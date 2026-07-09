@@ -350,14 +350,15 @@ def redeploy_dashboard() -> None:
     Fail-soft: a missing CLI or token just logs a reminder (Hermes lesson: the
     public numbers should not silently go stale, so at minimum we say so)."""
     import shutil
-    if shutil.which("vercel") is None or not os.environ.get("VERCEL_TOKEN"):
-        print("  (dashboard data updated locally; run a redeploy to publish "
-              "- install vercel CLI + set VERCEL_TOKEN in .env to automate)")
+    if shutil.which("vercel") is None:
+        print("  (dashboard data updated locally; vercel CLI not on PATH, skipping redeploy)")
         return
+    cmd = ["vercel", "deploy", "--prod", "--yes"]
+    if os.environ.get("VERCEL_TOKEN"):
+        cmd += ["--token", os.environ["VERCEL_TOKEN"]]
     try:
-        r = subprocess.run(
-            ["vercel", "deploy", "--prod", "--yes", "--token", os.environ["VERCEL_TOKEN"]],
-            cwd=ROOT / "dashboard", capture_output=True, text=True, timeout=600)
+        r = subprocess.run(cmd, cwd=ROOT / "dashboard",
+                           capture_output=True, text=True, timeout=600)
         print("  dashboard redeployed" if r.returncode == 0
               else f"  redeploy FAILED: {r.stderr[-300:]}")
     except Exception as e:
