@@ -35,7 +35,7 @@ def get_macro_snapshot() -> dict:
     try:
         from fredapi import Fred
         fred = Fred(api_key=api_key)
-        start = datetime.now() - timedelta(days=500)
+        start = datetime.now() - timedelta(days=900)
         out: dict = {"status": "ok", "as_of": datetime.now().date().isoformat(), "indicators": {}}
 
         for name, sid in SERIES.items():
@@ -45,7 +45,7 @@ def get_macro_snapshot() -> dict:
                     continue
                 latest = float(s.iloc[-1])
                 prior_3m = float(s.iloc[-64]) if len(s) > 64 else float(s.iloc[0])
-                if name == "cpi_yoy_proxy" and len(s) > 12:
+                if name == "cpi_yoy_proxy" and len(s) > 16:
                     latest = round((float(s.iloc[-1]) / float(s.iloc[-13]) - 1) * 100, 2)
                     prior_3m = round((float(s.iloc[-4]) / float(s.iloc[-16]) - 1) * 100, 2)
                     name = "cpi_yoy_pct"
