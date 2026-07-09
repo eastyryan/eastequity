@@ -133,10 +133,10 @@ export default function Home() {
       {/* Intro + stats */}
       <section className="pt-14 pb-12">
         <h1 className="max-w-xl text-3xl sm:text-4xl font-semibold tracking-tight leading-tight">
-          An AI agent that invests in the AI supply chain, in public.
+          An AI agent that swing-trades the AI supply chain, in public.
         </h1>
         <p className="mt-4 max-w-xl text-ink-2 leading-relaxed">
-          Long-only equities, compounding 10 to 15 percent gains over weeks to months, every
+          Long-only equities, compounding 10 to 15 percent swing gains over days to weeks, every
           decision published with its full reasoning. Research by Claude, hard rules enforced by
           code.
         </p>
@@ -393,9 +393,9 @@ export default function Home() {
           <div>
             <h3 className="font-medium">Guardrails</h3>
             <p className="mt-1.5 text-sm text-ink-2 leading-relaxed">
-              Deterministic code enforces every rule: long-only, no options or margin, position
-              caps, a 10 percent minimum upside target, never risking more than the expected
-              gain, and a kill switch.
+              Deterministic code enforces every rule: long-only, no options or margin, 3 to 90
+              day swing horizons, position caps, a 10 percent minimum upside target, never
+              risking more than the expected gain, and a kill switch.
             </p>
           </div>
           <div>
