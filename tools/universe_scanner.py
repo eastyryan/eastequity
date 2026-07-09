@@ -43,6 +43,7 @@ def scan_universe(top_n: int = 15) -> dict:
                 continue
             close, high, low, vol = df["Close"], df["High"], df["Low"], df["Volume"]
             last = float(close.iloc[-1])
+            pct_1d = last / float(close.iloc[-2]) - 1
             sma20, sma50 = float(close.rolling(20).mean().iloc[-1]), float(close.rolling(50).mean().iloc[-1])
             sma100 = float(close.rolling(100).mean().iloc[-1])
             mom_1m = last / float(close.iloc[-22]) - 1
@@ -68,6 +69,7 @@ def scan_universe(top_n: int = 15) -> dict:
             rows.append({
                 "ticker": t, "sector": ticker_sector[t],
                 "last_close": round(last, 2),
+                "pct_change_1d": round(pct_1d * 100, 2),
                 "momentum_1m_pct": round(mom_1m * 100, 1),
                 "momentum_3m_pct": round(mom_3m * 100, 1),
                 "momentum_6m_pct": round(mom_6m * 100, 1),
@@ -83,6 +85,21 @@ def scan_universe(top_n: int = 15) -> dict:
             continue
 
     rows.sort(key=lambda r: r["swing_setup_score"], reverse=True)
+
+    # Valuation context for the top setups only (per-ticker .info calls are slow,
+    # so we don't fetch it for the whole universe).
+    for r in rows[:top_n]:
+        try:
+            info = yf.Ticker(r["ticker"]).info
+            r["valuation"] = {
+                "trailing_pe": info.get("trailingPE"),
+                "forward_pe": info.get("forwardPE"),
+                "price_to_sales_ttm": info.get("priceToSalesTrailing12Months"),
+                "ev_to_ebitda": info.get("enterpriseToEbitda"),
+            }
+        except Exception:
+            r["valuation"] = None
+
     return {
         "status": "ok",
         "scanned": len(rows),
