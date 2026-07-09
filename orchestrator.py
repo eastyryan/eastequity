@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import subprocess
 import sys
@@ -122,16 +123,16 @@ def ask_claude(context: dict, run_id: str) -> str:
 # ---------------------------------------------------------------------------
 # Step 4 — Parse structured proposals out of the brain's response
 # ---------------------------------------------------------------------------
-def parse_proposals(response: str) -> tuple[list[dict], str | None]:
+def parse_proposals(response: str) -> tuple[list[dict], str | None, str | None]:
     blocks = re.findall(r"```json\s*(.*?)```", response, re.DOTALL)
     for block in reversed(blocks):  # last JSON block wins
         try:
             data = json.loads(block)
             if isinstance(data, dict) and "proposals" in data:
-                return data["proposals"], data.get("no_trade_reason")
+                return data["proposals"], data.get("no_trade_reason"), data.get("commentary")
         except json.JSONDecodeError:
             continue
-    return [], "no parsable proposals block in response"
+    return [], "no parsable proposals block in response", None
 
 
 # ---------------------------------------------------------------------------
@@ -147,8 +148,21 @@ def execute(approved: list[validator.ValidationResult], context: dict,
         print("  DRY RUN — approved proposals journaled, no orders placed.")
         return fills
 
+    # Per-DAY new-position cap across multiple intraday runs (validator only sees one batch).
+    today = datetime.now(timezone.utc).date().isoformat()
+    trades_file = ROOT / "journal" / "trades" / f"{today}.jsonl"
+    buys_today = 0
+    if trades_file.exists():
+        for line in trades_file.read_text().splitlines():
+            if json.loads(line).get("fill", {}).get("action") == "BUY":
+                buys_today += 1
+    max_buys_per_day = cfg["swing_rules"]["max_new_positions_per_day"]
+
     for vr in approved[:max_orders]:
         p = vr.proposal
+        if p["action"] == "BUY" and buys_today >= max_buys_per_day:
+            journal.log_rejection(p, [f"max_new_positions_per_day_reached:{buys_today}"], run_id)
+            continue
         ref = prices.get(p["ticker"].upper())
         if ref is None:
             journal.log_rejection(p, ["no_reference_price_available"], run_id)
@@ -167,6 +181,8 @@ def execute(approved: list[validator.ValidationResult], context: dict,
             continue
         journal.log_trade(order, fill, run_id)
         fills.append(fill)
+        if fill["action"] == "BUY":
+            buys_today += 1
         print(f"  FILLED {fill['action']} {fill['ticker']} "
               f"{fill['quantity']} @ {fill['fill_price']}")
     return fills
@@ -175,20 +191,140 @@ def execute(approved: list[validator.ValidationResult], context: dict,
 # ---------------------------------------------------------------------------
 # Step 7 — Dashboard data + X summary
 # ---------------------------------------------------------------------------
+def _benchmark_close(ticker: str = "SPY") -> float | None:
+    try:
+        import yfinance as yf
+        h = yf.Ticker(ticker).history(period="5d")
+        return round(float(h["Close"].iloc[-1]), 2)
+    except Exception:
+        return None
+
+
+def _trade_plans() -> dict:
+    """Latest BUY proposal per ticker from the journal (thesis, stop, target, horizon)."""
+    plans: dict = {}
+    for f in sorted((ROOT / "journal" / "proposals").glob("*.jsonl")):
+        for line in f.read_text().splitlines():
+            rec = json.loads(line)
+            p = rec.get("proposal", {})
+            if str(p.get("action", "")).upper() == "BUY" and p.get("ticker"):
+                plans[p["ticker"].upper()] = p
+    return plans
+
+
+def compute_closed_trades() -> list[dict]:
+    """Closed trades with a thesis verdict, from the broker history + trade plans."""
+    state_file = ROOT / "state" / "portfolio.json"
+    if not state_file.exists():
+        return []
+    history = json.loads(state_file.read_text()).get("history", [])
+    plans = _trade_plans()
+    opens: dict[str, dict] = {}
+    closed = []
+    for fill in history:
+        if fill.get("status") != "filled":
+            continue
+        t = fill["ticker"].upper()
+        if fill["action"] == "BUY":
+            opens[t] = fill
+        elif fill["action"] == "SELL_TO_CLOSE" and t in opens:
+            entry_fill = opens.pop(t)
+            plan = plans.get(t, {})
+            entry = float(entry_fill["fill_price"])
+            exit_px = float(fill["fill_price"])
+            stop = float(plan.get("stop_loss") or 0)
+            target = float(plan.get("target_price") or 0)
+            days_held = max((datetime.fromisoformat(fill["filled_at"])
+                             - datetime.fromisoformat(entry_fill["filled_at"])).days, 0)
+            horizon = plan.get("holding_horizon_days")
+            if target and exit_px >= target * 0.995:
+                verdict = "Hit target"
+            elif stop and exit_px <= stop * 1.005:
+                verdict = "Stopped out"
+            elif horizon and days_held >= float(horizon):
+                verdict = "Time-limit exit"
+            else:
+                verdict = "Thesis exit"
+            r_multiple = round((exit_px - entry) / (entry - stop), 2) if stop and entry > stop else None
+            closed.append({
+                "ticker": t, "entry_price": entry, "exit_price": exit_px,
+                "opened_at": entry_fill["filled_at"][:10], "closed_at": fill["filled_at"][:10],
+                "days_held": days_held, "pnl_usd": fill.get("realized_pnl_usd"),
+                "r_multiple": r_multiple, "verdict": verdict,
+                "thesis": plan.get("thesis"),
+            })
+    return closed
+
+
+def compute_performance_stats(closed: list[dict], equity_hist: list[dict]) -> dict | None:
+    if not closed:
+        return None
+    pnls = [t["pnl_usd"] or 0 for t in closed]
+    wins = [p for p in pnls if p > 0]
+    rs = [t["r_multiple"] for t in closed if t["r_multiple"] is not None]
+    peak, max_dd = 0.0, 0.0
+    for h in equity_hist:
+        peak = max(peak, h["equity"])
+        if peak:
+            max_dd = max(max_dd, (peak - h["equity"]) / peak)
+    return {
+        "closed_trades": len(closed),
+        "win_rate_pct": round(len(wins) / len(closed) * 100, 1),
+        "realized_pnl_usd": round(sum(pnls), 2),
+        "avg_r_multiple": round(sum(rs) / len(rs), 2) if rs else None,
+        "avg_days_held": round(sum(t["days_held"] for t in closed) / len(closed), 1),
+        "max_drawdown_pct": round(max_dd * 100, 2),
+    }
+
+
+def recent_improvements(limit: int = 10) -> list[dict]:
+    notes = []
+    for f in sorted((ROOT / "journal" / "improvements").glob("*.jsonl")):
+        for line in f.read_text().splitlines():
+            rec = json.loads(line)
+            notes.append({"date": rec["ts"][:10], "note": rec["note"]})
+    return notes[-limit:][::-1]
+
+
 def refresh_dashboard(context: dict, response: str, results: list, fills: list,
-                      run_id: str, no_trade_reason: str | None = None) -> None:
+                      run_id: str, no_trade_reason: str | None = None,
+                      commentary: str | None = None) -> None:
+    dash = ROOT / "dashboard" / "data"
+    dash.mkdir(parents=True, exist_ok=True)
+
+    # Append today's equity + benchmark to the track-record series first (last point wins).
+    hist_file = dash / "equity_history.json"
+    hist = json.loads(hist_file.read_text()) if hist_file.exists() else []
+    today = datetime.now(timezone.utc).date().isoformat()
+    hist = [h for h in hist if h["date"] != today]
+    hist.append({"date": today,
+                 "equity": context["portfolio"].get("total_equity_usd"),
+                 "cash": context["portfolio"].get("cash_usd"),
+                 "benchmark_close": _benchmark_close()})
+    hist_file.write_text(json.dumps(hist, indent=2))
+
+    closed = compute_closed_trades()
     out = {
         "no_trade_reason": no_trade_reason,
+        "commentary": commentary,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "run_id": run_id,
         "mode": context["trading_mode"],
+        "schedule_note": "Runs every 3 hours on weekdays",
         "portfolio": {k: context["portfolio"].get(k) for k in
                       ("cash_usd", "total_equity_usd", "positions")},
+        "macro_snapshot": {
+            name: context["macro_regime"].get("indicators", {}).get(name)
+            for name in ("cpi_yoy_pct", "ten_year_yield", "vix")
+        } if context["macro_regime"].get("status") == "ok" else None,
         "macro_regime_hint": context["macro_regime"].get("regime_hint"),
         "latest_reasoning": response,
         "proposals": [{"proposal": r.proposal, "approved": r.approved,
                        "reasons": r.reasons} for r in results],
         "fills": fills,
+        "closed_trades": closed[::-1],
+        "performance": compute_performance_stats(closed, hist),
+        "improvements": recent_improvements(),
     }
     dash = ROOT / "dashboard" / "data"
     dash.mkdir(parents=True, exist_ok=True)
@@ -208,12 +344,33 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
     hist_file.write_text(json.dumps(hist, indent=2))
 
 
+def redeploy_dashboard() -> None:
+    """Push fresh data to the live site if the Vercel CLI + token are available.
+
+    Fail-soft: a missing CLI or token just logs a reminder (Hermes lesson: the
+    public numbers should not silently go stale, so at minimum we say so)."""
+    import shutil
+    if shutil.which("vercel") is None or not os.environ.get("VERCEL_TOKEN"):
+        print("  (dashboard data updated locally; run a redeploy to publish "
+              "- install vercel CLI + set VERCEL_TOKEN in .env to automate)")
+        return
+    try:
+        r = subprocess.run(
+            ["vercel", "deploy", "--prod", "--yes", "--token", os.environ["VERCEL_TOKEN"]],
+            cwd=ROOT / "dashboard", capture_output=True, text=True, timeout=600)
+        print("  dashboard redeployed" if r.returncode == 0
+              else f"  redeploy FAILED: {r.stderr[-300:]}")
+    except Exception as e:
+        print(f"  redeploy FAILED: {e}")
+
+
 def draft_x_summary(fills: list, results: list, context: dict, run_id: str) -> None:
-    lines = [f"East Equity Agent — daily swing update ({datetime.now():%b %d})"]
+    # Plain tickers, no $cashtags: X rejects multi-cashtag posts (Hermes lesson).
+    lines = [f"East Equity Agent swing update ({datetime.now():%b %d})"]
     if fills:
         for f in fills:
             lines.append(f"{'Opened' if f['action'] == 'BUY' else 'Closed'} "
-                         f"${f['ticker']} @ {f['fill_price']}")
+                         f"{f['ticker']} @ {f['fill_price']}")
     else:
         lines.append("No new trades today — no setup met the bar.")
     eq = context["portfolio"].get("total_equity_usd")
@@ -247,7 +404,7 @@ def main() -> int:
 
     print("[2/5] Waking the brain (Claude)...")
     response = ask_claude(context, run_id)
-    proposals, no_trade_reason = parse_proposals(response)
+    proposals, no_trade_reason, commentary = parse_proposals(response)
     print(f"      {len(proposals)} proposal(s). {no_trade_reason or ''}")
 
     for m in re.findall(r"Improvement note:(.+)", response):
@@ -272,7 +429,8 @@ def main() -> int:
     fills = execute(approved, context, cfg, run_id)
 
     print("[5/5] Journaling + dashboard + X draft...")
-    refresh_dashboard(context, response, results, fills, run_id, no_trade_reason)
+    refresh_dashboard(context, response, results, fills, run_id, no_trade_reason, commentary)
+    redeploy_dashboard()
     draft_x_summary(fills, results, context, run_id)
     journal.log_run_summary({
         "proposals": len(proposals), "approved": len(approved),

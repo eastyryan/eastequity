@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import EquityChart from "@/components/EquityChart";
+import ClosedTrades from "@/components/ClosedTrades";
 
 type Position = {
   ticker: string;
@@ -11,15 +12,43 @@ type Position = {
   opened_at: string;
 };
 
+type Indicator = { latest: number; direction: string } | null;
+
 type Latest = {
   generated_at: string;
   run_id: string;
   mode: string;
+  schedule_note?: string;
   portfolio: { cash_usd: number; total_equity_usd: number; positions: Position[] };
   no_trade_reason?: string | null;
+  commentary?: string | null;
+  macro_snapshot?: { cpi_yoy_pct: Indicator; ten_year_yield: Indicator; vix: Indicator } | null;
   proposals: { proposal: Record<string, unknown>; approved: boolean; reasons: string[] }[];
   fills: { ticker: string; action: string; fill_price: number; quantity: number }[];
+  closed_trades?: {
+    ticker: string;
+    entry_price: number;
+    exit_price: number;
+    opened_at: string;
+    closed_at: string;
+    days_held: number;
+    pnl_usd: number | null;
+    r_multiple: number | null;
+    verdict: string;
+    thesis?: string | null;
+  }[];
+  performance?: {
+    closed_trades: number;
+    win_rate_pct: number;
+    realized_pnl_usd: number;
+    avg_r_multiple: number | null;
+    avg_days_held: number;
+    max_drawdown_pct: number;
+  } | null;
+  improvements?: { date: string; note: string }[];
 };
+
+type HistoryPoint = { date: string; equity: number; benchmark_close?: number | null };
 
 const STARTING_CAPITAL = 10000;
 
@@ -28,21 +57,39 @@ function readJson<T>(file: string): T {
 }
 
 function clean(s: string) {
-  return s.replace(/—/g, "-").replace(/–/g, "-").replace(/\*\*/g, "");
+  return s
+    .replace(/—/g, "-")
+    .replace(/–/g, "-")
+    .replace(/\*\*/g, "")
+    .replace(/[`*]/g, "");
 }
 
 function usd(n: number) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
+function arrow(direction?: string) {
+  return direction === "rising" ? "↑" : direction === "falling" ? "↓" : "";
+}
+
 export default function Home() {
   const latest = readJson<Latest>("latest.json");
-  const history = readJson<{ date: string; equity: number }[]>("equity_history.json");
+  const history = readJson<HistoryPoint[]>("equity_history.json");
 
   const equity = latest.portfolio.total_equity_usd;
   const cash = latest.portfolio.cash_usd;
   const positions = latest.portfolio.positions ?? [];
   const returnPct = ((equity - STARTING_CAPITAL) / STARTING_CAPITAL) * 100;
+
+  // Excess return vs holding SPY with the same capital since day one (Hermes-style honesty).
+  const benchPoints = history.filter((h) => h.benchmark_close);
+  let excessPts: number | null = null;
+  if (benchPoints.length >= 1) {
+    const spyReturnPct =
+      (benchPoints[benchPoints.length - 1].benchmark_close! / benchPoints[0].benchmark_close! - 1) * 100;
+    excessPts = returnPct - spyReturnPct;
+  }
+
   const lastRun = new Date(latest.generated_at).toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
@@ -56,9 +103,21 @@ export default function Home() {
       value: `${returnPct >= 0 ? "+" : ""}${returnPct.toFixed(2)}%`,
       accent: returnPct > 0,
     },
+    {
+      label: "vs S&P 500",
+      value:
+        excessPts === null ? "n/a" : `${excessPts >= 0 ? "+" : ""}${excessPts.toFixed(2)} pts`,
+      accent: excessPts !== null && excessPts > 0,
+    },
     { label: "Cash", value: usd(cash) },
-    { label: "Open positions", value: String(positions.length) },
   ];
+
+  const perf = latest.performance;
+  const thinking = latest.commentary ?? latest.no_trade_reason;
+  const macro = latest.macro_snapshot;
+  const closedTrades = latest.closed_trades ?? [];
+  const improvements = latest.improvements ?? [];
+  const rejected = latest.proposals.filter((p) => !p.approved);
 
   return (
     <main className="mx-auto max-w-4xl px-5 sm:px-8">
@@ -94,18 +153,58 @@ export default function Home() {
             </div>
           ))}
         </dl>
+
+        <p className="mt-8 text-[13px] text-ink-3">
+          Last run {lastRun}. {latest.schedule_note ?? "Runs on weekdays"}.
+        </p>
       </section>
 
       {/* Equity curve */}
       <section className="border-t border-line py-12">
         <h2 className="text-lg font-semibold tracking-tight">Equity curve</h2>
         <p className="mt-1 text-sm text-ink-2">
-          {usd(STARTING_CAPITAL)} starting capital, marked daily.
+          {usd(STARTING_CAPITAL)} starting capital, marked each session against buying and holding
+          the S&amp;P 500.
         </p>
         <div className="mt-6">
-          <EquityChart points={history} />
+          <EquityChart points={history} startingCapital={STARTING_CAPITAL} />
         </div>
       </section>
+
+      {/* Performance record, appears once trades have closed */}
+      {perf && (
+        <section className="border-t border-line py-12">
+          <h2 className="text-lg font-semibold tracking-tight">Performance record</h2>
+          <dl className="mt-6 grid grid-cols-2 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
+            {[
+              { label: "Closed trades", value: String(perf.closed_trades) },
+              { label: "Win rate", value: `${perf.win_rate_pct}%` },
+              {
+                label: "Realized P&L",
+                value: `${perf.realized_pnl_usd >= 0 ? "+" : ""}${usd(perf.realized_pnl_usd)}`,
+                accent: perf.realized_pnl_usd > 0,
+              },
+              {
+                label: "Avg R multiple",
+                value: perf.avg_r_multiple === null ? "n/a" : `${perf.avg_r_multiple}R`,
+              },
+              { label: "Avg days held", value: String(perf.avg_days_held) },
+              { label: "Max drawdown", value: `${perf.max_drawdown_pct}%` },
+            ].map((s) => (
+              <div key={s.label} className="border-l border-line pl-4">
+                <dt className="text-[13px] text-ink-3">{s.label}</dt>
+                <dd
+                  className={`mt-1 text-xl font-medium tracking-tight font-[family-name:var(--font-geist-mono)] ${
+                    s.accent ? "text-accent" : ""
+                  }`}
+                >
+                  {s.value}
+                </dd>
+              </div>
+            ))}
+          </dl>
+        </section>
+      )}
 
       {/* Positions */}
       <section className="border-t border-line py-12">
@@ -152,12 +251,32 @@ export default function Home() {
         )}
       </section>
 
-      {/* Latest decision */}
+      {/* What the agent is thinking */}
+      {thinking && (
+        <section className="border-t border-line py-12">
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 className="text-lg font-semibold tracking-tight">What the agent is thinking</h2>
+            <span className="text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">{lastRun}</span>
+          </div>
+          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-ink-2">{clean(thinking)}</p>
+
+          {macro && (
+            <div className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">
+              {macro.cpi_yoy_pct && (
+                <span>CPI {macro.cpi_yoy_pct.latest}% {arrow(macro.cpi_yoy_pct.direction)}</span>
+              )}
+              {macro.ten_year_yield && (
+                <span>10Y {macro.ten_year_yield.latest}% {arrow(macro.ten_year_yield.direction)}</span>
+              )}
+              {macro.vix && <span>VIX {macro.vix.latest} {arrow(macro.vix.direction)}</span>}
+            </div>
+          )}
+        </section>
+      )}
+
+      {/* Latest activity */}
       <section className="border-t border-line py-12">
-        <div className="flex items-baseline justify-between gap-4">
-          <h2 className="text-lg font-semibold tracking-tight">Latest decision</h2>
-          <span className="text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">{lastRun}</span>
-        </div>
+        <h2 className="text-lg font-semibold tracking-tight">Latest activity</h2>
 
         {latest.fills.length > 0 ? (
           <ul className="mt-4 space-y-2">
@@ -169,33 +288,58 @@ export default function Home() {
             ))}
           </ul>
         ) : (
-          <p className="mt-2 text-sm font-medium text-accent">No trade</p>
+          <p className="mt-2 text-sm text-ink-2">
+            No orders on the last run.
+          </p>
         )}
 
-        {latest.no_trade_reason && (
-          <blockquote className="mt-4 border-l-2 border-accent/40 pl-4 text-[15px] leading-relaxed text-ink-2">
-            {clean(latest.no_trade_reason)}
-          </blockquote>
-        )}
-
-        {latest.proposals.filter((p) => !p.approved).length > 0 && (
+        {rejected.length > 0 && (
           <div className="mt-6">
             <h3 className="text-sm font-medium">Rejected by the validator</h3>
             <ul className="mt-2 space-y-1.5">
-              {latest.proposals
-                .filter((p) => !p.approved)
-                .map((p, i) => (
-                  <li key={i} className="text-sm text-ink-2">
-                    <span className="font-[family-name:var(--font-geist-mono)]">
-                      {String(p.proposal.ticker)}
-                    </span>{" "}
-                    · {p.reasons.join(", ")}
-                  </li>
-                ))}
+              {rejected.map((p, i) => (
+                <li key={i} className="text-sm text-ink-2">
+                  <span className="font-[family-name:var(--font-geist-mono)]">
+                    {String(p.proposal.ticker)}
+                  </span>
+                  : {p.reasons.join(", ")}
+                </li>
+              ))}
             </ul>
           </div>
         )}
       </section>
+
+      {/* Closed results */}
+      {closedTrades.length > 0 && (
+        <section className="border-t border-line py-12">
+          <h2 className="text-lg font-semibold tracking-tight">Closed results</h2>
+          <p className="mt-1 text-sm text-ink-2">
+            Every finished trade, newest first, scored against its own written plan.
+          </p>
+          <ClosedTrades trades={closedTrades} />
+        </section>
+      )}
+
+      {/* What improved */}
+      {improvements.length > 0 && (
+        <section className="border-t border-line py-12">
+          <h2 className="text-lg font-semibold tracking-tight">What improved</h2>
+          <p className="mt-1 text-sm text-ink-2">
+            The agent critiques its own process after every run. Changes that ship land here.
+          </p>
+          <ul className="mt-6 space-y-5">
+            {improvements.map((im, i) => (
+              <li key={i} className="flex gap-5">
+                <span className="shrink-0 text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)] pt-0.5">
+                  {im.date}
+                </span>
+                <p className="text-sm text-ink-2 leading-relaxed">{clean(im.note)}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
 
       {/* How it works */}
       <section className="border-t border-line py-12">

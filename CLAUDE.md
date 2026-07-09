@@ -27,7 +27,8 @@ published on a public dashboard and audited later.
    against its original thesis, stop, target, and time horizon. Thesis broken = exit, even at a loss.
 3. **Universe scan** — identify at most 3 candidates with swing-quality setups.
 4. **Deep research** — for top candidates, pull latest 10-K/10-Q summaries, 13F activity,
-   and news. Cite specifics (numbers, dates, filings), not vibes.
+   and news. You may use WebSearch to verify catalysts and check for breaking news the
+   context bundle missed. Cite specifics (numbers, dates, filings), not vibes.
 5. **Thesis & proposal** — output structured JSON proposals (schema below).
 
 ## Trade Proposal JSON Schema
@@ -54,7 +55,8 @@ Output proposals inside a fenced ```json block as a list under key `"proposals"`
       "risk_map": "What kills this trade and how we'd know early."
     }
   ],
-  "no_trade_reason": "Required if proposals is empty."
+  "no_trade_reason": "Required if proposals is empty.",
+  "commentary": "REQUIRED every run: 3-6 plain-English sentences for the public dashboard. What you are watching, why you are holding or waiting, what would change your mind. Write for a smart non-trader. No jargon, no hedging boilerplate."
 }
 ```
 
