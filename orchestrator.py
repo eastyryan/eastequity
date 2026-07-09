@@ -83,6 +83,14 @@ def gather_context(cfg: dict) -> dict:
     return {
         "run_date": datetime.now(timezone.utc).isoformat(),
         "trading_mode": cfg["mode"]["trading_mode"],
+        # Hard limits the validator will enforce - size within them or be rejected.
+        "hard_limits": {
+            "position_sizing": cfg["position_sizing"],
+            "quality": cfg["trade_quality_requirements"],
+            "swing": {k: cfg["swing_rules"][k] for k in
+                      ("min_holding_horizon_days", "max_holding_horizon_days",
+                       "max_new_positions_per_day")},
+        },
         "macro_regime": macro,
         "portfolio": portfolio,
         "universe_scan": scan,
@@ -354,24 +362,22 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
 
 
 def redeploy_dashboard() -> None:
-    """Push fresh data to the live site if the Vercel CLI + token are available.
-
-    Fail-soft: a missing CLI or token just logs a reminder (Hermes lesson: the
-    public numbers should not silently go stale, so at minimum we say so)."""
-    import shutil
-    if shutil.which("vercel") is None:
-        print("  (dashboard data updated locally; vercel CLI not on PATH, skipping redeploy)")
-        return
-    cmd = ["vercel", "deploy", "--prod", "--yes"]
-    if os.environ.get("VERCEL_TOKEN"):
-        cmd += ["--token", os.environ["VERCEL_TOKEN"]]
+    """Publish fresh data by committing and pushing to GitHub; Vercel auto-deploys
+    from main. Fail-soft: a failed push logs loudly so numbers never go silently stale."""
     try:
-        r = subprocess.run(cmd, cwd=ROOT / "dashboard",
-                           capture_output=True, text=True, timeout=600)
-        print("  dashboard redeployed" if r.returncode == 0
-              else f"  redeploy FAILED: {r.stderr[-300:]}")
+        subprocess.run(["git", "add", "dashboard/data", "journal", "state/x_draft_*.txt"],
+                       cwd=ROOT, capture_output=True, text=True)
+        r = subprocess.run(["git", "commit", "-m", "Update dashboard data after trading run"],
+                           cwd=ROOT, capture_output=True, text=True)
+        if r.returncode != 0:
+            print("  (no data changes to publish)")
+            return
+        r = subprocess.run(["git", "push", "origin", "main"],
+                           cwd=ROOT, capture_output=True, text=True, timeout=120)
+        print("  data pushed - Vercel deploying" if r.returncode == 0
+              else f"  PUSH FAILED (site going stale): {r.stderr[-300:]}")
     except Exception as e:
-        print(f"  redeploy FAILED: {e}")
+        print(f"  PUBLISH FAILED (site going stale): {e}")
 
 
 def draft_x_summary(fills: list, results: list, context: dict, run_id: str) -> None:
