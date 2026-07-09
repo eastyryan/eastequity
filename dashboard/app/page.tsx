@@ -46,6 +46,7 @@ type Latest = {
     max_drawdown_pct: number;
   } | null;
   improvements?: { date: string; note: string }[];
+  watchlist?: { ticker: string; one_line: string; thoughts: string; would_buy_at?: string | null }[];
 };
 
 type HistoryPoint = { date: string; equity: number; benchmark_close?: number | null };
@@ -132,11 +133,12 @@ export default function Home() {
       {/* Intro + stats */}
       <section className="pt-14 pb-12">
         <h1 className="max-w-xl text-3xl sm:text-4xl font-semibold tracking-tight leading-tight">
-          An AI agent that swing-trades the AI supply chain, in public.
+          An AI agent that invests in the AI supply chain, in public.
         </h1>
         <p className="mt-4 max-w-xl text-ink-2 leading-relaxed">
-          Long-only equities, multi-week holding periods, every decision published with its full
-          reasoning. Research by Claude, hard rules enforced by code.
+          Long-only equities, compounding 10 to 15 percent gains over weeks to months, every
+          decision published with its full reasoning. Research by Claude, hard rules enforced by
+          code.
         </p>
 
         <dl className="mt-10 grid grid-cols-2 gap-y-8 sm:grid-cols-4">
@@ -274,6 +276,42 @@ export default function Home() {
         </section>
       )}
 
+      {/* Watchlist */}
+      {(latest.watchlist ?? []).length > 0 && (
+        <section className="border-t border-line py-12">
+          <h2 className="text-lg font-semibold tracking-tight">Watchlist</h2>
+          <p className="mt-1 text-sm text-ink-2">
+            The most compelling potential positions right now, ranked. Expand a name to read the
+            agent's current thinking.
+          </p>
+          <ul className="mt-6 divide-y divide-line/60">
+            {latest.watchlist!.map((w) => (
+              <li key={w.ticker}>
+                <details className="group py-4">
+                  <summary className="flex cursor-pointer list-none items-baseline gap-4 [&::-webkit-details-marker]:hidden">
+                    <span className="w-14 shrink-0 font-medium font-[family-name:var(--font-geist-mono)]">
+                      {w.ticker}
+                    </span>
+                    <span className="flex-1 text-sm text-ink-2 leading-relaxed">{clean(w.one_line)}</span>
+                    <span className="shrink-0 text-ink-3 transition-transform group-open:rotate-90" aria-hidden>
+                      ›
+                    </span>
+                  </summary>
+                  <div className="pb-2 pl-[4.5rem] pr-6">
+                    <p className="text-sm text-ink-2 leading-relaxed">{clean(w.thoughts)}</p>
+                    {w.would_buy_at && (
+                      <p className="mt-2 text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">
+                        Would buy: {clean(w.would_buy_at)}
+                      </p>
+                    )}
+                  </div>
+                </details>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* Latest activity */}
       <section className="border-t border-line py-12">
         <h2 className="text-lg font-semibold tracking-tight">Latest activity</h2>
@@ -355,8 +393,9 @@ export default function Home() {
           <div>
             <h3 className="font-medium">Guardrails</h3>
             <p className="mt-1.5 text-sm text-ink-2 leading-relaxed">
-              Deterministic code enforces every rule: long-only, no options or margin, 3 to 90 day
-              horizons, position caps, minimum 2:1 reward-to-risk, and a kill switch.
+              Deterministic code enforces every rule: long-only, no options or margin, position
+              caps, a 10 percent minimum upside target, never risking more than the expected
+              gain, and a kill switch.
             </p>
           </div>
           <div>

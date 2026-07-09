@@ -18,7 +18,7 @@
   },
   "swing_rules": {
     "min_holding_horizon_days": 3,
-    "max_holding_horizon_days": 90,
+    "max_holding_horizon_days": 365,
     "min_days_between_entries_same_ticker": 5,
     "max_new_positions_per_day": 2,
     "reject_intraday_language": true
@@ -39,7 +39,8 @@
       "macro_context", "catalysts", "position_size_usd"
     ],
     "min_confidence": 0.60,
-    "min_risk_reward_ratio": 2.0,
+    "min_risk_reward_ratio": 1.0,
+    "min_target_upside_pct": 0.10,
     "max_stop_loss_distance_pct": 0.15,
     "stop_loss_must_be_below_entry": true,
     "target_must_be_above_entry": true

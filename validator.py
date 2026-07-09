@@ -109,6 +109,9 @@ def _check_prices_and_rr(p: dict, cfg: dict, reasons: list[str]) -> None:
     stop_dist = (entry - stop) / entry
     if stop_dist > q["max_stop_loss_distance_pct"]:
         reasons.append(f"stop_too_far:{stop_dist:.1%} > {q['max_stop_loss_distance_pct']:.0%}")
+    upside = (target - entry) / entry
+    if upside < q["min_target_upside_pct"]:
+        reasons.append(f"target_upside_too_small:{upside:.1%} < {q['min_target_upside_pct']:.0%}")
     computed_rr = (target - entry) / (entry - stop)
     if computed_rr < q["min_risk_reward_ratio"]:
         reasons.append(f"risk_reward_too_low:{computed_rr:.2f} < {q['min_risk_reward_ratio']}")

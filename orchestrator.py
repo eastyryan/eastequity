@@ -123,16 +123,23 @@ def ask_claude(context: dict, run_id: str) -> str:
 # ---------------------------------------------------------------------------
 # Step 4 — Parse structured proposals out of the brain's response
 # ---------------------------------------------------------------------------
-def parse_proposals(response: str) -> tuple[list[dict], str | None, str | None]:
+def parse_proposals(response: str) -> dict:
+    """Extract the structured output block: proposals, commentary, watchlist."""
     blocks = re.findall(r"```json\s*(.*?)```", response, re.DOTALL)
     for block in reversed(blocks):  # last JSON block wins
         try:
             data = json.loads(block)
             if isinstance(data, dict) and "proposals" in data:
-                return data["proposals"], data.get("no_trade_reason"), data.get("commentary")
+                return {
+                    "proposals": data["proposals"],
+                    "no_trade_reason": data.get("no_trade_reason"),
+                    "commentary": data.get("commentary"),
+                    "watchlist": (data.get("watchlist") or [])[:10],
+                }
         except json.JSONDecodeError:
             continue
-    return [], "no parsable proposals block in response", None
+    return {"proposals": [], "no_trade_reason": "no parsable proposals block in response",
+            "commentary": None, "watchlist": []}
 
 
 # ---------------------------------------------------------------------------
@@ -288,7 +295,8 @@ def recent_improvements(limit: int = 10) -> list[dict]:
 
 def refresh_dashboard(context: dict, response: str, results: list, fills: list,
                       run_id: str, no_trade_reason: str | None = None,
-                      commentary: str | None = None) -> None:
+                      commentary: str | None = None,
+                      watchlist: list | None = None) -> None:
     dash = ROOT / "dashboard" / "data"
     dash.mkdir(parents=True, exist_ok=True)
 
@@ -307,6 +315,7 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
     out = {
         "no_trade_reason": no_trade_reason,
         "commentary": commentary,
+        "watchlist": watchlist or [],
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "run_id": run_id,
         "mode": context["trading_mode"],
@@ -405,7 +414,8 @@ def main() -> int:
 
     print("[2/5] Waking the brain (Claude)...")
     response = ask_claude(context, run_id)
-    proposals, no_trade_reason, commentary = parse_proposals(response)
+    parsed = parse_proposals(response)
+    proposals, no_trade_reason = parsed["proposals"], parsed["no_trade_reason"]
     print(f"      {len(proposals)} proposal(s). {no_trade_reason or ''}")
 
     for m in re.findall(r"Improvement note:(.+)", response):
@@ -430,7 +440,8 @@ def main() -> int:
     fills = execute(approved, context, cfg, run_id)
 
     print("[5/5] Journaling + dashboard + X draft...")
-    refresh_dashboard(context, response, results, fills, run_id, no_trade_reason, commentary)
+    refresh_dashboard(context, response, results, fills, run_id, no_trade_reason,
+                      parsed["commentary"], parsed["watchlist"])
     redeploy_dashboard()
     draft_x_summary(fills, results, context, run_id)
     journal.log_run_summary({
