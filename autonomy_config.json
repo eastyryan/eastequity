@@ -1,0 +1,71 @@
+{
+  "version": "1.0.0",
+  "system_name": "East Equity Agent",
+  "mode": {
+    "trading_mode": "dry_run",
+    "_trading_mode_options": ["dry_run", "paper", "live"],
+    "broker": "simulation",
+    "_broker_options": ["simulation", "moomoo", "ibkr_paper"]
+  },
+  "hard_rules": {
+    "long_only": true,
+    "allowed_actions": ["BUY", "SELL_TO_CLOSE", "HOLD"],
+    "allowed_instruments": ["EQUITY"],
+    "forbidden_instruments": ["OPTION", "FUTURE", "CRYPTO", "FOREX", "WARRANT", "BOND"],
+    "forbidden_strategies": ["short_selling", "margin", "leverage", "options", "inverse_etf", "leveraged_etf"],
+    "forbidden_ticker_patterns": ["SQQQ", "SPXU", "SDOW", "TQQQ", "UPRO", "SOXL", "SOXS", "UVXY", "VIXY", "SVXY", "TZA", "TNA", "LABU", "LABD", "NVDL", "NVDD", "CONL"],
+    "us_exchanges_only": true
+  },
+  "swing_rules": {
+    "min_holding_horizon_days": 3,
+    "max_holding_horizon_days": 90,
+    "min_days_between_entries_same_ticker": 5,
+    "max_new_positions_per_day": 2,
+    "reject_intraday_language": true
+  },
+  "position_sizing": {
+    "starting_capital_usd": 10000,
+    "max_position_pct_of_portfolio": 0.10,
+    "max_position_usd": 1000,
+    "max_open_positions": 8,
+    "max_total_exposure_pct": 0.80,
+    "min_cash_reserve_pct": 0.20,
+    "max_sector_concentration_pct": 0.40
+  },
+  "trade_quality_requirements": {
+    "required_proposal_fields": [
+      "ticker", "action", "thesis", "entry_price_max", "stop_loss",
+      "target_price", "holding_horizon_days", "confidence", "risk_reward_ratio",
+      "macro_context", "catalysts", "position_size_usd"
+    ],
+    "min_confidence": 0.60,
+    "min_risk_reward_ratio": 2.0,
+    "max_stop_loss_distance_pct": 0.15,
+    "stop_loss_must_be_below_entry": true,
+    "target_must_be_above_entry": true
+  },
+  "risk_controls": {
+    "kill_switch_file": "state/KILL_SWITCH",
+    "max_daily_loss_pct_halt": 0.03,
+    "max_drawdown_pct_halt": 0.15,
+    "require_broker_readback_confirmation": true,
+    "max_orders_per_run": 3,
+    "market_hours_only": true
+  },
+  "universe": {
+    "focus": "AI supply chain, semiconductors, data center infrastructure",
+    "universe_file": "data/universe.json",
+    "allow_off_universe_trades": false
+  },
+  "journaling": {
+    "journal_dir": "journal",
+    "log_all_proposals": true,
+    "log_all_rejections_with_reason": true,
+    "log_improvements": true
+  },
+  "schedule": {
+    "run_time_et": "10:00",
+    "run_days": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+    "position_review_frequency": "daily"
+  }
+}

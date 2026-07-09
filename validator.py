@@ -1,0 +1,177 @@
+"""East Equity Agent — deterministic proposal validator.
+
+Pure Python, no LLM. Every trade proposal produced by Claude passes through
+`validate_proposals()` before anything can reach a broker. A proposal is either
+APPROVED or REJECTED with an explicit machine-readable reason list; rejections
+are always journaled.
+
+Design rule: this file must never import anything that talks to a network or a
+broker. It reads config + portfolio state and applies hard rules. Boring on purpose.
+"""
+
+from __future__ import annotations
+
+import json
+import re
+from dataclasses import dataclass, field
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parent
+
+
+@dataclass
+class ValidationResult:
+    proposal: dict
+    approved: bool
+    reasons: list[str] = field(default_factory=list)  # rejection reasons (empty if approved)
+
+
+def load_config() -> dict:
+    return json.loads((ROOT / "autonomy_config.json").read_text())
+
+
+def load_universe() -> set[str]:
+    data = json.loads((ROOT / "data" / "universe.json").read_text())
+    tickers: set[str] = set()
+    for sector_tickers in data["sectors"].values():
+        tickers.update(t.upper() for t in sector_tickers)
+    return tickers
+
+
+def kill_switch_active(cfg: dict) -> bool:
+    return (ROOT / cfg["risk_controls"]["kill_switch_file"]).exists()
+
+
+# --- individual rule checks -------------------------------------------------
+
+def _check_required_fields(p: dict, cfg: dict, reasons: list[str]) -> None:
+    for f in cfg["trade_quality_requirements"]["required_proposal_fields"]:
+        if f not in p or p[f] in (None, ""):
+            reasons.append(f"missing_required_field:{f}")
+
+
+def _check_long_only(p: dict, cfg: dict, reasons: list[str]) -> None:
+    action = str(p.get("action", "")).upper()
+    if action not in cfg["hard_rules"]["allowed_actions"]:
+        reasons.append(f"forbidden_action:{action} (long-only: BUY/SELL_TO_CLOSE/HOLD)")
+    instrument = str(p.get("instrument", "EQUITY")).upper()
+    if instrument not in cfg["hard_rules"]["allowed_instruments"]:
+        reasons.append(f"forbidden_instrument:{instrument}")
+    # Belt-and-suspenders: scan free text for forbidden strategy language on BUYs.
+    text = " ".join(str(p.get(k, "")) for k in ("thesis", "risk_map", "catalysts")).lower()
+    for term in ("short sell", "short position", "put option", "call option",
+                 "buy puts", "buy calls", "on margin", "leveraged etf", "inverse etf"):
+        if term in text and action == "BUY":
+            reasons.append(f"forbidden_strategy_language:'{term}'")
+
+
+def _check_universe(p: dict, cfg: dict, universe: set[str], reasons: list[str]) -> None:
+    ticker = str(p.get("ticker", "")).upper()
+    if not re.fullmatch(r"[A-Z]{1,5}", ticker):
+        reasons.append(f"invalid_ticker_format:{ticker}")
+        return
+    if ticker in cfg["hard_rules"]["forbidden_ticker_patterns"]:
+        reasons.append(f"forbidden_ticker:{ticker} (leveraged/inverse product)")
+    if not cfg["universe"]["allow_off_universe_trades"] and ticker not in universe:
+        reasons.append(f"off_universe_ticker:{ticker}")
+
+
+def _check_swing_rules(p: dict, cfg: dict, reasons: list[str]) -> None:
+    sw = cfg["swing_rules"]
+    horizon = p.get("holding_horizon_days")
+    if not isinstance(horizon, (int, float)):
+        reasons.append("holding_horizon_days_not_numeric")
+    elif not sw["min_holding_horizon_days"] <= horizon <= sw["max_holding_horizon_days"]:
+        reasons.append(
+            f"horizon_out_of_swing_range:{horizon}d "
+            f"(allowed {sw['min_holding_horizon_days']}-{sw['max_holding_horizon_days']}d)")
+    if sw["reject_intraday_language"]:
+        text = str(p.get("thesis", "")).lower()
+        for term in ("day trade", "intraday", "scalp", "same-day"):
+            if term in text:
+                reasons.append(f"intraday_language_in_thesis:'{term}'")
+
+
+def _check_prices_and_rr(p: dict, cfg: dict, reasons: list[str]) -> None:
+    q = cfg["trade_quality_requirements"]
+    try:
+        entry = float(p["entry_price_max"])
+        stop = float(p["stop_loss"])
+        target = float(p["target_price"])
+    except (KeyError, TypeError, ValueError):
+        reasons.append("prices_not_numeric")
+        return
+    if str(p.get("action", "")).upper() != "BUY":
+        return  # price geometry checks apply to entries
+    if not (stop < entry < target):
+        reasons.append(f"price_geometry_invalid: require stop({stop}) < entry({entry}) < target({target})")
+        return
+    stop_dist = (entry - stop) / entry
+    if stop_dist > q["max_stop_loss_distance_pct"]:
+        reasons.append(f"stop_too_far:{stop_dist:.1%} > {q['max_stop_loss_distance_pct']:.0%}")
+    computed_rr = (target - entry) / (entry - stop)
+    if computed_rr < q["min_risk_reward_ratio"]:
+        reasons.append(f"risk_reward_too_low:{computed_rr:.2f} < {q['min_risk_reward_ratio']}")
+    claimed_rr = p.get("risk_reward_ratio")
+    if isinstance(claimed_rr, (int, float)) and abs(claimed_rr - computed_rr) > 0.5:
+        reasons.append(f"claimed_rr_mismatch: claimed {claimed_rr}, computed {computed_rr:.2f}")
+
+
+def _check_confidence(p: dict, cfg: dict, reasons: list[str]) -> None:
+    conf = p.get("confidence")
+    if not isinstance(conf, (int, float)) or not 0 <= conf <= 1:
+        reasons.append("confidence_not_in_0_1")
+    elif conf < cfg["trade_quality_requirements"]["min_confidence"]:
+        reasons.append(f"confidence_too_low:{conf} < {cfg['trade_quality_requirements']['min_confidence']}")
+
+
+def _check_sizing(p: dict, cfg: dict, portfolio: dict, reasons: list[str]) -> None:
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    ps = cfg["position_sizing"]
+    size = p.get("position_size_usd")
+    if not isinstance(size, (int, float)) or size <= 0:
+        reasons.append("position_size_not_positive_number")
+        return
+    equity = portfolio.get("total_equity_usd", ps["starting_capital_usd"])
+    if size > ps["max_position_usd"]:
+        reasons.append(f"size_exceeds_max_usd:{size} > {ps['max_position_usd']}")
+    if size > equity * ps["max_position_pct_of_portfolio"]:
+        reasons.append(f"size_exceeds_pct_cap:{size} > {ps['max_position_pct_of_portfolio']:.0%} of {equity}")
+    open_positions = portfolio.get("positions", [])
+    if len(open_positions) >= ps["max_open_positions"]:
+        reasons.append(f"max_open_positions_reached:{len(open_positions)}")
+    invested = sum(pos.get("market_value_usd", 0) for pos in open_positions)
+    if invested + size > equity * ps["max_total_exposure_pct"]:
+        reasons.append("total_exposure_cap_exceeded")
+    if any(pos["ticker"] == str(p.get("ticker", "")).upper() for pos in open_positions):
+        reasons.append("already_holding_ticker (adds not yet supported)")
+
+
+# --- entry point --------------------------------------------------------------
+
+def validate_proposals(proposals: list[dict], portfolio: dict) -> list[ValidationResult]:
+    """Validate a batch of proposals. Kill switch rejects everything."""
+    cfg = load_config()
+    universe = load_universe()
+    results: list[ValidationResult] = []
+
+    if kill_switch_active(cfg):
+        return [ValidationResult(p, False, ["KILL_SWITCH_ACTIVE"]) for p in proposals]
+
+    buys_this_batch = 0
+    for p in proposals:
+        reasons: list[str] = []
+        _check_required_fields(p, cfg, reasons)
+        _check_long_only(p, cfg, reasons)
+        _check_universe(p, cfg, universe, reasons)
+        _check_swing_rules(p, cfg, reasons)
+        _check_prices_and_rr(p, cfg, reasons)
+        _check_confidence(p, cfg, reasons)
+        _check_sizing(p, cfg, portfolio, reasons)
+        if str(p.get("action", "")).upper() == "BUY":
+            buys_this_batch += 1
+            if buys_this_batch > cfg["swing_rules"]["max_new_positions_per_day"]:
+                reasons.append("max_new_positions_per_day_exceeded")
+        results.append(ValidationResult(p, approved=not reasons, reasons=reasons))
+    return results

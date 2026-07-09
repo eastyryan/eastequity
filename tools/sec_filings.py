@@ -1,0 +1,128 @@
+"""SEC Filings Tool — keyless EDGAR access for 10-K / 10-Q swing research.
+
+Uses SEC's free JSON APIs (no API key; just a User-Agent header, per SEC rules):
+  * company_tickers.json           — ticker -> CIK mapping (cached)
+  * submissions/CIK##########.json — recent filings index
+  * companyfacts (XBRL)            — standardized fundamentals time series
+
+get_filing_brief(ticker) returns links to the latest 10-K/10-Q plus a compact
+fundamentals trend (revenue, net income, margins, capex) so Claude can spot
+multi-week-relevant inflections without downloading 300-page documents. When a
+deeper read is needed, the orchestrator can fetch the filing document itself
+via `download_latest_filing()` and hand sections to Claude.
+
+CLI: python -m tools.sec_filings NVDA
+"""
+
+from __future__ import annotations
+
+import json
+import time
+from pathlib import Path
+
+import requests
+
+ROOT = Path(__file__).resolve().parent.parent
+CACHE = ROOT / "data" / "cache"
+HEADERS = {"User-Agent": "East Equity Agent easton.ryan@hws.edu"}  # SEC requires contact info
+
+
+def _get(url: str) -> dict:
+    time.sleep(0.15)  # stay well under SEC's 10 req/s limit
+    r = requests.get(url, headers=HEADERS, timeout=30)
+    r.raise_for_status()
+    return r.json()
+
+
+def ticker_to_cik(ticker: str) -> str | None:
+    cache_file = CACHE / "company_tickers.json"
+    if cache_file.exists() and time.time() - cache_file.stat().st_mtime < 7 * 86400:
+        data = json.loads(cache_file.read_text())
+    else:
+        data = _get("https://www.sec.gov/files/company_tickers.json")
+        cache_file.parent.mkdir(parents=True, exist_ok=True)
+        cache_file.write_text(json.dumps(data))
+    for row in data.values():
+        if row["ticker"].upper() == ticker.upper():
+            return str(row["cik_str"]).zfill(10)
+    return None
+
+
+def _annualish(units: list[dict], quarterly: bool) -> list[dict]:
+    """Filter XBRL facts to 10-Q (quarterly) or 10-K (annual) rows, newest last."""
+    form = "10-Q" if quarterly else "10-K"
+    rows = [u for u in units if u.get("form") == form and u.get("frame") is None]
+    seen, out = set(), []
+    for u in sorted(rows, key=lambda u: u.get("end", "")):
+        key = (u.get("start"), u.get("end"))
+        if key not in seen:
+            seen.add(key)
+            out.append(u)
+    return out[-6:]
+
+
+def get_filing_brief(ticker: str) -> dict:
+    cik = ticker_to_cik(ticker)
+    if cik is None:
+        return {"status": "error", "reason": f"no CIK found for {ticker}"}
+    try:
+        sub = _get(f"https://data.sec.gov/submissions/CIK{cik}.json")
+        recent = sub["filings"]["recent"]
+        filings = []
+        for form, date, accession, doc in zip(recent["form"], recent["filingDate"],
+                                              recent["accessionNumber"], recent["primaryDocument"]):
+            if form in ("10-K", "10-Q", "8-K") and len(filings) < 8:
+                acc = accession.replace("-", "")
+                filings.append({
+                    "form": form, "filed": date,
+                    "url": f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{acc}/{doc}",
+                })
+
+        facts_out = {}
+        try:
+            facts = _get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json")
+            gaap = facts.get("facts", {}).get("us-gaap", {})
+            for label, tags in {
+                "revenue": ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues"],
+                "net_income": ["NetIncomeLoss"],
+                "gross_profit": ["GrossProfit"],
+                "capex": ["PaymentsToAcquirePropertyPlantAndEquipment"],
+            }.items():
+                for tag in tags:
+                    units = gaap.get(tag, {}).get("units", {}).get("USD")
+                    if units:
+                        facts_out[label] = [
+                            {"period_end": u["end"], "value_usd": u["val"], "form": u["form"]}
+                            for u in _annualish(units, quarterly=True)
+                        ]
+                        break
+        except Exception as e:
+            facts_out = {"error": f"companyfacts unavailable: {e}"}
+
+        return {"status": "ok", "ticker": ticker.upper(), "cik": cik,
+                "company": sub.get("name"), "recent_filings": filings,
+                "quarterly_fundamentals": facts_out}
+    except Exception as e:
+        return {"status": "error", "reason": f"{type(e).__name__}: {e}"}
+
+
+def download_latest_filing(ticker: str, form: str = "10-Q") -> dict:
+    """Download the latest filing document text (truncated) for deep reading."""
+    brief = get_filing_brief(ticker)
+    if brief.get("status") != "ok":
+        return brief
+    match = next((f for f in brief["recent_filings"] if f["form"] == form), None)
+    if match is None:
+        return {"status": "error", "reason": f"no recent {form} for {ticker}"}
+    time.sleep(0.15)
+    r = requests.get(match["url"], headers=HEADERS, timeout=60)
+    r.raise_for_status()
+    path = ROOT / "data" / "filings" / f"{ticker.upper()}_{form}_{match['filed']}.html"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(r.text)
+    return {"status": "ok", "saved_to": str(path), "filed": match["filed"], "url": match["url"]}
+
+
+if __name__ == "__main__":
+    import sys
+    print(json.dumps(get_filing_brief(sys.argv[1] if len(sys.argv) > 1 else "NVDA"), indent=2))
