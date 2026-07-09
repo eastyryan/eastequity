@@ -176,8 +176,9 @@ def execute(approved: list[validator.ValidationResult], context: dict,
 # Step 7 — Dashboard data + X summary
 # ---------------------------------------------------------------------------
 def refresh_dashboard(context: dict, response: str, results: list, fills: list,
-                      run_id: str) -> None:
+                      run_id: str, no_trade_reason: str | None = None) -> None:
     out = {
+        "no_trade_reason": no_trade_reason,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "run_id": run_id,
         "mode": context["trading_mode"],
@@ -191,8 +192,20 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
     }
     dash = ROOT / "dashboard" / "data"
     dash.mkdir(parents=True, exist_ok=True)
-    (dash / "latest.json").write_text(json.dumps(out, indent=2, default=str))
+    # Full response lives in the per-run archive; latest.json stays slim for the site.
     (dash / f"run_{run_id}.json").write_text(json.dumps(out, indent=2, default=str))
+    slim = {k: v for k, v in out.items() if k != "latest_reasoning"}
+    (dash / "latest.json").write_text(json.dumps(slim, indent=2, default=str))
+
+    # Append today's equity to the track-record series (one point per day, last wins).
+    hist_file = dash / "equity_history.json"
+    hist = json.loads(hist_file.read_text()) if hist_file.exists() else []
+    today = datetime.now(timezone.utc).date().isoformat()
+    hist = [h for h in hist if h["date"] != today]
+    hist.append({"date": today,
+                 "equity": context["portfolio"].get("total_equity_usd"),
+                 "cash": context["portfolio"].get("cash_usd")})
+    hist_file.write_text(json.dumps(hist, indent=2))
 
 
 def draft_x_summary(fills: list, results: list, context: dict, run_id: str) -> None:
@@ -259,7 +272,7 @@ def main() -> int:
     fills = execute(approved, context, cfg, run_id)
 
     print("[5/5] Journaling + dashboard + X draft...")
-    refresh_dashboard(context, response, results, fills, run_id)
+    refresh_dashboard(context, response, results, fills, run_id, no_trade_reason)
     draft_x_summary(fills, results, context, run_id)
     journal.log_run_summary({
         "proposals": len(proposals), "approved": len(approved),
