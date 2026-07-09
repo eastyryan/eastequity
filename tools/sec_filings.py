@@ -49,9 +49,21 @@ def ticker_to_cik(ticker: str) -> str | None:
 
 
 def _annualish(units: list[dict], quarterly: bool) -> list[dict]:
-    """Filter XBRL facts to 10-Q (quarterly) or 10-K (annual) rows, newest last."""
-    form = "10-Q" if quarterly else "10-K"
-    rows = [u for u in units if u.get("form") == form and u.get("frame") is None]
+    """Filter XBRL facts to single-quarter (not YTD-cumulative) or annual rows, newest last."""
+    from datetime import date
+
+    def span_days(u: dict) -> int:
+        try:
+            return (date.fromisoformat(u["end"]) - date.fromisoformat(u["start"])).days
+        except (KeyError, ValueError):
+            return -1
+
+    if quarterly:
+        rows = [u for u in units if u.get("form") in ("10-Q", "10-K")
+                and u.get("frame") is None and 80 <= span_days(u) <= 100]
+    else:
+        rows = [u for u in units if u.get("form") == "10-K"
+                and u.get("frame") is None and span_days(u) > 300]
     seen, out = set(), []
     for u in sorted(rows, key=lambda u: u.get("end", "")):
         key = (u.get("start"), u.get("end"))
