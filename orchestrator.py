@@ -79,6 +79,16 @@ def preflight(cfg: dict, run_id: str, news_only: bool = False) -> str | None:
         return "KILL_SWITCH file present — no runs until it is removed"
     if not news_only and datetime.now().strftime("%a") not in cfg["schedule"]["run_days"]:
         return "not a configured run day (weekend/holiday guard)"
+    # Usage budget: hard cap on completed runs per day so scheduled cycles can
+    # never drain the subscription's usage pool. Counts real (non-halted) runs
+    # in the journal, which syncs through git across local and cloud runners.
+    cap = cfg["schedule"].get("max_completed_runs_per_day", 12)
+    runs_file = ROOT / "journal" / "runs" / f"{datetime.now(timezone.utc).date().isoformat()}.jsonl"
+    if runs_file.exists():
+        completed = sum(1 for line in runs_file.read_text().splitlines()
+                        if "halted" not in json.loads(line))
+        if completed >= cap:
+            return f"daily run budget exhausted ({completed}/{cap}) - protecting usage limits"
     if not acquire_run_lock(run_id):
         return "another run is already in progress (RUN_LOCK held)"
     return None
