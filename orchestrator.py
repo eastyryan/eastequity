@@ -119,13 +119,21 @@ def ask_claude(context: dict, run_id: str) -> str:
         "Proposing nothing is acceptable — include no_trade_reason if so. "
         "End with an 'Improvement note:' line."
     )
-    result = subprocess.run(
-        ["claude", "-p", prompt, "--permission-mode", "plan"],
-        cwd=ROOT, capture_output=True, text=True, timeout=1800,
-    )
-    if result.returncode != 0:
-        raise RuntimeError(f"claude CLI failed: {result.stderr[:2000]}")
-    return result.stdout
+    import time
+    last_err = ""
+    for attempt in (1, 2):  # one retry: overnight runs can hit transient/usage errors
+        result = subprocess.run(
+            ["claude", "-p", prompt, "--permission-mode", "plan"],
+            cwd=ROOT, capture_output=True, text=True, timeout=1800,
+        )
+        if result.returncode == 0:
+            return result.stdout
+        last_err = (f"exit={result.returncode} stderr={result.stderr[:1000]} "
+                    f"stdout={result.stdout[:1000]}")
+        print(f"  claude attempt {attempt} failed: {last_err[:300]}")
+        if attempt == 1:
+            time.sleep(90)
+    raise RuntimeError(f"claude CLI failed after retry: {last_err}")
 
 
 # ---------------------------------------------------------------------------

@@ -86,11 +86,12 @@ def scan_universe(top_n: int = 15) -> dict:
 
     rows.sort(key=lambda r: r["swing_setup_score"], reverse=True)
 
-    # Valuation context for the top setups only (per-ticker .info calls are slow,
-    # so we don't fetch it for the whole universe).
+    # Valuation + analyst-estimate context for the top setups only (per-ticker
+    # calls are slow, so we don't fetch them for the whole universe).
     for r in rows[:top_n]:
+        tk = yf.Ticker(r["ticker"])
         try:
-            info = yf.Ticker(r["ticker"]).info
+            info = tk.info
             r["valuation"] = {
                 "trailing_pe": info.get("trailingPE"),
                 "forward_pe": info.get("forwardPE"),
@@ -99,6 +100,24 @@ def scan_universe(top_n: int = 15) -> dict:
             }
         except Exception:
             r["valuation"] = None
+        # Is the multiple deserved? Forward growth + which way analysts are revising.
+        try:
+            est: dict = {}
+            rev = tk.revenue_estimate
+            if rev is not None and "growth" in rev and "0y" in rev.index:
+                est["fwd_revenue_growth_pct"] = round(float(rev.loc["0y", "growth"]) * 100, 1)
+                if "+1y" in rev.index:
+                    est["next_yr_revenue_growth_pct"] = round(float(rev.loc["+1y", "growth"]) * 100, 1)
+            trend = tk.eps_trend
+            if trend is not None and "0y" in trend.index:
+                cur, m30 = float(trend.loc["0y", "current"]), float(trend.loc["0y", "30daysAgo"])
+                if m30:
+                    est["eps_revision_30d_pct"] = round((cur - m30) / abs(m30) * 100, 2)
+                    est["eps_revision_direction"] = ("up" if cur > m30 else
+                                                     "down" if cur < m30 else "flat")
+            r["analyst_estimates"] = est or None
+        except Exception:
+            r["analyst_estimates"] = None
 
     return {
         "status": "ok",
