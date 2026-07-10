@@ -98,36 +98,49 @@ def _summary_posted_today(today: str) -> bool:
     return False
 
 
+def _posted_today(today: str) -> bool:
+    if not POST_LOG.exists():
+        return False
+    return any(json.loads(line).get("ts", "").startswith(today)
+               and json.loads(line).get("status") in ("posted", "dry_run")
+               for line in POST_LOG.read_text().splitlines())
+
+
 def process_drafts(dry_run: bool = False) -> list[dict]:
+    """User policy: at most ONE post per day, in the market-close window
+    (4:00-6:59pm local), and ONLY if a trade was made that day. The post is the
+    day's latest trade memo; everything else stays on the dashboard."""
     results = []
     posted = _already_posted()
-    today = datetime.now(timezone.utc).date().isoformat()
-    for draft in sorted((ROOT / "state").glob("x_draft_*.txt")):
-        if draft.name in posted:
-            continue
-        text = draft.read_text().strip()
-        if not text:
-            continue
-        has_fill = ("_trade" in draft.name
-                    or bool(re.search(r"^(Opened|Closed) ", text, re.MULTILINE)))
-        hour_local = datetime.now().hour
-        is_eod_window = 17 <= hour_local <= 19
-        if has_fill:
-            kind = "trade"
-        elif is_eod_window and not _summary_posted_today(today):
-            kind = "summary"
-        else:
-            continue  # quiet drafts outside the summary window don't post
+    today_utc = datetime.now(timezone.utc).date().isoformat()
+    today_local = datetime.now().strftime("%Y%m%d")
 
-        result = {"status": "dry_run"} if dry_run else post_tweet(text)
-        record = {"ts": datetime.now(timezone.utc).isoformat(), "draft": draft.name,
-                  "kind": kind, **result}
-        results.append(record)
-        if result["status"] in ("posted", "dry_run"):
-            POST_LOG.parent.mkdir(parents=True, exist_ok=True)
+    if not (16 <= datetime.now().hour <= 18):
+        return results
+    if _posted_today(today_utc):
+        return results
+
+    todays_trades = [d for d in sorted((ROOT / "state").glob("x_draft_*_trade.txt"))
+                     if today_local in d.name and d.name not in posted
+                     and d.read_text().strip()]
+    if not todays_trades:
+        return results
+
+    draft = todays_trades[-1]  # latest trade memo of the day
+    result = {"status": "dry_run"} if dry_run else post_tweet(draft.read_text().strip())
+    record = {"ts": datetime.now(timezone.utc).isoformat(), "draft": draft.name,
+              "kind": "trade", **result}
+    results.append(record)
+    if result["status"] in ("posted", "dry_run"):
+        POST_LOG.parent.mkdir(parents=True, exist_ok=True)
+        with POST_LOG.open("a") as f:
+            f.write(json.dumps(record) + "\n")
+        # Retire the day's other trade drafts so they never post late.
+        for d in todays_trades[:-1]:
             with POST_LOG.open("a") as f:
-                f.write(json.dumps(record) + "\n")
-        print(json.dumps(record))
+                f.write(json.dumps({"ts": record["ts"], "draft": d.name,
+                                    "kind": "trade", "status": "superseded"}) + "\n")
+    print(json.dumps(record))
     return results
 
 
