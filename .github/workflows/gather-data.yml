@@ -1,0 +1,50 @@
+name: Gather market data for cloud runs
+
+# Cloud routine sandboxes block most external hosts (SEC, FRED, Yahoo), but they
+# always have the repo checkout. GitHub runners have full network access, so this
+# workflow gathers the complete context bundle ~20 minutes before each scheduled
+# trading run and commits it. The orchestrator's --gather-only mode falls back to
+# this file automatically when live feeds are unreachable.
+
+on:
+  schedule:
+    - cron: "40 9,12,13,15,17,19,21,23 * * 1-5"  # 20 min before weekday run slots (UTC)
+    - cron: "40 3 * * *"                          # before the midnight-ET and weekend runs
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: gather-data
+  cancel-in-progress: false
+
+jobs:
+  gather:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Gather context bundle
+        run: |
+          python orchestrator.py --gather-only | tee /tmp/gather.log
+          CTX=$(grep -o 'CONTEXT_FILE=.*' /tmp/gather.log | cut -d= -f2-)
+          test -s "$CTX"
+          cp "$CTX" data/cloud_context.json
+      - name: Commit and push (with retry against concurrent run pushes)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/cloud_context.json
+          git diff --cached --quiet && { echo "no data changes"; exit 0; }
+          git commit -m "Refresh market data bundle for cloud runs [vercel skip]"
+          for i in 1 2 3; do
+            git push origin main && exit 0
+            git pull --rebase origin main || exit 1
+          done
+          exit 1
