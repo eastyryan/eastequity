@@ -51,12 +51,36 @@ load_dotenv(ROOT / ".env")
 # ---------------------------------------------------------------------------
 # Step 1 — Safety preflight
 # ---------------------------------------------------------------------------
+LOCK_FILE = ROOT / "state" / "RUN_LOCK"
+LOCK_STALE_SECONDS = 45 * 60
+
+
+def acquire_run_lock(run_id: str) -> bool:
+    """One run at a time: concurrent cycles trade on stale portfolio snapshots."""
+    if LOCK_FILE.exists():
+        age = datetime.now().timestamp() - LOCK_FILE.stat().st_mtime
+        if age < LOCK_STALE_SECONDS:
+            return False
+        print(f"  (clearing stale run lock, {age/60:.0f} min old)")
+    LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
+    LOCK_FILE.write_text(run_id)
+    import atexit
+    atexit.register(release_run_lock)  # releases on every exit path, crashes included
+    return True
+
+
+def release_run_lock() -> None:
+    LOCK_FILE.unlink(missing_ok=True)
+
+
 def preflight(cfg: dict, run_id: str, news_only: bool = False) -> str | None:
     """Return a halt reason string, or None if clear to proceed."""
     if validator.kill_switch_active(cfg):
         return "KILL_SWITCH file present — no runs until it is removed"
     if not news_only and datetime.now().strftime("%a") not in cfg["schedule"]["run_days"]:
         return "not a configured run day (weekend/holiday guard)"
+    if not acquire_run_lock(run_id):
+        return "another run is already in progress (RUN_LOCK held)"
     return None
 
 
@@ -496,6 +520,12 @@ def main() -> int:
                     help="weekly audit of decisions vs outcomes; no trading")
     ap.add_argument("--news-only", action="store_true",
                     help="markets-closed news review: update commentary/watchlist, no trading")
+    ap.add_argument("--gather-only", action="store_true",
+                    help="cloud mode step 1: write context bundle to state/ and exit")
+    ap.add_argument("--act-on", metavar="RESPONSE_FILE",
+                    help="cloud mode step 2: validate/execute/publish from a saved brain response")
+    ap.add_argument("--context", metavar="CONTEXT_FILE",
+                    help="context bundle path (required with --act-on)")
     args = ap.parse_args()
 
     cfg = validator.load_config()
@@ -511,11 +541,23 @@ def main() -> int:
         journal.log_run_summary({"halted": halt}, run_id)
         return 1
 
-    print("[1/5] Gathering context...")
-    context = gather_context(cfg)
+    if args.act_on:
+        # Cloud mode: the scheduled agent already did the thinking; act on its output.
+        print("[1-2/5] Loading saved context + brain response (cloud mode)...")
+        context = json.loads(Path(args.context).read_text())
+        context["portfolio"] = get_portfolio_state()
+        response = Path(args.act_on).read_text()
+    else:
+        print("[1/5] Gathering context...")
+        context = gather_context(cfg)
+        if args.gather_only:
+            out = ROOT / "state" / f"context_{run_id}.json"
+            out.write_text(json.dumps(context, indent=2, default=str))
+            print(f"CONTEXT_FILE={out}")
+            return 0
+        print("[2/5] Waking the brain (Claude)...")
+        response = ask_claude(context, run_id, news_only=args.news_only)
 
-    print("[2/5] Waking the brain (Claude)...")
-    response = ask_claude(context, run_id, news_only=args.news_only)
     parsed = parse_proposals(response)
     proposals, no_trade_reason = parsed["proposals"], parsed["no_trade_reason"]
     if args.news_only:
@@ -530,7 +572,11 @@ def main() -> int:
         return 0
 
     print("[3/5] Validating (pure Python)...")
-    results = validator.validate_proposals(proposals, context["portfolio"])
+    # Validate against LIVE portfolio state, not the snapshot from step 1 - another
+    # run may have traded while the brain was thinking.
+    live_portfolio = get_portfolio_state()
+    context["portfolio"] = live_portfolio
+    results = validator.validate_proposals(proposals, live_portfolio)
     approved = [r for r in results if r.approved]
     for r in results:
         journal.log_proposal(r.proposal, run_id)
