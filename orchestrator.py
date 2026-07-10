@@ -39,6 +39,7 @@ from execution import simulated_broker
 from tools.macro_regime import get_macro_snapshot
 from tools.news_catalysts import get_news_and_catalysts
 from tools.portfolio_state import get_portfolio_state
+from tools.insider_form4 import get_insider_activity
 from tools.sec_filings import get_filing_brief
 from tools.smart_money_13f import get_smart_money
 from tools.universe_scanner import scan_universe
@@ -79,6 +80,17 @@ def gather_context(cfg: dict) -> dict:
     filings = {t: get_filing_brief(t) for t in focus}
     smart_money = get_smart_money(focus) if focus else {"status": "skipped"}
     news = get_news_and_catalysts(focus) if focus else {"status": "skipped"}
+    insiders = get_insider_activity(focus) if focus else {"status": "skipped"}
+
+    # The agent's own track record: what it predicted vs. what actually happened.
+    closed = compute_closed_trades()
+    hist_file = ROOT / "dashboard" / "data" / "equity_history.json"
+    hist = json.loads(hist_file.read_text()) if hist_file.exists() else []
+    track_record = {
+        "note": "Your own past trades. Study what worked and what did not before proposing.",
+        "closed_trades": closed[-20:],
+        "performance": compute_performance_stats(closed, hist),
+    }
 
     return {
         "run_date": datetime.now(timezone.utc).isoformat(),
@@ -97,6 +109,8 @@ def gather_context(cfg: dict) -> dict:
         "sec_filings": filings,
         "smart_money_13f": smart_money,
         "news_and_catalysts": news,
+        "insider_activity": insiders,
+        "track_record": track_record,
     }
 
 
@@ -405,16 +419,65 @@ def draft_x_summary(fills: list, results: list, context: dict, run_id: str) -> N
 
 
 # ---------------------------------------------------------------------------
+# Weekly self-review: audit the week's decisions against outcomes. No trading.
+# ---------------------------------------------------------------------------
+def self_review(run_id: str) -> int:
+    closed = compute_closed_trades()
+    portfolio = get_portfolio_state()
+    runs = []
+    for f in sorted((ROOT / "journal" / "runs").glob("*.jsonl"))[-5:]:
+        runs.extend(json.loads(line) for line in f.read_text().splitlines())
+    bundle = {"closed_trades": closed, "portfolio": portfolio,
+              "recent_run_summaries": runs[-40:]}
+    review_file = ROOT / "state" / f"review_{run_id}.json"
+    review_file.write_text(json.dumps(bundle, indent=2, default=str))
+
+    prompt = (
+        "Weekly self-review for East Equity Agent (no trading this run). Read CLAUDE.md, "
+        f"then the audit bundle at {review_file}. Audit your week honestly: for each open "
+        "position, is the original thesis tracking or drifting? For each closed trade, was "
+        "the exit right in hindsight? Which of your predictions were wrong and WHY - bad "
+        "data, bad reasoning, or bad luck? What pattern should change next week? "
+        "End with a section titled 'Self-review:' containing 4-8 plain-English sentences "
+        "for the public dashboard summarizing what you got right, what you got wrong, and "
+        "the one change you are making."
+    )
+    result = subprocess.run(["claude", "-p", prompt, "--permission-mode", "plan"],
+                            cwd=ROOT, capture_output=True, text=True, timeout=1800)
+    if result.returncode != 0:
+        print(f"self-review failed: {result.stderr[:500]}{result.stdout[:500]}")
+        return 1
+    m = re.search(r"Self-review:\s*(.+)", result.stdout, re.DOTALL)
+    summary = (m.group(1).strip() if m else result.stdout.strip())[:2000]
+    journal.log_improvement(f"Weekly self-review: {summary}", run_id)
+    _write_review_to_dashboard = ROOT / "dashboard" / "data" / "latest.json"
+    if _write_review_to_dashboard.exists():
+        d = json.loads(_write_review_to_dashboard.read_text())
+        d["improvements"] = ([{"date": datetime.now(timezone.utc).date().isoformat(),
+                               "note": f"Weekly self-review: {summary}"}]
+                             + d.get("improvements", []))[:10]
+        _write_review_to_dashboard.write_text(json.dumps(d, indent=2, default=str))
+    redeploy_dashboard()
+    print("self-review complete and published")
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # Main loop
 # ---------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--research-only", action="store_true",
                     help="run steps 1-4 only; skip validation/execution")
+    ap.add_argument("--self-review", action="store_true",
+                    help="weekly audit of decisions vs outcomes; no trading")
     args = ap.parse_args()
 
     cfg = validator.load_config()
     run_id = f"{datetime.now():%Y%m%d}-{uuid.uuid4().hex[:6]}"
+    if args.self_review:
+        print(f"=== East Equity Agent self-review {run_id} ===")
+        return self_review(run_id)
     print(f"=== East Equity Agent run {run_id} (mode: {cfg['mode']['trading_mode']}) ===")
 
     halt = preflight(cfg, run_id)

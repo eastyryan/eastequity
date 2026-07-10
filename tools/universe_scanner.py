@@ -100,6 +100,20 @@ def scan_universe(top_n: int = 15) -> dict:
             }
         except Exception:
             r["valuation"] = None
+        # Earnings clock: swing entries and binary prints interact constantly.
+        try:
+            from datetime import datetime, timezone
+            now = pd.Timestamp.now(tz="America/New_York")
+            ed = tk.earnings_dates
+            if ed is not None and len(ed.index):
+                past = [d for d in ed.index if d <= now]
+                future = [d for d in ed.index if d > now]
+                if future:
+                    r["days_to_earnings"] = (min(future) - now).days
+                if past:
+                    r["days_since_earnings"] = (now - max(past)).days
+        except Exception:
+            pass
         # Is the multiple deserved? Forward growth + which way analysts are revising.
         try:
             est: dict = {}
@@ -118,8 +132,29 @@ def scan_universe(top_n: int = 15) -> dict:
             r["analyst_estimates"] = est or None
         except Exception:
             r["analyst_estimates"] = None
+        # Post-earnings drift: recently reported, estimates going up, price not yet
+        # rewarded. Historically the cleanest swing setup for 10-15% compounding.
+        dse = r.get("days_since_earnings")
+        revision_up = (r.get("analyst_estimates") or {}).get("eps_revision_direction") == "up"
+        r["post_earnings_drift_candidate"] = bool(
+            dse is not None and 0 <= dse <= 15 and revision_up
+            and r.get("momentum_1m_pct", 99) < 15)
+
+    # Sector relative strength: which parts of the AI stack money is rotating
+    # into or out of. Computed over the whole universe, not just top setups.
+    by_sector: dict[str, list[dict]] = {}
+    for r in rows:
+        by_sector.setdefault(r["sector"], []).append(r)
+    sector_rs = sorted(
+        ({"sector": s,
+          "avg_momentum_1m_pct": round(sum(x["momentum_1m_pct"] for x in xs) / len(xs), 1),
+          "avg_momentum_3m_pct": round(sum(x["momentum_3m_pct"] for x in xs) / len(xs), 1),
+          "names": len(xs)}
+         for s, xs in by_sector.items() if xs),
+        key=lambda d: d["avg_momentum_1m_pct"], reverse=True)
 
     return {
+        "sector_relative_strength": sector_rs,
         "status": "ok",
         "scanned": len(rows),
         "note": "Ranked by deterministic swing_setup_score; agent must apply judgment and research before proposing.",
