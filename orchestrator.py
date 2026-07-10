@@ -97,6 +97,10 @@ def gather_context(cfg: dict) -> dict:
         "trading_mode": cfg["mode"]["trading_mode"],
         # Hard limits the validator will enforce - size within them or be rejected.
         "hard_limits": {
+            "effective_max_position_usd": round(min(
+                cfg["position_sizing"]["max_position_usd"],
+                portfolio.get("total_equity_usd", 0)
+                * cfg["position_sizing"]["max_position_pct_of_portfolio"]), 2),
             "position_sizing": cfg["position_sizing"],
             "quality": cfg["trade_quality_requirements"],
             "swing": {k: cfg["swing_rules"][k] for k in
