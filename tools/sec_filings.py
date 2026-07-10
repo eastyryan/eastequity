@@ -28,10 +28,8 @@ HEADERS = {"User-Agent": "East Equity Agent easton.ryan@hws.edu"}  # SEC require
 
 
 def _get(url: str) -> dict:
-    time.sleep(0.15)  # stay well under SEC's 10 req/s limit
-    r = requests.get(url, headers=HEADERS, timeout=30)
-    r.raise_for_status()
-    return r.json()
+    from tools.net import get_sec
+    return get_sec(url).json()
 
 
 def ticker_to_cik(ticker: str) -> str | None:

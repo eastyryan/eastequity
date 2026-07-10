@@ -36,10 +36,8 @@ MANAGERS = {
 
 
 def _get(url: str) -> requests.Response:
-    time.sleep(0.15)
-    r = requests.get(url, headers=HEADERS, timeout=30)
-    r.raise_for_status()
-    return r
+    from tools.net import get_sec
+    return get_sec(url)
 
 
 def _latest_13f_positions(cik: str) -> tuple[str, list[dict]]:

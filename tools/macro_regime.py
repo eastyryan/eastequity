@@ -30,17 +30,35 @@ SERIES = {
 
 def get_macro_snapshot() -> dict:
     api_key = os.environ.get("FRED_API_KEY")
-    if not api_key:
-        return {"status": "unavailable", "reason": "FRED_API_KEY not set in environment/.env"}
     try:
-        from fredapi import Fred
-        fred = Fred(api_key=api_key)
+        import pandas as pd
+        from tools.net import get_fred_observations
         start = datetime.now() - timedelta(days=900)
+        start_str = start.date().isoformat()
+        fred = None
+        if api_key:
+            try:
+                from fredapi import Fred
+                fred = Fred(api_key=api_key)
+            except Exception:
+                fred = None
+
+        def fetch_series(sid: str):
+            """Direct fredapi first; fall back to our Vercel proxy (cloud sandbox)."""
+            if fred is not None:
+                try:
+                    return fred.get_series(sid, observation_start=start)
+                except Exception:
+                    pass
+            obs = get_fred_observations(sid, start_str)
+            vals = {o["date"]: float(o["value"]) for o in obs if o.get("value") not in (".", None)}
+            return pd.Series(vals)
+
         out: dict = {"status": "ok", "as_of": datetime.now().date().isoformat(), "indicators": {}}
 
         for name, sid in SERIES.items():
             try:
-                s = fred.get_series(sid, observation_start=start).dropna()
+                s = fetch_series(sid).dropna()
                 if s.empty:
                     continue
                 latest = float(s.iloc[-1])
