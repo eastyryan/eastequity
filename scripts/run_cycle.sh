@@ -31,7 +31,14 @@ if [ "$DOW" -ge 6 ]; then
   exit $?
 fi
 
-.venv/bin/python -W ignore orchestrator.py "$@" >> logs/cron.log 2>&1
+# Slot-aware depth: midnight is a news review, 6am a light pre-market check,
+# everything else a full research cycle.
+case "$HHMM" in
+  0000) EXTRA="--news-only" ;;
+  0600) EXTRA="--light" ;;
+  *)    EXTRA="" ;;
+esac
+.venv/bin/python -W ignore orchestrator.py $EXTRA "$@" >> logs/cron.log 2>&1
 
 # Friday 7:30pm slot chains the weekly self-review after the trading cycle.
 if [ "$DOW" = "5" ] && [ "$HHMM" = "1930" ]; then

@@ -35,11 +35,14 @@ from dotenv import load_dotenv
 
 import journal
 import validator
-from execution import simulated_broker
+from execution import corporate_actions, exit_guard, simulated_broker
 from tools.macro_regime import get_macro_snapshot
 from tools.news_catalysts import get_news_and_catalysts
 from tools.portfolio_state import get_portfolio_state
+from tools.position_history import get_position_histories
+from tools.watchlist_triggers import check_watchlist_triggers
 from tools.insider_form4 import get_insider_activity
+from tools.performance_breakdown import build_performance_breakdown
 from tools.sec_filings import get_filing_brief
 from tools.smart_money_13f import get_smart_money
 from tools.universe_scanner import scan_universe
@@ -102,24 +105,75 @@ def preflight(cfg: dict, run_id: str, news_only: bool = False,
 # ---------------------------------------------------------------------------
 # Steps 2 — Context gathering (all deterministic Python, all fail-soft)
 # ---------------------------------------------------------------------------
-def gather_context(cfg: dict) -> dict:
+def _light_prices(tickers: list) -> dict:
+    """Last closes for a small ticker list without a full universe scan."""
+    try:
+        import yfinance as yf
+        data = yf.download(tickers, period="5d", interval="1d", group_by="ticker",
+                           auto_adjust=True, progress=False, threads=True)
+        out = {}
+        for t in tickers:
+            try:
+                df = data[t].dropna() if len(tickers) > 1 else data.dropna()
+                out[t] = round(float(df["Close"].iloc[-1]), 2)
+            except Exception:
+                continue
+        return out
+    except Exception:
+        return {}
+
+
+def gather_context(cfg: dict, light: bool = False) -> dict:
     print("  • macro regime...")
     macro = get_macro_snapshot()
     print("  • portfolio state...")
     portfolio = get_portfolio_state()
-    print("  • universe scan...")
-    scan = scan_universe(top_n=15)
 
-    # Deep research on: current holdings + top-5 scanner candidates.
     held = [p["ticker"] for p in portfolio.get("positions", [])]
-    candidates = [r["ticker"] for r in scan.get("top_setups", [])[:5]]
-    focus = list(dict.fromkeys(held + candidates))
+    if light:
+        # Light check: no universe scan or deep research. Prices for held +
+        # watchlist names only (needed for exits, marks, and trigger checks).
+        latest_file = ROOT / "dashboard" / "data" / "latest.json"
+        watch = []
+        if latest_file.exists():
+            watch = [w.get("ticker") for w in
+                     json.loads(latest_file.read_text()).get("watchlist", []) if w.get("ticker")]
+        tickers = list(dict.fromkeys(held + watch))
+        print(f"  • light price check on {tickers}...")
+        scan = {"status": "light", "note": "light run - no universe scan this cycle",
+                "top_setups": [], "prices": _light_prices(tickers)}
+        focus = held
+        print(f"  • news for holdings {focus}...")
+        filings = {t: {"status": "skipped_light_run"} for t in focus}
+        smart_money = {"status": "skipped_light_run"}
+        insiders = {"status": "skipped_light_run"}
+        news = get_news_and_catalysts(focus) if focus else {"status": "skipped"}
+    else:
+        print("  • universe scan...")
+        scan = scan_universe(top_n=15)
 
-    print(f"  • deep research on {focus}...")
-    filings = {t: get_filing_brief(t) for t in focus}
-    smart_money = get_smart_money(focus) if focus else {"status": "skipped"}
-    news = get_news_and_catalysts(focus) if focus else {"status": "skipped"}
-    insiders = get_insider_activity(focus) if focus else {"status": "skipped"}
+        # Deep research on: current holdings + top-5 scanner candidates.
+        candidates = [r["ticker"] for r in scan.get("top_setups", [])[:5]]
+        focus = list(dict.fromkeys(held + candidates))
+
+        print(f"  • deep research on {focus}...")
+        filings = {t: get_filing_brief(t) for t in focus}
+        smart_money = get_smart_money(focus) if focus else {"status": "skipped"}
+        news = get_news_and_catalysts(focus) if focus else {"status": "skipped"}
+        insiders = get_insider_activity(focus) if focus else {"status": "skipped"}
+
+    print("  • position histories...")
+    histories = get_position_histories(held) if held else {"status": "skipped"}
+
+    print("  • watchlist triggers...")
+    prev_file = ROOT / "dashboard" / "data" / "latest.json"
+    prev_watchlist = []
+    if prev_file.exists():
+        try:
+            prev_watchlist = json.loads(prev_file.read_text()).get("watchlist") or []
+        except Exception:
+            pass
+    watchlist_alerts = check_watchlist_triggers(prev_watchlist, scan.get("prices", {}))
 
     # The agent's own track record: what it predicted vs. what actually happened.
     closed = compute_closed_trades()
@@ -129,11 +183,13 @@ def gather_context(cfg: dict) -> dict:
         "note": "Your own past trades. Study what worked and what did not before proposing.",
         "closed_trades": closed[-20:],
         "performance": compute_performance_stats(closed, hist),
+        "breakdowns": build_performance_breakdown(closed),
     }
 
     return {
         "run_date": datetime.now(timezone.utc).isoformat(),
         "trading_mode": cfg["mode"]["trading_mode"],
+        "run_depth": "light" if light else "full",
         # Hard limits the validator will enforce - size within them or be rejected.
         "hard_limits": {
             "effective_max_position_usd": round(min(
@@ -149,6 +205,22 @@ def gather_context(cfg: dict) -> dict:
         "benchmark_close": _benchmark_close(),
         "macro_regime": macro,
         "portfolio": portfolio,
+        "position_histories": {
+            "note": "Last 10 daily sessions for each CURRENT HOLDING, newest last, "
+                    "with 5-day change and distance from the 10-day high/low. Use "
+                    "this to judge whether a position is resting, breaking down, or "
+                    "extended - not just today's print vs the entry plan.",
+            **histories,
+        },
+        "watchlist_trigger_alerts": {
+            "note": "Deterministic check of YOUR OWN previous run's watchlist "
+                    "'would_buy_at' price levels against today's prices. Each alert "
+                    "means a name you said you wanted cheaper is now at or within 2% "
+                    "of your stated level - prioritize deep research on it this run "
+                    "and either propose or update the watchlist entry. Non-price "
+                    "triggers (earnings dates, conditions) are not checked here.",
+            "alerts": watchlist_alerts,
+        },
         "universe_scan": scan,
         "sec_filings": filings,
         "smart_money_13f": smart_money,
@@ -159,12 +231,56 @@ def gather_context(cfg: dict) -> dict:
 
 
 # ---------------------------------------------------------------------------
+# Safety layer: deterministic corporate actions + forced exits, BEFORE the brain
+# ---------------------------------------------------------------------------
+def apply_safety_layer(context: dict, cfg: dict, run_id: str) -> list[dict]:
+    """Dividends/splits applied, then stops/horizons enforced - the brain can
+    never rationalize holding through its own written plan. Returns forced fills."""
+    if cfg["mode"]["trading_mode"] == "dry_run":
+        return []
+    ca = corporate_actions.apply_corporate_actions()
+    if ca.get("events") or ca.get("errors"):
+        context["corporate_actions"] = ca
+        context["portfolio"] = get_portfolio_state()
+        if ca.get("errors"):
+            print(f"  corporate-actions errors: {ca['errors']}")
+
+    prices = context["universe_scan"].get("prices", {})
+    forced = exit_guard.check_forced_exits(context["portfolio"], prices)
+    if not forced:
+        return []
+    fills = exit_guard.execute_forced_exits(forced, prices, run_id)
+    context["portfolio"] = get_portfolio_state()  # brain must see post-exit state
+    context["forced_exits"] = [
+        {**ex, "note": "Closed deterministically by the safety layer before this run; "
+                       "do not re-propose selling it. Explain the exit in your commentary."}
+        for ex in forced
+    ]
+    for f in fills:
+        print(f"  FORCED EXIT {f['ticker']} @ {f.get('fill_price')} "
+              f"({context['forced_exits'][0].get('reason', '?')})")
+    return fills
+
+
+# ---------------------------------------------------------------------------
 # Step 3 — Wake the brain (single Claude invocation via Claude Code CLI)
 # ---------------------------------------------------------------------------
 def ask_claude(context: dict, run_id: str, news_only: bool = False) -> str:
     """Invoke Claude Code headlessly with CLAUDE.md rules + the context bundle."""
     context_file = ROOT / "state" / f"context_{run_id}.json"
     context_file.write_text(json.dumps(context, indent=2, default=str))
+
+    if not news_only and context.get("run_depth") == "light":
+        prompt = (
+            "You are running a LIGHT East Equity Agent check (pre-market/overnight slot). "
+            f"Read CLAUDE.md, then the context bundle at {context_file}. No universe scan "
+            "was done this cycle. Review each open position against its original plan and "
+            "the latest news; you MAY propose SELL_TO_CLOSE if a thesis has broken, but "
+            "propose NO new BUYs this run (they will be discarded). Refresh your commentary "
+            "and carry the watchlist forward (update thoughts only where news changed them). "
+            "Output the exact JSON block per CLAUDE.md. End with an 'Improvement note:' line."
+        )
+        return _run_claude(prompt)
 
     if news_only:
         prompt = (
@@ -427,6 +543,8 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
         "fills": fills,
         "closed_trades": closed[::-1],
         "performance": compute_performance_stats(closed, hist),
+        "performance_breakdown": build_performance_breakdown(closed),
+        "forced_exits": context.get("forced_exits", []),
         "improvements": recent_improvements(),
     }
     dash = ROOT / "dashboard" / "data"
@@ -539,6 +657,9 @@ def main() -> int:
                     help="user-initiated run: exempt from (and not counted in) the daily run budget")
     ap.add_argument("--news-only", action="store_true",
                     help="markets-closed news review: update commentary/watchlist, no trading")
+    ap.add_argument("--light", action="store_true",
+                    help="light check (pre-market/overnight): position review + news; "
+                         "exits allowed, new buys discarded; no full universe scan")
     ap.add_argument("--gather-only", action="store_true",
                     help="cloud mode step 1: write context bundle to state/ and exit")
     ap.add_argument("--act-on", metavar="RESPONSE_FILE",
@@ -565,15 +686,16 @@ def main() -> int:
         print("[1-2/5] Loading saved context + brain response (cloud mode)...")
         context = json.loads(Path(args.context).read_text())
         context["portfolio"] = get_portfolio_state()
+        forced_exit_fills = [] if args.news_only else apply_safety_layer(context, cfg, run_id)
         response = Path(args.act_on).read_text()
     else:
         print("[1/5] Gathering context...")
-        context = gather_context(cfg)
+        context = gather_context(cfg, light=args.light)
         if args.gather_only:
             # Sandboxed cloud runs may find every live feed blocked. Fall back to
             # the bundle committed by the GitHub Actions data relay if it is fresh.
             degraded = (context["macro_regime"].get("status") != "ok"
-                        or not context["universe_scan"].get("top_setups"))
+                        or (not args.light and not context["universe_scan"].get("top_setups")))
             relay = ROOT / "data" / "cloud_context.json"
             if degraded and relay.exists():
                 cached = json.loads(relay.read_text())
@@ -594,6 +716,7 @@ def main() -> int:
             out.write_text(json.dumps(context, indent=2, default=str))
             print(f"CONTEXT_FILE={out}")
             return 0
+        forced_exit_fills = [] if args.news_only else apply_safety_layer(context, cfg, run_id)
         print("[2/5] Waking the brain (Claude)...")
         response = ask_claude(context, run_id, news_only=args.news_only)
 
@@ -601,6 +724,11 @@ def main() -> int:
     proposals, no_trade_reason = parsed["proposals"], parsed["no_trade_reason"]
     if args.news_only:
         proposals = []  # belt and suspenders: a news review never trades
+    elif args.light:
+        dropped = [p for p in proposals if str(p.get("action", "")).upper() == "BUY"]
+        for p in dropped:
+            journal.log_rejection(p, ["light_run_no_new_buys"], run_id)
+        proposals = [p for p in proposals if str(p.get("action", "")).upper() != "BUY"]
     print(f"      {len(proposals)} proposal(s). {no_trade_reason or ''}")
 
     for m in re.findall(r"Improvement note:(.+)", response):
@@ -626,7 +754,7 @@ def main() -> int:
             print(f"      APPROVED {r.proposal.get('ticker')} {r.proposal.get('action')}")
 
     print("[4/5] Executing...")
-    fills = execute(approved, context, cfg, run_id)
+    fills = forced_exit_fills + execute(approved, context, cfg, run_id)
 
     print("[5/5] Journaling + dashboard + X draft...")
     if fills:  # the snapshot from step 1 predates execution - re-read before publishing

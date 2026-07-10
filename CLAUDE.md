@@ -43,6 +43,16 @@ Beyond filings/13F/news, every run now includes:
   yet rewarded. These deserve priority research: historically the cleanest 10-15% swing.
 - **analyst_estimates** - forward revenue growth and 30-day EPS revisions: use these to
   judge whether a multiple is deserved instead of news tone.
+- **position_histories** - 10 daily bars per holding with 5-day change and distance from
+  the 10-day high/low. Judge whether a position is resting, breaking down, or extended.
+- **watchlist_trigger_alerts** - names from YOUR OWN previous watchlist that have reached
+  their stated buy level. Prioritize deep research on any alert this run.
+- **forced_exits** (when present) - positions the deterministic safety layer already closed
+  this run (stop breached or horizon expired). Do not re-propose selling them; explain the
+  exit plainly in your commentary.
+- **corporate_actions** (when present) - dividends credited / splits applied to the book.
+- **track_record.breakdowns** - your results bucketed by sector, confidence, holding period,
+  and verdict. Weight your confidence scores using this evidence, not vibes.
 
 ## Required Process (every run)
 
