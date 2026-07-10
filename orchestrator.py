@@ -146,6 +146,7 @@ def gather_context(cfg: dict) -> dict:
                       ("min_holding_horizon_days", "max_holding_horizon_days",
                        "max_new_positions_per_day")},
         },
+        "benchmark_close": _benchmark_close(),
         "macro_regime": macro,
         "portfolio": portfolio,
         "universe_scan": scan,
@@ -376,7 +377,7 @@ def compute_performance_stats(closed: list[dict], equity_hist: list[dict]) -> di
     }
 
 
-def recent_improvements(limit: int = 10) -> list[dict]:
+def recent_improvements(limit: int = 30) -> list[dict]:
     notes = []
     for f in sorted((ROOT / "journal" / "improvements").glob("*.jsonl")):
         for line in f.read_text().splitlines():
@@ -400,7 +401,7 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
     hist.append({"date": today,
                  "equity": context["portfolio"].get("total_equity_usd"),
                  "cash": context["portfolio"].get("cash_usd"),
-                 "benchmark_close": _benchmark_close()})
+                 "benchmark_close": context.get("benchmark_close") or _benchmark_close()})
     hist_file.write_text(json.dumps(hist, indent=2))
 
     closed = compute_closed_trades()
@@ -518,7 +519,7 @@ def self_review(run_id: str) -> int:
         d = json.loads(_write_review_to_dashboard.read_text())
         d["improvements"] = ([{"date": datetime.now(timezone.utc).date().isoformat(),
                                "note": f"Weekly self-review: {summary}"}]
-                             + d.get("improvements", []))[:10]
+                             + d.get("improvements", []))[:30]
         _write_review_to_dashboard.write_text(json.dumps(d, indent=2, default=str))
     redeploy_dashboard()
     print("self-review complete and published")

@@ -117,19 +117,21 @@ export default function Home() {
   })} ET`;
 
   const stats = [
-    { label: "Portfolio value", value: usd(equity) },
+    { label: "Portfolio value", value: usd(equity), signed: false, positive: false },
     {
       label: "Total return",
       value: `${returnPct >= 0 ? "+" : ""}${returnPct.toFixed(2)}%`,
-      accent: returnPct > 0,
+      signed: true,
+      positive: returnPct >= 0,
     },
     {
       label: "vs S&P 500",
       value:
         excessPts === null ? "n/a" : `${excessPts >= 0 ? "+" : ""}${excessPts.toFixed(2)} pts`,
-      accent: excessPts !== null && excessPts > 0,
+      signed: excessPts !== null,
+      positive: excessPts !== null && excessPts >= 0,
     },
-    { label: "Cash", value: usd(cash) },
+    { label: "Cash", value: usd(cash), signed: false, positive: false },
   ];
 
   const perf = latest.performance;
@@ -164,13 +166,13 @@ export default function Home() {
           code.
         </p>
 
-        <dl className="mt-10 grid grid-cols-2 gap-y-8 sm:grid-cols-4">
+        <dl className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
           {stats.map((s) => (
-            <div key={s.label} className="border-l border-line pl-4">
+            <div key={s.label} className="rounded-xl border border-line bg-white p-5">
               <dt className="text-[13px] text-ink-3">{s.label}</dt>
               <dd
-                className={`mt-1 text-2xl font-medium tracking-tight font-[family-name:var(--font-geist-mono)] ${
-                  s.accent ? "text-accent" : ""
+                className={`mt-2 text-2xl lg:text-3xl font-medium tracking-tight font-[family-name:var(--font-geist-mono)] ${
+                  s.signed ? (s.positive ? "text-accent" : "text-red-700") : ""
                 }`}
               >
                 {s.value}
@@ -364,7 +366,7 @@ export default function Home() {
             <h2 className="text-lg font-semibold tracking-tight">What the agent is thinking</h2>
             <span className="text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">{lastRun}</span>
           </div>
-          <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-ink-2">{clean(thinking)}</p>
+          <p className="mt-4 text-[15px] leading-relaxed text-ink-2">{clean(thinking)}</p>
 
           {macro && (
             <div className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">
@@ -471,7 +473,7 @@ export default function Home() {
             The agent critiques its own process after every run. Changes that ship land here.
           </p>
           <ul className="mt-6 space-y-5">
-            {improvements.map((im, i) => (
+            {improvements.slice(0, 3).map((im, i) => (
               <li key={i} className="flex gap-5">
                 <span className="shrink-0 text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)] pt-0.5">
                   {im.date}
@@ -480,6 +482,24 @@ export default function Home() {
               </li>
             ))}
           </ul>
+          {improvements.length > 3 && (
+            <details className="group mt-5">
+              <summary className="cursor-pointer list-none text-sm text-ink-2 hover:text-ink [&::-webkit-details-marker]:hidden">
+                <span className="group-open:hidden">Show {improvements.length - 3} earlier updates</span>
+                <span className="hidden group-open:inline">Hide earlier updates</span>
+              </summary>
+              <ul className="mt-5 space-y-5">
+                {improvements.slice(3).map((im, i) => (
+                  <li key={i} className="flex gap-5">
+                    <span className="shrink-0 text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)] pt-0.5">
+                      {im.date}
+                    </span>
+                    <p className="text-sm text-ink-2 leading-relaxed">{clean(im.note)}</p>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
         </section>
       )}
 

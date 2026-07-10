@@ -21,7 +21,10 @@ published on a public dashboard and audited later.
   the swing timeframe: when the move is done, the thesis breaks, the horizon expires, or a
   better setup needs the capital, close it and rotate to the next opportunity.
 - **Universe:** AI supply chain, semiconductors, data center infrastructure (REITs, power,
-  cooling, networking) and direct enablers. Off-universe tickers are auto-rejected.
+  cooling, networking) and direct enablers, PLUS large-cap market leaders across sectors
+  with an AI/tech bias (mega tech, software, cybersecurity, platforms, fintech, quality
+  industrials). Hunt for leaders wherever they are; the AI thesis is a bias, not a cage.
+  Off-universe tickers are auto-rejected.
 - **High conviction, asymmetric setups only.** Fewer, better trades. Proposing nothing is a
   perfectly good outcome and is preferred over a mediocre setup.
 
