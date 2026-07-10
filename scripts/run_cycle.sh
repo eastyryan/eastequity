@@ -31,11 +31,10 @@ if [ "$DOW" -ge 6 ]; then
   exit $?
 fi
 
-# Slot-aware depth: midnight is a news review, 6am a light pre-market check,
-# everything else a full research cycle.
+# Slot-aware depth: midnight is a news review; all market-day slots including
+# 6am/9am pre-market are FULL research cycles (pre-market data matters).
 case "$HHMM" in
   0000) EXTRA="--news-only" ;;
-  0600) EXTRA="--light" ;;
   *)    EXTRA="" ;;
 esac
 .venv/bin/python -W ignore orchestrator.py $EXTRA "$@" >> logs/cron.log 2>&1
