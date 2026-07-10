@@ -1,0 +1,3943 @@
+{
+  "run_date": "2026-07-10T20:08:35.961769+00:00",
+  "trading_mode": "paper",
+  "hard_limits": {
+    "effective_max_position_usd": 997.97,
+    "position_sizing": {
+      "starting_capital_usd": 10000,
+      "max_position_pct_of_portfolio": 0.1,
+      "max_position_usd": 1000,
+      "max_open_positions": 8,
+      "max_total_exposure_pct": 0.8,
+      "min_cash_reserve_pct": 0.2,
+      "max_sector_concentration_pct": 0.4
+    },
+    "quality": {
+      "required_proposal_fields": [
+        "ticker",
+        "action",
+        "thesis",
+        "entry_price_max",
+        "stop_loss",
+        "target_price",
+        "holding_horizon_days",
+        "confidence",
+        "risk_reward_ratio",
+        "macro_context",
+        "catalysts",
+        "position_size_usd"
+      ],
+      "min_confidence": 0.6,
+      "min_risk_reward_ratio": 1.0,
+      "min_target_upside_pct": 0.1,
+      "max_stop_loss_distance_pct": 0.15,
+      "stop_loss_must_be_below_entry": true,
+      "target_must_be_above_entry": true
+    },
+    "swing": {
+      "min_holding_horizon_days": 3,
+      "max_holding_horizon_days": 90,
+      "max_new_positions_per_day": 2
+    }
+  },
+  "macro_regime": {
+    "status": "ok",
+    "as_of": "2026-07-10",
+    "indicators": {
+      "fed_funds_rate": {
+        "latest": 3.62,
+        "three_months_ago": 3.64,
+        "direction": "falling"
+      },
+      "ten_year_yield": {
+        "latest": 4.56,
+        "three_months_ago": 4.33,
+        "direction": "rising"
+      },
+      "two_year_yield": {
+        "latest": 4.21,
+        "three_months_ago": 3.81,
+        "direction": "rising"
+      },
+      "cpi_yoy_pct": {
+        "latest": 4.27,
+        "three_months_ago": 2.66,
+        "direction": "rising"
+      },
+      "unemployment_rate": {
+        "latest": 4.2,
+        "three_months_ago": 3.7,
+        "direction": "rising"
+      },
+      "hy_credit_spread": {
+        "latest": 2.7,
+        "three_months_ago": 2.95,
+        "direction": "falling"
+      },
+      "vix": {
+        "latest": 15.84,
+        "three_months_ago": 19.12,
+        "direction": "falling"
+      },
+      "nfci": {
+        "latest": -0.52,
+        "three_months_ago": -0.38,
+        "direction": "falling"
+      },
+      "yield_curve_10y2y": {
+        "latest": 0.35
+      }
+    },
+    "regime_hint": {
+      "score_0_to_5": 4,
+      "label": "supportive",
+      "note": "Deterministic hint only \u2014 the agent must form its own regime view."
+    }
+  },
+  "portfolio": {
+    "status": "ok",
+    "broker": "simulation",
+    "mode": "paper",
+    "cash_usd": 8200.01,
+    "total_equity_usd": 9979.74,
+    "positions": [
+      {
+        "ticker": "DELL",
+        "quantity": 2.2189,
+        "avg_cost": 450.6702,
+        "market_value_usd": 980.53,
+        "opened_at": "2026-07-09T21:41:38.155448+00:00",
+        "proposal_id": "20260709-5a9364",
+        "last_price": 441.9,
+        "original_plan": {
+          "thesis": "Dell is the best risk/reward in an extended AI-server complex: it pairs elite momentum (+143% 3m, +202% 6m) with the cheapest valuation in the group (forward P/E ~20.9, P/S 2.2) and a constructive entry, having pulled back only 2.2% from its 20-day high while sitting 4.1% off its 52-week high near a buy point. The 29% collapse in Super Micro is a direct tailwind, consolidating enterprise/AI-server share toward Dell as customers de-risk suppliers. Q1 fundamentals (revenue $23.4B, net income $965M) confirm profitable scale, and the current tape ('Dell Stock Nears Buy Point') shows institutional demand building. With no earnings until 9/3, a 45-day swing captures the momentum leg without event risk.",
+          "stop_loss": 408.0,
+          "target_price": 525.0,
+          "entry_price_max": 458.0,
+          "holding_horizon_days": 45,
+          "confidence": 0.66,
+          "risk_reward_ratio": 1.34,
+          "catalysts": [
+            "Breakout through the buy point on sustained AI-server order momentum over the next 2-4 weeks",
+            "Continued Super Micro share-shift narrative benefiting Dell (ongoing, July 2026)",
+            "Positive pre-announcement/analyst upgrades ahead of the Sept 3 earnings print"
+          ],
+          "risk_map": "The trade breaks if AI-server demand cools or gross-margin fears (the Super Micro overhang) spread to Dell - watched via any negative pre-announcement, channel checks, or a close back below the 50-DMA. A broader chip/AI momentum unwind driven by the rising-rate/sticky-inflation backdrop would also hit it; the 408 stop (-9.4% from last close, within ATR) caps the loss and exits before the thesis fully unwinds.",
+          "macro_context": "Regime is supportive for AI/data-center longs: falling Fed funds, tight credit spreads, low VIX (16.9) and easy financial conditions, with the tape confirming a chip/AI-led Nasdaq rally. The one caveat is re-accelerating CPI (4.27%) and rising long rates (10Y 4.56%), which pressure the highest-multiple names most - precisely why Dell's ~21x forward multiple is the right way to express this trade rather than a 40-100x momentum name.",
+          "proposed_at": "2026-07-09T21:41:38.154718+00:00"
+        },
+        "days_held": 0
+      },
+      {
+        "ticker": "HPE",
+        "quantity": 16.3771,
+        "avg_cost": 48.8488,
+        "market_value_usd": 799.2,
+        "opened_at": "2026-07-10T19:14:48.307774+00:00",
+        "proposal_id": "20260710-ce5923",
+        "last_price": 48.8,
+        "original_plan": {
+          "thesis": "HPE is the cheapest name in the AI-server complex at a 12.2x forward P/E on 31% forward revenue growth, yet carries the group's largest positive earnings signal: a +40.5% 30-day EPS revision. It just delivered a record Q2 and closed the Juniper Networks acquisition, which expands its networking franchise and is driving analyst numbers sharply higher (the Q trailing net loss reflects one-time acquisition/charge items the market and estimates are looking through). Despite a 19% post-report pop it still sits 23.9% below its 52-week high with room to reclaim, while only 4.5% off its 20-day high \u2014 consolidating, not extended. The same SMCI-collapse dynamic consolidating server share toward established OEMs that supports my DELL position reinforces HPE. At a defensive 12x multiple it is the highest-quality way to add exposure without over-paying into a rising-yield tape.",
+          "stop_loss": 44.75,
+          "target_price": 56.5,
+          "entry_price_max": 49.25,
+          "holding_horizon_days": 40,
+          "confidence": 0.67,
+          "risk_reward_ratio": 1.61,
+          "catalysts": [
+            "Juniper cross-sell and cost-synergy realization ramping through the 40-day window",
+            "Continued upward analyst EPS/revenue revisions post-record-Q2 (already +40.5% in 30 days)",
+            "Server/networking share consolidation as SMCI (now $28.80) remains impaired"
+          ],
+          "risk_map": "Kills: (1) the Q2 net loss proves to be more than one-time Juniper charges and margins disappoint next print; (2) enterprise IT/server demand softens as labor weakens; (3) a further yield spike compresses the whole complex. Early warning: EPS revisions rolling from up to flat/down, a close below the 50-DMA / $44.75 stop, or HPE-specific integration-cost headlines. Note one SVP open-market sale ($0.9M) \u2014 routine, not a cluster.",
+          "macro_context": "The regime is supportive for AI/data-center longs \u2014 tight HY spreads (2.70%), VIX 15.84, loose financial conditions (NFCI -0.52) and an easing Fed \u2014 but CPI has reaccelerated to 4.27% with long yields rising, which pressures high-multiple growth. HPE's 12x forward multiple makes it the most valuation-defensive way to add exposure in exactly this backdrop: it participates in the AI-server theme with far less multiple-compression risk than the 35-95x names atop the scan.",
+          "proposed_at": "2026-07-10T19:15:17.281794+00:00"
+        },
+        "days_held": 0
+      }
+    ],
+    "pending_orders": {},
+    "history": [
+      {
+        "ticker": "DELL",
+        "action": "BUY",
+        "position_size_usd": 1000,
+        "reference_price": 450.22,
+        "proposal_id": "20260709-5a9364",
+        "order_id": "SIM-d8d429df38",
+        "status": "filled",
+        "submitted_at": "2026-07-09T21:41:38.155155+00:00",
+        "fill_price": 450.6702,
+        "quantity": 2.2189,
+        "notional_usd": 999.99,
+        "filled_at": "2026-07-09T21:41:38.155453+00:00"
+      },
+      {
+        "ticker": "HPE",
+        "action": "BUY",
+        "position_size_usd": 800,
+        "reference_price": 48.8,
+        "proposal_id": "20260710-ce5923",
+        "order_id": "SIM-16e5c2d0e8",
+        "status": "filled",
+        "submitted_at": "2026-07-10T19:14:48.307563+00:00",
+        "fill_price": 48.8488,
+        "quantity": 16.3771,
+        "notional_usd": 800.0,
+        "filled_at": "2026-07-10T19:14:48.307779+00:00"
+      }
+    ]
+  },
+  "universe_scan": {
+    "sector_relative_strength": [
+      {
+        "sector": "semi_equipment",
+        "avg_momentum_1m_pct": 5.3,
+        "avg_momentum_3m_pct": 22.3,
+        "names": 7
+      },
+      {
+        "sector": "servers_hardware",
+        "avg_momentum_1m_pct": 3.5,
+        "avg_momentum_3m_pct": 89.6,
+        "names": 6
+      },
+      {
+        "sector": "power_generation",
+        "avg_momentum_1m_pct": 2.8,
+        "avg_momentum_3m_pct": 2.4,
+        "names": 7
+      },
+      {
+        "sector": "networking",
+        "avg_momentum_1m_pct": 2.5,
+        "avg_momentum_3m_pct": 60.9,
+        "names": 7
+      },
+      {
+        "sector": "gpu_accelerators",
+        "avg_momentum_1m_pct": 2.3,
+        "avg_momentum_3m_pct": 65.0,
+        "names": 4
+      },
+      {
+        "sector": "semi_manufacturing",
+        "avg_momentum_1m_pct": -0.4,
+        "avg_momentum_3m_pct": 63.0,
+        "names": 5
+      },
+      {
+        "sector": "power_equipment",
+        "avg_momentum_1m_pct": -1.0,
+        "avg_momentum_3m_pct": 7.5,
+        "names": 6
+      },
+      {
+        "sector": "data_center_reits",
+        "avg_momentum_1m_pct": -1.9,
+        "avg_momentum_3m_pct": 3.8,
+        "names": 3
+      },
+      {
+        "sector": "design_ip",
+        "avg_momentum_1m_pct": -2.1,
+        "avg_momentum_3m_pct": 54.2,
+        "names": 3
+      },
+      {
+        "sector": "construction_industrial",
+        "avg_momentum_1m_pct": -10.7,
+        "avg_momentum_3m_pct": 20.7,
+        "names": 4
+      },
+      {
+        "sector": "hyperscaler_enablers",
+        "avg_momentum_1m_pct": -18.2,
+        "avg_momentum_3m_pct": 18.5,
+        "names": 5
+      }
+    ],
+    "status": "ok",
+    "scanned": 57,
+    "note": "Ranked by deterministic swing_setup_score; agent must apply judgment and research before proposing.",
+    "top_setups": [
+      {
+        "ticker": "AMD",
+        "sector": "gpu_accelerators",
+        "last_close": 557.89,
+        "pct_change_1d": 2.04,
+        "momentum_1m_pct": 17.3,
+        "momentum_3m_pct": 135.8,
+        "momentum_6m_pct": 157.8,
+        "above_50dma": true,
+        "trend_up_50_over_100": true,
+        "pct_from_52w_high": -4.6,
+        "pullback_from_20d_high_pct": -4.6,
+        "volume_surge_5d_vs_3m": 0.7,
+        "atr_pct": 6.84,
+        "swing_setup_score": 6.87,
+        "valuation": {
+          "trailing_pe": 185.34552,
+          "forward_pe": 42.005203,
+          "price_to_sales_ttm": 24.288347,
+          "ev_to_ebitda": 118.843
+        },
+        "days_to_earnings": 24,
+        "days_since_earnings": 66,
+        "analyst_estimates": {
+          "fwd_revenue_growth_pct": 43.0,
+          "next_yr_revenue_growth_pct": 55.7,
+          "eps_revision_30d_pct": 0.52,
+          "eps_revision_direction": "up"
+        },
+        "post_earnings_drift_candidate": false
+      },
+      {
+        "ticker": "DELL",
+        "sector": "servers_hardware",
+        "last_close": 434.83,
+        "pct_change_1d": -3.42,
+        "momentum_1m_pct": 13.9,
+        "momentum_3m_pct": 140.4,
+        "momentum_6m_pct": 186.6,
+        "above_50dma": true,
+        "trend_up_50_over_100": true,
+        "pct_from_52w_high": -7.4,
+        "pullback_from_20d_high_pct": -5.6,
+        "volume_surge_5d_vs_3m": 0.83,
+        "atr_pct": 7.36,
+        "swing_setup_score": 6.69,
+        "valuation": {
+          "trailing_pe": 34.62022,
+          "forward_pe": 20.228254,
+          "price_to_sales_ttm": 2.096701,
+          "ev_to_ebitda": 22.192
+        },
+        "days_to_earnings": 54,
+        "days_since_earnings": 43,
+        "analyst_estimates": {
+          "fwd_revenue_growth_pct": 50.8,
+          "next_yr_revenue_growth_pct": 11.3,
+          "eps_revision_30d_pct": 0.19,
+          "eps_revision_direction": "up"
+        },
+        "post_earnings_drift_candidate": false
+      },
+      {
+        "ticker": "TXN",
+        "sector": "semi_manufacturing",
+        "last_close": 311.46,
+        "pct_change_1d": 0.95,
+        "momentum_1m_pct": 7.9,
+        "momentum_3m_pct": 45.6,
+        "momentum_6m_pct": 81.5,
+        "above_50dma": true,
+        "trend_up_50_over_100": true,
+        "pct_from_52w_high": -6.8,
+        "pullback_from_20d_high_pct": -6.8,
+        "volume_surge_5d_vs_3m": 0.71,
+        "atr_pct": 5.18,
+        "swing_setup_score": 6.4,
+        "valuation": {
+          "trailing_pe": 53.15017,
+          "forward_pe": 32.534065,
+          "price_to_sales_ttm": 15.373548,
+          "ev_to_ebitda": 33.438
+        },
+        "days_to_earnings": 11,
+        "days_since_earnings": 79,
+        "analyst_estimates": {
+          "fwd_revenue_growth_pct": 18.8,
+          "next_yr_revenue_growth_pct": 11.4,
+          "eps_revision_30d_pct": -0.05,
+          "eps_revision_direction": "down"
+        },
+        "post_earnings_drift_candidate": false
+      },
+      {
+        "ticker": "HPE",
+        "sector": "servers_hardware",
+        "last_close": 48.49,
+        "pct_change_1d": -1.25,
+        "momentum_1m_pct": 0.8,
+        "momentum_3m_pct": 95.9,
+        "momentum_6m_pct": 98.6,
+        "above_50dma": true,
+        "trend_up_50_over_100": true,
+        "pct_from_52w_high": -24.3,
+        "pullback_from_20d_high_pct": -5.1,
+        "volume_surge_5d_vs_3m": 0.73,
+        "atr_pct": 5.63,
+        "swing_setup_score": 6.04,
+        "valuation": {
+          "trailing_pe": 45.321865,
+          "forward_pe": 12.128451,
+          "price_to_sales_ttm": 1.6553193,
+          "ev_to_ebitda": 14.403
+        },
+        "days_to_earnings": 54,
+        "days_since_earnings": 39,
+        "analyst_estimates": {
+          "fwd_revenue_growth_pct": 31.0,
+          "next_yr_revenue_growth_pct": 11.0,
+          "eps_revision_30d_pct": 40.54,
+          "eps_revision_direction": "up"
+        },
+        "post_earnings_drift_candidate": false
+      },
+      {
+        "ticker": "ALAB",
+        "sector": "networking",
+        "last_close": 412.97,
+        "pct_change_1d": -1.07,
+        "momentum_1m_pct": 20.9,
+        "momentum_3m_pct": 219.0,
+        "momentum_6m_pct": 107.0,
+        "above_50dma": true,
+        "trend_up_50_over_100": true,
+        "pct_from_52w_high": -17.3,
+        "pullback_from_20d_high_pct": -17.3,
+        "volume_surge_5d_vs_3m": 0.65,
+        "atr_pct": 10.93,
+        "swing_setup_score": 6.0,
+        "valuation": {
+          "trailing_pe": 282.85617,
+          "forward_pe": 95.87588,
+          "price_to_sales_ttm": 70.684265,
+          "ev_to_ebitda": 301.697
+        },
+        "days_to_earnings": 24,
+        "days_since_earnings": 66,
+        "analyst_estimates": {
+          "fwd_revenue_growth_pct": 81.7,
+          "next_yr_revenue_growth_pct": 43.3,
+          "eps_revision_30d_pct": 0.22,
+          "eps_revision_direction": "up"
+        },
+        "post_earnings_drift_candidate": false
+      },
+      {
+        "ticker": "CDNS",
+        "sector": "design_ip",
+        "last_close": 384.17,
+        "pct_change_1d": -0.46,
+        "momentum_1m_pct": -1.7,
+        "momentum_3m_pct": 36.7,
+        "momentum_6m_pct": 15.6,
+        "above_50dma": true,
+        "trend_up_50_over_100": true,
+        "pct_from_52w_high": -7.8,
+        "pullback_from_20d_high_pct": -4.8,
+        "volume_surge_5d_vs_3m": 0.58,
+        "atr_pct": 3.41,
+        "swing_setup_score": 5.75,
+        "valuation": {
+          "trailing_pe": 89.759346,
+          "forward_pe": 40.870106,
+          "price_to_sales_ttm": 19.16579,
+          "ev_to_ebitda": 53.613
+        },
+        "days_to_earnings": 16,
+        "days_since_earnings": 74,
+        "analyst_estimates": {
+          "fwd_revenue_growth_pct": 17.2,
+          "next_yr_revenue_growth_pct": 13.2,
+          "eps_revision_30d_pct": 0.14,
+          "eps_revision_direction": "up"
+        },
+        "post_earnings_drift_candidate": false
+      },
+      {
+        "ticker": "GEV",
+        "sector": "power_generation",
+        "last_close": 1091.19,
+        "pct_change_1d": 1.48,
+        "momentum_1m_pct": 18.6,
+        "momentum_3m_pct": 12.8,
+        "momentum_6m_pct": 68.7,
+        "above_50dma": true,
+        "trend_up_50_over_100": true,
+        "pct_from_52w_high": -8.8,
+        "pullback_from_20d_high_pct": -8.8,
+        "volume_surge_5d_vs_3m": 0.97,
+        "atr_pct": 5.84,
+        "swing_setup_score": 5.57,
+        "valuation": {
+          "trailing_pe": 31.915358,
+          "forward_pe": 44.709305,
+          "price_to_sales_ttm": 7.446946,
+          "ev_to_ebitda": 83.183
+        },
+        "days_to_earnings": 11,
+        "days_since_earnings": 79,
+        "analyst_estimates": {
+          "fwd_revenue_growth_pct": 19.5,
+          "next_yr_revenue_growth_pct": 14.1,
+          "eps_revision_30d_pct": -1.41,
+          "eps_revision_direction": "down"
+        },
+        "post_earnings_drift_candidate": false
+      },
+      {
+        "ticker": "ANET",
+        "sector": "networking",
+        "last_close": 187.0,
+        "pct_change_1d": 1.25,
+        "momentum_1m_pct": 22.9,
+        "momentum_3m_pct": 28.0,
+        "momentum_6m_pct": 26.8,
+        "above_50dma": true,
+        "trend_up_50_over_100": true,
+        "pct_from_52w_high": -1.5,
+        "pullback_from_20d_high_pct": -1.5,
+        "volume_surge_5d_vs_3m": 0.9,
+        "atr_pct": 5.78,
+        "swing_setup_score": 5.4,
+        "valuation": {
+          "trailing_pe": 64.04109,
+          "forward_pe": 41.98153,
+          "price_to_sales_ttm": 24.249958,
+          "ev_to_ebitda": 51.97
+        },
+        "days_to_earnings": 24,
+        "days_since_earnings": 66,
+        "analyst_estimates": {
+          "fwd_revenue_growth_pct": 28.7,
+          "next_yr_revenue_growth_pct": 23.7,
+          "eps_revision_30d_pct": -0.06,
+          "eps_revision_direction": "down"
+        },
+        "post_earnings_drift_candidate": false
+      },
+      {
+        "ticker": "CSCO",
+        "sector": "networking",
+        "last_close": 121.31,
+        "pct_change_1d": 2.54,
+        "momentum_1m_pct": 1.2,
+        "momentum_3m_pct": 46.4,
+        "momentum_6m_pct": 82.4,
+        "above_50dma": true,
+        "trend_up_50_over_100": true,
+        "pct_from_52w_high": -6.6,
+        "pullback_from_20d_high_pct": -0.9,
+        "volume_surge_5d_vs_3m": 0.85,
+        "atr_pct": 3.19,
+        "swing_setup_score": 5.06,
+        "valuation": {
+          "trailing_pe": 40.302326,
+          "forward_pe": 25.396034,
+          "price_to_sales_ttm": 7.8710604,
+          "ev_to_ebitda": 28.381
+        },
+        "days_to_earnings": 32,
+        "days_since_earnings": 58,
+        "analyst_estimates": {
+          "fwd_revenue_growth_pct": 11.0,
+          "next_yr_revenue_growth_pct": 9.0,
+          "eps_revision_30d_pct": -0.02,
+          "eps_revision_direction": "down"
+        },
+        "post_earnings_drift_candidate": false
+      },
+      {
+        "ticker": "AMAT",
+        "sector": "semi_equipment",
+        "last_close": 602.5,
+        "pct_change_1d": 2.35,
+        "momentum_1m_pct": 20.7,
+        "momentum_3m_pct": 51.6,
+        "momentum_6m_pct": 175.7,
+        "above_50dma": true,
+        "trend_up_50_over_100": true,
+        "pct_from_52w_high": -18.5,
+        "pullback_from_20d_high_pct": -18.5,
+        "volume_surge_5d_vs_3m": 1.08,
+        "atr_pct": 8.98,
+        "swing_setup_score": 5.0,
+        "valuation": {
+          "trailing_pe": 56.572773,
+          "forward_pe": 36.45347,
+          "price_to_sales_ttm": 16.481552,
+          "ev_to_ebitda": 50.286
+        },
+        "days_to_earnings": 33,
+        "days_since_earnings": 57,
+        "analyst_estimates": {
+          "fwd_revenue_growth_pct": 17.8,
+          "next_yr_revenue_growth_pct": 26.4,
+          "eps_revision_30d_pct": 0.32,
+          "eps_revision_direction": "up"
+        },
+        "post_earnings_drift_candidate": false
+      },
+      {
+        "ticker": "SNDK",
+        "sector": "servers_hardware",
+        "last_close": 1915.92,
+        "pct_change_1d": 3.1,
+        "momentum_1m_pct": 16.4,
+        "momentum_3m_pct": 125.0,
+        "momentum_6m_pct": 1323.3,
+        "above_50dma": true,
+        "trend_up_50_over_100": true,
+        "pct_from_52w_high": -18.6,
+        "pullback_from_20d_high_pct": -18.6,
+        "volume_surge_5d_vs_3m": 0.87,
+        "atr_pct": 12.47,
+        "swing_setup_score": 4.82,
+        "valuation": {
+          "trailing_pe": 61.016563,
+          "forward_pe": 9.370103,
+          "price_to_sales_ttm": 21.520643,
+          "ev_to_ebitda": 48.236
+        },
+        "days_to_earnings": 25,
+        "days_since_earnings": 71,
+        "analyst_estimates": {
+          "fwd_revenue_growth_pct": 168.8,
+          "next_yr_revenue_growth_pct": 143.5,
+          "eps_revision_30d_pct": 1.96,
+          "eps_revision_direction": "up"
+        },
+        "post_earnings_drift_candidate": false
+      },
+      {
+        "ticker": "WDC",
+        "sector": "servers_hardware",
+        "last_close": 582.59,
+        "pct_change_1d": 0.78,
+        "momentum_1m_pct": 12.5,
+        "momentum_3m_pct": 72.4,
+        "momentum_6m_pct": 390.8,
+        "above_50dma": true,
+        "trend_up_50_over_100": true,
+        "pct_from_52w_high": -27.2,
+        "pullback_from_20d_high_pct": -27.2,
+        "volume_surge_5d_vs_3m": 0.8,
+        "atr_pct": 10.4,
+        "swing_setup_score": 4.63,
+        "valuation": {
+          "trailing_pe": 34.864456,
+          "forward_pe": 31.646372,
+          "price_to_sales_ttm": 17.050747,
+          "ev_to_ebitda": 50.339
+        },
+        "days_to_earnings": 18,
+        "days_since_earnings": 71,
+        "analyst_estimates": {
+          "fwd_revenue_growth_pct": 35.2,
+          "next_yr_revenue_growth_pct": 39.7,
+          "eps_revision_30d_pct": 0.21,
+          "eps_revision_direction": "up"
+        },
+        "post_earnings_drift_candidate": false
+      },
+      {
+        "ticker": "CRDO",
+        "sector": "networking",
+        "last_close": 257.79,
+        "pct_change_1d": -2.96,
+        "momentum_1m_pct": 10.0,
+        "momentum_3m_pct": 138.8,
+        "momentum_6m_pct": 72.0,
+        "above_50dma": true,
+        "trend_up_50_over_100": true,
+        "pct_from_52w_high": -16.5,
+        "pullback_from_20d_high_pct": -16.5,
+        "volume_surge_5d_vs_3m": 0.73,
+        "atr_pct": 11.39,
+        "swing_setup_score": 4.5,
+        "valuation": {
+          "trailing_pe": 103.116005,
+          "forward_pe": 28.924643,
+          "price_to_sales_ttm": 36.005962,
+          "ev_to_ebitda": 100.325
+        },
+        "days_to_earnings": 53,
+        "days_since_earnings": 39,
+        "analyst_estimates": {
+          "fwd_revenue_growth_pct": 83.6,
+          "next_yr_revenue_growth_pct": 49.0,
+          "eps_revision_30d_pct": 10.97,
+          "eps_revision_direction": "up"
+        },
+        "post_earnings_drift_candidate": false
+      },
+      {
+        "ticker": "ONTO",
+        "sector": "semi_equipment",
+        "last_close": 321.55,
+        "pct_change_1d": 1.43,
+        "momentum_1m_pct": 17.3,
+        "momentum_3m_pct": 30.2,
+        "momentum_6m_pct": 148.4,
+        "above_50dma": true,
+        "trend_up_50_over_100": true,
+        "pct_from_52w_high": -16.8,
+        "pullback_from_20d_high_pct": -16.8,
+        "volume_surge_5d_vs_3m": 1.02,
+        "atr_pct": 9.56,
+        "swing_setup_score": 4.38,
+        "valuation": {
+          "trailing_pe": 148.86572,
+          "forward_pe": 32.332085,
+          "price_to_sales_ttm": 15.520053,
+          "ev_to_ebitda": 56.63
+        },
+        "days_to_earnings": 26,
+        "days_since_earnings": 66,
+        "analyst_estimates": {
+          "fwd_revenue_growth_pct": 33.4,
+          "next_yr_revenue_growth_pct": 23.5,
+          "eps_revision_30d_pct": 0.94,
+          "eps_revision_direction": "up"
+        },
+        "post_earnings_drift_candidate": false
+      },
+      {
+        "ticker": "STX",
+        "sector": "servers_hardware",
+        "last_close": 910.34,
+        "pct_change_1d": 2.28,
+        "momentum_1m_pct": 7.7,
+        "momentum_3m_pct": 81.9,
+        "momentum_6m_pct": 316.8,
+        "above_50dma": true,
+        "trend_up_50_over_100": true,
+        "pct_from_52w_high": -20.4,
+        "pullback_from_20d_high_pct": -20.4,
+        "volume_surge_5d_vs_3m": 0.97,
+        "atr_pct": 9.68,
+        "swing_setup_score": 4.38,
+        "valuation": {
+          "trailing_pe": 86.69905,
+          "forward_pe": 33.042896,
+          "price_to_sales_ttm": 18.707209,
+          "ev_to_ebitda": 57.66
+        },
+        "days_to_earnings": 17,
+        "days_since_earnings": 73,
+        "analyst_estimates": {
+          "fwd_revenue_growth_pct": 32.5,
+          "next_yr_revenue_growth_pct": 39.3,
+          "eps_revision_30d_pct": 0.1,
+          "eps_revision_direction": "up"
+        },
+        "post_earnings_drift_candidate": false
+      }
+    ],
+    "prices": {
+      "AMD": 557.89,
+      "DELL": 434.83,
+      "TXN": 311.46,
+      "HPE": 48.49,
+      "ALAB": 412.97,
+      "CDNS": 384.17,
+      "GEV": 1091.19,
+      "ANET": 187.0,
+      "CSCO": 121.31,
+      "AMAT": 602.5,
+      "SNDK": 1915.92,
+      "WDC": 582.59,
+      "CRDO": 257.79,
+      "ONTO": 321.55,
+      "STX": 910.34,
+      "MU": 979.3,
+      "LRCX": 350.33,
+      "KLAC": 231.52,
+      "TSM": 434.15,
+      "ARM": 323.39,
+      "NVDA": 210.96,
+      "TLN": 385.8,
+      "MRVL": 235.81,
+      "ASML": 1797.32,
+      "ETN": 407.04,
+      "AVGO": 399.97,
+      "VST": 158.79,
+      "INTC": 109.84,
+      "VRT": 318.87,
+      "NBIS": 219.65,
+      "NRG": 140.4,
+      "IRM": 121.43,
+      "SNPS": 445.5,
+      "NVT": 160.74,
+      "ON": 95.96,
+      "EQIX": 1051.21,
+      "STRL": 682.29,
+      "DLR": 180.41,
+      "PWR": 658.01,
+      "FIX": 1755.07,
+      "COHR": 324.49,
+      "IESC": 625.54,
+      "SMCI": 28.31,
+      "APLD": 31.15,
+      "TER": 359.6,
+      "HUBB": 490.95,
+      "EME": 782.08,
+      "IREN": 41.14,
+      "MOD": 245.96,
+      "CEG": 251.38,
+      "OKLO": 48.83,
+      "LITE": 802.01,
+      "SMR": 9.02,
+      "CRWV": 88.88,
+      "ORCL": 140.68,
+      "AAOI": 119.92,
+      "CAMT": 143.79
+    }
+  },
+  "sec_filings": {
+    "DELL": {
+      "status": "ok",
+      "ticker": "DELL",
+      "cik": "0001571996",
+      "company": "Dell Technologies Inc.",
+      "recent_filings": [
+        {
+          "form": "8-K",
+          "filed": "2026-07-06",
+          "url": "https://www.sec.gov/Archives/edgar/data/1571996/000119312526296224/d32716d8k.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-07-01",
+          "url": "https://www.sec.gov/Archives/edgar/data/1571996/000157199626000036/dell-20260625.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-06-17",
+          "url": "https://www.sec.gov/Archives/edgar/data/1571996/000157199626000032/dell-20260611.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-06-16",
+          "url": "https://www.sec.gov/Archives/edgar/data/1571996/000119312526272720/d20600d8k.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-06-12",
+          "url": "https://www.sec.gov/Archives/edgar/data/1571996/000119312526269594/d131151d8k.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-06-10",
+          "url": "https://www.sec.gov/Archives/edgar/data/1571996/000119312526265877/d98058d8k.htm"
+        },
+        {
+          "form": "10-Q",
+          "filed": "2026-06-09",
+          "url": "https://www.sec.gov/Archives/edgar/data/1571996/000157199626000030/dell-20260501.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-05-28",
+          "url": "https://www.sec.gov/Archives/edgar/data/1571996/000157199626000021/dell-20260528.htm"
+        }
+      ],
+      "quarterly_fundamentals": {
+        "revenue": [
+          {
+            "period_end": "2023-08-04",
+            "value_usd": 22934000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2023-11-03",
+            "value_usd": 22251000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-05-03",
+            "value_usd": 22244000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-08-02",
+            "value_usd": 25026000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-11-01",
+            "value_usd": 24366000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-05-02",
+            "value_usd": 23378000000,
+            "form": "10-Q"
+          }
+        ],
+        "net_income": [
+          {
+            "period_end": "2023-08-04",
+            "value_usd": 462000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2023-11-03",
+            "value_usd": 1006000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-05-03",
+            "value_usd": 960000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-08-02",
+            "value_usd": 846000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-11-01",
+            "value_usd": 1132000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-05-02",
+            "value_usd": 965000000,
+            "form": "10-Q"
+          }
+        ],
+        "gross_profit": [
+          {
+            "period_end": "2023-08-04",
+            "value_usd": 5387000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2023-11-03",
+            "value_usd": 5148000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-05-03",
+            "value_usd": 4806000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-08-02",
+            "value_usd": 5311000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-11-01",
+            "value_usd": 5307000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-05-02",
+            "value_usd": 4937000000,
+            "form": "10-Q"
+          }
+        ],
+        "capex": [
+          {
+            "period_end": "2020-05-01",
+            "value_usd": 559000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2021-04-30",
+            "value_usd": 625000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2022-04-29",
+            "value_usd": 690000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2023-05-05",
+            "value_usd": 701000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-05-03",
+            "value_usd": 596000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-05-02",
+            "value_usd": 568000000,
+            "form": "10-Q"
+          }
+        ]
+      }
+    },
+    "HPE": {
+      "status": "ok",
+      "ticker": "HPE",
+      "cik": "0001645590",
+      "company": "Hewlett Packard Enterprise Co",
+      "recent_filings": [
+        {
+          "form": "10-Q",
+          "filed": "2026-06-02",
+          "url": "https://www.sec.gov/Archives/edgar/data/1645590/000164559026000055/hpe-20260430.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-06-01",
+          "url": "https://www.sec.gov/Archives/edgar/data/1645590/000164559026000052/hpe-20260601.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-05-14",
+          "url": "https://www.sec.gov/Archives/edgar/data/1645590/000164559026000045/hpe-20260513.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-05-04",
+          "url": "https://www.sec.gov/Archives/edgar/data/1645590/000164559026000040/hpe-20260504.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-04-03",
+          "url": "https://www.sec.gov/Archives/edgar/data/1645590/000164559026000036/hpe-20260401.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-03-23",
+          "url": "https://www.sec.gov/Archives/edgar/data/1645590/000114036126010765/ef20068405_8k.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-03-18",
+          "url": "https://www.sec.gov/Archives/edgar/data/1645590/000114036126010222/ef20068126_8k.htm"
+        },
+        {
+          "form": "10-Q",
+          "filed": "2026-03-10",
+          "url": "https://www.sec.gov/Archives/edgar/data/1645590/000164559026000032/hpe-20260131.htm"
+        }
+      ],
+      "quarterly_fundamentals": {
+        "revenue": [
+          {
+            "period_end": "2023-07-31",
+            "value_usd": 7002000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-01-31",
+            "value_usd": 6755000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-04-30",
+            "value_usd": 7204000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-07-31",
+            "value_usd": 7710000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-01-31",
+            "value_usd": 7854000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-04-30",
+            "value_usd": 7627000000,
+            "form": "10-Q"
+          }
+        ],
+        "net_income": [
+          {
+            "period_end": "2023-07-31",
+            "value_usd": 464000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-01-31",
+            "value_usd": 387000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-04-30",
+            "value_usd": 314000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-07-31",
+            "value_usd": 512000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-01-31",
+            "value_usd": 627000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-04-30",
+            "value_usd": -1050000000,
+            "form": "10-Q"
+          }
+        ]
+      }
+    },
+    "AMD": {
+      "status": "ok",
+      "ticker": "AMD",
+      "cik": "0000002488",
+      "company": "ADVANCED MICRO DEVICES INC",
+      "recent_filings": [
+        {
+          "form": "8-K",
+          "filed": "2026-07-01",
+          "url": "https://www.sec.gov/Archives/edgar/data/2488/000000248826000115/amd-20260626.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-05-15",
+          "url": "https://www.sec.gov/Archives/edgar/data/2488/000119312526226746/d118163d8k.htm"
+        },
+        {
+          "form": "10-Q",
+          "filed": "2026-05-06",
+          "url": "https://www.sec.gov/Archives/edgar/data/2488/000000248826000076/amd-20260328.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-05-05",
+          "url": "https://www.sec.gov/Archives/edgar/data/2488/000000248826000072/amd-20260505.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-02-24",
+          "url": "https://www.sec.gov/Archives/edgar/data/2488/000000248826000045/amd-20260223.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-02-17",
+          "url": "https://www.sec.gov/Archives/edgar/data/2488/000000248826000029/amd-20260210.htm"
+        },
+        {
+          "form": "10-K",
+          "filed": "2026-02-04",
+          "url": "https://www.sec.gov/Archives/edgar/data/2488/000000248826000018/amd-20251227.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-02-03",
+          "url": "https://www.sec.gov/Archives/edgar/data/2488/000000248826000014/amd-20260203.htm"
+        }
+      ],
+      "quarterly_fundamentals": {
+        "revenue": [
+          {
+            "period_end": "2023-07-01",
+            "value_usd": 5359000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2023-09-30",
+            "value_usd": 5800000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-03-30",
+            "value_usd": 5473000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-06-29",
+            "value_usd": 5835000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-09-28",
+            "value_usd": 6819000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-03-29",
+            "value_usd": 7438000000,
+            "form": "10-Q"
+          }
+        ],
+        "net_income": [
+          {
+            "period_end": "2023-07-01",
+            "value_usd": 27000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2023-09-30",
+            "value_usd": 299000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-03-30",
+            "value_usd": 123000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-06-29",
+            "value_usd": 265000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-09-28",
+            "value_usd": 771000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-03-29",
+            "value_usd": 709000000,
+            "form": "10-Q"
+          }
+        ],
+        "gross_profit": [
+          {
+            "period_end": "2023-07-01",
+            "value_usd": 2443000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2023-09-30",
+            "value_usd": 2747000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-03-30",
+            "value_usd": 2560000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-06-29",
+            "value_usd": 2864000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-09-28",
+            "value_usd": 3419000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-03-29",
+            "value_usd": 3736000000,
+            "form": "10-Q"
+          }
+        ],
+        "capex": [
+          {
+            "period_end": "2020-03-28",
+            "value_usd": 55000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2021-03-27",
+            "value_usd": 66000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2022-03-26",
+            "value_usd": 71000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2023-04-01",
+            "value_usd": 158000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-03-30",
+            "value_usd": 142000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-03-29",
+            "value_usd": 212000000,
+            "form": "10-Q"
+          }
+        ]
+      }
+    },
+    "TXN": {
+      "status": "ok",
+      "ticker": "TXN",
+      "cik": "0000097476",
+      "company": "TEXAS INSTRUMENTS INC",
+      "recent_filings": [
+        {
+          "form": "8-K",
+          "filed": "2026-06-02",
+          "url": "https://www.sec.gov/Archives/edgar/data/97476/000095010326008325/dp247795_8k.htm"
+        },
+        {
+          "form": "10-Q",
+          "filed": "2026-04-24",
+          "url": "https://www.sec.gov/Archives/edgar/data/97476/000009747626000101/txn-20260331.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-04-22",
+          "url": "https://www.sec.gov/Archives/edgar/data/97476/000009747626000097/txn-20260422.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-04-17",
+          "url": "https://www.sec.gov/Archives/edgar/data/97476/000009747626000094/txn-20260416.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-03-25",
+          "url": "https://www.sec.gov/Archives/edgar/data/97476/000119312526124057/d136885d8k.htm"
+        },
+        {
+          "form": "10-K",
+          "filed": "2026-02-06",
+          "url": "https://www.sec.gov/Archives/edgar/data/97476/000009747626000059/txn-20251231.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-02-06",
+          "url": "https://www.sec.gov/Archives/edgar/data/97476/000119312526040312/d937106d8k.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-02-04",
+          "url": "https://www.sec.gov/Archives/edgar/data/97476/000119312526036727/d100130d8k.htm"
+        }
+      ],
+      "quarterly_fundamentals": {
+        "revenue": [
+          {
+            "period_end": "2023-06-30",
+            "value_usd": 4531000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2023-09-30",
+            "value_usd": 4532000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-03-31",
+            "value_usd": 3661000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-06-30",
+            "value_usd": 3822000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-09-30",
+            "value_usd": 4151000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-03-31",
+            "value_usd": 4069000000,
+            "form": "10-Q"
+          }
+        ],
+        "net_income": [
+          {
+            "period_end": "2023-06-30",
+            "value_usd": 1722000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2023-09-30",
+            "value_usd": 1709000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-03-31",
+            "value_usd": 1105000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-06-30",
+            "value_usd": 1127000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-09-30",
+            "value_usd": 1362000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-03-31",
+            "value_usd": 1179000000,
+            "form": "10-Q"
+          }
+        ],
+        "gross_profit": [
+          {
+            "period_end": "2023-06-30",
+            "value_usd": 2910000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2023-09-30",
+            "value_usd": 2815000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-03-31",
+            "value_usd": 2095000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-06-30",
+            "value_usd": 2211000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-09-30",
+            "value_usd": 2474000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-03-31",
+            "value_usd": 2313000000,
+            "form": "10-Q"
+          }
+        ],
+        "capex": [
+          {
+            "period_end": "2020-03-31",
+            "value_usd": 161000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2021-03-31",
+            "value_usd": 308000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2022-03-31",
+            "value_usd": 443000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2023-03-31",
+            "value_usd": 982000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-03-31",
+            "value_usd": 1248000000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-03-31",
+            "value_usd": 1123000000,
+            "form": "10-Q"
+          }
+        ]
+      }
+    },
+    "ALAB": {
+      "status": "ok",
+      "ticker": "ALAB",
+      "cik": "0001736297",
+      "company": "Astera Labs, Inc.",
+      "recent_filings": [
+        {
+          "form": "8-K",
+          "filed": "2026-06-08",
+          "url": "https://www.sec.gov/Archives/edgar/data/1736297/000173629726000027/alab-20260604.htm"
+        },
+        {
+          "form": "10-Q",
+          "filed": "2026-05-06",
+          "url": "https://www.sec.gov/Archives/edgar/data/1736297/000173629726000020/alab-20260331.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-05-05",
+          "url": "https://www.sec.gov/Archives/edgar/data/1736297/000173629726000017/alab-20260505.htm"
+        },
+        {
+          "form": "10-K",
+          "filed": "2026-02-20",
+          "url": "https://www.sec.gov/Archives/edgar/data/1736297/000173629726000010/alab-20251231.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-02-10",
+          "url": "https://www.sec.gov/Archives/edgar/data/1736297/000110465926012649/tm265461d2_8k.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-02-10",
+          "url": "https://www.sec.gov/Archives/edgar/data/1736297/000173629726000005/alab-20260210.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-02-10",
+          "url": "https://www.sec.gov/Archives/edgar/data/1736297/000110465926012606/tm265461d1_8k.htm"
+        },
+        {
+          "form": "8-K",
+          "filed": "2026-01-20",
+          "url": "https://www.sec.gov/Archives/edgar/data/1736297/000110465926005022/tm263452d1_8k.htm"
+        }
+      ],
+      "quarterly_fundamentals": {
+        "revenue": [
+          {
+            "period_end": "2024-03-31",
+            "value_usd": 65258000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-06-30",
+            "value_usd": 76850000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-09-30",
+            "value_usd": 113086000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-03-31",
+            "value_usd": 159442000,
+            "form": "10-Q"
+          }
+        ],
+        "net_income": [
+          {
+            "period_end": "2024-03-31",
+            "value_usd": -92995000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-06-30",
+            "value_usd": -7546000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-09-30",
+            "value_usd": -7593000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-03-31",
+            "value_usd": 31819000,
+            "form": "10-Q"
+          }
+        ],
+        "gross_profit": [
+          {
+            "period_end": "2024-03-31",
+            "value_usd": 50520000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-06-30",
+            "value_usd": 59854000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2024-09-30",
+            "value_usd": 87877000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-03-31",
+            "value_usd": 119411000,
+            "form": "10-Q"
+          }
+        ],
+        "capex": [
+          {
+            "period_end": "2024-03-31",
+            "value_usd": 3424000,
+            "form": "10-Q"
+          },
+          {
+            "period_end": "2025-03-31",
+            "value_usd": 4539000,
+            "form": "10-Q"
+          }
+        ]
+      }
+    }
+  },
+  "smart_money_13f": {
+    "status": "ok",
+    "tickers": [
+      "DELL",
+      "HPE",
+      "AMD",
+      "TXN",
+      "ALAB"
+    ],
+    "note": "13F data is ~45 days stale. Use for conviction/positioning context only, never timing.",
+    "holdings": [
+      {
+        "manager": "Appaloosa (Tepper)",
+        "period": "2026-03-31",
+        "ticker": "AMD",
+        "issuer": "ADVANCED MICRO DEVICES INC",
+        "value_usd": 45039402,
+        "shares": 0,
+        "put_call": ""
+      },
+      {
+        "manager": "Coatue Management",
+        "period": "2026-03-31",
+        "ticker": "AMD",
+        "issuer": "SOLSTICE ADVANCED MATLS INC",
+        "value_usd": 51902278,
+        "shares": 0,
+        "put_call": ""
+      },
+      {
+        "manager": "Coatue Management",
+        "period": "2026-03-31",
+        "ticker": "AMD",
+        "issuer": "SOLSTICE ADVANCED MATLS INC",
+        "value_usd": 55337171,
+        "shares": 0,
+        "put_call": ""
+      },
+      {
+        "manager": "Coatue Management",
+        "period": "2026-03-31",
+        "ticker": "AMD",
+        "issuer": "SOLSTICE ADVANCED MATLS INC",
+        "value_usd": 18774049,
+        "shares": 0,
+        "put_call": ""
+      },
+      {
+        "manager": "D1 Capital",
+        "period": "2026-03-31",
+        "ticker": "TXN",
+        "issuer": "TEXAS INSTRS INC",
+        "value_usd": 340327614,
+        "shares": 0,
+        "put_call": ""
+      },
+      {
+        "manager": "Duquesne (Druckenmiller)",
+        "period": "2026-03-31",
+        "ticker": "DELL",
+        "issuer": "Lyondellbasell Industries Nv",
+        "value_usd": 10588,
+        "shares": 0,
+        "put_call": ""
+      },
+      {
+        "manager": "Duquesne (Druckenmiller)",
+        "period": "2026-03-31",
+        "ticker": "AMD",
+        "issuer": "Solstice Advanced Matls Inc",
+        "value_usd": 4762,
+        "shares": 0,
+        "put_call": ""
+      }
+    ]
+  },
+  "news_and_catalysts": {
+    "status": "ok",
+    "as_of": "2026-07-10T20:08:21.299585+00:00",
+    "tickers": {
+      "DELL": {
+        "headlines": [
+          {
+            "title": "Tech stocks live: SK Hynix begins trading on Nasdaq, SpaceX stock tumbles",
+            "published": "2026-07-06T13:10:03Z",
+            "url": "https://finance.yahoo.com/technology/live/tech-stocks-live-sk-hynix-begins-trading-on-nasdaq-spacex-stock-tumbles-131003284.html"
+          },
+          {
+            "title": "Do Diversification and AI Strategy Power Lenovo's Long-Term Growth?",
+            "published": "2026-07-10T17:35:00Z",
+            "url": "https://finance.yahoo.com/technology/articles/diversification-ai-strategy-power-lenovos-173500475.html"
+          },
+          {
+            "title": "Dell Stock Gets Trump Bump. But Here Are The Real Reasons It Is Strong As It Eyes New Entry.",
+            "published": "2026-07-10T16:28:52Z",
+            "url": "https://www.investors.com/stock-lists/stock-spotlight/dell-stock-dell-technologies-trump-bump-eyes-entry/?src=A00220&yptr=yahoo"
+          },
+          {
+            "title": "Defense AI Heats Up: BigBear.ai Lands First European Validation for AI-Powered Airport Screening",
+            "published": "2026-07-10T16:25:29Z",
+            "url": "https://finance.yahoo.com/technology/ai/articles/defense-ai-heats-bigbear-ai-162529616.html"
+          },
+          {
+            "title": "Can SMCI Convert Strong AI Growth Into Robust Cash and Margins?",
+            "published": "2026-07-10T14:06:00Z",
+            "url": "https://finance.yahoo.com/technology/ai/articles/smci-convert-strong-ai-growth-140600721.html"
+          },
+          {
+            "title": "Dow Jones Futures Rise, Delta Falls On Earnings; Micron, Sandisk Slide As SK Hynix Raises $26.5 Billion",
+            "published": "2026-07-10T12:12:43Z",
+            "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-futures-nasdaq-micron-sandisk-jump-delta-taiwan-semi-sk-hynix/?src=A00220&yptr=yahoo"
+          }
+        ],
+        "next_earnings": "2026-09-03"
+      },
+      "HPE": {
+        "headlines": [
+          {
+            "title": "Can SMCI Convert Strong AI Growth Into Robust Cash and Margins?",
+            "published": "2026-07-10T14:06:00Z",
+            "url": "https://finance.yahoo.com/technology/ai/articles/smci-convert-strong-ai-growth-140600721.html"
+          },
+          {
+            "title": "Hewlett Packard Enterprise (HPE) Is Up 19.1% After Record Q2 And Juniper Deal Completion - What's Changed",
+            "published": "2026-07-10T13:13:06Z",
+            "url": "https://finance.yahoo.com/markets/stocks/articles/hewlett-packard-enterprise-hpe-19-131306459.html"
+          },
+          {
+            "title": "US Stock Market Today: S&P 500 Futures Edge Higher On Persistent Higher Yield Concerns",
+            "published": "2026-07-10T08:14:49Z",
+            "url": "https://finance.yahoo.com/markets/stocks/articles/us-stock-market-today-p-081449137.html"
+          },
+          {
+            "title": "Hewlett Packard Enterprise (HPE) Stock Still Looks Undervalued As Its 302% Run Cools",
+            "published": "2026-07-10T06:14:23Z",
+            "url": "https://finance.yahoo.com/markets/stocks/articles/hewlett-packard-enterprise-hpe-stock-061423898.html"
+          },
+          {
+            "title": "Cadence (CDNS) Expands Collaboration with HPE for AI Data Center Modernization",
+            "published": "2026-07-09T18:36:59Z",
+            "url": "https://finance.yahoo.com/technology/ai/articles/cadence-cdns-expands-collaboration-hpe-183659091.html"
+          },
+          {
+            "title": "Super Micro Stock Just Collapsed 29% in a Month: Is It Time to Switch to Dell or Hewlett Packard Enterprise?",
+            "published": "2026-07-09T18:20:12Z",
+            "url": "https://247wallst.com/investing/2026/07/09/super-micro-stock-just-collapsed-29-in-a-month-is-it-time-to-switch-to-dell-or-hewlett-packard-enterprise/"
+          }
+        ],
+        "next_earnings": "2026-06-01"
+      },
+      "AMD": {
+        "headlines": [
+          {
+            "title": "Chip stocks regain some ground after whipsaw of a trading week",
+            "published": "2026-07-10T14:30:00Z",
+            "url": "https://finance.yahoo.com/video/chip-stocks-regain-ground-whipsaw-143000172.html"
+          },
+          {
+            "title": "Nasdaq's hottest winners just fell behind: Chart of the Day",
+            "published": "2026-07-10T10:00:00Z",
+            "url": "https://finance.yahoo.com/markets/article/nasdaqs-hottest-winners-just-fell-behind-chart-of-the-day-100000829.html"
+          },
+          {
+            "title": "What's Going On With Nvidia Stock Friday",
+            "published": "2026-07-10T20:00:45Z",
+            "url": "https://finance.yahoo.com/markets/stocks/articles/whats-going-nvidia-stock-friday-200045889.html"
+          },
+          {
+            "title": "Nvidia Vera CPU Expands Market Reach",
+            "published": "2026-07-10T19:45:54Z",
+            "url": "https://finance.yahoo.com/technology/articles/nvidia-vera-cpu-expands-market-194554385.html"
+          },
+          {
+            "title": "Rackspace Technology (RXT) Rebounds 22% After Brutal Week",
+            "published": "2026-07-10T19:22:36Z",
+            "url": "https://247wallst.com/investing/2026/07/10/rackspace-technology-rxt-market-movers/"
+          },
+          {
+            "title": "Why I Can\u2019t Stop Buying This \u201cBoring\u201d Chipmaker With Game Changing Upside",
+            "published": "2026-07-10T18:23:53Z",
+            "url": "https://247wallst.com/investing/2026/07/10/why-i-cant-stop-buying-this-boring-chipmaker-with-game-changing-upside/"
+          }
+        ],
+        "next_earnings": "2026-08-04"
+      },
+      "TXN": {
+        "headlines": [
+          {
+            "title": "Allegro MicroSystems Trends Point to Higher Chip Content Ahead",
+            "published": "2026-07-10T16:07:00Z",
+            "url": "https://finance.yahoo.com/technology/articles/allegro-microsystems-trends-point-higher-160700932.html"
+          },
+          {
+            "title": "Can TXN's Embedded Business Extend Its Double-Digit Growth Run?",
+            "published": "2026-07-10T15:32:00Z",
+            "url": "https://finance.yahoo.com/markets/stocks/articles/txns-embedded-business-extend-double-153200942.html"
+          },
+          {
+            "title": "What Is The Market Really Expecting From AVGO Stock?",
+            "published": "2026-07-10T14:59:19Z",
+            "url": "https://www.trefis.com/articles/606617/what-is-the-market-really-expecting-from-avgo-stock-2/2026-07-10"
+          },
+          {
+            "title": "ASYS Stock is Trading at a Discount: Should You Buy, Sell or Hold?",
+            "published": "2026-07-10T12:12:00Z",
+            "url": "https://finance.yahoo.com/markets/stocks/articles/asys-stock-trading-discount-buy-121200678.html"
+          },
+          {
+            "title": "1 High-Flying Stock with Impressive Fundamentals and 2 We Avoid",
+            "published": "2026-07-10T09:11:16Z",
+            "url": "https://finance.yahoo.com/markets/stocks/articles/1-high-flying-stock-impressive-091116525.html"
+          },
+          {
+            "title": "The Line In The Sand For AVGO Stock",
+            "published": "2026-07-09T13:29:23Z",
+            "url": "https://www.trefis.com/articles/606395/the-line-in-the-sand-for-avgo-stock/2026-07-09"
+          }
+        ],
+        "next_earnings": "2026-07-22"
+      },
+      "ALAB": {
+        "headlines": [
+          {
+            "title": "ALAB Rides on Strong Demand for PCIe Solution: A Sign for More Upside?",
+            "published": "2026-07-09T17:17:00Z",
+            "url": "https://finance.yahoo.com/technology/articles/alab-rides-strong-demand-pcie-171700817.html"
+          },
+          {
+            "title": "Credo Climbs 165% in a Year: Is the Stock Still Worth Buying?",
+            "published": "2026-07-09T14:21:00Z",
+            "url": "https://finance.yahoo.com/markets/stocks/articles/credo-climbs-165-stock-still-142100398.html"
+          },
+          {
+            "title": "Why Astera Labs Stock Skyrocketed Last Month",
+            "published": "2026-07-08T21:15:52Z",
+            "url": "https://www.fool.com/investing/2026/07/08/why-astera-labs-stock-skyrocketed-last-month/"
+          },
+          {
+            "title": "Chip Stocks Join in Broad Selloff",
+            "published": "2026-07-08T16:12:19Z",
+            "url": "https://www.barrons.com/livecoverage/stock-market-news-today-070826/card/chip-stocks-rise-despite-broad-sell-off-57FRlQc5rbq2KNPTEOnt?siteid=yhoof2&yptr=yahoo"
+          },
+          {
+            "title": "US Stock Market Today: S&P 500 Futures Dip As Oil And Rate Jitters Build",
+            "published": "2026-07-08T08:14:13Z",
+            "url": "https://finance.yahoo.com/markets/stocks/articles/us-stock-market-today-p-081413844.html"
+          },
+          {
+            "title": "SpaceX Drags on First Day in Nasdaq 100",
+            "published": "2026-07-07T18:57:19Z",
+            "url": "https://www.barrons.com/livecoverage/stock-market-news-today-070726/card/spacex-drags-on-first-day-in-nasdaq-100-75gssZ2WSdGBHKv5UcNl?siteid=yhoof2&yptr=yahoo"
+          }
+        ],
+        "next_earnings": "2026-08-04"
+      }
+    }
+  },
+  "insider_activity": {
+    "status": "ok",
+    "note": "Open-market Form 4 transactions only (codes P/S). Clustered officer buying is a strong signal; routine selling usually is not.",
+    "tickers": {
+      "DELL": {
+        "transactions": [
+          {
+            "insider": "Silver Lake Technology Investors V, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 36.0,
+            "price": 405.36,
+            "notional_usd": 14592.96,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors V, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 14.0,
+            "price": 406.35,
+            "notional_usd": 5688.9,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors V, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 50.0,
+            "price": 407.59,
+            "notional_usd": 20379.5,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors V, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 116.0,
+            "price": 408.52,
+            "notional_usd": 47388.32,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors V, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 92.0,
+            "price": 409.49,
+            "notional_usd": 37673.08,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors V, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 123.0,
+            "price": 410.68,
+            "notional_usd": 50513.64,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors V, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 96.0,
+            "price": 411.4,
+            "notional_usd": 39494.4,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors V, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 14.0,
+            "price": 412.51,
+            "notional_usd": 5775.14,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors V, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 1.0,
+            "price": 413.3,
+            "notional_usd": 413.3,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors V, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 31.0,
+            "price": 415.49,
+            "notional_usd": 12880.19,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors V, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 35.0,
+            "price": 416.34,
+            "notional_usd": 14571.9,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors V, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 11.0,
+            "price": 417.78,
+            "notional_usd": 4595.58,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors V, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 17.0,
+            "price": 418.49,
+            "notional_usd": 7114.33,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Sl Spv-2, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 3561.0,
+            "price": 405.36,
+            "notional_usd": 1443486.96,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Sl Spv-2, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 1362.0,
+            "price": 406.35,
+            "notional_usd": 553448.7,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Sl Spv-2, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 4932.0,
+            "price": 407.59,
+            "notional_usd": 2010233.88,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Sl Spv-2, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 11564.0,
+            "price": 408.52,
+            "notional_usd": 4724125.28,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Sl Spv-2, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 9146.0,
+            "price": 409.49,
+            "notional_usd": 3745195.54,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Sl Spv-2, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 12177.0,
+            "price": 410.68,
+            "notional_usd": 5000850.36,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Sl Spv-2, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 9545.0,
+            "price": 411.4,
+            "notional_usd": 3926813.0,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Sl Spv-2, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 1380.0,
+            "price": 412.51,
+            "notional_usd": 569263.8,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Sl Spv-2, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 38.0,
+            "price": 413.3,
+            "notional_usd": 15705.4,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Sl Spv-2, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 3111.0,
+            "price": 415.49,
+            "notional_usd": 1292589.39,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Sl Spv-2, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 3503.0,
+            "price": 416.34,
+            "notional_usd": 1458439.02,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Sl Spv-2, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 1129.0,
+            "price": 417.78,
+            "notional_usd": 471673.62,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Sl Spv-2, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 1756.0,
+            "price": 418.49,
+            "notional_usd": 734868.44,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 79.0,
+            "price": 405.36,
+            "notional_usd": 32023.44,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 30.0,
+            "price": 406.35,
+            "notional_usd": 12190.5,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 110.0,
+            "price": 407.59,
+            "notional_usd": 44834.9,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 258.0,
+            "price": 408.52,
+            "notional_usd": 105398.16,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 204.0,
+            "price": 409.49,
+            "notional_usd": 83535.96,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 272.0,
+            "price": 410.68,
+            "notional_usd": 111704.96,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 213.0,
+            "price": 411.4,
+            "notional_usd": 87628.2,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 31.0,
+            "price": 412.51,
+            "notional_usd": 12787.81,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 1.0,
+            "price": 413.3,
+            "notional_usd": 413.3,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 69.0,
+            "price": 415.49,
+            "notional_usd": 28668.81,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 78.0,
+            "price": 416.34,
+            "notional_usd": 32474.52,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 25.0,
+            "price": 417.78,
+            "notional_usd": 10444.5,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Technology Investors Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 39.0,
+            "price": 418.49,
+            "notional_usd": 16321.11,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners V De (Aiv), L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 2084.0,
+            "price": 405.36,
+            "notional_usd": 844770.24,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners V De (Aiv), L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 797.0,
+            "price": 406.35,
+            "notional_usd": 323860.95,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners V De (Aiv), L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 2886.0,
+            "price": 407.59,
+            "notional_usd": 1176304.74,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners V De (Aiv), L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 6766.0,
+            "price": 408.52,
+            "notional_usd": 2764046.32,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners V De (Aiv), L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 5352.0,
+            "price": 409.49,
+            "notional_usd": 2191590.48,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners V De (Aiv), L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 7125.0,
+            "price": 410.68,
+            "notional_usd": 2926095.0,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners V De (Aiv), L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 5585.0,
+            "price": 411.4,
+            "notional_usd": 2297669.0,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners V De (Aiv), L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 808.0,
+            "price": 412.51,
+            "notional_usd": 333308.08,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners V De (Aiv), L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 22.0,
+            "price": 413.3,
+            "notional_usd": 9092.6,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners V De (Aiv), L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 1820.0,
+            "price": 415.49,
+            "notional_usd": 756191.8,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners V De (Aiv), L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 2049.0,
+            "price": 416.34,
+            "notional_usd": 853080.66,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners V De (Aiv), L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 661.0,
+            "price": 417.78,
+            "notional_usd": 276152.58,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners V De (Aiv), L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 1027.0,
+            "price": 418.49,
+            "notional_usd": 429789.23,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 4100.0,
+            "price": 405.36,
+            "notional_usd": 1661976.0,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 1568.0,
+            "price": 406.35,
+            "notional_usd": 637156.8,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 5678.0,
+            "price": 407.59,
+            "notional_usd": 2314296.02,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 13313.0,
+            "price": 408.52,
+            "notional_usd": 5438626.76,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 10530.0,
+            "price": 409.49,
+            "notional_usd": 4311929.7,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 14019.0,
+            "price": 410.68,
+            "notional_usd": 5757322.92,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 10989.0,
+            "price": 411.4,
+            "notional_usd": 4520874.6,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 1589.0,
+            "price": 412.51,
+            "notional_usd": 655478.39,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 44.0,
+            "price": 413.3,
+            "notional_usd": 18185.2,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 3581.0,
+            "price": 415.49,
+            "notional_usd": 1487869.69,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 4033.0,
+            "price": 416.34,
+            "notional_usd": 1679099.22,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 1300.0,
+            "price": 417.78,
+            "notional_usd": 543114.0,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Partners Iv, L.P.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 2022.0,
+            "price": 418.49,
+            "notional_usd": 846186.78,
+            "date": "2026-07-06"
+          },
+          {
+            "insider": "Silver Lake Group, L.L.C.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 390.0,
+            "price": 392.47,
+            "notional_usd": 153063.3,
+            "date": "2026-06-26"
+          },
+          {
+            "insider": "Silver Lake Group, L.L.C.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 215.0,
+            "price": 392.47,
+            "notional_usd": 84381.05,
+            "date": "2026-06-26"
+          },
+          {
+            "insider": "Silver Lake Group, L.L.C.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 936.0,
+            "price": 393.89,
+            "notional_usd": 368681.04,
+            "date": "2026-06-26"
+          },
+          {
+            "insider": "Silver Lake Group, L.L.C.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 514.0,
+            "price": 393.89,
+            "notional_usd": 202459.46,
+            "date": "2026-06-26"
+          },
+          {
+            "insider": "Silver Lake Group, L.L.C.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 441.0,
+            "price": 394.81,
+            "notional_usd": 174111.21,
+            "date": "2026-06-26"
+          },
+          {
+            "insider": "Silver Lake Group, L.L.C.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 243.0,
+            "price": 394.81,
+            "notional_usd": 95938.83,
+            "date": "2026-06-26"
+          },
+          {
+            "insider": "Silver Lake Group, L.L.C.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 7125.0,
+            "price": 396.24,
+            "notional_usd": 2823210.0,
+            "date": "2026-06-26"
+          },
+          {
+            "insider": "Silver Lake Group, L.L.C.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 3915.0,
+            "price": 396.24,
+            "notional_usd": 1551279.6,
+            "date": "2026-06-26"
+          },
+          {
+            "insider": "Silver Lake Group, L.L.C.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 516.0,
+            "price": 398.16,
+            "notional_usd": 205450.56,
+            "date": "2026-06-26"
+          },
+          {
+            "insider": "Silver Lake Group, L.L.C.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 284.0,
+            "price": 398.16,
+            "notional_usd": 113077.44,
+            "date": "2026-06-26"
+          },
+          {
+            "insider": "Silver Lake Group, L.L.C.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 968.0,
+            "price": 399.38,
+            "notional_usd": 386599.84,
+            "date": "2026-06-26"
+          },
+          {
+            "insider": "Silver Lake Group, L.L.C.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 532.0,
+            "price": 399.38,
+            "notional_usd": 212470.16,
+            "date": "2026-06-26"
+          },
+          {
+            "insider": "Silver Lake Group, L.L.C.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 387.0,
+            "price": 400.67,
+            "notional_usd": 155059.29,
+            "date": "2026-06-26"
+          },
+          {
+            "insider": "Silver Lake Group, L.L.C.",
+            "title": "other",
+            "type": "SELL",
+            "shares": 213.0,
+            "price": 400.67,
+            "notional_usd": 85342.71,
+            "date": "2026-06-26"
+          }
+        ],
+        "summary": {
+          "open_market_buys": 0,
+          "open_market_sells": 79,
+          "buy_notional_usd": 0,
+          "sell_notional_usd": 78451393.05,
+          "distinct_buyers": 0
+        }
+      },
+      "HPE": {
+        "transactions": [
+          {
+            "insider": "Karros Kirt P",
+            "title": "SVP, Treasurer, Corp Dev",
+            "type": "SELL",
+            "shares": 18785.0,
+            "price": 48.5,
+            "notional_usd": 911072.5,
+            "date": "2026-06-22"
+          }
+        ],
+        "summary": {
+          "open_market_buys": 0,
+          "open_market_sells": 1,
+          "buy_notional_usd": 0,
+          "sell_notional_usd": 911072.5,
+          "distinct_buyers": 0
+        }
+      },
+      "AMD": {
+        "transactions": [
+          {
+            "insider": "Papermaster Mark D",
+            "title": "Chief Technology Officer & EVP",
+            "type": "SELL",
+            "shares": 6000.0,
+            "price": 536.33,
+            "notional_usd": 3217980.0,
+            "date": "2026-06-15"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 2720.0,
+            "price": 449.21,
+            "notional_usd": 1221851.2,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 700.0,
+            "price": 450.4,
+            "notional_usd": 315280.0,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 4400.0,
+            "price": 451.53,
+            "notional_usd": 1986732.0,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 12862.0,
+            "price": 452.4,
+            "notional_usd": 5818768.8,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 14458.0,
+            "price": 453.45,
+            "notional_usd": 6555980.1,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 9392.0,
+            "price": 454.43,
+            "notional_usd": 4268006.56,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 7390.0,
+            "price": 455.4,
+            "notional_usd": 3365406.0,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 6638.0,
+            "price": 456.38,
+            "notional_usd": 3029450.44,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 7351.0,
+            "price": 457.42,
+            "notional_usd": 3362494.42,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 5700.0,
+            "price": 458.45,
+            "notional_usd": 2613165.0,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 2891.0,
+            "price": 459.41,
+            "notional_usd": 1328154.31,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 1700.0,
+            "price": 460.45,
+            "notional_usd": 782765.0,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 900.0,
+            "price": 461.67,
+            "notional_usd": 415503.0,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 1900.0,
+            "price": 462.81,
+            "notional_usd": 879339.0,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 400.0,
+            "price": 464.1,
+            "notional_usd": 185640.0,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 1100.0,
+            "price": 465.38,
+            "notional_usd": 511918.0,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 3337.0,
+            "price": 466.31,
+            "notional_usd": 1556076.47,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 3679.0,
+            "price": 467.48,
+            "notional_usd": 1719858.92,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 5002.0,
+            "price": 468.61,
+            "notional_usd": 2343987.22,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 6814.0,
+            "price": 469.55,
+            "notional_usd": 3199513.7,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 7426.0,
+            "price": 470.6,
+            "notional_usd": 3494675.6,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 5376.0,
+            "price": 471.52,
+            "notional_usd": 2534891.52,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 3509.0,
+            "price": 472.57,
+            "notional_usd": 1658248.13,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 3700.0,
+            "price": 473.61,
+            "notional_usd": 1752357.0,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 3855.0,
+            "price": 474.53,
+            "notional_usd": 1829313.15,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 1300.0,
+            "price": 475.48,
+            "notional_usd": 618124.0,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Su Lisa T",
+            "title": "Chair, President & CEO",
+            "type": "SELL",
+            "shares": 500.0,
+            "price": 476.43,
+            "notional_usd": 238215.0,
+            "date": "2026-06-10"
+          },
+          {
+            "insider": "Denzel Nora",
+            "title": "director",
+            "type": "SELL",
+            "shares": 1821.0,
+            "price": 522.0,
+            "notional_usd": 950562.0,
+            "date": "2026-05-29"
+          },
+          {
+            "insider": "Denzel Nora",
+            "title": "director",
+            "type": "SELL",
+            "shares": 8626.0,
+            "price": 522.0,
+            "notional_usd": 4502772.0,
+            "date": "2026-06-02"
+          },
+          {
+            "insider": "Norrod Forrest Eugene",
+            "title": "EVP & GM DESG",
+            "type": "SELL",
+            "shares": 516.0,
+            "price": 427.8,
+            "notional_usd": 220744.8,
+            "date": "2026-05-20"
+          },
+          {
+            "insider": "Norrod Forrest Eugene",
+            "title": "EVP & GM DESG",
+            "type": "SELL",
+            "shares": 1975.0,
+            "price": 428.45,
+            "notional_usd": 846188.75,
+            "date": "2026-05-20"
+          },
+          {
+            "insider": "Norrod Forrest Eugene",
+            "title": "EVP & GM DESG",
+            "type": "SELL",
+            "shares": 2667.0,
+            "price": 429.45,
+            "notional_usd": 1145343.15,
+            "date": "2026-05-20"
+          },
+          {
+            "insider": "Norrod Forrest Eugene",
+            "title": "EVP & GM DESG",
+            "type": "SELL",
+            "shares": 5032.0,
+            "price": 430.68,
+            "notional_usd": 2167181.76,
+            "date": "2026-05-20"
+          },
+          {
+            "insider": "Norrod Forrest Eugene",
+            "title": "EVP & GM DESG",
+            "type": "SELL",
+            "shares": 3287.0,
+            "price": 431.56,
+            "notional_usd": 1418537.72,
+            "date": "2026-05-20"
+          },
+          {
+            "insider": "Norrod Forrest Eugene",
+            "title": "EVP & GM DESG",
+            "type": "SELL",
+            "shares": 2274.0,
+            "price": 432.78,
+            "notional_usd": 984141.72,
+            "date": "2026-05-20"
+          },
+          {
+            "insider": "Norrod Forrest Eugene",
+            "title": "EVP & GM DESG",
+            "type": "SELL",
+            "shares": 1284.0,
+            "price": 433.75,
+            "notional_usd": 556935.0,
+            "date": "2026-05-20"
+          },
+          {
+            "insider": "Norrod Forrest Eugene",
+            "title": "EVP & GM DESG",
+            "type": "SELL",
+            "shares": 1562.0,
+            "price": 435.18,
+            "notional_usd": 679751.16,
+            "date": "2026-05-20"
+          },
+          {
+            "insider": "Norrod Forrest Eugene",
+            "title": "EVP & GM DESG",
+            "type": "SELL",
+            "shares": 890.0,
+            "price": 435.91,
+            "notional_usd": 387959.9,
+            "date": "2026-05-20"
+          }
+        ],
+        "summary": {
+          "open_market_buys": 0,
+          "open_market_sells": 39,
+          "buy_notional_usd": 0,
+          "sell_notional_usd": 74663812.5,
+          "distinct_buyers": 0
+        }
+      },
+      "TXN": {
+        "transactions": [
+          {
+            "insider": "Craighead Martin S",
+            "title": "director",
+            "type": "SELL",
+            "shares": 9643.0,
+            "price": 320.4075,
+            "notional_usd": 3089689.52,
+            "date": "2026-05-28"
+          },
+          {
+            "insider": "Craighead Martin S",
+            "title": "director",
+            "type": "SELL",
+            "shares": 357.0,
+            "price": 321.0069,
+            "notional_usd": 114599.46,
+            "date": "2026-05-28"
+          },
+          {
+            "insider": "Bahai Ahmad",
+            "title": "Sr. Vice President",
+            "type": "SELL",
+            "shares": 5000.0,
+            "price": 309.1272,
+            "notional_usd": 1545636.0,
+            "date": "2026-05-14"
+          },
+          {
+            "insider": "Lizardi Rafael R",
+            "title": "Sr. Vice President & CFO",
+            "type": "SELL",
+            "shares": 32119.0,
+            "price": 307.8474,
+            "notional_usd": 9887750.64,
+            "date": "2026-05-14"
+          },
+          {
+            "insider": "Lizardi Rafael R",
+            "title": "Sr. Vice President & CFO",
+            "type": "SELL",
+            "shares": 14156.0,
+            "price": 308.5448,
+            "notional_usd": 4367760.19,
+            "date": "2026-05-14"
+          },
+          {
+            "insider": "Lizardi Rafael R",
+            "title": "Sr. Vice President & CFO",
+            "type": "SELL",
+            "shares": 1459.0,
+            "price": 309.4487,
+            "notional_usd": 451485.65,
+            "date": "2026-05-14"
+          },
+          {
+            "insider": "Cox Carrie Smith",
+            "title": "director",
+            "type": "SELL",
+            "shares": 8393.0,
+            "price": 306.3737,
+            "notional_usd": 2571394.46,
+            "date": "2026-05-13"
+          },
+          {
+            "insider": "Cox Carrie Smith",
+            "title": "director",
+            "type": "SELL",
+            "shares": 445.0,
+            "price": 307.0433,
+            "notional_usd": 136634.27,
+            "date": "2026-05-13"
+          }
+        ],
+        "summary": {
+          "open_market_buys": 0,
+          "open_market_sells": 8,
+          "buy_notional_usd": 0,
+          "sell_notional_usd": 22164950.19,
+          "distinct_buyers": 0
+        }
+      },
+      "ALAB": {
+        "transactions": [
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 971.0,
+            "price": 451.9579,
+            "notional_usd": 438851.12,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 265.0,
+            "price": 453.1203,
+            "notional_usd": 120076.88,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 436.0,
+            "price": 453.8275,
+            "notional_usd": 197868.79,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 720.0,
+            "price": 454.9213,
+            "notional_usd": 327543.34,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 637.0,
+            "price": 455.8887,
+            "notional_usd": 290401.1,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 747.0,
+            "price": 456.9733,
+            "notional_usd": 341359.06,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 1006.0,
+            "price": 457.9983,
+            "notional_usd": 460746.29,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 845.0,
+            "price": 459.0184,
+            "notional_usd": 387870.55,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 334.0,
+            "price": 460.0732,
+            "notional_usd": 153664.45,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 468.0,
+            "price": 461.4695,
+            "notional_usd": 215967.73,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 629.0,
+            "price": 462.4406,
+            "notional_usd": 290875.14,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 496.0,
+            "price": 463.3543,
+            "notional_usd": 229823.73,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 307.0,
+            "price": 464.4516,
+            "notional_usd": 142586.64,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 75.0,
+            "price": 466.1309,
+            "notional_usd": 34959.82,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 219.0,
+            "price": 466.8959,
+            "notional_usd": 102250.2,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 336.0,
+            "price": 467.9949,
+            "notional_usd": 157246.29,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 1520.0,
+            "price": 460.0721,
+            "notional_usd": 699309.59,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 2129.0,
+            "price": 461.4701,
+            "notional_usd": 982469.84,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 2862.0,
+            "price": 462.4414,
+            "notional_usd": 1323507.29,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 2256.0,
+            "price": 463.3535,
+            "notional_usd": 1045325.5,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 1394.0,
+            "price": 464.4527,
+            "notional_usd": 647447.06,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 343.0,
+            "price": 466.1389,
+            "notional_usd": 159885.64,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 995.0,
+            "price": 466.8959,
+            "notional_usd": 464561.42,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 1527.0,
+            "price": 467.9952,
+            "notional_usd": 714628.67,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 1286.0,
+            "price": 429.5782,
+            "notional_usd": 552437.57,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 6630.0,
+            "price": 430.7908,
+            "notional_usd": 2856143.0,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 767.0,
+            "price": 432.7922,
+            "notional_usd": 331951.62,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 346.0,
+            "price": 433.4288,
+            "notional_usd": 149966.36,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 501.0,
+            "price": 434.7802,
+            "notional_usd": 217824.88,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 467.0,
+            "price": 435.7564,
+            "notional_usd": 203498.24,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 804.0,
+            "price": 436.8202,
+            "notional_usd": 351203.44,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 469.0,
+            "price": 437.9321,
+            "notional_usd": 205390.15,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 650.0,
+            "price": 438.7871,
+            "notional_usd": 285211.61,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 952.0,
+            "price": 440.0527,
+            "notional_usd": 418930.17,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 1519.0,
+            "price": 440.857,
+            "notional_usd": 669661.78,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 984.0,
+            "price": 441.7943,
+            "notional_usd": 434725.59,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 1095.0,
+            "price": 442.8714,
+            "notional_usd": 484944.18,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 1197.0,
+            "price": 443.8248,
+            "notional_usd": 531258.29,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 1330.0,
+            "price": 444.9081,
+            "notional_usd": 591727.77,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 948.0,
+            "price": 445.8515,
+            "notional_usd": 422667.22,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 898.0,
+            "price": 446.9136,
+            "notional_usd": 401328.41,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 883.0,
+            "price": 447.8608,
+            "notional_usd": 395461.09,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 1479.0,
+            "price": 448.8476,
+            "notional_usd": 663845.6,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 570.0,
+            "price": 449.8885,
+            "notional_usd": 256436.45,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 734.0,
+            "price": 450.9443,
+            "notional_usd": 330993.12,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 5837.0,
+            "price": 429.578,
+            "notional_usd": 2507446.79,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 30141.0,
+            "price": 430.7907,
+            "notional_usd": 12984462.49,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 3485.0,
+            "price": 432.7916,
+            "notional_usd": 1508278.73,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 1574.0,
+            "price": 433.4284,
+            "notional_usd": 682216.3,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 2279.0,
+            "price": 434.7826,
+            "notional_usd": 990869.55,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 2122.0,
+            "price": 435.7564,
+            "notional_usd": 924675.08,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 3655.0,
+            "price": 436.8206,
+            "notional_usd": 1596579.29,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 2129.0,
+            "price": 437.9323,
+            "notional_usd": 932357.87,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 2955.0,
+            "price": 438.7869,
+            "notional_usd": 1296615.29,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 4332.0,
+            "price": 440.0528,
+            "notional_usd": 1906308.73,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 6904.0,
+            "price": 440.8574,
+            "notional_usd": 3043679.49,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 4468.0,
+            "price": 441.7946,
+            "notional_usd": 1973938.27,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 4980.0,
+            "price": 442.8711,
+            "notional_usd": 2205498.08,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 5437.0,
+            "price": 443.8246,
+            "notional_usd": 2413074.35,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 6048.0,
+            "price": 444.9077,
+            "notional_usd": 2690801.77,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 4310.0,
+            "price": 445.8516,
+            "notional_usd": 1921620.4,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 4082.0,
+            "price": 446.9137,
+            "notional_usd": 1824301.72,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 4013.0,
+            "price": 447.8613,
+            "notional_usd": 1797267.4,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 6723.0,
+            "price": 448.8474,
+            "notional_usd": 3017601.07,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 2586.0,
+            "price": 449.8883,
+            "notional_usd": 1163411.14,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 3338.0,
+            "price": 450.9435,
+            "notional_usd": 1505249.4,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 4418.0,
+            "price": 451.9576,
+            "notional_usd": 1996748.68,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 1204.0,
+            "price": 453.1214,
+            "notional_usd": 545558.17,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 1980.0,
+            "price": 453.8275,
+            "notional_usd": 898578.45,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 3269.0,
+            "price": 454.9207,
+            "notional_usd": 1487135.77,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 2898.0,
+            "price": 455.8879,
+            "notional_usd": 1321163.13,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 3396.0,
+            "price": 456.9729,
+            "notional_usd": 1551879.97,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 4574.0,
+            "price": 457.9988,
+            "notional_usd": 2094886.51,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Alba Manuel",
+            "title": "director",
+            "type": "SELL",
+            "shares": 3837.0,
+            "price": 459.0178,
+            "notional_usd": 1761251.3,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Dyckerhoff Stefan A",
+            "title": "other",
+            "type": "SELL",
+            "shares": 3505.0,
+            "price": 450.0,
+            "notional_usd": 1577250.0,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Dyckerhoff Stefan A",
+            "title": "other",
+            "type": "SELL",
+            "shares": 8333.0,
+            "price": 450.0,
+            "notional_usd": 3749850.0,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Dyckerhoff Stefan A",
+            "title": "other",
+            "type": "SELL",
+            "shares": 661.0,
+            "price": 450.0,
+            "notional_usd": 297450.0,
+            "date": "2026-07-01"
+          },
+          {
+            "insider": "Mayer Bethany",
+            "title": "director",
+            "type": "SELL",
+            "shares": 99.0,
+            "price": 391.2689,
+            "notional_usd": 38735.62,
+            "date": "2026-06-24"
+          },
+          {
+            "insider": "Mayer Bethany",
+            "title": "director",
+            "type": "SELL",
+            "shares": 193.0,
+            "price": 392.6746,
+            "notional_usd": 75786.2,
+            "date": "2026-06-24"
+          },
+          {
+            "insider": "Mayer Bethany",
+            "title": "director",
+            "type": "SELL",
+            "shares": 54.0,
+            "price": 393.86,
+            "notional_usd": 21268.44,
+            "date": "2026-06-24"
+          },
+          {
+            "insider": "Mayer Bethany",
+            "title": "director",
+            "type": "SELL",
+            "shares": 146.0,
+            "price": 396.4915,
+            "notional_usd": 57887.76,
+            "date": "2026-06-24"
+          },
+          {
+            "insider": "Mayer Bethany",
+            "title": "director",
+            "type": "SELL",
+            "shares": 165.0,
+            "price": 398.3154,
+            "notional_usd": 65722.04,
+            "date": "2026-06-24"
+          },
+          {
+            "insider": "Mayer Bethany",
+            "title": "director",
+            "type": "SELL",
+            "shares": 29.0,
+            "price": 399.96,
+            "notional_usd": 11598.84,
+            "date": "2026-06-24"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 879.0,
+            "price": 362.8405,
+            "notional_usd": 318936.8,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 854.0,
+            "price": 361.1061,
+            "notional_usd": 308384.61,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 1116.0,
+            "price": 360.0879,
+            "notional_usd": 401858.1,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 877.0,
+            "price": 359.3267,
+            "notional_usd": 315129.52,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 883.0,
+            "price": 358.136,
+            "notional_usd": 316234.09,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 566.0,
+            "price": 356.9442,
+            "notional_usd": 202030.42,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 946.0,
+            "price": 355.1273,
+            "notional_usd": 335950.43,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 373.0,
+            "price": 354.3839,
+            "notional_usd": 132185.19,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 1101.0,
+            "price": 352.9665,
+            "notional_usd": 388616.12,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 318.0,
+            "price": 351.7187,
+            "notional_usd": 111846.55,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 17.0,
+            "price": 351.13,
+            "notional_usd": 5969.21,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 423.0,
+            "price": 349.9557,
+            "notional_usd": 148031.26,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 193.0,
+            "price": 347.8389,
+            "notional_usd": 67132.91,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 238.0,
+            "price": 346.2717,
+            "notional_usd": 82412.66,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 246.0,
+            "price": 345.2366,
+            "notional_usd": 84928.2,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 243.0,
+            "price": 344.0294,
+            "notional_usd": 83599.14,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 527.0,
+            "price": 342.5453,
+            "notional_usd": 180521.37,
+            "date": "2026-06-04"
+          },
+          {
+            "insider": "Lazar Jack R",
+            "title": "director",
+            "type": "SELL",
+            "shares": 200.0,
+            "price": 339.56,
+            "notional_usd": 67912.0,
+            "date": "2026-06-04"
+          }
+        ],
+        "summary": {
+          "open_market_buys": 0,
+          "open_market_sells": 101,
+          "buy_notional_usd": 0,
+          "sell_notional_usd": 90675515.35,
+          "distinct_buyers": 0
+        }
+      }
+    }
+  },
+  "track_record": {
+    "note": "Your own past trades. Study what worked and what did not before proposing.",
+    "closed_trades": [],
+    "performance": null
+  }
+}
