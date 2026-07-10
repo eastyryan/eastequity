@@ -91,11 +91,16 @@ export default function Home() {
     excessPts = returnPct - spyReturnPct;
   }
 
-  const lastRun = new Date(latest.generated_at).toLocaleDateString("en-US", {
+  const lastRunDate = new Date(latest.generated_at);
+  const lastRun = `${lastRunDate.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
-    year: "numeric",
-  });
+    timeZone: "America/New_York",
+  })}, ${lastRunDate.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/New_York",
+  })} ET`;
 
   const stats = [
     { label: "Portfolio value", value: usd(equity) },
