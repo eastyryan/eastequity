@@ -102,7 +102,7 @@ def _posted_today(today: str) -> bool:
     if not POST_LOG.exists():
         return False
     return any(json.loads(line).get("ts", "").startswith(today)
-               and json.loads(line).get("status") in ("posted", "dry_run")
+               and json.loads(line).get("status") == "posted"
                for line in POST_LOG.read_text().splitlines())
 
 
