@@ -36,12 +36,15 @@ def _get(url: str) -> dict:
 
 def ticker_to_cik(ticker: str) -> str | None:
     cache_file = CACHE / "company_tickers.json"
-    if cache_file.exists() and time.time() - cache_file.stat().st_mtime < 7 * 86400:
-        data = json.loads(cache_file.read_text())
-    else:
-        data = _get("https://www.sec.gov/files/company_tickers.json")
-        cache_file.parent.mkdir(parents=True, exist_ok=True)
-        cache_file.write_text(json.dumps(data))
+    try:
+        if cache_file.exists() and time.time() - cache_file.stat().st_mtime < 7 * 86400:
+            data = json.loads(cache_file.read_text())
+        else:
+            data = _get("https://www.sec.gov/files/company_tickers.json")
+            cache_file.parent.mkdir(parents=True, exist_ok=True)
+            cache_file.write_text(json.dumps(data))
+    except Exception:
+        return None
     for row in data.values():
         if row["ticker"].upper() == ticker.upper():
             return str(row["cik_str"]).zfill(10)
@@ -74,7 +77,10 @@ def _annualish(units: list[dict], quarterly: bool) -> list[dict]:
 
 
 def get_filing_brief(ticker: str) -> dict:
-    cik = ticker_to_cik(ticker)
+    try:
+        cik = ticker_to_cik(ticker)
+    except Exception as e:
+        return {"status": "error", "reason": f"{type(e).__name__}: {e}"}
     if cik is None:
         return {"status": "error", "reason": f"no CIK found for {ticker}"}
     try:

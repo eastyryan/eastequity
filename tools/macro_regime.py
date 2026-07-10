@@ -58,10 +58,14 @@ def get_macro_snapshot() -> dict:
                 out["indicators"][name] = {"error": str(e)}
 
         ind = out["indicators"]
-        yc = None
-        if "ten_year_yield" in ind and "two_year_yield" in ind:
+        if "latest" in ind.get("ten_year_yield", {}) and "latest" in ind.get("two_year_yield", {}):
             yc = round(ind["ten_year_yield"]["latest"] - ind["two_year_yield"]["latest"], 2)
             out["indicators"]["yield_curve_10y2y"] = {"latest": yc}
+
+        if not any("latest" in v for v in ind.values()):
+            return {"status": "unavailable",
+                    "reason": "FRED unreachable for all series (network/policy restriction)",
+                    "series_errors": {k: v.get("error") for k, v in ind.items() if "error" in v}}
 
         # Simple deterministic regime score — a hint, not a verdict. Claude interprets.
         score = 0
