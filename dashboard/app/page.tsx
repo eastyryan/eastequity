@@ -10,6 +10,20 @@ type Position = {
   market_value_usd: number;
   last_price?: number;
   opened_at: string;
+  days_held?: number;
+  original_plan?: {
+    thesis?: string;
+    stop_loss?: number;
+    target_price?: number;
+    entry_price_max?: number;
+    holding_horizon_days?: number;
+    confidence?: number;
+    risk_reward_ratio?: number;
+    catalysts?: string[];
+    risk_map?: string;
+    macro_context?: string;
+    proposed_at?: string;
+  } | null;
 };
 
 type Indicator = { latest: number; direction: string } | null;
@@ -129,7 +143,11 @@ export default function Home() {
     <main className="mx-auto max-w-4xl px-5 sm:px-8">
       {/* Header */}
       <header className="flex h-16 items-center justify-between border-b border-line">
-        <span className="text-[15px] font-semibold tracking-tight">East Equity Agent</span>
+        <span className="flex items-center gap-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/avatar.jpg" alt="" className="h-8 w-8 rounded-full border border-line" />
+          <span className="text-[15px] font-semibold tracking-tight">East Equity Agent</span>
+        </span>
         <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-800 font-[family-name:var(--font-geist-mono)]">
           PAPER TRADING
         </span>
@@ -225,36 +243,117 @@ export default function Home() {
             </p>
           </div>
         ) : (
-          <div className="mt-6 overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-line text-left text-[13px] text-ink-3">
-                  <th className="py-2 pr-4 font-normal">Ticker</th>
-                  <th className="py-2 pr-4 font-normal">Shares</th>
-                  <th className="py-2 pr-4 font-normal">Avg cost</th>
-                  <th className="py-2 pr-4 font-normal">Value</th>
-                  <th className="py-2 font-normal">P&amp;L</th>
-                </tr>
-              </thead>
-              <tbody className="font-[family-name:var(--font-geist-mono)]">
-                {positions.map((p) => {
-                  const pnl = p.market_value_usd - p.quantity * p.avg_cost;
-                  return (
-                    <tr key={p.ticker} className="border-b border-line/60">
-                      <td className="py-3 pr-4 font-medium">{p.ticker}</td>
-                      <td className="py-3 pr-4">{p.quantity}</td>
-                      <td className="py-3 pr-4">${p.avg_cost.toFixed(2)}</td>
-                      <td className="py-3 pr-4">{usd(p.market_value_usd)}</td>
-                      <td className={`py-3 ${pnl >= 0 ? "text-accent" : "text-red-700"}`}>
-                        {pnl >= 0 ? "+" : ""}
-                        {usd(pnl)}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+          <ul className="mt-6 divide-y divide-line/60">
+            {positions.map((p) => {
+              const pnl = p.market_value_usd - p.quantity * p.avg_cost;
+              const pnlPct = (pnl / (p.quantity * p.avg_cost)) * 100;
+              const plan = p.original_plan;
+              return (
+                <li key={p.ticker}>
+                  <details className="group py-4">
+                    <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-4 gap-y-1 [&::-webkit-details-marker]:hidden">
+                      <span className="w-14 shrink-0 font-medium font-[family-name:var(--font-geist-mono)]">
+                        {p.ticker}
+                      </span>
+                      <span className="text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">
+                        {p.quantity} sh @ ${p.avg_cost.toFixed(2)}
+                      </span>
+                      <span className="ml-auto flex items-baseline gap-4">
+                        <span className="text-sm font-[family-name:var(--font-geist-mono)]">
+                          {usd(p.market_value_usd)}
+                        </span>
+                        <span
+                          className={`text-sm font-[family-name:var(--font-geist-mono)] ${
+                            pnl >= 0 ? "text-accent" : "text-red-700"
+                          }`}
+                        >
+                          {pnl >= 0 ? "+" : ""}
+                          {usd(pnl)} ({pnl >= 0 ? "+" : ""}
+                          {pnlPct.toFixed(1)}%)
+                        </span>
+                        <span
+                          className="shrink-0 text-ink-3 transition-transform group-open:rotate-90"
+                          aria-hidden
+                        >
+                          ›
+                        </span>
+                      </span>
+                    </summary>
+
+                    <div className="mt-4 space-y-4 pl-0 sm:pl-[4.5rem]">
+                      {plan && (
+                        <div className="grid grid-cols-2 gap-y-4 sm:grid-cols-5 text-sm">
+                          {[
+                            { label: "Stop loss", value: plan.stop_loss ? `$${plan.stop_loss}` : "n/a" },
+                            { label: "Target", value: plan.target_price ? `$${plan.target_price}` : "n/a" },
+                            {
+                              label: "Horizon",
+                              value: plan.holding_horizon_days
+                                ? `${p.days_held ?? 0}d of ${plan.holding_horizon_days}d`
+                                : "n/a",
+                            },
+                            {
+                              label: "Confidence",
+                              value: plan.confidence != null ? `${Math.round(plan.confidence * 100)}%` : "n/a",
+                            },
+                            {
+                              label: "Reward / risk",
+                              value: plan.risk_reward_ratio != null ? `${plan.risk_reward_ratio}` : "n/a",
+                            },
+                          ].map((s) => (
+                            <div key={s.label} className="border-l border-line pl-3">
+                              <div className="text-[12px] text-ink-3">{s.label}</div>
+                              <div className="mt-0.5 font-[family-name:var(--font-geist-mono)]">{s.value}</div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {plan?.thesis && (
+                        <div>
+                          <h3 className="text-sm font-medium">Thesis</h3>
+                          <p className="mt-1 text-sm text-ink-2 leading-relaxed">{clean(plan.thesis)}</p>
+                        </div>
+                      )}
+
+                      {plan?.catalysts && plan.catalysts.length > 0 && (
+                        <div>
+                          <h3 className="text-sm font-medium">Catalysts</h3>
+                          <ul className="mt-1 list-disc space-y-1 pl-5 text-sm text-ink-2 leading-relaxed">
+                            {plan.catalysts.map((c, i) => (
+                              <li key={i}>{clean(c)}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+
+                      {plan?.risk_map && (
+                        <div>
+                          <h3 className="text-sm font-medium">What kills this trade</h3>
+                          <p className="mt-1 text-sm text-ink-2 leading-relaxed">{clean(plan.risk_map)}</p>
+                        </div>
+                      )}
+
+                      {plan?.macro_context && (
+                        <div>
+                          <h3 className="text-sm font-medium">Macro context at entry</h3>
+                          <p className="mt-1 text-sm text-ink-2 leading-relaxed">{clean(plan.macro_context)}</p>
+                        </div>
+                      )}
+
+                      <p className="text-[12px] text-ink-3">
+                        Opened {new Date(p.opened_at).toLocaleDateString("en-US", {
+                          month: "long",
+                          day: "numeric",
+                          timeZone: "America/New_York",
+                        })}. The agent re-reviews this position against this plan on every run.
+                      </p>
+                    </div>
+                  </details>
+                </li>
+              );
+            })}
+          </ul>
         )}
       </section>
 

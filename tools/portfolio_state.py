@@ -33,7 +33,13 @@ def get_portfolio_state() -> dict:
                 plans[p.get("ticker", "").upper()] = {
                     "thesis": p.get("thesis"), "stop_loss": p.get("stop_loss"),
                     "target_price": p.get("target_price"),
+                    "entry_price_max": p.get("entry_price_max"),
                     "holding_horizon_days": p.get("holding_horizon_days"),
+                    "confidence": p.get("confidence"),
+                    "risk_reward_ratio": p.get("risk_reward_ratio"),
+                    "catalysts": p.get("catalysts"),
+                    "risk_map": p.get("risk_map"),
+                    "macro_context": p.get("macro_context"),
                     "proposed_at": rec.get("ts"),
                 }
     for pos in state.get("positions", []):

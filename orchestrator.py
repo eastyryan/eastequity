@@ -73,22 +73,27 @@ def release_run_lock() -> None:
     LOCK_FILE.unlink(missing_ok=True)
 
 
-def preflight(cfg: dict, run_id: str, news_only: bool = False) -> str | None:
+def preflight(cfg: dict, run_id: str, news_only: bool = False,
+              manual: bool = False) -> str | None:
     """Return a halt reason string, or None if clear to proceed."""
     if validator.kill_switch_active(cfg):
         return "KILL_SWITCH file present — no runs until it is removed"
     if not news_only and datetime.now().strftime("%a") not in cfg["schedule"]["run_days"]:
         return "not a configured run day (weekend/holiday guard)"
-    # Usage budget: hard cap on completed runs per day so scheduled cycles can
-    # never drain the subscription's usage pool. Counts real (non-halted) runs
-    # in the journal, which syncs through git across local and cloud runners.
-    cap = cfg["schedule"].get("max_completed_runs_per_day", 12)
-    runs_file = ROOT / "journal" / "runs" / f"{datetime.now(timezone.utc).date().isoformat()}.jsonl"
-    if runs_file.exists():
-        completed = sum(1 for line in runs_file.read_text().splitlines()
-                        if "halted" not in json.loads(line))
-        if completed >= cap:
-            return f"daily run budget exhausted ({completed}/{cap}) - protecting usage limits"
+    # Usage budget: hard cap on SCHEDULED runs per day so the automation can never
+    # drain the subscription's usage pool. Manual (user-initiated) runs are marked
+    # in the journal and neither count toward nor are blocked by the budget.
+    if not manual:
+        cap = cfg["schedule"].get("max_completed_runs_per_day", 12)
+        runs_file = ROOT / "journal" / "runs" / f"{datetime.now(timezone.utc).date().isoformat()}.jsonl"
+        if runs_file.exists():
+            completed = 0
+            for line in runs_file.read_text().splitlines():
+                rec = json.loads(line)
+                if "halted" not in rec and not rec.get("manual"):
+                    completed += 1
+            if completed >= cap:
+                return f"daily run budget exhausted ({completed}/{cap}) - protecting usage limits"
     if not acquire_run_lock(run_id):
         return "another run is already in progress (RUN_LOCK held)"
     return None
@@ -289,7 +294,8 @@ def _benchmark_close(ticker: str = "SPY") -> float | None:
         import yfinance as yf
         h = yf.Ticker(ticker).history(period="5d")
         return round(float(h["Close"].iloc[-1]), 2)
-    except Exception:
+    except Exception as e:
+        print(f"  WARNING: benchmark fetch failed ({e}) - S&P comparison will show a gap")
         return None
 
 
@@ -528,6 +534,8 @@ def main() -> int:
                     help="run steps 1-4 only; skip validation/execution")
     ap.add_argument("--self-review", action="store_true",
                     help="weekly audit of decisions vs outcomes; no trading")
+    ap.add_argument("--manual", action="store_true",
+                    help="user-initiated run: exempt from (and not counted in) the daily run budget")
     ap.add_argument("--news-only", action="store_true",
                     help="markets-closed news review: update commentary/watchlist, no trading")
     ap.add_argument("--gather-only", action="store_true",
@@ -545,7 +553,7 @@ def main() -> int:
         return self_review(run_id)
     print(f"=== East Equity Agent run {run_id} (mode: {cfg['mode']['trading_mode']}) ===")
 
-    halt = preflight(cfg, run_id, news_only=args.news_only)
+    halt = preflight(cfg, run_id, news_only=args.news_only, manual=args.manual)
     if halt:
         print(f"HALT: {halt}")
         journal.log_run_summary({"halted": halt}, run_id)
@@ -608,6 +616,7 @@ def main() -> int:
     redeploy_dashboard()
     draft_x_summary(fills, results, context, run_id)
     journal.log_run_summary({
+        "manual": args.manual,
         "proposals": len(proposals), "approved": len(approved),
         "fills": len(fills), "no_trade_reason": no_trade_reason,
     }, run_id)
