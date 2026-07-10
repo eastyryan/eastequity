@@ -127,7 +127,7 @@ export default function Home() {
     {
       label: "vs S&P 500",
       value:
-        excessPts === null ? "n/a" : `${excessPts >= 0 ? "+" : ""}${excessPts.toFixed(2)} pts`,
+        excessPts === null ? "n/a" : `${excessPts >= 0 ? "+" : ""}${excessPts.toFixed(2)}%`,
       signed: excessPts !== null,
       positive: excessPts !== null && excessPts >= 0,
     },
@@ -171,7 +171,7 @@ export default function Home() {
             <div key={s.label} className="rounded-xl border border-line bg-white p-5">
               <dt className="text-[13px] text-ink-3">{s.label}</dt>
               <dd
-                className={`mt-2 text-2xl lg:text-3xl font-medium tracking-tight font-[family-name:var(--font-geist-mono)] ${
+                className={`mt-2 whitespace-nowrap text-2xl lg:text-3xl font-medium tracking-tight font-[family-name:var(--font-geist-mono)] ${
                   s.signed ? (s.positive ? "text-accent" : "text-red-700") : ""
                 }`}
               >
