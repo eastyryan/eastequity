@@ -513,11 +513,16 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
     hist_file = dash / "equity_history.json"
     hist = json.loads(hist_file.read_text()) if hist_file.exists() else []
     today = datetime.now(timezone.utc).date().isoformat()
+    # A benchmark value, once recorded for a date, must survive every later
+    # rewrite of that day's entry - sandboxed runs can't refetch it.
+    prev_today = next((h for h in hist if h.get("date") == today), {})
+    bench = (context.get("benchmark_close") or _benchmark_close()
+             or prev_today.get("benchmark_close"))
     hist = [h for h in hist if h["date"] != today]
     hist.append({"date": today,
                  "equity": context["portfolio"].get("total_equity_usd"),
                  "cash": context["portfolio"].get("cash_usd"),
-                 "benchmark_close": context.get("benchmark_close") or _benchmark_close()})
+                 "benchmark_close": bench})
     hist_file.write_text(json.dumps(hist, indent=2))
 
     closed = compute_closed_trades()
