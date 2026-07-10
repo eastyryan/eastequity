@@ -51,11 +51,11 @@ load_dotenv(ROOT / ".env")
 # ---------------------------------------------------------------------------
 # Step 1 — Safety preflight
 # ---------------------------------------------------------------------------
-def preflight(cfg: dict, run_id: str) -> str | None:
+def preflight(cfg: dict, run_id: str, news_only: bool = False) -> str | None:
     """Return a halt reason string, or None if clear to proceed."""
     if validator.kill_switch_active(cfg):
         return "KILL_SWITCH file present — no runs until it is removed"
-    if datetime.now().strftime("%a") not in cfg["schedule"]["run_days"]:
+    if not news_only and datetime.now().strftime("%a") not in cfg["schedule"]["run_days"]:
         return "not a configured run day (weekend/holiday guard)"
     return None
 
@@ -117,10 +117,24 @@ def gather_context(cfg: dict) -> dict:
 # ---------------------------------------------------------------------------
 # Step 3 — Wake the brain (single Claude invocation via Claude Code CLI)
 # ---------------------------------------------------------------------------
-def ask_claude(context: dict, run_id: str) -> str:
+def ask_claude(context: dict, run_id: str, news_only: bool = False) -> str:
     """Invoke Claude Code headlessly with CLAUDE.md rules + the context bundle."""
     context_file = ROOT / "state" / f"context_{run_id}.json"
     context_file.write_text(json.dumps(context, indent=2, default=str))
+
+    if news_only:
+        prompt = (
+            "You are running a scheduled East Equity Agent NEWS REVIEW (markets are closed - "
+            f"no trading this run). Read CLAUDE.md, then the context bundle at {context_file}. "
+            "Review weekend/overnight news for current holdings and the whole universe: "
+            "earnings reports, guidance changes, analyst moves, macro developments. Update "
+            "your view of each holding and each watchlist name. Output the JSON block from "
+            "CLAUDE.md with proposals REQUIRED to be an empty list, no_trade_reason set to "
+            "'news review - markets closed', fresh commentary (lead with anything that "
+            "changes Monday's plan), and an updated watchlist. End with an "
+            "'Improvement note:' line."
+        )
+        return _run_claude(prompt)
 
     prompt = (
         "You are running a scheduled East Equity Agent trading cycle. "
@@ -133,6 +147,10 @@ def ask_claude(context: dict, run_id: str) -> str:
         "Proposing nothing is acceptable — include no_trade_reason if so. "
         "End with an 'Improvement note:' line."
     )
+    return _run_claude(prompt)
+
+
+def _run_claude(prompt: str) -> str:
     import time
     last_err = ""
     for attempt in (1, 2):  # one retry: overnight runs can hit transient/usage errors
@@ -349,7 +367,8 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "run_id": run_id,
         "mode": context["trading_mode"],
-        "schedule_note": "Runs every 3 hours on weekdays",
+        "schedule_note": "Runs hourly during market hours, plus pre-market, evening, "
+                         "midnight, and weekend news checks",
         "portfolio": {k: context["portfolio"].get(k) for k in
                       ("cash_usd", "total_equity_usd", "positions")},
         "macro_snapshot": {
@@ -471,6 +490,8 @@ def main() -> int:
                     help="run steps 1-4 only; skip validation/execution")
     ap.add_argument("--self-review", action="store_true",
                     help="weekly audit of decisions vs outcomes; no trading")
+    ap.add_argument("--news-only", action="store_true",
+                    help="markets-closed news review: update commentary/watchlist, no trading")
     args = ap.parse_args()
 
     cfg = validator.load_config()
@@ -480,7 +501,7 @@ def main() -> int:
         return self_review(run_id)
     print(f"=== East Equity Agent run {run_id} (mode: {cfg['mode']['trading_mode']}) ===")
 
-    halt = preflight(cfg, run_id)
+    halt = preflight(cfg, run_id, news_only=args.news_only)
     if halt:
         print(f"HALT: {halt}")
         journal.log_run_summary({"halted": halt}, run_id)
@@ -490,9 +511,11 @@ def main() -> int:
     context = gather_context(cfg)
 
     print("[2/5] Waking the brain (Claude)...")
-    response = ask_claude(context, run_id)
+    response = ask_claude(context, run_id, news_only=args.news_only)
     parsed = parse_proposals(response)
     proposals, no_trade_reason = parsed["proposals"], parsed["no_trade_reason"]
+    if args.news_only:
+        proposals = []  # belt and suspenders: a news review never trades
     print(f"      {len(proposals)} proposal(s). {no_trade_reason or ''}")
 
     for m in re.findall(r"Improvement note:(.+)", response):
