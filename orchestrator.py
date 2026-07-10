@@ -517,6 +517,9 @@ def main() -> int:
     fills = execute(approved, context, cfg, run_id)
 
     print("[5/5] Journaling + dashboard + X draft...")
+    if fills:  # the snapshot from step 1 predates execution - re-read before publishing
+        simulated_broker.mark_to_market(context["universe_scan"].get("prices", {}))
+        context["portfolio"] = get_portfolio_state()
     refresh_dashboard(context, response, results, fills, run_id, no_trade_reason,
                       parsed["commentary"], parsed["watchlist"])
     redeploy_dashboard()
