@@ -569,6 +569,26 @@ def main() -> int:
         print("[1/5] Gathering context...")
         context = gather_context(cfg)
         if args.gather_only:
+            # Sandboxed cloud runs may find every live feed blocked. Fall back to
+            # the bundle committed by the GitHub Actions data relay if it is fresh.
+            degraded = (context["macro_regime"].get("status") != "ok"
+                        or not context["universe_scan"].get("top_setups"))
+            relay = ROOT / "data" / "cloud_context.json"
+            if degraded and relay.exists():
+                cached = json.loads(relay.read_text())
+                age_h = (datetime.now(timezone.utc)
+                         - datetime.fromisoformat(cached["run_date"])).total_seconds() / 3600
+                if age_h < 4:
+                    cached["portfolio"] = context["portfolio"]      # live repo state
+                    cached["hard_limits"] = context["hard_limits"]
+                    cached["stale_data_notice"] = (
+                        f"Live data feeds unreachable from this environment; using the "
+                        f"bundle gathered {age_h:.1f}h ago by the GitHub Actions data relay. "
+                        f"Prices may be up to that stale - factor this into confidence.")
+                    context = cached
+                    print(f"  (live feeds blocked - using relay bundle, {age_h:.1f}h old)")
+                else:
+                    print(f"  (relay bundle too stale: {age_h:.1f}h - proceeding degraded)")
             out = ROOT / "state" / f"context_{run_id}.json"
             out.write_text(json.dumps(context, indent=2, default=str))
             print(f"CONTEXT_FILE={out}")
