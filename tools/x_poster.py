@@ -35,18 +35,51 @@ def _keys() -> dict | None:
     return keys if all(keys.values()) else None
 
 
+def _split_thread(text: str, limit: int = 272) -> list[str]:
+    """Split long-form posts into a thread on paragraph, then sentence, boundaries."""
+    if len(text) <= MAX_LEN:
+        return [text]
+    chunks, current = [], ""
+    for para in [p.strip() for p in text.split("\n\n") if p.strip()]:
+        pieces = [para] if len(para) <= limit else re.split(r"(?<=[.!?]) +", para)
+        for piece in pieces:
+            if current and len(current) + len(piece) + 2 > limit:
+                chunks.append(current.strip())
+                current = piece
+            else:
+                current = f"{current}\n\n{piece}" if (current and piece is pieces[0]
+                                                      and len(pieces) == 1) else \
+                          (f"{current} {piece}" if current else piece)
+        if current and len(current) >= limit * 0.7:
+            chunks.append(current.strip())
+            current = ""
+    if current.strip():
+        chunks.append(current.strip())
+    n = len(chunks)
+    return [f"{c} ({i+1}/{n})" if n > 1 else c for i, c in enumerate(chunks)]
+
+
 def post_tweet(text: str) -> dict:
+    """Post text; long-form content goes out as a reply-chained thread."""
     from requests_oauthlib import OAuth1Session
     keys = _keys()
     if keys is None:
         return {"status": "skipped", "reason": "X API keys not configured in .env"}
     session = OAuth1Session(keys["X_API_KEY"], keys["X_API_SECRET"],
                             keys["X_ACCESS_TOKEN"], keys["X_ACCESS_SECRET"])
-    r = session.post("https://api.twitter.com/2/tweets",
-                     json={"text": text[:MAX_LEN]}, timeout=30)
-    if r.status_code in (200, 201):
-        return {"status": "posted", "tweet_id": r.json().get("data", {}).get("id")}
-    return {"status": "error", "code": r.status_code, "body": r.text[:300]}
+    ids, reply_to = [], None
+    for chunk in _split_thread(text):
+        payload = {"text": chunk[:MAX_LEN]}
+        if reply_to:
+            payload["reply"] = {"in_reply_to_tweet_id": reply_to}
+        r = session.post("https://api.twitter.com/2/tweets", json=payload, timeout=30)
+        if r.status_code not in (200, 201):
+            return {"status": "error", "code": r.status_code, "body": r.text[:300],
+                    "posted_ids": ids}
+        reply_to = r.json().get("data", {}).get("id")
+        ids.append(reply_to)
+    return {"status": "posted", "tweet_id": ids[0] if ids else None,
+            "thread_len": len(ids)}
 
 
 def _already_posted() -> set[str]:
@@ -75,7 +108,8 @@ def process_drafts(dry_run: bool = False) -> list[dict]:
         text = draft.read_text().strip()
         if not text:
             continue
-        has_fill = bool(re.search(r"^(Opened|Closed) ", text, re.MULTILINE))
+        has_fill = ("_trade" in draft.name
+                    or bool(re.search(r"^(Opened|Closed) ", text, re.MULTILINE)))
         hour_local = datetime.now().hour
         is_eod_window = 17 <= hour_local <= 19
         if has_fill:

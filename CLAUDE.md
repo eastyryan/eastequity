@@ -61,6 +61,9 @@ Beyond filings/13F/news, every run now includes:
 2. **Portfolio review** — read current positions; for each, do fresh research and decide HOLD
    or SELL_TO_CLOSE. Thesis broken = exit, even at a loss. Thesis intact with room to run =
    hold, even past the original target. Move done or better use of capital found = rotate.
+   Apply the cash test: estimate the position's remaining 12-month expected return from
+   here; if it no longer clearly beats ~4% (cash yield), holding it is habit, not a
+   decision — book it and free the capital.
 3. **Universe scan** — identify at most 3 candidates with swing-quality setups.
 4. **Deep research** — for top candidates, pull latest 10-K/10-Q summaries, 13F activity,
    and news. You may use WebSearch to verify catalysts and check for breaking news the
@@ -86,6 +89,7 @@ Output proposals inside a fenced ```json block as a list under key `"proposals"`
       "confidence": 0.72,
       "risk_reward_ratio": 2.5,
       "thesis": "3-6 sentence investment rationale grounded in filings/flows/momentum.",
+      "scenarios": {"bull": {"price": 240, "prob": 0.3}, "base": {"price": 215, "prob": 0.45}, "bear": {"price": 170, "prob": 0.25}},
       "catalysts": ["Specific catalyst with expected date/window"],
       "macro_context": "One-paragraph regime alignment statement.",
       "risk_map": "What kills this trade and how we'd know early."
@@ -103,6 +107,16 @@ Output proposals inside a fenced ```json block as a list under key `"proposals"`
   ]
 }
 ```
+
+Optional field "x_post": REQUIRED whenever you propose a trade or a position was closed
+this run (including forced exits); omit on quiet runs. Write the post yourself, first
+person, for your public X account. Model: a sharp fund manager's trade memo, not a bot
+alert. Structure: what you did and at what price; the thesis in plain numbers (growth,
+multiple, the gap you are exploiting); the specific catalyst and its DATE; bull/base/bear
+targets with probabilities and the probability-weighted 12-month expected return; the live
+risk that would prove you wrong. Plain tickers (no $cashtags). 3-6 short paragraphs. End
+with: "This is a paper-trading experiment running in public, not advice." Never overstate:
+every number must come from the context bundle.
 
 The watchlist is REQUIRED every run: your 5-10 most compelling potential positions from the
 universe, ranked most-compelling first. These are names you researched and would buy under the

@@ -343,11 +343,12 @@ def parse_proposals(response: str) -> dict:
                     "no_trade_reason": data.get("no_trade_reason"),
                     "commentary": data.get("commentary"),
                     "watchlist": (data.get("watchlist") or [])[:10],
+                    "x_post": data.get("x_post"),
                 }
         except json.JSONDecodeError:
             continue
     return {"proposals": [], "no_trade_reason": "no parsable proposals block in response",
-            "commentary": None, "watchlist": []}
+            "commentary": None, "watchlist": [], "x_post": None}
 
 
 # ---------------------------------------------------------------------------
@@ -589,8 +590,16 @@ def redeploy_dashboard() -> None:
         print(f"  PUBLISH FAILED (site going stale): {e}")
 
 
-def draft_x_summary(fills: list, results: list, context: dict, run_id: str) -> None:
-    # Plain tickers, no $cashtags: X rejects multi-cashtag posts (Hermes lesson).
+def draft_x_summary(fills: list, results: list, context: dict, run_id: str,
+                    x_post: str | None = None) -> None:
+    # Trade drafts get a _trade filename suffix so the poster prioritizes them.
+    suffix = "_trade" if fills else ""
+    path = ROOT / "state" / f"x_draft_{run_id}{suffix}.txt"
+    if x_post and x_post.strip():
+        # The brain wrote its own post (fund-manager memo style). Publish verbatim.
+        path.write_text(x_post.strip())
+        return
+    # Fallback terse draft. Plain tickers, no $cashtags (X rejects multi-cashtag posts).
     lines = [f"East Equity Agent swing update ({datetime.now():%b %d})"]
     if fills:
         for f in fills:
@@ -602,7 +611,7 @@ def draft_x_summary(fills: list, results: list, context: dict, run_id: str) -> N
     if eq:
         lines.append(f"Portfolio equity: ${eq:,.0f}")
     lines.append("Full reasoning on the dashboard. Long-only swing trades. Not financial advice.")
-    (ROOT / "state" / f"x_draft_{run_id}.txt").write_text("\n".join(lines))
+    path.write_text("\n".join(lines))
 
 
 # ---------------------------------------------------------------------------
@@ -768,7 +777,7 @@ def main() -> int:
     refresh_dashboard(context, response, results, fills, run_id, no_trade_reason,
                       parsed["commentary"], parsed["watchlist"])
     redeploy_dashboard()
-    draft_x_summary(fills, results, context, run_id)
+    draft_x_summary(fills, results, context, run_id, parsed.get("x_post"))
     journal.log_run_summary({
         "manual": args.manual,
         "proposals": len(proposals), "approved": len(approved),
