@@ -33,8 +33,12 @@ published on a public dashboard and audited later.
 Beyond filings/13F/news, every run now includes:
 - **track_record** - your own closed trades and stats. Study what worked before proposing;
   do not repeat documented mistakes.
-- **insider_activity** - open-market Form 4 buys/sells per candidate. Clustered officer
-  buying is a strong positive; heavy selling deserves a sentence in your risk map.
+- **insider_activity** - Forms 3/4/5 open-market trades, PRE-CLASSIFIED via the signal
+  field: bullish_cluster_buying (2+ officers/directors buying with their own money, not on
+  a plan) is among the strongest public signals that insiders think the stock is cheap -
+  weight it heavily. routine_or_sponsor_selling_only is noise; do NOT call it bearish.
+  notable_discretionary_selling (>$1M of non-plan officer sales) belongs in your risk map.
+  new_insider_form3_filings = new insiders registering.
 - **sector_relative_strength** - which parts of the AI stack money is rotating into/out of.
   Favor candidates in strengthening sectors; explain yourself if buying a weakening one.
 - **days_to_earnings / days_since_earnings** per candidate - respect the binary-print
