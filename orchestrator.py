@@ -43,6 +43,9 @@ from tools.position_history import get_position_histories
 from tools.watchlist_triggers import check_watchlist_triggers
 from tools.insider_form4 import get_insider_activity
 from tools.performance_breakdown import build_performance_breakdown
+from tools.fundamentals import get_deep_fundamentals
+from tools.filing_text import get_mdna_excerpt, get_latest_earnings_release
+from tools.guidance_ledger import auto_grade, get_ledger_summary, record_guidance
 from tools.sec_filings import get_filing_brief
 from tools.smart_money_13f import get_smart_money
 from tools.universe_scanner import scan_universe
@@ -148,6 +151,9 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         smart_money = {"status": "skipped_light_run"}
         insiders = {"status": "skipped_light_run"}
         news = get_news_and_catalysts(focus) if focus else {"status": "skipped"}
+        deep_fundamentals = {t: {"status": "skipped_light_run"} for t in focus}
+        filing_texts = {}
+        guidance = get_ledger_summary(held)
     else:
         print("  • universe scan...")
         scan = scan_universe(top_n=15)
@@ -168,6 +174,19 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
 
         print(f"  • deep research on {focus}...")
         filings = {t: get_filing_brief(t) for t in focus}
+        print("  • deep fundamentals + quality ratios...")
+        deep_fundamentals = {t: get_deep_fundamentals(t) for t in focus}
+        print("  • filing prose (MD&A + earnings releases)...")
+        filing_texts = {t: {"mdna": get_mdna_excerpt(t, max_chars=5000),
+                            "earnings_release": get_latest_earnings_release(t, max_chars=5000)}
+                        for t in focus[:5]}
+        print("  • guidance ledger...")
+        for t in focus:
+            try:
+                auto_grade(t)
+            except Exception as e:
+                print(f"    (auto_grade {t} failed: {e})")
+        guidance = get_ledger_summary(focus)
         smart_money = get_smart_money(focus) if focus else {"status": "skipped"}
         news = get_news_and_catalysts(focus) if focus else {"status": "skipped"}
         insiders = get_insider_activity(focus) if focus else {"status": "skipped"}
@@ -233,6 +252,14 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         },
         "universe_scan": scan,
         "sec_filings": filings,
+        "deep_fundamentals": deep_fundamentals,
+        "filing_texts": filing_texts,
+        "filing_texts_note": (
+            "Real MD&A and press-release prose per focus ticker. When "
+            "earnings_release.contains_guidance_language is true, QUOTE the specific "
+            "guidance sentence (numbers and fiscal period) instead of paraphrasing. "
+            "mdna.section == 'document_start' means general filing text, not MD&A."),
+        "guidance_ledger": guidance,
         "smart_money_13f": smart_money,
         "news_and_catalysts": news,
         "insider_activity": insiders,
@@ -416,11 +443,12 @@ def parse_proposals(response: str) -> dict:
                     "commentary": data.get("commentary"),
                     "watchlist": (data.get("watchlist") or [])[:10],
                     "x_post": data.get("x_post"),
+                    "guidance_entries": (data.get("guidance_entries") or [])[:20],
                 }
         except json.JSONDecodeError:
             continue
     return {"proposals": [], "no_trade_reason": "no parsable proposals block in response",
-            "commentary": None, "watchlist": [], "x_post": None}
+            "commentary": None, "watchlist": [], "x_post": None, "guidance_entries": []}
 
 
 # ---------------------------------------------------------------------------
@@ -934,6 +962,14 @@ def main() -> int:
 
     for m in re.findall(r"Improvement note:(.+)", response):
         journal.log_improvement(m.strip(), run_id)
+
+    if parsed.get("guidance_entries"):
+        try:
+            gsum = record_guidance(parsed["guidance_entries"])
+            print(f"      guidance ledger: {gsum['recorded']} recorded, "
+                  f"{gsum['replaced']} replaced, {len(gsum['invalid'])} invalid")
+        except Exception as e:
+            print(f"      (guidance ledger write failed: {e})")
 
     if args.research_only:
         print(json.dumps(proposals, indent=2))

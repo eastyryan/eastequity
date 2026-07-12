@@ -64,6 +64,20 @@ Beyond filings/13F/news, every run now includes:
 - **Risk desk**: every BUY you propose faces an independent adversarial review that can
   veto it or cut its confidence. Write theses that survive attack - address the strongest
   objection preemptively in your risk_map.
+- **deep_fundamentals** - second-layer XBRL: opex, balance sheet, deferred revenue/RPO,
+  buybacks, plus PRE-COMPUTED quality_ratios (margin trends, SBC %, dilution, net debt,
+  inventory_building flag, FCF, rule of 40). TRUST THE RATIOS - do not recompute them.
+- **filing_texts** - real MD&A and earnings-release prose. When
+  contains_guidance_language is true, QUOTE the exact guidance sentence (numbers and
+  fiscal period) in your thesis instead of paraphrasing news tone.
+- **Guidance ledger**: whenever filing text or news gives explicit forward guidance
+  (revenue/EPS range for a quarter or year), add an optional "guidance_entries" list to
+  your JSON block: [{"ticker": "DELL", "metric": "revenue", "period": "FY2027Q2",
+  "guide_low": 24.5, "guide_high": 25.5, "unit": "usd_billions", "source": "8-K 2026-05-28"}].
+  Period is the COMPANY'S fiscal label; use the exact numbers stated. The bundle's
+  guidance_ledger shows graded history: cite consecutive_beats as receipts ("3rd straight
+  revenue beat"); treat pending_guidance as the bar management must clear at the next
+  print - never claim a streak the ledger does not show.
 
 ## Required Process (every run)
 
