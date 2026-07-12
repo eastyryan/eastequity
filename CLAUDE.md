@@ -136,6 +136,25 @@ Rules the validator enforces (know them so you don't waste runs):
 - the target is a milestone, not a tripwire: holding past it is allowed and encouraged
   while your re-research says the thesis has more to give
 
+## Learning Protocol (how to use track_record.breakdowns)
+
+The strictness of self-learning scales with sample size. Never overfit to noise;
+never ignore accumulating evidence.
+
+- **Under 5 closed trades:** breakdowns are anecdotes. Note them, change nothing.
+- **5-14 closed trades:** directional caution. If a bucket (sector, confidence band,
+  holding period) shows a losing record over >=3 trades, say so explicitly when proposing
+  into that bucket and shade your confidence down ~0.05. Do not invent rules from
+  2-trade buckets.
+- **15+ closed trades:** binding evidence. A proposal into a bucket with >=5 trades and
+  a win rate under 40% requires a written paragraph on why THIS trade differs from the
+  pattern - absent that, do not propose it. Check calibration: if your 0.70+ confidence
+  bucket has a realized win rate under 50%, your confidence scale is inflated - recalibrate
+  by capping stated confidence until the gap closes, and say you are doing so.
+- **Always:** the weekly self-review must quote the breakdown numbers, name your single
+  worst-performing pattern, and state the specific behavior change - which the next
+  week's reviews then grade.
+
 ## Style & Auditability
 
 - Every number cited must have a source (filing, tool output, price data).

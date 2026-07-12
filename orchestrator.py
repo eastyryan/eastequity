@@ -624,6 +624,7 @@ def self_review(run_id: str) -> int:
     for f in sorted((ROOT / "journal" / "runs").glob("*.jsonl"))[-5:]:
         runs.extend(json.loads(line) for line in f.read_text().splitlines())
     bundle = {"closed_trades": closed, "portfolio": portfolio,
+              "breakdowns": build_performance_breakdown(closed),
               "recent_run_summaries": runs[-40:]}
     review_file = ROOT / "state" / f"review_{run_id}.json"
     review_file.write_text(json.dumps(bundle, indent=2, default=str))
@@ -659,6 +660,110 @@ def self_review(run_id: str) -> int:
 
 
 # ---------------------------------------------------------------------------
+# Weekly universe review: the agent curates its own watchable universe.
+# ---------------------------------------------------------------------------
+def universe_review(run_id: str) -> int:
+    """The agent researches the broad market (web search enabled) and proposes
+    edits to data/universe.json. Deterministic guardrails cap what can change:
+    held and watchlist names are untouchable, size stays 90-140, max 10 adds and
+    10 removals per review, tech/AI bias preserved."""
+    universe_file = ROOT / "data" / "universe.json"
+    current = json.loads(universe_file.read_text())
+    portfolio = get_portfolio_state()
+    protected = {p["ticker"].upper() for p in portfolio.get("positions", [])}
+    latest_file = ROOT / "dashboard" / "data" / "latest.json"
+    if latest_file.exists():
+        protected |= {w.get("ticker", "").upper()
+                      for w in json.loads(latest_file.read_text()).get("watchlist", [])}
+    protected.discard("")
+
+    print("  • fresh sector scan for the review...")
+    scan = scan_universe(top_n=10)
+    bundle = {
+        "current_universe": current,
+        "protected_tickers_never_remove": sorted(protected),
+        "sector_relative_strength": scan.get("sector_relative_strength"),
+        "top_setups_now": scan.get("top_setups"),
+        "track_record_breakdowns": build_performance_breakdown(compute_closed_trades()),
+    }
+    review_file = ROOT / "state" / f"universe_review_{run_id}.json"
+    review_file.write_text(json.dumps(bundle, indent=2, default=str))
+
+    prompt = (
+        "Weekly UNIVERSE REVIEW for East Equity Agent (no trading this run). Read CLAUDE.md, "
+        f"then the bundle at {review_file}. Your job: curate the watchable universe honestly. "
+        "Use WebSearch to research the broad market: which quality names are emerging as "
+        "leaders (new highs, accelerating estimates, institutional accumulation) that we do "
+        "NOT track, and which current universe names have lost leadership (persistent "
+        "downtrends, broken growth, fading relevance)? Keep a strong AI/technology bias "
+        "(at least ~70% of names) but market leaders from any sector earn a place. "
+        "Constraints (code-enforced): US-listed common equities only, no leveraged/inverse "
+        "products, never remove the protected tickers, max 10 adds and 10 removals, final "
+        "size 90-140 names. Removing a name is healthy - a universe that only grows is a "
+        "museum. Output a ```json block: {\"sectors\": {<full updated sectors map>}, "
+        "\"added\": [..], \"removed\": [..], \"rationale\": \"3-5 plain sentences for "
+        "the public improvement log\"}."
+    )
+    result = subprocess.run(["claude", "-p", prompt], cwd=ROOT,
+                            capture_output=True, text=True, timeout=1800)
+    if result.returncode != 0:
+        print(f"universe review failed: {result.stderr[:300]}{result.stdout[:300]}")
+        return 1
+    blocks = re.findall(r"```json\s*(.*?)```", result.stdout, re.DOTALL)
+    data = None
+    for block in reversed(blocks):
+        try:
+            cand = json.loads(block)
+            if isinstance(cand, dict) and "sectors" in cand:
+                data = cand
+                break
+        except json.JSONDecodeError:
+            continue
+    if data is None:
+        print("universe review: no parsable proposal, universe unchanged")
+        return 1
+
+    # Deterministic guardrails - the agent proposes, code disposes.
+    new_tickers = {t.upper() for ts in data["sectors"].values() for t in ts}
+    old_tickers = {t.upper() for ts in current["sectors"].values() for t in ts}
+    added, removed = new_tickers - old_tickers, old_tickers - new_tickers
+    problems = []
+    if not 90 <= len(new_tickers) <= 140:
+        problems.append(f"size {len(new_tickers)} outside 90-140")
+    if len(added) > 10 or len(removed) > 10:
+        problems.append(f"too many changes (+{len(added)}/-{len(removed)}, max 10 each)")
+    if removed & protected:
+        problems.append(f"tried to remove protected: {sorted(removed & protected)}")
+    forbidden = set(validator.load_config()["hard_rules"]["forbidden_ticker_patterns"])
+    if new_tickers & forbidden:
+        problems.append(f"forbidden products: {sorted(new_tickers & forbidden)}")
+    if any(not re.fullmatch(r"[A-Z]{1,5}", t) for t in new_tickers):
+        problems.append("invalid ticker format present")
+    if problems:
+        print(f"universe review REJECTED by guardrails: {problems}")
+        journal.log_improvement(
+            f"Universe review rejected by guardrails ({'; '.join(problems)}) - no changes.",
+            run_id)
+        return 1
+
+    current["sectors"] = data["sectors"]
+    current["last_reviewed"] = datetime.now(timezone.utc).date().isoformat()
+    universe_file.write_text(json.dumps(current, indent=2))
+    note = (f"Weekly universe review: added {sorted(added) if added else 'none'}, "
+            f"removed {sorted(removed) if removed else 'none'} "
+            f"({len(new_tickers)} names). {data.get('rationale', '')}")
+    journal.log_improvement(note, run_id)
+    if latest_file.exists():
+        d = json.loads(latest_file.read_text())
+        d["improvements"] = ([{"date": datetime.now(timezone.utc).date().isoformat(),
+                               "note": note}] + d.get("improvements", []))[:30]
+        latest_file.write_text(json.dumps(d, indent=2, default=str))
+    redeploy_dashboard()
+    print(f"universe updated: +{len(added)} -{len(removed)} = {len(new_tickers)} names")
+    return 0
+
+
+# ---------------------------------------------------------------------------
 # Main loop
 # ---------------------------------------------------------------------------
 def main() -> int:
@@ -667,6 +772,8 @@ def main() -> int:
                     help="run steps 1-4 only; skip validation/execution")
     ap.add_argument("--self-review", action="store_true",
                     help="weekly audit of decisions vs outcomes; no trading")
+    ap.add_argument("--universe-review", action="store_true",
+                    help="weekly curation of the watchable universe; no trading")
     ap.add_argument("--manual", action="store_true",
                     help="user-initiated run: exempt from (and not counted in) the daily run budget")
     ap.add_argument("--news-only", action="store_true",
@@ -687,6 +794,9 @@ def main() -> int:
     if args.self_review:
         print(f"=== East Equity Agent self-review {run_id} ===")
         return self_review(run_id)
+    if args.universe_review:
+        print(f"=== East Equity Agent universe review {run_id} ===")
+        return universe_review(run_id)
     print(f"=== East Equity Agent run {run_id} (mode: {cfg['mode']['trading_mode']}) ===")
 
     if args.gather_only:
