@@ -62,6 +62,16 @@ def _is_url(token: str) -> bool:
     return bool(re.search(r"https?://|www\.|\.[a-z]{2,4}(/|$)", token))
 
 
+def _is_cashtag(token: str) -> bool:
+    return bool(re.fullmatch(r"\$[A-Za-z]{1,5}[.,!?:;)]*", token))
+
+
+def journal_header(date=None) -> str:
+    from datetime import datetime as _dt
+    d = date or _dt.now()
+    return bold(f"East Equity Agent Journal - {d.strftime('%B %-d, %Y')}")
+
+
 def format_for_x(text: str) -> str:
     """House style: **Company (TICK)** markers become Unicode bold; everything
     else (the agent's own commentary) becomes Unicode italic. URLs and the
@@ -78,7 +88,7 @@ def format_for_x(text: str) -> str:
                 styled.append(bold(part))
             else:
                 styled.append(" ".join(
-                    tok if _is_url(tok) else italic(tok)
+                    tok if (_is_url(tok) or _is_cashtag(tok)) else italic(tok)
                     for tok in part.split(" ")))
         lines_out.append("".join(styled))
     return "\n".join(lines_out)
@@ -159,7 +169,7 @@ def process_drafts(dry_run: bool = False) -> list[dict]:
         return results
 
     draft = todays_trades[-1]  # latest trade memo of the day
-    text = format_for_x(draft.read_text().strip())
+    text = journal_header() + "\n\n" + format_for_x(draft.read_text().strip())
     chart = None
     try:
         from tools.chart_card import render_equity_card

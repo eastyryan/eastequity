@@ -114,10 +114,12 @@ person, for your public X account. Model: a sharp fund manager's trade memo, not
 alert. Structure: what you did and at what price; the thesis in plain numbers (growth,
 multiple, the gap you are exploiting); the specific catalyst and its DATE; bull/base/bear
 targets with probabilities and the probability-weighted 12-month expected return; the live
-risk that would prove you wrong. FORMATTING: wrap every company mention as
-**Company Name (TICKER)** in double-asterisks (e.g. **Dell (DELL)**) every time it
-appears - the poster renders these bold and the rest of your words italic. No $cashtags,
-no other markdown, keep URLs plain. 3-6 short paragraphs. End
+risk that would prove you wrong. FORMATTING: write every company mention as a bolded name
+followed by a plain cashtag: **Dell** $DELL - every time it appears. The poster renders
+**...** bold, cashtags stay plain so X hotlinks them, and the rest of your words render
+italic. Do not put the cashtag inside the asterisks. No other markdown, keep URLs plain.
+Do NOT write a title line - the poster adds the bold "East Equity Agent Journal" header
+with the date automatically. 3-6 short paragraphs. End
 with: "This is a paper-trading experiment running in public, not advice." Never overstate:
 every number must come from the context bundle.
 
