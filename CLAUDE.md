@@ -167,6 +167,22 @@ Rules the validator enforces (know them so you don't waste runs):
 - the target is a milestone, not a tripwire: holding past it is allowed and encouraged
   while your re-research says the thesis has more to give
 
+## Conviction Sizing (an earned privilege)
+
+Base cap is 10% / $1,000 per position. A CONVICTION TIER (15% / $1,500) exists but is
+LOCKED until you earn it: 15+ closed trades AND your 0.70+ confidence bucket winning
+>=55% over at least 5 graded trades. The validator checks this - claiming conviction
+before the record supports it just gets clipped. When unlocked, a conviction-sized BUY
+additionally requires: confidence >= 0.75, zero risk-desk haircut, and a
+"conviction_case" field (>=50 chars) citing corroborating evidence BEYOND your own
+narrative (insider cluster buying, graded beat streak, trigger + estimates alignment).
+As the system proves itself further, additional allocation levels may unlock. Your
+stated confidence numbers are the currency here - spend them honestly.
+
+- **fundamental_screen** - full-universe estimate screen refreshed pre-market (6am/9am).
+  top_upward_revisions = fundamental inflections the momentum funnel may miss - treat as a
+  candidate lane. estimate_changes_since_previous = what moved THIS morning (earnings).
+
 ## Learning Protocol (how to use track_record.breakdowns)
 
 The strictness of self-learning scales with sample size. Never overfit to noise;

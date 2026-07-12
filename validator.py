@@ -128,6 +128,30 @@ def _check_confidence(p: dict, cfg: dict, reasons: list[str]) -> None:
         reasons.append(f"confidence_too_low:{conf} < {cfg['trade_quality_requirements']['min_confidence']}")
 
 
+def _conviction_unlocked(cfg: dict) -> tuple[bool, str]:
+    """Conviction sizing is an EARNED privilege: enough closed trades AND proof
+    that high-confidence calls actually win. Reads the published breakdown
+    (local file, deterministic) - no network, no LLM."""
+    tier = cfg["position_sizing"].get("conviction_tier")
+    if not tier:
+        return False, "no conviction tier configured"
+    try:
+        latest = json.loads((ROOT / "dashboard" / "data" / "latest.json").read_text())
+        bd = latest.get("performance_breakdown") or {}
+        total = bd.get("total_trades", 0)
+        if total < tier["unlocked_after_closed_trades"]:
+            return False, f"{total}/{tier['unlocked_after_closed_trades']} closed trades"
+        for bucket in bd.get("by_confidence", []):
+            if bucket.get("bucket") == "0.70+" and bucket.get("trades", 0) >= 5:
+                if bucket.get("win_rate_pct", 0) >= tier["required_high_conf_bucket_win_rate_pct"]:
+                    return True, "unlocked: calibration proven"
+                return False, (f"0.70+ bucket win rate {bucket.get('win_rate_pct')}% < "
+                               f"{tier['required_high_conf_bucket_win_rate_pct']}%")
+        return False, "0.70+ confidence bucket lacks 5 graded trades"
+    except Exception as e:
+        return False, f"breakdown unreadable: {e}"
+
+
 def _check_sizing(p: dict, cfg: dict, portfolio: dict, reasons: list[str]) -> None:
     if str(p.get("action", "")).upper() != "BUY":
         return
@@ -137,10 +161,31 @@ def _check_sizing(p: dict, cfg: dict, portfolio: dict, reasons: list[str]) -> No
         reasons.append("position_size_not_positive_number")
         return
     equity = portfolio.get("total_equity_usd", ps["starting_capital_usd"])
-    if size > ps["max_position_usd"]:
-        reasons.append(f"size_exceeds_max_usd:{size} > {ps['max_position_usd']}")
-    if size > equity * ps["max_position_pct_of_portfolio"]:
-        reasons.append(f"size_exceeds_pct_cap:{size} > {ps['max_position_pct_of_portfolio']:.0%} of {equity}")
+    max_usd = ps["max_position_usd"]
+    max_pct = ps["max_position_pct_of_portfolio"]
+    # Conviction tier: higher caps, only when earned and the case is complete.
+    tier = ps.get("conviction_tier")
+    if tier and (size > max_usd or size > equity * max_pct):
+        unlocked, why = _conviction_unlocked(cfg)
+        conf_ok = isinstance(p.get("confidence"), (int, float)) and \
+            p["confidence"] >= tier["min_confidence"]
+        case_ok = (not tier.get("requires_conviction_case")
+                   or len(str(p.get("conviction_case", ""))) >= 50)
+        no_haircut = "risk_desk_note" not in p
+        if unlocked and conf_ok and case_ok and no_haircut:
+            max_usd = tier["max_position_usd"]
+            max_pct = tier["max_position_pct_of_portfolio"]
+        else:
+            blockers = []
+            if not unlocked: blockers.append(f"not_unlocked({why})")
+            if not conf_ok: blockers.append(f"confidence<{tier['min_confidence']}")
+            if not case_ok: blockers.append("missing_conviction_case")
+            if not no_haircut: blockers.append("risk_desk_haircut_present")
+            reasons.append(f"conviction_sizing_denied:{';'.join(blockers)}")
+    if size > max_usd:
+        reasons.append(f"size_exceeds_max_usd:{size} > {max_usd}")
+    if size > equity * max_pct:
+        reasons.append(f"size_exceeds_pct_cap:{size} > {max_pct:.0%} of {equity}")
     open_positions = portfolio.get("positions", [])
     if len(open_positions) >= ps["max_open_positions"]:
         reasons.append(f"max_open_positions_reached:{len(open_positions)}")

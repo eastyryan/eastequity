@@ -154,6 +154,8 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         deep_fundamentals = {t: {"status": "skipped_light_run"} for t in focus}
         filing_texts = {}
         guidance = get_ledger_summary(held)
+        from tools.fundamental_screen import get_screen
+        fundamental_screen = get_screen(None)  # cached only, never refreshes
     else:
         print("  • universe scan...")
         scan = scan_universe(top_n=15)
@@ -180,6 +182,13 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         filing_texts = {t: {"mdna": get_mdna_excerpt(t, max_chars=5000),
                             "earnings_release": get_latest_earnings_release(t, max_chars=5000)}
                         for t in focus[:5]}
+        print("  • fundamental screen (full universe, cached)...")
+        try:
+            from tools.fundamental_screen import get_screen
+            all_universe = sorted(validator.load_universe())
+            fundamental_screen = get_screen(all_universe)
+        except Exception as e:
+            fundamental_screen = {"status": "error", "reason": str(e)[:200]}
         print("  • guidance ledger...")
         for t in focus:
             try:
@@ -260,6 +269,7 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
             "guidance sentence (numbers and fiscal period) instead of paraphrasing. "
             "mdna.section == 'document_start' means general filing text, not MD&A."),
         "guidance_ledger": guidance,
+        "fundamental_screen": fundamental_screen,
         "smart_money_13f": smart_money,
         "news_and_catalysts": news,
         "insider_activity": insiders,
