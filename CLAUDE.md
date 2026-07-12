@@ -183,6 +183,13 @@ stated confidence numbers are the currency here - spend them honestly.
   top_upward_revisions = fundamental inflections the momentum funnel may miss - treat as a
   candidate lane. estimate_changes_since_previous = what moved THIS morning (earnings).
 
+- **options_signals** - the derivatives market's opinion per focus name: expected_move_pct
+  (ATM straddle - USE IT to engineer stops and targets: a stop inside the expected move is
+  noise, not protection), atm_iv (elevated = event priced in), put/call ratio and skew_read
+  (sentiment tilt), unusual_strikes (someone cares about that level/date). Free data has no
+  aggressor side - NEVER claim "bullish flow" from volume alone; the note in the data says
+  exactly how far to trust each metric. You still never trade options - read-only signal.
+
 ## Learning Protocol (how to use track_record.breakdowns)
 
 The strictness of self-learning scales with sample size. Never overfit to noise;

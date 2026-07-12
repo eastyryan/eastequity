@@ -46,6 +46,7 @@ from tools.performance_breakdown import build_performance_breakdown
 from tools.fundamentals import get_deep_fundamentals
 from tools.filing_text import get_mdna_excerpt, get_latest_earnings_release
 from tools.guidance_ledger import auto_grade, get_ledger_summary, record_guidance
+from tools.options_signal import get_options_signals
 from tools.sec_filings import get_filing_brief
 from tools.smart_money_13f import get_smart_money
 from tools.universe_scanner import scan_universe
@@ -154,6 +155,7 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         deep_fundamentals = {t: {"status": "skipped_light_run"} for t in focus}
         filing_texts = {}
         guidance = get_ledger_summary(held)
+        options_signals = get_options_signals(held) if held else {"status": "skipped"}
         from tools.fundamental_screen import get_screen
         fundamental_screen = get_screen(None)  # cached only, never refreshes
     else:
@@ -189,6 +191,8 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
             fundamental_screen = get_screen(all_universe)
         except Exception as e:
             fundamental_screen = {"status": "error", "reason": str(e)[:200]}
+        print("  • options-derived signals...")
+        options_signals = get_options_signals(focus)
         print("  • guidance ledger...")
         for t in focus:
             try:
@@ -270,6 +274,7 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
             "mdna.section == 'document_start' means general filing text, not MD&A."),
         "guidance_ledger": guidance,
         "fundamental_screen": fundamental_screen,
+        "options_signals": options_signals,
         "smart_money_13f": smart_money,
         "news_and_catalysts": news,
         "insider_activity": insiders,
