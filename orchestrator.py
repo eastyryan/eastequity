@@ -904,6 +904,7 @@ def main() -> int:
         journal.log_run_summary({"halted": halt}, run_id)
         return 1
 
+    forced_exit_fills = []
     if args.act_on:
         # Cloud mode: the scheduled agent already did the thinking; act on its output.
         print("[1-2/5] Loading saved context + brain response (cloud mode)...")
@@ -913,9 +914,10 @@ def main() -> int:
             forced_exit_fills = apply_safety_layer(context, cfg, run_id)
         response = Path(args.act_on).read_text()
     else:
-        forced_exit_fills: list = []
-    print("[1/5] Gathering context...")
+        print("[1/5] Gathering context...")
         context = gather_context(cfg, light=args.light)
+        if not args.news_only:
+            forced_exit_fills = apply_safety_layer(context, cfg, run_id)
         print("[2/5] Waking the brain (Claude)...")
         response = ask_claude(context, run_id, news_only=args.news_only)
 
