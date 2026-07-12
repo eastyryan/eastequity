@@ -15,7 +15,7 @@ mkdir -p logs
   OUT=$(.venv/bin/python -W ignore orchestrator.py --gather-only 2>&1 | grep -o 'CONTEXT_FILE=.*' | cut -d= -f2-)
   [ -s "$OUT" ] && cp "$OUT" data/cloud_context.json
 
-  git add data/cloud_context.json journal/x_posts.jsonl 2>/dev/null
+  git add data/cloud_context.json data/charts journal/x_posts.jsonl 2>/dev/null
   git diff --cached --quiet && exit 0
   git commit -m "Refresh market data bundle for cloud runs [vercel skip]"
   for i in 1 2 3; do

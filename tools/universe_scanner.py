@@ -86,9 +86,21 @@ def scan_universe(top_n: int = 15) -> dict:
 
     rows.sort(key=lambda r: r["swing_setup_score"], reverse=True)
 
-    # Valuation + analyst-estimate context for the top setups only (per-ticker
-    # calls are slow, so we don't fetch them for the whole universe).
-    for r in rows[:top_n]:
+    # Contrarian/value-reversal lane: quality names knocked well off their highs
+    # that are turning up. A momentum-only funnel never shows these to the brain.
+    top_tickers = {r["ticker"] for r in rows[:top_n]}
+    contrarian = sorted(
+        (r for r in rows
+         if r["ticker"] not in top_tickers
+         and r["pct_from_52w_high"] <= -20
+         and r["momentum_1m_pct"] > 2),
+        key=lambda r: r["momentum_1m_pct"], reverse=True)[:5]
+    for r in contrarian:
+        r["lane"] = "contrarian_reversal"
+
+    # Valuation + analyst-estimate context for top setups AND contrarian picks
+    # (per-ticker calls are slow, so not the whole universe).
+    for r in rows[:top_n] + contrarian:
         tk = yf.Ticker(r["ticker"])
         try:
             info = tk.info
@@ -154,6 +166,7 @@ def scan_universe(top_n: int = 15) -> dict:
         key=lambda d: d["avg_momentum_1m_pct"], reverse=True)
 
     return {
+        "contrarian_setups": contrarian,
         "sector_relative_strength": sector_rs,
         "status": "ok",
         "scanned": len(rows),

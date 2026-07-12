@@ -156,6 +156,16 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         candidates = [r["ticker"] for r in scan.get("top_setups", [])[:5]]
         focus = list(dict.fromkeys(held + candidates))
 
+        contrarian_picks = [r["ticker"] for r in scan.get("contrarian_setups", [])[:3]]
+        focus = list(dict.fromkeys(focus + contrarian_picks))
+
+        print("  • rendering candlestick charts...")
+        try:
+            from tools.price_chart import render_charts
+            render_charts(focus)
+        except Exception as e:
+            print(f"    (chart rendering failed: {e})")
+
         print(f"  • deep research on {focus}...")
         filings = {t: get_filing_brief(t) for t in focus}
         smart_money = get_smart_money(focus) if focus else {"status": "skipped"}
@@ -326,6 +336,68 @@ def _run_claude(prompt: str) -> str:
         if attempt == 1:
             time.sleep(90)
     raise RuntimeError(f"claude CLI failed after retry: {last_err}")
+
+
+# ---------------------------------------------------------------------------
+# Adversarial risk desk: an independent skeptic tries to kill every BUY.
+# ---------------------------------------------------------------------------
+def adversarial_review(proposals: list[dict], context_file: str, run_id: str) -> list[dict]:
+    """Second pass by a separate Claude session prompted to REFUTE each BUY.
+    Veto drops the proposal (journaled); survivors may get a confidence haircut.
+    Skipped where the claude CLI is unavailable (cloud sandboxes) - noted loudly."""
+    import shutil
+    buys = [p for p in proposals if str(p.get("action", "")).upper() == "BUY"]
+    if not buys:
+        return proposals
+    if shutil.which("claude") is None:
+        print("  (risk desk unavailable in this environment - proposals pass unreviewed)")
+        return proposals
+    prompt = (
+        "You are the RISK DESK for a paper-trading fund. Another analyst proposed the "
+        f"trades in this JSON: {json.dumps(buys)}. The full market context is at "
+        f"{context_file} - read it. Your job is to try to KILL each trade: attack the "
+        "thesis with the data (valuation, estimate revisions, insider selling, earnings "
+        "timing, macro, entry geometry, portfolio concentration vs existing holdings). "
+        "Be a skeptic, not a contrarian for sport - approve genuinely sound trades. "
+        "Output ONLY a ```json block: {\"reviews\": [{\"ticker\": \"X\", "
+        "\"verdict\": \"approve\"|\"veto\", \"objection\": \"one paragraph\", "
+        "\"confidence_adjustment\": 0.0}]} where confidence_adjustment is 0 or negative "
+        "(max -0.10) for approved-with-reservations."
+    )
+    try:
+        out = _run_claude(prompt)
+    except Exception as e:
+        print(f"  risk desk failed ({e}) - proposals pass unreviewed")
+        return proposals
+    reviews = {}
+    for block in reversed(re.findall(r"```json\s*(.*?)```", out, re.DOTALL)):
+        try:
+            data = json.loads(block)
+            if "reviews" in data:
+                reviews = {r["ticker"].upper(): r for r in data["reviews"]}
+                break
+        except (json.JSONDecodeError, KeyError, TypeError):
+            continue
+    if not reviews:
+        print("  risk desk output unparsable - proposals pass unreviewed")
+        return proposals
+    kept = []
+    for p in proposals:
+        r = reviews.get(str(p.get("ticker", "")).upper())
+        if r is None or str(p.get("action", "")).upper() != "BUY":
+            kept.append(p)
+            continue
+        if r.get("verdict") == "veto":
+            print(f"  RISK DESK VETO {p['ticker']}: {r.get('objection', '')[:120]}")
+            journal.log_rejection(p, [f"risk_desk_veto: {r.get('objection', '')[:300]}"], run_id)
+            continue
+        adj = min(float(r.get("confidence_adjustment", 0) or 0), 0)
+        if adj:
+            p["confidence"] = round(max(p.get("confidence", 0) + adj, 0), 2)
+            p["risk_desk_note"] = r.get("objection", "")[:300]
+            print(f"  risk desk haircut {p['ticker']}: {adj} -> {p['confidence']}")
+        kept.append(p)
+    return kept
 
 
 # ---------------------------------------------------------------------------
@@ -862,6 +934,11 @@ def main() -> int:
     if args.research_only:
         print(json.dumps(proposals, indent=2))
         return 0
+
+    if proposals and not args.news_only:
+        print("[2.5/5] Risk desk review...")
+        ctx_path = args.context if args.act_on else str(ROOT / "state" / f"context_{run_id}.json")
+        proposals = adversarial_review(proposals, ctx_path, run_id)
 
     print("[3/5] Validating (pure Python)...")
     # Validate against LIVE portfolio state, not the snapshot from step 1 - another

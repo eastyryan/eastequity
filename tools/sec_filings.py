@@ -112,6 +112,40 @@ def get_filing_brief(ticker: str) -> dict:
                             for u in _annualish(units, quarterly=True)
                         ]
                         break
+            # Balance sheet, cash flow, dilution: the "is this business sound"
+            # layer. Instant facts have no start date; flow facts may be YTD -
+            # period_days lets the brain interpret them correctly.
+            for label, tags in {
+                "cash_and_equivalents": ["CashAndCashEquivalentsAtCarryingValue"],
+                "long_term_debt": ["LongTermDebt", "LongTermDebtNoncurrent"],
+                "operating_cash_flow": ["NetCashProvidedByUsedInOperatingActivities"],
+                "stock_based_compensation": ["ShareBasedCompensation"],
+                "diluted_shares": ["WeightedAverageNumberOfDilutedSharesOutstanding"],
+            }.items():
+                for tag in tags:
+                    unit_map = gaap.get(tag, {}).get("units", {})
+                    units = unit_map.get("USD") or unit_map.get("shares")
+                    if units:
+                        rows = [u for u in units if u.get("form") in ("10-Q", "10-K")
+                                and u.get("frame") is None]
+                        seen, out_rows = set(), []
+                        for u in sorted(rows, key=lambda u: u.get("end", "")):
+                            key = (u.get("start"), u.get("end"))
+                            if key in seen:
+                                continue
+                            seen.add(key)
+                            row = {"period_end": u["end"], "value": u["val"], "form": u["form"]}
+                            if u.get("start"):
+                                from datetime import date
+                                try:
+                                    row["period_days"] = (date.fromisoformat(u["end"])
+                                                          - date.fromisoformat(u["start"])).days
+                                except ValueError:
+                                    pass
+                            out_rows.append(row)
+                        if out_rows:
+                            facts_out[label] = out_rows[-6:]
+                        break
         except Exception as e:
             facts_out = {"error": f"companyfacts unavailable: {e}"}
 

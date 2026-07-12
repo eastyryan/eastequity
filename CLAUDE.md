@@ -53,6 +53,17 @@ Beyond filings/13F/news, every run now includes:
 - **corporate_actions** (when present) - dividends credited / splits applied to the book.
 - **track_record.breakdowns** - your results bucketed by sector, confidence, holding period,
   and verdict. Weight your confidence scores using this evidence, not vibes.
+- **contrarian_setups** - quality names 20%+ off their highs that are turning up. The
+  momentum funnel never surfaces these; give them a genuine look, not a token one.
+- **Candlestick charts** at data/charts/<TICKER>.png for every focus name - USE THE READ
+  TOOL TO LOOK AT THEM before judging entry geometry. Bases, failed breakouts, and support
+  shelves are visible there that the numeric indicators cannot convey.
+- **Deeper fundamentals** in sec_filings: cash, long_term_debt, operating_cash_flow (check
+  period_days - flow rows may be year-to-date), stock_based_compensation, diluted_shares.
+  A cheap multiple with heavy debt or SBC-inflated earnings is not cheap - say so.
+- **Risk desk**: every BUY you propose faces an independent adversarial review that can
+  veto it or cut its confidence. Write theses that survive attack - address the strongest
+  objection preemptively in your risk_map.
 
 ## Required Process (every run)
 
