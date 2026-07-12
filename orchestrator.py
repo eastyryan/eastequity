@@ -909,10 +909,12 @@ def main() -> int:
         print("[1-2/5] Loading saved context + brain response (cloud mode)...")
         context = json.loads(Path(args.context).read_text())
         context["portfolio"] = get_portfolio_state()
-        forced_exit_fills = [] if args.news_only else apply_safety_layer(context, cfg, run_id)
+        if not args.news_only:
+            forced_exit_fills = apply_safety_layer(context, cfg, run_id)
         response = Path(args.act_on).read_text()
     else:
-        print("[1/5] Gathering context...")
+        forced_exit_fills: list = []
+    print("[1/5] Gathering context...")
         context = gather_context(cfg, light=args.light)
         print("[2/5] Waking the brain (Claude)...")
         response = ask_claude(context, run_id, news_only=args.news_only)
