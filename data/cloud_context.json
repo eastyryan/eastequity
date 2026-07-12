@@ -1,5 +1,5 @@
 {
-  "run_date": "2026-07-12T20:51:51.990546+00:00",
+  "run_date": "2026-07-12T22:08:39.123656+00:00",
   "trading_mode": "paper",
   "run_depth": "full",
   "hard_limits": {
@@ -11,7 +11,15 @@
       "max_open_positions": 8,
       "max_total_exposure_pct": 0.8,
       "min_cash_reserve_pct": 0.2,
-      "max_sector_concentration_pct": 0.4
+      "max_sector_concentration_pct": 0.4,
+      "conviction_tier": {
+        "unlocked_after_closed_trades": 15,
+        "required_high_conf_bucket_win_rate_pct": 55,
+        "max_position_pct_of_portfolio": 0.15,
+        "max_position_usd": 1500,
+        "min_confidence": 0.75,
+        "requires_conviction_case": true
+      }
     },
     "quality": {
       "required_proposal_fields": [
@@ -129,7 +137,7 @@
           "macro_context": "Regime is supportive for AI/data-center longs: falling Fed funds, tight credit spreads, low VIX (16.9) and easy financial conditions, with the tape confirming a chip/AI-led Nasdaq rally. The one caveat is re-accelerating CPI (4.27%) and rising long rates (10Y 4.56%), which pressure the highest-multiple names most - precisely why Dell's ~21x forward multiple is the right way to express this trade rather than a 40-100x momentum name.",
           "proposed_at": "2026-07-09T21:41:38.154718+00:00"
         },
-        "days_held": 2
+        "days_held": 3
       },
       {
         "ticker": "HPE",
@@ -374,7 +382,15 @@
   },
   "watchlist_trigger_alerts": {
     "note": "Deterministic check of YOUR OWN previous run's watchlist 'would_buy_at' price levels against today's prices. Each alert means a name you said you wanted cheaper is now at or within 2% of your stated level - prioritize deep research on it this run and either propose or update the watchlist entry. Non-price triggers (earnings dates, conditions) are not checked here.",
-    "alerts": []
+    "alerts": [
+      {
+        "ticker": "AXON",
+        "trigger_text": "On a decisive reclaim of the 20-day high, roughly $600+, with the reversal confirmed",
+        "parsed_level": 600.0,
+        "last_price": 565.8,
+        "note": "price trigger reached - prioritize deep research on this name this run"
+      }
+    ]
   },
   "universe_scan": {
     "contrarian_setups": [
@@ -668,12 +684,7 @@
         "volume_surge_5d_vs_3m": 0.69,
         "atr_pct": 6.14,
         "swing_setup_score": 7.0,
-        "valuation": {
-          "trailing_pe": 54.35437,
-          "forward_pe": 36.648632,
-          "price_to_sales_ttm": 21.857695,
-          "ev_to_ebitda": null
-        },
+        "valuation": null,
         "days_to_earnings": 16,
         "days_since_earnings": 75,
         "analyst_estimates": {
@@ -8142,6 +8153,122 @@
   },
   "filing_texts_note": "Real MD&A and press-release prose per focus ticker. When earnings_release.contains_guidance_language is true, QUOTE the specific guidance sentence (numbers and fiscal period) instead of paraphrasing. mdna.section == 'document_start' means general filing text, not MD&A.",
   "guidance_ledger": {},
+  "fundamental_screen": {
+    "as_of": "2026-07-12T21:31:03.371198+00:00",
+    "age_hours": 0.6,
+    "names_covered": 108,
+    "note": "Full-universe estimate screen, refreshed pre-market (6am/9am ET). top_upward_revisions = fundamental inflections regardless of price - candidates the momentum funnel may not surface. estimate_changes_since_previous = what moved THIS MORNING (earnings/guidance).",
+    "top_upward_revisions": [
+      {
+        "ticker": "HPE",
+        "fwd_revenue_growth_pct": 31.0,
+        "eps_revision_30d_pct": 40.54,
+        "eps_revision_7d_pct": 0.02,
+        "eps_estimate_current_yr": 3.41
+      },
+      {
+        "ticker": "MU",
+        "fwd_revenue_growth_pct": 246.7,
+        "eps_revision_30d_pct": 23.73,
+        "eps_revision_7d_pct": 0.0,
+        "eps_estimate_current_yr": 73.32
+      },
+      {
+        "ticker": "IESC",
+        "fwd_revenue_growth_pct": 19.1,
+        "eps_revision_30d_pct": 12.13,
+        "eps_revision_7d_pct": 12.13,
+        "eps_estimate_current_yr": 19.69
+      },
+      {
+        "ticker": "CRDO",
+        "fwd_revenue_growth_pct": 83.6,
+        "eps_revision_30d_pct": 10.97,
+        "eps_revision_7d_pct": 0.83,
+        "eps_estimate_current_yr": 6.12
+      },
+      {
+        "ticker": "SNOW",
+        "fwd_revenue_growth_pct": 30.2,
+        "eps_revision_30d_pct": 7.64,
+        "eps_revision_7d_pct": 0.03,
+        "eps_estimate_current_yr": 1.93
+      },
+      {
+        "ticker": "STRL",
+        "fwd_revenue_growth_pct": 59.2,
+        "eps_revision_30d_pct": 6.63,
+        "eps_revision_7d_pct": 2.06,
+        "eps_estimate_current_yr": 19.31
+      },
+      {
+        "ticker": "COIN",
+        "fwd_revenue_growth_pct": -15.2,
+        "eps_revision_30d_pct": 4.7,
+        "eps_revision_7d_pct": 9.33,
+        "eps_estimate_current_yr": 1.2
+      },
+      {
+        "ticker": "TSLA",
+        "fwd_revenue_growth_pct": 9.5,
+        "eps_revision_30d_pct": 4.41,
+        "eps_revision_7d_pct": 1.42,
+        "eps_estimate_current_yr": 2.14
+      },
+      {
+        "ticker": "VST",
+        "fwd_revenue_growth_pct": 31.2,
+        "eps_revision_30d_pct": 4.19,
+        "eps_revision_7d_pct": 2.34,
+        "eps_estimate_current_yr": 9.95
+      },
+      {
+        "ticker": "SMR",
+        "fwd_revenue_growth_pct": 79.3,
+        "eps_revision_30d_pct": 3.82,
+        "eps_revision_7d_pct": 0.0,
+        "eps_estimate_current_yr": -0.51
+      }
+    ],
+    "top_downward_revisions": [
+      {
+        "ticker": "HON",
+        "fwd_revenue_growth_pct": -46.0,
+        "eps_revision_30d_pct": -57.19,
+        "eps_revision_7d_pct": 9.44,
+        "eps_estimate_current_yr": 9.01
+      },
+      {
+        "ticker": "NBIS",
+        "fwd_revenue_growth_pct": 540.8,
+        "eps_revision_30d_pct": -31.62,
+        "eps_revision_7d_pct": -31.62,
+        "eps_estimate_current_yr": -2.14
+      },
+      {
+        "ticker": "TLN",
+        "fwd_revenue_growth_pct": 77.4,
+        "eps_revision_30d_pct": -10.84,
+        "eps_revision_7d_pct": -5.29,
+        "eps_estimate_current_yr": 21.55
+      },
+      {
+        "ticker": "CRWV",
+        "fwd_revenue_growth_pct": 146.9,
+        "eps_revision_30d_pct": -2.59,
+        "eps_revision_7d_pct": 0.0,
+        "eps_estimate_current_yr": -4.64
+      },
+      {
+        "ticker": "IREN",
+        "fwd_revenue_growth_pct": 44.6,
+        "eps_revision_30d_pct": -1.74,
+        "eps_revision_7d_pct": -1.74,
+        "eps_estimate_current_yr": -2.05
+      }
+    ],
+    "estimate_changes_since_previous": []
+  },
   "smart_money_13f": {
     "status": "ok",
     "tickers": [
@@ -8242,7 +8369,7 @@
   },
   "news_and_catalysts": {
     "status": "ok",
-    "as_of": "2026-07-12T20:51:24.533336+00:00",
+    "as_of": "2026-07-12T22:08:08.192276+00:00",
     "tickers": {
       "DELL": {
         "headlines": [
@@ -8318,7 +8445,7 @@
         "headlines": [
           {
             "title": "Dow Jones Futures Loom Amid New U.S.-Iran Attacks; Nvidia, Micron, Sandisk Near Buy Points",
-            "published": "2026-07-12T20:20:36Z",
+            "published": "2026-07-12T21:55:15Z",
             "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-futures-us-iran-attacks-nvidia-micron-sandisk-taiwan-semiconductor/?src=A00220&yptr=yahoo"
           },
           {
@@ -8563,2219 +8690,2978 @@
   },
   "insider_activity": {
     "status": "ok",
-    "note": "Open-market Form 4 transactions only (codes P/S). Clustered officer buying is a strong signal; routine selling usually is not.",
+    "note": "Forms 4/5 open-market trades (codes P/S), classified. THE SIGNAL FIELD IS PRE-COMPUTED: bullish_cluster_buying (2+ officers/directors buying discretionarily) is the strongest positive; routine_or_sponsor_selling_only is usually noise - do not treat it as bearish by itself. notable_discretionary_selling (>$1M non-plan officer sales) deserves a sentence in your risk map. Form 3 count = new insiders registering.",
     "tickers": {
       "DELL": {
         "transactions": [
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 4570.0,
             "price": 420.21,
             "notional_usd": 1920359.7,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 10364.0,
             "price": 420.99,
             "notional_usd": 4363140.36,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 4836.0,
             "price": 421.96,
             "notional_usd": 2040598.56,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 2681.0,
             "price": 422.96,
             "notional_usd": 1133955.76,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 3414.0,
             "price": 424.05,
             "notional_usd": 1447706.7,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 3011.0,
             "price": 425.11,
             "notional_usd": 1280006.21,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 1242.0,
             "price": 426.14,
             "notional_usd": 529265.88,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 1318.0,
             "price": 427.19,
             "notional_usd": 563036.42,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 3623.0,
             "price": 428.2,
             "notional_usd": 1551368.6,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 3477.0,
             "price": 429.16,
             "notional_usd": 1492189.32,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 3573.0,
             "price": 430.23,
             "notional_usd": 1537211.79,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 5296.0,
             "price": 431.15,
             "notional_usd": 2283370.4,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 5079.0,
             "price": 432.29,
             "notional_usd": 2195600.91,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 4009.0,
             "price": 433.2,
             "notional_usd": 1736698.8,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 1675.0,
             "price": 434.18,
             "notional_usd": 727251.5,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 1445.0,
             "price": 435.23,
             "notional_usd": 628907.35,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 1929.0,
             "price": 436.33,
             "notional_usd": 841680.57,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 1409.0,
             "price": 437.13,
             "notional_usd": 615916.17,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Sl Spv-2, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 144.0,
             "price": 438.0,
             "notional_usd": 63072.0,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 46.0,
             "price": 420.21,
             "notional_usd": 19329.66,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 105.0,
             "price": 420.99,
             "notional_usd": 44203.95,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 49.0,
             "price": 421.96,
             "notional_usd": 20676.04,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 27.0,
             "price": 422.96,
             "notional_usd": 11419.92,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 34.0,
             "price": 424.05,
             "notional_usd": 14417.7,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 30.0,
             "price": 425.11,
             "notional_usd": 12753.3,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 13.0,
             "price": 426.14,
             "notional_usd": 5539.82,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 13.0,
             "price": 427.19,
             "notional_usd": 5553.47,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 37.0,
             "price": 428.2,
             "notional_usd": 15843.4,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 35.0,
             "price": 429.16,
             "notional_usd": 15020.6,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 36.0,
             "price": 430.23,
             "notional_usd": 15488.28,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 53.0,
             "price": 431.15,
             "notional_usd": 22850.95,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 51.0,
             "price": 432.29,
             "notional_usd": 22046.79,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 40.0,
             "price": 433.2,
             "notional_usd": 17328.0,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 17.0,
             "price": 434.18,
             "notional_usd": 7381.06,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 15.0,
             "price": 435.23,
             "notional_usd": 6528.45,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 19.0,
             "price": 436.33,
             "notional_usd": 8290.27,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 14.0,
             "price": 437.13,
             "notional_usd": 6119.82,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 1.0,
             "price": 438.0,
             "notional_usd": 438.0,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 102.0,
             "price": 420.21,
             "notional_usd": 42861.42,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 232.0,
             "price": 420.99,
             "notional_usd": 97669.68,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 108.0,
             "price": 421.96,
             "notional_usd": 45571.68,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 60.0,
             "price": 422.96,
             "notional_usd": 25377.6,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 76.0,
             "price": 424.05,
             "notional_usd": 32227.8,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 67.0,
             "price": 425.11,
             "notional_usd": 28482.37,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 28.0,
             "price": 426.14,
             "notional_usd": 11931.92,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 29.0,
             "price": 427.19,
             "notional_usd": 12388.51,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 81.0,
             "price": 428.2,
             "notional_usd": 34684.2,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 78.0,
             "price": 429.16,
             "notional_usd": 33474.48,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 80.0,
             "price": 430.23,
             "notional_usd": 34418.4,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 119.0,
             "price": 431.15,
             "notional_usd": 51306.85,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 114.0,
             "price": 432.29,
             "notional_usd": 49281.06,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 90.0,
             "price": 433.2,
             "notional_usd": 38988.0,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 37.0,
             "price": 434.18,
             "notional_usd": 16064.66,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 32.0,
             "price": 435.23,
             "notional_usd": 13927.36,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 43.0,
             "price": 436.33,
             "notional_usd": 18762.19,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 32.0,
             "price": 437.13,
             "notional_usd": 13988.16,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 3.0,
             "price": 438.0,
             "notional_usd": 1314.0,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 5277.0,
             "price": 420.21,
             "notional_usd": 2217448.17,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 11967.0,
             "price": 420.99,
             "notional_usd": 5037987.33,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 5584.0,
             "price": 421.96,
             "notional_usd": 2356224.64,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 3096.0,
             "price": 422.96,
             "notional_usd": 1309484.16,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 3942.0,
             "price": 424.05,
             "notional_usd": 1671605.1,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 3476.0,
             "price": 425.11,
             "notional_usd": 1477682.36,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 1435.0,
             "price": 426.14,
             "notional_usd": 611510.9,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 1522.0,
             "price": 427.19,
             "notional_usd": 650183.18,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 4183.0,
             "price": 428.2,
             "notional_usd": 1791160.6,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 4015.0,
             "price": 429.16,
             "notional_usd": 1723077.4,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 4125.0,
             "price": 430.23,
             "notional_usd": 1774698.75,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 6115.0,
             "price": 431.15,
             "notional_usd": 2636482.25,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 5864.0,
             "price": 432.29,
             "notional_usd": 2534948.56,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 4629.0,
             "price": 433.2,
             "notional_usd": 2005282.8,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 1935.0,
             "price": 434.18,
             "notional_usd": 840138.3,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 1669.0,
             "price": 435.23,
             "notional_usd": 726398.87,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 2227.0,
             "price": 436.33,
             "notional_usd": 971706.91,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 1626.0,
             "price": 437.13,
             "notional_usd": 710773.38,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners Iv, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 167.0,
             "price": 438.0,
             "notional_usd": 73146.0,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 2680.0,
             "price": 420.21,
             "notional_usd": 1126162.8,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 6078.0,
             "price": 420.99,
             "notional_usd": 2558777.22,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 2836.0,
             "price": 421.96,
             "notional_usd": 1196678.56,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 1572.0,
             "price": 422.96,
             "notional_usd": 664893.12,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 2002.0,
             "price": 424.05,
             "notional_usd": 848948.1,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 1766.0,
             "price": 425.11,
             "notional_usd": 750744.26,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 729.0,
             "price": 426.14,
             "notional_usd": 310656.06,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 773.0,
             "price": 427.19,
             "notional_usd": 330217.87,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 2125.0,
             "price": 428.2,
             "notional_usd": 909925.0,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 2039.0,
             "price": 429.16,
             "notional_usd": 875057.24,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 2095.0,
             "price": 430.23,
             "notional_usd": 901331.85,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 3106.0,
             "price": 431.15,
             "notional_usd": 1339151.9,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 2979.0,
             "price": 432.29,
             "notional_usd": 1287791.91,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 2351.0,
             "price": 433.2,
             "notional_usd": 1018453.2,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 983.0,
             "price": 434.18,
             "notional_usd": 426798.94,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 847.0,
             "price": 435.23,
             "notional_usd": 368639.81,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 1131.0,
             "price": 436.33,
             "notional_usd": 493489.23,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 826.0,
             "price": 437.13,
             "notional_usd": 361069.38,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Partners V De (Aiv), L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 85.0,
             "price": 438.0,
             "notional_usd": 37230.0,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 36.0,
             "price": 405.36,
             "notional_usd": 14592.96,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 14.0,
             "price": 406.35,
             "notional_usd": 5688.9,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 50.0,
             "price": 407.59,
             "notional_usd": 20379.5,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 116.0,
             "price": 408.52,
             "notional_usd": 47388.32,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 92.0,
             "price": 409.49,
             "notional_usd": 37673.08,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 123.0,
             "price": 410.68,
             "notional_usd": 50513.64,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 96.0,
             "price": 411.4,
             "notional_usd": 39494.4,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 14.0,
             "price": 412.51,
             "notional_usd": 5775.14,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 1.0,
             "price": 413.3,
             "notional_usd": 413.3,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 31.0,
             "price": 415.49,
             "notional_usd": 12880.19,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 35.0,
             "price": 416.34,
             "notional_usd": 14571.9,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 11.0,
             "price": 417.78,
             "notional_usd": 4595.58,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           },
           {
             "insider": "Silver Lake Technology Investors V, L.P.",
             "title": "other",
+            "role": "other",
             "type": "SELL",
             "shares": 17.0,
             "price": 418.49,
             "notional_usd": 7114.33,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": true
           }
         ],
         "summary": {
+          "signal": "routine_or_sponsor_selling_only",
           "open_market_buys": 0,
           "open_market_sells": 108,
           "buy_notional_usd": 0,
           "sell_notional_usd": 75012324.17,
-          "distinct_buyers": 0
-        }
+          "discretionary_officer_dir_buys": 0,
+          "discretionary_officer_dir_sells": 0,
+          "distinct_discretionary_buyers": 0,
+          "plan_10b5_1_trades": 0,
+          "institutional_entity_trades": 108
+        },
+        "new_insider_form3_filings": 6
       },
       "HPE": {
         "transactions": [
           {
             "insider": "Karros Kirt P",
             "title": "SVP, Treasurer, Corp Dev",
+            "role": "officer",
             "type": "SELL",
             "shares": 18785.0,
             "price": 48.5,
             "notional_usd": 911072.5,
-            "date": "2026-06-22"
+            "date": "2026-06-22",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           }
         ],
         "summary": {
+          "signal": "routine_or_sponsor_selling_only",
           "open_market_buys": 0,
           "open_market_sells": 1,
           "buy_notional_usd": 0,
           "sell_notional_usd": 911072.5,
-          "distinct_buyers": 0
-        }
+          "discretionary_officer_dir_buys": 0,
+          "discretionary_officer_dir_sells": 0,
+          "distinct_discretionary_buyers": 0,
+          "plan_10b5_1_trades": 1,
+          "institutional_entity_trades": 0
+        },
+        "new_insider_form3_filings": 21
       },
       "HOOD": {
         "transactions": [
           {
             "insider": "Robinhood Markets, Inc.",
-            "title": "other",
+            "title": "ten_pct_owner",
+            "role": "ten_pct_owner",
             "type": "SELL",
             "shares": 10041.0,
             "price": 30.55,
             "notional_usd": 306752.55,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Robinhood Markets, Inc.",
-            "title": "other",
+            "title": "ten_pct_owner",
+            "role": "ten_pct_owner",
             "type": "SELL",
             "shares": 7908.0,
             "price": 31.11,
             "notional_usd": 246017.88,
-            "date": "2026-07-09"
+            "date": "2026-07-09",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Robinhood Markets, Inc.",
-            "title": "other",
+            "title": "ten_pct_owner",
+            "role": "ten_pct_owner",
             "type": "SELL",
             "shares": 3484.0,
             "price": 33.18,
             "notional_usd": 115599.12,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Robinhood Markets, Inc.",
-            "title": "other",
+            "title": "ten_pct_owner",
+            "role": "ten_pct_owner",
             "type": "SELL",
             "shares": 5299.0,
             "price": 33.96,
             "notional_usd": 179954.04,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Robinhood Markets, Inc.",
-            "title": "other",
+            "title": "ten_pct_owner",
+            "role": "ten_pct_owner",
             "type": "SELL",
             "shares": 10033.0,
             "price": 31.35,
             "notional_usd": 314534.55,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Robinhood Markets, Inc.",
-            "title": "other",
+            "title": "ten_pct_owner",
+            "role": "ten_pct_owner",
             "type": "SELL",
             "shares": 2296.0,
             "price": 32.12,
             "notional_usd": 73747.52,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Robinhood Markets, Inc.",
-            "title": "other",
+            "title": "ten_pct_owner",
+            "role": "ten_pct_owner",
             "type": "SELL",
             "shares": 182.0,
             "price": 32.95,
             "notional_usd": 5996.9,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Tenev Vladimir",
             "title": "Chief Executive Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 18200.0,
             "price": 112.2242,
             "notional_usd": 2042480.44,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Tenev Vladimir",
             "title": "Chief Executive Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 13000.0,
             "price": 113.175,
             "notional_usd": 1471275.0,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Tenev Vladimir",
             "title": "Chief Executive Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 50980.0,
             "price": 114.3314,
             "notional_usd": 5828614.77,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Tenev Vladimir",
             "title": "Chief Executive Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 49177.0,
             "price": 115.0297,
             "notional_usd": 5656815.56,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Tenev Vladimir",
             "title": "Chief Executive Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 68046.0,
             "price": 116.3753,
             "notional_usd": 7918873.66,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Tenev Vladimir",
             "title": "Chief Executive Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 115773.0,
             "price": 117.2706,
             "notional_usd": 13576769.17,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Tenev Vladimir",
             "title": "Chief Executive Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 59824.0,
             "price": 118.1385,
             "notional_usd": 7067517.62,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Gallagher Daniel Martin Jr",
             "title": "Chief Legal Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 500.0,
             "price": 112.056,
             "notional_usd": 56028.0,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Gallagher Daniel Martin Jr",
             "title": "Chief Legal Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 700.0,
             "price": 113.5943,
             "notional_usd": 79516.01,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Gallagher Daniel Martin Jr",
             "title": "Chief Legal Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 2000.0,
             "price": 114.684,
             "notional_usd": 229368.0,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Gallagher Daniel Martin Jr",
             "title": "Chief Legal Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 900.0,
             "price": 115.7567,
             "notional_usd": 104181.03,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Gallagher Daniel Martin Jr",
             "title": "Chief Legal Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 2953.0,
             "price": 116.8023,
             "notional_usd": 344917.19,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Gallagher Daniel Martin Jr",
             "title": "Chief Legal Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 2547.0,
             "price": 117.802,
             "notional_usd": 300041.69,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Gallagher Daniel Martin Jr",
             "title": "Chief Legal Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 400.0,
             "price": 118.4525,
             "notional_usd": 47381.0,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Quirk Steven M.",
             "title": "Chief Brokerage Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 19377.0,
             "price": 119.96,
             "notional_usd": 2324464.92,
-            "date": "2026-07-02"
+            "date": "2026-07-02",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Treseder Oluwadara Johnson",
             "title": "director",
+            "role": "director",
             "type": "SELL",
             "shares": 1875.0,
             "price": 115.0,
             "notional_usd": 215625.0,
-            "date": "2026-07-02"
+            "date": "2026-07-02",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Treseder Oluwadara Johnson",
             "title": "director",
+            "role": "director",
             "type": "SELL",
             "shares": 1875.0,
             "price": 120.0,
             "notional_usd": 225000.0,
-            "date": "2026-07-02"
+            "date": "2026-07-02",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           }
         ],
         "summary": {
+          "signal": "routine_or_sponsor_selling_only",
           "open_market_buys": 0,
           "open_market_sells": 24,
           "buy_notional_usd": 0,
           "sell_notional_usd": 48731471.62,
-          "distinct_buyers": 0
-        }
+          "discretionary_officer_dir_buys": 0,
+          "discretionary_officer_dir_sells": 0,
+          "distinct_discretionary_buyers": 0,
+          "plan_10b5_1_trades": 24,
+          "institutional_entity_trades": 0
+        },
+        "new_insider_form3_filings": 9
       },
       "AMD": {
         "transactions": [
           {
             "insider": "Papermaster Mark D",
             "title": "Chief Technology Officer & EVP",
+            "role": "officer",
             "type": "SELL",
             "shares": 6000.0,
             "price": 536.33,
             "notional_usd": 3217980.0,
-            "date": "2026-06-15"
+            "date": "2026-06-15",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 2720.0,
             "price": 449.21,
             "notional_usd": 1221851.2,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 700.0,
             "price": 450.4,
             "notional_usd": 315280.0,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 4400.0,
             "price": 451.53,
             "notional_usd": 1986732.0,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 12862.0,
             "price": 452.4,
             "notional_usd": 5818768.8,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 14458.0,
             "price": 453.45,
             "notional_usd": 6555980.1,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 9392.0,
             "price": 454.43,
             "notional_usd": 4268006.56,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 7390.0,
             "price": 455.4,
             "notional_usd": 3365406.0,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 6638.0,
             "price": 456.38,
             "notional_usd": 3029450.44,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 7351.0,
             "price": 457.42,
             "notional_usd": 3362494.42,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 5700.0,
             "price": 458.45,
             "notional_usd": 2613165.0,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 2891.0,
             "price": 459.41,
             "notional_usd": 1328154.31,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 1700.0,
             "price": 460.45,
             "notional_usd": 782765.0,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 900.0,
             "price": 461.67,
             "notional_usd": 415503.0,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 1900.0,
             "price": 462.81,
             "notional_usd": 879339.0,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 400.0,
             "price": 464.1,
             "notional_usd": 185640.0,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 1100.0,
             "price": 465.38,
             "notional_usd": 511918.0,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 3337.0,
             "price": 466.31,
             "notional_usd": 1556076.47,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 3679.0,
             "price": 467.48,
             "notional_usd": 1719858.92,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 5002.0,
             "price": 468.61,
             "notional_usd": 2343987.22,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 6814.0,
             "price": 469.55,
             "notional_usd": 3199513.7,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 7426.0,
             "price": 470.6,
             "notional_usd": 3494675.6,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 5376.0,
             "price": 471.52,
             "notional_usd": 2534891.52,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 3509.0,
             "price": 472.57,
             "notional_usd": 1658248.13,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 3700.0,
             "price": 473.61,
             "notional_usd": 1752357.0,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 3855.0,
             "price": 474.53,
             "notional_usd": 1829313.15,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 1300.0,
             "price": 475.48,
             "notional_usd": 618124.0,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Su Lisa T",
             "title": "Chair, President & CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 500.0,
             "price": 476.43,
             "notional_usd": 238215.0,
-            "date": "2026-06-10"
+            "date": "2026-06-10",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Denzel Nora",
             "title": "director",
+            "role": "director",
             "type": "SELL",
             "shares": 1821.0,
             "price": 522.0,
             "notional_usd": 950562.0,
-            "date": "2026-05-29"
+            "date": "2026-05-29",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Denzel Nora",
             "title": "director",
+            "role": "director",
             "type": "SELL",
             "shares": 8626.0,
             "price": 522.0,
             "notional_usd": 4502772.0,
-            "date": "2026-06-02"
+            "date": "2026-06-02",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Norrod Forrest Eugene",
             "title": "EVP & GM DESG",
+            "role": "officer",
             "type": "SELL",
             "shares": 516.0,
             "price": 427.8,
             "notional_usd": 220744.8,
-            "date": "2026-05-20"
+            "date": "2026-05-20",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Norrod Forrest Eugene",
             "title": "EVP & GM DESG",
+            "role": "officer",
             "type": "SELL",
             "shares": 1975.0,
             "price": 428.45,
             "notional_usd": 846188.75,
-            "date": "2026-05-20"
+            "date": "2026-05-20",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Norrod Forrest Eugene",
             "title": "EVP & GM DESG",
+            "role": "officer",
             "type": "SELL",
             "shares": 2667.0,
             "price": 429.45,
             "notional_usd": 1145343.15,
-            "date": "2026-05-20"
+            "date": "2026-05-20",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Norrod Forrest Eugene",
             "title": "EVP & GM DESG",
+            "role": "officer",
             "type": "SELL",
             "shares": 5032.0,
             "price": 430.68,
             "notional_usd": 2167181.76,
-            "date": "2026-05-20"
+            "date": "2026-05-20",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Norrod Forrest Eugene",
             "title": "EVP & GM DESG",
+            "role": "officer",
             "type": "SELL",
             "shares": 3287.0,
             "price": 431.56,
             "notional_usd": 1418537.72,
-            "date": "2026-05-20"
+            "date": "2026-05-20",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Norrod Forrest Eugene",
             "title": "EVP & GM DESG",
+            "role": "officer",
             "type": "SELL",
             "shares": 2274.0,
             "price": 432.78,
             "notional_usd": 984141.72,
-            "date": "2026-05-20"
+            "date": "2026-05-20",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Norrod Forrest Eugene",
             "title": "EVP & GM DESG",
+            "role": "officer",
             "type": "SELL",
             "shares": 1284.0,
             "price": 433.75,
             "notional_usd": 556935.0,
-            "date": "2026-05-20"
+            "date": "2026-05-20",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Norrod Forrest Eugene",
             "title": "EVP & GM DESG",
+            "role": "officer",
             "type": "SELL",
             "shares": 1562.0,
             "price": 435.18,
             "notional_usd": 679751.16,
-            "date": "2026-05-20"
+            "date": "2026-05-20",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Norrod Forrest Eugene",
             "title": "EVP & GM DESG",
+            "role": "officer",
             "type": "SELL",
             "shares": 890.0,
             "price": 435.91,
             "notional_usd": 387959.9,
-            "date": "2026-05-20"
+            "date": "2026-05-20",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           }
         ],
         "summary": {
+          "signal": "notable_discretionary_selling",
           "open_market_buys": 0,
           "open_market_sells": 39,
           "buy_notional_usd": 0,
           "sell_notional_usd": 74663812.5,
-          "distinct_buyers": 0
-        }
+          "discretionary_officer_dir_buys": 0,
+          "discretionary_officer_dir_sells": 2,
+          "distinct_discretionary_buyers": 0,
+          "plan_10b5_1_trades": 37,
+          "institutional_entity_trades": 0
+        },
+        "new_insider_form3_filings": 16
       },
       "S": {
         "transactions": [
           {
             "insider": "Parekh Sonalee Elizabeth",
             "title": "Chief Financial Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 33823.0,
             "price": 17.89,
             "notional_usd": 605093.47,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Padgett Barry L.",
             "title": "President and COO",
+            "role": "officer",
             "type": "SELL",
             "shares": 15460.0,
             "price": 17.89,
             "notional_usd": 276579.4,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Pinczuk Ana G.",
             "title": "President Product & Technology",
+            "role": "officer",
             "type": "SELL",
             "shares": 16042.0,
             "price": 17.89,
             "notional_usd": 286991.38,
-            "date": "2026-07-06"
+            "date": "2026-07-06",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Weingarten Tomer",
             "title": "President, CEO",
+            "role": "officer",
             "type": "SELL",
             "shares": 57941.0,
             "price": 17.7051,
             "notional_usd": 1025851.2,
-            "date": "2026-07-01"
+            "date": "2026-07-01",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           }
         ],
         "summary": {
+          "signal": "notable_discretionary_selling",
           "open_market_buys": 0,
           "open_market_sells": 4,
           "buy_notional_usd": 0,
           "sell_notional_usd": 2194515.45,
-          "distinct_buyers": 0
-        }
+          "discretionary_officer_dir_buys": 0,
+          "discretionary_officer_dir_sells": 3,
+          "distinct_discretionary_buyers": 0,
+          "plan_10b5_1_trades": 1,
+          "institutional_entity_trades": 0
+        },
+        "new_insider_form3_filings": 24
       },
       "OKTA": {
         "transactions": [
           {
             "insider": "Mckinnon Todd",
             "title": "Chief Executive Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 12695.0,
             "price": 145.629,
             "notional_usd": 1848760.15,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Mckinnon Todd",
             "title": "Chief Executive Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 29502.0,
             "price": 146.3878,
             "notional_usd": 4318732.88,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Mckinnon Todd",
             "title": "Chief Executive Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 25034.0,
             "price": 147.3023,
             "notional_usd": 3687565.78,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Mckinnon Todd",
             "title": "Chief Executive Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 1705.0,
             "price": 148.1604,
             "notional_usd": 252613.48,
-            "date": "2026-07-08"
+            "date": "2026-07-08",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Schwartz Larissa",
             "title": "See Remarks",
+            "role": "officer",
             "type": "SELL",
             "shares": 2463.0,
             "price": 120.0,
             "notional_usd": 295560.0,
-            "date": "2026-06-22"
+            "date": "2026-06-22",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Kelleher Eric Robert",
             "title": "See Remarks",
+            "role": "officer",
             "type": "SELL",
             "shares": 200.0,
             "price": 107.975,
             "notional_usd": 21595.0,
-            "date": "2026-06-18"
+            "date": "2026-06-18",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Kelleher Eric Robert",
             "title": "See Remarks",
+            "role": "officer",
             "type": "SELL",
             "shares": 400.0,
             "price": 109.005,
             "notional_usd": 43602.0,
-            "date": "2026-06-18"
+            "date": "2026-06-18",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Kelleher Eric Robert",
             "title": "See Remarks",
+            "role": "officer",
             "type": "SELL",
             "shares": 1000.0,
             "price": 111.0467,
             "notional_usd": 111046.7,
-            "date": "2026-06-18"
+            "date": "2026-06-18",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Kelleher Eric Robert",
             "title": "See Remarks",
+            "role": "officer",
             "type": "SELL",
             "shares": 300.0,
             "price": 112.1483,
             "notional_usd": 33644.49,
-            "date": "2026-06-18"
+            "date": "2026-06-18",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Kelleher Eric Robert",
             "title": "See Remarks",
+            "role": "officer",
             "type": "SELL",
             "shares": 200.0,
             "price": 115.335,
             "notional_usd": 23067.0,
-            "date": "2026-06-18"
+            "date": "2026-06-18",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Kelleher Eric Robert",
             "title": "See Remarks",
+            "role": "officer",
             "type": "SELL",
             "shares": 1777.0,
             "price": 117.5945,
             "notional_usd": 208965.43,
-            "date": "2026-06-18"
+            "date": "2026-06-18",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Kelleher Eric Robert",
             "title": "See Remarks",
+            "role": "officer",
             "type": "SELL",
             "shares": 100.0,
             "price": 118.49,
             "notional_usd": 11849.0,
-            "date": "2026-06-18"
+            "date": "2026-06-18",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           }
         ],
         "summary": {
+          "signal": "routine_or_sponsor_selling_only",
           "open_market_buys": 0,
           "open_market_sells": 12,
           "buy_notional_usd": 0,
           "sell_notional_usd": 10857001.91,
-          "distinct_buyers": 0
-        }
+          "discretionary_officer_dir_buys": 0,
+          "discretionary_officer_dir_sells": 0,
+          "distinct_discretionary_buyers": 0,
+          "plan_10b5_1_trades": 12,
+          "institutional_entity_trades": 0
+        },
+        "new_insider_form3_filings": 17
       },
       "AXON": {
         "transactions": [
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 82.0,
             "price": 626.78,
             "notional_usd": 51395.96,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 82.0,
             "price": 628.2,
             "notional_usd": 51512.4,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 41.0,
             "price": 629.2418,
             "notional_usd": 25798.91,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 251.0,
             "price": 631.3478,
             "notional_usd": 158468.3,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 123.0,
             "price": 632.9098,
             "notional_usd": 77847.91,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 88.0,
             "price": 634.1576,
             "notional_usd": 55805.87,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 241.0,
             "price": 635.8986,
             "notional_usd": 153251.56,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 83.0,
             "price": 636.6527,
             "notional_usd": 52842.17,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 371.0,
             "price": 638.1184,
             "notional_usd": 236741.93,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 366.0,
             "price": 639.4084,
             "notional_usd": 234023.47,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 772.0,
             "price": 640.4121,
             "notional_usd": 494398.14,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 379.0,
             "price": 641.6579,
             "notional_usd": 243188.34,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 1045.0,
             "price": 642.7299,
             "notional_usd": 671652.75,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 1308.0,
             "price": 643.7624,
             "notional_usd": 842041.22,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 744.0,
             "price": 644.7637,
             "notional_usd": 479704.19,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 124.0,
             "price": 645.8705,
             "notional_usd": 80087.94,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 1787.0,
             "price": 646.9398,
             "notional_usd": 1156081.42,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 500.0,
             "price": 647.9656,
             "notional_usd": 323982.8,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 931.0,
             "price": 649.023,
             "notional_usd": 604240.41,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 274.0,
             "price": 650.2006,
             "notional_usd": 178154.96,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 160.0,
             "price": 650.8943,
             "notional_usd": 104143.09,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 147.0,
             "price": 652.1121,
             "notional_usd": 95860.48,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 2.0,
             "price": 655.0625,
             "notional_usd": 1310.12,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 1.0,
             "price": 657.64,
             "notional_usd": 657.64,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 76.0,
             "price": 659.52,
             "notional_usd": 50123.52,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 22.0,
             "price": 662.695,
             "notional_usd": 14579.29,
-            "date": "2026-07-07"
+            "date": "2026-07-07",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Smith Patrick W",
             "title": "CHIEF EXECUTIVE OFFICER",
+            "role": "officer",
             "type": "SELL",
             "shares": 10000.0,
             "price": 500.0018,
             "notional_usd": 5000018.0,
-            "date": "2026-06-29"
+            "date": "2026-06-29",
+            "is_10b5_1_plan": true,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 339.0,
             "price": 481.756,
             "notional_usd": 163315.28,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 1261.0,
             "price": 482.5231,
             "notional_usd": 608461.63,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 926.0,
             "price": 483.5043,
             "notional_usd": 447724.98,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 440.0,
             "price": 484.5618,
             "notional_usd": 213207.19,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 498.0,
             "price": 485.2969,
             "notional_usd": 241677.86,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 2018.0,
             "price": 486.5998,
             "notional_usd": 981958.4,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 2018.0,
             "price": 487.521,
             "notional_usd": 983817.38,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 365.0,
             "price": 488.4769,
             "notional_usd": 178294.07,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 545.0,
             "price": 489.4404,
             "notional_usd": 266745.02,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 769.0,
             "price": 490.4574,
             "notional_usd": 377161.74,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 1229.0,
             "price": 491.5793,
             "notional_usd": 604150.96,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 939.0,
             "price": 492.3946,
             "notional_usd": 462358.53,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 573.0,
             "price": 493.4821,
             "notional_usd": 282765.24,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 296.0,
             "price": 494.5174,
             "notional_usd": 146377.15,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 44.0,
             "price": 495.1209,
             "notional_usd": 21785.32,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 120.0,
             "price": 496.6183,
             "notional_usd": 59594.2,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 80.0,
             "price": 498.4,
             "notional_usd": 39872.0,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 40.0,
             "price": 499.56,
             "notional_usd": 19982.4,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Isner Joshua",
             "title": "PRESIDENT",
+            "role": "officer",
             "type": "SELL",
             "shares": 500.0,
             "price": 501.277,
             "notional_usd": 250638.5,
-            "date": "2026-06-05"
+            "date": "2026-06-05",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           },
           {
             "insider": "Coughlin Elizabeth Reid",
             "title": "Chief Human Officer",
+            "role": "officer",
             "type": "SELL",
             "shares": 1554.0,
             "price": 485.0,
             "notional_usd": 753690.0,
-            "date": "2026-06-04"
+            "date": "2026-06-04",
+            "is_10b5_1_plan": false,
+            "is_institutional_entity": false
           }
         ],
         "summary": {
+          "signal": "notable_discretionary_selling",
           "open_market_buys": 0,
           "open_market_sells": 47,
           "buy_notional_usd": 0,
           "sell_notional_usd": 18541490.64,
-          "distinct_buyers": 0
-        }
+          "discretionary_officer_dir_buys": 0,
+          "discretionary_officer_dir_sells": 20,
+          "distinct_discretionary_buyers": 0,
+          "plan_10b5_1_trades": 27,
+          "institutional_entity_trades": 0
+        },
+        "new_insider_form3_filings": 19
       },
       "WDC": {
         "transactions": [],
         "summary": {
+          "signal": "no_open_market_activity",
           "open_market_buys": 0,
           "open_market_sells": 0,
           "buy_notional_usd": 0,
           "sell_notional_usd": 0,
-          "distinct_buyers": 0
-        }
+          "discretionary_officer_dir_buys": 0,
+          "discretionary_officer_dir_sells": 0,
+          "distinct_discretionary_buyers": 0,
+          "plan_10b5_1_trades": 0,
+          "institutional_entity_trades": 0
+        },
+        "new_insider_form3_filings": 26
       },
       "SHOP": {
         "transactions": [],
         "summary": {
+          "signal": "no_open_market_activity",
           "open_market_buys": 0,
           "open_market_sells": 0,
           "buy_notional_usd": 0,
           "sell_notional_usd": 0,
-          "distinct_buyers": 0
-        }
+          "discretionary_officer_dir_buys": 0,
+          "discretionary_officer_dir_sells": 0,
+          "distinct_discretionary_buyers": 0,
+          "plan_10b5_1_trades": 0,
+          "institutional_entity_trades": 0
+        },
+        "new_insider_form3_filings": 2
       }
     }
   },
