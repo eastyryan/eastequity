@@ -689,6 +689,33 @@ def main() -> int:
         return self_review(run_id)
     print(f"=== East Equity Agent run {run_id} (mode: {cfg['mode']['trading_mode']}) ===")
 
+    if args.gather_only:
+        # Pure data collection (used by the relay/Action): no preflight gates,
+        # no lock, no budget - it must work on weekends and holidays too.
+        context = gather_context(cfg, light=args.light)
+        degraded = (context["macro_regime"].get("status") != "ok"
+                    or (not args.light and not context["universe_scan"].get("top_setups")))
+        relay = ROOT / "data" / "cloud_context.json"
+        if degraded and relay.exists():
+            cached = json.loads(relay.read_text())
+            age_h = (datetime.now(timezone.utc)
+                     - datetime.fromisoformat(cached["run_date"])).total_seconds() / 3600
+            if age_h < 4:
+                cached["portfolio"] = context["portfolio"]
+                cached["hard_limits"] = context["hard_limits"]
+                cached["stale_data_notice"] = (
+                    f"Live data feeds unreachable from this environment; using the "
+                    f"bundle gathered {age_h:.1f}h ago by the data relay. "
+                    f"Prices may be up to that stale - factor this into confidence.")
+                context = cached
+                print(f"  (live feeds blocked - using relay bundle, {age_h:.1f}h old)")
+            else:
+                print(f"  (relay bundle too stale: {age_h:.1f}h - proceeding degraded)")
+        out = ROOT / "state" / f"context_{run_id}.json"
+        out.write_text(json.dumps(context, indent=2, default=str))
+        print(f"CONTEXT_FILE={out}")
+        return 0
+
     halt = preflight(cfg, run_id, news_only=args.news_only, manual=args.manual)
     if halt:
         print(f"HALT: {halt}")
@@ -705,32 +732,6 @@ def main() -> int:
     else:
         print("[1/5] Gathering context...")
         context = gather_context(cfg, light=args.light)
-        if args.gather_only:
-            # Sandboxed cloud runs may find every live feed blocked. Fall back to
-            # the bundle committed by the GitHub Actions data relay if it is fresh.
-            degraded = (context["macro_regime"].get("status") != "ok"
-                        or (not args.light and not context["universe_scan"].get("top_setups")))
-            relay = ROOT / "data" / "cloud_context.json"
-            if degraded and relay.exists():
-                cached = json.loads(relay.read_text())
-                age_h = (datetime.now(timezone.utc)
-                         - datetime.fromisoformat(cached["run_date"])).total_seconds() / 3600
-                if age_h < 4:
-                    cached["portfolio"] = context["portfolio"]      # live repo state
-                    cached["hard_limits"] = context["hard_limits"]
-                    cached["stale_data_notice"] = (
-                        f"Live data feeds unreachable from this environment; using the "
-                        f"bundle gathered {age_h:.1f}h ago by the GitHub Actions data relay. "
-                        f"Prices may be up to that stale - factor this into confidence.")
-                    context = cached
-                    print(f"  (live feeds blocked - using relay bundle, {age_h:.1f}h old)")
-                else:
-                    print(f"  (relay bundle too stale: {age_h:.1f}h - proceeding degraded)")
-            out = ROOT / "state" / f"context_{run_id}.json"
-            out.write_text(json.dumps(context, indent=2, default=str))
-            print(f"CONTEXT_FILE={out}")
-            return 0
-        forced_exit_fills = [] if args.news_only else apply_safety_layer(context, cfg, run_id)
         print("[2/5] Waking the brain (Claude)...")
         response = ask_claude(context, run_id, news_only=args.news_only)
 
@@ -776,13 +777,13 @@ def main() -> int:
         context["portfolio"] = get_portfolio_state()
     refresh_dashboard(context, response, results, fills, run_id, no_trade_reason,
                       parsed["commentary"], parsed["watchlist"])
-    redeploy_dashboard()
     draft_x_summary(fills, results, context, run_id, parsed.get("x_post"))
     journal.log_run_summary({
         "manual": args.manual,
         "proposals": len(proposals), "approved": len(approved),
         "fills": len(fills), "no_trade_reason": no_trade_reason,
     }, run_id)
+    redeploy_dashboard()  # publish last so every artifact of this run is committed
     print("Done.")
     return 0
 
