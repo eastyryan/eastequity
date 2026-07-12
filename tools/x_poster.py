@@ -91,7 +91,16 @@ def format_for_x(text: str) -> str:
                     tok if (_is_url(tok) or _is_cashtag(tok)) else italic(tok)
                     for tok in part.split(" ")))
         lines_out.append("".join(styled))
-    return "\n".join(lines_out)
+    out = "\n".join(lines_out)
+    # X allows at most ONE cashtag per post (platform rule). Keep the first for
+    # the hotlink; later ones become bold plain tickers.
+    seen = [0]
+
+    def _decash(m):
+        seen[0] += 1
+        return m.group(0) if seen[0] == 1 else bold(m.group(1))
+
+    return re.sub(r"\$([A-Za-z]{1,5})\b", _decash, out)
 
 
 def _upload_media(session, path: str) -> str | None:
