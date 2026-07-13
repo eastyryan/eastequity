@@ -447,6 +447,7 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
 
     return {
         "run_date": datetime.now(timezone.utc).isoformat(),
+        "as_of_et": _et_date(),  # today's US MARKET date - cite this, not the UTC run_date
         "trading_mode": cfg["mode"]["trading_mode"],
         "run_depth": "light" if light else "full",
         # Hard limits the validator will enforce - size within them or be rejected.
@@ -579,6 +580,8 @@ def ask_claude(context: dict, run_id: str, news_only: bool = False) -> str:
         return _run_claude(prompt)
 
     prompt = (
+        f"Today's date in the US market timezone (ET) is {_et_date()} - use THIS date in "
+        f"any prose, never the UTC run_date. "
         "You are running a scheduled East Equity Agent trading cycle. "
         f"Read your system rules in CLAUDE.md, then read the full market/portfolio "
         f"context bundle at {context_file}. Follow the Required Process exactly: "
@@ -900,6 +903,194 @@ def recent_improvements(limit: int = 30) -> list[dict]:
     return notes[-limit:][::-1]
 
 
+# ---------------------------------------------------------------------------
+# Time: user-facing dates use the MARKET timezone (ET), never UTC. An evening run
+# (after 8pm ET) is still ~02:00 UTC the NEXT day - stamping UTC would show viewers
+# "tomorrow's" date on the review blurb, the equity curve, and X posts.
+# ---------------------------------------------------------------------------
+def _et_now() -> datetime:
+    try:
+        from zoneinfo import ZoneInfo
+        return datetime.now(ZoneInfo("America/New_York"))
+    except Exception:
+        # tzdata unavailable (some minimal Linux images): approximate ET as UTC-4 (EDT).
+        # Only affects a date stamp; off by at most an hour near midnight in winter.
+        return datetime.now(timezone.utc) - timedelta(hours=4)
+
+
+def _et_date() -> str:
+    return _et_now().date().isoformat()
+
+
+def _to_et_date(iso_ts: str | None) -> str | None:
+    """Convert a UTC ISO timestamp to its ET calendar date (YYYY-MM-DD)."""
+    if not iso_ts:
+        return None
+    try:
+        dt = datetime.fromisoformat(iso_ts.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        from zoneinfo import ZoneInfo
+        return dt.astimezone(ZoneInfo("America/New_York")).date().isoformat()
+    except Exception:
+        try:
+            return (datetime.fromisoformat(iso_ts.replace("Z", "+00:00"))
+                    - timedelta(hours=4)).date().isoformat()
+        except Exception:
+            return iso_ts[:10]
+
+
+def _sector_map() -> dict:
+    """ticker -> sector, from data/universe.json (for dashboard exposure)."""
+    try:
+        sectors = json.loads((ROOT / "data" / "universe.json").read_text())["sectors"]
+        return {t.upper(): s for s, ts in sectors.items() for t in ts}
+    except Exception:
+        return {}
+
+
+def build_trade_events() -> list[dict]:
+    """Every filled BUY/SELL with its ET date - the equity curve annotates these so the
+    line tells a story (entries, exits, stop-outs) instead of being an anonymous squiggle."""
+    state_file = ROOT / "state" / "portfolio.json"
+    if not state_file.exists():
+        return []
+    history = json.loads(state_file.read_text()).get("history", [])
+    verdicts = {(t["ticker"].upper(), t["closed_at"]): t.get("verdict")
+                for t in compute_closed_trades()}
+    events = []
+    for fill in history:
+        if fill.get("status") != "filled":
+            continue
+        d = _to_et_date(fill.get("filled_at"))
+        ev = {"date": d, "ticker": fill["ticker"].upper(),
+              "action": fill["action"], "price": fill.get("fill_price")}
+        if fill["action"] == "SELL_TO_CLOSE":
+            ev["verdict"] = verdicts.get((fill["ticker"].upper(), d))
+        events.append(ev)
+    return events
+
+
+def build_position_charts(positions: list[dict]) -> dict:
+    """~90 daily OHLC bars per open holding plus its plan levels, for the per-position
+    charts (entry/stop/target drawn on the tape). Fail-soft: a blocked fetch just omits
+    that name. Written to its own file so latest.json stays slim."""
+    out = {}
+    if not positions:
+        return out
+    try:
+        import yfinance as yf
+    except Exception:
+        return out
+    for pos in positions:
+        t = pos.get("ticker", "").upper()
+        plan = pos.get("original_plan") or {}
+        try:
+            df = yf.download(t, period="5mo", interval="1d", auto_adjust=True,
+                             progress=False)
+            if df is None or df.empty:
+                continue
+            bars = []
+            for idx, row in df.tail(90).iterrows():
+                bars.append({
+                    "date": idx.date().isoformat(),
+                    "open": round(float(row["Open"]), 2), "high": round(float(row["High"]), 2),
+                    "low": round(float(row["Low"]), 2), "close": round(float(row["Close"]), 2),
+                })
+            out[t] = {
+                "bars": bars,
+                "avg_cost": pos.get("avg_cost"),
+                "last_price": pos.get("last_price"),
+                "entry": plan.get("entry_price_max"),
+                "stop": plan.get("stop_loss"),
+                "target": plan.get("target_price"),
+                "opened_at": _to_et_date(pos.get("opened_at")),
+            }
+        except Exception:
+            continue
+    return out
+
+
+def update_watchlist_outcomes(watchlist: list, prices: dict, positions: list) -> list[dict]:
+    """Track whether the agent's watchlist calls play out: when a name was first watched
+    and at what price, whether price later reached its stated would_buy_at level, whether
+    the agent actually bought it, and how far it has moved since. Persisted across runs so
+    the site can grade the agent's foresight, not just its trades."""
+    f = ROOT / "dashboard" / "data" / "watchlist_outcomes.json"
+    try:
+        tracked = {d["ticker"]: d for d in json.loads(f.read_text())} if f.exists() else {}
+    except Exception:
+        tracked = {}
+    held = {p.get("ticker", "").upper() for p in positions}
+    ever_bought = held | {e["ticker"].upper() for e in build_trade_events()
+                          if e["action"] == "BUY"}
+    today = _et_date()
+    current = {str(w.get("ticker", "")).upper(): w for w in (watchlist or []) if w.get("ticker")}
+
+    for tk, w in current.items():
+        px = prices.get(tk)
+        rec = tracked.get(tk) or {"ticker": tk, "first_watched": today,
+                                  "price_when_added": px, "hit_buy_level": False}
+        rec["currently_watched"] = True
+        rec["would_buy_at"] = w.get("would_buy_at")
+        rec["one_line"] = w.get("one_line")
+        if px is not None:
+            rec["latest_price"] = px
+            base = rec.get("price_when_added") or px
+            rec["move_pct_since_watched"] = round((px / base - 1) * 100, 1) if base else None
+        # Parse a numeric buy level out of would_buy_at (e.g. "near $170") and flag a hit.
+        lvl = None
+        m = re.search(r"\$?\s*(\d+(?:\.\d+)?)", str(w.get("would_buy_at") or ""))
+        if m:
+            lvl = float(m.group(1))
+        if lvl and px is not None and px <= lvl * 1.02:
+            rec["hit_buy_level"], rec["hit_date"] = True, rec.get("hit_date") or today
+        rec["acted"] = tk in ever_bought
+        tracked[tk] = rec
+
+    for tk, rec in tracked.items():
+        if tk not in current:
+            rec["currently_watched"] = False
+            rec.setdefault("dropped_date", today)
+            px = prices.get(tk)
+            if px is not None:
+                rec["latest_price"] = px
+                base = rec.get("price_when_added") or px
+                rec["move_pct_since_watched"] = round((px / base - 1) * 100, 1) if base else None
+            rec["acted"] = rec.get("acted") or (tk in ever_bought)
+
+    rows = sorted(tracked.values(),
+                  key=lambda r: (not r.get("currently_watched"), r.get("first_watched") or ""),
+                  reverse=False)[:60]
+    try:
+        f.write_text(json.dumps(_json_safe(rows), indent=2))
+    except Exception:
+        pass
+    return rows
+
+
+def append_runs_index(run_id: str, mode: str, fills: list, commentary: str | None,
+                      no_trade_reason: str | None) -> None:
+    """A compact index of every published run so the site can offer a browsable archive
+    linking each run's full reasoning (dashboard/data/run_<id>.json)."""
+    f = ROOT / "dashboard" / "data" / "runs_index.json"
+    try:
+        idx = json.loads(f.read_text()) if f.exists() else []
+    except Exception:
+        idx = []
+    headline = (commentary or no_trade_reason or "").strip().split(". ")[0][:180]
+    entry = {"run_id": run_id, "date": _et_date(), "mode": mode,
+             "n_fills": len(fills or []),
+             "tickers_traded": sorted({str(x.get("ticker", "")).upper() for x in (fills or [])}),
+             "headline": headline}
+    idx = [e for e in idx if e.get("run_id") != run_id]
+    idx.append(entry)
+    try:
+        f.write_text(json.dumps(idx[-400:], indent=2))
+    except Exception:
+        pass
+
+
 def refresh_dashboard(context: dict, response: str, results: list, fills: list,
                       run_id: str, no_trade_reason: str | None = None,
                       commentary: str | None = None,
@@ -910,7 +1101,7 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
     # Append today's equity + benchmark to the track-record series first (last point wins).
     hist_file = dash / "equity_history.json"
     hist = json.loads(hist_file.read_text()) if hist_file.exists() else []
-    today = datetime.now(timezone.utc).date().isoformat()
+    today = _et_date()  # market-timezone date, so evening runs don't stamp "tomorrow"
     # A benchmark value, once recorded for a date, must survive every later
     # rewrite of that day's entry - sandboxed runs can't refetch it.
     prev_today = next((h for h in hist if h.get("date") == today), {})
@@ -933,8 +1124,14 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
         "mode": context["trading_mode"],
         "schedule_note": "Runs hourly during market hours, plus pre-market, evening, "
                          "midnight, and weekend news checks",
-        "portfolio": {k: context["portfolio"].get(k) for k in
-                      ("cash_usd", "total_equity_usd", "positions")},
+        "portfolio": {
+            "cash_usd": context["portfolio"].get("cash_usd"),
+            "total_equity_usd": context["portfolio"].get("total_equity_usd"),
+            # Attach sector to each position for the dashboard exposure view.
+            "positions": [{**p, "sector": _sector_map().get(p.get("ticker", "").upper())}
+                          for p in context["portfolio"].get("positions", [])],
+        },
+        "as_of_et": _et_date(),
         "macro_snapshot": {
             name: context["macro_regime"].get("indicators", {}).get(name)
             for name in ("cpi_yoy_pct", "ten_year_yield", "vix",
@@ -958,9 +1155,25 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
             for pos in context["portfolio"].get("positions", [])), 2),
         "forced_exits": context.get("forced_exits", []),
         "improvements": recent_improvements(),
+        "trade_events": build_trade_events(),
     }
     dash = ROOT / "dashboard" / "data"
     dash.mkdir(parents=True, exist_ok=True)
+
+    # Auxiliary data files (kept out of latest.json so it stays slim):
+    positions = context["portfolio"].get("positions", [])
+    prices = context.get("universe_scan", {}).get("prices", {})
+    try:
+        (dash / "position_charts.json").write_text(
+            json.dumps(_json_safe(build_position_charts(positions)), indent=2))
+    except Exception as e:
+        print(f"  (position_charts write failed: {e})")
+    try:
+        out["watchlist_outcomes"] = update_watchlist_outcomes(watchlist or [], prices, positions)
+    except Exception as e:
+        print(f"  (watchlist outcomes failed: {e})")
+    append_runs_index(run_id, context.get("trading_mode", "paper"), fills, commentary, no_trade_reason)
+
     # Full response lives in the per-run archive; latest.json stays slim for the site.
     (dash / f"run_{run_id}.json").write_text(json.dumps(_json_safe(out), indent=2, default=str))
     slim = {k: v for k, v in out.items() if k != "latest_reasoning"}
@@ -1074,13 +1287,37 @@ def self_review(run_id: str) -> int:
     _write_review_to_dashboard = ROOT / "dashboard" / "data" / "latest.json"
     if _write_review_to_dashboard.exists():
         d = json.loads(_write_review_to_dashboard.read_text())
-        d["improvements"] = ([{"date": datetime.now(timezone.utc).date().isoformat(),
+        d["improvements"] = ([{"date": _et_date(),
                                "note": f"Weekly self-review: {summary}"}]
                              + d.get("improvements", []))[:30]
         _write_review_to_dashboard.write_text(json.dumps(d, indent=2, default=str))
     redeploy_dashboard()
     print("self-review complete and published")
     return 0
+
+
+def _unpriceable(tickers: list) -> set:
+    """Names that return NO live price data (delisted / bad ticker). Fail-open: if the
+    whole download fails (feed down), return empty so a good review is never wiped."""
+    if not tickers:
+        return set()
+    try:
+        import yfinance as yf
+        data = yf.download(list(tickers), period="5d", interval="1d", group_by="ticker",
+                           auto_adjust=True, progress=False, threads=True)
+    except Exception:
+        return set()
+    bad, got_any = set(), False
+    for t in tickers:
+        try:
+            df = data[t].dropna() if len(tickers) > 1 else data.dropna()
+            if len(df) and float(df["Close"].iloc[-1]) > 0:
+                got_any = True
+            else:
+                bad.add(t.upper())
+        except Exception:
+            bad.add(t.upper())
+    return bad if got_any else set()  # nothing priced at all -> feed down, fail open
 
 
 # ---------------------------------------------------------------------------
@@ -1104,6 +1341,7 @@ def universe_review(run_id: str) -> int:
     print("  • fresh sector scan for the review...")
     scan = scan_universe(top_n=10)
     bundle = {
+        "as_of_et": _et_date(),
         "current_universe": current,
         "protected_tickers_never_remove": sorted(protected),
         "sector_relative_strength": scan.get("sector_relative_strength"),
@@ -1114,6 +1352,8 @@ def universe_review(run_id: str) -> int:
     review_file.write_text(json.dumps(bundle, indent=2, default=str))
 
     prompt = (
+        f"Today's date in the US market timezone (ET) is {_et_date()} - use THIS date, not "
+        f"the UTC run_date, in any prose. "
         "Weekly UNIVERSE REVIEW for East Equity Agent (no trading this run). Read CLAUDE.md, "
         f"then the bundle at {review_file}. Your job: curate the watchable universe honestly. "
         "Use WebSearch to research the broad market: which quality names are emerging as "
@@ -1170,17 +1410,40 @@ def universe_review(run_id: str) -> int:
             run_id)
         return 1
 
+    # Price-validate ADDED names: the review has no web access in the cloud sandbox and
+    # can propose a delisted/unpriceable ticker (e.g. PSTG). Drop any added name that
+    # returns no live price data before it can poison the universe. Fail-open: if the
+    # whole check fails (yfinance down), keep the names rather than wipe a good review.
+    dropped = _unpriceable(sorted(added)) if added else set()
+    if dropped:
+        print(f"  dropping unpriceable added names: {sorted(dropped)}")
+        data["sectors"] = {s: [t for t in ts if t.upper() not in dropped]
+                           for s, ts in data["sectors"].items()}
+        added = added - dropped
+        new_tickers = new_tickers - dropped
+
     current["sectors"] = data["sectors"]
-    current["last_reviewed"] = datetime.now(timezone.utc).date().isoformat()
+    current["last_reviewed"] = _et_date()
     universe_file.write_text(json.dumps(current, indent=2))
+    drop_note = f" (dropped unpriceable: {sorted(dropped)})" if dropped else ""
     note = (f"Weekly universe review: added {sorted(added) if added else 'none'}, "
             f"removed {sorted(removed) if removed else 'none'} "
-            f"({len(new_tickers)} names). {data.get('rationale', '')}")
+            f"({len(new_tickers)} names){drop_note}. {data.get('rationale', '')}")
     journal.log_improvement(note, run_id)
+    # Persistent public log of universe changes (for the dashboard changelog).
+    log_file = ROOT / "dashboard" / "data" / "universe_log.json"
+    try:
+        ulog = json.loads(log_file.read_text()) if log_file.exists() else []
+    except Exception:
+        ulog = []
+    ulog.append({"date": _et_date(), "added": sorted(added), "removed": sorted(removed),
+                 "dropped_unpriceable": sorted(dropped), "size": len(new_tickers),
+                 "rationale": data.get("rationale", "")})
+    log_file.write_text(json.dumps(ulog[-100:], indent=2))
     if latest_file.exists():
         d = json.loads(latest_file.read_text())
-        d["improvements"] = ([{"date": datetime.now(timezone.utc).date().isoformat(),
-                               "note": note}] + d.get("improvements", []))[:30]
+        d["improvements"] = ([{"date": _et_date(), "note": note}]
+                             + d.get("improvements", []))[:30]
         latest_file.write_text(json.dumps(d, indent=2, default=str))
     redeploy_dashboard()
     print(f"universe updated: +{len(added)} -{len(removed)} = {len(new_tickers)} names")

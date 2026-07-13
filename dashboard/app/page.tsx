@@ -1,8 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
+import Link from "next/link";
 import EquityChart from "@/components/EquityChart";
 import ClosedTrades from "@/components/ClosedTrades";
 import Calibration from "@/components/Calibration";
+import CalibrationDiagram from "@/components/CalibrationDiagram";
+import PositionChart from "@/components/PositionChart";
+import CostsChart from "@/components/CostsChart";
+import SectorExposure from "@/components/SectorExposure";
+import UniverseLog from "@/components/UniverseLog";
+import WatchlistOutcomes from "@/components/WatchlistOutcomes";
 
 type Position = {
   ticker: string;
@@ -12,6 +19,7 @@ type Position = {
   last_price?: number;
   opened_at: string;
   days_held?: number;
+  sector?: string | null;
   original_plan?: {
     thesis?: string;
     stop_loss?: number;
@@ -83,7 +91,7 @@ type Latest = {
     thesis?: string | null;
     dividends_usd?: number;
     total_pnl_usd?: number;
-    fees_usd?: number;
+    fees_usd?: { commission?: number; sec_fee?: number; taf?: number } | null;
     gap_modeled?: boolean;
   }[];
   performance?: {
@@ -104,6 +112,45 @@ type Latest = {
   data_quality?: { source: string; age_hours?: number; stale?: boolean; note?: string } | null;
   stale_data_notice?: string | null;
   universe_size?: number;
+  as_of_et?: string;
+  trade_events?: TradeEvent[];
+  watchlist_outcomes?: WatchlistOutcome[];
+};
+
+type TradeEvent = { date: string; ticker: string; action: "BUY" | "SELL_TO_CLOSE"; verdict?: string | null };
+
+type WatchlistOutcome = {
+  ticker: string;
+  first_watched: string;
+  price_when_added?: number | null;
+  would_buy_at?: string | null;
+  one_line?: string;
+  currently_watched?: boolean;
+  hit_buy_level?: boolean;
+  hit_date?: string;
+  acted?: boolean;
+  latest_price?: number | null;
+  move_pct_since_watched?: number | null;
+  dropped_date?: string;
+};
+
+type PositionChartData = {
+  bars: { date: string; open: number; high: number; low: number; close: number }[];
+  avg_cost?: number | null;
+  last_price?: number | null;
+  entry?: number | null;
+  stop?: number | null;
+  target?: number | null;
+  opened_at?: string | null;
+};
+
+type UniverseLogEntry = {
+  date: string;
+  added: string[];
+  removed: string[];
+  dropped_unpriceable: string[];
+  size: number;
+  rationale: string;
 };
 
 type HistoryPoint = { date: string; equity: number; benchmark_close?: number | null };
@@ -112,6 +159,15 @@ const STARTING_CAPITAL = 10000;
 
 function readJson<T>(file: string): T {
   return JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", file), "utf-8"));
+}
+
+// Optional data files (may not exist until a run emits them) — never crash the build.
+function readJsonSafe<T>(file: string, fallback: T): T {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(process.cwd(), "data", file), "utf-8")) as T;
+  } catch {
+    return fallback;
+  }
 }
 
 function clean(s: string) {
@@ -156,6 +212,10 @@ function freshness(l: Latest): Freshness | null {
 export default function Home() {
   const latest = readJson<Latest>("latest.json");
   const history = readJson<HistoryPoint[]>("equity_history.json");
+  const positionCharts = readJsonSafe<Record<string, PositionChartData>>("position_charts.json", {});
+  const universeLog = readJsonSafe<UniverseLogEntry[]>("universe_log.json", []);
+  const watchlistOutcomes =
+    latest.watchlist_outcomes ?? readJsonSafe<WatchlistOutcome[]>("watchlist_outcomes.json", []);
 
   const equity = latest.portfolio.total_equity_usd;
   const cash = latest.portfolio.cash_usd;
@@ -322,7 +382,7 @@ export default function Home() {
           the S&amp;P 500.
         </p>
         <div className="mt-6">
-          <EquityChart points={history} startingCapital={STARTING_CAPITAL} />
+          <EquityChart points={history} startingCapital={STARTING_CAPITAL} events={latest.trade_events} />
         </div>
       </section>
 
@@ -354,6 +414,17 @@ export default function Home() {
 
       {/* Confidence calibration, honesty feature: stated confidence vs realized win rate */}
       {latest.calibration && <Calibration data={latest.calibration} />}
+      {latest.calibration && Object.keys(latest.calibration.by_confidence ?? {}).length > 0 && (
+        <section className="border-t border-line py-12">
+          <h2 className="text-lg font-semibold tracking-tight">Calibration curve</h2>
+          <p className="mt-1 text-sm text-ink-2">
+            Each confidence bucket plotted against perfect calibration - below the line is overconfidence.
+          </p>
+          <div className="mt-6 mx-auto max-w-sm">
+            <CalibrationDiagram calibration={latest.calibration} />
+          </div>
+        </section>
+      )}
 
       {/* Positions */}
       <section className="border-t border-line py-12">
@@ -475,6 +546,18 @@ export default function Home() {
                         </div>
                       )}
 
+                      {positionCharts[p.ticker]?.bars?.length ? (
+                        <div>
+                          <h3 className="text-sm font-medium">Price vs. the plan</h3>
+                          <p className="mt-0.5 text-[12px] text-ink-3">
+                            Dashed lines mark the target and stop; the flag marks entry.
+                          </p>
+                          <div className="mt-2">
+                            <PositionChart ticker={p.ticker} data={positionCharts[p.ticker] ?? null} />
+                          </div>
+                        </div>
+                      ) : null}
+
                       {plan?.thesis && (
                         <div>
                           <h3 className="text-sm font-medium">Thesis</h3>
@@ -522,6 +605,17 @@ export default function Home() {
           </ul>
         )}
       </section>
+
+      {/* Sector exposure / concentration */}
+      {positions.length > 0 && (
+        <section className="border-t border-line py-12">
+          <h2 className="text-lg font-semibold tracking-tight">Sector exposure</h2>
+          <p className="mt-1 text-sm text-ink-2">Where the book is concentrated, as a share of total equity.</p>
+          <div className="mt-6">
+            <SectorExposure positions={positions} cash={cash} totalEquity={equity} />
+          </div>
+        </section>
+      )}
 
       {/* What the agent is thinking */}
       {thinking && (
@@ -588,6 +682,9 @@ export default function Home() {
         </section>
       )}
 
+      {/* Watchlist outcomes: did the agent's calls play out? */}
+      {watchlistOutcomes.length > 0 && <WatchlistOutcomes outcomes={watchlistOutcomes} />}
+
       {/* Latest activity */}
       <section className="border-t border-line py-12">
         <h2 className="text-lg font-semibold tracking-tight">Latest activity</h2>
@@ -622,6 +719,13 @@ export default function Home() {
             </ul>
           </div>
         )}
+
+        <Link
+          href="/runs"
+          className="mt-6 inline-block text-sm text-ink-2 underline decoration-line underline-offset-4 hover:text-ink"
+        >
+          Browse every run&apos;s full reasoning →
+        </Link>
       </section>
 
       {/* Closed results */}
@@ -634,6 +738,22 @@ export default function Home() {
           <ClosedTrades trades={closedTrades} />
         </section>
       )}
+
+      {/* Costs & drag over time */}
+      {closedTrades.length > 0 && (
+        <section className="border-t border-line py-12">
+          <h2 className="text-lg font-semibold tracking-tight">Costs and income over time</h2>
+          <p className="mt-1 text-sm text-ink-2">
+            Cumulative trading fees paid versus dividends received - the honest drag on the record.
+          </p>
+          <div className="mt-6">
+            <CostsChart closedTrades={closedTrades} />
+          </div>
+        </section>
+      )}
+
+      {/* Universe changes log */}
+      {universeLog.length > 0 && <UniverseLog log={universeLog} />}
 
       {/* What improved */}
       {improvements.length > 0 && (

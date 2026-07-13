@@ -15,7 +15,7 @@ type ClosedTrade = {
   thesis?: string | null;
   dividends_usd?: number;
   total_pnl_usd?: number;
-  fees_usd?: number;
+  fees_usd?: { commission?: number; sec_fee?: number; taf?: number } | null;
   gap_modeled?: boolean;
 };
 
@@ -27,6 +27,12 @@ function usd(n: number) {
 
 function usd2(n: number) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
+}
+
+// fees_usd is a breakdown object from the broker; sum the real charges for display.
+function feeTotal(f: ClosedTrade["fees_usd"]): number {
+  if (!f) return 0;
+  return (f.commission ?? 0) + (f.sec_fee ?? 0) + (f.taf ?? 0);
 }
 
 export default function ClosedTrades({ trades }: { trades: ClosedTrade[] }) {
@@ -64,7 +70,7 @@ export default function ClosedTrades({ trades }: { trades: ClosedTrade[] }) {
                 ${t.entry_price.toFixed(2)} to ${t.exit_price.toFixed(2)} over {t.days_held}d, closed{" "}
                 {t.closed_at}
                 {t.dividends_usd ? ` · +${usd2(t.dividends_usd)} div` : ""}
-                {t.fees_usd ? ` · -${usd2(t.fees_usd)} fees` : ""}
+                {feeTotal(t.fees_usd) ? ` · -${usd2(feeTotal(t.fees_usd))} fees` : ""}
               </p>
               {t.thesis && (
                 <details className="mt-2">

@@ -3,6 +3,7 @@
 import { useMemo, useRef, useState } from "react";
 
 type Point = { date: string; equity: number; benchmark_close?: number | null };
+type TradeEvent = { date: string; ticker: string; action: "BUY" | "SELL_TO_CLOSE"; verdict?: string | null };
 
 const W = 800;
 const H = 260;
@@ -21,7 +22,15 @@ function fmtDate(iso: string) {
   });
 }
 
-export default function EquityChart({ points, startingCapital }: { points: Point[]; startingCapital: number }) {
+export default function EquityChart({
+  points,
+  startingCapital,
+  events = [],
+}: {
+  points: Point[];
+  startingCapital: number;
+  events?: TradeEvent[];
+}) {
   const [hover, setHover] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -53,6 +62,45 @@ export default function EquityChart({ points, startingCapital }: { points: Point
     return { agentPath, benchPath, xs, ys, benchVals, ticks };
   }, [view, startingCapital]);
 
+  // Map each trade event to the nearest visible session by date, dropping events that fall
+  // outside the visible window. Grouped by session index so same-day events can be stacked.
+  const eventsByIndex = useMemo(() => {
+    const map: Record<number, TradeEvent[]> = {};
+    if (view.length === 0 || events.length === 0) return map;
+    const times = view.map((p) => Date.parse(p.date + "T00:00:00Z"));
+    const min = times[0];
+    const max = times[times.length - 1];
+    for (const ev of events) {
+      const t = Date.parse(ev.date + "T00:00:00Z");
+      if (Number.isNaN(t) || t < min || t > max) continue;
+      let best = 0;
+      for (let i = 1; i < times.length; i++) if (Math.abs(times[i] - t) < Math.abs(times[best] - t)) best = i;
+      (map[best] ??= []).push(ev);
+    }
+    return map;
+  }, [events, view]);
+
+  // Concrete marker geometry: a green ▲ just below the line for BUY, a red ▼ just above it for
+  // SELL_TO_CLOSE. Same-day events on the same side stack further from the line.
+  const markers = useMemo(() => {
+    const out: { cx: number; cy: number; dir: "up" | "down"; color: string; idx: number }[] = [];
+    for (const key of Object.keys(eventsByIndex)) {
+      const idx = Number(key);
+      let buyN = 0;
+      let sellN = 0;
+      for (const ev of eventsByIndex[idx]) {
+        if (ev.action === "BUY") {
+          out.push({ cx: xs[idx], cy: ys[idx] + 7 + buyN * 9, dir: "up", color: "#047857", idx });
+          buyN++;
+        } else {
+          out.push({ cx: xs[idx], cy: ys[idx] - 7 - sellN * 9, dir: "down", color: "#b91c1c", idx });
+          sellN++;
+        }
+      }
+    }
+    return out;
+  }, [eventsByIndex, xs, ys]);
+
   function onMove(e: React.PointerEvent<SVGSVGElement>) {
     const rect = svgRef.current?.getBoundingClientRect();
     if (!rect) return;
@@ -63,19 +111,40 @@ export default function EquityChart({ points, startingCapital }: { points: Point
   }
 
   const hasBench = benchVals.some((v) => v !== null);
+  const showLegend = (hasBench && view.length > 1) || markers.length > 0;
 
   return (
     <div className="relative">
-      {hasBench && view.length > 1 && (
-        <div className="mb-3 flex items-center gap-5 text-[13px] text-ink-2">
-          <span className="flex items-center gap-2">
-            <span className="inline-block h-0.5 w-5 rounded bg-accent" aria-hidden />
-            Agent
-          </span>
-          <span className="flex items-center gap-2">
-            <span className="inline-block h-0.5 w-5 rounded bg-zinc-400" aria-hidden />
-            S&amp;P 500 (SPY), same capital
-          </span>
+      {showLegend && (
+        <div className="mb-3 flex flex-wrap items-center gap-x-5 gap-y-1.5 text-[13px] text-ink-2">
+          {hasBench && view.length > 1 && (
+            <>
+              <span className="flex items-center gap-2">
+                <span className="inline-block h-0.5 w-5 rounded bg-accent" aria-hidden />
+                Agent
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="inline-block h-0.5 w-5 rounded bg-zinc-400" aria-hidden />
+                S&amp;P 500 (SPY), same capital
+              </span>
+            </>
+          )}
+          {markers.length > 0 && (
+            <>
+              <span className="flex items-center gap-1.5">
+                <span className="text-[10px] leading-none text-accent" aria-hidden>
+                  ▲
+                </span>
+                Buy
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="text-[10px] leading-none text-red-700" aria-hidden>
+                  ▼
+                </span>
+                Sell
+              </span>
+            </>
+          )}
         </div>
       )}
       <svg
@@ -112,6 +181,22 @@ export default function EquityChart({ points, startingCapital }: { points: Point
             strokeWidth="2"
           />
         ))}
+        {markers.map((m, i) => {
+          const s = 4;
+          const pts =
+            m.dir === "up"
+              ? `${m.cx},${m.cy - s} ${m.cx - s},${m.cy + s} ${m.cx + s},${m.cy + s}`
+              : `${m.cx},${m.cy + s} ${m.cx - s},${m.cy - s} ${m.cx + s},${m.cy - s}`;
+          return (
+            <polygon
+              key={i}
+              points={pts}
+              fill={m.color}
+              opacity={hover === null || hover === m.idx ? 1 : 0.5}
+              onPointerEnter={() => setHover(m.idx)}
+            />
+          );
+        })}
         {hover !== null && (
           <line x1={xs[hover]} x2={xs[hover]} y1={PAD.top} y2={H - PAD.bottom} stroke="#a1a1aa" strokeWidth="1" strokeDasharray="3 3" />
         )}
@@ -126,7 +211,7 @@ export default function EquityChart({ points, startingCapital }: { points: Point
       {hover !== null && (
         <div
           className="pointer-events-none absolute -translate-x-1/2 rounded-md border border-line bg-white px-3 py-1.5 shadow-sm"
-          style={{ left: `${(xs[hover] / W) * 100}%`, top: hasBench ? 28 : 0 }}
+          style={{ left: `${(xs[hover] / W) * 100}%`, top: showLegend ? 28 : 0 }}
         >
           <div className="text-[11px] text-ink-3 font-[family-name:var(--font-geist-mono)]">{fmtDate(view[hover].date)}</div>
           <div className="text-sm font-medium font-[family-name:var(--font-geist-mono)]">{fmtUsd(view[hover].equity)}</div>
@@ -135,6 +220,17 @@ export default function EquityChart({ points, startingCapital }: { points: Point
               SPY {fmtUsd(benchVals[hover]!)}
             </div>
           )}
+          {(eventsByIndex[hover] ?? []).map((ev, i) => (
+            <div
+              key={i}
+              className={`text-[11px] font-[family-name:var(--font-geist-mono)] ${
+                ev.action === "BUY" ? "text-accent" : "text-red-700"
+              }`}
+            >
+              {ev.action === "BUY" ? "BUY" : "SELL"} {ev.ticker}
+              {ev.action === "SELL_TO_CLOSE" && ev.verdict ? ` · ${ev.verdict}` : ""}
+            </div>
+          ))}
         </div>
       )}
 
