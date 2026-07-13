@@ -92,6 +92,17 @@ def audit_ticker(ticker: str, cross_check: bool = False, evict: bool = False) ->
         if filer == "foreign_annual" and not rev:
             out["note"] = "annual-cadence filer (20-F/40-F); quarterly XBRL absent by design"
 
+        # Earnings clock: when the NEXT report lands (that is when the quarterly
+        # cache invalidates and fundamentals deserve a fresh read).
+        if cross_check:
+            try:
+                import yfinance as yf
+                cal = yf.Ticker(ticker).calendar
+                dates = cal.get("Earnings Date") if isinstance(cal, dict) else None
+                if dates:
+                    out["next_earnings"] = str(dates[0])
+            except Exception:
+                pass
         if cross_check and rev:
             yf_rev, yf_period = _yf_latest_quarterly_revenue(ticker)
             if yf_rev:

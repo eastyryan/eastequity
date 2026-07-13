@@ -157,6 +157,20 @@ Beyond filings/13F/news, every run now includes:
 - **Deeper fundamentals** in sec_filings: cash, long_term_debt, operating_cash_flow (check
   period_days - flow rows may be year-to-date), stock_based_compensation, diluted_shares.
   A cheap multiple with heavy debt or SBC-inflated earnings is not cheap - say so.
+- **fundamentals_freshness** - HARD RULE. Per focus name: the newest period our extracted
+  fundamentals reach (current_through) vs the period the latest filed 10-Q/10-K covers.
+  If a name is in stale_tickers (or its brief carries stale_fundamentals_warning), its
+  fundamental numbers are NOT the latest reported quarter: do NOT cite them as current,
+  do NOT build a thesis on them - say the data is stale and lean on price/news instead.
+  ALWAYS state the quarter-end date next to every fundamental figure ("revenue $43.8B,
+  Q ended 2026-05-01"); an unlabeled number is treated as an error. universe_audit
+  summarizes the weekly all-names sweep.
+- **Quarterly clock** - deep fundamentals and filing prose refresh automatically when a
+  NEW 10-Q/10-K is filed (cache keyed on the latest filing date), so post-earnings runs
+  always read the new statements; between filings the cached statements are identical to
+  a fresh read. days_to_earnings per candidate and next_earnings in the weekly audit tell
+  you when each name's next refresh lands. Fast-moving data - news, price action, volume,
+  options, insiders, 13F, partnerships - is NEVER cached and refreshes every run.
 - **partnerships** - per focus name: recent 8-K MATERIAL-AGREEMENT filings (item 1.01 =
   a definitive agreement the SEC forced them to file - the real deal feed; item 8.01 and
   news headlines are noisier leads) plus partnership-flavored headlines. ANALYZE EVERY

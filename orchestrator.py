@@ -422,12 +422,50 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
 
         print(f"  • deep research on {focus}...")
         filings = {t: get_filing_brief(t) for t in focus}
-        print("  • deep fundamentals + quality ratios...")
-        deep_fundamentals = {t: get_deep_fundamentals(t) for t in focus}
-        print("  • filing prose (MD&A + earnings releases)...")
-        filing_texts = {t: {"mdna": get_mdna_excerpt(t, max_chars=10000),
-                            "earnings_release": get_latest_earnings_release(t, max_chars=8000)}
-                        for t in focus[:5]}
+
+        # QUARTERLY-CLOCK CACHE: the three financial statements only change when a
+        # new 10-Q/10-K/20-F is FILED. Deep XBRL + filing prose are cached per name,
+        # keyed on the latest periodic filing date from the brief - a new filing
+        # invalidates automatically (the day after earnings, the key changes and
+        # everything refreshes). Fast-moving data (news, price/volume, options,
+        # insiders) is deliberately NOT cached - it refreshes every run.
+        deep_fundamentals, filing_texts = {}, {}
+        cache_dir = ROOT / "data" / "cache"
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        reused, refreshed = [], []
+        for t in focus:
+            filed_key = ((filings.get(t) or {}).get("latest_periodic_filing") or {}).get("filed", "")
+            cache_f = cache_dir / f"quarterly_{t.upper()}.json"
+            cached = None
+            try:
+                if filed_key and cache_f.exists():
+                    blob = json.loads(cache_f.read_text())
+                    if blob.get("filed_key") == filed_key:
+                        cached = blob
+            except Exception:
+                cached = None
+            if cached:
+                deep_fundamentals[t] = cached["deep"]
+                if cached.get("texts") is not None:
+                    filing_texts[t] = cached["texts"]
+                reused.append(t)
+            else:
+                deep_fundamentals[t] = get_deep_fundamentals(t)
+                texts = None
+                if len(filing_texts) < 5:  # prose kept for the top-5 as before
+                    texts = {"mdna": get_mdna_excerpt(t, max_chars=10000),
+                             "earnings_release": get_latest_earnings_release(t, max_chars=8000)}
+                    filing_texts[t] = texts
+                refreshed.append(t)
+                try:
+                    if filed_key:
+                        cache_f.write_text(json.dumps(_json_safe(
+                            {"filed_key": filed_key, "cached_at": _et_date(),
+                             "deep": deep_fundamentals[t], "texts": texts}), default=str))
+                except Exception:
+                    pass
+        print(f"    quarterly cache: {len(reused)} reused, {len(refreshed)} refreshed"
+              + (f" ({refreshed})" if refreshed else ""))
         print("  • fundamental screen (full universe, cached)...")
         try:
             from tools.fundamental_screen import get_screen
