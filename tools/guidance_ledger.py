@@ -133,7 +133,10 @@ def _fiscal_label_ends(units: list) -> dict:
     inherits the fiscal-year end date."""
     by_period: dict = {}
     for u in units:
-        if u.get("form") not in ("10-Q", "10-K") or u.get("frame") is not None:
+        # No frame exclusion: newest quarters often exist ONLY as framed entries
+        # (see sec_filings.dedupe_facts). Earliest-filed still wins per period so
+        # the fy/fp label comes from the original filer, not a later comparative.
+        if u.get("form") not in ("10-Q", "10-K"):
             continue
         key = (u.get("start"), u.get("end"))
         if None in key:
@@ -384,7 +387,9 @@ def _fiscal_labels(units: list) -> tuple:
     """
     by_period: dict = {}
     for u in units:
-        if u.get("form") not in ("10-Q", "10-K") or u.get("frame") is not None:
+        # No frame exclusion (newest quarters are often framed-only); earliest-filed
+        # per period keeps the original filer's fy/fp label for correct mapping.
+        if u.get("form") not in ("10-Q", "10-K"):
             continue
         key = (u.get("start"), u.get("end"))
         if None in key:

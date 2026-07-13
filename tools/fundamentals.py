@@ -101,15 +101,23 @@ def _span_days(u: dict):
 
 
 def _rows_from_units(units: list, instant: bool, keep: int) -> list:
-    """Dedupe/sort 10-Q & 10-K facts, newest last, keep the last `keep` periods."""
-    rows = [u for u in units if u.get("form") in ("10-Q", "10-K")
-            and u.get("frame") is None]
-    seen, out = set(), []
-    for u in sorted(rows, key=lambda u: (u.get("end", ""), u.get("start") or "")):
-        key = (u.get("start"), u.get("end"))
-        if key in seen:
+    """Dedupe/sort 10-Q & 10-K facts, newest last, keep the last `keep` periods.
+
+    NEVER filter on the `frame` field: for recently reported quarters the
+    frame-annotated entry is often the ONLY copy (unframed twins appear later as
+    comparatives in subsequent filings), so excluding frames silently serves
+    year-old data - the DELL $23.4B-vs-$43.8B incident. Dedupe by (start, end)
+    prefers the LATEST-FILED entry so restatements/amendments win."""
+    by_period: dict = {}
+    for u in units:
+        if u.get("form") not in ("10-Q", "10-K", "10-Q/A", "10-K/A"):
             continue
-        seen.add(key)
+        key = (u.get("start"), u.get("end"))
+        prev = by_period.get(key)
+        if prev is None or (u.get("filed") or "") > (prev.get("filed") or ""):
+            by_period[key] = u
+    out = []
+    for u in sorted(by_period.values(), key=lambda u: (u.get("end", ""), u.get("start") or "")):
         row = {"period_end": u.get("end"), "value": u.get("val"), "form": u.get("form")}
         if not instant:
             days = _span_days(u)

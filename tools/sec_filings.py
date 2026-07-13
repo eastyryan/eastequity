@@ -87,29 +87,51 @@ def get_company_facts(cik_or_ticker) -> dict:
     return data
 
 
-def _annualish(units: list[dict], quarterly: bool) -> list[dict]:
-    """Filter XBRL facts to single-quarter (not YTD-cumulative) or annual rows, newest last."""
+def dedupe_facts(units: list[dict], forms=("10-Q", "10-K", "10-Q/A", "10-K/A"),
+                 min_span: int | None = None, max_span: int | None = None) -> list[dict]:
+    """Canonical XBRL fact selection: filter by form and (optionally) duration span,
+    dedupe by (start, end) PREFERRING THE LATEST-FILED entry, sorted newest-last.
+
+    CRITICAL: never filter on the `frame` field. SEC frame annotations are NOT
+    duplicates - for recently reported quarters the frame-annotated entry is often
+    the ONLY copy (older quarters get unframed twins later, as comparatives in
+    subsequent filings). A `frame is None` filter silently serves YEAR-OLD numbers
+    for any company that stopped double-reporting discrete quarter rows - exactly
+    how DELL's latest revenue showed $23.4B (Q1 FY2026) when the filed 10-Q said
+    $43.8B (Q1 FY2027). Dedup by period handles genuine duplicates; latest-filed
+    wins so restatements/amendments take precedence."""
     from datetime import date
 
-    def span_days(u: dict) -> int:
+    def span_days(u: dict) -> int | None:
         try:
             return (date.fromisoformat(u["end"]) - date.fromisoformat(u["start"])).days
-        except (KeyError, ValueError):
-            return -1
+        except (KeyError, ValueError, TypeError):
+            return None
 
-    if quarterly:
-        rows = [u for u in units if u.get("form") in ("10-Q", "10-K")
-                and u.get("frame") is None and 80 <= span_days(u) <= 100]
-    else:
-        rows = [u for u in units if u.get("form") == "10-K"
-                and u.get("frame") is None and span_days(u) > 300]
-    seen, out = set(), []
-    for u in sorted(rows, key=lambda u: u.get("end", "")):
+    by_period: dict = {}
+    for u in units:
+        if u.get("form") not in forms:
+            continue
+        if min_span is not None or max_span is not None:
+            d = span_days(u)
+            if d is None:
+                continue
+            if min_span is not None and d < min_span:
+                continue
+            if max_span is not None and d > max_span:
+                continue
         key = (u.get("start"), u.get("end"))
-        if key not in seen:
-            seen.add(key)
-            out.append(u)
-    return out[-6:]
+        prev = by_period.get(key)
+        if prev is None or (u.get("filed") or "") > (prev.get("filed") or ""):
+            by_period[key] = u
+    return sorted(by_period.values(), key=lambda u: (u.get("end", ""), u.get("start") or ""))
+
+
+def _annualish(units: list[dict], quarterly: bool) -> list[dict]:
+    """Single-quarter (not YTD-cumulative) or annual rows, newest last, via dedupe_facts."""
+    if quarterly:
+        return dedupe_facts(units, min_span=80, max_span=100)[-6:]
+    return dedupe_facts(units, forms=("10-K", "10-K/A"), min_span=300)[-6:]
 
 
 def get_filing_brief(ticker: str) -> dict:
@@ -123,12 +145,17 @@ def get_filing_brief(ticker: str) -> dict:
         sub = _get(f"https://data.sec.gov/submissions/CIK{cik}.json")
         recent = sub["filings"]["recent"]
         filings = []
-        for form, date, accession, doc in zip(recent["form"], recent["filingDate"],
-                                              recent["accessionNumber"], recent["primaryDocument"]):
+        latest_report = None  # newest 10-Q/10-K: (form, filed, period reportDate)
+        report_dates = recent.get("reportDate", [""] * len(recent["form"]))
+        for form, fdate, rdate, accession, doc in zip(
+                recent["form"], recent["filingDate"], report_dates,
+                recent["accessionNumber"], recent["primaryDocument"]):
+            if form in ("10-K", "10-Q") and latest_report is None:
+                latest_report = {"form": form, "filed": fdate, "period_end": rdate}
             if form in ("10-K", "10-Q", "8-K") and len(filings) < 8:
                 acc = accession.replace("-", "")
                 filings.append({
-                    "form": form, "filed": date,
+                    "form": form, "filed": fdate,
                     "url": f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{acc}/{doc}",
                 })
 
@@ -142,17 +169,25 @@ def get_filing_brief(ticker: str) -> dict:
                 "gross_profit": ["GrossProfit"],
                 "capex": ["PaymentsToAcquirePropertyPlantAndEquipment"],
             }.items():
+                # Recency-aware tag choice: a company can switch tags; the first tag
+                # with data may have gone stale. Pick the tag whose series is newest.
+                best_rows, best_end = None, ""
                 for tag in tags:
                     units = gaap.get(tag, {}).get("units", {}).get("USD")
-                    if units:
-                        facts_out[label] = [
-                            {"period_end": u["end"], "value_usd": u["val"], "form": u["form"]}
-                            for u in _annualish(units, quarterly=True)
-                        ]
-                        break
+                    if not units:
+                        continue
+                    rows = _annualish(units, quarterly=True)
+                    if rows and rows[-1].get("end", "") > best_end:
+                        best_rows, best_end = rows, rows[-1].get("end", "")
+                if best_rows:
+                    facts_out[label] = [
+                        {"period_end": u["end"], "value_usd": u["val"], "form": u["form"]}
+                        for u in best_rows
+                    ]
             # Balance sheet, cash flow, dilution: the "is this business sound"
             # layer. Instant facts have no start date; flow facts may be YTD -
             # period_days lets the brain interpret them correctly.
+            from datetime import date as _date
             for label, tags in {
                 "cash_and_equivalents": ["CashAndCashEquivalentsAtCarryingValue"],
                 "long_term_debt": ["LongTermDebt", "LongTermDebtNoncurrent"],
@@ -160,36 +195,49 @@ def get_filing_brief(ticker: str) -> dict:
                 "stock_based_compensation": ["ShareBasedCompensation"],
                 "diluted_shares": ["WeightedAverageNumberOfDilutedSharesOutstanding"],
             }.items():
+                best_rows, best_end = None, ""
                 for tag in tags:
                     unit_map = gaap.get(tag, {}).get("units", {})
                     units = unit_map.get("USD") or unit_map.get("shares")
-                    if units:
-                        rows = [u for u in units if u.get("form") in ("10-Q", "10-K")
-                                and u.get("frame") is None]
-                        seen, out_rows = set(), []
-                        for u in sorted(rows, key=lambda u: u.get("end", "")):
-                            key = (u.get("start"), u.get("end"))
-                            if key in seen:
-                                continue
-                            seen.add(key)
-                            row = {"period_end": u["end"], "value": u["val"], "form": u["form"]}
-                            if u.get("start"):
-                                from datetime import date
-                                try:
-                                    row["period_days"] = (date.fromisoformat(u["end"])
-                                                          - date.fromisoformat(u["start"])).days
-                                except ValueError:
-                                    pass
-                            out_rows.append(row)
-                        if out_rows:
-                            facts_out[label] = out_rows[-6:]
-                        break
+                    if not units:
+                        continue
+                    rows = dedupe_facts(units)
+                    if rows and rows[-1].get("end", "") > best_end:
+                        best_rows, best_end = rows, rows[-1].get("end", "")
+                if best_rows:
+                    out_rows = []
+                    for u in best_rows[-6:]:
+                        row = {"period_end": u["end"], "value": u["val"], "form": u["form"]}
+                        if u.get("start"):
+                            try:
+                                row["period_days"] = (_date.fromisoformat(u["end"])
+                                                      - _date.fromisoformat(u["start"])).days
+                            except ValueError:
+                                pass
+                        out_rows.append(row)
+                    facts_out[label] = out_rows
         except Exception as e:
             facts_out = {"error": f"companyfacts unavailable: {e}"}
 
-        return {"status": "ok", "ticker": ticker.upper(), "cik": cik,
-                "company": sub.get("name"), "recent_filings": filings,
-                "quarterly_fundamentals": facts_out}
+        out = {"status": "ok", "ticker": ticker.upper(), "cik": cik,
+               "company": sub.get("name"), "recent_filings": filings,
+               "latest_periodic_filing": latest_report,
+               "quarterly_fundamentals": facts_out}
+        # Freshness cross-check: the submissions index is authoritative about WHICH
+        # period the newest 10-Q/10-K covers. If our extracted fundamentals end
+        # before that period, something upstream is stale - say so LOUDLY rather
+        # than letting year-old numbers pass as current (the DELL $23.4B incident).
+        rev = facts_out.get("revenue") or []
+        current_through = rev[-1]["period_end"] if rev else None
+        out["fundamentals_current_through"] = current_through
+        if latest_report and latest_report.get("period_end") and current_through:
+            if current_through < latest_report["period_end"]:
+                out["stale_fundamentals_warning"] = (
+                    f"Extracted fundamentals end {current_through} but the latest "
+                    f"{latest_report['form']} (filed {latest_report['filed']}) covers the period "
+                    f"ending {latest_report['period_end']}. Numbers below are NOT the latest "
+                    f"reported quarter - do not present them as current.")
+        return out
     except Exception as e:
         return {"status": "error", "reason": f"{type(e).__name__}: {e}"}
 

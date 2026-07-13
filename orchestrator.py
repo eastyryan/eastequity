@@ -439,6 +439,21 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         "calibration": compute_calibration(closed),
     }
 
+    # Fundamentals freshness: per focus name, does our extracted data reach the
+    # period covered by the newest filed 10-Q/10-K? Derived from the briefs already
+    # fetched (no extra network). stale=true names must never be cited as current.
+    fundamentals_freshness = {}
+    for t, br in (filings or {}).items():
+        if isinstance(br, dict) and br.get("status") == "ok":
+            fundamentals_freshness[t] = {
+                "current_through": br.get("fundamentals_current_through"),
+                "latest_filing_period": (br.get("latest_periodic_filing") or {}).get("period_end"),
+                "stale": bool(br.get("stale_fundamentals_warning")),
+            }
+    stale_names = sorted(t for t, v in fundamentals_freshness.items() if v["stale"])
+    if stale_names:
+        print(f"  !! STALE FUNDAMENTALS for {stale_names} - flagged to the brain")
+
     # Volatility -> stop engineering. One source of truth (validator.stop_floor_pct)
     # for both the brain-facing floors and the deterministic validation at execute time.
     volatility = build_volatility_context(scan, options_signals)
@@ -483,6 +498,14 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         },
         "universe_scan": scan,
         "sec_filings": filings,
+        "fundamentals_freshness": {
+            "note": "Per focus name: the newest period our XBRL fundamentals reach vs the "
+                    "period the latest filed 10-Q/10-K actually covers. stale=true means "
+                    "the fundamentals below are NOT the latest reported quarter - do NOT "
+                    "cite them as current; flag the staleness and lean on price/news.",
+            "by_ticker": fundamentals_freshness,
+            "stale_tickers": stale_names,
+        },
         "deep_fundamentals": deep_fundamentals,
         "filing_texts": filing_texts,
         "filing_texts_note": (

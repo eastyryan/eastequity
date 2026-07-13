@@ -81,6 +81,15 @@ Beyond filings/13F/news, every run now includes:
 - **Deeper fundamentals** in sec_filings: cash, long_term_debt, operating_cash_flow (check
   period_days - flow rows may be year-to-date), stock_based_compensation, diluted_shares.
   A cheap multiple with heavy debt or SBC-inflated earnings is not cheap - say so.
+- **fundamentals_freshness** - HARD RULE. Per focus name: the newest period our extracted
+  fundamentals reach (current_through) vs the period the latest filed 10-Q/10-K covers
+  (latest_filing_period). If a name appears in stale_tickers (or its sec_filings entry
+  carries stale_fundamentals_warning), its fundamental numbers are NOT the latest reported
+  quarter: do NOT cite them as current, do NOT build a thesis on them, say plainly that the
+  fundamental data is stale, and reason from price/news/estimates instead. ALWAYS state the
+  quarter-end date next to every fundamental figure you cite ("revenue $43.8B, Q ended
+  2026-05-01") so a reader can verify recency at a glance - an unlabeled number is treated
+  as an error.
 - **Risk desk**: every BUY you propose faces an independent adversarial review that can
   veto it or cut its confidence. Write theses that survive attack - address the strongest
   objection preemptively in your risk_map.
@@ -281,7 +290,9 @@ never ignore accumulating evidence.
 
 ## Style & Auditability
 
-- Every number cited must have a source (filing, tool output, price data).
+- Every number cited must have a source (filing, tool output, price data) AND, for any
+  fundamental figure, its period-end date. "Revenue $43.8B" is incomplete; "revenue $43.8B
+  (Q ended 2026-05-01)" is auditable. Check fundamentals_freshness before trusting any of it.
 - Write reasoning as if for the public dashboard: clear, specific, falsifiable.
 - If a tool fails, say so explicitly and reason without it — never fabricate its output.
 - End every run with an **Improvement note**: one concrete thing about the process
