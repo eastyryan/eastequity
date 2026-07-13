@@ -598,9 +598,14 @@ def ask_claude(context: dict, run_id: str, news_only: bool = False) -> str:
 def _run_claude(prompt: str) -> str:
     import time
     last_err = ""
+    # NOTE: no --permission-mode plan. Newer Claude Code (2.x) diverts a plan-mode
+    # answer to a plan file and returns only a prose summary on stdout, so our JSON
+    # block never appears and parsing falls back to a no-trade. The default headless
+    # mode prints the full response (incl. the fenced ```json) to stdout, which is what
+    # we parse - matching universe_review(), which already runs claude -p without plan mode.
     for attempt in (1, 2):  # one retry: overnight runs can hit transient/usage errors
         result = subprocess.run(
-            ["claude", "-p", prompt, "--permission-mode", "plan"],
+            ["claude", "-p", prompt],
             cwd=ROOT, capture_output=True, text=True, timeout=1800,
         )
         if result.returncode == 0:
@@ -679,9 +684,14 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
 # Step 4 — Parse structured proposals out of the brain's response
 # ---------------------------------------------------------------------------
 def parse_proposals(response: str) -> dict:
-    """Extract the structured output block: proposals, commentary, watchlist."""
-    blocks = re.findall(r"```json\s*(.*?)```", response, re.DOTALL)
-    for block in reversed(blocks):  # last JSON block wins
+    """Extract the structured output block: proposals, commentary, watchlist. Accepts a
+    fenced ```json block or, as a fallback, a bare JSON object containing a 'proposals'
+    key (so a run still parses if the model omits the fence)."""
+    candidates = re.findall(r"```json\s*(.*?)```", response, re.DOTALL)
+    # Fallback: any brace-balanced object mentioning "proposals", fence or not.
+    for m in re.finditer(r'\{[^{}]*"proposals"[\s\S]*?\}\s*$', response):
+        candidates.append(m.group(0))
+    for block in reversed(candidates):  # last valid block wins
         try:
             data = json.loads(block)
             if isinstance(data, dict) and "proposals" in data:
@@ -695,7 +705,10 @@ def parse_proposals(response: str) -> dict:
                 }
         except json.JSONDecodeError:
             continue
-    return {"proposals": [], "no_trade_reason": "no parsable proposals block in response",
+    # Graceful public-facing fallback (this text can surface on the dashboard).
+    return {"proposals": [],
+            "no_trade_reason": "No trade this run; the agent's written review did not include a "
+                               "machine-readable order block, so no orders were placed.",
             "commentary": None, "watchlist": [], "x_post": None, "guidance_entries": []}
 
 
