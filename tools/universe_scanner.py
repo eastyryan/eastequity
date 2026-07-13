@@ -151,6 +151,19 @@ def _screen_quality_ok(screen_row) -> bool:
     return True
 
 
+def _trend_read(last, sma50, sma200) -> str:
+    """Market-environment label from benchmark trend structure. 'supportive' =
+    healthy uptrend (press with size); 'neutral' = mixed (normal selectivity);
+    'hostile' = below the long-term average (raise the bar, prefer cash). Pure."""
+    if last is None or sma200 is None:
+        return "unknown"
+    if last < sma200:
+        return "hostile"
+    if sma50 is not None and last > sma50 > sma200:
+        return "supportive"
+    return "neutral"
+
+
 def _rel_strength(name_ret, bench_ret):
     """Relative strength: the name's return minus the benchmark's over the SAME window
     (both plain fractions). None if either side is missing. This is cross-sectional
@@ -178,11 +191,25 @@ def scan_universe(top_n: int = 15) -> dict:
                        group_by="ticker", auto_adjust=True, progress=False, threads=True)
 
     # Benchmark returns over the SAME session windows used per-name, computed once.
+    # Also the market-ENVIRONMENT read: only press hard in a supportive tape.
     spy_1m = spy_3m = None
+    benchmark_trend = {"read": "unknown"}
     try:
         spy_close = [float(x) for x in data["SPY"]["Close"].dropna().tolist()]
         spy_1m = _return_over_sessions(spy_close, SESS_1M)
         spy_3m = _return_over_sessions(spy_close, SESS_3M)
+        if len(spy_close) >= 200:
+            s_last = spy_close[-1]
+            s50 = sum(spy_close[-50:]) / 50
+            s200 = sum(spy_close[-200:]) / 200
+            benchmark_trend = {
+                "spy_last": round(s_last, 2),
+                "spy_50dma": round(s50, 2),
+                "spy_200dma": round(s200, 2),
+                "spy_above_200dma": s_last > s200,
+                "spy_1m_pct": round(spy_1m * 100, 1) if spy_1m is not None else None,
+                "read": _trend_read(s_last, s50, s200),
+            }
     except Exception:
         spy_1m = spy_3m = None
 
@@ -457,6 +484,7 @@ def scan_universe(top_n: int = 15) -> dict:
         "contrarian_setups": contrarian,
         "deep_value_200w": deep_value,
         "supplier_pullbacks": supplier_pullbacks,
+        "benchmark_trend": benchmark_trend,
         "sector_relative_strength": sector_rs,
         "status": "ok",
         "scanned": len(rows),

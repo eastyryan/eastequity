@@ -347,6 +347,19 @@ def build_position_stop_cushion(portfolio: dict, vol: dict, cfg: dict) -> dict:
                 info["stop_distance_from_entry_pct"] = round((float(entry) - stop) / float(entry) * 100, 2)
             except (TypeError, ValueError):
                 pass
+        # Stall detection (soft time stop, forces a DECISION not an exit): two weeks
+        # in with the price going nowhere is unpriced opportunity cost - the brain
+        # must justify continuing to hold or rotate. The horizon force-close
+        # remains the hard time stop.
+        days_held = pos.get("days_held")
+        avg_cost = pos.get("avg_cost")
+        try:
+            if days_held is not None and avg_cost:
+                pnl_pct = (last / float(avg_cost) - 1) * 100
+                info["unrealized_pnl_pct"] = round(pnl_pct, 2)
+                info["stalled"] = bool(days_held >= 14 and abs(pnl_pct) < 3.0)
+        except (TypeError, ValueError, ZeroDivisionError):
+            pass
         out[t] = info
     return out
 

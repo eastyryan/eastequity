@@ -15,7 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from tools.universe_scanner import (  # noqa: E402
     _return_over_sessions, _trailing_high, _rel_strength, _median_dollar_volume,
-    _ma_tail, _screen_quality_ok, _deep_value_sort_key, _load_ai_exposure,
+    _ma_tail, _screen_quality_ok, _deep_value_sort_key, _load_ai_exposure, _trend_read,
     WEEKS_200, AT_OR_BELOW_TOLERANCE_PCT,
     SESS_1M, SESS_3M, SESS_6M, SESS_52W, MIN_BARS, SESS_ADV, MIN_ADV_USD,
 )
@@ -157,11 +157,21 @@ def test_ai_exposure_file_loads():
               and v.get("reason") for v in labels.values()))
 
 
+def test_trend_read():
+    print("benchmark trend read (market-environment gate):")
+    check("healthy uptrend -> supportive", _trend_read(110, 105, 100) == "supportive")
+    check("below 200dma -> hostile", _trend_read(95, 98, 100) == "hostile")
+    check("above 200dma but 50<200 -> neutral", _trend_read(101, 99, 100) == "neutral")
+    check("above 200dma, below 50dma -> neutral", _trend_read(104, 105, 100) == "neutral")
+    check("missing data -> unknown", _trend_read(None, None, None) == "unknown")
+
+
 if __name__ == "__main__":
     for fn in (test_constants, test_return_over_sessions, test_trailing_high,
                test_rel_strength, test_median_dollar_volume,
                test_ma_tail_200w, test_screen_quality_gate,
-               test_deep_value_ai_risk_ordering, test_ai_exposure_file_loads):
+               test_deep_value_ai_risk_ordering, test_ai_exposure_file_loads,
+               test_trend_read):
         fn()
     print()
     if FAILURES:
