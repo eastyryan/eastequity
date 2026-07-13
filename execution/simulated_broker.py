@@ -226,15 +226,34 @@ def readback(order_id: str) -> dict | None:
             # nets it out automatically (avg_cost == fill_price when commission 0).
             avg_cost = round((gross + commission) / qty, 4)
             state["cash_usd"] = round(state["cash_usd"] - cash_out, 2)
-            state["positions"].append({
-                "ticker": order["ticker"].upper(), "quantity": qty,
-                "avg_cost": avg_cost, "market_value_usd": notional,
-                "opened_at": datetime.now(timezone.utc).isoformat(),
-                "proposal_id": order.get("proposal_id"),
-                "buy_commission_usd": commission,
-            })
+            existing = next((p for p in state["positions"]
+                             if p["ticker"] == order["ticker"].upper()), None)
+            is_add = existing is not None
+            if is_add:
+                # SCALE-IN: merge into the open position with a blended cost basis
+                # (both legs commission-inclusive). opened_at / proposal_id stay
+                # with the ORIGINAL entry; adds_count feeds the validator's cap.
+                old_qty, old_cost = existing["quantity"], existing["avg_cost"]
+                new_qty = round(old_qty + qty, 4)
+                existing["avg_cost"] = round(
+                    (old_qty * old_cost + gross + commission) / new_qty, 4)
+                existing["quantity"] = new_qty
+                existing["market_value_usd"] = round(new_qty * fill_price, 2)
+                existing["buy_commission_usd"] = round(
+                    existing.get("buy_commission_usd", 0.0) + commission, 4)
+                existing["adds_count"] = int(existing.get("adds_count", 0)) + 1
+            else:
+                state["positions"].append({
+                    "ticker": order["ticker"].upper(), "quantity": qty,
+                    "avg_cost": avg_cost, "market_value_usd": notional,
+                    "opened_at": datetime.now(timezone.utc).isoformat(),
+                    "proposal_id": order.get("proposal_id"),
+                    "buy_commission_usd": commission,
+                })
             fill = {**order, "status": "filled", "fill_price": fill_price,
                     "quantity": qty, "notional_usd": notional,
+                    "is_add": is_add,
+                    "position_avg_cost_after": (existing["avg_cost"] if is_add else avg_cost),
                     "total_cost_usd": cash_out,
                     # Per-share dollars the modeled open-gap added to the entry fill
                     # (0 when atr_pct absent). Already inside fill_price/cost basis —
@@ -248,7 +267,14 @@ def readback(order_id: str) -> dict | None:
         if pos is None:
             fill = {**order, "status": "rejected_no_position"}
         else:
-            qty = pos["quantity"]
+            # PARTIAL EXITS: sell_fraction in (0, 1] - default full close. Forced
+            # exits (stops/horizon) never set it, so they remain full closes.
+            try:
+                frac = float(order.get("sell_fraction") or 1.0)
+            except (TypeError, ValueError):
+                frac = 1.0
+            frac = min(max(frac, 0.0001), 1.0)
+            qty = round(pos["quantity"] * frac, 4) if frac < 1.0 else pos["quantity"]
             fill_price, gap_modeled = _sell_fill_price(order, ref, slip, costs)
             if fill_price <= 0:  # never let a modeled gap fill go non-positive
                 fill_price = round(max(ref, 0.01) * (1 - slip), 4)
@@ -260,16 +286,28 @@ def readback(order_id: str) -> dict | None:
                             float(costs["finra_taf_per_share_usd"]) * qty), 4)  # per share, capped
             proceeds = round(gross - commission - sec_fee - taf, 2)  # net cash in
             state["cash_usd"] = round(state["cash_usd"] + proceeds, 2)
-            state["positions"].remove(pos)
             # Price realized P&L, net of ALL costs: buy commission is baked into
             # avg_cost, sell fees are already out of proceeds.
             price_pnl = round(proceeds - qty * pos["avg_cost"], 2)
             # Dividends were ALREADY credited to cash when the event was processed
             # (corporate_actions). We only ATTRIBUTE them to the trade here for
             # per-trade reporting — cash is NOT touched again (no double count).
-            divs = round(float(pos.get("dividends_received_usd", 0.0) or 0.0), 2)
+            # Partials attribute pro-rata; the remainder stays with the position.
+            total_divs = float(pos.get("dividends_received_usd", 0.0) or 0.0)
+            divs = round(total_divs * frac, 2)
+            entry_cost, opened_at = pos["avg_cost"], pos.get("opened_at")
+            if frac < 1.0:
+                pos["quantity"] = round(pos["quantity"] - qty, 4)
+                pos["market_value_usd"] = round(pos["quantity"] * fill_price, 2)
+                pos["dividends_received_usd"] = round(total_divs - divs, 2)
+            else:
+                state["positions"].remove(pos)
             fill = {**order, "status": "filled", "fill_price": fill_price,
                     "quantity": qty, "notional_usd": round(gross, 2),
+                    "sell_fraction": round(frac, 4),
+                    # entry data stamped on the fill so closed-trade records never
+                    # need fragile open/close pairing (adds/partials break pairing)
+                    "avg_cost": entry_cost, "position_opened_at": opened_at,
                     "realized_pnl_usd": price_pnl,               # price-only, net of fees
                     "total_realized_pnl_usd": round(price_pnl + divs, 2),  # + carried dividends
                     "dividends_received_usd": divs,

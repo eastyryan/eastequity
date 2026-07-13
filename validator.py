@@ -272,8 +272,41 @@ def _check_sizing(p: dict, cfg: dict, portfolio: dict, reasons: list[str]) -> No
     invested = sum(pos.get("market_value_usd", 0) for pos in open_positions)
     if invested + size > equity * ps["max_total_exposure_pct"]:
         reasons.append("total_exposure_cap_exceeded")
-    if any(pos["ticker"] == str(p.get("ticker", "")).upper() for pos in open_positions):
-        reasons.append("already_holding_ticker (adds not yet supported)")
+    held = next((pos for pos in open_positions
+                 if pos["ticker"] == str(p.get("ticker", "")).upper()), None)
+    if held is not None:
+        # SCALE-IN rules: adds are allowed only into WINNERS (add price above the
+        # blended cost - never average down), capped per position in count and in
+        # combined exposure. Config-gated so the old flat rejection is one flag away.
+        sc = ps.get("scale_in") or {}
+        if not sc.get("enabled"):
+            reasons.append("already_holding_ticker (scale-in disabled)")
+        else:
+            if int(held.get("adds_count", 0)) >= int(sc.get("max_adds_per_position", 2)):
+                reasons.append(f"max_adds_reached:{held.get('adds_count')}")
+            try:
+                if sc.get("add_only_above_cost", True) and \
+                        float(p.get("entry_price_max", 0)) <= float(held.get("avg_cost", 0)):
+                    reasons.append(
+                        f"add_below_cost:{p.get('entry_price_max')} <= avg_cost "
+                        f"{held.get('avg_cost')} (never average down)")
+            except (TypeError, ValueError):
+                reasons.append("add_price_not_numeric")
+            combined = held.get("market_value_usd", 0) + (size or 0)
+            if combined > max_usd or combined > equity * max_pct:
+                reasons.append(f"combined_position_exceeds_cap:{combined:.0f} > "
+                               f"{min(max_usd, equity * max_pct):.0f}")
+
+
+def _check_sell_fraction(p: dict, reasons: list[str]) -> None:
+    """Partial exits: sell_fraction, when present, must be a sane fraction."""
+    if str(p.get("action", "")).upper() != "SELL_TO_CLOSE":
+        return
+    f = p.get("sell_fraction")
+    if f is None:
+        return
+    if not isinstance(f, (int, float)) or not 0 < f <= 1:
+        reasons.append(f"invalid_sell_fraction:{f} (must be in (0, 1])")
 
 
 # --- entry point --------------------------------------------------------------
@@ -302,6 +335,7 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
         _check_prices_and_rr(p, cfg, reasons)
         _check_volatility_stop(p, cfg, market_context or {}, reasons)
         _check_market_cap(p, cfg, market_context or {}, reasons)
+        _check_sell_fraction(p, reasons)
         _check_confidence(p, cfg, reasons)
         _check_sizing(p, cfg, portfolio, reasons)
         if str(p.get("action", "")).upper() == "BUY":

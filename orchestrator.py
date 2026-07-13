@@ -236,6 +236,42 @@ def _json_safe(obj):
     return obj
 
 
+def build_health() -> dict:
+    """Runs heartbeat: expected schedule slots so far today (ET) vs runs actually
+    journaled. A silently-dead pipeline (the plan-mode parse bug ran for DAYS
+    unnoticed) now shows up on the dashboard as missed runs instead of nothing."""
+    now = _et_now()
+    weekday = now.weekday() < 5
+    slots = ([6, 9, 10, 12, 14, 16, 17.5, 19.5] if weekday else [23.98])
+    now_h = now.hour + now.minute / 60
+    expected = sum(1 for s in slots if s <= now_h)
+    completed = 0
+    last_ts = None
+    from datetime import timedelta as _td
+    for delta in (0, 1):  # journal files are named by UTC date; today ET spans two
+        f = ROOT / "journal" / "runs" / f"{(datetime.now(timezone.utc) - _td(days=delta)).date().isoformat()}.jsonl"
+        if not f.exists():
+            continue
+        for line in f.read_text().splitlines():
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            d = _to_et_date(rec.get("ts"))
+            if d == _et_date() and "halted" not in rec and not rec.get("manual"):
+                completed += 1
+                last_ts = rec.get("ts") or last_ts
+    missed = max(0, expected - completed)
+    return {
+        "as_of_et": now.isoformat(timespec="minutes"),
+        "expected_runs_so_far": expected,
+        "completed_scheduled_runs": completed,
+        "missed": missed,
+        "last_scheduled_run_utc": last_ts,
+        "status": "ok" if missed <= 1 else "DEGRADED - scheduled runs are being missed",
+    }
+
+
 def _universe_audit_summary() -> dict | None:
     """Compact summary of the latest ALL-universe freshness audit for the bundle.
     None when no audit exists or it is too old to trust (>8 days)."""
@@ -541,6 +577,56 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
     if stale_names:
         print(f"  !! STALE FUNDAMENTALS for {stale_names} - flagged to the brain")
 
+    # PER-NAME DIGEST: the financial identity card the brain reads FIRST. Key numbers
+    # from the statements (always labeled with their quarter-end - the backbone never
+    # goes out of view even though deep re-fetches are quarterly), plus everything
+    # that changes daily. Full detail remains below in the bundle for digging.
+    def _dig(t: str) -> dict:
+        br = filings.get(t) if isinstance(filings.get(t), dict) else {}
+        qf = br.get("quarterly_fundamentals") or {}
+        rev = (qf.get("revenue") or [])
+        ni = (qf.get("net_income") or [])
+        ratios = ((deep_fundamentals.get(t) or {}).get("quality_ratios") or {}).get("ratios") or {}
+
+        def rv(key):
+            v = ratios.get(key)
+            return v.get("value") if isinstance(v, dict) else v
+        row = next((r for r in (scan.get("top_setups") or []) + (scan.get("contrarian_setups") or [])
+                    + (scan.get("deep_value_200w") or []) + (scan.get("supplier_pullbacks") or [])
+                    if r.get("ticker") == t), {})
+        yoy = None
+        if len(rev) >= 5 and rev[-5].get("value_usd"):
+            yoy = round((rev[-1]["value_usd"] / rev[-5]["value_usd"] - 1) * 100, 1)
+        d = {
+            "latest_quarter_end": rev[-1]["period_end"] if rev else None,  # CITE THIS DATE
+            "revenue_usd": rev[-1]["value_usd"] if rev else None,
+            "revenue_yoy_pct": yoy,
+            "net_income_usd": ni[-1]["value_usd"] if ni else None,
+            "ttm_ebitda_usd": rv("ebitda_ttm_usd"),
+            "net_debt_to_ebitda": rv("net_debt_to_ebitda"),
+            "fcf_ttm_usd": rv("free_cash_flow_ttm_usd"),
+            "sbc_pct_of_revenue": rv("sbc_pct_of_revenue"),
+            "market_cap_usd": rv("market_cap_usd") or row.get("market_cap_usd"),
+            "fundamentals_stale": bool(br.get("stale_fundamentals_warning")),
+            "next_earnings": (news.get("tickers", {}).get(t) or {}).get("next_earnings")
+                             if isinstance(news, dict) else None,
+            "days_to_earnings": row.get("days_to_earnings"),
+            # daily-fresh layer
+            "last_close": row.get("last_close"),
+            "rel_strength_1m_pct": row.get("rel_strength_1m_pct"),
+            "volume_read": (row.get("volume_signal") or {}).get("read"),
+            "ai_exposure": row.get("ai_exposure"),
+            "insider_signal": ((insiders.get("tickers", {}).get(t) or {}).get("summary") or {}).get("signal")
+                              if isinstance(insiders, dict) else None,
+            "13f_net_activity": ((smart_money.get("by_ticker") or {}).get(t) or {}).get("net_activity")
+                                if isinstance(smart_money, dict) else None,
+            "deal_8ks_recent": len(((partnerships.get("tickers", {}).get(t) or {})
+                                    .get("material_agreement_8ks") or []))
+                               if isinstance(partnerships, dict) else None,
+        }
+        return {k: v for k, v in d.items() if v is not None}
+    digest = {t: _dig(t) for t in focus}
+
     # Volatility -> stop engineering. One source of truth (validator.stop_floor_pct)
     # for both the brain-facing floors and the deterministic validation at execute time.
     volatility = build_volatility_context(scan, options_signals)
@@ -550,6 +636,14 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
     return {
         "run_date": datetime.now(timezone.utc).isoformat(),
         "as_of_et": _et_date(),  # today's US MARKET date - cite this, not the UTC run_date
+        "digest": {
+            "note": "READ FIRST: per focus name, the key statement numbers (each with its "
+                    "quarter-end date - cite them WITH the date), leverage/cash-flow reads, "
+                    "next earnings (when fresh statements arrive), and today's fast-moving "
+                    "signals. Full detail lives in the sections below; dig there before "
+                    "proposing, but this card is the always-current financial identity.",
+            "by_ticker": digest,
+        },
         "trading_mode": cfg["mode"]["trading_mode"],
         "run_depth": "light" if light else "full",
         # Hard limits the validator will enforce - size within them or be rejected.
@@ -865,6 +959,7 @@ def execute(approved: list[validator.ValidationResult], context: dict,
             "ticker": p["ticker"], "action": p["action"],
             "position_size_usd": p.get("position_size_usd"),
             "reference_price": ref, "proposal_id": run_id,
+            "sell_fraction": p.get("sell_fraction"),  # partial exits (validated)
             # ATR lets the broker vol-scale slippage and model an entry gap (a $400 name
             # swinging 7%/day costs more to fill than a flat 10bps implies).
             "atr_pct": atr_map.get(p["ticker"].upper()),
@@ -922,15 +1017,23 @@ def compute_closed_trades() -> list[dict]:
         t = fill["ticker"].upper()
         if fill["action"] == "BUY":
             opens[t] = fill
-        elif fill["action"] == "SELL_TO_CLOSE" and t in opens:
-            entry_fill = opens.pop(t)
+        elif fill["action"] == "SELL_TO_CLOSE" and (fill.get("avg_cost") or t in opens):
             plan = plans.get(t, {})
-            entry = float(entry_fill["fill_price"])
+            # New-style fills stamp entry data directly (adds/partials make
+            # open/close pairing unreliable); legacy fills fall back to pairing.
+            if fill.get("avg_cost"):
+                entry = float(fill["avg_cost"])
+                opened_ts = fill.get("position_opened_at") or fill["filled_at"]
+                opens.pop(t, None)
+            else:
+                entry_fill = opens.pop(t)
+                entry = float(entry_fill["fill_price"])
+                opened_ts = entry_fill["filled_at"]
             exit_px = float(fill["fill_price"])
             stop = float(plan.get("stop_loss") or 0)
             target = float(plan.get("target_price") or 0)
             days_held = max((datetime.fromisoformat(fill["filled_at"])
-                             - datetime.fromisoformat(entry_fill["filled_at"])).days, 0)
+                             - datetime.fromisoformat(opened_ts)).days, 0)
             horizon = plan.get("holding_horizon_days")
             if target and exit_px >= target * 0.995:
                 verdict = "Hit target"
@@ -951,7 +1054,7 @@ def compute_closed_trades() -> list[dict]:
                 total_pnl = (price_pnl or 0.0) + divs
             closed.append({
                 "ticker": t, "entry_price": entry, "exit_price": exit_px,
-                "opened_at": entry_fill["filled_at"][:10], "closed_at": fill["filled_at"][:10],
+                "opened_at": _to_et_date(opened_ts), "closed_at": _to_et_date(fill["filled_at"]),
                 "days_held": days_held, "pnl_usd": price_pnl,
                 "dividends_usd": round(divs, 2), "total_pnl_usd": round(total_pnl, 2),
                 "fees_usd": fill.get("fees_usd"), "gap_modeled": fill.get("gap_modeled", False),
@@ -1276,6 +1379,7 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
         "data_quality": context.get("data_quality"),
         "stale_data_notice": context.get("stale_data_notice"),
         "universe_size": len(validator.load_universe()),
+        "health": build_health(),
         "total_dividends_usd": round(sum(
             (pos.get("dividends_received_usd") or 0)
             for pos in context["portfolio"].get("positions", [])), 2),

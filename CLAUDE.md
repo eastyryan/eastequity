@@ -385,8 +385,12 @@ stated confidence numbers are the currency here - spend them honestly.
   positive relative strength vs SPY (rel_strength_1m/3m), constructive reaction to its own
   news, orderly pullback structure rather than freefall (pullback_from_20d_high_pct), and
   buyers showing up (volume_surge). Enter on evidence of strength, not on hope of a turn.
-  Prefer sizing an initial entry at 50-70% of your intended size with the add level stated
-  in the watchlist (would_buy_at) - adds are not yet executable, so the record shows intent.
+  Prefer sizing an initial entry at 50-70% of your intended size, then SCALE IN: adds are
+  now executable (a BUY on a held ticker merges at blended cost). Validator rules: max 2
+  adds per position, adds only ABOVE your blended cost (never average down), and combined
+  exposure stays inside the per-name cap. PARTIAL EXITS: a SELL_TO_CLOSE may carry
+  "sell_fraction" (0-1, e.g. 0.5 books half) - use it to take profits on runners while a
+  trailing thesis plays out; omit it for a full close. Forced safety exits are always full.
 
 ## Learning Protocol (how to use track_record.breakdowns)
 

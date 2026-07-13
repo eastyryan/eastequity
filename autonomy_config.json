@@ -79,6 +79,12 @@
     "max_total_exposure_pct": 0.8,
     "min_cash_reserve_pct": 0.2,
     "max_sector_concentration_pct": 0.4,
+    "scale_in": {
+      "enabled": true,
+      "max_adds_per_position": 2,
+      "add_only_above_cost": true,
+      "_note": "Adds allowed only into winners (price above blended cost, never averaging down), max 2 adds, combined exposure stays inside the per-name cap. Partial exits via sell_fraction in (0,1]."
+    },
     "conviction_tier": {
       "unlocked_after_closed_trades": 15,
       "required_high_conf_bucket_win_rate_pct": 55,
