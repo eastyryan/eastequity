@@ -262,13 +262,32 @@ def build_health() -> dict:
                 completed += 1
                 last_ts = rec.get("ts") or last_ts
     missed = max(0, expected - completed)
+    # Bundle-age alarm: the relay bundle is the cloud runs' data supply. If the
+    # gatherers (GH Action / local relay) die, the bundle ages - warn well BEFORE
+    # the 4h stale threshold so it gets fixed, not discovered after the fact.
+    bundle_age_h = None
+    try:
+        b = json.loads((ROOT / "data" / "cloud_context.json").read_text())
+        bundle_age_h = round((datetime.now(timezone.utc)
+                              - datetime.fromisoformat(b["run_date"])).total_seconds() / 3600, 1)
+    except Exception:
+        pass
+    market_hours = weekday and 9.5 <= now_h <= 16
+    bundle_alarm = bool(bundle_age_h is not None and
+                        (bundle_age_h > 2 if market_hours else bundle_age_h > 8))
+    status = "ok"
+    if missed > 1:
+        status = "DEGRADED - scheduled runs are being missed"
+    elif bundle_alarm:
+        status = f"WARNING - data bundle is {bundle_age_h}h old (gatherers may be down)"
     return {
         "as_of_et": now.isoformat(timespec="minutes"),
         "expected_runs_so_far": expected,
         "completed_scheduled_runs": completed,
         "missed": missed,
+        "bundle_age_hours": bundle_age_h,
         "last_scheduled_run_utc": last_ts,
-        "status": "ok" if missed <= 1 else "DEGRADED - scheduled runs are being missed",
+        "status": status,
     }
 
 

@@ -9,6 +9,9 @@ name: Gather market data for cloud runs
 on:
   schedule:
     - cron: "40 9,12,13,15,17,19,21,23 * * 1-5"  # 20 min before weekday run slots (UTC)
+    - cron: "10 14-20 * * 1-5"                    # +every market hour at :10 (9:30-4 ET) so
+                                                  # the bundle is never more than ~30min old
+                                                  # while the market is open
     - cron: "40 3 * * *"                          # before the midnight-ET and weekend runs
   workflow_dispatch:
 
