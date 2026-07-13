@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import EquityChart from "@/components/EquityChart";
 import ClosedTrades from "@/components/ClosedTrades";
+import Calibration from "@/components/Calibration";
 
 type Position = {
   ticker: string;
@@ -28,6 +29,30 @@ type Position = {
 
 type Indicator = { latest: number; direction: string } | null;
 
+type CalibrationBucket = {
+  trades: number;
+  win_rate_pct: number;
+  avg_stated_confidence_pct: number;
+  calibration_gap_pct: number;
+};
+
+type Calibration = {
+  note: string;
+  by_confidence: Record<string, CalibrationBucket>;
+  high_conf_0_70_plus: { trades: number; win_rate_pct: number | null; inflated: boolean };
+};
+
+type PositionRisk = {
+  last_price: number;
+  recorded_stop: number;
+  cushion_to_stop_pct: number | null;
+  atr_pct: number | null;
+  expected_move_pct: number | null;
+  cushion_in_atr?: number;
+  inside_noise_band?: boolean;
+  stop_distance_from_entry_pct?: number;
+};
+
 type Latest = {
   generated_at: string;
   run_id: string;
@@ -36,7 +61,13 @@ type Latest = {
   portfolio: { cash_usd: number; total_equity_usd: number; positions: Position[] };
   no_trade_reason?: string | null;
   commentary?: string | null;
-  macro_snapshot?: { cpi_yoy_pct: Indicator; ten_year_yield: Indicator; vix: Indicator } | null;
+  macro_snapshot?: {
+    cpi_yoy_pct: Indicator;
+    ten_year_yield: Indicator;
+    vix: Indicator;
+    yield_curve_10y2y?: Indicator;
+    hy_credit_spread?: Indicator;
+  } | null;
   proposals: { proposal: Record<string, unknown>; approved: boolean; reasons: string[] }[];
   fills: { ticker: string; action: string; fill_price: number; quantity: number }[];
   closed_trades?: {
@@ -50,6 +81,10 @@ type Latest = {
     r_multiple: number | null;
     verdict: string;
     thesis?: string | null;
+    dividends_usd?: number;
+    total_pnl_usd?: number;
+    fees_usd?: number;
+    gap_modeled?: boolean;
   }[];
   performance?: {
     closed_trades: number;
@@ -58,9 +93,17 @@ type Latest = {
     avg_r_multiple: number | null;
     avg_days_held: number;
     max_drawdown_pct: number;
+    realized_pnl_incl_dividends_usd?: number;
+    total_fees_paid_usd?: number;
   } | null;
   improvements?: { date: string; note: string }[];
   watchlist?: { ticker: string; one_line: string; thoughts: string; would_buy_at?: string | null }[];
+  total_dividends_usd?: number;
+  calibration?: Calibration | null;
+  position_risk?: Record<string, PositionRisk>;
+  data_quality?: { source: string; age_hours?: number; stale?: boolean; note?: string } | null;
+  stale_data_notice?: string | null;
+  universe_size?: number;
 };
 
 type HistoryPoint = { date: string; equity: number; benchmark_close?: number | null };
@@ -83,8 +126,31 @@ function usd(n: number) {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
+// Cents-precise, for the small figures (fees, per-trade dividends) where rounding to
+// whole dollars would hide or distort the number.
+function usd2(n: number) {
+  return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 2 });
+}
+
 function arrow(direction?: string) {
   return direction === "rising" ? "↑" : direction === "falling" ? "↓" : "";
+}
+
+type Freshness = { label: string; tone: "live" | "stale" | "degraded"; detail?: string };
+
+// Derive a small data-health badge from the (optional) data_quality / stale_data_notice fields.
+// Returns null when we have no freshness signal at all, so healthy-but-silent runs stay clean.
+function freshness(l: Latest): Freshness | null {
+  if (l.stale_data_notice) {
+    return { label: "DEGRADED", tone: "degraded", detail: l.stale_data_notice };
+  }
+  const dq = l.data_quality;
+  if (!dq) return null;
+  if (dq.stale) {
+    const age = dq.age_hours != null ? ` ${Math.round(dq.age_hours)}h` : "";
+    return { label: `STALE${age}`, tone: "stale", detail: dq.note };
+  }
+  return { label: "LIVE DATA", tone: "live", detail: dq.note ?? dq.source };
 }
 
 export default function Home() {
@@ -141,6 +207,57 @@ export default function Home() {
   const improvements = latest.improvements ?? [];
   const rejected = latest.proposals.filter((p) => !p.approved);
 
+  const fresh = freshness(latest);
+  const freshClass =
+    fresh?.tone === "degraded"
+      ? "border-red-300 bg-red-50 text-red-700"
+      : fresh?.tone === "stale"
+        ? "border-amber-300 bg-amber-50 text-amber-800"
+        : "border-emerald-300 bg-emerald-50 text-emerald-700";
+
+  const universeLabel = latest.universe_size ? `${latest.universe_size} names` : "dozens of names";
+
+  const perfTiles: { label: string; value: string; accent?: boolean; sub?: string }[] = perf
+    ? [
+        { label: "Closed trades", value: String(perf.closed_trades) },
+        { label: "Win rate", value: `${perf.win_rate_pct}%` },
+        {
+          label: "Realized P&L",
+          value: `${perf.realized_pnl_usd >= 0 ? "+" : ""}${usd(perf.realized_pnl_usd)}`,
+          accent: perf.realized_pnl_usd > 0,
+          sub:
+            perf.realized_pnl_incl_dividends_usd != null &&
+            perf.realized_pnl_incl_dividends_usd !== perf.realized_pnl_usd
+              ? `${perf.realized_pnl_incl_dividends_usd >= 0 ? "+" : ""}${usd2(
+                  perf.realized_pnl_incl_dividends_usd,
+                )} incl. dividends`
+              : undefined,
+        },
+        { label: "Avg R multiple", value: perf.avg_r_multiple === null ? "n/a" : `${perf.avg_r_multiple}R` },
+        { label: "Avg days held", value: String(perf.avg_days_held) },
+        { label: "Max drawdown", value: `${perf.max_drawdown_pct}%` },
+        {
+          label: "Dividends",
+          value:
+            latest.total_dividends_usd == null
+              ? "n/a"
+              : latest.total_dividends_usd
+                ? `+${usd2(latest.total_dividends_usd)}`
+                : "$0.00",
+          accent: (latest.total_dividends_usd ?? 0) > 0,
+        },
+        {
+          label: "Fees paid",
+          value:
+            perf.total_fees_paid_usd == null
+              ? "n/a"
+              : perf.total_fees_paid_usd
+                ? `-${usd2(perf.total_fees_paid_usd)}`
+                : "$0.00",
+        },
+      ]
+    : [];
+
   return (
     <main className="mx-auto max-w-4xl px-5 sm:px-8">
       {/* Header */}
@@ -150,8 +267,19 @@ export default function Home() {
           <img src="/avatar.jpg" alt="" className="h-8 w-8 rounded-full border border-line" />
           <span className="text-[15px] font-semibold tracking-tight">East Equity Agent</span>
         </span>
-        <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-800 font-[family-name:var(--font-geist-mono)]">
-          PAPER TRADING
+        <span className="flex items-center gap-2">
+          {fresh && (
+            <span
+              title={fresh.detail}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium font-[family-name:var(--font-geist-mono)] ${freshClass}`}
+            >
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
+              {fresh.label}
+            </span>
+          )}
+          <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-800 font-[family-name:var(--font-geist-mono)]">
+            PAPER TRADING
+          </span>
         </span>
       </header>
 
@@ -202,22 +330,8 @@ export default function Home() {
       {perf && (
         <section className="border-t border-line py-12">
           <h2 className="text-lg font-semibold tracking-tight">Performance record</h2>
-          <dl className="mt-6 grid grid-cols-2 gap-y-8 sm:grid-cols-3 lg:grid-cols-6">
-            {[
-              { label: "Closed trades", value: String(perf.closed_trades) },
-              { label: "Win rate", value: `${perf.win_rate_pct}%` },
-              {
-                label: "Realized P&L",
-                value: `${perf.realized_pnl_usd >= 0 ? "+" : ""}${usd(perf.realized_pnl_usd)}`,
-                accent: perf.realized_pnl_usd > 0,
-              },
-              {
-                label: "Avg R multiple",
-                value: perf.avg_r_multiple === null ? "n/a" : `${perf.avg_r_multiple}R`,
-              },
-              { label: "Avg days held", value: String(perf.avg_days_held) },
-              { label: "Max drawdown", value: `${perf.max_drawdown_pct}%` },
-            ].map((s) => (
+          <dl className="mt-6 grid grid-cols-2 gap-y-8 sm:grid-cols-4">
+            {perfTiles.map((s) => (
               <div key={s.label} className="border-l border-line pl-4">
                 <dt className="text-[13px] text-ink-3">{s.label}</dt>
                 <dd
@@ -227,11 +341,19 @@ export default function Home() {
                 >
                   {s.value}
                 </dd>
+                {s.sub && (
+                  <dd className="mt-0.5 text-[11px] text-ink-3 font-[family-name:var(--font-geist-mono)]">
+                    {s.sub}
+                  </dd>
+                )}
               </div>
             ))}
           </dl>
         </section>
       )}
+
+      {/* Confidence calibration, honesty feature: stated confidence vs realized win rate */}
+      {latest.calibration && <Calibration data={latest.calibration} />}
 
       {/* Positions */}
       <section className="border-t border-line py-12">
@@ -250,6 +372,9 @@ export default function Home() {
               const pnl = p.market_value_usd - p.quantity * p.avg_cost;
               const pnlPct = (pnl / (p.quantity * p.avg_cost)) * 100;
               const plan = p.original_plan;
+              const risk = latest.position_risk?.[p.ticker];
+              const horizon = plan?.holding_horizon_days;
+              const horizonPct = horizon ? ((p.days_held ?? 0) / horizon) * 100 : null;
               return (
                 <li key={p.ticker}>
                   <details className="group py-4">
@@ -308,6 +433,45 @@ export default function Home() {
                               <div className="mt-0.5 font-[family-name:var(--font-geist-mono)]">{s.value}</div>
                             </div>
                           ))}
+                        </div>
+                      )}
+
+                      {/* Live risk: distance-to-stop in ATR terms and how far into the horizon we are */}
+                      {(risk?.cushion_in_atr != null || horizonPct !== null) && (
+                        <div className="flex flex-wrap items-start gap-x-8 gap-y-4">
+                          {risk?.cushion_in_atr != null && (
+                            <div>
+                              <div className="text-[12px] text-ink-3">Cushion to stop</div>
+                              <div
+                                className={`mt-0.5 text-sm font-[family-name:var(--font-geist-mono)] ${
+                                  risk.inside_noise_band ? "text-amber-700" : ""
+                                }`}
+                              >
+                                {risk.cushion_in_atr.toFixed(1)}× ATR
+                                {risk.inside_noise_band && (
+                                  <span className="ml-1.5 text-[11px]">inside noise band</span>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                          {horizonPct !== null && (
+                            <div className="min-w-[150px] max-w-[240px] flex-1">
+                              <div className="flex items-baseline justify-between text-[12px] text-ink-3">
+                                <span>Horizon</span>
+                                <span className="font-[family-name:var(--font-geist-mono)]">
+                                  {p.days_held ?? 0}d / {horizon}d
+                                </span>
+                              </div>
+                              <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-line">
+                                <div
+                                  className={`h-full rounded-full ${
+                                    horizonPct >= 100 ? "bg-red-700" : "bg-accent"
+                                  }`}
+                                  style={{ width: `${Math.min(100, Math.max(2, horizonPct))}%` }}
+                                />
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
 
@@ -377,6 +541,12 @@ export default function Home() {
                 <span>10Y {macro.ten_year_yield.latest}% {arrow(macro.ten_year_yield.direction)}</span>
               )}
               {macro.vix && <span>VIX {macro.vix.latest} {arrow(macro.vix.direction)}</span>}
+              {macro.yield_curve_10y2y && (
+                <span>10Y-2Y {macro.yield_curve_10y2y.latest}% {arrow(macro.yield_curve_10y2y.direction)}</span>
+              )}
+              {macro.hy_credit_spread && (
+                <span>HY spread {macro.hy_credit_spread.latest}% {arrow(macro.hy_credit_spread.direction)}</span>
+              )}
             </div>
           )}
         </section>
@@ -469,8 +639,10 @@ export default function Home() {
       {improvements.length > 0 && (
         <section className="border-t border-line py-12">
           <h2 className="text-lg font-semibold tracking-tight">What improved</h2>
-          <p className="mt-1 text-sm text-ink-2">
-            The agent critiques its own process after every run. Changes that ship land here.
+          <p className="mt-1 max-w-2xl text-sm text-ink-2">
+            After every run the agent writes down one concrete thing that would have made it sharper -
+            a data gap, a tooling gripe, a lesson learned. These are its own unedited notes, not a
+            changelog of shipped fixes.
           </p>
           <ul className="mt-6 space-y-5">
             {improvements.slice(0, 3).map((im, i) => (
@@ -510,8 +682,8 @@ export default function Home() {
           <div>
             <h3 className="font-medium">Research</h3>
             <p className="mt-1.5 text-sm text-ink-2 leading-relaxed">
-              Claude reads macro data, SEC filings, 13F flows, and price structure across 57 names
-              in semiconductors, networking, power, and data center infrastructure.
+              Claude reads macro data, SEC filings, 13F flows, and price structure across{" "}
+              {universeLabel} in semiconductors, networking, power, and data center infrastructure.
             </p>
           </div>
           <div>

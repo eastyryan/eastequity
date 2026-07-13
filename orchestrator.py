@@ -28,7 +28,7 @@ import re
 import subprocess
 import sys
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -80,6 +80,94 @@ def release_run_lock() -> None:
     LOCK_FILE.unlink(missing_ok=True)
 
 
+def _node_id() -> str:
+    """Best-effort stable id for this execution node (cloud sandbox vs a Mac)."""
+    import socket
+    if os.environ.get("EE_NODE"):
+        return os.environ["EE_NODE"]
+    try:
+        return socket.gethostname() or "unknown-node"
+    except Exception:
+        return "unknown-node"
+
+
+def _read_remote_lease() -> dict | None:
+    """The lease as committed on origin/main (the shared source of truth). Fail-open:
+    returns None on any git/parse error so a lease can never brick the trader."""
+    try:
+        subprocess.run(["git", "fetch", "origin", "main"], cwd=ROOT,
+                       capture_output=True, timeout=60)
+        r = subprocess.run(["git", "show", "origin/main:state/RUN_LEASE.json"],
+                           cwd=ROOT, capture_output=True, text=True, timeout=30)
+        if r.returncode == 0 and r.stdout.strip():
+            return json.loads(r.stdout)
+    except Exception as e:
+        print(f"  (cross-node lease read failed, proceeding fail-open: {e})")
+    return None
+
+
+def acquire_cross_node_lease(run_id: str, cfg: dict, manual: bool = False) -> str | None:
+    """Advisory cross-node lease over the shared ledger, arbitrated through git.
+
+    Returns a halt reason if another NODE holds an unexpired lease (scheduled runs
+    stand down; manual runs only warn), else None after claiming the lease. Fail-OPEN
+    on any git/parse error - the lease only prevents the clear double-trade case, it
+    must never prevent trading because of an infra hiccup."""
+    rc = cfg.get("risk_controls", {})
+    if not rc.get("cross_node_lease_enabled", True):
+        return None
+    ttl_min = rc.get("cross_node_lease_ttl_minutes", 30)
+    now = datetime.now(timezone.utc)
+    lease_path = ROOT / "state" / "RUN_LEASE.json"
+
+    def _conflict(lease: dict | None) -> str | None:
+        if not lease:
+            return None
+        try:
+            exp = datetime.fromisoformat(lease["expires_at"])
+        except Exception:
+            return None  # unparseable -> fail open
+        if exp > now and lease.get("run_id") not in (None, run_id) \
+                and lease.get("holder") != _node_id():
+            return (f"cross-node lease held by {lease.get('holder')} "
+                    f"(run {lease.get('run_id')}) until {exp.isoformat()}")
+
+    conflict = _conflict(_read_remote_lease())
+    if conflict:
+        if manual:
+            print(f"  WARNING: {conflict} - proceeding anyway (manual run).")
+        else:
+            return f"{conflict} - standing down to avoid double-trading the ledger"
+
+    # Claim the lease and push it so the other node can see it before it trades.
+    lease = {"holder": _node_id(), "run_id": run_id, "acquired_at": now.isoformat(),
+             "expires_at": (now + timedelta(minutes=ttl_min)).isoformat()}
+    try:
+        lease_path.parent.mkdir(parents=True, exist_ok=True)
+        lease_path.write_text(json.dumps(lease, indent=2))
+        subprocess.run(["git", "add", "state/RUN_LEASE.json"], cwd=ROOT, capture_output=True)
+        c = subprocess.run(["git", "commit", "-m", "Acquire run lease [vercel skip]"],
+                           cwd=ROOT, capture_output=True, text=True)
+        if c.returncode == 0:
+            p = subprocess.run(["git", "push", "origin", "main"], cwd=ROOT,
+                               capture_output=True, text=True, timeout=120)
+            if p.returncode != 0:  # lost the push race - rebase and re-check the holder
+                rb = subprocess.run(["git", "pull", "--rebase", "origin", "main"],
+                                    cwd=ROOT, capture_output=True, text=True, timeout=120)
+                if rb.returncode != 0:
+                    subprocess.run(["git", "rebase", "--abort"], cwd=ROOT, capture_output=True)
+                    print("  (lease push race, rebase failed - proceeding fail-open)")
+                    return None
+                conflict = _conflict(_read_remote_lease())
+                if conflict and not manual:
+                    return f"lost the lease race: {conflict} - standing down"
+                subprocess.run(["git", "push", "origin", "main"], cwd=ROOT,
+                               capture_output=True, timeout=120)
+    except Exception as e:
+        print(f"  (cross-node lease claim failed, proceeding fail-open: {e})")
+    return None
+
+
 def preflight(cfg: dict, run_id: str, news_only: bool = False,
               manual: bool = False) -> str | None:
     """Return a halt reason string, or None if clear to proceed."""
@@ -103,6 +191,12 @@ def preflight(cfg: dict, run_id: str, news_only: bool = False,
                 return f"daily run budget exhausted ({completed}/{cap}) - protecting usage limits"
     if not acquire_run_lock(run_id):
         return "another run is already in progress (RUN_LOCK held)"
+    # Cross-node lease: a scheduled run that trades the shared ledger stands down if
+    # another node (cloud vs local) already holds it. Skipped for news-only (never trades).
+    if not news_only:
+        lease_halt = acquire_cross_node_lease(run_id, cfg, manual=manual)
+        if lease_halt:
+            return lease_halt
     return None
 
 
@@ -125,6 +219,113 @@ def _light_prices(tickers: list) -> dict:
         return out
     except Exception:
         return {}
+
+
+def _json_safe(obj):
+    """Recursively replace NaN/Infinity floats with None so every bundle we write
+    is STRICT JSON. yfinance/pandas leak NaN into estimate/valuation fields, and a
+    bare NaN token makes cloud_context.json unparseable for the cloud routine that
+    depends on it. Cheap insurance applied at every bundle/dashboard write."""
+    import math
+    if isinstance(obj, float):
+        return obj if math.isfinite(obj) else None
+    if isinstance(obj, dict):
+        return {k: _json_safe(v) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple)):
+        return [_json_safe(v) for v in obj]
+    return obj
+
+
+def build_volatility_context(scan: dict, options_signals: dict) -> dict:
+    """Per-ticker volatility for the deterministic stop floor: {TICKER: {atr_pct,
+    expected_move_pct}}. ATR comes from the scanner (every name; also present in the
+    relayed cloud bundle); expected move from options when that data loaded. This is
+    the single map fed to BOTH the validator and the brain-facing stop_engineering
+    block, so what the brain is told matches what the validator enforces."""
+    vol: dict[str, dict] = {}
+    scan = scan or {}
+    # ATR for the whole scanned universe (new field), with a fallback to the
+    # per-row atr on top_setups/contrarian for bundles gathered before that field.
+    for t, atr in (scan.get("atr_by_ticker") or {}).items():
+        vol.setdefault(t.upper(), {})["atr_pct"] = atr
+    for r in (scan.get("top_setups") or []) + (scan.get("contrarian_setups") or []):
+        t = str(r.get("ticker", "")).upper()
+        if t and r.get("atr_pct") is not None:
+            vol.setdefault(t, {}).setdefault("atr_pct", r["atr_pct"])
+    for t, sig in ((options_signals or {}).get("tickers") or {}).items():
+        if isinstance(sig, dict) and sig.get("expected_move_pct") is not None:
+            vol.setdefault(t.upper(), {})["expected_move_pct"] = sig["expected_move_pct"]
+    return vol
+
+
+def build_stop_engineering(focus: list, vol: dict, cfg: dict) -> dict:
+    """Brain-facing: the enforced minimum stop distance per focus name, so the agent
+    engineers stops OUTSIDE the noise band on the first try instead of being rejected."""
+    floors = {}
+    for t in focus:
+        t = str(t).upper()
+        v = vol.get(t)
+        if not v:
+            continue
+        floor = validator.stop_floor_pct(v.get("atr_pct"), v.get("expected_move_pct"), cfg)
+        if floor is None:
+            continue
+        floors[t] = {
+            "atr_pct": v.get("atr_pct"),
+            "expected_move_pct": v.get("expected_move_pct"),
+            "min_stop_distance_pct": round(floor * 100, 2),
+            "tradeable": floor <= cfg["trade_quality_requirements"]["max_stop_loss_distance_pct"],
+        }
+    return {
+        "note": "ENFORCED stop floor per name. Your stop_loss must sit at least "
+                "min_stop_distance_pct below entry or the validator rejects it "
+                "(stop_inside_noise_band). This is a floor, not a target - for a swing "
+                "hold, aim WIDER (roughly 1.5-2x ATR, or clearly beyond the expected "
+                "move) so ordinary volatility does not stop you out. If tradeable is "
+                "false the name is too volatile for a valid stop under the 15% cap; do "
+                "not propose it.",
+        "floors": floors,
+    }
+
+
+def build_position_stop_cushion(portfolio: dict, vol: dict, cfg: dict) -> dict:
+    """Per open position: how much room is left between today's price and the recorded
+    stop, measured in the name's own volatility. A cushion under ~1 ATR means an
+    ordinary session could trip the stop - the brain should decide deliberately
+    (hold through, or exit on its own terms) rather than be noise-stopped."""
+    out = {}
+    for pos in portfolio.get("positions", []):
+        t = str(pos.get("ticker", "")).upper()
+        plan = pos.get("original_plan") or {}
+        stop = plan.get("stop_loss")
+        last = pos.get("last_price")
+        v = vol.get(t) or {}
+        atr = v.get("atr_pct")
+        if not (stop and last):
+            continue
+        try:
+            stop, last = float(stop), float(last)
+        except (TypeError, ValueError):
+            continue
+        cushion_pct = (last - stop) / last * 100 if last else None
+        entry = plan.get("entry_price_max") or pos.get("avg_cost")
+        info = {
+            "last_price": round(last, 2),
+            "recorded_stop": round(stop, 2),
+            "cushion_to_stop_pct": round(cushion_pct, 2) if cushion_pct is not None else None,
+            "atr_pct": atr,
+            "expected_move_pct": v.get("expected_move_pct"),
+        }
+        if atr and cushion_pct is not None and atr > 0:
+            info["cushion_in_atr"] = round(cushion_pct / atr, 2)
+            info["inside_noise_band"] = cushion_pct < atr  # < ~1 average day's range
+        if entry:
+            try:
+                info["stop_distance_from_entry_pct"] = round((float(entry) - stop) / float(entry) * 100, 2)
+            except (TypeError, ValueError):
+                pass
+        out[t] = info
+    return out
 
 
 def gather_context(cfg: dict, light: bool = False) -> dict:
@@ -181,8 +382,8 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         print("  • deep fundamentals + quality ratios...")
         deep_fundamentals = {t: get_deep_fundamentals(t) for t in focus}
         print("  • filing prose (MD&A + earnings releases)...")
-        filing_texts = {t: {"mdna": get_mdna_excerpt(t, max_chars=5000),
-                            "earnings_release": get_latest_earnings_release(t, max_chars=5000)}
+        filing_texts = {t: {"mdna": get_mdna_excerpt(t, max_chars=10000),
+                            "earnings_release": get_latest_earnings_release(t, max_chars=8000)}
                         for t in focus[:5]}
         print("  • fundamental screen (full universe, cached)...")
         try:
@@ -203,6 +404,15 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         smart_money = get_smart_money(focus) if focus else {"status": "skipped"}
         news = get_news_and_catalysts(focus) if focus else {"status": "skipped"}
         insiders = get_insider_activity(focus) if focus else {"status": "skipped"}
+
+    # Held names that dropped out of the universe scan (e.g. removed in a weekly review)
+    # must STILL be priced, or mark_to_market and the safety layer freeze them at entry
+    # cost - which quietly flatters losers that fell out of the momentum funnel.
+    scan_prices = scan.setdefault("prices", {})
+    missing_held = [t for t in held if t not in scan_prices]
+    if missing_held:
+        for t, px in _light_prices(missing_held).items():
+            scan_prices[t] = px
 
     print("  • position histories...")
     histories = get_position_histories(held) if held else {"status": "skipped"}
@@ -226,7 +436,14 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         "closed_trades": closed[-20:],
         "performance": compute_performance_stats(closed, hist),
         "breakdowns": build_performance_breakdown(closed),
+        "calibration": compute_calibration(closed),
     }
+
+    # Volatility -> stop engineering. One source of truth (validator.stop_floor_pct)
+    # for both the brain-facing floors and the deterministic validation at execute time.
+    volatility = build_volatility_context(scan, options_signals)
+    stop_engineering = build_stop_engineering(focus, volatility, cfg)
+    position_stop_cushion = build_position_stop_cushion(portfolio, volatility, cfg)
 
     return {
         "run_date": datetime.now(timezone.utc).isoformat(),
@@ -275,6 +492,16 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         "guidance_ledger": guidance,
         "fundamental_screen": fundamental_screen,
         "options_signals": options_signals,
+        "stop_engineering": stop_engineering,
+        "position_stop_cushion": {
+            "note": "For each open position: room left between today's price and your "
+                    "recorded stop, measured in the name's own ATR. cushion_in_atr < 1 "
+                    "(inside_noise_band true) means one ordinary session could hit the "
+                    "stop - decide deliberately (hold through it, or exit on your terms) "
+                    "rather than get noise-stopped. The safety layer still enforces the "
+                    "recorded stop on a closing basis.",
+            "positions": position_stop_cushion,
+        },
         "smart_money_13f": smart_money,
         "news_and_catalysts": news,
         "insider_activity": insiders,
@@ -298,10 +525,13 @@ def apply_safety_layer(context: dict, cfg: dict, run_id: str) -> list[dict]:
             print(f"  corporate-actions errors: {ca['errors']}")
 
     prices = context["universe_scan"].get("prices", {})
-    forced = exit_guard.check_forced_exits(context["portfolio"], prices)
+    # ATR per name lets the broker model stop gap-through (a stop rarely fills exactly
+    # at its level; price gaps beyond it). Same map the volatility-stop floor uses.
+    atr_map = context["universe_scan"].get("atr_by_ticker") or {}
+    forced = exit_guard.check_forced_exits(context["portfolio"], prices, atr_map)
     if not forced:
         return []
-    fills = exit_guard.execute_forced_exits(forced, prices, run_id)
+    fills = exit_guard.execute_forced_exits(forced, prices, run_id, atr_map)
     context["portfolio"] = get_portfolio_state()  # brain must see post-exit state
     context["forced_exits"] = [
         {**ex, "note": "Closed deterministically by the safety layer before this run; "
@@ -320,7 +550,7 @@ def apply_safety_layer(context: dict, cfg: dict, run_id: str) -> list[dict]:
 def ask_claude(context: dict, run_id: str, news_only: bool = False) -> str:
     """Invoke Claude Code headlessly with CLAUDE.md rules + the context bundle."""
     context_file = ROOT / "state" / f"context_{run_id}.json"
-    context_file.write_text(json.dumps(context, indent=2, default=str))
+    context_file.write_text(json.dumps(_json_safe(context), indent=2, default=str))
 
     if not news_only and context.get("run_depth") == "light":
         prompt = (
@@ -473,6 +703,7 @@ def execute(approved: list[validator.ValidationResult], context: dict,
             cfg: dict, run_id: str) -> list[dict]:
     fills = []
     prices = context["universe_scan"].get("prices", {})
+    atr_map = context["universe_scan"].get("atr_by_ticker") or {}
     max_orders = cfg["risk_controls"]["max_orders_per_run"]
 
     if cfg["mode"]["trading_mode"] == "dry_run":
@@ -505,6 +736,9 @@ def execute(approved: list[validator.ValidationResult], context: dict,
             "ticker": p["ticker"], "action": p["action"],
             "position_size_usd": p.get("position_size_usd"),
             "reference_price": ref, "proposal_id": run_id,
+            # ATR lets the broker vol-scale slippage and model an entry gap (a $400 name
+            # swinging 7%/day costs more to fill than a flat 10bps implies).
+            "atr_pct": atr_map.get(p["ticker"].upper()),
         })
         fill = simulated_broker.readback(order["order_id"])  # mandatory readback
         if fill is None or fill.get("status") != "filled":
@@ -578,11 +812,22 @@ def compute_closed_trades() -> list[dict]:
             else:
                 verdict = "Thesis exit"
             r_multiple = round((exit_px - entry) / (entry - stop), 2) if stop and entry > stop else None
+            # pnl_usd stays price-only (net of fees) for trade GRADING; total_pnl_usd adds
+            # attributed dividends for honest RETURN. Dividends already hit cash when paid,
+            # so never sum both into the same total (see compute_performance_stats).
+            price_pnl = fill.get("realized_pnl_usd")
+            divs = fill.get("dividends_received_usd") or 0.0
+            total_pnl = fill.get("total_realized_pnl_usd")
+            if total_pnl is None:
+                total_pnl = (price_pnl or 0.0) + divs
             closed.append({
                 "ticker": t, "entry_price": entry, "exit_price": exit_px,
                 "opened_at": entry_fill["filled_at"][:10], "closed_at": fill["filled_at"][:10],
-                "days_held": days_held, "pnl_usd": fill.get("realized_pnl_usd"),
+                "days_held": days_held, "pnl_usd": price_pnl,
+                "dividends_usd": round(divs, 2), "total_pnl_usd": round(total_pnl, 2),
+                "fees_usd": fill.get("fees_usd"), "gap_modeled": fill.get("gap_modeled", False),
                 "r_multiple": r_multiple, "verdict": verdict,
+                "confidence": plan.get("confidence"),
                 "thesis": plan.get("thesis"),
             })
     return closed
@@ -591,9 +836,12 @@ def compute_closed_trades() -> list[dict]:
 def compute_performance_stats(closed: list[dict], equity_hist: list[dict]) -> dict | None:
     if not closed:
         return None
-    pnls = [t["pnl_usd"] or 0 for t in closed]
+    pnls = [t["pnl_usd"] or 0 for t in closed]          # price-only, net of fees
+    total_pnls = [t.get("total_pnl_usd", t["pnl_usd"] or 0) or 0 for t in closed]  # + dividends
     wins = [p for p in pnls if p > 0]
     rs = [t["r_multiple"] for t in closed if t["r_multiple"] is not None]
+    fees = sum((t.get("fees_usd") or {}).get(k, 0) or 0
+               for t in closed for k in ("commission", "sec_fee", "taf"))
     peak, max_dd = 0.0, 0.0
     for h in equity_hist:
         peak = max(peak, h["equity"])
@@ -602,10 +850,44 @@ def compute_performance_stats(closed: list[dict], equity_hist: list[dict]) -> di
     return {
         "closed_trades": len(closed),
         "win_rate_pct": round(len(wins) / len(closed) * 100, 1),
-        "realized_pnl_usd": round(sum(pnls), 2),
+        "realized_pnl_usd": round(sum(pnls), 2),               # price-only
+        "realized_pnl_incl_dividends_usd": round(sum(total_pnls), 2),
+        "total_fees_paid_usd": round(fees, 2),                 # cost drag, shown for honesty
         "avg_r_multiple": round(sum(rs) / len(rs), 2) if rs else None,
         "avg_days_held": round(sum(t["days_held"] for t in closed) / len(closed), 1),
         "max_drawdown_pct": round(max_dd * 100, 2),
+    }
+
+
+def compute_calibration(closed: list[dict]) -> dict | None:
+    """Are the brain's stated confidences honest? Bucket closed trades by the confidence
+    it claimed at entry and compare to the realized win rate. Directly feeds the CLAUDE.md
+    rule 'if your 0.70+ bucket wins <50%, your scale is inflated - recalibrate'. Returns
+    None until there is anything to measure."""
+    graded = [t for t in closed if isinstance(t.get("confidence"), (int, float))]
+    if not graded:
+        return None
+    buckets = {"0.60-0.69": (0.60, 0.70), "0.70-0.79": (0.70, 0.80), "0.80+": (0.80, 1.01)}
+    out = {}
+    for label, (lo, hi) in buckets.items():
+        rows = [t for t in graded if lo <= t["confidence"] < hi]
+        if not rows:
+            continue
+        wins = sum(1 for t in rows if (t.get("pnl_usd") or 0) > 0)
+        win_rate = round(wins / len(rows) * 100, 1)
+        avg_conf = round(sum(t["confidence"] for t in rows) / len(rows) * 100, 1)
+        out[label] = {"trades": len(rows), "win_rate_pct": win_rate,
+                      "avg_stated_confidence_pct": avg_conf,
+                      "calibration_gap_pct": round(win_rate - avg_conf, 1)}
+    high = [t for t in graded if t["confidence"] >= 0.70]
+    high_wr = round(sum(1 for t in high if (t.get("pnl_usd") or 0) > 0) / len(high) * 100, 1) if high else None
+    return {
+        "note": "Realized win rate vs the confidence you STATED at entry, by bucket. A "
+                "large negative calibration_gap_pct means your confidence is inflated; "
+                "cap stated confidence until the gap closes (per the Learning Protocol).",
+        "by_confidence": out,
+        "high_conf_0_70_plus": {"trades": len(high), "win_rate_pct": high_wr,
+                                "inflated": bool(high_wr is not None and len(high) >= 5 and high_wr < 50)},
     }
 
 
@@ -655,7 +937,8 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
                       ("cash_usd", "total_equity_usd", "positions")},
         "macro_snapshot": {
             name: context["macro_regime"].get("indicators", {}).get(name)
-            for name in ("cpi_yoy_pct", "ten_year_yield", "vix")
+            for name in ("cpi_yoy_pct", "ten_year_yield", "vix",
+                         "yield_curve_10y2y", "hy_credit_spread")
         } if context["macro_regime"].get("status") == "ok" else None,
         "macro_regime_hint": context["macro_regime"].get("regime_hint"),
         "latest_reasoning": response,
@@ -665,42 +948,68 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
         "closed_trades": closed[::-1],
         "performance": compute_performance_stats(closed, hist),
         "performance_breakdown": build_performance_breakdown(closed),
+        "calibration": compute_calibration(closed),
+        "position_risk": (context.get("position_stop_cushion") or {}).get("positions", {}),
+        "data_quality": context.get("data_quality"),
+        "stale_data_notice": context.get("stale_data_notice"),
+        "universe_size": len(validator.load_universe()),
+        "total_dividends_usd": round(sum(
+            (pos.get("dividends_received_usd") or 0)
+            for pos in context["portfolio"].get("positions", [])), 2),
         "forced_exits": context.get("forced_exits", []),
         "improvements": recent_improvements(),
     }
     dash = ROOT / "dashboard" / "data"
     dash.mkdir(parents=True, exist_ok=True)
     # Full response lives in the per-run archive; latest.json stays slim for the site.
-    (dash / f"run_{run_id}.json").write_text(json.dumps(out, indent=2, default=str))
+    (dash / f"run_{run_id}.json").write_text(json.dumps(_json_safe(out), indent=2, default=str))
     slim = {k: v for k, v in out.items() if k != "latest_reasoning"}
-    (dash / "latest.json").write_text(json.dumps(slim, indent=2, default=str))
-
-    # Append today's equity to the track-record series (one point per day, last wins).
-    hist_file = dash / "equity_history.json"
-    hist = json.loads(hist_file.read_text()) if hist_file.exists() else []
-    today = datetime.now(timezone.utc).date().isoformat()
-    hist = [h for h in hist if h["date"] != today]
-    hist.append({"date": today,
-                 "equity": context["portfolio"].get("total_equity_usd"),
-                 "cash": context["portfolio"].get("cash_usd")})
-    hist_file.write_text(json.dumps(hist, indent=2))
+    (dash / "latest.json").write_text(json.dumps(_json_safe(slim), indent=2, default=str))
+    # NOTE: equity_history (with benchmark_close) was already written at the top of this
+    # function. A second write here used to re-append today's point WITHOUT benchmark_close,
+    # silently wiping the S&P comparison line every run - removed. Do not reintroduce it.
 
 
 def redeploy_dashboard() -> None:
     """Publish fresh data by committing and pushing to GitHub; Vercel auto-deploys
-    from main. Fail-soft: a failed push logs loudly so numbers never go silently stale."""
+    from main. Fail-soft: a failed push logs loudly so numbers never go silently stale.
+
+    Persists the AUTHORITATIVE ledger (state/portfolio.json) and the kill switch so a
+    cloud trade is durable and a kill switch reaches every node - previously these were
+    never committed, so cloud fills were ephemeral. Retries on push races (the hourly
+    relay + gather Action push concurrently) instead of wedging the node permanently."""
+    import glob as _glob
     try:
-        subprocess.run(["git", "add", "dashboard/data", "journal", "state/x_draft_*.txt"],
-                       cwd=ROOT, capture_output=True, text=True)
+        paths = ["dashboard/data", "journal", "state/portfolio.json"]
+        paths += _glob.glob(str(ROOT / "state" / "x_draft_*.txt"))
+        if (ROOT / "state" / "KILL_SWITCH").exists():
+            paths.append("state/KILL_SWITCH")
+        if (ROOT / "data" / "cusip_map.json").exists():
+            paths.append("data/cusip_map.json")  # learned ticker->CUSIP, must persist in cloud
+        # add -A so a REMOVED kill switch (all-clear) also propagates; ignore missing paths.
+        for p in paths:
+            subprocess.run(["git", "add", "-A", p], cwd=ROOT, capture_output=True, text=True)
         r = subprocess.run(["git", "commit", "-m", "Update dashboard data after trading run"],
                            cwd=ROOT, capture_output=True, text=True)
         if r.returncode != 0:
             print("  (no data changes to publish)")
             return
-        r = subprocess.run(["git", "push", "origin", "main"],
-                           cwd=ROOT, capture_output=True, text=True, timeout=120)
-        print("  data pushed - Vercel deploying" if r.returncode == 0
-              else f"  PUSH FAILED (site going stale): {r.stderr[-300:]}")
+        # Push with rebase-retry so a concurrent relay/Action push can't strand us.
+        for attempt in range(3):
+            r = subprocess.run(["git", "push", "origin", "main"],
+                               cwd=ROOT, capture_output=True, text=True, timeout=120)
+            if r.returncode == 0:
+                print("  data pushed - Vercel deploying")
+                return
+            print(f"  push rejected (attempt {attempt + 1}/3), rebasing...")
+            rb = subprocess.run(["git", "pull", "--rebase", "origin", "main"],
+                                cwd=ROOT, capture_output=True, text=True, timeout=120)
+            if rb.returncode != 0:
+                subprocess.run(["git", "rebase", "--abort"], cwd=ROOT,
+                               capture_output=True, text=True)
+                print(f"  REBASE FAILED (site going stale): {rb.stderr[-300:]}")
+                return
+        print(f"  PUSH FAILED after retries (site going stale): {r.stderr[-300:]}")
     except Exception as e:
         print(f"  PUBLISH FAILED (site going stale): {e}")
 
@@ -918,26 +1227,56 @@ def main() -> int:
         # Pure data collection (used by the relay/Action): no preflight gates,
         # no lock, no budget - it must work on weekends and holidays too.
         context = gather_context(cfg, light=args.light)
-        degraded = (context["macro_regime"].get("status") != "ok"
-                    or (not args.light and not context["universe_scan"].get("top_setups")))
+        # Never hand the brain empty/partial data WITHOUT a label. Distinguish three
+        # cases: full-degradation (scan/macro dead), partial (prices OK but research
+        # feeds failed), and healthy.
+        scan_empty = not args.light and not context["universe_scan"].get("top_setups")
+        macro_bad = context["macro_regime"].get("status") != "ok"
+        degraded = macro_bad or scan_empty
+
+        def _feed_ok(key: str) -> bool:
+            v = context.get(key) or {}
+            return isinstance(v, dict) and v.get("status") not in ("error", "unavailable")
+        partial = (not degraded) and not all(
+            _feed_ok(k) for k in ("news_and_catalysts", "sec_filings", "insider_activity"))
+
         relay = ROOT / "data" / "cloud_context.json"
         if degraded and relay.exists():
             cached = json.loads(relay.read_text())
-            age_h = (datetime.now(timezone.utc)
-                     - datetime.fromisoformat(cached["run_date"])).total_seconds() / 3600
-            if age_h < 4:
-                cached["portfolio"] = context["portfolio"]
-                cached["hard_limits"] = context["hard_limits"]
-                cached["stale_data_notice"] = (
-                    f"Live data feeds unreachable from this environment; using the "
-                    f"bundle gathered {age_h:.1f}h ago by the data relay. "
-                    f"Prices may be up to that stale - factor this into confidence.")
-                context = cached
-                print(f"  (live feeds blocked - using relay bundle, {age_h:.1f}h old)")
-            else:
-                print(f"  (relay bundle too stale: {age_h:.1f}h - proceeding degraded)")
+            try:
+                age_h = (datetime.now(timezone.utc)
+                         - datetime.fromisoformat(cached["run_date"])).total_seconds() / 3600
+            except Exception:
+                age_h = 999.0
+            # Even a several-hours-old bundle beats an empty context - but SAY how stale.
+            cached["portfolio"] = context["portfolio"]
+            cached["hard_limits"] = context["hard_limits"]
+            severity = "still fresh" if age_h < 4 else "STALE"
+            cached["stale_data_notice"] = (
+                f"Live data feeds unreachable here; using the relay bundle gathered "
+                f"{age_h:.1f}h ago ({severity}). Prices and news may be up to that old - "
+                f"lower confidence and avoid time-sensitive entries accordingly.")
+            cached["data_quality"] = {"source": "relay_bundle", "age_hours": round(age_h, 1),
+                                      "stale": age_h >= 4}
+            context = cached
+            print(f"  (live feeds blocked - using relay bundle, {age_h:.1f}h old)")
+        elif degraded:
+            # No bundle to fall back to: proceed but LABEL the emptiness loudly so the
+            # brain doesn't mistake missing data for a quiet market.
+            context["stale_data_notice"] = (
+                "Live feeds failed AND no relay bundle is available - this context is "
+                "largely EMPTY. Treat scan/macro data as missing; do not open new "
+                "positions on absent data, and say so in commentary.")
+            context["data_quality"] = {"source": "degraded_empty", "stale": True}
+            print("  (degraded and no relay bundle - handing a labeled empty context)")
+        elif partial:
+            context["data_quality"] = {"source": "live_partial",
+                                       "note": "price scan OK but one or more research "
+                                               "feeds (news/filings/insiders) failed"}
+            print("  (partial degradation - some research feeds failed; labeled)")
+
         out = ROOT / "state" / f"context_{run_id}.json"
-        out.write_text(json.dumps(context, indent=2, default=str))
+        out.write_text(json.dumps(_json_safe(context), indent=2, default=str))
         print(f"CONTEXT_FILE={out}")
         return 0
 
@@ -1000,7 +1339,11 @@ def main() -> int:
     # run may have traded while the brain was thinking.
     live_portfolio = get_portfolio_state()
     context["portfolio"] = live_portfolio
-    results = validator.validate_proposals(proposals, live_portfolio)
+    # Rebuild the volatility map from the (possibly file-loaded) context so the
+    # stop floor the validator enforces matches the stop_engineering shown to the brain.
+    market_context = build_volatility_context(
+        context.get("universe_scan") or {}, context.get("options_signals") or {})
+    results = validator.validate_proposals(proposals, live_portfolio, market_context)
     approved = [r for r in results if r.approved]
     for r in results:
         journal.log_proposal(r.proposal, run_id)

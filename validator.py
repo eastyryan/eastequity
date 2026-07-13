@@ -42,6 +42,28 @@ def kill_switch_active(cfg: dict) -> bool:
     return (ROOT / cfg["risk_controls"]["kill_switch_file"]).exists()
 
 
+def stop_floor_pct(atr_pct, expected_move_pct, cfg: dict) -> float | None:
+    """Minimum stop distance (as a fraction of entry) below which a stop is noise,
+    not protection. Single source of truth - used both to VALIDATE proposals and to
+    SURFACE the floor to the brain so it engineers stops correctly.
+
+    Inputs are percentages as emitted by the tools (atr_pct=7.36 -> 7.36%,
+    expected_move_pct=12.0 -> ±12%). The floor is the larger of:
+      - min_stop_atr_multiple x 14-day ATR% (always available - the scanner computes
+        it for every name; one ATR is roughly one average day's true range, so a stop
+        inside it gets tripped by a single ordinary session), and
+      - min_stop_expected_move_fraction x the options market's expected move to the
+        nearest expiry (available for focus/held names when option data loads).
+    Returns None when NO volatility input is available (caller fails open)."""
+    q = cfg["trade_quality_requirements"]
+    floors: list[float] = []
+    if isinstance(atr_pct, (int, float)) and atr_pct > 0:
+        floors.append(q["min_stop_atr_multiple"] * (atr_pct / 100.0))
+    if isinstance(expected_move_pct, (int, float)) and expected_move_pct > 0:
+        floors.append(q["min_stop_expected_move_fraction"] * (expected_move_pct / 100.0))
+    return max(floors) if floors else None
+
+
 # --- individual rule checks -------------------------------------------------
 
 def _check_required_fields(p: dict, cfg: dict, reasons: list[str]) -> None:
@@ -118,6 +140,47 @@ def _check_prices_and_rr(p: dict, cfg: dict, reasons: list[str]) -> None:
     claimed_rr = p.get("risk_reward_ratio")
     if isinstance(claimed_rr, (int, float)) and abs(claimed_rr - computed_rr) > 0.5:
         reasons.append(f"claimed_rr_mismatch: claimed {claimed_rr}, computed {computed_rr:.2f}")
+
+
+def _check_volatility_stop(p: dict, cfg: dict, market_context: dict, reasons: list[str]) -> None:
+    """Reject stops placed inside the name's volatility noise band. Turns the
+    CLAUDE.md guidance ('a stop inside the expected move is noise') into an enforced
+    rule. Fail-open: with no volatility data for the ticker, this check is skipped -
+    the price-geometry and max-distance rules still apply."""
+    q = cfg["trade_quality_requirements"]
+    if not q.get("volatility_stop_enforced"):
+        return
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    vol = (market_context or {}).get(str(p.get("ticker", "")).upper())
+    if not isinstance(vol, dict):
+        return  # no volatility data -> fail open
+    try:
+        entry = float(p["entry_price_max"])
+        stop = float(p["stop_loss"])
+    except (KeyError, TypeError, ValueError):
+        return  # prices_not_numeric / geometry handled by _check_prices_and_rr
+    if not (0 < stop < entry):
+        return  # geometry handled elsewhere
+    floor = stop_floor_pct(vol.get("atr_pct"), vol.get("expected_move_pct"), cfg)
+    if floor is None:
+        return  # fail open
+    max_stop = q["max_stop_loss_distance_pct"]
+    parts = []
+    if isinstance(vol.get("atr_pct"), (int, float)) and vol["atr_pct"] > 0:
+        parts.append(f"ATR {vol['atr_pct']}%")
+    if isinstance(vol.get("expected_move_pct"), (int, float)) and vol["expected_move_pct"] > 0:
+        parts.append(f"expected move {vol['expected_move_pct']}%")
+    src = " / ".join(parts)
+    if floor > max_stop + 1e-9:
+        # Noise band is wider than the widest allowed stop: no valid stop exists.
+        reasons.append(f"volatility_untradeable:noise_floor {floor:.1%} > max_stop "
+                       f"{max_stop:.0%} ({src}) - too volatile for a swing stop")
+        return
+    stop_dist = (entry - stop) / entry
+    if stop_dist < floor - 0.001:  # 0.1% tolerance for rounding
+        reasons.append(f"stop_inside_noise_band:{stop_dist:.1%} < required {floor:.1%} "
+                       f"below entry ({src})")
 
 
 def _check_confidence(p: dict, cfg: dict, reasons: list[str]) -> None:
@@ -198,8 +261,13 @@ def _check_sizing(p: dict, cfg: dict, portfolio: dict, reasons: list[str]) -> No
 
 # --- entry point --------------------------------------------------------------
 
-def validate_proposals(proposals: list[dict], portfolio: dict) -> list[ValidationResult]:
-    """Validate a batch of proposals. Kill switch rejects everything."""
+def validate_proposals(proposals: list[dict], portfolio: dict,
+                       market_context: dict | None = None) -> list[ValidationResult]:
+    """Validate a batch of proposals. Kill switch rejects everything.
+
+    market_context: optional {TICKER: {"atr_pct": float, "expected_move_pct": float}}
+    used to enforce the volatility-aware stop floor. When absent, that check fails
+    open and all other rules still apply (backward compatible)."""
     cfg = load_config()
     universe = load_universe()
     results: list[ValidationResult] = []
@@ -215,6 +283,7 @@ def validate_proposals(proposals: list[dict], portfolio: dict) -> list[Validatio
         _check_universe(p, cfg, universe, reasons)
         _check_swing_rules(p, cfg, reasons)
         _check_prices_and_rr(p, cfg, reasons)
+        _check_volatility_stop(p, cfg, market_context or {}, reasons)
         _check_confidence(p, cfg, reasons)
         _check_sizing(p, cfg, portfolio, reasons)
         if str(p.get("action", "")).upper() == "BUY":

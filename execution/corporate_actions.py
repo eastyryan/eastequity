@@ -68,6 +68,11 @@ def apply_corporate_actions() -> dict:
                     continue
                 amount = round(pos["quantity"] * float(per_share), 2)
                 state["cash_usd"] = round(state["cash_usd"] + amount, 2)
+                # Attribute the dividend to the position for per-trade P&L
+                # reporting on close. Additive + idempotent: guarded by the same
+                # cutoff as the cash credit, so it accrues exactly once per event.
+                pos["dividends_received_usd"] = round(
+                    float(pos.get("dividends_received_usd", 0.0) or 0.0) + amount, 2)
                 record = {"type": "dividend", "ticker": ticker,
                           "per_share": float(per_share),
                           "quantity": pos["quantity"], "amount_usd": amount,

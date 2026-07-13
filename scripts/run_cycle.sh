@@ -2,6 +2,14 @@
 # East Equity Agent scheduled cycle. Invoked by launchd every hour at :00, :30, :59
 # with --scheduled; the time-slot gate below decides which ticks actually run.
 # Direct invocation (no --scheduled) always runs, e.g. `run_cycle.sh --self-review`.
+#
+# DOUBLE-TRADE NOTE: this is the LOCAL trader. The orchestrator's RUN_LOCK
+# (state/RUN_LOCK) is a LOCAL file lock only — it does NOT coordinate with the
+# scheduled CLOUD trader, so both nodes can theoretically trade the same ledger
+# in the same window. The kill switch is honored (orchestrator preflight aborts
+# on state/KILL_SWITCH) and the relay keeps the ledger synced via git, but a real
+# cross-node lease is still needed — see the integrator hand-off. Do not add a
+# second orchestrator invocation to this script.
 export PATH="/Users/eastonryan/.local/bin:/Users/eastonryan/.npm-global/bin:/usr/local/bin:/usr/bin:/bin"
 cd /Users/eastonryan/east-equity-agent
 mkdir -p logs

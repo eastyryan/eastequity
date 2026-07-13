@@ -38,10 +38,11 @@ CLI: python -m tools.guidance_ledger DELL      (auto_grade + summary)
 from __future__ import annotations
 
 import json
+import math
 import os
 import re
 import tempfile
-from datetime import date, datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -94,25 +95,84 @@ def _period_key(period: str) -> tuple:
     return (int(m.group(1)), int(m.group(2)) if m.group(2) else 5)
 
 
-def _period_estimated_end(period: str) -> date | None:
-    """Conservative calendar estimate of when a fiscal period could have ended.
+def _period_estimated_end(period: str, period_ends: dict | None = None) -> date | None:
+    """When a fiscal period plausibly ended.
 
-    Without knowing the company's fiscal calendar we assume the LATEST it
-    could plausibly end: FY####Q# ends by calendar (####)-Q#-end + a fiscal
-    offset cushion of one quarter (companies like DELL label FY2026 for a year
-    ending early calendar 2026). Used only to decide whether an ungraded entry
-    is worth annotating as "past due" vs. simply future.
+    Prefers the company's ACTUAL period-end from companyfacts (period_ends map,
+    label -> date) so shifted fiscal years are handled correctly — the old
+    calendar assumption put NVDA's Jan-year-end FY2026Q2 three months wrong and
+    produced misleading "past due" notes. For a period not yet in XBRL (future
+    guidance), it projects from the same quarter of the nearest prior fiscal
+    year (anchored to the real fiscal calendar). Only when neither is available
+    does it fall back to the calendar-quarter assumption.
     """
     m = _PERIOD_RE.match(period or "")
     if not m:
         return None
+    if period_ends and period in period_ends:
+        return period_ends[period]
     year = int(m.group(1))
-    q = int(m.group(2)) if m.group(2) else 4
-    month = q * 3  # Q1->Mar, Q2->Jun, Q3->Sep, Q4/FY->Dec of the labeled year
+    q = m.group(2)  # str "1".."4" or None for full-year
+    if period_ends:
+        for py in range(year - 1, year - 6, -1):
+            plabel = f"FY{py}Q{q}" if q else f"FY{py}"
+            if plabel in period_ends:
+                return period_ends[plabel] + timedelta(days=365 * (year - py))
+    # Fallback: calendar assumption (original behavior, fiscal calendar unknown).
+    qn = int(q) if q else 4
+    month = qn * 3  # Q1->Mar, Q2->Jun, Q3->Sep, Q4/FY->Dec of the labeled year
     if month == 12:
         return date(year, 12, 31)
     import calendar
     return date(year, month, calendar.monthrange(year, month)[1])
+
+
+def _fiscal_label_ends(units: list) -> dict:
+    """Fiscal label -> period END date, using the same earliest-filing-per-period
+    mapping as _fiscal_labels (so it inherits its restatement handling). Q4
+    inherits the fiscal-year end date."""
+    by_period: dict = {}
+    for u in units:
+        if u.get("form") not in ("10-Q", "10-K") or u.get("frame") is not None:
+            continue
+        key = (u.get("start"), u.get("end"))
+        if None in key:
+            continue
+        prev = by_period.get(key)
+        if prev is None or (u.get("filed") or "9999") < (prev.get("filed") or "9999"):
+            by_period[key] = u
+    ends: dict = {}
+    for row in by_period.values():
+        fy, fp = row.get("fy"), row.get("fp")
+        if fy is None or fp is None:
+            continue
+        try:
+            end = date.fromisoformat(row["end"])
+        except (KeyError, ValueError, TypeError):
+            continue
+        if fp in ("Q1", "Q2", "Q3") and _quarter_span_ok(row):
+            ends[f"FY{fy}{fp}"] = end
+        elif fp == "FY" and _annual_span_ok(row):
+            ends[f"FY{fy}"] = end
+            ends.setdefault(f"FY{fy}Q4", end)  # Q4 ends at the fiscal-year end
+    return ends
+
+
+def _period_ends_for_ticker(ticker: str) -> dict:
+    """{fiscal_label: date} of actual period ends, via the shared companyfacts
+    cache. Built from the first broadly-reported duration tag."""
+    from tools.sec_filings import get_company_facts
+
+    facts = get_company_facts(ticker)  # shared TTL cache (see sec_filings)
+    gaap = facts.get("facts", {}).get("us-gaap", {})
+    for tag in ("Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax",
+                "RevenueFromContractWithCustomerIncludingAssessedTax", "NetIncomeLoss"):
+        units = gaap.get(tag, {}).get("units", {}).get("USD")
+        if units:
+            ends = _fiscal_label_ends(units)
+            if ends:
+                return ends
+    return {}
 
 
 # ---------------------------------------------------------------------------
@@ -195,18 +255,54 @@ def _verdict(actual_in_unit: float, low: float, high: float) -> str:
     return "met"
 
 
+def _unit_check(raw_actual: float, low: float, high: float, unit: str) -> tuple:
+    """(ok, suggested_unit, factor) magnitude sanity before grading.
+
+    A brain mislabel (unit "usd" while the number means billions) otherwise
+    grades every print as a huge beat. We compare the divisor the XBRL actual
+    IMPLIES (raw_actual / guide_midpoint) to the entry's stated divisor: a
+    consistent unit lands them within the same order of magnitude, so a ratio
+    ~1000x off means the unit is wrong. Sign is ignored here (a guided profit
+    delivered as a loss is a legitimate miss, not a unit error). Returns
+    ok=False with the divisor that best reconciles the two (as a unit name).
+    """
+    mid = (low + high) / 2.0
+    if mid == 0 or raw_actual == 0:
+        return True, None, 1.0
+    stated = _UNIT_DIVISORS.get(unit, 1.0)
+    implied = abs(raw_actual) / abs(mid)
+    ratio = implied / stated
+    if 0.2 <= ratio <= 5.0:               # same order of magnitude -> consistent
+        return True, None, ratio
+    factor = ratio if ratio >= 1 else (1.0 / ratio if ratio > 0 else float("inf"))
+    suggested, best = None, None
+    for u, d in _UNIT_DIVISORS.items():
+        if d <= 0:
+            continue
+        r = implied / d
+        if 0.2 <= r <= 5.0:
+            score = abs(math.log10(r))
+            if best is None or score < best:
+                best, suggested = score, u
+    return False, suggested, factor
+
+
 def grade_guidance(ticker: str, actuals: dict) -> list:
     """Grade ungraded ledger entries against supplied actuals.
 
     actuals: {"revenue": {"FY2026Q2": 4.2e9}, "eps": {"FY2026Q2": 1.85}}
     Values are RAW (USD for dollar metrics, per-share for EPS); they are
     converted into each entry's stated unit before comparing to the guide.
-    Returns the list of entries graded by this call.
+    A magnitude sanity check (see _unit_check) leaves an entry UNGRADED with a
+    unit_mismatch note rather than emitting a false verdict when the guided
+    unit and the XBRL actual disagree by ~1000x.
+    Returns the list of entries graded (with a real verdict) by this call.
     """
     ticker = str(ticker).strip().upper()
     ledger = _load_ledger()
     rows = ledger.get(ticker, [])
     graded = []
+    changed = False
     for entry in rows:
         if entry.get("verdict") is not None:
             continue
@@ -217,15 +313,38 @@ def grade_guidance(ticker: str, actuals: dict) -> list:
             raw_actual = float(metric_actuals[entry["period"]])
         except (TypeError, ValueError):
             continue
-        divisor = _UNIT_DIVISORS.get(entry.get("unit", "usd"), 1.0)
+        unit = entry.get("unit", "usd")
+        ok, suggested, factor = _unit_check(
+            raw_actual, entry["guide_low"], entry["guide_high"], unit)
+        if not ok:
+            note = ("unit_mismatch: XBRL actual (%.6g) is ~%sx off the guided "
+                    "%s-%s %s range - stated unit likely wrong%s; left ungraded "
+                    "to avoid a false beat/miss" % (
+                        raw_actual, _round_factor(factor),
+                        entry["guide_low"], entry["guide_high"], unit,
+                        " (looks like %s)" % suggested if suggested else ""))
+            if entry.get("note") != note:
+                entry["note"] = note
+                changed = True
+            continue
+        divisor = _UNIT_DIVISORS.get(unit, 1.0)
         actual = round(raw_actual / divisor, 4)
         entry["actual"] = actual
         entry["verdict"] = _verdict(actual, entry["guide_low"], entry["guide_high"])
         entry["graded_at"] = datetime.now(timezone.utc).isoformat()
         graded.append(dict(entry, ticker=ticker))
-    if graded:
+        changed = True
+    if changed:
         _save_ledger(ledger)
     return graded
+
+
+def _round_factor(factor: float) -> str:
+    if factor == float("inf"):
+        return "inf"
+    if factor >= 100:
+        return str(int(round(factor / 100.0) * 100))  # 1000, 1000000, ...
+    return "%.0f" % factor
 
 
 # ---------------------------------------------------------------------------
@@ -293,13 +412,9 @@ def _fiscal_labels(units: list) -> tuple:
 
 def _actuals_from_edgar(ticker: str) -> dict:
     """{"revenue": {period: raw_usd}, "eps": {period: per_share}} from XBRL."""
-    from tools.sec_filings import ticker_to_cik
+    from tools.sec_filings import get_company_facts
 
-    cik = ticker_to_cik(ticker)
-    if cik is None:
-        raise ValueError(f"no CIK for {ticker}")
-    from tools.net import get_sec
-    facts = get_sec(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json").json()
+    facts = get_company_facts(ticker)  # shared TTL cache (see sec_filings)
     gaap = facts.get("facts", {}).get("us-gaap", {})
 
     out: dict = {}
@@ -346,6 +461,12 @@ def auto_grade(ticker: str) -> list:
     graded = grade_guidance(ticker, actuals)
     graded_keys = {(g["metric"], g["period"]) for g in graded}
 
+    # Actual fiscal-period ends (handles shifted fiscal years) for past-due notes.
+    try:
+        period_ends = _period_ends_for_ticker(ticker)
+    except Exception:
+        period_ends = {}
+
     # Annotate past-due entries we could NOT grade so the brain sees why.
     ledger = _load_ledger()
     changed = False
@@ -355,7 +476,7 @@ def auto_grade(ticker: str) -> list:
             continue
         if (entry["metric"], entry["period"]) in graded_keys:
             continue
-        est_end = _period_estimated_end(entry["period"])
+        est_end = _period_estimated_end(entry["period"], period_ends)
         if est_end and est_end < today and not entry.get("note"):
             if entry["metric"] == "eps" and entry["period"].endswith("Q4"):
                 entry["note"] = "Q4 EPS not standalone in XBRL (non-additive); grade manually"

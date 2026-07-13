@@ -106,7 +106,11 @@
     "min_target_upside_pct": 0.1,
     "max_stop_loss_distance_pct": 0.15,
     "stop_loss_must_be_below_entry": true,
-    "target_must_be_above_entry": true
+    "target_must_be_above_entry": true,
+    "volatility_stop_enforced": true,
+    "min_stop_atr_multiple": 1.0,
+    "min_stop_expected_move_fraction": 0.5,
+    "_volatility_stop_note": "A stop tighter than the name's noise is not protection - it exits on ordinary volatility, not on a broken thesis. The stop must sit at least max(min_stop_atr_multiple x 14d-ATR%, min_stop_expected_move_fraction x options expected_move%) below entry. Enforced only when volatility data is present (fail-open). If that floor exceeds max_stop_loss_distance_pct, the name is too volatile for a valid swing stop and is rejected."
   },
   "risk_controls": {
     "kill_switch_file": "state/KILL_SWITCH",
@@ -114,7 +118,23 @@
     "max_drawdown_pct_halt": 0.15,
     "require_broker_readback_confirmation": true,
     "max_orders_per_run": 3,
-    "market_hours_only": true
+    "market_hours_only": true,
+    "cross_node_lease_enabled": true,
+    "cross_node_lease_ttl_minutes": 30,
+    "_cross_node_lease_note": "Advisory lease over the shared ledger, arbitrated through git so the cloud routine and a local run never trade the same portfolio.json concurrently. A scheduled run stands down if another node holds an unexpired lease; manual runs only warn (the user is deliberately driving). Fail-open on any git error - a lease must never brick the trader."
+  },
+  "execution_costs": {
+    "slippage_bps": 10,
+    "slippage_atr_fraction": 0.05,
+    "entry_gap_atr_fraction": 0.1,
+    "commission_per_share_usd": 0.0,
+    "commission_min_usd": 0.0,
+    "sec_sell_fee_rate": 0.0000278,
+    "finra_taf_per_share_usd": 0.000166,
+    "finra_taf_max_usd": 8.30,
+    "model_stop_gaps": true,
+    "stop_gap_atr_fraction": 0.5,
+    "_note": "Applied to simulated fills so the paper track record is not flattered by zero trading costs. Effective slippage each way = max(slippage_bps/10000, slippage_atr_fraction x ATR%) so volatile names cost more than a flat 10bps. entry_gap_atr_fraction: an adverse open-gap on ENTRIES (buys fill higher, sells lower) approximating a next-session fill instead of the same-close the decision used. Moomoo US equities are commission-free (per-share defaults 0) but pass SEC + FINRA TAF regulatory fees on SELLS - modeled here. model_stop_gaps: a forced stop exit can fill BELOW the stop by up to stop_gap_atr_fraction x ATR to approximate overnight gap-through risk."
   },
   "universe": {
     "focus": "AI supply chain, semiconductors, data center infrastructure, plus large-cap market leaders with an AI/tech bias",

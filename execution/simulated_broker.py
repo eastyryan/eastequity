@@ -1,9 +1,38 @@
 """Simulated broker — the default (and safest) execution backend.
 
 Maintains a paper portfolio in state/portfolio.json. Fills BUY/SELL_TO_CLOSE
-orders at the provided reference price (last close from the scanner) with a
-small slippage haircut, and supports the same readback interface the real
-Moomoo/IBKR adapters will implement later:
+orders at the provided reference price (last close from the scanner) with
+realistic trading costs so the public track record is not flattered by a
+frictionless simulation. What IS modeled (all config-driven from
+autonomy_config.json -> "execution_costs", with a fail-soft fallback to today's
+behaviour of 10bps slippage / no fees when the block is missing):
+
+    * Slippage (volatility-scaled, symmetric): the effective one-way fraction is
+      max(slippage_bps/10000, slippage_atr_fraction x ATR%), so a 7% ATR name costs
+      ~0.35% each way (0.05x7) instead of a flat 0.10%. BUY fills at ref*(1+slip),
+      SELL at ref*(1-slip). Applied everywhere slippage is (entries AND exits, incl.
+      the stop-gap fill). Falls back to the flat slippage_bps fraction when atr_pct
+      is absent, so a missing ATR reproduces today's behaviour exactly.
+    * Entry gap (BUY opens only): on TOP of slippage, a BUY fills at
+      ref*(1 + slip + entry_gap_atr_fraction x ATR%) — an adverse open-gap that
+      approximates buying at a worse next session than the exact close the brain saw.
+      Zero when atr_pct is absent. It is baked into the fill price (and thus cost
+      basis / cash) once and only reported separately, so it is never double-charged.
+    * Commission (both sides): max(commission_min_usd, per_share * shares).
+      Moomoo US equities are commission-free, so the shipped defaults are 0.
+    * Regulatory fees on SELLS ONLY: SEC fee on sell notional + FINRA TAF per
+      share (capped). Buy commission is folded into the position's avg_cost;
+      sell fees are netted out of proceeds, so realized P&L nets ALL costs.
+    * Stop gap-through: a forced stop exit does not fill exactly at the stop —
+      when model_stop_gaps is on and the order carries a stop-exit marker plus
+      stop_loss + atr_pct, the fill gaps BELOW the stop by
+      stop_gap_atr_fraction x ATR before slippage/fees.
+
+What is NOT modeled: partial fills (every order fills in full or is rejected),
+queue position / market impact, borrow, and trading halts. The entry gap is an ATR
+APPROXIMATION of next-session risk, NOT a true next-open fill — no pending-fill
+lifecycle re-prices the order against the following session's actual bar. Do not
+claim these.
 
     place_order(order) -> pending order dict
     readback(order_id) -> fill confirmation dict (or None)
@@ -22,7 +51,74 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 STATE_FILE = ROOT / "state" / "portfolio.json"
-SLIPPAGE = 0.001  # 10 bps assumed slippage on paper fills
+SLIPPAGE = 0.001  # legacy default (10 bps) — used only if config is unreadable
+
+
+# Fallbacks reproduce today's behaviour exactly (10bps slippage, no fees, no
+# gap modeling) so a missing/partial execution_costs block never breaks a run.
+_COST_DEFAULTS = {
+    "slippage_bps": 10.0,
+    "slippage_atr_fraction": 0.0,   # 0 -> vol-scaling off, flat slippage_bps only
+    "entry_gap_atr_fraction": 0.0,  # 0 -> no modeled entry gap (same-close behaviour)
+    "commission_per_share_usd": 0.0,
+    "commission_min_usd": 0.0,
+    "sec_sell_fee_rate": 0.0,
+    "finra_taf_per_share_usd": 0.0,
+    "finra_taf_max_usd": float("inf"),
+    "model_stop_gaps": False,
+    "stop_gap_atr_fraction": 0.5,
+}
+
+
+def _execution_costs() -> dict:
+    """Read the execution_costs block the same way the codebase reads config.
+
+    Robust to a missing block / unreadable file / null values: any absent key
+    falls back to _COST_DEFAULTS (today's frictionless-ish behaviour)."""
+    block = {}
+    try:
+        cfg = json.loads((ROOT / "autonomy_config.json").read_text())
+        block = cfg.get("execution_costs") or {}
+    except Exception:
+        block = {}
+    out = dict(_COST_DEFAULTS)
+    for k in _COST_DEFAULTS:
+        v = block.get(k)
+        if v is not None:
+            out[k] = v
+    return out
+
+
+def _effective_slip(costs: dict, atr_pct) -> float:
+    """Effective one-way slippage FRACTION, volatility-scaled and symmetric.
+
+    max(slippage_bps/10000, slippage_atr_fraction x ATR%): a 7% ATR name at
+    slippage_atr_fraction=0.05 costs ~0.35% each way, not a flat 0.10%. Falls back
+    to the flat slippage_bps fraction when atr_pct is absent/unparseable (today's
+    behaviour) and never returns less than that flat floor. Fail-soft; never raises."""
+    flat = float(costs["slippage_bps"]) / 10000.0
+    if atr_pct is None:
+        return flat
+    try:
+        vol = float(costs["slippage_atr_fraction"]) * (float(atr_pct) / 100.0)
+    except (TypeError, ValueError):
+        return flat
+    return max(flat, vol)
+
+
+def _entry_gap_frac(costs: dict, atr_pct) -> float:
+    """Adverse open-gap FRACTION added to a BUY fill on TOP of slippage.
+
+    entry_gap_atr_fraction x ATR%: approximates buying at a worse next session than
+    the exact close the decision used. Zero when atr_pct is absent/unparseable, so a
+    missing ATR reproduces the old same-close entry. Fail-soft; never raises."""
+    if atr_pct is None:
+        return 0.0
+    try:
+        gap = float(costs["entry_gap_atr_fraction"]) * (float(atr_pct) / 100.0)
+    except (TypeError, ValueError):
+        return 0.0
+    return max(gap, 0.0)
 
 
 def _load() -> dict:
@@ -58,44 +154,136 @@ def place_order(order: dict) -> dict:
     return order
 
 
+def _sell_fill_price(order: dict, ref: float, slip: float, costs: dict) -> tuple[float, bool]:
+    """Sell fill price, modeling overnight stop gap-through when applicable.
+
+    ``slip`` is the EFFECTIVE (volatility-scaled) one-way fraction from
+    _effective_slip(), so every sell path here — ordinary, gap-through, and the
+    no-ATR 2x penalty — is vol-scaled, not flat-bps.
+
+    Returns (fill_price, gap_modeled). A forced stop exit does not fill exactly
+    at the stop: with model_stop_gaps on and a stop-exit marker present,
+      * with stop_loss + atr_pct: gap BELOW the stop by
+        stop_gap_atr_fraction x (atr_pct/100) x ref, then apply sell slippage;
+      * with stop_loss but NO atr_pct: degrade gracefully with a 2x slippage
+        penalty off ref.
+    Otherwise it is an ordinary sell: ref*(1-slip)."""
+    reason = str(order.get("forced_exit_reason") or "")
+    is_stop = reason.startswith("stop")
+    if costs.get("model_stop_gaps") and is_stop:
+        stop_loss = order.get("stop_loss")
+        atr_pct = order.get("atr_pct")
+        if stop_loss is not None and atr_pct is not None:
+            try:
+                sl = float(stop_loss)
+                atrp = float(atr_pct)
+                gapped = sl - float(costs["stop_gap_atr_fraction"]) * (atrp / 100.0) * ref
+                if gapped <= 0:  # pathological atr — fall back to ref before slippage
+                    gapped = ref
+                return round(gapped * (1 - slip), 4), True
+            except (TypeError, ValueError):
+                pass  # bad numbers — fall through to ordinary sell
+        elif stop_loss is not None:  # stop but no ATR: 2x slippage penalty
+            return round(ref * (1 - 2 * slip), 4), True
+    return round(ref * (1 - slip), 4), False
+
+
 def readback(order_id: str) -> dict | None:
-    """Fill the pending order and return the broker's confirmation."""
+    """Fill the pending order and return the broker's confirmation.
+
+    All slippage/commission/regulatory-fee/stop-gap math lives here (place_order
+    only stashes the pending order verbatim), so any cost-bearing fields the
+    order carries — forced_exit_reason, stop_loss, atr_pct — are read here."""
     state = _load()
     order = state["pending_orders"].pop(order_id, None)
     if order is None:
         return None
+    costs = _execution_costs()
+    atr_pct = order.get("atr_pct")  # percent, e.g. 7.36; may be None (fail-soft)
+    # Volatility-scaled, symmetric slippage: flat bps floor, ATR-scaled above it.
+    # Applied to BOTH entries and exits (incl. the stop-gap fill via _sell_fill_price).
+    slip = _effective_slip(costs, atr_pct)
     ref = float(order["reference_price"])
     action = order["action"].upper()
 
     if action == "BUY":
-        fill_price = round(ref * (1 + SLIPPAGE), 4)
+        # Entry gap: an adverse open-gap on TOP of slippage (opening BUYs only),
+        # approximating a worse next-session fill than the close the brain saw.
+        # Baked into fill_price ONCE (so cost basis / cash already include it) and
+        # only reported via entry_gap_usd — never charged a second time.
+        entry_gap = _entry_gap_frac(costs, atr_pct)
+        fill_price = round(ref * (1 + slip + entry_gap), 4)
         qty = order.get("quantity") or round(float(order["position_size_usd"]) / fill_price, 4)
-        cost = round(qty * fill_price, 2)
-        if cost > state["cash_usd"]:
+        gross = qty * fill_price
+        commission = round(max(float(costs["commission_min_usd"]),
+                               float(costs["commission_per_share_usd"]) * qty), 4)
+        cash_out = round(gross + commission, 2)  # buy pays notional + commission
+        if cash_out > state["cash_usd"]:
             fill = {**order, "status": "rejected_insufficient_cash"}
         else:
-            state["cash_usd"] = round(state["cash_usd"] - cost, 2)
+            notional = round(gross, 2)
+            # Cost basis INCLUDES the buy commission, so realized P&L on close
+            # nets it out automatically (avg_cost == fill_price when commission 0).
+            avg_cost = round((gross + commission) / qty, 4)
+            state["cash_usd"] = round(state["cash_usd"] - cash_out, 2)
             state["positions"].append({
                 "ticker": order["ticker"].upper(), "quantity": qty,
-                "avg_cost": fill_price, "market_value_usd": cost,
+                "avg_cost": avg_cost, "market_value_usd": notional,
                 "opened_at": datetime.now(timezone.utc).isoformat(),
                 "proposal_id": order.get("proposal_id"),
+                "buy_commission_usd": commission,
             })
             fill = {**order, "status": "filled", "fill_price": fill_price,
-                    "quantity": qty, "notional_usd": cost}
+                    "quantity": qty, "notional_usd": notional,
+                    "total_cost_usd": cash_out,
+                    # Per-share dollars the modeled open-gap added to the entry fill
+                    # (0 when atr_pct absent). Already inside fill_price/cost basis —
+                    # transparency only, do NOT subtract it anywhere.
+                    "entry_gap_usd": round(entry_gap * ref, 4),
+                    "fees_usd": {"commission": commission, "sec_fee": 0.0, "taf": 0.0,
+                                 "slippage_bps": float(costs["slippage_bps"]),
+                                 "effective_slippage_pct": round(slip * 100.0, 4)}}
     elif action == "SELL_TO_CLOSE":
         pos = next((p for p in state["positions"] if p["ticker"] == order["ticker"].upper()), None)
         if pos is None:
             fill = {**order, "status": "rejected_no_position"}
         else:
-            fill_price = round(ref * (1 - SLIPPAGE), 4)
-            proceeds = round(pos["quantity"] * fill_price, 2)
+            qty = pos["quantity"]
+            fill_price, gap_modeled = _sell_fill_price(order, ref, slip, costs)
+            if fill_price <= 0:  # never let a modeled gap fill go non-positive
+                fill_price = round(max(ref, 0.01) * (1 - slip), 4)
+            gross = qty * fill_price
+            commission = round(max(float(costs["commission_min_usd"]),
+                                   float(costs["commission_per_share_usd"]) * qty), 4)
+            sec_fee = round(float(costs["sec_sell_fee_rate"]) * gross, 4)   # on sell notional
+            taf = round(min(float(costs["finra_taf_max_usd"]),
+                            float(costs["finra_taf_per_share_usd"]) * qty), 4)  # per share, capped
+            proceeds = round(gross - commission - sec_fee - taf, 2)  # net cash in
             state["cash_usd"] = round(state["cash_usd"] + proceeds, 2)
             state["positions"].remove(pos)
-            pnl = round(proceeds - pos["quantity"] * pos["avg_cost"], 2)
+            # Price realized P&L, net of ALL costs: buy commission is baked into
+            # avg_cost, sell fees are already out of proceeds.
+            price_pnl = round(proceeds - qty * pos["avg_cost"], 2)
+            # Dividends were ALREADY credited to cash when the event was processed
+            # (corporate_actions). We only ATTRIBUTE them to the trade here for
+            # per-trade reporting — cash is NOT touched again (no double count).
+            divs = round(float(pos.get("dividends_received_usd", 0.0) or 0.0), 2)
             fill = {**order, "status": "filled", "fill_price": fill_price,
-                    "quantity": pos["quantity"], "notional_usd": proceeds,
-                    "realized_pnl_usd": pnl}
+                    "quantity": qty, "notional_usd": round(gross, 2),
+                    "realized_pnl_usd": price_pnl,               # price-only, net of fees
+                    "total_realized_pnl_usd": round(price_pnl + divs, 2),  # + carried dividends
+                    "dividends_received_usd": divs,
+                    "fees_usd": {"commission": commission, "sec_fee": sec_fee, "taf": taf,
+                                 "slippage_bps": float(costs["slippage_bps"]),
+                                 "effective_slippage_pct": round(slip * 100.0, 4)}}
+            if gap_modeled:
+                fill["gap_modeled"] = True
+                sl = order.get("stop_loss")
+                if sl is not None:
+                    try:  # how far below the recorded stop we actually filled
+                        fill["gap_usd"] = round(float(sl) - fill_price, 4)
+                    except (TypeError, ValueError):
+                        pass
     else:
         fill = {**order, "status": "rejected_unsupported_action"}
 

@@ -25,6 +25,11 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Full history so the `git pull --rebase` below can cleanly replay our
+          # data commit on top of trade-path commits (a shallow clone can make
+          # rebase against an advanced remote fail).
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -40,9 +45,17 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # This runner GATHERS data only — it never trades. Stage ONLY the data
+          # bundle + charts. Never add state/portfolio.json or state/KILL_SWITCH:
+          # this checkout's copy is stale relative to the cloud trader, and
+          # committing it here would overwrite the authoritative ledger. The
+          # ledger is owned exclusively by the trade path.
           git add data/cloud_context.json data/charts
           git diff --cached --quiet && { echo "no data changes"; exit 0; }
           git commit -m "Refresh market data bundle for cloud runs [vercel skip]"
+          # Rebase-and-retry so we replay on top of any concurrent trade-path
+          # push instead of fighting it (our commit touches only data/, so it
+          # never conflicts with the ledger's state/ changes).
           for i in 1 2 3; do
             git push origin main && exit 0
             git pull --rebase origin main || exit 1

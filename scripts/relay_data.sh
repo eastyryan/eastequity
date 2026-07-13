@@ -16,6 +16,14 @@ mkdir -p logs
   [ -s "$OUT" ] && cp "$OUT" data/cloud_context.json
 
   git add data/cloud_context.json data/charts journal/x_posts.jsonl 2>/dev/null
+  # Keep the authoritative ledger + kill switch synced from this node. Staged
+  # separately and guarded so a missing file never aborts the data commit
+  # (git add is atomic — one bad pathspec drops the whole add). `git add -A`
+  # also propagates a CLEARED kill switch (staged deletion) to the cloud trader.
+  # The `git pull --rebase` at the top means we add on top of the latest remote
+  # ledger, so this syncs rather than clobbers the cloud trader's commits.
+  git add -A state/portfolio.json 2>/dev/null || true
+  git add -A state/KILL_SWITCH 2>/dev/null || true
   git diff --cached --quiet && exit 0
   git commit -m "Refresh market data bundle for cloud runs [vercel skip]"
   for i in 1 2 3; do

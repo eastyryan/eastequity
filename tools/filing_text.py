@@ -99,10 +99,20 @@ _MDNA_RE = re.compile(
     r"Management[’ʼ'`]?s?\s+Discussion\s+and\s+Analysis", re.I)
 # Next Item heading at a line start: "Item 3." / "Item 7A." etc.
 _NEXT_ITEM_RE = re.compile(r"^\s*Item\s+\d+A?\b", re.I | re.M)
+# The substantive MD&A subsections: results of operations (the actual revenue /
+# margin walk) and liquidity (cash / debt discussion). The first ~1000 chars of
+# MD&A are usually forward-looking-statement boilerplate + an overview; starting
+# the excerpt at Results of Operations gets the brain the numbers-bearing prose.
+_RESULTS_RE = re.compile(r"Results\s+of\s+Operations", re.I)
 
 
 def _extract_mdna(text: str, max_chars: int) -> "tuple[str, bool, str]":
-    """Return (excerpt, truncated, section_label) from full filing text."""
+    """Return (excerpt, truncated, section_label) from full filing text.
+
+    Locates the MD&A section (Item 7 in a 10-K, Item 2 in a 10-Q), then prefers
+    to start the excerpt at "Results of Operations" so the results + liquidity
+    discussion survives truncation instead of the opening boilerplate.
+    """
     # Iterate forward: TOC rows fail the length test; the first substantive
     # hit is the section start (later hits are "(Continued)" page headers).
     # Two passes: prefer matches sitting under an "Item N." heading (the real
@@ -119,6 +129,12 @@ def _extract_mdna(text: str, max_chars: int) -> "tuple[str, bool, str]":
             end = nxt.start() if nxt else len(text)
             body = text[start:end]
             if len(body) > 1500:  # real section, not a table-of-contents row
+                # Skip the overview/forward-looking boilerplate: begin at Results
+                # of Operations when it leaves enough substance for the excerpt.
+                sub = _RESULTS_RE.search(body, 200)
+                if sub and (len(body) - sub.start()) > 800:
+                    excerpt, truncated = _clean_excerpt(body[sub.start():], max_chars)
+                    return excerpt, truncated, "mdna_results_of_operations"
                 excerpt, truncated = _clean_excerpt(body, max_chars)
                 return excerpt, truncated, "mdna"
     # Fallback: first substantive prose after the table of contents.
@@ -132,8 +148,15 @@ def _extract_mdna(text: str, max_chars: int) -> "tuple[str, bool, str]":
     return excerpt, truncated, "document_start"
 
 
-def get_mdna_excerpt(ticker: str, max_chars: int = 6000) -> dict:
-    """MD&A prose from the latest 10-Q (falling back to 10-K)."""
+def get_mdna_excerpt(ticker: str, max_chars: int = 12000) -> dict:
+    """MD&A prose from the latest 10-Q (falling back to 10-K).
+
+    Default raised to 12000 chars: the old ~1000-word cap usually returned only
+    the overview/boilerplate. The excerpt now starts at Results of Operations
+    (see _extract_mdna) and `section` labels what was returned. NOTE the caller
+    should pass a wide max_chars (>=8000) to receive the full results+liquidity
+    walk; the orchestrator currently passes 5000 and should be raised.
+    """
     try:
         from tools.sec_filings import get_filing_brief
         brief = get_filing_brief(ticker)
@@ -159,8 +182,37 @@ def get_mdna_excerpt(ticker: str, max_chars: int = 6000) -> dict:
 
 
 _EXHIBIT_NAME_RE = re.compile(r"ex(?:hibit)?[-_.]?99|press", re.I)
-_GUIDANCE_RE = re.compile(
-    r"guidance|outlook|expects[^.]{0,60}fiscal|full[- ]year", re.I | re.S)
+
+# Forward-looking guidance detector. The old coarse OR (guidance|outlook|...)
+# fired on risk-factor boilerplate ("our outlook could be affected by..."). We
+# now require BOTH a guidance/expectation word AND a nearby numeric MONEY range
+# (or a "$N plus or minus" point estimate) — the pattern actual guidance takes
+# ("revenue of $24.5 billion to $25.5 billion") and boilerplate almost never does.
+_GUIDANCE_WORD_RE = re.compile(
+    r"\b(?:guidance|outlook|expect\w*|anticipat\w*|forecast\w*|"
+    r"project(?:s|ed|ing)?|for\s+(?:the\s+)?(?:first|second|third|fourth|full)"
+    r"[- ](?:quarter|year|fiscal))\b", re.I)
+_MONEY_RANGE_RE = re.compile(
+    r"\$\s?\d[\d,]*(?:\.\d+)?\s*(?:billion|million|thousand|bn|mm)?"
+    r"\s*(?:to|through|and|[-–—])\s*"
+    r"\$?\s?\d[\d,]*(?:\.\d+)?\s*(?:billion|million|thousand|bn|mm)?", re.I)
+_PLUS_MINUS_RE = re.compile(
+    r"\$\s?\d[\d,]*(?:\.\d+)?\s*(?:billion|million|thousand)?\s*,?\s*"
+    r"(?:plus or minus|\+/?-|±)", re.I)
+
+
+def _has_guidance_language(text: str) -> bool:
+    """True only when a guidance/expectation word sits within ~240 chars of a
+    numeric money range or point estimate — a tight proxy for real forward
+    guidance that ignores risk-factor boilerplate."""
+    ranges = [m.start() for m in _MONEY_RANGE_RE.finditer(text)]
+    ranges += [m.start() for m in _PLUS_MINUS_RE.finditer(text)]
+    if not ranges:
+        return False
+    for gm in _GUIDANCE_WORD_RE.finditer(text):
+        if any(abs(r - gm.start()) <= 240 for r in ranges):
+            return True
+    return False
 
 
 def get_latest_earnings_release(ticker: str, max_chars: int = 6000) -> dict:
@@ -204,8 +256,7 @@ def get_latest_earnings_release(ticker: str, max_chars: int = 6000) -> dict:
                 continue  # graphic-only or stub exhibit; keep looking
             return {"status": "ok", "ticker": ticker.upper(), "filed": filed,
                     "url": url, "excerpt": excerpt, "truncated": truncated,
-                    "contains_guidance_language":
-                        bool(_GUIDANCE_RE.search(text))}
+                    "contains_guidance_language": _has_guidance_language(text)}
         return {"status": "none_recent"}
     except Exception as e:
         return {"status": "error", "reason": f"{type(e).__name__}: {e}"}

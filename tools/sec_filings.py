@@ -17,6 +17,7 @@ CLI: python -m tools.sec_filings NVDA
 from __future__ import annotations
 
 import json
+import threading
 import time
 from pathlib import Path
 
@@ -25,6 +26,16 @@ import requests
 ROOT = Path(__file__).resolve().parent.parent
 CACHE = ROOT / "data" / "cache"
 HEADERS = {"User-Agent": "East Equity Agent easton.ryan@hws.edu"}  # SEC requires contact info
+
+# Shared companyfacts cache. The multi-MB companyfacts payload was otherwise
+# fetched ~3x per focus ticker (get_filing_brief + fundamentals.get_deep_fundamentals
+# + guidance_ledger.auto_grade); one TTL-cached fetch per CIK cuts EDGAR load 3x.
+# Keyed by zero-padded CIK. Thread-safe enough for the single-process orchestrator
+# (the network fetch happens outside the lock; a duplicate concurrent fetch is
+# harmless). Errors are never cached, so a transient outage self-heals next call.
+_FACTS_CACHE: dict = {}
+_FACTS_LOCK = threading.Lock()
+_FACTS_TTL_SECONDS = 12 * 60  # fresh within a run, expired between runs (~3h apart)
 
 
 def _get(url: str) -> dict:
@@ -47,6 +58,33 @@ def ticker_to_cik(ticker: str) -> str | None:
         if row["ticker"].upper() == ticker.upper():
             return str(row["cik_str"]).zfill(10)
     return None
+
+
+def get_company_facts(cik_or_ticker) -> dict:
+    """Fetch + TTL-cache the EDGAR companyfacts JSON once per CIK.
+
+    Shared entrypoint so sec_filings, fundamentals and guidance_ledger reuse a
+    single fetch per focus ticker per run instead of three. Accepts a ticker
+    symbol or a CIK (int or zero-padded str). Raises on a fetch/parse failure —
+    callers keep their own fail-soft try/except and a failure is never cached.
+    """
+    raw = str(cik_or_ticker).strip()
+    if raw.isdigit():
+        cik = raw.zfill(10)
+    else:
+        cik = ticker_to_cik(raw)
+        if cik is None:
+            raise ValueError(f"no CIK found for {cik_or_ticker}")
+    now = time.time()
+    with _FACTS_LOCK:
+        hit = _FACTS_CACHE.get(cik)
+        if hit is not None and (now - hit[0]) < _FACTS_TTL_SECONDS:
+            return hit[1]
+    # Fetch outside the lock (multi-second network); store on success only.
+    data = _get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json")
+    with _FACTS_LOCK:
+        _FACTS_CACHE[cik] = (time.time(), data)
+    return data
 
 
 def _annualish(units: list[dict], quarterly: bool) -> list[dict]:
@@ -96,7 +134,7 @@ def get_filing_brief(ticker: str) -> dict:
 
         facts_out = {}
         try:
-            facts = _get(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json")
+            facts = get_company_facts(cik)  # shared TTL cache (see get_company_facts)
             gaap = facts.get("facts", {}).get("us-gaap", {})
             for label, tags in {
                 "revenue": ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues"],

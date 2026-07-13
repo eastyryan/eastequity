@@ -1,10 +1,17 @@
 """Universe Scanner — swing-trade momentum/setup screen over the AI/data-center universe.
 
-Pulls ~9 months of daily bars via yfinance for every ticker in data/universe.json
-and computes swing-relevant metrics: trend structure (50/200 SMA), 1/3/6-month
-momentum, distance from 52-week high, pullback depth from 20-day high, volume
-surge, and ATR-based volatility. Emits a ranked JSON list so Claude can pick
-candidates worth deep research — the scanner ranks, it does not decide.
+Pulls ~14 months of daily bars via yfinance for every ticker in data/universe.json
+(plus SPY as the benchmark) and computes swing-relevant metrics over TRUE trading-
+session windows: trend structure (50/100/200-day SMA), 1/3/6-month momentum, distance
+from the trailing 52-week high, pullback depth from the 20-day high, volume surge,
+ATR-based volatility, and relative strength vs SPY. Names with less than a full
+252-session year of history are still admitted but flagged (is_full_52w_window) so the
+"52-week" label is never claimed on a shorter window. Emits a ranked JSON list so
+Claude can pick candidates worth deep research — the scanner ranks, it does not decide.
+
+Window sizing is deliberate: ~14 months (~294 sessions) guarantees enough bars for a
+real 200-day SMA and a true trailing-252-session 52-week high AFTER rolling (a 9- or
+12-month pull would come up short once you roll a full year back).
 
 CLI: python -m tools.universe_scanner [--top N]
 """
@@ -21,6 +28,81 @@ def load_universe() -> dict[str, list[str]]:
     return json.loads((ROOT / "data" / "universe.json").read_text())["sectors"]
 
 
+# Trading-session counts for each labelled window (~21 sessions per calendar month).
+# Used everywhere so a field named "1m/3m/6m/52w" ALWAYS spans that many sessions and
+# never the full fetch window. iloc offset for an N-session return is N+1 (the base bar
+# sits N sessions before the last bar).
+SESS_1M, SESS_3M, SESS_6M, SESS_52W = 21, 63, 126, 252
+
+# Minimum bars to admit a name at all: enough for a valid 50-DMA and a true 3-month
+# momentum reading (63 sessions -> needs 64 bars). Lowered from the old 130 so recent
+# IPOs are screened too; longer windows (100/200-DMA, 6m momentum, 52w high) degrade
+# gracefully to None / partial-window rather than being silently mislabeled.
+MIN_BARS = SESS_3M + 1  # 64
+
+# Sessions for the average-dollar-volume liquidity read, and the threshold below which
+# a name is flagged illiquid. $20M/day: a $10k paper book never moves these, but the
+# discipline surfaces names that would be hard to enter/exit at real size. Names are
+# FLAGGED, never dropped (a held name must always survive the scan).
+SESS_ADV, MIN_ADV_USD = 20, 20_000_000
+
+
+def _median_dollar_volume(closes, volumes, sessions: int = SESS_ADV):
+    """Median close x volume over the trailing `sessions` bars (median is robust to a
+    single earnings-day volume spike). Pure Python so it is unit-testable without pandas."""
+    if not closes or not volumes:
+        return None
+    n = min(len(closes), len(volumes))
+    if n == 0:
+        return None
+    dv = [closes[i] * volumes[i] for i in range(n)
+          if closes[i] is not None and volumes[i] is not None]
+    if not dv:
+        return None
+    window = dv[-sessions:] if len(dv) >= sessions else dv
+    s = sorted(window)
+    mid = len(s) // 2
+    return s[mid] if len(s) % 2 else (s[mid - 1] + s[mid]) / 2
+
+
+def _return_over_sessions(closes, sessions: int):
+    """Total return over `sessions` trading sessions from an oldest-first sequence of
+    closing prices. None when history is too short or the base price is unusable. Pure
+    Python (list/tuple in, float out) so it is unit-testable without pandas/numpy."""
+    if closes is None or sessions <= 0:
+        return None
+    n = len(closes)
+    if n < sessions + 1:
+        return None
+    base = closes[-(sessions + 1)]
+    last = closes[-1]
+    if base in (None, 0) or last is None:
+        return None
+    return last / base - 1
+
+
+def _trailing_high(highs, sessions: int):
+    """Highest value over the trailing `sessions` bars (all bars if fewer exist).
+    Returns (high, is_full_window). is_full_window is True only when at least `sessions`
+    bars were available, so callers can gate the "52-week" claim. Pure Python."""
+    if not highs:
+        return None, False
+    window = highs[-sessions:] if len(highs) >= sessions else list(highs)
+    vals = [h for h in window if h is not None]
+    if not vals:
+        return None, False
+    return max(vals), len(highs) >= sessions
+
+
+def _rel_strength(name_ret, bench_ret):
+    """Relative strength: the name's return minus the benchmark's over the SAME window
+    (both plain fractions). None if either side is missing. This is cross-sectional
+    signal the pure-momentum funnel lacks, not another re-derivation of the name's price."""
+    if name_ret is None or bench_ret is None:
+        return None
+    return name_ret - bench_ret
+
+
 def scan_universe(top_n: int = 15) -> dict:
     import pandas as pd
     import yfinance as yf
@@ -32,39 +114,88 @@ def scan_universe(top_n: int = 15) -> dict:
             ticker_sector.setdefault(t, sector)
     tickers = sorted(ticker_sector)
 
-    data = yf.download(tickers, period="9mo", interval="1d",
+    # 14mo (~294 sessions) so a true 200-DMA and a trailing-252-session 52-week high
+    # survive after rolling. SPY rides along in the same batched download to power
+    # relative strength without an extra network round-trip.
+    data = yf.download(tickers + ["SPY"], period="14mo", interval="1d",
                        group_by="ticker", auto_adjust=True, progress=False, threads=True)
+
+    # Benchmark returns over the SAME session windows used per-name, computed once.
+    spy_1m = spy_3m = None
+    try:
+        spy_close = [float(x) for x in data["SPY"]["Close"].dropna().tolist()]
+        spy_1m = _return_over_sessions(spy_close, SESS_1M)
+        spy_3m = _return_over_sessions(spy_close, SESS_3M)
+    except Exception:
+        spy_1m = spy_3m = None
 
     rows = []
     for t in tickers:
         try:
             df = data[t].dropna()
-            if len(df) < 130:
+            n = len(df)
+            if n < MIN_BARS:
                 continue
             close, high, low, vol = df["Close"], df["High"], df["Low"], df["Volume"]
-            last = float(close.iloc[-1])
-            pct_1d = last / float(close.iloc[-2]) - 1
-            sma20, sma50 = float(close.rolling(20).mean().iloc[-1]), float(close.rolling(50).mean().iloc[-1])
-            sma100 = float(close.rolling(100).mean().iloc[-1])
-            mom_1m = last / float(close.iloc[-22]) - 1
-            mom_3m = last / float(close.iloc[-64]) - 1
-            mom_6m = last / float(close.iloc[0]) - 1
-            hi_52w = float(high.max())
+            close_list = [float(x) for x in close.tolist()]
+            high_list = [float(x) for x in high.tolist()]
+            last = close_list[-1]
+            pct_1d = last / close_list[-2] - 1
+            sma20 = float(close.rolling(20).mean().iloc[-1])
+            sma50 = float(close.rolling(50).mean().iloc[-1])
+            # 100/200-DMA only exist once enough sessions have rolled; None otherwise
+            # so short-history names never get a fabricated long-term trend read.
+            sma100 = float(close.rolling(100).mean().iloc[-1]) if n >= 100 else None
+            sma200 = float(close.rolling(200).mean().iloc[-1]) if n >= 200 else None
+            # True session-count momentum (21/63/126), NOT the full fetch window.
+            mom_1m = _return_over_sessions(close_list, SESS_1M)  # numeric (n >= MIN_BARS)
+            mom_3m = _return_over_sessions(close_list, SESS_3M)  # numeric (n >= MIN_BARS)
+            mom_6m = _return_over_sessions(close_list, SESS_6M)  # None until 127 bars
+            # True trailing-252-session high; is_full flags whether it is really 52 weeks.
+            hi_52w, full_52w = _trailing_high(high_list, SESS_52W)
             pullback_20d = last / float(high.rolling(20).max().iloc[-1]) - 1
             vol_surge = float(vol.iloc[-5:].mean()) / max(float(vol.iloc[-65:-5].mean()), 1)
             tr = pd.concat([high - low, (high - close.shift()).abs(),
                             (low - close.shift()).abs()], axis=1).max(axis=1)
             atr_pct = float(tr.rolling(14).mean().iloc[-1]) / last
 
-            # Swing setup score: uptrend structure + medium-term momentum,
-            # rewarding orderly pullbacks (buyable) over chases at the highs.
+            # Relative strength vs SPY over the matching windows (cross-sectional signal).
+            rel_1m = _rel_strength(mom_1m, spy_1m)
+            rel_3m = _rel_strength(mom_3m, spy_3m)
+
+            # Liquidity: 20-session median dollar volume, and a FLAG (never a filter).
+            vol_list = [float(x) for x in vol.tolist()]
+            adv_usd = _median_dollar_volume(close_list, vol_list)
+            is_liquid = adv_usd is not None and adv_usd >= MIN_ADV_USD
+
+            # Derived trend booleans (None when the underlying SMA has too little history).
+            above_50 = last > sma50
+            above_200 = (last > sma200) if sma200 is not None else None
+            trend_50_100 = (sma50 > sma100) if sma100 is not None else None
+            trend_50_200 = (sma50 > sma200) if sma200 is not None else None
+            pct_from_hi = (last / hi_52w - 1) * 100 if hi_52w else None
+
+            # Swing setup score: uptrend structure + medium-term momentum, rewarding
+            # orderly pullbacks (buyable) over chases at the highs. SCORING CHANGE: the
+            # primary uptrend gate now uses the TRUE 200-DMA (last > sma50 > sma200),
+            # falling back to the 100-DMA and then the 50-DMA only for names without a
+            # full 200 sessions yet. A small, bounded relative-strength term nudges
+            # market-beaters up as a tiebreaker without overriding the momentum ranking.
+            if sma200 is not None:
+                in_uptrend = last > sma50 > sma200
+            elif sma100 is not None:
+                in_uptrend = last > sma50 > sma100
+            else:
+                in_uptrend = last > sma50
             score = 0.0
-            score += 2.0 if last > sma50 > sma100 else 0.0
+            score += 2.0 if in_uptrend else 0.0
             score += 1.0 if last > sma20 else 0.0
             score += max(min(mom_3m * 5, 2.0), -1.0)
             score += max(min(mom_1m * 5, 1.0), -1.0)
             score += 1.0 if -0.10 <= pullback_20d <= -0.02 else 0.0
             score += 0.5 if vol_surge > 1.3 else 0.0
+            if rel_1m is not None:  # bounded [-0.2, +0.4]: refine, don't reorder
+                score += max(min(rel_1m * 4, 0.4), -0.2)
 
             rows.append({
                 "ticker": t, "sector": ticker_sector[t],
@@ -72,13 +203,22 @@ def scan_universe(top_n: int = 15) -> dict:
                 "pct_change_1d": round(pct_1d * 100, 2),
                 "momentum_1m_pct": round(mom_1m * 100, 1),
                 "momentum_3m_pct": round(mom_3m * 100, 1),
-                "momentum_6m_pct": round(mom_6m * 100, 1),
-                "above_50dma": last > sma50,
-                "trend_up_50_over_100": sma50 > sma100,
-                "pct_from_52w_high": round((last / hi_52w - 1) * 100, 1),
+                "momentum_6m_pct": round(mom_6m * 100, 1) if mom_6m is not None else None,
+                "above_50dma": above_50,
+                "above_200dma": above_200,
+                "trend_up_50_over_100": trend_50_100,
+                "trend_up_50_over_200": trend_50_200,
+                "pct_from_52w_high": round(pct_from_hi, 1) if pct_from_hi is not None else None,
+                "dist_from_52w_high_pct": round(-pct_from_hi, 1) if pct_from_hi is not None else None,
+                "is_full_52w_window": bool(full_52w),
+                "high_window_sessions": min(n, SESS_52W),
                 "pullback_from_20d_high_pct": round(pullback_20d * 100, 1),
                 "volume_surge_5d_vs_3m": round(vol_surge, 2),
                 "atr_pct": round(atr_pct * 100, 2),
+                "rel_strength_1m_pct": round(rel_1m * 100, 1) if rel_1m is not None else None,
+                "rel_strength_3m_pct": round(rel_3m * 100, 1) if rel_3m is not None else None,
+                "avg_dollar_volume_20d_usd": round(adv_usd) if adv_usd is not None else None,
+                "liquid": is_liquid,
                 "swing_setup_score": round(score, 2),
             })
         except Exception:
@@ -88,10 +228,15 @@ def scan_universe(top_n: int = 15) -> dict:
 
     # Contrarian/value-reversal lane: quality names knocked well off their highs
     # that are turning up. A momentum-only funnel never shows these to the brain.
+    # Only names with a genuine trailing-52-week window qualify, so the "20% off the
+    # 52-week high" claim is truthful (partial-history names are excluded, not counted
+    # off a shorter high that understates their drawdown).
     top_tickers = {r["ticker"] for r in rows[:top_n]}
     contrarian = sorted(
         (r for r in rows
          if r["ticker"] not in top_tickers
+         and r.get("is_full_52w_window")
+         and r.get("pct_from_52w_high") is not None
          and r["pct_from_52w_high"] <= -20
          and r["momentum_1m_pct"] > 2),
         key=lambda r: r["momentum_1m_pct"], reverse=True)[:5]
@@ -173,6 +318,10 @@ def scan_universe(top_n: int = 15) -> dict:
         "note": "Ranked by deterministic swing_setup_score; agent must apply judgment and research before proposing.",
         "top_setups": rows[:top_n],
         "prices": {r["ticker"]: r["last_close"] for r in rows},
+        # 14-day ATR% for EVERY scanned name (not just top_setups), so the
+        # deterministic volatility-stop floor has universe-wide coverage - including
+        # cloud runs, which read this straight from the relayed data bundle.
+        "atr_by_ticker": {r["ticker"]: r["atr_pct"] for r in rows},
     }
 
 

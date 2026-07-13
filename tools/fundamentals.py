@@ -6,11 +6,26 @@ sheet stress (inventory, receivables, current assets/liabilities), forward
 demand (deferred revenue + RemainingPerformanceObligation for software names),
 and capital allocation (buybacks, acquisitions).
 
-Keyless: everything comes from data.sec.gov companyfacts via tools.net.get_sec
-(User-Agent + proxy fallback handled there). One fetch per ticker — the
-quality-ratio inputs (revenue, gross profit, SBC, shares, cash, debt, OCF,
-capex) are extracted from the same payload with longer history than the
-6-quarter display window, so YoY comparisons never starve.
+Keyless: everything comes from data.sec.gov companyfacts via the shared
+tools.sec_filings.get_company_facts TTL cache (User-Agent + proxy fallback and
+the multi-MB payload are fetched once per CIK per run, reused by sec_filings and
+guidance_ledger). The quality-ratio inputs (revenue, gross profit, SBC, shares,
+cash, debt, OCF, capex, interest) are extracted from the same payload with
+longer history than the 6-quarter display window, so YoY/TTM never starve.
+
+net_debt uses TOTAL debt (long-term + current + finance leases) minus cash — not
+long-term debt alone — so revolvers / commercial paper / current maturities are
+no longer invisible. Durable ratios (rule_of_40, gross/operating margin,
+interest coverage, FCF, buybacks) are computed on TRAILING-TWELVE-MONTH figures
+de-YTD'd from the cumulative cash-flow facts, removing seasonality.
+
+The enterprise-value / leverage layer adds TTM EBITDA (operating income + the D&A
+add-back), net_debt/EBITDA (price-free — the single highest-value leverage read: a
+levered long into a thin catalyst is a different trade than a net-cash compounder),
+and the price-dependent market_cap / enterprise_value / ev_to_ebitda / buyback_yield
+(latest close via yfinance INSIDE the tool, fail-soft to reason "price_unavailable").
+A missing input emits value:null + a short reason label, never an omission that could
+read as zero leverage.
 
 XBRL fallback tag lists adapted from the user's Ledgerline project
 (~/finance/lib/edgar.ts) — that tag map is battle-tested across issuers;
@@ -55,7 +70,19 @@ CONCEPT_TAGS = {
     "share_buybacks": ["PaymentsForRepurchaseOfCommonStock"],
     "acquisitions": ["PaymentsToAcquireBusinessesNetOfCashAcquired",
                      "PaymentsToAcquireBusinessesGross"],
+    # Depreciation & amortization add-back (cash-flow statement), for EBITDA. The
+    # combined D&A tags come first; depreciation-only is a labeled last resort (it
+    # understates EBITDA by the amortization it omits).
+    "depreciation_amortization": ["DepreciationDepletionAndAmortization",
+                                  "DepreciationAmortizationAndAccretionNet",
+                                  "DepreciationAndAmortization",
+                                  "DepreciationAmortizationAndAccretion",
+                                  "Depreciation"],
 }
+
+# EBITDA D&A add-back tag priority (reuses the CONCEPT_TAGS entry above so the
+# quarterly display and the TTM EBITDA math cannot drift apart).
+DA_TAGS = CONCEPT_TAGS["depreciation_amortization"]
 
 # Instant facts (balance-sheet snapshots) have no start date; everything else
 # is a duration/flow fact whose rows may be YTD-cumulative in Q2/Q3 filings.
@@ -88,13 +115,15 @@ def _rows_from_units(units: list, instant: bool, keep: int) -> list:
             days = _span_days(u)
             if days is not None:
                 row["period_days"] = days  # >100 days => YTD-cumulative, not single quarter
+            if u.get("start"):
+                row["period_start"] = u.get("start")  # needed to de-YTD flow facts
         out.append(row)
     return out[-keep:]
 
 
-def _series(gaap: dict, tags: list, instant: bool, keep: int = 6) -> list:
-    """Best fallback-tag series: first tag with recent data; else freshest available."""
-    best, best_end = [], ""
+def _series_tagged(gaap: dict, tags: list, instant: bool, keep: int = 6) -> tuple:
+    """(rows, tag_used): first tag with recent data; else freshest available."""
+    best, best_end, best_tag = [], "", None
     for tag in tags:
         unit_map = gaap.get(tag, {}).get("units", {})
         units = unit_map.get("USD") or unit_map.get("USD/shares") or unit_map.get("shares")
@@ -109,10 +138,152 @@ def _series(gaap: dict, tags: list, instant: bool, keep: int = 6) -> list:
         except ValueError:
             fresh = False
         if fresh:
-            return rows          # first fresh tag in priority order wins
+            return rows, tag     # first fresh tag in priority order wins
         if end > best_end:       # remember the least-stale series as a fallback
-            best, best_end = rows, end
-    return best
+            best, best_end, best_tag = rows, end, tag
+    return best, best_tag
+
+
+def _series(gaap: dict, tags: list, instant: bool, keep: int = 6) -> list:
+    """Best fallback-tag series: first tag with recent data; else freshest available."""
+    return _series_tagged(gaap, tags, instant, keep)[0]
+
+
+def _latest_instant(gaap: dict, tag: str) -> tuple:
+    """(value, period_end) of the newest instant (balance-sheet) fact for one tag."""
+    unit_map = gaap.get(tag, {}).get("units", {})
+    units = unit_map.get("USD")
+    if not units:
+        return None, None
+    r = _latest(_rows_from_units(units, instant=True, keep=8))
+    return r.get("value"), r.get("period_end")
+
+
+def _quarterize_flow(rows: list) -> list:
+    """De-YTD flow facts into single-quarter values, newest last.
+
+    Cash-flow / SBC / interest facts are reported year-to-date (Q1 ~90d,
+    H1 ~180d, 9M ~270d, FY ~365d), all sharing one fiscal-year `period_start`.
+    Grouping by that start and differencing consecutive rows recovers each
+    quarter (= ytd(this) - ytd(previous)). A true single-quarter fact (income
+    statement 3-month context) has its OWN start, so it forms a singleton group
+    and passes through as itself. When both a 3-month and a derived value land
+    on the same period_end, the span closest to ~91 days wins.
+    """
+    from collections import defaultdict
+    by_start = defaultdict(list)
+    for r in rows:
+        if (r.get("period_days") is None or r.get("value") is None
+                or not r.get("period_start")):
+            continue
+        by_start[r["period_start"]].append(r)
+    out = []
+    for _start, group in by_start.items():
+        prev_v, prev_d = 0.0, 0
+        for r in sorted(group, key=lambda x: x["period_end"]):
+            q_v, q_d = r["value"] - prev_v, r["period_days"] - prev_d
+            if 80 <= q_d <= 100:
+                out.append({"period_end": r["period_end"], "value": q_v, "period_days": q_d})
+            prev_v, prev_d = r["value"], r["period_days"]
+    merged = {}
+    for r in sorted(out, key=lambda x: abs((x["period_days"] or 0) - 91), reverse=True):
+        merged[r["period_end"]] = r   # closest-to-91-day span wins the period_end
+    return [merged[k] for k in sorted(merged)]
+
+
+def _ttm(rows_q: list) -> tuple:
+    """(ttm, end, prior_ttm) from single-quarter rows: sum of the last 4 quarters
+    and the 4 before that. Returns (None, None, None) if <4 clean quarters."""
+    clean = [r for r in rows_q if r.get("value") is not None]
+    if len(clean) < 4:
+        return None, None, None
+    last4 = clean[-4:]
+    ttm = sum(r["value"] for r in last4)
+    prior = sum(r["value"] for r in clean[-8:-4]) if len(clean) >= 8 else None
+    return ttm, last4[-1]["period_end"], prior
+
+
+def _ttm_fcf(ocf_q: list, capex_q: list) -> tuple:
+    """(ttm_fcf, end) = sum over the last 4 single-quarter OCF rows of
+    OCF - capex, matching capex to OCF by period_end. None if a quarter's capex
+    is missing (never fabricate a partial FCF)."""
+    if len(ocf_q) < 4:
+        return None, None
+    cap_by_end = {r["period_end"]: r["value"] for r in capex_q}
+    total, last4 = 0.0, ocf_q[-4:]
+    for r in last4:
+        cap = cap_by_end.get(r["period_end"])
+        if cap is None:
+            return None, None
+        total += r["value"] - cap
+    return total, last4[-1]["period_end"]
+
+
+def _compute_total_debt(gaap: dict) -> dict | None:
+    """Total debt = noncurrent principal + current principal (+ finance leases).
+
+    Fixes net-debt blindness to current/short-term debt. Components are summed
+    without double-counting: the noncurrent side takes the first present of the
+    principal representations; the current side prefers the DebtCurrent aggregate
+    else sums its parts; finance (capital) leases are added only when the
+    noncurrent tag did not already bundle them (consistent with the existing
+    LongTermDebtAndCapitalLeaseObligations fallback). Operating leases are left
+    OUT of debt (surfaced separately). Returns a component breakdown with
+    per-side as_of dates so the caller can flag a stale (no-longer-reported)
+    figure and carry it forward rather than zeroing it. None if no debt tag.
+    """
+    nc_val = nc_end = nc_tag = None
+    for tag in ("LongTermDebtNoncurrent", "LongTermDebt",
+                "LongTermDebtAndCapitalLeaseObligations"):
+        v, e = _latest_instant(gaap, tag)
+        if v is not None:
+            nc_val, nc_end, nc_tag = v, e, tag
+            break
+    lt_tags = [nc_tag] if nc_tag else []
+
+    cur_val = cur_end = None
+    cur_tags: list = []
+    v, e = _latest_instant(gaap, "DebtCurrent")
+    if v is not None:
+        cur_val, cur_end, cur_tags = v, e, ["DebtCurrent"]
+    else:
+        acc, latest_e, got = 0.0, "", False
+        for tag in ("LongTermDebtCurrent", "ShortTermBorrowings", "CommercialPaper"):
+            vv, ee = _latest_instant(gaap, tag)
+            if vv is not None:
+                acc, got = acc + vv, True
+                cur_tags.append(tag)
+                if (ee or "") > latest_e:
+                    latest_e = ee
+        if got:
+            cur_val, cur_end = acc, latest_e
+
+    lease_nc = lease_cur = 0.0
+    if nc_tag != "LongTermDebtAndCapitalLeaseObligations":
+        v, e = _latest_instant(gaap, "FinanceLeaseLiabilityNoncurrent")
+        if v is not None:
+            lease_nc = v
+            lt_tags.append("FinanceLeaseLiabilityNoncurrent")
+            nc_end = nc_end or e
+    v, e = _latest_instant(gaap, "FinanceLeaseLiabilityCurrent")
+    if v is not None:
+        lease_cur = v
+        cur_tags.append("FinanceLeaseLiabilityCurrent")
+        cur_end = cur_end or e
+
+    long_term = (nc_val or 0.0) + lease_nc if (nc_val is not None or lease_nc) else None
+    current = (cur_val or 0.0) + lease_cur if (cur_val is not None or lease_cur) else None
+    if long_term is None and current is None:
+        return None
+    ends = [d for d in (nc_end, cur_end) if d]
+    return {
+        "long_term_debt": long_term,
+        "current_debt": current,
+        "total_debt": (long_term or 0.0) + (current or 0.0),
+        "as_of": max(ends) if ends else None,
+        "long_term_tags": lt_tags,
+        "current_tags": cur_tags,
+    }
 
 
 def _quarterly(rows: list) -> list:
@@ -168,10 +339,44 @@ def _pct(a, b):
     return round(100.0 * a / b, 2)
 
 
+def _leverage_read(net_debt, ebitda) -> tuple:
+    """Coarse net-debt/EBITDA leverage read. Returns (ratio, label, reason).
+
+    * label set  -> a usable read (ratio may still be None for net-cash + a
+      non-positive EBITDA, where the ratio is not meaningful but "net_cash" is).
+    * label None + reason set -> not computable; the caller emits value:null +
+      reason. A missing read must NEVER read as zero leverage.
+
+    net_cash (net_debt < 0) is safe regardless of EBITDA sign. A name WITH net
+    debt and a non-positive EBITDA cannot de-lever from operations, so it returns
+    reason "ebitda_non_positive" (a high-leverage-risk flag), not a bogus ratio.
+    Bands: net_cash / conservative <2x / moderate 2-3x / levered >3x.
+    """
+    if net_debt is not None and net_debt < 0:  # net cash — safe whatever EBITDA does
+        ratio = round(net_debt / ebitda, 2) if (ebitda and ebitda > 0) else None
+        return ratio, "net_cash", None
+    if ebitda is None:
+        return None, None, "ebitda_unavailable"
+    if ebitda <= 0:
+        return None, None, "ebitda_non_positive"
+    if net_debt is None:
+        return None, None, "net_debt_unavailable"
+    ratio = round(net_debt / ebitda, 2)
+    label = "conservative" if ratio < 2 else "moderate" if ratio <= 3 else "levered"
+    return ratio, label, None
+
+
+def _enterprise_value(market_cap, total_debt, cash):
+    """EV = market cap + total debt - cash. None if market cap is unavailable;
+    debt/cash default to 0 so a debt-free or cash-less name still computes."""
+    if market_cap is None:
+        return None
+    return market_cap + (total_debt or 0.0) - (cash or 0.0)
+
+
 def get_deep_fundamentals(ticker: str) -> dict:
     """Second-layer fundamentals + pre-computed quality ratios for one ticker."""
-    from tools.net import get_sec
-    from tools.sec_filings import ticker_to_cik
+    from tools.sec_filings import ticker_to_cik, get_company_facts
 
     try:
         cik = ticker_to_cik(ticker)
@@ -181,7 +386,7 @@ def get_deep_fundamentals(ticker: str) -> dict:
         return {"status": "error", "reason": f"no CIK found for {ticker}"}
 
     try:
-        facts = get_sec(f"https://data.sec.gov/api/xbrl/companyfacts/CIK{cik}.json").json()
+        facts = get_company_facts(cik)  # shared TTL cache (see sec_filings)
     except Exception as e:
         return {"status": "error", "reason": f"companyfacts unavailable: {e}"}
     gaap = facts.get("facts", {}).get("us-gaap", {})
@@ -198,18 +403,19 @@ def get_deep_fundamentals(ticker: str) -> dict:
         "RevenueFromContractWithCustomerIncludingAssessedTax",
         "Revenues", "SalesRevenueNet"], instant=False, keep=24))
     gross = _quarterly(_series(gaap, ["GrossProfit"], instant=False, keep=24))
-    sbc = _quarterly(_series(gaap, [
-        "ShareBasedCompensation", "AllocatedShareBasedCompensationExpense"],
-        instant=False, keep=24))
+    # SBC: prefer the income-statement tag (a 3-month context is usually filed
+    # every quarter) over the cash-flow tag (YTD-only, which silently dropped
+    # ~3 of 4 quarters). sbc_rows keeps YTD rows too, for a de-YTD fallback.
+    sbc_rows, sbc_tag = _series_tagged(gaap, [
+        "AllocatedShareBasedCompensationExpense", "ShareBasedCompensation"],
+        instant=False, keep=24)
+    sbc = _quarterly(sbc_rows)
     shares = _quarterly(_series(gaap, [
         "WeightedAverageNumberOfDilutedSharesOutstanding"], instant=False, keep=24))
     cash = _series(gaap, [
         "CashAndCashEquivalentsAtCarryingValue",
         "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"],
         instant=True, keep=8)
-    lt_debt = _series(gaap, [
-        "LongTermDebtNoncurrent", "LongTermDebt",
-        "LongTermDebtAndCapitalLeaseObligations"], instant=True, keep=8)
     ocf = _series(gaap, [
         "NetCashProvidedByUsedInOperatingActivities",
         "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"],
@@ -257,18 +463,37 @@ def get_deep_fundamentals(ticker: str) -> dict:
     except Exception as e:
         omitted["operating_margin_pct"] = str(e)
 
-    # SBC as % of revenue (single-quarter rows on both sides)
+    # SBC as % of revenue. Prefer a single-quarter figure matching the latest
+    # revenue quarter; if the issuer only reports SBC year-to-date on the cash
+    # flow statement, surface the YTD value divided to a per-quarter estimate
+    # (labeled with its span) instead of silently omitting it.
     try:
-        v = _pct(_find_by_end(sbc, rev_l.get("period_end")).get("value"), rev_l.get("value"))
-        p = _pct(_find_by_end(sbc, rev_o.get("period_end")).get("value"), rev_o.get("value"))
-        if v is not None:
+        sbc_match = _find_by_end(sbc, rev_l.get("period_end"))
+        if sbc_match.get("value") is not None and rev_l.get("value"):
+            v = _pct(sbc_match["value"], rev_l["value"])
+            p = _pct(_find_by_end(sbc, rev_o.get("period_end")).get("value"), rev_o.get("value"))
             ratios["sbc_pct_of_revenue"] = {
                 "value": v,
                 "trend": _trend(None if p is None else v - p, 0.5, higher_is_better=False),
-                "note": "SBC is %s%% of latest Q revenue - haircut GAAP-adjusted earnings by this" % v,
+                "xbrl_tag": sbc_tag, "period_days": sbc_match.get("period_days"),
+                "note": "SBC is %s%% of latest Q revenue (single-quarter, tag %s) - "
+                        "haircut GAAP-adjusted earnings by this" % (v, sbc_tag),
             }
         else:
-            omitted["sbc_pct_of_revenue"] = "no single-quarter SBC matching the latest revenue quarter"
+            latest_sbc = _latest(sbc_rows)
+            days = latest_sbc.get("period_days")
+            if latest_sbc.get("value") is not None and rev_l.get("value") and days:
+                n_q = max(1, round(days / 91.0))
+                v = _pct(latest_sbc["value"] / n_q, rev_l["value"])
+                ratios["sbc_pct_of_revenue"] = {
+                    "value": v, "trend": "flat",
+                    "xbrl_tag": sbc_tag, "period_days": days,
+                    "note": "SBC ~%s%% of revenue, DERIVED from a %s-day YTD figure "
+                            "(tag %s) divided to a per-quarter estimate - approximate"
+                            % (v, days, sbc_tag),
+                }
+            else:
+                omitted["sbc_pct_of_revenue"] = "no SBC matching the latest revenue quarter"
     except Exception as e:
         omitted["sbc_pct_of_revenue"] = str(e)
 
@@ -290,42 +515,96 @@ def get_deep_fundamentals(ticker: str) -> dict:
     except Exception as e:
         omitted["diluted_shares_yoy_change_pct"] = str(e)
 
-    # net debt (LT debt - cash), latest snapshot, trend vs prior period
+    # Net debt = TOTAL debt (long-term + current, incl. finance leases) - cash.
+    # The old version used long-term debt only, understating leverage for names
+    # with revolvers / commercial paper / current maturities. A no-longer-reported
+    # debt figure is carried forward with a stale flag, never zeroed to "debt-free".
     try:
-        c_l, d_l = _latest(cash), _latest(lt_debt)
-        # A debt series whose newest fact is far older than the newest cash fact
-        # means the company stopped reporting LT debt (repaid it): treat as zero.
-        debt_stale = False
-        try:
-            debt_stale = (d_l and c_l and
-                          (date.fromisoformat(c_l["period_end"])
-                           - date.fromisoformat(d_l["period_end"])).days > STALE_DAYS)
-        except (KeyError, ValueError, TypeError):
-            pass
-        if c_l.get("value") is not None and (debt_stale or not d_l):
+        c_l = _latest(cash)
+        cash_val = c_l.get("value")
+        debt = _compute_total_debt(gaap)
+        if debt is None and cash_val is not None:
             ratios["net_debt_usd"] = {
-                "value": -c_l["value"],
-                "trend": "flat",
-                "note": "no recent long-term debt reported - treated as debt-free; "
-                        "value is negative cash as of %s" % c_l.get("period_end"),
+                "value": -cash_val, "trend": "flat",
+                "note": "no debt reported in XBRL - treated as debt-free; value is "
+                        "negative cash as of %s" % c_l.get("period_end"),
+                "components": {"long_term_debt": 0.0, "current_debt": 0.0,
+                               "total_debt": 0.0, "cash_and_equivalents": cash_val,
+                               "as_of": c_l.get("period_end")},
             }
-        elif c_l.get("value") is not None and d_l.get("value") is not None:
-            nd = d_l["value"] - c_l["value"]
-            c_p = _find_by_end(cash, _n_back(lt_debt, 1).get("period_end"))
-            d_p = _n_back(lt_debt, 1)
-            nd_prev = (d_p["value"] - c_p["value"]
-                       if c_p.get("value") is not None and d_p.get("value") is not None else None)
-            ratios["net_debt_usd"] = {
-                "value": nd,
-                "trend": _trend(None if nd_prev is None else nd - nd_prev,
-                                abs(nd) * 0.02 + 1e6, higher_is_better=False),
-                "note": ("net cash position" if nd < 0 else "net debt position")
-                        + " as of %s (LT debt minus cash)" % d_l.get("period_end"),
+        elif debt is not None and cash_val is not None:
+            total = debt["total_debt"]
+            nd = total - cash_val
+            stale = False
+            try:
+                stale = (date.fromisoformat(c_l["period_end"])
+                         - date.fromisoformat(debt["as_of"])).days > STALE_DAYS
+            except (KeyError, ValueError, TypeError):
+                pass
+            comp = {
+                "long_term_debt": debt["long_term_debt"],
+                "current_debt": debt["current_debt"],
+                "total_debt": total,
+                "cash_and_equivalents": cash_val,
+                "as_of": debt["as_of"], "cash_as_of": c_l.get("period_end"),
+                "long_term_tags": debt["long_term_tags"],
+                "current_tags": debt["current_tags"],
+            }
+            note = ("net cash" if nd < 0 else "net debt") + \
+                   " = total debt (long-term + current, incl. finance leases) minus " \
+                   "cash, as of %s" % debt["as_of"]
+            if stale:
+                comp["stale"] = True
+                note += (" (STALE: debt last reported %s, older than cash %s - carried "
+                         "forward, NOT zeroed)" % (debt["as_of"], c_l.get("period_end")))
+            ratios["net_debt_usd"] = {"value": nd, "trend": "flat",
+                                      "note": note, "components": comp}
+            ratios["total_debt_usd"] = {
+                "value": total, "trend": "flat",
+                "note": "long-term %s + current %s (finance leases in, operating "
+                        "leases out); LT tags %s, current tags %s" % (
+                            debt["long_term_debt"], debt["current_debt"],
+                            debt["long_term_tags"], debt["current_tags"]),
             }
         else:
-            omitted["net_debt_usd"] = "cash or long-term debt series unavailable"
+            omitted["net_debt_usd"] = "cash unavailable"
     except Exception as e:
         omitted["net_debt_usd"] = str(e)
+
+    # Operating lease liabilities: debt-like commitment surfaced separately (NOT
+    # folded into total_debt), so the brain can weigh asset-light / retail names.
+    try:
+        ol_nc, ol_nc_e = _latest_instant(gaap, "OperatingLeaseLiabilityNoncurrent")
+        ol_c, ol_c_e = _latest_instant(gaap, "OperatingLeaseLiabilityCurrent")
+        parts = [x for x in (ol_nc, ol_c) if x is not None]
+        if parts:
+            ratios["operating_lease_liability_usd"] = {
+                "value": sum(parts), "trend": "flat",
+                "xbrl_tag": "OperatingLeaseLiabilityCurrent + Noncurrent",
+                "note": "operating lease liabilities, NOT in total_debt (a debt-like "
+                        "commitment for asset-light/retail names) as of %s"
+                        % (ol_nc_e or ol_c_e),
+            }
+    except Exception as e:
+        omitted["operating_lease_liability_usd"] = str(e)
+
+    # Current ratio (liquidity): current assets / current liabilities, latest snapshot.
+    try:
+        ca = _latest(quarterly.get("total_current_assets", []))
+        cl = _latest(quarterly.get("total_current_liabilities", []))
+        if ca.get("value") and cl.get("value"):
+            cr = round(ca["value"] / cl["value"], 2)
+            ratios["current_ratio"] = {
+                "value": cr, "trend": "flat",
+                "xbrl_tag": "AssetsCurrent / LiabilitiesCurrent",
+                "note": "current assets / current liabilities = %sx as of %s%s" % (
+                    cr, ca.get("period_end"),
+                    " - under 1.0, liquidity watch" if cr < 1 else ""),
+            }
+        else:
+            omitted["current_ratio"] = "current assets or liabilities not reported"
+    except Exception as e:
+        omitted["current_ratio"] = str(e)
 
     # inventory-to-revenue trend: latest vs year ago -> inventory_building flag
     try:
@@ -371,25 +650,264 @@ def get_deep_fundamentals(ticker: str) -> dict:
     except Exception as e:
         omitted["free_cash_flow_usd"] = str(e)
 
-    # Rule of 40 (software lens): YoY revenue growth % + FCF margin %
+    # ---- TTM aggregates (trailing-twelve-month, de-YTD'd) for durable ratios ----
+    # Single-quarter growth mixed with an averaged margin (the old rule-of-40)
+    # over/under-states seasonal names; TTM removes seasonality on both legs.
+    ttm_rev, ttm_rev_end, ttm_rev_prior = _ttm(revenue)
+    ttm_gross, _, ttm_gross_prior = _ttm(gross)
+    ttm_op, _, _ = _ttm(op_inc_q)
+    ocf_q = _quarterize_flow(ocf)
+    capex_q = _quarterize_flow(capex)
+    ttm_fcf, ttm_fcf_end = _ttm_fcf(ocf_q, capex_q)
+
+    # TTM FCF (proper 4-quarter, de-YTD'd) alongside the single-period FCF above.
+    if ttm_fcf is not None:
+        ratios["free_cash_flow_ttm_usd"] = {
+            "value": ttm_fcf, "trend": "flat",
+            "note": "trailing-twelve-month FCF = OCF - capex over 4 de-YTD'd "
+                    "quarters ending %s" % ttm_fcf_end,
+        }
+
+    # Rule of 40: TTM revenue growth % + TTM FCF margin % (a level, not a "trend").
     try:
-        if rev_l.get("value") and rev_o.get("value") and fcf_val is not None:
-            growth = 100.0 * (rev_l["value"] - rev_o["value"]) / rev_o["value"]
-            # If FCF spans multiple quarters (YTD), scale to per-quarter estimate.
-            n_q = max(1, round((fcf_days or 91) / 91.0))
-            margin = 100.0 * (fcf_val / n_q) / rev_l["value"]
+        if ttm_rev and ttm_rev_prior and ttm_fcf is not None:
+            growth = 100.0 * (ttm_rev - ttm_rev_prior) / ttm_rev_prior
+            margin = 100.0 * ttm_fcf / ttm_rev
             r40 = round(growth + margin, 1)
             ratios["rule_of_40"] = {
                 "value": r40,
-                "trend": "improving" if r40 >= 40 else "deteriorating",
-                "note": "revenue growth %.1f%% + FCF margin %.1f%% (software heuristic; FCF %s)"
-                        % (growth, margin,
-                           "YTD scaled to per-quarter estimate" if n_q > 1 else "single quarter"),
+                "rule_of_40_value": r40,
+                "rule_of_40_pass": bool(r40 >= 40),
+                "note": "TTM revenue growth %.1f%% + TTM FCF margin %.1f%% (software "
+                        "heuristic; pass = >=40; TTM ending %s)" % (growth, margin, ttm_rev_end),
             }
         else:
-            omitted["rule_of_40"] = "needs YoY revenue pair and computable FCF"
+            omitted["rule_of_40"] = "needs 8 quarters of revenue and a computable TTM FCF"
     except Exception as e:
         omitted["rule_of_40"] = str(e)
+
+    # TTM gross margin + trend vs the prior TTM (seasonality-free margin direction).
+    try:
+        if ttm_gross is not None and ttm_rev:
+            m = round(100.0 * ttm_gross / ttm_rev, 2)
+            mp = (100.0 * ttm_gross_prior / ttm_rev_prior
+                  if ttm_gross_prior is not None and ttm_rev_prior else None)
+            ratios["gross_margin_ttm_pct"] = {
+                "value": m,
+                "trend": _trend(None if mp is None else m - mp, 0.5),
+                "xbrl_tag": "GrossProfit / revenue", "period_days": 365,
+                "note": "TTM gross margin %s%%%s" % (
+                    m, " vs %.2f%% prior TTM" % mp if mp is not None else ""),
+            }
+    except Exception as e:
+        omitted["gross_margin_ttm_pct"] = str(e)
+
+    # TTM operating margin (durable operating-leverage read).
+    try:
+        if ttm_op is not None and ttm_rev:
+            ratios["operating_margin_ttm_pct"] = {
+                "value": round(100.0 * ttm_op / ttm_rev, 2), "trend": "flat",
+                "xbrl_tag": "OperatingIncomeLoss / revenue", "period_days": 365,
+                "note": "TTM operating margin, ending %s" % ttm_rev_end,
+            }
+    except Exception as e:
+        omitted["operating_margin_ttm_pct"] = str(e)
+
+    # Interest coverage = TTM EBIT (operating income) / TTM interest expense.
+    try:
+        int_q = _quarterize_flow(_series(gaap, CONCEPT_TAGS["interest_expense"],
+                                         instant=False, keep=12))
+        ttm_int, _, _ = _ttm(int_q)
+        if ttm_op is not None and ttm_int:
+            cov = round(ttm_op / abs(ttm_int), 2)
+            ratios["interest_coverage"] = {
+                "value": cov, "trend": "flat",
+                "xbrl_tag": "OperatingIncomeLoss / InterestExpense", "period_days": 365,
+                "note": "TTM EBIT covers interest %sx%s" % (
+                    cov, " - THIN (<3x)" if cov < 3 else ""),
+            }
+        else:
+            omitted["interest_coverage"] = "no TTM interest expense reported (may be debt-free)"
+    except Exception as e:
+        omitted["interest_coverage"] = str(e)
+
+    # Buyback proxy: TTM common-stock repurchases (yield = this / market cap).
+    try:
+        bb_q = _quarterize_flow(_series(gaap, CONCEPT_TAGS["share_buybacks"],
+                                        instant=False, keep=12))
+        ttm_bb, bb_end, _ = _ttm(bb_q)
+        if ttm_bb is not None:
+            ratios["buyback_ttm_usd"] = {
+                "value": ttm_bb, "trend": "flat",
+                "xbrl_tag": "PaymentsForRepurchaseOfCommonStock", "period_days": 365,
+                "note": "TTM common-stock repurchases ending %s; buyback yield = this "
+                        "/ market cap (divide by the market cap in your bundle)" % bb_end,
+            }
+        else:
+            omitted["buyback_ttm_usd"] = "no repurchase cash flow reported (no buyback program)"
+    except Exception as e:
+        omitted["buyback_ttm_usd"] = str(e)
+
+    # ==================== ENTERPRISE-VALUE / LEVERAGE LAYER ====================
+    # The EV and leverage math a swing thesis actually turns on. net_debt/EBITDA
+    # needs NO price and is the single highest-value line here (a 4x+ levered long
+    # with a thin catalyst is a different trade than a net-cash compounder); the EV
+    # and market-cap ratios need a live price, fetched fail-soft via yfinance. All
+    # PRE-COMPUTED — the brain TRUSTS these and never recomputes. A missing input
+    # emits value:null + a short reason label, never an omission that reads as zero.
+
+    # -- TTM EBITDA = TTM operating income (EBIT) + TTM D&A add-back ------------
+    ebitda_ttm = None
+    try:
+        da_rows, da_tag = _series_tagged(gaap, DA_TAGS, instant=False, keep=12)
+        ttm_da, ttm_da_end, _ = _ttm(_quarterize_flow(da_rows))
+        if ttm_op is None:
+            ratios["ebitda_ttm_usd"] = {
+                "value": None, "trend": "flat",
+                "reason": "operating_income_ttm_unavailable",
+                "note": "EBITDA needs a TTM operating income (OperatingIncomeLoss); "
+                        "fewer than 4 clean quarters were available",
+            }
+        elif ttm_da is None:
+            ratios["ebitda_ttm_usd"] = {
+                "value": None, "trend": "flat", "reason": "d_and_a_unavailable",
+                "note": "EBITDA not computed: no trailing-twelve-month D&A add-back "
+                        "found (tried %s); TTM EBIT (operating income) was %s" % (
+                            "/".join(DA_TAGS), ttm_op),
+            }
+        else:
+            ebitda_ttm = ttm_op + ttm_da
+            da_src = ("%s (depreciation-only — understates EBITDA by the "
+                      "amortization it omits)" % da_tag) if da_tag == "Depreciation" else da_tag
+            ratios["ebitda_ttm_usd"] = {
+                "value": ebitda_ttm, "trend": "flat",
+                "xbrl_tags": "OperatingIncomeLoss + %s" % da_tag, "period_days": 365,
+                "components": {"ttm_operating_income_usd": ttm_op,
+                               "ttm_d_and_a_usd": ttm_da, "d_and_a_tag": da_tag},
+                "note": "TTM EBITDA (USD) = TTM operating income %s + TTM D&A %s "
+                        "[%s], ending %s" % (ttm_op, ttm_da, da_src,
+                                             ttm_da_end or ttm_rev_end),
+            }
+    except Exception as e:
+        ratios["ebitda_ttm_usd"] = {"value": None, "trend": "flat",
+                                    "reason": "error", "note": str(e)}
+
+    # -- total debt / cash / net debt (all XBRL, NO price needed) ---------------
+    debt_c = _compute_total_debt(gaap)
+    total_debt_val = debt_c["total_debt"] if debt_c else 0.0
+    cash_now = _latest(cash).get("value")
+    net_debt_val = (total_debt_val - cash_now) if cash_now is not None else None
+
+    # -- net_debt / EBITDA : highest-value leverage read, price-free -----------
+    try:
+        ratio, label, reason = _leverage_read(net_debt_val, ebitda_ttm)
+        if label is None:
+            note = ("net debt / TTM EBITDA not computed (%s): net debt = total debt "
+                    "%s minus cash %s = %s; TTM EBITDA = %s" % (
+                        reason, total_debt_val, cash_now, net_debt_val, ebitda_ttm))
+            if reason == "ebitda_non_positive":
+                note += (" — net debt against a non-positive EBITDA cannot be "
+                         "de-levered from operations; treat as HIGH leverage risk, "
+                         "NOT zero")
+            ratios["net_debt_to_ebitda"] = {"value": None, "trend": "flat",
+                                            "reason": reason, "note": note}
+        else:
+            shown = ("%sx" % ratio if ratio is not None
+                     else "n/m (net cash, EBITDA non-positive)")
+            ratios["net_debt_to_ebitda"] = {
+                "value": ratio, "trend": "flat", "leverage_read": label,
+                "xbrl_tags": "(total_debt - cash) / (OperatingIncomeLoss + D&A) TTM",
+                "period_days": 365,
+                "note": "net debt (total debt %s - cash %s = %s) / TTM EBITDA %s = %s "
+                        "[read=%s; scale: net_cash / conservative <2x / moderate "
+                        "2-3x / levered >3x]" % (total_debt_val, cash_now,
+                                                 net_debt_val, ebitda_ttm, shown, label),
+            }
+    except Exception as e:
+        ratios["net_debt_to_ebitda"] = {"value": None, "trend": "flat",
+                                        "reason": "error", "note": str(e)}
+
+    # -- price-dependent: market cap, EV, EV/EBITDA, buyback yield --------------
+    # yfinance is a CLOUD-only dependency (absent in the local/offline env); the
+    # whole block degrades to reason "price_unavailable" rather than raising, and
+    # the price-free net_debt_to_ebitda above still stands.
+    _mc_keys = ("market_cap_usd", "enterprise_value_usd", "ev_to_ebitda",
+                "buyback_yield_pct")
+    try:
+        latest_shares = _latest(shares).get("value")
+        price = price_asof = None
+        try:
+            import yfinance as yf
+            hist = yf.Ticker(ticker).history(period="5d")
+            if hist is not None and not hist.empty:
+                price = float(hist["Close"].iloc[-1])
+                price_asof = str(hist.index[-1].date())
+        except Exception:
+            price = None
+
+        market_cap = (price * latest_shares
+                      if (price is not None and latest_shares) else None)
+        if market_cap is None:
+            why = "price_unavailable" if latest_shares else "diluted_shares_unavailable"
+            for k in _mc_keys:
+                ratios[k] = {
+                    "value": None, "trend": "flat", "reason": why,
+                    "note": "needs price x diluted shares; %s (the price-free "
+                            "net_debt_to_ebitda above is unaffected)" % why,
+                }
+        else:
+            ratios["market_cap_usd"] = {
+                "value": market_cap, "trend": "flat",
+                "xbrl_tags": "yfinance close x "
+                             "WeightedAverageNumberOfDilutedSharesOutstanding",
+                "note": "market cap (USD) = %s close %s (%s) x %s weighted-avg diluted "
+                        "shares — approximate vs point-in-time shares outstanding" % (
+                            ticker.upper(), round(price, 2), price_asof, latest_shares),
+            }
+            ev = _enterprise_value(market_cap, total_debt_val, cash_now)
+            ratios["enterprise_value_usd"] = {
+                "value": ev, "trend": "flat",
+                "xbrl_tags": "market_cap + total_debt - cash",
+                "note": "EV (USD) = market cap %s + total debt %s - cash %s" % (
+                    round(market_cap, 2), total_debt_val, cash_now),
+            }
+            if ebitda_ttm is not None and ebitda_ttm > 0:
+                ev_ebitda = round(ev / ebitda_ttm, 2)
+                ratios["ev_to_ebitda"] = {
+                    "value": ev_ebitda, "trend": "flat",
+                    "xbrl_tags": "enterprise_value / (OperatingIncomeLoss + D&A) TTM",
+                    "period_days": 365,
+                    "note": "EV/EBITDA = %sx (EV %s / TTM EBITDA %s)" % (
+                        ev_ebitda, round(ev, 2), ebitda_ttm),
+                }
+            else:
+                why = ("ebitda_non_positive" if ebitda_ttm is not None
+                       else "ebitda_unavailable")
+                ratios["ev_to_ebitda"] = {
+                    "value": None, "trend": "flat", "reason": why,
+                    "note": "EV/EBITDA not computable: TTM EBITDA is %s" % (
+                        "non-positive" if ebitda_ttm is not None else "unavailable"),
+                }
+            bb = ratios.get("buyback_ttm_usd", {}).get("value")
+            if bb is not None:
+                by = round(100.0 * bb / market_cap, 2)
+                ratios["buyback_yield_pct"] = {
+                    "value": by, "trend": "flat",
+                    "xbrl_tags": "PaymentsForRepurchaseOfCommonStock TTM "
+                                 "/ market_cap x 100",
+                    "note": "buyback yield = TTM repurchases %s / market cap %s = %s%% "
+                            "(cash returned via buybacks; add dividend yield for total "
+                            "shareholder yield)" % (bb, round(market_cap, 2), by),
+                }
+            else:
+                ratios["buyback_yield_pct"] = {
+                    "value": None, "trend": "flat", "reason": "no_buyback_ttm",
+                    "note": "no TTM repurchase cash flow reported (no active buyback)",
+                }
+    except Exception as e:
+        for k in _mc_keys:
+            ratios.setdefault(k, {"value": None, "trend": "flat",
+                                  "reason": "error", "note": str(e)})
 
     quality = {"ratios": ratios}
     if omitted:

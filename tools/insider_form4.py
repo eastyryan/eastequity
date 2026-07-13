@@ -12,27 +12,62 @@ from __future__ import annotations
 
 import json
 import re
-import time
+from datetime import date, timedelta
 from xml.etree import ElementTree
 
-import requests
-
 HEADERS = {"User-Agent": "East Equity Agent easton.ryan@hws.edu"}
-MAX_FILINGS_PER_TICKER = 6
+
+# Recency: mirror filing_text's 120-day gate so a cluster/selling verdict rests
+# on CURRENT trades, not months-old ones presented as fresh.
+WINDOW_DAYS = 120
+# Only fetch filings filed within this window (bounds EDGAR calls). A Form 4 must
+# be filed within 2 business days, so anything reporting an in-window trade was
+# itself filed inside this range; the buffer covers late Form 4/5 reports.
+SCAN_FILING_DAYS = 135
+# Hard cap on Form 4/5 documents parsed per ticker (bounds EDGAR calls for
+# prolific filers). Within 120 days this is rarely reached.
+MAX_FILINGS_SCAN = 60
 
 
-def _get(url: str) -> requests.Response:
+def _get(url: str):
     from tools.net import get_sec
     return get_sec(url)
 
 
-ENTITY_MARKERS = ("L.P.", "LP", "LLC", "L.L.C", "FUND", "CAPITAL", "PARTNERS",
-                  "HOLDINGS", "TRUST", "MANAGEMENT", "INVESTORS", "GROUP INC")
+# Whole-word entity markers. Matched as TOKENS (not naive substrings) so people
+# like "RALPH ..." / "PHILIP ..." / "ALPHA ..." are not misread as institutions
+# (the old bare-substring "LP" tagged them as entities and dropped them from the
+# discretionary buy/sell tallies, suppressing real cluster-buy / selling signals).
+_ENTITY_TOKENS = {
+    "LP", "LLP", "LLC", "INC", "INCORPORATED", "CORP", "CORPORATION", "LTD",
+    "LIMITED", "TRUST", "FUND", "FUNDS", "PARTNERS", "PARTNER", "PARTNERSHIP",
+    "CAPITAL", "HOLDINGS", "HOLDING", "MANAGEMENT", "INVESTORS", "GROUP",
+    "ASSOCIATES", "VENTURES", "ADVISORS", "ADVISERS", "PLC", "SICAV",
+}
 
 
 def _is_entity(name: str) -> bool:
-    up = name.upper()
-    return any(m in up for m in ENTITY_MARKERS)
+    up = (name or "").upper()
+    # Collapse dotted acronyms ("L.P." -> "LP", "L.L.C." -> "LLC", "L. P." -> "LP")
+    # so they tokenize to a single marker word.
+    up = re.sub(r"(?:[A-Z]\.\s*){2,}",
+                lambda m: re.sub(r"[.\s]", "", m.group(0)), up)
+    tokens = set(re.findall(r"[A-Z0-9&]+", up))
+    return bool(tokens & _ENTITY_TOKENS)
+
+
+def _parse_date(s: str | None) -> date | None:
+    try:
+        return date.fromisoformat((s or "")[:10])
+    except (ValueError, TypeError):
+        return None
+
+
+def _in_window(datestr: str | None, cutoff: date) -> bool:
+    """Keep a transaction if its trade date is within the window (or, rarely,
+    unparseable - the filing was already gated to the recent scan window)."""
+    d = _parse_date(datestr)
+    return d is None or d >= cutoff
 
 
 def _parse_form4(xml_text: str) -> list[dict]:
@@ -44,7 +79,13 @@ def _parse_form4(xml_text: str) -> list[dict]:
            "ten_pct_owner" if root.findtext(".//isTenPercentOwner") == "1" else "other"
     title = root.findtext(".//officerTitle") or role
     # Post-2023 checkbox: transaction made under a pre-scheduled 10b5-1 plan.
-    plan_10b5_1 = (root.findtext(".//aff10b5One") or "").strip().lower() in ("1", "true")
+    plan_flag = (root.findtext(".//aff10b5One") or "").strip().lower() in ("1", "true")
+    # Many filers disclose the plan ONLY in a free-text footnote/remark, not the
+    # structured checkbox. Scan that prose too, or discretionary-sell counts are
+    # overstated (a planned sale wrongly treated as a discretionary decision).
+    free_text = " ".join((el.text or "") for el in root.iterfind(".//footnotes/footnote"))
+    free_text += " " + (root.findtext(".//remarks") or "")
+    plan_10b5_1 = plan_flag or bool(re.search(r"10\s*B5[\-\s]?1", free_text.upper()))
     out = []
     for tx in root.iterfind(".//nonDerivativeTransaction"):
         code = tx.findtext(".//transactionCoding/transactionCode")
@@ -71,12 +112,15 @@ def get_insider_activity(tickers: list[str]) -> dict:
     from tools.sec_filings import ticker_to_cik
 
     out = {"status": "ok",
-           "note": "Forms 4/5 open-market trades (codes P/S), classified. THE SIGNAL FIELD "
+           "note": "Forms 4/5 open-market trades (codes P/S) from the LAST 120 DAYS only, "
+                   "classified. THE SIGNAL FIELD "
                    "IS PRE-COMPUTED: bullish_cluster_buying (2+ officers/directors buying "
                    "discretionarily) is the strongest positive; routine_or_sponsor_selling_only "
                    "is usually noise - do not treat it as bearish by itself. "
                    "notable_discretionary_selling (>$1M non-plan officer sales) deserves a "
-                   "sentence in your risk map. Form 3 count = new insiders registering.",
+                   "sentence in your risk map. Form 3 count = new insiders registering. "
+                   "Entity filers (funds/LPs) and 10b5-1 plan trades (structured flag OR "
+                   "footnote text) are excluded from the discretionary tallies.",
            "tickers": {}}
     for t in tickers:
         cik = ticker_to_cik(t)
@@ -88,14 +132,26 @@ def get_insider_activity(tickers: list[str]) -> dict:
         try:
             sub = _get(f"https://data.sec.gov/submissions/CIK{cik}.json").json()
             recent = sub["filings"]["recent"]
+            scan_cutoff = date.today() - timedelta(days=SCAN_FILING_DAYS)
+            tx_cutoff = date.today() - timedelta(days=WINDOW_DAYS)
             count = 0
-            for form, accession, doc in zip(recent["form"], recent["accessionNumber"],
-                                            recent["primaryDocument"]):
-                if form not in ("4", "5") or count >= MAX_FILINGS_PER_TICKER:
-                    if form == "3":
-                        entry["new_insider_form3_filings"] = entry.get(
-                            "new_insider_form3_filings", 0) + 1
+            for form, filed, accession, doc in zip(
+                    recent["form"], recent["filingDate"],
+                    recent["accessionNumber"], recent["primaryDocument"]):
+                filed_date = _parse_date(filed)
+                # recent[] is newest-first: once past the scan window, all the
+                # rest are older too - stop. (Recency window, not a fixed count:
+                # a real BUY just outside the old 6-filing window is now caught.)
+                if filed_date is not None and filed_date < scan_cutoff:
+                    break
+                if form == "3":
+                    entry["new_insider_form3_filings"] = entry.get(
+                        "new_insider_form3_filings", 0) + 1
                     continue
+                if form not in ("4", "5"):
+                    continue
+                if count >= MAX_FILINGS_SCAN:
+                    break
                 count += 1
                 acc = accession.replace("-", "")
                 # primaryDocument may be an .html wrapper; the XML sits alongside it.
@@ -106,6 +162,11 @@ def get_insider_activity(tickers: list[str]) -> dict:
                     entry["transactions"].extend(_parse_form4(_get(url).text))
                 except Exception:
                     continue
+            # Keep only trades whose TRANSACTION date falls in the recency window;
+            # open-market P/S (already the only codes parsed) are never crowded
+            # out by grants because grants (codes A/M) are dropped in _parse_form4.
+            entry["transactions"] = [
+                x for x in entry["transactions"] if _in_window(x.get("date"), tx_cutoff)]
             buys = [x for x in entry["transactions"] if x["type"] == "BUY"]
             sells = [x for x in entry["transactions"] if x["type"] == "SELL"]
             # The signal that matters: discretionary (non-plan) trades by actual
@@ -130,6 +191,7 @@ def get_insider_activity(tickers: list[str]) -> dict:
                 signal = "no_open_market_activity"
             entry["summary"] = {
                 "signal": signal,
+                "window_days": WINDOW_DAYS,
                 "open_market_buys": len(buys),
                 "open_market_sells": len(sells),
                 "buy_notional_usd": round(sum(x["notional_usd"] for x in buys), 2),
