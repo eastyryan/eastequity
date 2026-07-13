@@ -8,7 +8,9 @@ name: Gather market data for cloud runs
 
 on:
   schedule:
-    - cron: "40 9,12,13,15,17,19,21,23 * * 1-5"  # 20 min before weekday run slots (UTC)
+    - cron: "40 9,12,13,15,17,19,21 * * 1-5"     # 20 min before weekday run slots (UTC);
+                                                  # 21:40 feeds the 5:30pm ET full review
+                                                  # (7:30pm slot removed 2026-07-13)
     - cron: "10 14-20 * * 1-5"                    # +every market hour at :10 (9:30-4 ET) so
                                                   # the bundle is never more than ~30min old
                                                   # while the market is open

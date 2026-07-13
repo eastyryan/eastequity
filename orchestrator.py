@@ -242,7 +242,7 @@ def build_health() -> dict:
     unnoticed) now shows up on the dashboard as missed runs instead of nothing."""
     now = _et_now()
     weekday = now.weekday() < 5
-    slots = ([6, 9, 10, 12, 14, 16, 17.5, 19.5] if weekday else [23.98])
+    slots = ([6, 9, 10, 12, 14, 16, 17.5] if weekday else [23.98])
     now_h = now.hour + now.minute / 60
     expected = sum(1 for s in slots if s <= now_h)
     completed = 0
@@ -733,6 +733,16 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         "insider_activity": insiders,
         "partnerships": partnerships,
         "track_record": track_record,
+        # THE LOOP, forward half: the weekly self-review's lessons reach every
+        # trading run, so "the one change I'm making" actually changes behavior.
+        "lessons_learned": {
+            "note": "Your own most recent self-review conclusions and process notes. "
+                    "The CURRENT stated behavior change is binding until the next "
+                    "review grades it - honor it in this run's decisions.",
+            "recent": [n for n in recent_improvements(40)
+                       if str(n.get("note", "")).startswith("Weekly self-review:")
+                       or "[style-log]" in str(n.get("note", ""))][:5],
+        },
     }
 
 
@@ -1511,23 +1521,31 @@ def self_review(run_id: str) -> int:
     runs = []
     for f in sorted((ROOT / "journal" / "runs").glob("*.jsonl"))[-5:]:
         runs.extend(json.loads(line) for line in f.read_text().splitlines())
+    # THE LOOP: feed the review its own PRIOR reviews so it must grade last week's
+    # stated behavior change - lessons compound instead of evaporating weekly.
+    prior_reviews = [n for n in recent_improvements(60)
+                     if str(n.get("note", "")).startswith("Weekly self-review:")][:8]
     bundle = {"closed_trades": closed, "portfolio": portfolio,
               "breakdowns": build_performance_breakdown(closed),
+              "calibration": compute_calibration(closed),
+              "prior_self_reviews": prior_reviews,
               "recent_run_summaries": runs[-40:]}
     review_file = ROOT / "state" / f"review_{run_id}.json"
     review_file.write_text(json.dumps(bundle, indent=2, default=str))
 
     prompt = (
         "Weekly self-review for East Equity Agent (no trading this run). Read CLAUDE.md, "
-        f"then the audit bundle at {review_file}. Audit your week honestly: for each open "
-        "position, is the original thesis tracking or drifting? For each closed trade, was "
-        "the exit right in hindsight? Which of your predictions were wrong and WHY - bad "
-        "data, bad reasoning, or bad luck? What pattern should change next week? "
-        "End with a section titled 'Self-review:' containing 4-8 plain-English sentences "
-        "for the public dashboard summarizing what you got right, what you got wrong, and "
-        "the one change you are making."
+        f"then the audit bundle at {review_file}. FIRST: grade your previous review's "
+        "stated behavior change (prior_self_reviews, newest first) - did you actually do "
+        "it this week, and did it help? Quote it. Then audit the week honestly: for each "
+        "open position, is the original thesis tracking or drifting? For each closed "
+        "trade, was the exit right in hindsight? Which predictions were wrong and WHY - "
+        "bad data, bad reasoning, or bad luck? Use the breakdowns and calibration numbers, "
+        "not vibes. End with a section titled 'Self-review:' containing 4-8 plain-English "
+        "sentences for the public dashboard: what you got right, what you got wrong, "
+        "whether last week's change stuck, and the ONE change you are making next week."
     )
-    result = subprocess.run(["claude", "-p", prompt, "--permission-mode", "plan"],
+    result = subprocess.run(["claude", "-p", prompt],
                             cwd=ROOT, capture_output=True, text=True, timeout=1800)
     if result.returncode != 0:
         print(f"self-review failed: {result.stderr[:500]}{result.stdout[:500]}")

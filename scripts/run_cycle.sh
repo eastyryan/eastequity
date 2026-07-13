@@ -22,7 +22,7 @@ if [ "$1" = "--scheduled" ]; then
   if [ "$DOW" -le 5 ]; then
     # Weekdays: 6am, 9am, hourly 10am-4pm, 5:30pm, 7:30pm, midnight
     case "$HHMM" in
-      0600|0900|1000|1100|1200|1300|1400|1500|1600|1730|1930|0000) ;;
+      0600|0900|1000|1100|1200|1300|1400|1500|1600|1730|0000) ;;
       *) exit 0 ;;
     esac
   else
@@ -39,15 +39,16 @@ if [ "$DOW" -ge 6 ]; then
   exit $?
 fi
 
-# Slot-aware depth: midnight is a news review; all market-day slots including
-# 6am/9am pre-market are FULL research cycles (pre-market data matters).
+# Slot-aware depth: midnight is a news review; 5:30pm is a FULL-RESEARCH review
+# (all names, deep research) with NO trading; market-day slots incl. 6am/9am
+# pre-market are full trading cycles (pre-market data matters).
 case "$HHMM" in
-  0000) EXTRA="--news-only" ;;
-  *)    EXTRA="" ;;
+  0000|1730) EXTRA="--news-only" ;;
+  *)         EXTRA="" ;;
 esac
 .venv/bin/python -W ignore orchestrator.py $EXTRA "$@" >> logs/cron.log 2>&1
 
-# Friday 7:30pm slot chains the weekly self-review after the trading cycle.
-if [ "$DOW" = "5" ] && [ "$HHMM" = "1930" ]; then
+# Friday 5:30pm slot chains the weekly self-review after the evening review.
+if [ "$DOW" = "5" ] && [ "$HHMM" = "1730" ]; then
   .venv/bin/python -W ignore orchestrator.py --self-review >> logs/cron.log 2>&1
 fi
