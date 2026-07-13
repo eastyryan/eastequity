@@ -1,5 +1,5 @@
 {
-  "run_date": "2026-07-13T09:54:54.602064+00:00",
+  "run_date": "2026-07-13T11:54:07.618720+00:00",
   "as_of_et": "2026-07-13",
   "trading_mode": "paper",
   "run_depth": "full",
@@ -419,7 +419,7 @@
     "alerts": [
       {
         "ticker": "AXON",
-        "trigger_text": "On a decisive reclaim of the 20-day high, roughly $600+, with the reversal confirmed",
+        "trigger_text": "An actual close above $600 that holds for 2+ sessions, ideally alongside insider buying rather than more selling",
         "parsed_level": 600.0,
         "last_price": 565.8,
         "note": "price trigger reached - prioritize deep research on this name this run"
@@ -1019,7 +1019,7 @@
           "ev_to_ebitda": 2546.275
         },
         "days_to_earnings": 24,
-        "days_since_earnings": 66,
+        "days_since_earnings": 67,
         "analyst_estimates": {
           "fwd_revenue_growth_pct": 27.0,
           "next_yr_revenue_growth_pct": 21.3,
@@ -1299,7 +1299,7 @@
           "ev_to_ebitda": 84.466
         },
         "days_to_earnings": 9,
-        "days_since_earnings": 81,
+        "days_since_earnings": 82,
         "analyst_estimates": {
           "fwd_revenue_growth_pct": 19.5,
           "next_yr_revenue_growth_pct": 14.1,
@@ -11104,149 +11104,12 @@
   "filing_texts_note": "Real MD&A and press-release prose per focus ticker. When earnings_release.contains_guidance_language is true, QUOTE the specific guidance sentence (numbers and fiscal period) instead of paraphrasing. mdna.section == 'document_start' means general filing text, not MD&A.",
   "guidance_ledger": {},
   "fundamental_screen": {
-    "as_of": "2026-07-13T09:51:40.114524+00:00",
-    "age_hours": 12.3,
-    "names_covered": 106,
+    "as_of": "2026-07-13T10:06:47.559002+00:00",
+    "age_hours": 1.7,
+    "names_covered": 0,
     "note": "Full-universe estimate screen, refreshed pre-market (6am/9am ET, gated on true America/New_York time). top_upward_revisions = fundamental inflections regardless of price - candidates the momentum funnel may not surface. estimate_changes_since_previous = what moved THIS MORNING (earnings/guidance). Each row may carry revision_direction (up/down/flat) and eps_growth_next_yr_pct (forward EPS growth) - judge a multiple against growth, not news tone.",
-    "top_upward_revisions": [
-      {
-        "ticker": "HPE",
-        "fwd_revenue_growth_pct": 31.0,
-        "eps_revision_30d_pct": 40.54,
-        "eps_revision_7d_pct": 0.02,
-        "eps_estimate_current_yr": 3.41,
-        "revision_direction": "up",
-        "eps_growth_next_yr_pct": 17.1
-      },
-      {
-        "ticker": "IESC",
-        "fwd_revenue_growth_pct": 19.1,
-        "eps_revision_30d_pct": 12.13,
-        "eps_revision_7d_pct": 12.13,
-        "eps_estimate_current_yr": 19.69,
-        "revision_direction": "up",
-        "eps_growth_next_yr_pct": 12.8
-      },
-      {
-        "ticker": "CRDO",
-        "fwd_revenue_growth_pct": 83.6,
-        "eps_revision_30d_pct": 10.97,
-        "eps_revision_7d_pct": 0.83,
-        "eps_estimate_current_yr": 6.12,
-        "revision_direction": "up",
-        "eps_growth_next_yr_pct": 45.6
-      },
-      {
-        "ticker": "SNOW",
-        "fwd_revenue_growth_pct": 30.2,
-        "eps_revision_30d_pct": 7.64,
-        "eps_revision_7d_pct": 0.03,
-        "eps_estimate_current_yr": 1.93,
-        "revision_direction": "up",
-        "eps_growth_next_yr_pct": 39.1
-      },
-      {
-        "ticker": "STRL",
-        "fwd_revenue_growth_pct": 59.2,
-        "eps_revision_30d_pct": 6.63,
-        "eps_revision_7d_pct": 2.06,
-        "eps_estimate_current_yr": 19.31,
-        "revision_direction": "up",
-        "eps_growth_next_yr_pct": 42.0
-      },
-      {
-        "ticker": "COIN",
-        "fwd_revenue_growth_pct": -15.2,
-        "eps_revision_30d_pct": 4.7,
-        "eps_revision_7d_pct": 9.33,
-        "eps_estimate_current_yr": 1.2,
-        "revision_direction": "up",
-        "eps_growth_next_yr_pct": 297.4
-      },
-      {
-        "ticker": "TSLA",
-        "fwd_revenue_growth_pct": 9.5,
-        "eps_revision_30d_pct": 4.41,
-        "eps_revision_7d_pct": 1.42,
-        "eps_estimate_current_yr": 2.14,
-        "revision_direction": "up",
-        "eps_growth_next_yr_pct": 20.8
-      },
-      {
-        "ticker": "VST",
-        "fwd_revenue_growth_pct": 31.2,
-        "eps_revision_30d_pct": 4.19,
-        "eps_revision_7d_pct": 2.34,
-        "eps_estimate_current_yr": 9.95,
-        "revision_direction": "up",
-        "eps_growth_next_yr_pct": 13.4
-      },
-      {
-        "ticker": "SMR",
-        "fwd_revenue_growth_pct": 79.3,
-        "eps_revision_30d_pct": 3.82,
-        "eps_revision_7d_pct": 0.0,
-        "eps_estimate_current_yr": -0.51,
-        "revision_direction": "up",
-        "eps_growth_next_yr_pct": -34.1
-      },
-      {
-        "ticker": "ADBE",
-        "fwd_revenue_growth_pct": 11.6,
-        "eps_revision_30d_pct": 3.66,
-        "eps_revision_7d_pct": -0.03,
-        "eps_estimate_current_yr": 24.42,
-        "revision_direction": "up",
-        "eps_growth_next_yr_pct": 12.7
-      }
-    ],
-    "top_downward_revisions": [
-      {
-        "ticker": "HON",
-        "fwd_revenue_growth_pct": -46.0,
-        "eps_revision_30d_pct": -57.19,
-        "eps_revision_7d_pct": 9.44,
-        "eps_estimate_current_yr": 9.01,
-        "revision_direction": "down",
-        "eps_growth_next_yr_pct": 17.3
-      },
-      {
-        "ticker": "NBIS",
-        "fwd_revenue_growth_pct": 540.8,
-        "eps_revision_30d_pct": -31.62,
-        "eps_revision_7d_pct": -31.62,
-        "eps_estimate_current_yr": -2.14,
-        "revision_direction": "down",
-        "eps_growth_next_yr_pct": -127.8
-      },
-      {
-        "ticker": "TLN",
-        "fwd_revenue_growth_pct": 77.4,
-        "eps_revision_30d_pct": -10.84,
-        "eps_revision_7d_pct": -5.29,
-        "eps_estimate_current_yr": 21.55,
-        "revision_direction": "down",
-        "eps_growth_next_yr_pct": 39.3
-      },
-      {
-        "ticker": "CRWV",
-        "fwd_revenue_growth_pct": 146.9,
-        "eps_revision_30d_pct": -2.59,
-        "eps_revision_7d_pct": 0.0,
-        "eps_estimate_current_yr": -4.64,
-        "revision_direction": "down",
-        "eps_growth_next_yr_pct": 27.5
-      },
-      {
-        "ticker": "S",
-        "fwd_revenue_growth_pct": 19.9,
-        "eps_revision_30d_pct": -1.72,
-        "eps_revision_7d_pct": -0.46,
-        "eps_estimate_current_yr": -0.73,
-        "revision_direction": "down",
-        "eps_growth_next_yr_pct": 21.7
-      }
-    ],
+    "top_upward_revisions": [],
+    "top_downward_revisions": [],
     "estimate_changes_since_previous": []
   },
   "options_signals": {
@@ -11299,15 +11162,7 @@
         "put_call_volume_ratio": 0.37,
         "iv_skew_pct": 2.5,
         "skew_read": "balanced",
-        "unusual_strikes": [
-          {
-            "type": "call",
-            "strike": 540.0,
-            "volume": 695,
-            "open_interest": 0,
-            "pct_from_spot": -3.2
-          }
-        ]
+        "unusual_strikes": []
       },
       "S": {
         "status": "ok",
@@ -11343,50 +11198,7 @@
         "put_call_volume_ratio": 0.75,
         "iv_skew_pct": 2.3,
         "skew_read": "balanced",
-        "unusual_strikes": [
-          {
-            "type": "call",
-            "strike": 120.0,
-            "volume": 6256,
-            "open_interest": 0,
-            "pct_from_spot": 7.2
-          },
-          {
-            "type": "call",
-            "strike": 110.0,
-            "volume": 2355,
-            "open_interest": 0,
-            "pct_from_spot": -1.8
-          },
-          {
-            "type": "call",
-            "strike": 115.0,
-            "volume": 1823,
-            "open_interest": 0,
-            "pct_from_spot": 2.7
-          },
-          {
-            "type": "put",
-            "strike": 70.0,
-            "volume": 6501,
-            "open_interest": 0,
-            "pct_from_spot": -37.5
-          },
-          {
-            "type": "put",
-            "strike": 104.0,
-            "volume": 2279,
-            "open_interest": 0,
-            "pct_from_spot": -7.1
-          },
-          {
-            "type": "put",
-            "strike": 95.0,
-            "volume": 639,
-            "open_interest": 0,
-            "pct_from_spot": -15.2
-          }
-        ]
+        "unusual_strikes": []
       },
       "AXON": {
         "status": "ok",
@@ -11645,10 +11457,15 @@
   },
   "news_and_catalysts": {
     "status": "ok",
-    "as_of": "2026-07-13T09:52:08.563496+00:00",
+    "as_of": "2026-07-13T11:51:25.814581+00:00",
     "tickers": {
       "DELL": {
         "headlines": [
+          {
+            "title": "1 Unpopular Stock That Deserves Some Love and 2 We Find Risky",
+            "published": "2026-07-13T11:34:39Z",
+            "url": "https://finance.yahoo.com/markets/stocks/articles/1-unpopular-stock-deserves-love-113439041.html"
+          },
           {
             "title": "Goldman Sachs sets jaw-dropping SanDisk stock price target for 2026",
             "published": "2026-07-12T16:47:00Z",
@@ -11673,11 +11490,6 @@
             "title": "Trump Accounts May Boost Kids' Savings\u2014 but Experts Say it Could Cost Families Thousands in College Aid",
             "published": "2026-07-11T10:01:02Z",
             "url": "https://finance.yahoo.com/small-business/articles/trump-accounts-may-boost-kids-100102041.html"
-          },
-          {
-            "title": "Dell (DELL) Says XPS Eyesafe Study Improved Sleep Eye Comfort And Productivity",
-            "published": "2026-07-11T04:16:04Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/dell-dell-says-xps-eyesafe-041604537.html"
           }
         ],
         "next_earnings": "2026-09-03"
@@ -11755,6 +11567,26 @@
       "AMD": {
         "headlines": [
           {
+            "title": "Kospi falls 9%, SK Hynix stock dives as Iran closes Hormuz Strait",
+            "published": "2026-07-13T11:34:10Z",
+            "url": "https://qz.com/kospi-iran-strait-hormuz-sk-hynix-wall-street-071326"
+          },
+          {
+            "title": "Nvidia's Biggest Risk Isn't Custom AI Chips From Broadcom or AMD -- It's Something That's Hidden in Plain Sight",
+            "published": "2026-07-13T11:26:00Z",
+            "url": "https://www.fool.com/investing/2026/07/13/nvda-biggest-risk-isnt-custom-ai-chips-avgo-or-amd/"
+          },
+          {
+            "title": "Will Memory Giants Micron, Sandisk, and SK Hynix Continue to Soar? History Is Strikingly Clear About What Happens Next.",
+            "published": "2026-07-13T10:30:00Z",
+            "url": "https://www.fool.com/investing/2026/07/13/will-memory-giants-micron-sandisk-and-sk-hynix-con/"
+          },
+          {
+            "title": "Stocks to Watch: SK Hynix, Intel, Akzo Nobel",
+            "published": "2026-07-13T09:28:45Z",
+            "url": "https://www.wsj.com/livecoverage/stock-market-today-dow-sp-500-nasdaq-07-13-2026/card/stocks-to-watch-sk-hynix-intel-akzo-nobel-Kz6QtkxLQjQNjN4ji1kT?siteid=yhoof2&yptr=yahoo"
+          },
+          {
             "title": "Advanced Micro Devices (AMD): Turing Inc. is being backed by AMD Ventures, Reports Bloomberg",
             "published": "2026-07-13T09:21:21Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/advanced-micro-devices-amd-turing-092121852.html"
@@ -11763,26 +11595,6 @@
             "title": "Taiwan Semiconductor Reports Earnings July 16. Here's What to Watch.",
             "published": "2026-07-13T09:10:00Z",
             "url": "https://www.fool.com/investing/2026/07/13/taiwan-semiconductor-reports-earnings-july-16-here/"
-          },
-          {
-            "title": "TSM Stock Dips Premarket As 36% Q2 Sales Surge Fails To Offset Iran-Driven Market Jitters",
-            "published": "2026-07-13T08:26:58Z",
-            "url": "https://stocktwits.com/news-articles/markets/equity/tsm-stock-dips-premarket-as-36-q2-sales-surge-fails-to-offset-iran-driven-market-jitters/cZmzjZaR7o8"
-          },
-          {
-            "title": "INTC, AMD, NVDA, AVGO: Chip Stocks Slide As Fresh US-Iran Strikes Test Peace Deal",
-            "published": "2026-07-13T04:58:19Z",
-            "url": "https://stocktwits.com/news-articles/markets/equity/intc-amd-nvda-avgo-chip-stocks-slide-as-fresh-us-iran-strikes-test-peace-deal/cZmzgG5R7oh"
-          },
-          {
-            "title": "Did Nvidia's 2028 Rack Delay Under Jensen Huang Open a Door for AMD and Google?",
-            "published": "2026-07-13T03:35:00Z",
-            "url": "https://www.fool.com/investing/2026/07/12/did-nvidias-2028-rack-delay-under-jensen-huang-ope/"
-          },
-          {
-            "title": "Why Meta Platforms Stock Surged This Week",
-            "published": "2026-07-13T02:11:48Z",
-            "url": "https://www.fool.com/investing/2026/07/12/why-meta-platforms-stock-surged-this-week/"
           }
         ],
         "next_earnings": "2026-08-04"
