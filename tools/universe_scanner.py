@@ -114,6 +114,29 @@ def _ma_tail(values, n: int):
     return sum(vals) / len(vals), len(values) >= n
 
 
+def _load_ai_exposure() -> dict:
+    """{TICKER: {exposure, reason}} from data/ai_exposure.json - the business-reality
+    layer: is this company SELLING the AI buildout, benefiting from it, orthogonal to
+    it, or is its core product replicable by frontier AI (the retail bear case)?
+    Numbers lag narrative: a name can grow revenue for years while the market reprices
+    its terminal value - this label is how the scanner carries that context. Fail-soft
+    to empty (rows then carry no label; the brain still applies the CLAUDE.md rules)."""
+    try:
+        data = json.loads((ROOT / "data" / "ai_exposure.json").read_text())
+        return {t.upper(): v for t, v in (data.get("labels") or {}).items()}
+    except Exception:
+        return {}
+
+
+def _deep_value_sort_key(row: dict) -> tuple:
+    """Deep-value lane ordering: AI-at-risk names rank LAST regardless of how far
+    below the 200W MA they sit - a business whose core product frontier AI can
+    replicate is the value-trap case, not the generational-entry case. Within each
+    group, deepest below the MA first. Pure for offline tests."""
+    return (row.get("ai_exposure") == "ai_at_risk",
+            row.get("pct_vs_200w_ma") if row.get("pct_vs_200w_ma") is not None else 0.0)
+
+
 def _screen_quality_ok(screen_row) -> bool:
     """Deterministic pre-filter for the deep-value lane: exclude names the estimate
     screen shows as SHRINKING with falling estimates (a broken business below its
@@ -190,6 +213,9 @@ def scan_universe(top_n: int = 15) -> dict:
                        .get("current", {}).get("rows", {})) or {}
     except Exception:
         screen_rows = {}
+
+    # Business-reality layer: per-name AI-exposure labels (see _load_ai_exposure).
+    ai_exposure = _load_ai_exposure()
 
     rows = []
     for t in tickers:
@@ -285,6 +311,9 @@ def scan_universe(top_n: int = 15) -> dict:
                 "wma_200w": round(w200[t][0], 2) if t in w200 else None,
                 "pct_vs_200w_ma": round(w200[t][2], 1) if t in w200 else None,
                 "is_full_200w_window": bool(w200[t][1]) if t in w200 else False,
+                # Business-reality: what this company sells relative to the AI wave.
+                "ai_exposure": (ai_exposure.get(t) or {}).get("exposure"),
+                "ai_exposure_reason": (ai_exposure.get(t) or {}).get("reason"),
                 "swing_setup_score": round(score, 2),
             })
         except Exception:
@@ -324,13 +353,33 @@ def scan_universe(top_n: int = 15) -> dict:
          and r.get("pct_vs_200w_ma") is not None
          and r["pct_vs_200w_ma"] <= AT_OR_BELOW_TOLERANCE_PCT
          and _screen_quality_ok(screen_rows.get(r["ticker"]))),
-        key=lambda r: r["pct_vs_200w_ma"])[:5]
+        key=_deep_value_sort_key)[:5]
     for r in deep_value:
         r["lane"] = "deep_value_200w"
 
-    # Valuation + analyst-estimate context for top setups, contrarian AND deep-value
-    # picks (per-ticker calls are slow, so not the whole universe).
-    for r in rows[:top_n] + contrarian + deep_value:
+    # Supplier-pullback lane: AI SUPPLIERS (memory, photonics, interconnect, power...)
+    # that ran hard, are now 8-30% off their 52-week high, but still hold their
+    # 200-DMA - the "extended name coming back in" setup. Memory names here often
+    # print the lowest forward multiples on the board; CLAUDE.md's cyclical-value
+    # discipline governs whether that is value or a cycle-peak trap.
+    lane_taken |= {r["ticker"] for r in deep_value}
+    supplier_pullbacks = sorted(
+        (r for r in rows
+         if r["ticker"] not in lane_taken
+         and r.get("ai_exposure") == "ai_supplier"
+         and r.get("liquid")
+         and r.get("is_full_52w_window")
+         and r.get("above_200dma")
+         and r.get("pct_from_52w_high") is not None
+         and -30 <= r["pct_from_52w_high"] <= -8),
+        key=lambda r: r.get("rel_strength_3m_pct") if r.get("rel_strength_3m_pct")
+        is not None else -999, reverse=True)[:5]
+    for r in supplier_pullbacks:
+        r["lane"] = "supplier_pullback"
+
+    # Valuation + analyst-estimate context for top setups, contrarian, deep-value
+    # AND supplier-pullback picks (per-ticker calls are slow, so not the whole universe).
+    for r in rows[:top_n] + contrarian + deep_value + supplier_pullbacks:
         tk = yf.Ticker(r["ticker"])
         try:
             info = tk.info
@@ -381,6 +430,14 @@ def scan_universe(top_n: int = 15) -> dict:
         r["post_earnings_drift_candidate"] = bool(
             dse is not None and 0 <= dse <= 15 and revision_up
             and r.get("momentum_1m_pct", 99) < 15)
+        # Fwd-multiple vs growth: which extended AI suppliers are CHEAP relative to
+        # their growth (memory names often print the lowest fwd multiples late-cycle -
+        # the brain must judge cycle-peak vs value; this just makes it visible).
+        fpe = (r.get("valuation") or {}).get("forward_pe")
+        g = (r.get("analyst_estimates") or {}).get("fwd_revenue_growth_pct")
+        r["fwd_pe_to_growth"] = (round(fpe / g, 2)
+                                 if isinstance(fpe, (int, float)) and isinstance(g, (int, float))
+                                 and fpe > 0 and g > 0 else None)
 
     # Sector relative strength: which parts of the AI stack money is rotating
     # into or out of. Computed over the whole universe, not just top setups.
@@ -398,6 +455,7 @@ def scan_universe(top_n: int = 15) -> dict:
     return {
         "contrarian_setups": contrarian,
         "deep_value_200w": deep_value,
+        "supplier_pullbacks": supplier_pullbacks,
         "sector_relative_strength": sector_rs,
         "status": "ok",
         "scanned": len(rows),

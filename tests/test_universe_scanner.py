@@ -15,7 +15,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from tools.universe_scanner import (  # noqa: E402
     _return_over_sessions, _trailing_high, _rel_strength, _median_dollar_volume,
-    _ma_tail, _screen_quality_ok, WEEKS_200, AT_OR_BELOW_TOLERANCE_PCT,
+    _ma_tail, _screen_quality_ok, _deep_value_sort_key, _load_ai_exposure,
+    WEEKS_200, AT_OR_BELOW_TOLERANCE_PCT,
     SESS_1M, SESS_3M, SESS_6M, SESS_52W, MIN_BARS, SESS_ADV, MIN_ADV_USD,
 )
 
@@ -129,10 +130,38 @@ def test_screen_quality_gate():
     check("empty dict passes", _screen_quality_ok({}) is True)
 
 
+def test_deep_value_ai_risk_ordering():
+    print("deep-value lane ordering (AI-at-risk ranks last):")
+    rows = [
+        {"ticker": "DUOL", "pct_vs_200w_ma": -37.0, "ai_exposure": "ai_at_risk"},
+        {"ticker": "SMR", "pct_vs_200w_ma": -43.2, "ai_exposure": "ai_supplier"},
+        {"ticker": "ADBE", "pct_vs_200w_ma": -44.6, "ai_exposure": "ai_at_risk"},
+        {"ticker": "S", "pct_vs_200w_ma": -2.0, "ai_exposure": "ai_beneficiary"},
+        {"ticker": "XXXX", "pct_vs_200w_ma": -10.0, "ai_exposure": None},
+    ]
+    ordered = [r["ticker"] for r in sorted(rows, key=_deep_value_sort_key)]
+    check("non-at-risk sorted deepest-first, at-risk LAST",
+          ordered == ["SMR", "XXXX", "S", "ADBE", "DUOL"], str(ordered))
+    check("missing label treated as not-at-risk (brain still vets)",
+          ordered.index("XXXX") < ordered.index("ADBE"))
+
+
+def test_ai_exposure_file_loads():
+    print("ai_exposure.json (seed file):")
+    labels = _load_ai_exposure()
+    check("file loads with 100+ names", len(labels) >= 100, str(len(labels)))
+    check("DUOL labeled at-risk", (labels.get("DUOL") or {}).get("exposure") == "ai_at_risk")
+    check("NVDA labeled supplier", (labels.get("NVDA") or {}).get("exposure") == "ai_supplier")
+    check("every label has a valid enum + reason",
+          all(v.get("exposure") in ("ai_supplier", "ai_beneficiary", "ai_neutral", "ai_at_risk")
+              and v.get("reason") for v in labels.values()))
+
+
 if __name__ == "__main__":
     for fn in (test_constants, test_return_over_sessions, test_trailing_high,
                test_rel_strength, test_median_dollar_volume,
-               test_ma_tail_200w, test_screen_quality_gate):
+               test_ma_tail_200w, test_screen_quality_gate,
+               test_deep_value_ai_risk_ordering, test_ai_exposure_file_loads):
         fn()
     print()
     if FAILURES:

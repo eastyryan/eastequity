@@ -1266,6 +1266,8 @@ def redeploy_dashboard() -> None:
             paths.append("state/KILL_SWITCH")
         if (ROOT / "data" / "cusip_map.json").exists():
             paths.append("data/cusip_map.json")  # learned ticker->CUSIP, must persist in cloud
+        if (ROOT / "data" / "ai_exposure.json").exists():
+            paths.append("data/ai_exposure.json")  # business-reality labels, review-maintained
         # add -A so a REMOVED kill switch (all-clear) also propagates; ignore missing paths.
         for p in paths:
             subprocess.run(["git", "add", "-A", p], cwd=ROOT, capture_output=True, text=True)
@@ -1456,9 +1458,15 @@ def universe_review(run_id: str) -> int:
         "Constraints (code-enforced): US-listed common equities only, no leveraged/inverse "
         "products, never remove the protected tickers, max 10 adds and 10 removals, final "
         "size 90-140 names. Removing a name is healthy - a universe that only grows is a "
-        "museum. Output a ```json block: {\"sectors\": {<full updated sectors map>}, "
-        "\"added\": [..], \"removed\": [..], \"rationale\": \"3-5 plain sentences for "
-        "the public improvement log\"}."
+        "museum. ALSO maintain the AI-exposure map (data/ai_exposure.json in the bundle "
+        "context): classify every ADDED name and refresh any existing label your research "
+        "contradicts, using exactly one of ai_supplier / ai_beneficiary / ai_neutral / "
+        "ai_at_risk with a <=160-char reason written as the plain retail bear/bull case "
+        "(e.g. 'frontier LLMs teach languages free'). Output a ```json block: "
+        "{\"sectors\": {<full updated sectors map>}, "
+        "\"added\": [..], \"removed\": [..], "
+        "\"ai_exposure_updates\": {\"TICK\": {\"exposure\": \"...\", \"reason\": \"...\"}}, "
+        "\"rationale\": \"3-5 plain sentences for the public improvement log\"}."
     )
     result = subprocess.run(["claude", "-p", prompt], cwd=ROOT,
                             capture_output=True, text=True, timeout=1800)
@@ -1513,6 +1521,36 @@ def universe_review(run_id: str) -> int:
                            for s, ts in data["sectors"].items()}
         added = added - dropped
         new_tickers = new_tickers - dropped
+
+    # AI-exposure map maintenance (enum-guarded): the review classifies added names
+    # and refreshes labels its research contradicts; code validates and merges so a
+    # malformed label can never corrupt the business-reality layer the scanner reads.
+    try:
+        exp_file = ROOT / "data" / "ai_exposure.json"
+        exp = json.loads(exp_file.read_text()) if exp_file.exists() else {
+            "description": "per-name AI exposure", "valid_exposures":
+            ["ai_supplier", "ai_beneficiary", "ai_neutral", "ai_at_risk"], "labels": {}}
+        valid = set(exp.get("valid_exposures") or
+                    ["ai_supplier", "ai_beneficiary", "ai_neutral", "ai_at_risk"])
+        applied, rejected_lbl = 0, []
+        for tk, upd in (data.get("ai_exposure_updates") or {}).items():
+            tk = str(tk).upper()
+            e = (upd or {}).get("exposure")
+            reason = str((upd or {}).get("reason") or "")[:160]
+            if tk in new_tickers and e in valid and reason:
+                exp["labels"][tk] = {"exposure": e, "reason": reason}
+                applied += 1
+            else:
+                rejected_lbl.append(tk)
+        # prune labels for names no longer in the universe
+        exp["labels"] = {t: v for t, v in exp["labels"].items() if t in new_tickers}
+        exp["last_reviewed"] = _et_date()
+        exp_file.write_text(json.dumps(exp, indent=1))
+        if applied or rejected_lbl:
+            print(f"  ai_exposure: {applied} labels updated"
+                  + (f", rejected {rejected_lbl}" if rejected_lbl else ""))
+    except Exception as e:
+        print(f"  (ai_exposure maintenance failed: {e})")
 
     current["sectors"] = data["sectors"]
     current["last_reviewed"] = _et_date()

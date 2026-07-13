@@ -88,6 +88,35 @@ Beyond filings/13F/news, every run now includes:
   is still 3-90 days: the swing trade is the reversion bounce or base breakout off
   this level with a stop below the zone, NOT a multi-year hold. If it needs years to
   work, put it on the watchlist with the level and move on.
+- **ai_exposure** (on every scanned row) - the BUSINESS-REALITY label: ai_supplier
+  (sells the AI buildout), ai_beneficiary (AI cuts its costs / extends its product),
+  ai_neutral (moat orthogonal to AI), ai_at_risk (core product replicable or
+  commoditized by frontier AI - e.g. language learning, template creative tooling,
+  seat-priced SaaS facing agentic AI). THINK LIKE A RETAIL INVESTOR: for any
+  deep-value or contrarian candidate, state the one-line bear case a retail investor
+  would give ("why would I pay for X when AI does it free?") and REBUT IT WITH
+  SPECIFIC EVIDENCE (enterprise workflow lock-in, proprietary data moat, AI revenue
+  actually in the numbers - not management slideware) before proposing. CRITICAL:
+  rising revenue and even upward estimate revisions DO NOT refute a structural AI
+  repricing - fundamentals lag narrative, and a melting business can grow for years
+  while its multiple compresses. When a quality screen says "cheap" and the label
+  says ai_at_risk, the market is usually pricing the threat, not making a mistake -
+  your job is to figure out which, and say so in plain words.
+- **supplier_pullbacks** - AI SUPPLIERS (memory, photonics, interconnect, power) that
+  ran hard, now sit 8-30% off their 52-week high, and still hold their 200-DMA - the
+  "extended leader coming back in" setup, ranked by 3-month relative strength. Check
+  fwd_pe_to_growth on these rows; memory names often show the lowest multiples here.
+  Entries still need the reclaim/base confirmation the momentum lanes demand.
+- **Cyclical-value discipline (memory/storage and other AI-supplier cyclicals)** -
+  extended AI suppliers (memory, photonics, interconnect) pulling back from huge runs
+  often show the LOWEST forward multiples on the board (fwd_pe_to_growth on surfaced
+  rows makes this visible). A low forward P/E on a CYCLICAL near record earnings is a
+  cycle-peak warning as often as a value signal: earnings estimates embed the cycle
+  continuing. To buy one, underwrite the CYCLE, not the multiple - HBM/AI demand
+  visibility, supply discipline, inventory levels (the inventory_building flag),
+  guidance direction - and treat the entry as the pullback/reclaim setup the momentum
+  lanes already demand. Never write "cheapest fwd P/E in the group" as a thesis by
+  itself.
 - **Candlestick charts** at data/charts/<TICKER>.png for every focus name - USE THE READ
   TOOL TO LOOK AT THEM before judging entry geometry. Bases, failed breakouts, and support
   shelves are visible there that the numeric indicators cannot convey.
