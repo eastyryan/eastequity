@@ -117,6 +117,33 @@ def test_fundamentals_rows_from_units():
     check("amendment wins here too", am and am[-1]["value"] == 101.0)
 
 
+def test_series_tagged_recency_and_umbrella():
+    """Tag choice: strictly-newer tag wins; ties go to the earlier (umbrella) tag."""
+    print("_series_tagged (umbrella-first, strict recency):")
+    from tools.fundamentals import _series_tagged
+
+    def fact(end, val, start=None, filed="2026-06-01"):
+        return {"start": start or "2026-02-01", "end": end, "val": val,
+                "form": "10-Q", "filed": filed}
+
+    # MELI case: both tags equally fresh; umbrella (listed first) must win.
+    gaap = {"Revenues": {"units": {"USD": [fact("2026-03-31", 8.8e9)]}},
+            "Contract": {"units": {"USD": [fact("2026-03-31", 6.1e9)]}}}
+    rows, tag = _series_tagged(gaap, ["Revenues", "Contract"], instant=False)
+    check("equal freshness -> umbrella tag wins", tag == "Revenues" and rows[-1]["value"] == 8.8e9,
+          f"{tag}")
+    # ORCL case: umbrella tag died years ago; strictly-newer subset must win.
+    gaap2 = {"Revenues": {"units": {"USD": [fact("2022-05-31", 42.4e9)]}},
+             "Contract": {"units": {"USD": [fact("2026-02-28", 17.2e9)]}}}
+    rows2, tag2 = _series_tagged(gaap2, ["Revenues", "Contract"], instant=False)
+    check("strictly newer subset beats dead umbrella", tag2 == "Contract", f"{tag2}")
+    # LITE case: a ~1yr-stale mid-priority tag must NOT beat a truly current one.
+    gaap3 = {"Excluding": {"units": {"USD": [fact("2025-03-29", 0.4e9)]}},
+             "Including": {"units": {"USD": [fact("2026-03-28", 0.8e9)]}}}
+    rows3, tag3 = _series_tagged(gaap3, ["Excluding", "Including"], instant=False)
+    check("current tag beats a year-stale earlier-listed one", tag3 == "Including", f"{tag3}")
+
+
 def test_old_behavior_would_have_failed():
     """Prove the test catches the bug: simulate the OLD filter and show it's stale."""
     print("counterfactual (old filter is provably stale):")
@@ -133,6 +160,7 @@ def test_old_behavior_would_have_failed():
 if __name__ == "__main__":
     for fn in (test_dedupe_facts_keeps_framed_newest, test_dedupe_prefers_latest_filed,
                test_annualish_quarterly_and_annual, test_fundamentals_rows_from_units,
+               test_series_tagged_recency_and_umbrella,
                test_old_behavior_would_have_failed):
         fn()
     print()

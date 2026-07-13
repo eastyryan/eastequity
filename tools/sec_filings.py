@@ -87,7 +87,18 @@ def get_company_facts(cik_or_ticker) -> dict:
     return data
 
 
-def dedupe_facts(units: list[dict], forms=("10-Q", "10-K", "10-Q/A", "10-K/A"),
+def evict_facts(cik_or_ticker) -> None:
+    """Drop one company's facts from the in-memory cache. Full-universe sweeps
+    (~111 multi-MB payloads) would otherwise hold gigabytes in RAM."""
+    raw = str(cik_or_ticker).strip()
+    cik = raw.zfill(10) if raw.isdigit() else ticker_to_cik(raw)
+    if cik:
+        with _FACTS_LOCK:
+            _FACTS_CACHE.pop(cik, None)
+
+
+def dedupe_facts(units: list[dict],
+                 forms=("10-Q", "10-K", "10-Q/A", "10-K/A", "20-F", "40-F", "6-K"),
                  min_span: int | None = None, max_span: int | None = None) -> list[dict]:
     """Canonical XBRL fact selection: filter by form and (optionally) duration span,
     dedupe by (start, end) PREFERRING THE LATEST-FILED entry, sorted newest-last.
@@ -128,10 +139,12 @@ def dedupe_facts(units: list[dict], forms=("10-Q", "10-K", "10-Q/A", "10-K/A"),
 
 
 def _annualish(units: list[dict], quarterly: bool) -> list[dict]:
-    """Single-quarter (not YTD-cumulative) or annual rows, newest last, via dedupe_facts."""
+    """Single-quarter (not YTD-cumulative) or annual rows, newest last, via dedupe_facts.
+    Annual accepts 20-F/40-F so foreign private issuers (TSM, ASML, ARM...) aren't blank."""
     if quarterly:
-        return dedupe_facts(units, min_span=80, max_span=100)[-6:]
-    return dedupe_facts(units, forms=("10-K", "10-K/A"), min_span=300)[-6:]
+        return dedupe_facts(units, forms=("10-Q", "10-K", "10-Q/A", "10-K/A", "20-F", "40-F", "6-K"),
+                            min_span=80, max_span=100)[-6:]
+    return dedupe_facts(units, forms=("10-K", "10-K/A", "20-F", "40-F"), min_span=300)[-6:]
 
 
 def get_filing_brief(ticker: str) -> dict:
@@ -150,9 +163,10 @@ def get_filing_brief(ticker: str) -> dict:
         for form, fdate, rdate, accession, doc in zip(
                 recent["form"], recent["filingDate"], report_dates,
                 recent["accessionNumber"], recent["primaryDocument"]):
-            if form in ("10-K", "10-Q") and latest_report is None:
+            # 20-F/40-F: foreign private issuers' annual report (their "10-K").
+            if form in ("10-K", "10-Q", "20-F", "40-F") and latest_report is None:
                 latest_report = {"form": form, "filed": fdate, "period_end": rdate}
-            if form in ("10-K", "10-Q", "8-K") and len(filings) < 8:
+            if form in ("10-K", "10-Q", "8-K", "20-F", "6-K") and len(filings) < 8:
                 acc = accession.replace("-", "")
                 filings.append({
                     "form": form, "filed": fdate,
@@ -163,15 +177,25 @@ def get_filing_brief(ticker: str) -> dict:
         try:
             facts = get_company_facts(cik)  # shared TTL cache (see get_company_facts)
             gaap = facts.get("facts", {}).get("us-gaap", {})
+            # Umbrella concepts FIRST: `Revenues` is the GAAP top line; the ASC-606
+            # contract tags are SUBSETS that understate fintechs (MELI: interest income
+            # outside contract revenue, -31%) and misstate utilities (TLN: derivative
+            # effects). Banks report RevenuesNetOfInterestExpense (JPM's `Revenues` tag
+            # died in 2014). Ties on recency go to the earlier (more inclusive) tag;
+            # a strictly newer subset tag still wins (ORCL's `Revenues` died in 2022).
             for label, tags in {
-                "revenue": ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues"],
+                "revenue": ["Revenues", "RevenuesNetOfInterestExpense",
+                            "RevenueFromContractWithCustomerExcludingAssessedTax",
+                            "RevenueFromContractWithCustomerIncludingAssessedTax"],
                 "net_income": ["NetIncomeLoss"],
                 "gross_profit": ["GrossProfit"],
                 "capex": ["PaymentsToAcquirePropertyPlantAndEquipment"],
             }.items():
                 # Recency-aware tag choice: a company can switch tags; the first tag
-                # with data may have gone stale. Pick the tag whose series is newest.
+                # with data may have gone stale. Pick the tag whose series is newest;
+                # ties go to the earlier (umbrella) tag in the list.
                 best_rows, best_end = None, ""
+                best_annual, best_annual_end = None, ""
                 for tag in tags:
                     units = gaap.get(tag, {}).get("units", {}).get("USD")
                     if not units:
@@ -179,10 +203,19 @@ def get_filing_brief(ticker: str) -> dict:
                     rows = _annualish(units, quarterly=True)
                     if rows and rows[-1].get("end", "") > best_end:
                         best_rows, best_end = rows, rows[-1].get("end", "")
+                    if label == "revenue":  # annual (FY) revenue: freshness + FY context
+                        arows = _annualish(units, quarterly=False)
+                        if arows and arows[-1].get("end", "") > best_annual_end:
+                            best_annual, best_annual_end = arows, arows[-1].get("end", "")
                 if best_rows:
                     facts_out[label] = [
                         {"period_end": u["end"], "value_usd": u["val"], "form": u["form"]}
                         for u in best_rows
+                    ]
+                if label == "revenue" and best_annual:
+                    facts_out["annual_revenue"] = [
+                        {"period_end": u["end"], "value_usd": u["val"], "form": u["form"]}
+                        for u in best_annual[-4:]
                     ]
             # Balance sheet, cash flow, dilution: the "is this business sound"
             # layer. Instant facts have no start date; flow facts may be YTD -
@@ -228,9 +261,20 @@ def get_filing_brief(ticker: str) -> dict:
         # before that period, something upstream is stale - say so LOUDLY rather
         # than letting year-old numbers pass as current (the DELL $23.4B incident).
         rev = facts_out.get("revenue") or []
-        current_through = rev[-1]["period_end"] if rev else None
+        arev = facts_out.get("annual_revenue") or []
+        # Current-through considers BOTH cadences: a fiscal-year-end company's latest
+        # filing is a 10-K whose discrete Q4 is never filed as a quarterly row (Q4 =
+        # FY - Q1 - Q2 - Q3), so the ANNUAL series is what reaches the reportDate
+        # (ORCL/CRDO). Quarterly-only would false-alarm every such company.
+        q_end = rev[-1]["period_end"] if rev else None
+        a_end = arev[-1]["period_end"] if arev else None
+        current_through = max(filter(None, [q_end, a_end]), default=None)
         out["fundamentals_current_through"] = current_through
-        if latest_report and latest_report.get("period_end") and current_through:
+        # Warning is scoped to domestic quarterly filers; foreign private issuers
+        # (20-F/40-F) report annually, so a quarterly-series lag is their normal
+        # cadence, not a staleness bug - the audit classifies them separately.
+        if (latest_report and latest_report.get("form") in ("10-K", "10-Q")
+                and latest_report.get("period_end") and current_through):
             if current_through < latest_report["period_end"]:
                 out["stale_fundamentals_warning"] = (
                     f"Extracted fundamentals end {current_through} but the latest "

@@ -130,7 +130,14 @@ def _rows_from_units(units: list, instant: bool, keep: int) -> list:
 
 
 def _series_tagged(gaap: dict, tags: list, instant: bool, keep: int = 6) -> tuple:
-    """(rows, tag_used): first tag with recent data; else freshest available."""
+    """(rows, tag_used): the tag whose series is STRICTLY newest; ties go to the
+    earlier tag in the list (list order = concept preference, umbrella first).
+
+    The old rule - "first tag fresh within 550 days wins" - let a subset tag that
+    lagged a year beat the truly current one (LITE's contract-excluding tag, 470
+    days stale, outranked the current including-tax variant). Strict recency with
+    ordered tie-break gets both properties: never stale when a fresher tag exists,
+    and the preferred (most inclusive) concept wins among equally-fresh ones."""
     best, best_end, best_tag = [], "", None
     for tag in tags:
         unit_map = gaap.get(tag, {}).get("units", {})
@@ -141,13 +148,7 @@ def _series_tagged(gaap: dict, tags: list, instant: bool, keep: int = 6) -> tupl
         if not rows:
             continue
         end = rows[-1]["period_end"] or ""
-        try:
-            fresh = (date.today() - date.fromisoformat(end)).days <= STALE_DAYS
-        except ValueError:
-            fresh = False
-        if fresh:
-            return rows, tag     # first fresh tag in priority order wins
-        if end > best_end:       # remember the least-stale series as a fallback
+        if end > best_end:  # strictly newer wins; ties keep the earlier-listed tag
             best, best_end, best_tag = rows, end, tag
     return best, best_tag
 
@@ -406,10 +407,15 @@ def get_deep_fundamentals(ticker: str) -> dict:
             quarterly[concept] = rows
 
     # ---- ratio inputs: same payload, longer history so YoY never starves ----
+    # Umbrella concept first: `Revenues` is the GAAP top line; ASC-606 contract tags
+    # are subsets that understate fintechs (MELI -31%) and misstate utilities with
+    # derivatives (TLN). Banks use RevenuesNetOfInterestExpense. Strict-recency
+    # selection in _series_tagged still lets a fresher subset tag win (ORCL).
     revenue = _quarterly(_series(gaap, [
+        "Revenues", "RevenuesNetOfInterestExpense",
         "RevenueFromContractWithCustomerExcludingAssessedTax",
         "RevenueFromContractWithCustomerIncludingAssessedTax",
-        "Revenues", "SalesRevenueNet"], instant=False, keep=24))
+        "SalesRevenueNet"], instant=False, keep=24))
     gross = _quarterly(_series(gaap, ["GrossProfit"], instant=False, keep=24))
     # SBC: prefer the income-statement tag (a 3-month context is usually filed
     # every quarter) over the cash-flow tag (YTD-only, which silently dropped

@@ -424,23 +424,35 @@ def _actuals_from_edgar(ticker: str) -> dict:
 
     out: dict = {}
     # Revenue: same tag preference order as tools.sec_filings.get_filing_brief
-    # (kept in sync so ledger actuals match what the brain sees in its bundle).
+    # (kept in sync so ledger actuals match what the brain sees in its bundle):
+    # umbrella `Revenues` first (contract tags are subsets - grading a total-revenue
+    # guide against a subset actual is a false miss), banks' net-of-interest tag,
+    # then the contract variants. The tag whose facts are NEWEST wins; ties go to
+    # the earlier (more inclusive) tag - never a first-tag-with-any-data break.
     for label, tags, additive in (
-        ("revenue", ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues"], True),
+        ("revenue", ["Revenues", "RevenuesNetOfInterestExpense",
+                     "RevenueFromContractWithCustomerExcludingAssessedTax",
+                     "RevenueFromContractWithCustomerIncludingAssessedTax"], True),
         ("eps", ["EarningsPerShareDiluted", "EarningsPerShareBasic"], False),
     ):
+        best_units, best_end = None, ""
         for tag in tags:
             unit_map = gaap.get(tag, {}).get("units", {})
             units = unit_map.get("USD") or unit_map.get("USD/shares")
             if not units:
                 continue
-            labels, annual, q_by_fy = _fiscal_labels(units)
-            if additive:  # derive Q4 = FY - (Q1+Q2+Q3) where the full set exists
-                for fy, qs in q_by_fy.items():
-                    if fy in annual and all(k in qs for k in ("Q1", "Q2", "Q3")):
-                        labels[f"FY{fy}Q4"] = annual[fy] - sum(qs.values())
-            out[label] = labels
-            break
+            newest = max((u.get("end", "") for u in units
+                          if u.get("form") in ("10-Q", "10-K")), default="")
+            if newest > best_end:
+                best_units, best_end = units, newest
+        if not best_units:
+            continue
+        labels, annual, q_by_fy = _fiscal_labels(best_units)
+        if additive:  # derive Q4 = FY - (Q1+Q2+Q3) where the full set exists
+            for fy, qs in q_by_fy.items():
+                if fy in annual and all(k in qs for k in ("Q1", "Q2", "Q3")):
+                    labels[f"FY{fy}Q4"] = annual[fy] - sum(qs.values())
+        out[label] = labels
     return out
 
 

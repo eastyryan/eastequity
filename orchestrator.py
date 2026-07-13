@@ -236,6 +236,29 @@ def _json_safe(obj):
     return obj
 
 
+def _universe_audit_summary() -> dict | None:
+    """Compact summary of the latest ALL-universe freshness audit for the bundle.
+    None when no audit exists or it is too old to trust (>8 days)."""
+    f = ROOT / "dashboard" / "data" / "freshness_audit.json"
+    try:
+        a = json.loads(f.read_text())
+        audited_at = a.get("audited_at_et", "")
+        age_days = None
+        try:
+            age_days = (datetime.now(timezone.utc)
+                        - datetime.fromisoformat(audited_at)).days
+        except Exception:
+            pass
+        if age_days is not None and age_days > 8:
+            return None
+        return {"audited_at_et": audited_at, "audited": a.get("audited"),
+                "fresh": a.get("fresh"), "stale_tickers": a.get("stale_tickers", []),
+                "error_tickers": a.get("error_tickers", []),
+                "foreign_annual_filers": a.get("foreign_annual_filers", [])}
+    except Exception:
+        return None
+
+
 def build_volatility_context(scan: dict, options_signals: dict) -> dict:
     """Per-ticker volatility for the deterministic stop floor: {TICKER: {atr_pct,
     expected_move_pct}}. ATR comes from the scanner (every name; also present in the
@@ -502,9 +525,11 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
             "note": "Per focus name: the newest period our XBRL fundamentals reach vs the "
                     "period the latest filed 10-Q/10-K actually covers. stale=true means "
                     "the fundamentals below are NOT the latest reported quarter - do NOT "
-                    "cite them as current; flag the staleness and lean on price/news.",
+                    "cite them as current; flag the staleness and lean on price/news. "
+                    "universe_audit summarizes the weekly ALL-names sweep.",
             "by_ticker": fundamentals_freshness,
             "stale_tickers": stale_names,
+            "universe_audit": _universe_audit_summary(),
         },
         "deep_fundamentals": deep_fundamentals,
         "filing_texts": filing_texts,
@@ -1332,6 +1357,31 @@ def self_review(run_id: str) -> int:
     return 0
 
 
+def run_freshness_audit(run_id: str) -> int:
+    """Audit fundamentals freshness for EVERY universe name and publish the artifact.
+    Runs weekly after the universe review and on demand via --freshness-audit. A
+    stale name here means our XBRL extraction lags that company's latest filed
+    report - the exact class of bug behind the DELL $23.4B incident."""
+    from tools.freshness_audit import audit_universe
+    audit = audit_universe(cross_check=True, progress=True)
+    stale, errors = audit.get("stale_tickers", []), audit.get("error_tickers", [])
+    mism = audit.get("value_mismatch_vs_yfinance", [])
+    print(f"  audited {audit.get('audited')} names: {audit.get('fresh')} fresh, "
+          f"{len(stale)} stale, {len(errors)} errors, {len(mism)} value mismatches")
+    if stale or errors or mism:
+        journal.log_improvement(
+            f"Universe freshness audit: {len(stale)} stale ({stale}), {len(errors)} "
+            f"errors ({errors}), {len(mism)} yfinance mismatches ({mism}) out of "
+            f"{audit.get('audited')} names - investigate before trusting these names' "
+            f"fundamentals.", run_id)
+    else:
+        journal.log_improvement(
+            f"Universe freshness audit: all {audit.get('audited')} names verified "
+            f"current against their latest SEC filings (+ yfinance cross-check).", run_id)
+    redeploy_dashboard()
+    return 0 if not stale else 1
+
+
 def _unpriceable(tickers: list) -> set:
     """Names that return NO live price data (delisted / bad ticker). Fail-open: if the
     whole download fails (feed down), return empty so a good review is never wiped."""
@@ -1481,6 +1531,21 @@ def universe_review(run_id: str) -> int:
         d["improvements"] = ([{"date": _et_date(), "note": note}]
                              + d.get("improvements", []))[:30]
         latest_file.write_text(json.dumps(d, indent=2, default=str))
+    # Weekly full-universe freshness sweep rides the same Sunday slot: audit the
+    # FINAL curated universe so every name - not just this week's focus set - is
+    # verified current against its latest SEC filing before Monday's pre-market.
+    try:
+        from tools.freshness_audit import audit_universe
+        audit = audit_universe(cross_check=True, progress=False)
+        a_stale = audit.get("stale_tickers", [])
+        print(f"  freshness sweep: {audit.get('fresh')}/{audit.get('audited')} fresh"
+              + (f", STALE: {a_stale}" if a_stale else ""))
+        if a_stale:
+            journal.log_improvement(
+                f"Freshness sweep found stale fundamentals for {a_stale} - "
+                f"do not trust these names' fundamentals until resolved.", run_id)
+    except Exception as e:
+        print(f"  (freshness sweep failed: {e})")
     redeploy_dashboard()
     print(f"universe updated: +{len(added)} -{len(removed)} = {len(new_tickers)} names")
     return 0
@@ -1497,6 +1562,9 @@ def main() -> int:
                     help="weekly audit of decisions vs outcomes; no trading")
     ap.add_argument("--universe-review", action="store_true",
                     help="weekly curation of the watchable universe; no trading")
+    ap.add_argument("--freshness-audit", action="store_true",
+                    help="audit fundamentals freshness for EVERY universe name, "
+                         "publish dashboard/data/freshness_audit.json; no trading")
     ap.add_argument("--manual", action="store_true",
                     help="user-initiated run: exempt from (and not counted in) the daily run budget")
     ap.add_argument("--news-only", action="store_true",
@@ -1520,6 +1588,9 @@ def main() -> int:
     if args.universe_review:
         print(f"=== East Equity Agent universe review {run_id} ===")
         return universe_review(run_id)
+    if args.freshness_audit:
+        print(f"=== East Equity Agent universe freshness audit {run_id} ===")
+        return run_freshness_audit(run_id)
     print(f"=== East Equity Agent run {run_id} (mode: {cfg['mode']['trading_mode']}) ===")
 
     if args.gather_only:
