@@ -35,10 +35,16 @@ def render_charts(tickers: list[str]) -> list[str]:
                 continue
             sma20 = df["Close"].rolling(20).mean()
             sma50 = df["Close"].rolling(50).mean()
+            vol_ma50 = df["Volume"].rolling(50).mean()
 
-            fig, ax = plt.subplots(figsize=(12.8, 6.0), dpi=110)
+            # Two panes: price (top) + volume (bottom). Volume is the conviction
+            # dimension - reversals and real breakouts print in it first.
+            fig, (ax, axv) = plt.subplots(
+                2, 1, figsize=(12.8, 7.6), dpi=110, sharex=True,
+                gridspec_kw={"height_ratios": [3, 1], "hspace": 0.06})
             fig.patch.set_facecolor("#fafafa")
             ax.set_facecolor("#fafafa")
+            axv.set_facecolor("#fafafa")
             x = range(len(df))
             for i, (_, row) in enumerate(df.iterrows()):
                 up = row["Close"] >= row["Open"]
@@ -50,10 +56,41 @@ def render_charts(tickers: list[str]) -> list[str]:
                     facecolor=color, edgecolor=color))
             ax.plot(x, sma20, color="#2563eb", linewidth=1.2, label="20d avg")
             ax.plot(x, sma50, color="#d97706", linewidth=1.2, label="50d avg")
+
+            # Volume pane: bars colored by day direction; 50d average line; bars at
+            # >=2x average darkened (effort spikes worth reading against the range).
+            vols = df["Volume"].tolist()
+            vma = vol_ma50.tolist()
+            for i, (_, row) in enumerate(df.iterrows()):
+                up = row["Close"] >= row["Open"]
+                base = "#047857" if up else "#b91c1c"
+                heavy = vma[i] and vols[i] >= 2 * vma[i]
+                axv.bar(i, vols[i], width=0.7, color=base,
+                        alpha=0.95 if heavy else 0.45, linewidth=0)
+            axv.plot(x, vma, color="#52525b", linewidth=1.1, label="50d avg vol")
+            # Annotate the volume read so the picture and the numbers agree.
+            try:
+                from tools.volume_analysis import analyze_volume
+                vs = analyze_volume(
+                    [float(v) for v in df["Open"]], [float(v) for v in df["High"]],
+                    [float(v) for v in df["Low"]], [float(v) for v in df["Close"]],
+                    [float(v) for v in vols])
+                axv.set_title(f"volume - read: {vs.get('read')} | rvol {vs.get('rvol')} | "
+                              f"CMF20 {vs.get('cmf_20')} | U/D {vs.get('updown_vol_ratio_25d')} | "
+                              f"OBV div: {vs.get('obv_divergence')}",
+                              loc="left", fontsize=10, color="#52525b", pad=6)
+            except Exception:
+                pass
+            axv.tick_params(colors="#a1a1aa", length=0, labelsize=9)
+            axv.grid(axis="y", color="#e4e4e7", linewidth=0.8)
+            axv.set_axisbelow(True)
+            for sp in axv.spines.values():
+                sp.set_visible(False)
+
             ticks = list(range(0, len(df), max(len(df) // 6, 1)))
-            ax.set_xticks(ticks)
-            ax.set_xticklabels([df.index[i].strftime("%b %d") for i in ticks],
-                               color="#a1a1aa", fontsize=10)
+            axv.set_xticks(ticks)
+            axv.set_xticklabels([df.index[i].strftime("%b %d") for i in ticks],
+                                color="#a1a1aa", fontsize=10)
             ax.tick_params(colors="#a1a1aa", length=0)
             for sp in ax.spines.values():
                 sp.set_visible(False)

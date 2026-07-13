@@ -283,6 +283,14 @@ def scan_universe(top_n: int = 15) -> dict:
             adv_usd = _median_dollar_volume(close_list, vol_list)
             is_liquid = adv_usd is not None and adv_usd >= MIN_ADV_USD
 
+            # Volume read: effort-vs-result, climax, OBV divergence, CMF, breakout
+            # sponsorship - the conviction dimension of the price action.
+            from tools.volume_analysis import analyze_volume
+            low_list = [float(x) for x in low.tolist()]
+            open_list = [float(x) for x in df["Open"].tolist()]
+            volume_signal = analyze_volume(open_list, high_list, low_list,
+                                           close_list, vol_list)
+
             # Derived trend booleans (None when the underlying SMA has too little history).
             above_50 = last > sma50
             above_200 = (last > sma200) if sma200 is not None else None
@@ -341,6 +349,7 @@ def scan_universe(top_n: int = 15) -> dict:
                 # Business-reality: what this company sells relative to the AI wave.
                 "ai_exposure": (ai_exposure.get(t) or {}).get("exposure"),
                 "ai_exposure_reason": (ai_exposure.get(t) or {}).get("reason"),
+                "volume_signal": volume_signal,
                 "swing_setup_score": round(score, 2),
             })
         except Exception:

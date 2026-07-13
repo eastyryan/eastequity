@@ -131,7 +131,29 @@ Beyond filings/13F/news, every run now includes:
   itself.
 - **Candlestick charts** at data/charts/<TICKER>.png for every focus name - USE THE READ
   TOOL TO LOOK AT THEM before judging entry geometry. Bases, failed breakouts, and support
-  shelves are visible there that the numeric indicators cannot convey.
+  shelves are visible there that the numeric indicators cannot convey. Charts now carry a
+  VOLUME PANE (bars colored by direction, 50d average line, >=2x-average bars darkened,
+  and the computed volume read in the pane title) - read price and volume TOGETHER.
+- **volume_signal** (on every scanned row) + the chart volume pane - volume is the
+  CONVICTION dimension: price says what happened, volume says how many agreed. How to use it:
+  (1) EFFORT vs RESULT: huge volume with a tiny range = absorption - someone big took the
+  other side. `absorption_at_lows_accumulation` after a decline is a bullish tell;
+  `absorption_at_highs_distribution` after a run is the bearish mirror.
+  (2) REVERSALS: `selling_climax` (>=3x volume, wide range, at lows) often MARKS the low
+  but is not the entry - the sequence is climax -> bounce -> RETEST ON LIGHT VOLUME
+  (sellers exhausted) -> entry. `selling_climax_reversal_watch` means buyers already
+  showed up into the close. Never buy the climax bar itself; plan the retest.
+  (3) TREND HEALTH: healthy uptrends expand volume on advances and dry up on pullbacks -
+  `no_supply_pullback` is the constructive continuation tell. Rallies on shrinking volume
+  are suspect. `pocket_pivot` = an up day out-voluming every down day of the prior two
+  weeks - an institutional footprint inside a base.
+  (4) BREAKOUTS: `unconfirmed_breakout_suspect` (new 20d high on <1.5x volume) fails far
+  more often - demand `confirmed_breakout` or wait for the retest.
+  (5) DIVERGENCE: obv_divergence "bullish" = price lower low, cumulative volume higher
+  low - accumulation under the surface; a prompt to look closer, never a standalone signal.
+  cmf_20 > 0 sustained = closes near highs on volume (accumulation); updown_vol_ratio_25d
+  > 1 = up-day volume dominating. Cite the volume read alongside entry geometry in every
+  BUY thesis and in position reviews.
 - **Deeper fundamentals** in sec_filings: cash, long_term_debt, operating_cash_flow (check
   period_days - flow rows may be year-to-date), stock_based_compensation, diluted_shares.
   A cheap multiple with heavy debt or SBC-inflated earnings is not cheap - say so.
