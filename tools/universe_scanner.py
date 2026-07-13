@@ -94,6 +94,40 @@ def _trailing_high(highs, sessions: int):
     return max(vals), len(highs) >= sessions
 
 
+# 200-WEEK moving average: ~4 years of weekly closes. A widely-watched long-term
+# support/reversion zone - fundamentally strong compounders trading AT or BELOW it
+# have historically been "quality on sale" entries (the MSFT-below-its-200W pattern).
+# Weekly bars move slowly, so one extra batched 5y/1wk download per scan is enough.
+WEEKS_200 = 200
+AT_OR_BELOW_TOLERANCE_PCT = 2.0  # "at" = within +2% above; anything below qualifies
+
+
+def _ma_tail(values, n: int):
+    """(mean of the last n values, is_full_window). Partial history returns the mean
+    over what exists with is_full=False so callers can refuse to claim '200-week'.
+    Pure Python (list in, float out) for offline unit tests."""
+    if not values:
+        return None, False
+    vals = [v for v in values[-n:] if v is not None]
+    if not vals:
+        return None, False
+    return sum(vals) / len(vals), len(values) >= n
+
+
+def _screen_quality_ok(screen_row) -> bool:
+    """Deterministic pre-filter for the deep-value lane: exclude names the estimate
+    screen shows as SHRINKING with falling estimates (a broken business below its
+    200W MA is a value trap, not a discount). Missing data passes - the brain and
+    the deep fundamentals do the real vetting; this only removes obvious wrecks."""
+    if not isinstance(screen_row, dict):
+        return True
+    growth = screen_row.get("fwd_revenue_growth_pct")
+    direction = screen_row.get("revision_direction")
+    if isinstance(growth, (int, float)) and growth < 0 and direction == "down":
+        return False
+    return True
+
+
 def _rel_strength(name_ret, bench_ret):
     """Relative strength: the name's return minus the benchmark's over the SAME window
     (both plain fractions). None if either side is missing. This is cross-sectional
@@ -128,6 +162,34 @@ def scan_universe(top_n: int = 15) -> dict:
         spy_3m = _return_over_sessions(spy_close, SESS_3M)
     except Exception:
         spy_1m = spy_3m = None
+
+    # 200-WEEK MA: separate batched WEEKLY download (~260 rows/name - lighter than the
+    # daily pull). Fail-soft: if the weekly fetch dies, the scan proceeds without the
+    # deep-value lane rather than failing the whole cycle.
+    w200: dict[str, tuple] = {}  # ticker -> (ma, is_full, pct_vs_ma)
+    try:
+        wdata = yf.download(tickers, period="5y", interval="1wk",
+                            group_by="ticker", auto_adjust=True, progress=False, threads=True)
+        for t in tickers:
+            try:
+                wcloses = [float(x) for x in wdata[t]["Close"].dropna().tolist()]
+                if not wcloses:
+                    continue
+                ma, full = _ma_tail(wcloses, WEEKS_200)
+                if ma:
+                    w200[t] = (ma, full, (wcloses[-1] / ma - 1) * 100)
+            except Exception:
+                continue
+    except Exception:
+        w200 = {}
+
+    # Estimate screen cache (whole universe, refreshed pre-market) powers the
+    # deep-value quality gate without any extra network. Fail-soft to empty.
+    try:
+        screen_rows = (json.loads((ROOT / "data" / "fundamental_screen.json").read_text())
+                       .get("current", {}).get("rows", {})) or {}
+    except Exception:
+        screen_rows = {}
 
     rows = []
     for t in tickers:
@@ -219,6 +281,10 @@ def scan_universe(top_n: int = 15) -> dict:
                 "rel_strength_3m_pct": round(rel_3m * 100, 1) if rel_3m is not None else None,
                 "avg_dollar_volume_20d_usd": round(adv_usd) if adv_usd is not None else None,
                 "liquid": is_liquid,
+                # 200-WEEK MA context (None when the weekly fetch missed this name).
+                "wma_200w": round(w200[t][0], 2) if t in w200 else None,
+                "pct_vs_200w_ma": round(w200[t][2], 1) if t in w200 else None,
+                "is_full_200w_window": bool(w200[t][1]) if t in w200 else False,
                 "swing_setup_score": round(score, 2),
             })
         except Exception:
@@ -243,9 +309,28 @@ def scan_universe(top_n: int = 15) -> dict:
     for r in contrarian:
         r["lane"] = "contrarian_reversal"
 
-    # Valuation + analyst-estimate context for top setups AND contrarian picks
-    # (per-ticker calls are slow, so not the whole universe).
-    for r in rows[:top_n] + contrarian:
+    # Deep-value lane: LIQUID names with a genuine 200-week history trading AT
+    # (within +2%) or BELOW their 200-week MA - a widely-watched long-term
+    # support/reversion zone where quality compounders have historically been
+    # generational entries. The estimate screen removes obvious wrecks (shrinking
+    # + falling estimates = value trap); the brain and deep fundamentals do the
+    # real "is this business actually strong" vetting. Sorted deepest-below first.
+    lane_taken = top_tickers | {r["ticker"] for r in contrarian}
+    deep_value = sorted(
+        (r for r in rows
+         if r["ticker"] not in lane_taken
+         and r.get("liquid")
+         and r.get("is_full_200w_window")
+         and r.get("pct_vs_200w_ma") is not None
+         and r["pct_vs_200w_ma"] <= AT_OR_BELOW_TOLERANCE_PCT
+         and _screen_quality_ok(screen_rows.get(r["ticker"]))),
+        key=lambda r: r["pct_vs_200w_ma"])[:5]
+    for r in deep_value:
+        r["lane"] = "deep_value_200w"
+
+    # Valuation + analyst-estimate context for top setups, contrarian AND deep-value
+    # picks (per-ticker calls are slow, so not the whole universe).
+    for r in rows[:top_n] + contrarian + deep_value:
         tk = yf.Ticker(r["ticker"])
         try:
             info = tk.info
@@ -312,6 +397,7 @@ def scan_universe(top_n: int = 15) -> dict:
 
     return {
         "contrarian_setups": contrarian,
+        "deep_value_200w": deep_value,
         "sector_relative_strength": sector_rs,
         "status": "ok",
         "scanned": len(rows),

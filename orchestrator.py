@@ -393,6 +393,12 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         contrarian_picks = [r["ticker"] for r in scan.get("contrarian_setups", [])[:3]]
         focus = list(dict.fromkeys(focus + contrarian_picks))
 
+        # Deep-value lane: strong names at/below their 200-WEEK MA get the full
+        # deep-research treatment too - the whole point is vetting whether the
+        # business is genuinely sound while the price sits on long-term support.
+        deep_value_picks = [r["ticker"] for r in scan.get("deep_value_200w", [])[:2]]
+        focus = list(dict.fromkeys(focus + deep_value_picks))
+
         print("  • rendering candlestick charts...")
         try:
             from tools.price_chart import render_charts

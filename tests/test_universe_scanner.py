@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from tools.universe_scanner import (  # noqa: E402
     _return_over_sessions, _trailing_high, _rel_strength, _median_dollar_volume,
+    _ma_tail, _screen_quality_ok, WEEKS_200, AT_OR_BELOW_TOLERANCE_PCT,
     SESS_1M, SESS_3M, SESS_6M, SESS_52W, MIN_BARS, SESS_ADV, MIN_ADV_USD,
 )
 
@@ -100,9 +101,38 @@ def test_median_dollar_volume():
     check("SESS_ADV/threshold sane", SESS_ADV == 20 and MIN_ADV_USD == 20_000_000)
 
 
+def test_ma_tail_200w():
+    print("200-week MA helper (_ma_tail):")
+    # 250 weeks of closes rising 100 -> 349; MA over last 200 = mean(150..349) = 249.5
+    closes = [100.0 + i for i in range(250)]
+    ma, full = _ma_tail(closes, WEEKS_200)
+    check("full-window MA over trailing 200 only",
+          ma is not None and abs(ma - 249.5) < 1e-9 and full is True, f"got {ma},{full}")
+    # 120 weeks (young IPO): mean over what exists, flagged partial
+    ma2, full2 = _ma_tail(closes[:120], WEEKS_200)
+    check("partial history flagged (no fake '200-week' claim)",
+          ma2 is not None and full2 is False, f"got {ma2},{full2}")
+    check("empty -> (None, False)", _ma_tail([], WEEKS_200) == (None, False))
+    check("None values skipped", _ma_tail([None, 10.0, 20.0], 2)[0] == 15.0)
+    check("at-or-below tolerance is +2%", AT_OR_BELOW_TOLERANCE_PCT == 2.0)
+
+
+def test_screen_quality_gate():
+    print("deep-value quality gate (_screen_quality_ok):")
+    check("shrinking + falling estimates -> EXCLUDED (value trap)",
+          _screen_quality_ok({"fwd_revenue_growth_pct": -8.2, "revision_direction": "down"}) is False)
+    check("shrinking but revisions up -> passes (turn possible)",
+          _screen_quality_ok({"fwd_revenue_growth_pct": -3.0, "revision_direction": "up"}) is True)
+    check("growing + falling revisions -> passes (brain vets)",
+          _screen_quality_ok({"fwd_revenue_growth_pct": 12.0, "revision_direction": "down"}) is True)
+    check("missing data passes (brain vets)", _screen_quality_ok(None) is True)
+    check("empty dict passes", _screen_quality_ok({}) is True)
+
+
 if __name__ == "__main__":
     for fn in (test_constants, test_return_over_sessions, test_trailing_high,
-               test_rel_strength, test_median_dollar_volume):
+               test_rel_strength, test_median_dollar_volume,
+               test_ma_tail_200w, test_screen_quality_gate):
         fn()
     print()
     if FAILURES:

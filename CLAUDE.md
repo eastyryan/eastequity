@@ -75,6 +75,19 @@ Beyond filings/13F/news, every run now includes:
   and verdict. Weight your confidence scores using this evidence, not vibes.
 - **contrarian_setups** - quality names 20%+ off their highs that are turning up. The
   momentum funnel never surfaces these; give them a genuine look, not a token one.
+- **deep_value_200w** - liquid names trading AT (within +2%) or BELOW their 200-WEEK
+  moving average, a widely-watched ~4-year support/reversion zone where fundamentally
+  strong compounders have historically been generational entries (the classic
+  Microsoft-below-its-200W pattern). Every candidate row carries pct_vs_200w_ma and
+  wma_200w (also present on all scanned rows). DISCIPLINE: this lane is a lens, not a
+  buy signal. (1) Verify the business is ACTUALLY strong with the fresh ratios -
+  growing revenue, real FCF, sane net_debt_to_ebitda, margins holding; a deteriorating
+  business below its 200W MA is a value trap wearing a discount costume. (2) Ask WHY
+  it is down here and whether that reason is temporary (cycle, sentiment, macro) or
+  structural (share loss, broken model) - name which in your thesis. (3) Your horizon
+  is still 3-90 days: the swing trade is the reversion bounce or base breakout off
+  this level with a stop below the zone, NOT a multi-year hold. If it needs years to
+  work, put it on the watchlist with the level and move on.
 - **Candlestick charts** at data/charts/<TICKER>.png for every focus name - USE THE READ
   TOOL TO LOOK AT THEM before judging entry geometry. Bases, failed breakouts, and support
   shelves are visible there that the numeric indicators cannot convey.
