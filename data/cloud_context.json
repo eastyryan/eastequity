@@ -1,6 +1,6 @@
 {
-  "run_date": "2026-07-13T03:54:32.821630+00:00",
-  "as_of_et": "2026-07-12",
+  "run_date": "2026-07-13T04:54:35.074105+00:00",
+  "as_of_et": "2026-07-13",
   "trading_mode": "paper",
   "run_depth": "full",
   "hard_limits": {
@@ -57,7 +57,7 @@
   "benchmark_close": 754.95,
   "macro_regime": {
     "status": "ok",
-    "as_of": "2026-07-12",
+    "as_of": "2026-07-13",
     "indicators": {
       "fed_funds_rate": {
         "latest": 3.62,
@@ -11097,7 +11097,7 @@
   "guidance_ledger": {},
   "fundamental_screen": {
     "as_of": "2026-07-12T21:31:03.371198+00:00",
-    "age_hours": 6.3,
+    "age_hours": 7.3,
     "names_covered": 108,
     "note": "Full-universe estimate screen, refreshed pre-market (6am/9am ET, gated on true America/New_York time). top_upward_revisions = fundamental inflections regardless of price - candidates the momentum funnel may not surface. estimate_changes_since_previous = what moved THIS MORNING (earnings/guidance). Each row may carry revision_direction (up/down/flat) and eps_growth_next_yr_pct (forward EPS growth) - judge a multiple against growth, not news tone.",
     "top_upward_revisions": [
@@ -11218,117 +11218,160 @@
       "DELL": {
         "status": "ok",
         "expiry": "2026-07-24",
-        "days_to_expiry": 12,
+        "days_to_expiry": 11,
         "spot": 434.97,
-        "expected_move_pct": 12.02,
-        "atm_iv_pct": 83.2,
+        "expected_move_pct": 13.21,
+        "atm_iv_pct": 0.0,
         "put_call_volume_ratio": 0.94,
-        "iv_skew_pct": 0.9,
+        "iv_skew_pct": 1.4,
         "skew_read": "balanced",
         "unusual_strikes": []
       },
       "HPE": {
         "status": "ok",
         "expiry": "2026-07-24",
-        "days_to_expiry": 12,
+        "days_to_expiry": 11,
         "spot": 48.54,
-        "expected_move_pct": 11.09,
-        "atm_iv_pct": 76.2,
+        "expected_move_pct": 10.63,
+        "atm_iv_pct": 0.1,
         "put_call_volume_ratio": 0.74,
-        "iv_skew_pct": 1.8,
-        "skew_read": "balanced",
+        "iv_skew_pct": 3.6,
+        "skew_read": "puts_bid_over_calls (downside protection in demand)",
         "unusual_strikes": []
       },
       "RBRK": {
         "status": "ok",
         "expiry": "2026-07-24",
-        "days_to_expiry": 12,
+        "days_to_expiry": 11,
         "spot": 84.38,
-        "expected_move_pct": 9.95,
-        "atm_iv_pct": 69.0,
+        "expected_move_pct": 7.68,
+        "atm_iv_pct": 0.4,
         "put_call_volume_ratio": 0.33,
-        "iv_skew_pct": 11.0,
+        "iv_skew_pct": 3.6,
         "skew_read": "puts_bid_over_calls (downside protection in demand)",
         "unusual_strikes": []
       },
       "AMD": {
         "status": "ok",
         "expiry": "2026-07-20",
-        "days_to_expiry": 8,
+        "days_to_expiry": 7,
         "spot": 557.89,
-        "expected_move_pct": 8.78,
-        "atm_iv_pct": 74.4,
+        "expected_move_pct": 9.15,
+        "atm_iv_pct": 0.1,
         "put_call_volume_ratio": 0.37,
-        "iv_skew_pct": 7.9,
-        "skew_read": "puts_bid_over_calls (downside protection in demand)",
-        "unusual_strikes": []
+        "iv_skew_pct": 2.5,
+        "skew_read": "balanced",
+        "unusual_strikes": [
+          {
+            "type": "call",
+            "strike": 540.0,
+            "volume": 695,
+            "open_interest": 0,
+            "pct_from_spot": -3.2
+          }
+        ]
       },
       "S": {
         "status": "ok",
         "expiry": "2026-07-24",
-        "days_to_expiry": 12,
+        "days_to_expiry": 11,
         "spot": 17.88,
-        "expected_move_pct": 8.39,
-        "atm_iv_pct": 57.7,
+        "expected_move_pct": 8.33,
+        "atm_iv_pct": 0.8,
         "put_call_volume_ratio": 0.33,
-        "iv_skew_pct": -2.7,
+        "iv_skew_pct": 1.0,
         "skew_read": "balanced",
         "unusual_strikes": []
       },
       "OKTA": {
         "status": "ok",
         "expiry": "2026-07-24",
-        "days_to_expiry": 12,
+        "days_to_expiry": 11,
         "spot": 138.63,
-        "expected_move_pct": 9.36,
-        "atm_iv_pct": 59.5,
+        "expected_move_pct": 8.23,
+        "atm_iv_pct": 0.6,
         "put_call_volume_ratio": 1.57,
-        "iv_skew_pct": 1.4,
-        "skew_read": "balanced",
+        "iv_skew_pct": 3.2,
+        "skew_read": "puts_bid_over_calls (downside protection in demand)",
         "unusual_strikes": []
       },
       "HOOD": {
         "status": "ok",
         "expiry": "2026-07-24",
-        "days_to_expiry": 12,
+        "days_to_expiry": 11,
         "spot": 111.97,
-        "expected_move_pct": 9.89,
-        "atm_iv_pct": 68.4,
+        "expected_move_pct": 10.36,
+        "atm_iv_pct": 0.0,
         "put_call_volume_ratio": 0.75,
-        "iv_skew_pct": 3.0,
-        "skew_read": "puts_bid_over_calls (downside protection in demand)",
+        "iv_skew_pct": 2.3,
+        "skew_read": "balanced",
         "unusual_strikes": [
+          {
+            "type": "call",
+            "strike": 120.0,
+            "volume": 6256,
+            "open_interest": 0,
+            "pct_from_spot": 7.2
+          },
+          {
+            "type": "call",
+            "strike": 110.0,
+            "volume": 2355,
+            "open_interest": 0,
+            "pct_from_spot": -1.8
+          },
+          {
+            "type": "call",
+            "strike": 115.0,
+            "volume": 1823,
+            "open_interest": 0,
+            "pct_from_spot": 2.7
+          },
           {
             "type": "put",
             "strike": 70.0,
             "volume": 6501,
-            "open_interest": 148,
+            "open_interest": 0,
             "pct_from_spot": -37.5
+          },
+          {
+            "type": "put",
+            "strike": 104.0,
+            "volume": 2279,
+            "open_interest": 0,
+            "pct_from_spot": -7.1
+          },
+          {
+            "type": "put",
+            "strike": 95.0,
+            "volume": 639,
+            "open_interest": 0,
+            "pct_from_spot": -15.2
           }
         ]
       },
       "AXON": {
         "status": "ok",
         "expiry": "2026-07-24",
-        "days_to_expiry": 12,
+        "days_to_expiry": 11,
         "spot": 565.8,
-        "expected_move_pct": 9.39,
-        "atm_iv_pct": 64.6,
+        "expected_move_pct": 8.68,
+        "atm_iv_pct": 0.5,
         "put_call_volume_ratio": 2.27,
-        "iv_skew_pct": 3.2,
-        "skew_read": "puts_bid_over_calls (downside protection in demand)",
+        "iv_skew_pct": 0.5,
+        "skew_read": "balanced",
         "unusual_strikes": []
       },
       "DASH": {
         "status": "ok",
         "expiry": "2026-07-24",
-        "days_to_expiry": 12,
+        "days_to_expiry": 11,
         "spot": 191.82,
-        "expected_move_pct": 7.51,
-        "atm_iv_pct": 51.9,
+        "expected_move_pct": 6.71,
+        "atm_iv_pct": 1.2,
         "put_call_volume_ratio": 1.85,
-        "iv_skew_pct": 3.1,
-        "skew_read": "puts_bid_over_calls (downside protection in demand)",
+        "iv_skew_pct": 2.8,
+        "skew_read": "balanced",
         "unusual_strikes": []
       }
     }
@@ -11338,55 +11381,55 @@
     "floors": {
       "DELL": {
         "atr_pct": 7.36,
-        "expected_move_pct": 12.02,
+        "expected_move_pct": 13.21,
         "min_stop_distance_pct": 7.36,
         "tradeable": true
       },
       "HPE": {
         "atr_pct": 5.62,
-        "expected_move_pct": 11.09,
+        "expected_move_pct": 10.63,
         "min_stop_distance_pct": 5.62,
         "tradeable": true
       },
       "RBRK": {
         "atr_pct": 5.98,
-        "expected_move_pct": 9.95,
+        "expected_move_pct": 7.68,
         "min_stop_distance_pct": 5.98,
         "tradeable": true
       },
       "AMD": {
         "atr_pct": 6.84,
-        "expected_move_pct": 8.78,
+        "expected_move_pct": 9.15,
         "min_stop_distance_pct": 6.84,
         "tradeable": true
       },
       "S": {
         "atr_pct": 5.34,
-        "expected_move_pct": 8.39,
+        "expected_move_pct": 8.33,
         "min_stop_distance_pct": 5.34,
         "tradeable": true
       },
       "OKTA": {
         "atr_pct": 5.16,
-        "expected_move_pct": 9.36,
+        "expected_move_pct": 8.23,
         "min_stop_distance_pct": 5.16,
         "tradeable": true
       },
       "HOOD": {
         "atr_pct": 6.14,
-        "expected_move_pct": 9.89,
+        "expected_move_pct": 10.36,
         "min_stop_distance_pct": 6.14,
         "tradeable": true
       },
       "AXON": {
         "atr_pct": 6.65,
-        "expected_move_pct": 9.39,
+        "expected_move_pct": 8.68,
         "min_stop_distance_pct": 6.65,
         "tradeable": true
       },
       "DASH": {
         "atr_pct": 4.33,
-        "expected_move_pct": 7.51,
+        "expected_move_pct": 6.71,
         "min_stop_distance_pct": 4.33,
         "tradeable": true
       }
@@ -11400,7 +11443,7 @@
         "recorded_stop": 408.0,
         "cushion_to_stop_pct": 7.67,
         "atr_pct": 7.36,
-        "expected_move_pct": 12.02,
+        "expected_move_pct": 13.21,
         "cushion_in_atr": 1.04,
         "inside_noise_band": false,
         "stop_distance_from_entry_pct": 10.92
@@ -11410,7 +11453,7 @@
         "recorded_stop": 44.75,
         "cushion_to_stop_pct": 8.3,
         "atr_pct": 5.62,
-        "expected_move_pct": 11.09,
+        "expected_move_pct": 10.63,
         "cushion_in_atr": 1.48,
         "inside_noise_band": false,
         "stop_distance_from_entry_pct": 9.14
@@ -11564,7 +11607,7 @@
   },
   "news_and_catalysts": {
     "status": "ok",
-    "as_of": "2026-07-13T03:51:35.150537+00:00",
+    "as_of": "2026-07-13T04:51:33.966982+00:00",
     "tickers": {
       "DELL": {
         "headlines": [
