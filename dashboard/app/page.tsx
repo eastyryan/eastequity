@@ -197,16 +197,29 @@ type Freshness = { label: string; tone: "live" | "stale" | "degraded"; detail?: 
 // Derive a small data-health badge from the (optional) data_quality / stale_data_notice fields.
 // Returns null when we have no freshness signal at all, so healthy-but-silent runs stay clean.
 function freshness(l: Latest): Freshness | null {
+  // data_quality is the structured verdict and takes precedence; the prose
+  // stale_data_notice exists for the BRAIN and is set even when the relay bundle
+  // is minutes old (cloud runs always use it), so notice-first wrongly branded
+  // every routine cloud run DEGRADED over fresh data.
+  const dq = l.data_quality;
+  if (dq) {
+    if (dq.source === "degraded_empty") {
+      return { label: "DEGRADED", tone: "degraded", detail: l.stale_data_notice ?? dq.note };
+    }
+    if (dq.stale) {
+      const age = dq.age_hours != null ? ` ${Math.round(dq.age_hours)}h` : "";
+      return { label: `STALE${age}`, tone: "stale", detail: l.stale_data_notice ?? dq.note };
+    }
+    if (dq.source === "live_partial") {
+      return { label: "PARTIAL", tone: "stale", detail: dq.note };
+    }
+    const age = dq.age_hours != null && dq.age_hours >= 1 ? ` ${Math.round(dq.age_hours)}h` : "";
+    return { label: `LIVE DATA${age}`, tone: "live", detail: dq.note ?? dq.source };
+  }
   if (l.stale_data_notice) {
     return { label: "DEGRADED", tone: "degraded", detail: l.stale_data_notice };
   }
-  const dq = l.data_quality;
-  if (!dq) return null;
-  if (dq.stale) {
-    const age = dq.age_hours != null ? ` ${Math.round(dq.age_hours)}h` : "";
-    return { label: `STALE${age}`, tone: "stale", detail: dq.note };
-  }
-  return { label: "LIVE DATA", tone: "live", detail: dq.note ?? dq.source };
+  return null;
 }
 
 export default function Home() {
