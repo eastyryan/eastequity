@@ -60,7 +60,9 @@
       "NVDD",
       "CONL"
     ],
-    "us_exchanges_only": true
+    "us_exchanges_only": true,
+    "min_market_cap_usd": 1000000000,
+    "_min_market_cap_note": "Hard floor: never BUY a company under $1B market cap. Enforced at proposal validation (when a cap is known), at scanner surfacing, and at weekly universe review (sub-$1B adds are dropped like unpriceable names)."
   },
   "swing_rules": {
     "min_holding_horizon_days": 3,

@@ -375,6 +375,7 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         filings = {t: {"status": "skipped_light_run"} for t in focus}
         smart_money = {"status": "skipped_light_run"}
         insiders = {"status": "skipped_light_run"}
+        partnerships = {"status": "skipped_light_run"}
         news = get_news_and_catalysts(focus) if focus else {"status": "skipped"}
         deep_fundamentals = {t: {"status": "skipped_light_run"} for t in focus}
         filing_texts = {}
@@ -433,6 +434,12 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         smart_money = get_smart_money(focus) if focus else {"status": "skipped"}
         news = get_news_and_catalysts(focus) if focus else {"status": "skipped"}
         insiders = get_insider_activity(focus) if focus else {"status": "skipped"}
+        print("  • strategic partnerships / material deals...")
+        try:
+            from tools.partnerships import get_partnerships
+            partnerships = get_partnerships(focus) if focus else {"status": "skipped"}
+        except Exception as e:
+            partnerships = {"status": "error", "reason": str(e)[:150]}
 
     # Held names that dropped out of the universe scan (e.g. removed in a weekly review)
     # must STILL be priced, or mark_to_market and the safety layer freeze them at entry
@@ -560,6 +567,7 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         "smart_money_13f": smart_money,
         "news_and_catalysts": news,
         "insider_activity": insiders,
+        "partnerships": partnerships,
         "track_record": track_record,
     }
 
@@ -1390,6 +1398,28 @@ def run_freshness_audit(run_id: str) -> int:
     return 0 if not stale else 1
 
 
+def _below_min_cap(tickers: list, floor_usd: float) -> set:
+    """Added universe names under the market-cap floor. Fail-open: if EVERY lookup
+    fails (feed down), return empty rather than wiping a good review."""
+    if not tickers or not floor_usd:
+        return set()
+    bad, got_any = set(), False
+    try:
+        import yfinance as yf
+        for t in tickers:
+            try:
+                mcap = yf.Ticker(t).fast_info.get("marketCap")
+                if isinstance(mcap, (int, float)) and mcap > 0:
+                    got_any = True
+                    if mcap < floor_usd:
+                        bad.add(t.upper())
+            except Exception:
+                continue
+    except Exception:
+        return set()
+    return bad if got_any else set()
+
+
 def _unpriceable(tickers: list) -> set:
     """Names that return NO live price data (delisted / bad ticker). Fail-open: if the
     whole download fails (feed down), return empty so a good review is never wiped."""
@@ -1455,7 +1485,8 @@ def universe_review(run_id: str) -> int:
         "NOT track, and which current universe names have lost leadership (persistent "
         "downtrends, broken growth, fading relevance)? Keep a strong AI/technology bias "
         "(at least ~70% of names) but market leaders from any sector earn a place. "
-        "Constraints (code-enforced): US-listed common equities only, no leveraged/inverse "
+        "Constraints (code-enforced): US-listed common equities only, MINIMUM $1B market "
+        "cap (sub-billion adds are dropped), no leveraged/inverse "
         "products, never remove the protected tickers, max 10 adds and 10 removals, final "
         "size 90-140 names. Removing a name is healthy - a universe that only grows is a "
         "museum. ALSO maintain the AI-exposure map (data/ai_exposure.json in the bundle "
@@ -1515,8 +1546,14 @@ def universe_review(run_id: str) -> int:
     # returns no live price data before it can poison the universe. Fail-open: if the
     # whole check fails (yfinance down), keep the names rather than wipe a good review.
     dropped = _unpriceable(sorted(added)) if added else set()
+    # $1B market-cap floor: sub-billion adds are dropped the same way (hard rule).
+    cap_floor = validator.load_config()["hard_rules"].get("min_market_cap_usd", 0)
+    small = _below_min_cap(sorted(added - dropped), cap_floor) if added else set()
+    if small:
+        print(f"  dropping sub-${cap_floor/1e9:.0f}B added names: {sorted(small)}")
+    dropped |= small
     if dropped:
-        print(f"  dropping unpriceable added names: {sorted(dropped)}")
+        print(f"  dropping unpriceable/sub-cap added names: {sorted(dropped)}")
         data["sectors"] = {s: [t for t in ts if t.upper() not in dropped]
                            for s, ts in data["sectors"].items()}
         added = added - dropped
@@ -1757,6 +1794,35 @@ def main() -> int:
     # stop floor the validator enforces matches the stop_engineering shown to the brain.
     market_context = build_volatility_context(
         context.get("universe_scan") or {}, context.get("options_signals") or {})
+    # Market caps for the $1B floor: bundle first (deep fundamentals / scanner lane
+    # rows - gathered where network exists), live yfinance as a last resort. Absent
+    # figures fail open in the validator; the universe review is the real gate.
+    for p in proposals:
+        if str(p.get("action", "")).upper() != "BUY":
+            continue
+        t = str(p.get("ticker", "")).upper()
+        mcap = None
+        try:
+            mcap = (((context.get("deep_fundamentals") or {}).get(t) or {})
+                    .get("quality_ratios", {}).get("ratios", {})
+                    .get("market_cap_usd", {}) or {}).get("value")
+        except Exception:
+            mcap = None
+        if not mcap:
+            scan_ctx = context.get("universe_scan") or {}
+            for r in (scan_ctx.get("top_setups") or []) + (scan_ctx.get("contrarian_setups") or []) \
+                     + (scan_ctx.get("deep_value_200w") or []) + (scan_ctx.get("supplier_pullbacks") or []):
+                if r.get("ticker") == t and r.get("market_cap_usd"):
+                    mcap = r["market_cap_usd"]
+                    break
+        if not mcap:
+            try:
+                import yfinance as yf
+                mcap = yf.Ticker(t).fast_info.get("marketCap")
+            except Exception:
+                mcap = None
+        if mcap:
+            market_context.setdefault(t, {})["market_cap_usd"] = float(mcap)
     results = validator.validate_proposals(proposals, live_portfolio, market_context)
     approved = [r for r in results if r.approved]
     for r in results:

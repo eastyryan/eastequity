@@ -389,6 +389,7 @@ def scan_universe(top_n: int = 15) -> dict:
                 "price_to_sales_ttm": info.get("priceToSalesTrailing12Months"),
                 "ev_to_ebitda": info.get("enterpriseToEbitda"),
             }
+            r["market_cap_usd"] = info.get("marketCap")  # feeds the $1B floor
         except Exception:
             r["valuation"] = None
         # Earnings clock: swing entries and binary prints interact constantly.

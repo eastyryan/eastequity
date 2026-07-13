@@ -123,7 +123,23 @@ Beyond filings/13F/news, every run now includes:
 - **Deeper fundamentals** in sec_filings: cash, long_term_debt, operating_cash_flow (check
   period_days - flow rows may be year-to-date), stock_based_compensation, diluted_shares.
   A cheap multiple with heavy debt or SBC-inflated earnings is not cheap - say so.
-- **fundamentals_freshness** - HARD RULE. Per focus name: the newest period our extracted
+- **partnerships** - per focus name: recent 8-K MATERIAL-AGREEMENT filings (item 1.01 =
+  a definitive agreement the SEC forced them to file - the real deal feed; item 8.01 and
+  news headlines are noisier leads) plus partnership-flavored headlines. ANALYZE EVERY
+  DEAL FROM BOTH SIDES before treating it as a catalyst or a risk:
+  (1) QUANTIFIED OR SLIDEWARE - is there a dollar value, unit volume, or duration
+  anywhere in the filing/release? An unquantified "strategic partnership" is marketing.
+  (2) WHO NEEDS WHOM - which side issued the announcement? The weak side borrows
+  credibility (a small-cap trumpeting an NVIDIA logo); the strong side allocates real
+  volume (Apple committing sockets to a supplier changes that supplier's earnings).
+  (3) DEPENDENCY CUTS BOTH WAYS - a transformative deal can create customer
+  concentration, pricing leverage for the bigger party, and second-source risk at
+  renewal. Say what happens to the small side if the big side walks.
+  (4) WHOSE SOCKET GOT DISPLACED - most deals are share shifts, not new demand; name
+  the loser and consider whether the displaced incumbent is now cheaper than the winner.
+  (5) REACTION vs MATERIALITY - if the stock barely moved on a quantified, multi-year
+  agreement, that may be the overlooked opportunity; if it ripped on slideware, that is
+  the risk. Partnership theses must cite the 8-K/filing, not just a headline. Per focus name: the newest period our extracted
   fundamentals reach (current_through) vs the period the latest filed 10-Q/10-K covers
   (latest_filing_period). If a name appears in stale_tickers (or its sec_filings entry
   carries stale_fundamentals_warning), its fundamental numbers are NOT the latest reported
@@ -270,6 +286,9 @@ Rules the validator enforces (know them so you don't waste runs):
   stop cap (`tradeable: false`) it is too volatile for a valid swing stop - do not propose it.
 - position_size_usd ≤ configured cap; max open positions and exposure caps
 - holding_horizon_days in [3, 90]; ticker must be in `data/universe.json`
+- **minimum $1B market cap** on any BUY - sub-billion names are rejected at validation,
+  blocked from entering the universe, and carry delisting/manipulation risk this system
+  does not price. Do not propose them.
 - the target is a milestone, not a tripwire: holding past it is allowed and encouraged
   while your re-research says the thesis has more to give
 

@@ -183,6 +183,23 @@ def _check_volatility_stop(p: dict, cfg: dict, market_context: dict, reasons: li
                        f"below entry ({src})")
 
 
+def _check_market_cap(p: dict, cfg: dict, market_context: dict, reasons: list[str]) -> None:
+    """Hard floor: never BUY a company under the configured minimum market cap
+    ($1B - sub-billion names carry delisting/manipulation/liquidity risk this
+    system is not built to price). The cap comes from market_context (supplied by
+    the orchestrator from the gather bundle / a live lookup); when no figure is
+    available this fails OPEN - the validator itself never touches a network, and
+    the universe review separately blocks sub-$1B names from ever entering."""
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    floor = cfg["hard_rules"].get("min_market_cap_usd")
+    if not floor:
+        return
+    mcap = (market_context or {}).get(str(p.get("ticker", "")).upper(), {}).get("market_cap_usd")
+    if isinstance(mcap, (int, float)) and 0 < mcap < floor:
+        reasons.append(f"below_min_market_cap:${mcap/1e9:.2f}B < ${floor/1e9:.0f}B")
+
+
 def _check_confidence(p: dict, cfg: dict, reasons: list[str]) -> None:
     conf = p.get("confidence")
     if not isinstance(conf, (int, float)) or not 0 <= conf <= 1:
@@ -284,6 +301,7 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
         _check_swing_rules(p, cfg, reasons)
         _check_prices_and_rr(p, cfg, reasons)
         _check_volatility_stop(p, cfg, market_context or {}, reasons)
+        _check_market_cap(p, cfg, market_context or {}, reasons)
         _check_confidence(p, cfg, reasons)
         _check_sizing(p, cfg, portfolio, reasons)
         if str(p.get("action", "")).upper() == "BUY":
