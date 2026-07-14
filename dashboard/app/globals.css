@@ -1,13 +1,34 @@
 @import "tailwindcss";
+@import "./design-tokens.css";
 
-@theme {
-  --color-accent: #047857;
-  --color-accent-soft: #ecfdf5;
-  --color-ink: #18181b;
-  --color-ink-2: #52525b;
-  --color-ink-3: #a1a1aa;
-  --color-paper: #fafafa;
-  --color-line: #e4e4e7;
+/* Tailwind utility names mapped onto the design-system tokens.
+   Existing semantic classes (ink/line/accent) keep working but now
+   resolve to the system palette; new names (brand/pos/neg/attn/card/
+   sunken) expose the rest of the system. Green/red are P/L-only per
+   the design system; blue is the brand and never signals direction. */
+@theme inline {
+  --color-accent: var(--pos);
+  --color-accent-soft: var(--pos-subtle);
+  --color-pos: var(--pos);
+  --color-pos-strong: var(--pos-strong);
+  --color-pos-soft: var(--pos-subtle);
+  --color-neg: var(--neg);
+  --color-neg-strong: var(--neg-strong);
+  --color-neg-soft: var(--neg-subtle);
+  --color-attn: var(--attn);
+  --color-attn-soft: var(--attn-subtle);
+  --color-brand: var(--brand);
+  --color-brand-soft: var(--brand-subtle);
+  --color-brand-border: var(--brand-border);
+  --color-ink: var(--text-strong);
+  --color-ink-2: var(--text-body);
+  --color-ink-3: var(--text-muted);
+  --color-faint: var(--text-faint);
+  --color-paper: var(--bg-app);
+  --color-card: var(--surface-card);
+  --color-sunken: var(--surface-sunken);
+  --color-line: var(--border-subtle);
+  --color-line-2: var(--border-default);
 }
 
 html {
@@ -15,7 +36,34 @@ html {
 }
 
 body {
-  background: var(--color-paper);
-  color: var(--color-ink);
+  background: var(--bg-app);
+  color: var(--text-body);
   -webkit-font-smoothing: antialiased;
+  /* Tabular figures everywhere so numeric columns always align. */
+  font-feature-settings: "tnum" 1;
+}
+
+/* Every number, ticker, and tabular data point is Plex Mono with full
+   numeric features (tabular + slashed zero) per the design system. */
+.num {
+  font-family: var(--font-mono);
+  font-feature-settings: var(--num-features);
+}
+
+/* Design-system card: white panel, hairline border, generous radius,
+   soft cool-tinted shadow. */
+.ds-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+}
+
+/* Uppercase micro-label (mono, letterspaced) for structural labels. */
+.ds-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-2xs);
+  letter-spacing: var(--ls-label);
+  text-transform: uppercase;
+  color: var(--text-faint);
 }

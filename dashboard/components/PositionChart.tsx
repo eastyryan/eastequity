@@ -73,10 +73,10 @@ export default function PositionChart({ ticker, data }: { ticker: string; data: 
 
   const { y, x, cw, openedIdx } = geom;
   const lines: { v: number; label: string; color: string; dash?: string }[] = [];
-  if (typeof data?.target === "number") lines.push({ v: data.target, label: `T ${fmtPrice(data.target)}`, color: "#047857", dash: "4 3" });
-  if (typeof data?.stop === "number") lines.push({ v: data.stop, label: `S ${fmtPrice(data.stop)}`, color: "#b91c1c", dash: "4 3" });
+  if (typeof data?.target === "number") lines.push({ v: data.target, label: `T ${fmtPrice(data.target)}`, color: "var(--chart-up)", dash: "4 3" });
+  if (typeof data?.stop === "number") lines.push({ v: data.stop, label: `S ${fmtPrice(data.stop)}`, color: "var(--chart-down)", dash: "4 3" });
   const basis = data?.avg_cost ?? data?.entry;
-  if (typeof basis === "number") lines.push({ v: basis, label: `cost ${fmtPrice(basis)}`, color: "#a1a1aa" });
+  if (typeof basis === "number") lines.push({ v: basis, label: `cost ${fmtPrice(basis)}`, color: "var(--text-faint)" });
 
   return (
     <div className="relative">
@@ -93,7 +93,7 @@ export default function PositionChart({ ticker, data }: { ticker: string; data: 
         {lines.map((ln, i) => (
           <g key={i}>
             <line x1={PAD.left} x2={W - PAD.right} y1={y(ln.v)} y2={y(ln.v)} stroke={ln.color} strokeWidth="1" strokeDasharray={ln.dash} opacity="0.85" />
-            <text x={W - PAD.right + 4} y={y(ln.v) + 3} fontSize="10" fill={ln.color} fontFamily="var(--font-geist-mono)">
+            <text x={W - PAD.right + 4} y={y(ln.v) + 3} fontSize="10" fill={ln.color} fontFamily="var(--font-mono)">
               {ln.label}
             </text>
           </g>
@@ -101,14 +101,14 @@ export default function PositionChart({ ticker, data }: { ticker: string; data: 
         {/* opened-at hairline */}
         {openedIdx >= 0 && (
           <g>
-            <line x1={x(openedIdx)} x2={x(openedIdx)} y1={PAD.top} y2={H - PAD.bottom} stroke="#18181b" strokeWidth="1" strokeDasharray="2 2" opacity="0.35" />
-            <path d={`M${x(openedIdx) - 3},${H - PAD.bottom} L${x(openedIdx) + 3},${H - PAD.bottom} L${x(openedIdx)},${H - PAD.bottom - 5} Z`} fill="#18181b" opacity="0.6" />
+            <line x1={x(openedIdx)} x2={x(openedIdx)} y1={PAD.top} y2={H - PAD.bottom} stroke="var(--text-strong)" strokeWidth="1" strokeDasharray="2 2" opacity="0.35" />
+            <path d={`M${x(openedIdx) - 3},${H - PAD.bottom} L${x(openedIdx) + 3},${H - PAD.bottom} L${x(openedIdx)},${H - PAD.bottom - 5} Z`} fill="var(--text-strong)" opacity="0.6" />
           </g>
         )}
         {/* candles */}
         {bars.map((b, i) => {
           const up = b.close >= b.open;
-          const color = up ? "#047857" : "#b91c1c";
+          const color = up ? "var(--chart-up)" : "var(--chart-down)";
           const bodyTop = y(Math.max(b.open, b.close));
           const bodyBot = y(Math.min(b.open, b.close));
           return (
@@ -119,21 +119,21 @@ export default function PositionChart({ ticker, data }: { ticker: string; data: 
           );
         })}
         {/* axis dates */}
-        <text x={PAD.left} y={H - 6} fontSize="10" fill="#a1a1aa" fontFamily="var(--font-geist-mono)">
+        <text x={PAD.left} y={H - 6} fontSize="10" fill="var(--text-faint)" fontFamily="var(--font-mono)">
           {fmtDate(bars[0].date)}
         </text>
-        <text x={W - PAD.right} y={H - 6} textAnchor="end" fontSize="10" fill="#a1a1aa" fontFamily="var(--font-geist-mono)">
+        <text x={W - PAD.right} y={H - 6} textAnchor="end" fontSize="10" fill="var(--text-faint)" fontFamily="var(--font-mono)">
           {fmtDate(bars[bars.length - 1].date)}
         </text>
       </svg>
 
       {hover !== null && bars[hover] && (
         <div
-          className="pointer-events-none absolute -translate-x-1/2 rounded-md border border-line bg-white px-2.5 py-1 shadow-sm"
+          className="pointer-events-none absolute -translate-x-1/2 rounded-md border border-line bg-card px-2.5 py-1 shadow-sm"
           style={{ left: `${(x(hover) / W) * 100}%`, top: 0 }}
         >
-          <div className="text-[10px] text-ink-3 font-[family-name:var(--font-geist-mono)]">{fmtDate(bars[hover].date)}</div>
-          <div className="text-[11px] font-[family-name:var(--font-geist-mono)]">
+          <div className="text-[10px] text-ink-3 font-[family-name:var(--font-mono)]">{fmtDate(bars[hover].date)}</div>
+          <div className="text-[11px] font-[family-name:var(--font-mono)]">
             O{fmtPrice(bars[hover].open)} H{fmtPrice(bars[hover].high)} L{fmtPrice(bars[hover].low)} C{fmtPrice(bars[hover].close)}
           </div>
         </div>

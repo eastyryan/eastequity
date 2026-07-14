@@ -115,17 +115,17 @@ function ProposalCard({ item }: { item: Proposal }) {
   const reasons = (item.reasons ?? []).filter((r) => r && r.length > 0);
 
   return (
-    <div className="rounded-xl border border-line bg-white p-5">
+    <div className="ds-card p-5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <div className="flex items-baseline gap-3">
-          <span className="font-medium font-[family-name:var(--font-geist-mono)]">{ticker}</span>
+          <span className="font-medium font-[family-name:var(--font-mono)]">{ticker}</span>
           {action && <span className="text-[13px] text-ink-3">{action}</span>}
         </div>
         <span
-          className={`rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase font-[family-name:var(--font-geist-mono)] ${
+          className={`rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase font-[family-name:var(--font-mono)] ${
             item.approved
-              ? "border-emerald-300 bg-emerald-50 text-accent"
-              : "border-red-300 bg-red-50 text-red-700"
+              ? "border-pos/30 bg-pos-soft text-accent"
+              : "border-neg/30 bg-neg-soft text-neg"
           }`}
         >
           {item.approved ? "Approved" : "Rejected"}
@@ -137,7 +137,7 @@ function ProposalCard({ item }: { item: Proposal }) {
           {stats.map((s) => (
             <div key={s.label} className="border-l border-line pl-3">
               <div className="text-[12px] text-ink-3">{s.label}</div>
-              <div className="mt-0.5 font-[family-name:var(--font-geist-mono)]">{s.value}</div>
+              <div className="mt-0.5 font-[family-name:var(--font-mono)]">{s.value}</div>
             </div>
           ))}
         </div>
@@ -168,8 +168,8 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
 
   if (!run) {
     return (
-      <main className="mx-auto max-w-4xl px-5 sm:px-8">
-        <header className="flex h-16 items-center justify-between border-b border-line">
+      <main className="mx-auto max-w-5xl px-5 pb-10 sm:px-8">
+        <header className="flex h-[68px] items-center justify-between border-b border-line">
           <Link href="/" className="flex items-center gap-2.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/avatar.jpg" alt="" className="h-8 w-8 rounded-full border border-line" />
@@ -183,7 +183,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
           </p>
           <Link
             href="/runs"
-            className="mt-6 inline-block rounded-md border border-line px-3.5 py-1.5 text-sm text-ink-2 hover:border-zinc-300 hover:text-ink"
+            className="mt-6 inline-block rounded-md border border-line px-3.5 py-1.5 text-sm text-ink-2 hover:border-line-2 hover:text-ink"
           >
             ← All runs
           </Link>
@@ -219,9 +219,9 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
   const reasoning = run.latest_reasoning;
 
   return (
-    <main className="mx-auto max-w-4xl px-5 sm:px-8">
+    <main className="mx-auto max-w-5xl px-5 pb-10 sm:px-8">
       {/* Header */}
-      <header className="flex h-16 items-center justify-between border-b border-line">
+      <header className="flex h-[68px] items-center justify-between border-b border-line">
         <Link href="/" className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/avatar.jpg" alt="" className="h-8 w-8 rounded-full border border-line" />
@@ -229,7 +229,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
         </Link>
         <Link
           href="/runs"
-          className="text-[13px] text-ink-3 hover:text-ink font-[family-name:var(--font-geist-mono)]"
+          className="text-[13px] text-ink-3 hover:text-ink font-[family-name:var(--font-mono)]"
         >
           All runs
         </Link>
@@ -239,14 +239,14 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
       <section className="pt-14 pb-12">
         <Link
           href="/runs"
-          className="text-[13px] text-ink-3 hover:text-ink font-[family-name:var(--font-geist-mono)]"
+          className="text-[13px] text-ink-3 hover:text-ink font-[family-name:var(--font-mono)]"
         >
           ← Run archive
         </Link>
         <h1 className="mt-4 text-3xl sm:text-4xl font-semibold tracking-tight leading-tight">
           {dateLabel || "Run"}
         </h1>
-        <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">
+        <p className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-ink-3 font-[family-name:var(--font-mono)]">
           {timeLabel && <span>{timeLabel}</span>}
           {run.mode && (
             <>
@@ -261,7 +261,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
 
       {/* Commentary */}
       {commentary && (
-        <section className="border-t border-line py-12">
+        <section className="ds-card mt-5 p-5 sm:p-7">
           <h2 className="text-lg font-semibold tracking-tight">What the agent said</h2>
           <p className="mt-4 text-[15px] leading-relaxed text-ink-2">{clean(commentary)}</p>
         </section>
@@ -269,13 +269,13 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
 
       {/* Full reasoning / chain-of-thought */}
       {reasoning && (
-        <section className="border-t border-line py-12">
+        <section className="ds-card mt-5 p-5 sm:p-7">
           <h2 className="text-lg font-semibold tracking-tight">Full reasoning</h2>
           <p className="mt-1 text-sm text-ink-2">
             The agent&apos;s complete chain-of-thought for this run, unedited.
           </p>
-          <div className="mt-6 overflow-x-auto rounded-xl border border-line bg-white p-5">
-            <pre className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-ink-2 font-[family-name:var(--font-geist-mono)]">
+          <div className="mt-6 overflow-x-auto ds-card p-5">
+            <pre className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-ink-2 font-[family-name:var(--font-mono)]">
               {clean(reasoning)}
             </pre>
           </div>
@@ -284,7 +284,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
 
       {/* Proposals */}
       {proposals.length > 0 && (
-        <section className="border-t border-line py-12">
+        <section className="ds-card mt-5 p-5 sm:p-7">
           <h2 className="text-lg font-semibold tracking-tight">Proposals</h2>
           <p className="mt-1 text-sm text-ink-2">
             Every idea the agent put to the validator this run, approved and rejected.
@@ -315,12 +315,12 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
       )}
 
       {/* Fills */}
-      <section className="border-t border-line py-12">
+      <section className="ds-card mt-5 p-5 sm:p-7">
         <h2 className="text-lg font-semibold tracking-tight">Orders filled</h2>
         {fills.length > 0 ? (
           <ul className="mt-4 space-y-2">
             {fills.map((f, i) => (
-              <li key={i} className="text-sm font-[family-name:var(--font-geist-mono)]">
+              <li key={i} className="text-sm font-[family-name:var(--font-mono)]">
                 {f.action === "BUY" ? "Opened" : "Closed"} {f.ticker}: {f.quantity} shares at $
                 {f.fill_price}
               </li>
@@ -333,7 +333,7 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
 
       {/* Closed trades */}
       {closed.length > 0 && (
-        <section className="border-t border-line py-12">
+        <section className="ds-card mt-5 p-5 sm:p-7">
           <h2 className="text-lg font-semibold tracking-tight">Closed on this run</h2>
           <p className="mt-1 text-sm text-ink-2">
             Positions the agent exited this session, scored against their own plans.

@@ -64,15 +64,15 @@ export default function RunsIndex() {
   const runs = [...index].reverse();
 
   return (
-    <main className="mx-auto max-w-4xl px-5 sm:px-8">
+    <main className="mx-auto max-w-5xl px-5 pb-10 sm:px-8">
       {/* Header */}
-      <header className="flex h-16 items-center justify-between border-b border-line">
+      <header className="flex h-[68px] items-center justify-between border-b border-line">
         <Link href="/" className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/avatar.jpg" alt="" className="h-8 w-8 rounded-full border border-line" />
           <span className="text-[15px] font-semibold tracking-tight">East Equity Agent</span>
         </Link>
-        <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-800 font-[family-name:var(--font-geist-mono)]">
+        <span className="rounded-full border border-attn/40 bg-attn-soft px-2.5 py-0.5 text-[11px] font-medium text-attn font-[family-name:var(--font-mono)]">
           PAPER TRADING
         </span>
       </header>
@@ -81,7 +81,7 @@ export default function RunsIndex() {
       <section className="pt-14 pb-12">
         <Link
           href="/"
-          className="text-[13px] text-ink-3 hover:text-ink font-[family-name:var(--font-geist-mono)]"
+          className="text-[13px] text-ink-3 hover:text-ink font-[family-name:var(--font-mono)]"
         >
           ← Back to dashboard
         </Link>
@@ -95,7 +95,7 @@ export default function RunsIndex() {
       </section>
 
       {/* Runs list */}
-      <section className="border-t border-line py-12">
+      <section className="ds-card mt-5 p-5 sm:p-7">
         {runs.length === 0 ? (
           <div className="rounded-lg border border-dashed border-line px-6 py-10 text-center">
             <p className="font-medium">No runs archived yet</p>
@@ -115,15 +115,15 @@ export default function RunsIndex() {
                     className="group flex flex-col gap-2 py-5 sm:flex-row sm:items-baseline sm:gap-5"
                   >
                     <div className="flex shrink-0 items-center gap-3 sm:w-56">
-                      <span className="text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">
+                      <span className="text-[13px] text-ink-3 font-[family-name:var(--font-mono)]">
                         {formatDate(r.date)}
                       </span>
                       {r.mode && (
                         <span
-                          className={`rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase font-[family-name:var(--font-geist-mono)] ${
+                          className={`rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase font-[family-name:var(--font-mono)] ${
                             isPaper
-                              ? "border-amber-300 bg-amber-50 text-amber-800"
-                              : "border-line bg-white text-ink-3"
+                              ? "border-attn/40 bg-attn-soft text-attn"
+                              : "border-line bg-card text-ink-3"
                           }`}
                         >
                           {r.mode}
@@ -134,7 +134,7 @@ export default function RunsIndex() {
                       <p className="text-sm leading-relaxed text-ink group-hover:text-accent">
                         {clean(r.headline ?? "")}
                       </p>
-                      <p className="mt-1 text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">
+                      <p className="mt-1 text-[13px] text-ink-3 font-[family-name:var(--font-mono)]">
                         {tickers.length > 0 ? `Traded ${tickers.join(", ")}` : "No trade"}
                       </p>
                     </div>

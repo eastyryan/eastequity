@@ -20,12 +20,12 @@ const INNER = SIZE - PAD.left - PAD.right; // 264 === SIZE - PAD.top - PAD.botto
 // (or worse) is drawn red. Small misses stay accent so the diagram is not alarmist.
 const OVERCONFIDENT_GAP_PCT = -8;
 
-const ACCENT = "#047857";
-const RED = "#b91c1c";
-const INK2 = "#52525b";
-const INK3 = "#a1a1aa";
-const LINE = "#e4e4e7";
-const PAPER = "#fafafa";
+const ACCENT = "var(--chart-up)";
+const RED = "var(--chart-down)";
+const INK2 = "var(--text-body)";
+const INK3 = "var(--text-faint)";
+const LINE = "var(--chart-grid)";
+const PAPER = "var(--surface-card)";
 
 const sx = (v: number) => PAD.left + (v / 100) * INNER;
 const sy = (v: number) => PAD.top + INNER - (v / 100) * INNER;
@@ -81,7 +81,7 @@ export default function CalibrationDiagram({ calibration }: { calibration: Calib
             textAnchor="middle"
             fontSize="10"
             fill={INK3}
-            fontFamily="var(--font-geist-mono)"
+            fontFamily="var(--font-mono)"
           >
             {t}
           </text>
@@ -94,7 +94,7 @@ export default function CalibrationDiagram({ calibration }: { calibration: Calib
             textAnchor="end"
             fontSize="10"
             fill={INK3}
-            fontFamily="var(--font-geist-mono)"
+            fontFamily="var(--font-mono)"
           >
             {t}
           </text>
@@ -132,7 +132,7 @@ export default function CalibrationDiagram({ calibration }: { calibration: Calib
                 textAnchor={flipLeft ? "end" : "start"}
                 fontSize="10"
                 fill={INK2}
-                fontFamily="var(--font-geist-mono)"
+                fontFamily="var(--font-mono)"
               >
                 {bucket}
               </text>

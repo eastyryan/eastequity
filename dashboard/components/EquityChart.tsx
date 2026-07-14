@@ -10,15 +10,17 @@ const W = 800;
 const H = 300;
 const PAD = { top: 28, right: 30, bottom: 22, left: 14 };
 
-// Share-card palette (kept in lockstep with tools/chart_card.py).
-const PAPER = "#f1f0ea"; // warm off-white panel
-const INK = "#141413";
-const SUB = "#9d9c96"; // muted date/label gray
-const GREEN = "#12a06a"; // portfolio line + positive values
-const RED = "#dc2626";
-const GRAY = "#8e8d88"; // S&P line + its endpoint
-const BASELINE = "#c9c8c1";
-const CHIP_BORDER = "#e4e3dd";
+// Design-system palette: green/red are P/L-only, benchmark is neutral, grid is
+// faint dashed. CSS variables resolve from app/design-tokens.css.
+const PAPER = "var(--surface-card)";
+const INK = "var(--text-strong)";
+const SUB = "var(--text-muted)";
+const GREEN = "var(--chart-up)"; // portfolio line + positive values
+const RED = "var(--chart-down)";
+const GRAY = "var(--chart-bench)"; // S&P line + its endpoint
+const BASELINE = "var(--chart-grid)";
+const CHIP_BORDER = "var(--border-subtle)";
+const MONO = "var(--font-mono)";
 
 const RANGES: { key: RangeKey; days: number | null }[] = [
   { key: "1W", days: 7 },
@@ -187,7 +189,7 @@ export default function EquityChart({
   const sparse = view.length <= 15;
 
   return (
-    <div className="rounded-2xl px-4 pt-5 pb-4 sm:px-7 sm:pt-6 sm:pb-5" style={{ backgroundColor: PAPER }}>
+    <div className="ds-card px-4 pt-5 pb-4 sm:px-7 sm:pt-6 sm:pb-5">
       {/* Header: portfolio column left, benchmark column right */}
       <div className="flex items-start justify-between gap-4">
         <div>
@@ -204,26 +206,30 @@ export default function EquityChart({
             </span>
           </div>
           <div
-            className="mt-3 text-2xl sm:text-[32px] font-bold leading-none tracking-tight"
-            style={{ color: agentHdr.color }}
+            className="mt-3 text-2xl sm:text-[30px] font-semibold leading-none tracking-tight"
+            style={{ color: agentHdr.color, fontFamily: MONO, fontFeatureSettings: '"tnum" 1' }}
           >
             {agentHdr.arrow} {agentHdr.text}
           </div>
-          <div className="mt-2 text-[12px]" style={{ color: SUB }}>
+          <div className="mt-2 text-[12px]" style={{ color: SUB, fontFamily: MONO }}>
             {dateRange}
           </div>
         </div>
         <div className="shrink-0 text-right">
-          <div className="text-[14px] sm:text-[15px] font-bold tracking-tight leading-9" style={{ color: INK }}>
+          <div className="text-[14px] sm:text-[15px] font-semibold tracking-tight leading-9" style={{ color: INK }}>
             S&amp;P 500
           </div>
           <div
-            className="mt-3 text-2xl sm:text-[32px] font-bold leading-none tracking-tight"
-            style={{ color: benchHdr ? benchHdr.color : SUB }}
+            className="mt-3 text-2xl sm:text-[30px] font-semibold leading-none tracking-tight"
+            style={{
+              color: benchHdr ? benchHdr.color : SUB,
+              fontFamily: MONO,
+              fontFeatureSettings: '"tnum" 1',
+            }}
           >
             {benchHdr ? `${benchHdr.arrow} ${benchHdr.text}` : "n/a"}
           </div>
-          <div className="mt-2 text-[12px]" style={{ color: SUB }}>
+          <div className="mt-2 text-[12px]" style={{ color: SUB, fontFamily: MONO }}>
             {dateRange}
           </div>
         </div>
@@ -240,6 +246,32 @@ export default function EquityChart({
           onPointerMove={onMove}
           onPointerLeave={() => setHover(null)}
         >
+          {/* Design-system chart chrome: area gradient + the signature soft
+              neon glow under the portfolio line. */}
+          <defs>
+            <linearGradient id="eq-area" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stopColor="var(--chart-area-top)" />
+              <stop offset="1" stopColor="var(--chart-area-bot)" />
+            </linearGradient>
+            <filter id="eq-glow" x="-10%" y="-40%" width="120%" height="180%">
+              <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor={GREEN} floodOpacity="0.5" />
+            </filter>
+          </defs>
+
+          {/* Faint dashed horizontal grid (no vertical grid, no chartjunk) */}
+          {[0, 1, 2, 3].map((i) => (
+            <line
+              key={`g${i}`}
+              x1={PAD.left}
+              x2={W - PAD.right}
+              y1={PAD.top + ((H - PAD.top - PAD.bottom) / 3) * i}
+              y2={PAD.top + ((H - PAD.top - PAD.bottom) / 3) * i}
+              stroke={BASELINE}
+              strokeWidth="1"
+              strokeDasharray="3 5"
+            />
+          ))}
+
           {/* 0% baseline + vertical guide at the last session */}
           <line
             x1={PAD.left}
@@ -270,13 +302,14 @@ export default function EquityChart({
             />
           )}
 
-          {/* S&P 500, drawn beneath the agent line */}
+          {/* S&P 500 benchmark: thin, neutral, dashed — beneath the agent line */}
           {geo.benchPath && (
             <path
               d={geo.benchPath}
               fill="none"
               stroke={GRAY}
-              strokeWidth="2.5"
+              strokeWidth="1.5"
+              strokeDasharray="4 4"
               strokeLinecap="round"
               strokeLinejoin="round"
             />
@@ -315,15 +348,24 @@ export default function EquityChart({
             </g>
           )}
 
-          {/* Agent line on top */}
+          {/* Area fill under the agent line (vertical tint → transparent) */}
+          {geo.agentPath && view.length > 1 && (
+            <path
+              d={`${geo.agentPath} L${geo.xs[last]},${H - PAD.bottom} L${geo.xs[0]},${H - PAD.bottom} Z`}
+              fill="url(#eq-area)"
+            />
+          )}
+
+          {/* Agent line on top, with the signature glow */}
           {geo.agentPath && (
             <path
               d={geo.agentPath}
               fill="none"
               stroke={GREEN}
-              strokeWidth="3"
+              strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
+              filter="url(#eq-glow)"
             />
           )}
           {sparse &&
@@ -366,7 +408,7 @@ export default function EquityChart({
 
         {/* Tooltip chip */}
         <div
-          className="pointer-events-none absolute z-10 min-w-[186px] rounded-xl border bg-white px-3.5 py-2.5 shadow-[0_2px_10px_rgba(20,20,19,0.08)]"
+          className="pointer-events-none absolute z-10 min-w-[186px] rounded-xl border bg-card px-3.5 py-2.5 shadow-[0_2px_10px_rgba(20,20,19,0.08)]"
           style={{
             left: `${(geo.xs[active] / W) * 100}%`,
             top: 6,
@@ -374,14 +416,17 @@ export default function EquityChart({
             transform: flip ? "translateX(calc(-100% - 14px))" : "translateX(14px)",
           }}
         >
-          <div className="text-[12px] font-medium" style={{ color: INK }}>
+          <div className="text-[12px] font-medium" style={{ color: INK, fontFamily: MONO }}>
             {fmtDate(view[active].date)}
           </div>
           <div className="my-1.5 h-px" style={{ backgroundColor: CHIP_BORDER }} />
           <div className="flex items-center gap-2 text-[12.5px]">
             <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: GREEN }} aria-hidden />
             <span style={{ color: INK }}>EastEquity Agent</span>
-            <span className="ml-auto pl-3 font-semibold" style={{ color: activeAgent.color }}>
+            <span
+              className="ml-auto pl-3 font-semibold"
+              style={{ color: activeAgent.color, fontFamily: MONO, fontFeatureSettings: '"tnum" 1' }}
+            >
               {activeAgent.text}
             </span>
           </div>
@@ -390,7 +435,11 @@ export default function EquityChart({
             <span style={{ color: INK }}>S&amp;P 500</span>
             <span
               className="ml-auto pl-3 font-semibold"
-              style={{ color: activeBench ? activeBench.color : SUB }}
+              style={{
+                color: activeBench ? activeBench.color : SUB,
+                fontFamily: MONO,
+                fontFeatureSettings: '"tnum" 1',
+              }}
             >
               {activeBench ? activeBench.text : "—"}
             </span>
@@ -417,32 +466,34 @@ export default function EquityChart({
         </p>
       )}
 
-      {/* Timeframe pills */}
-      <div className="mt-4 flex items-center justify-center gap-1.5">
-        {RANGES.map((r) => {
-          const enabled = r.key === "MAX" || counts[r.key] >= 2;
-          const selected = effective === r.key;
-          return (
-            <button
-              key={r.key}
-              type="button"
-              disabled={!enabled}
-              onClick={() => {
-                setRange(r.key);
-                setHover(null);
-              }}
-              className={`rounded-full px-4 py-1.5 text-[13px] transition-colors ${
-                selected ? "font-bold" : "font-medium"
-              } ${!enabled ? "cursor-default" : ""}`}
-              style={{
-                backgroundColor: selected ? INK : "transparent",
-                color: selected ? "#ffffff" : enabled ? SUB : BASELINE,
-              }}
-            >
-              {r.key}
-            </button>
-          );
-        })}
+      {/* Timeframe control (design-system Range: sunken track, raised selection) */}
+      <div className="mt-4 flex items-center justify-center">
+        <div className="inline-flex gap-0.5 rounded-lg border border-line-2 bg-sunken p-0.5">
+          {RANGES.map((r) => {
+            const enabled = r.key === "MAX" || counts[r.key] >= 2;
+            const selected = effective === r.key;
+            return (
+              <button
+                key={r.key}
+                type="button"
+                disabled={!enabled}
+                onClick={() => {
+                  setRange(r.key);
+                  setHover(null);
+                }}
+                className={`num rounded-md px-3 py-1 text-[12px] font-medium transition-colors ${
+                  selected
+                    ? "bg-card text-ink shadow-[var(--shadow-xs)]"
+                    : enabled
+                      ? "text-ink-3 hover:text-ink-2"
+                      : "cursor-default text-faint/60"
+                }`}
+              >
+                {r.key}
+              </button>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

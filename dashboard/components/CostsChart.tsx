@@ -70,7 +70,7 @@ export default function CostsChart({ closedTrades }: { closedTrades: Trade[] }) 
       <div className="mb-3 flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
         <div className="flex items-center gap-5 text-[13px] text-ink-2">
           <span className="flex items-center gap-2">
-            <span className="inline-block h-0.5 w-5 rounded bg-red-700" aria-hidden />
+            <span className="inline-block h-0.5 w-5 rounded bg-neg" aria-hidden />
             Fees
           </span>
           <span className="flex items-center gap-2">
@@ -78,8 +78,8 @@ export default function CostsChart({ closedTrades }: { closedTrades: Trade[] }) 
             Dividends
           </span>
         </div>
-        <div className="flex items-center gap-5 text-sm font-[family-name:var(--font-geist-mono)]">
-          <span className="text-red-700">-{usd2(totalFees)} fees</span>
+        <div className="flex items-center gap-5 text-sm font-[family-name:var(--font-mono)]">
+          <span className="text-neg">-{usd2(totalFees)} fees</span>
           <span className="text-accent">+{usd2(totalDiv)} div</span>
         </div>
       </div>
@@ -92,37 +92,37 @@ export default function CostsChart({ closedTrades }: { closedTrades: Trade[] }) 
       >
         {ticks.map((t, i) => (
           <g key={i}>
-            <line x1={PAD.left} x2={W - PAD.right} y1={t.y} y2={t.y} stroke="#e4e4e7" strokeWidth="1" />
+            <line x1={PAD.left} x2={W - PAD.right} y1={t.y} y2={t.y} stroke="var(--chart-grid)" strokeWidth="1" />
             <text
               x={PAD.left - 8}
               y={t.y + 4}
               textAnchor="end"
               fontSize="11"
-              fill="#a1a1aa"
-              fontFamily="var(--font-geist-mono)"
+              fill="var(--text-faint)"
+              fontFamily="var(--font-mono)"
             >
               {fmtTick(t.v, big)}
             </text>
           </g>
         ))}
 
-        {divArea && <path d={divArea} fill="#047857" fillOpacity={0.06} stroke="none" />}
-        {feeArea && <path d={feeArea} fill="#b91c1c" fillOpacity={0.06} stroke="none" />}
-        {n > 1 && <path d={divLine} fill="none" stroke="#047857" strokeWidth="1.5" strokeLinejoin="round" />}
-        {n > 1 && <path d={feeLine} fill="none" stroke="#b91c1c" strokeWidth="1.5" strokeLinejoin="round" />}
+        {divArea && <path d={divArea} fill="var(--chart-up)" fillOpacity={0.06} stroke="none" />}
+        {feeArea && <path d={feeArea} fill="var(--chart-down)" fillOpacity={0.06} stroke="none" />}
+        {n > 1 && <path d={divLine} fill="none" stroke="var(--chart-up)" strokeWidth="1.5" strokeLinejoin="round" />}
+        {n > 1 && <path d={feeLine} fill="none" stroke="var(--chart-down)" strokeWidth="1.5" strokeLinejoin="round" />}
 
         {series.map((s, i) => {
           const dot = n <= 12 ? 2 : i === n - 1 ? 3 : 0;
           if (dot === 0) return null;
           return (
             <g key={i}>
-              <circle cx={x(i)} cy={y(s.cumD)} r={dot} fill="#047857" stroke="#fafafa" strokeWidth="1.5" />
-              <circle cx={x(i)} cy={y(s.cumF)} r={dot} fill="#b91c1c" stroke="#fafafa" strokeWidth="1.5" />
+              <circle cx={x(i)} cy={y(s.cumD)} r={dot} fill="var(--chart-up)" stroke="var(--surface-card)" strokeWidth="1.5" />
+              <circle cx={x(i)} cy={y(s.cumF)} r={dot} fill="var(--chart-down)" stroke="var(--surface-card)" strokeWidth="1.5" />
             </g>
           );
         })}
 
-        <text x={PAD.left} y={H - 8} fontSize="11" fill="#a1a1aa" fontFamily="var(--font-geist-mono)">
+        <text x={PAD.left} y={H - 8} fontSize="11" fill="var(--text-faint)" fontFamily="var(--font-mono)">
           {fmtDate(series[0].date)}
         </text>
         <text
@@ -130,8 +130,8 @@ export default function CostsChart({ closedTrades }: { closedTrades: Trade[] }) 
           y={H - 8}
           textAnchor="end"
           fontSize="11"
-          fill="#a1a1aa"
-          fontFamily="var(--font-geist-mono)"
+          fill="var(--text-faint)"
+          fontFamily="var(--font-mono)"
         >
           {fmtDate(series[n - 1].date)}
         </text>

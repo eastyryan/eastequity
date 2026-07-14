@@ -49,10 +49,10 @@ export default function UniverseLog({ log }: { log: UniverseLogEntry[] }) {
                   aria-hidden
                 />
                 <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                  <span className="text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">
+                  <span className="text-[13px] text-ink-3 font-[family-name:var(--font-mono)]">
                     {e.date}
                   </span>
-                  <span className="text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">
+                  <span className="text-[13px] text-ink-3 font-[family-name:var(--font-mono)]">
                     <span className="text-accent">+{added.length} added</span>
                     {" / "}
                     <span>−{removed.length} removed</span>
@@ -65,7 +65,7 @@ export default function UniverseLog({ log }: { log: UniverseLogEntry[] }) {
                     {added.map((t) => (
                       <span
                         key={`add-${t}`}
-                        className="rounded border border-emerald-200 bg-accent-soft px-1.5 py-px text-[12px] text-accent font-[family-name:var(--font-geist-mono)]"
+                        className="rounded border border-pos/25 bg-accent-soft px-1.5 py-px text-[12px] text-accent font-[family-name:var(--font-mono)]"
                       >
                         +{t}
                       </span>
@@ -73,8 +73,8 @@ export default function UniverseLog({ log }: { log: UniverseLogEntry[] }) {
                     {removed.map((t) => (
                       <span
                         key={`rem-${t}`}
-                        className={`rounded border border-line px-1.5 py-px text-[12px] font-[family-name:var(--font-geist-mono)] ${
-                          droppedSet.has(t) ? "text-amber-700 line-through" : "text-ink-3 line-through"
+                        className={`rounded border border-line px-1.5 py-px text-[12px] font-[family-name:var(--font-mono)] ${
+                          droppedSet.has(t) ? "text-attn line-through" : "text-ink-3 line-through"
                         }`}
                         title={droppedSet.has(t) ? "Dropped - no longer priceable" : undefined}
                       >
@@ -86,7 +86,7 @@ export default function UniverseLog({ log }: { log: UniverseLogEntry[] }) {
                 )}
 
                 {dropped.length > 0 && (
-                  <p className="mt-2 text-[12px] text-amber-700">
+                  <p className="mt-2 text-[12px] text-attn">
                     Dropped as unpriceable: {dropped.join(", ")}
                   </p>
                 )}

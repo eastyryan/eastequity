@@ -39,26 +39,26 @@ function OutcomeCard({ o }: { o: WatchlistOutcome }) {
     <li className="py-5">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
         <div className="flex flex-wrap items-baseline gap-2.5">
-          <span className="font-medium font-[family-name:var(--font-geist-mono)]">{o.ticker}</span>
+          <span className="font-medium font-[family-name:var(--font-mono)]">{o.ticker}</span>
           {o.acted ? (
-            <span className="rounded-full border border-emerald-300 bg-accent-soft px-2 py-0.5 text-[10px] font-medium uppercase text-accent font-[family-name:var(--font-geist-mono)]">
+            <span className="rounded-full border border-pos/30 bg-accent-soft px-2 py-0.5 text-[10px] font-medium uppercase text-accent font-[family-name:var(--font-mono)]">
               Bought
             </span>
           ) : (
-            <span className="rounded-full border border-line bg-white px-2 py-0.5 text-[10px] font-medium uppercase text-ink-3 font-[family-name:var(--font-geist-mono)]">
+            <span className="rounded-full border border-line bg-card px-2 py-0.5 text-[10px] font-medium uppercase text-ink-3 font-[family-name:var(--font-mono)]">
               Not acted
             </span>
           )}
           {o.hit_buy_level && (
-            <span className="inline-flex items-center gap-1 text-[12px] text-accent font-[family-name:var(--font-geist-mono)]">
+            <span className="inline-flex items-center gap-1 text-[12px] text-accent font-[family-name:var(--font-mono)]">
               <span aria-hidden>✓</span> hit buy level{o.hit_date ? ` ${o.hit_date}` : ""}
             </span>
           )}
         </div>
         {move != null && (
           <span
-            className={`text-sm font-[family-name:var(--font-geist-mono)] ${
-              move >= 0 ? "text-accent" : "text-red-700"
+            className={`text-sm font-[family-name:var(--font-mono)] ${
+              move >= 0 ? "text-accent" : "text-neg"
             }`}
           >
             {move >= 0 ? "+" : ""}
@@ -71,7 +71,7 @@ function OutcomeCard({ o }: { o: WatchlistOutcome }) {
         <p className="mt-1.5 text-sm text-ink-2 leading-relaxed">{clean(o.one_line)}</p>
       )}
 
-      <p className="mt-2 flex flex-wrap gap-x-2 gap-y-0.5 text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">
+      <p className="mt-2 flex flex-wrap gap-x-2 gap-y-0.5 text-[13px] text-ink-3 font-[family-name:var(--font-mono)]">
         {o.first_watched && <span>Watched since {o.first_watched}</span>}
         {buyAt && (
           <>

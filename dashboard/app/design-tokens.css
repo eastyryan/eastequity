@@ -1,0 +1,232 @@
+/* ============================================================
+   East Equity Agent — Design System tokens (light-mode primary).
+   Source: "Design system light mode" kit (tokens/colors, typography,
+   spacing, effects merged). Fonts are loaded via next/font in
+   layout.tsx, so the kit's --font-sans/--font-mono declarations and
+   Google Fonts @import are intentionally omitted here.
+   Dark mode variant applies via [data-theme="dark"] (kept for later).
+   ============================================================ */
+
+:root {
+  /* ---- Brand: blue ---- */
+  --blue-50:  oklch(0.972 0.018 255);
+  --blue-100: oklch(0.940 0.038 255);
+  --blue-200: oklch(0.885 0.070 255);
+  --blue-300: oklch(0.795 0.110 256);
+  --blue-400: oklch(0.680 0.150 257);
+  --blue-500: oklch(0.575 0.170 258);  /* primary brand */
+  --blue-600: oklch(0.505 0.165 260);
+  --blue-700: oklch(0.435 0.140 261);
+  --blue-800: oklch(0.370 0.110 262);
+
+  /* ---- Finance semantics ---- */
+  --up-100: oklch(0.940 0.055 155);
+  --up-300: oklch(0.800 0.130 154);
+  --up-500: oklch(0.640 0.150 152);   /* primary green */
+  --up-600: oklch(0.560 0.140 152);
+  --up-700: oklch(0.470 0.120 152);
+  --down-100: oklch(0.945 0.035 25);
+  --down-300: oklch(0.760 0.140 27);
+  --down-500: oklch(0.585 0.205 27);  /* primary red */
+  --down-600: oklch(0.520 0.200 27);
+  --down-700: oklch(0.455 0.175 27);
+  --amber-100: oklch(0.950 0.045 80);
+  --amber-500: oklch(0.720 0.150 70);
+  --amber-600: oklch(0.640 0.145 65);
+  --violet-100: oklch(0.945 0.035 300);
+  --violet-500: oklch(0.600 0.160 300);
+
+  /* ---- Neutral ramp (cool-neutral gray) ---- */
+  --n-0:   oklch(1 0 0);
+  --n-25:  oklch(0.990 0.002 250);
+  --n-50:  oklch(0.978 0.003 250);
+  --n-100: oklch(0.960 0.004 250);
+  --n-150: oklch(0.940 0.005 250);
+  --n-200: oklch(0.915 0.006 252);
+  --n-300: oklch(0.865 0.007 252);
+  --n-400: oklch(0.740 0.008 253);
+  --n-500: oklch(0.620 0.008 254);
+  --n-600: oklch(0.520 0.009 255);
+  --n-700: oklch(0.410 0.009 256);
+  --n-800: oklch(0.300 0.008 257);
+  --n-900: oklch(0.220 0.007 258);
+  --n-950: oklch(0.160 0.006 260);
+
+  /* ============ SEMANTIC ALIASES (light) ============ */
+  --bg-app:         var(--n-50);
+  --surface-card:   var(--n-0);
+  --surface-raised: var(--n-0);
+  --surface-sunken: var(--n-100);
+  --surface-hover:  var(--n-100);
+  --surface-active: var(--n-150);
+  --surface-inverse: var(--n-950);
+
+  --text-strong: var(--n-900);
+  --text-body:   var(--n-700);
+  --text-muted:  var(--n-600);
+  --text-faint:  var(--n-500);
+  --text-on-brand: var(--n-0);
+  --text-on-inverse: var(--n-100);
+
+  --border-subtle: var(--n-150);
+  --border-default: var(--n-200);
+  --border-strong: var(--n-300);
+  --border-focus:  var(--blue-500);
+
+  --brand:        var(--blue-500);
+  --brand-hover:  var(--blue-600);
+  --brand-active: var(--blue-700);
+  --brand-subtle: var(--blue-50);
+  --brand-border: var(--blue-200);
+  --on-brand:     var(--n-0);
+
+  --pos:          var(--up-600);
+  --pos-strong:   var(--up-700);
+  --pos-subtle:   var(--up-100);
+  --neg:          var(--down-600);
+  --neg-strong:   var(--down-700);
+  --neg-subtle:   var(--down-100);
+  --attn:         var(--amber-600);
+  --attn-subtle:  var(--amber-100);
+
+  --chart-up:       var(--up-500);
+  --chart-up-glow:  oklch(0.640 0.150 152 / 0.28);
+  --chart-down:     var(--down-500);
+  --chart-down-glow: oklch(0.585 0.205 27 / 0.26);
+  --chart-brand:    var(--blue-500);
+  --chart-bench:    var(--n-400);
+  --chart-grid:     var(--n-150);
+  --chart-area-top: oklch(0.640 0.150 152 / 0.18);
+  --chart-area-bot: oklch(0.640 0.150 152 / 0);
+
+  /* ---- Typography scale ---- */
+  --text-2xs: 0.6875rem;
+  --text-xs:  0.75rem;
+  --text-sm:  0.8125rem;
+  --text-md:  0.875rem;
+  --text-base: 0.9375rem;
+  --text-lg:  1.0625rem;
+  --text-xl:  1.25rem;
+  --text-2xl: 1.5rem;
+  --text-3xl: 1.875rem;
+  --text-4xl: 2.375rem;
+  --text-5xl: 3rem;
+
+  --fw-regular: 400;
+  --fw-medium:  500;
+  --fw-semibold: 600;
+  --fw-bold:    700;
+
+  --lh-tight:   1.1;
+  --lh-snug:    1.25;
+  --lh-normal:  1.45;
+  --lh-relaxed: 1.6;
+
+  --ls-tight:  -0.02em;
+  --ls-snug:   -0.01em;
+  --ls-normal: 0;
+  --ls-wide:   0.02em;
+  --ls-label:  0.06em;
+
+  --num-features: "tnum" 1, "zero" 1;
+
+  /* ---- Spacing / radii / layout ---- */
+  --sp-1: 0.25rem; --sp-2: 0.5rem; --sp-3: 0.75rem; --sp-4: 1rem;
+  --sp-5: 1.25rem; --sp-6: 1.5rem; --sp-7: 2rem; --sp-8: 2.5rem;
+  --sp-9: 3rem; --sp-10: 4rem;
+
+  --radius-xs: 4px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-2xl: 20px;
+  --radius-pill: 999px;
+
+  --sidebar-w: 268px;
+  --content-max: 1440px;
+  --header-h: 68px;
+
+  /* ---- Effects ---- */
+  --shadow-xs: 0 1px 2px oklch(0.3 0.02 258 / 0.06);
+  --shadow-sm: 0 1px 2px oklch(0.3 0.02 258 / 0.06),
+               0 2px 6px oklch(0.3 0.02 258 / 0.05);
+  --shadow-md: 0 2px 4px oklch(0.3 0.02 258 / 0.05),
+               0 6px 16px oklch(0.3 0.02 258 / 0.08);
+  --shadow-lg: 0 4px 8px oklch(0.3 0.02 258 / 0.06),
+               0 16px 40px oklch(0.3 0.02 258 / 0.10);
+  --shadow-focus: 0 0 0 3px oklch(0.575 0.170 258 / 0.30);
+
+  --glow-up:   0 0 12px oklch(0.640 0.150 152 / 0.45);
+  --glow-down: 0 0 12px oklch(0.585 0.205 27 / 0.42);
+  --glow-brand: 0 0 12px oklch(0.575 0.170 258 / 0.40);
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur-med: 200ms;
+  --dur-slow: 320ms;
+
+  color-scheme: light;
+}
+
+/* ==================== DARK THEME (variant, unused today) ==================== */
+[data-theme="dark"] {
+  --bg-app:        oklch(0.155 0.004 240);
+  --surface-card:  oklch(0.195 0.005 240);
+  --surface-raised: oklch(0.225 0.006 240);
+  --surface-sunken: oklch(0.175 0.004 240);
+  --surface-hover: oklch(0.235 0.006 240);
+  --surface-active: oklch(0.275 0.007 240);
+  --surface-inverse: var(--n-50);
+
+  --text-strong: oklch(0.975 0.003 240);
+  --text-body:   oklch(0.855 0.005 240);
+  --text-muted:  oklch(0.700 0.007 240);
+  --text-faint:  oklch(0.560 0.008 240);
+  --text-on-brand: oklch(0.985 0.002 250);
+  --text-on-inverse: var(--n-900);
+
+  --border-subtle: oklch(0.270 0.006 240);
+  --border-default: oklch(0.310 0.007 240);
+  --border-strong: oklch(0.380 0.008 240);
+  --border-focus:  var(--blue-400);
+
+  --brand:        var(--blue-400);
+  --brand-hover:  var(--blue-300);
+  --brand-active: var(--blue-200);
+  --brand-subtle: oklch(0.300 0.080 258);
+  --brand-border: oklch(0.400 0.100 258);
+  --on-brand:     oklch(0.160 0.02 260);
+
+  --pos:          var(--up-500);
+  --pos-strong:   var(--up-300);
+  --pos-subtle:   oklch(0.320 0.070 152);
+  --neg:          var(--down-500);
+  --neg-strong:   var(--down-300);
+  --neg-subtle:   oklch(0.320 0.090 27);
+  --attn:         var(--amber-500);
+  --attn-subtle:  oklch(0.330 0.070 70);
+
+  --chart-up:       oklch(0.760 0.170 150);
+  --chart-up-glow:  oklch(0.760 0.170 150 / 0.40);
+  --chart-down:     oklch(0.680 0.200 27);
+  --chart-down-glow: oklch(0.680 0.200 27 / 0.38);
+  --chart-brand:    var(--blue-400);
+  --chart-bench:    oklch(0.500 0.010 240);
+  --chart-grid:     oklch(0.280 0.006 240);
+  --chart-area-top: oklch(0.760 0.170 150 / 0.22);
+  --chart-area-bot: oklch(0.760 0.170 150 / 0);
+
+  --shadow-xs: 0 1px 2px oklch(0 0 0 / 0.40);
+  --shadow-sm: 0 1px 3px oklch(0 0 0 / 0.45);
+  --shadow-md: 0 4px 14px oklch(0 0 0 / 0.50);
+  --shadow-lg: 0 12px 40px oklch(0 0 0 / 0.60);
+  --shadow-focus: 0 0 0 3px oklch(0.680 0.150 257 / 0.40);
+
+  --glow-up:   0 0 16px oklch(0.760 0.170 150 / 0.55);
+  --glow-down: 0 0 16px oklch(0.680 0.200 27 / 0.50);
+  --glow-brand: 0 0 16px oklch(0.680 0.150 257 / 0.50);
+
+  color-scheme: dark;
+}

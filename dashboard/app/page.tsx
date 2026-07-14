@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Link from "next/link";
 import EquityChart from "@/components/EquityChart";
+import Spark from "@/components/Spark";
 import ClosedTrades from "@/components/ClosedTrades";
 import Calibration from "@/components/Calibration";
 import CalibrationDiagram from "@/components/CalibrationDiagram";
@@ -171,7 +172,36 @@ type UniverseLogEntry = {
   rationale: string;
 };
 
-type HistoryPoint = { date: string; equity: number; benchmark_close?: number | null };
+type HistoryPoint = { date: string; equity: number; cash?: number; benchmark_close?: number | null };
+
+// MetricDelta (design system): sign-colored mono value with ▲/▼ marker.
+// The canonical way to show any gain/loss. Green up, red down, gray zero.
+function Delta({
+  value,
+  suffix = "%",
+  note,
+  digits = 2,
+}: {
+  value: number;
+  suffix?: string;
+  note?: string;
+  digits?: number;
+}) {
+  const zero = Math.abs(value) < 1e-9;
+  const color = zero ? "text-faint" : value >= 0 ? "text-pos" : "text-neg";
+  const mark = zero ? "" : value >= 0 ? "▲" : "▼";
+  return (
+    <span className="inline-flex items-baseline gap-2">
+      <span className={`num inline-flex items-baseline gap-1 text-[14px] font-semibold leading-none ${color}`}>
+        {mark && <span className="text-[0.8em]">{mark}</span>}
+        {value >= 0 ? "+" : ""}
+        {value.toFixed(digits)}
+        {suffix}
+      </span>
+      {note && <span className="text-[13px] text-ink-3">{note}</span>}
+    </span>
+  );
+}
 
 const STARTING_CAPITAL = 10000;
 
@@ -273,23 +303,24 @@ export default function Home() {
     timeZone: "America/New_York",
   })} ET`;
 
-  const stats = [
-    { label: "Portfolio value", value: usd(equity), signed: false, positive: false },
-    {
-      label: "Total return",
-      value: `${returnPct >= 0 ? "+" : ""}${returnPct.toFixed(2)}%`,
-      signed: true,
-      positive: returnPct >= 0,
-    },
-    {
-      label: "vs S&P 500",
-      value:
-        excessPts === null ? "n/a" : `${excessPts >= 0 ? "+" : ""}${excessPts.toFixed(2)}%`,
-      signed: excessPts !== null,
-      positive: excessPts !== null && excessPts >= 0,
-    },
-    { label: "Cash", value: usd(cash), signed: false, positive: false },
-  ];
+  // Stat-card series (design system: every metric card carries a sparkline).
+  const equitySeries = history.map((h) => h.equity);
+  const cashSeries = history
+    .map((h) => h.cash)
+    .filter((c): c is number => typeof c === "number");
+  const excessSeries = benchPoints.map(
+    (h) =>
+      (h.equity / STARTING_CAPITAL - h.benchmark_close! / benchPoints[0].benchmark_close!) * 100,
+  );
+  const dayChange =
+    history.length >= 2 ? equity - history[history.length - 2].equity : null;
+  const dayChangePct =
+    dayChange !== null && history[history.length - 2].equity
+      ? (dayChange / history[history.length - 2].equity) * 100
+      : null;
+  // Hero value with faded decimals ($10,006 + faint .75), per the system.
+  const [equityDollars, equityCents] = usd2(equity).split(".");
+  const investedPct = equity ? ((equity - cash) / equity) * 100 : 0;
 
   const perf = latest.performance;
   const thinking = latest.commentary ?? latest.no_trade_reason;
@@ -305,10 +336,10 @@ export default function Home() {
   const fresh = freshness(latest);
   const freshClass =
     fresh?.tone === "degraded"
-      ? "border-red-300 bg-red-50 text-red-700"
+      ? "border-neg/30 bg-neg-soft text-neg"
       : fresh?.tone === "stale"
-        ? "border-amber-300 bg-amber-50 text-amber-800"
-        : "border-emerald-300 bg-emerald-50 text-emerald-700";
+        ? "border-attn/40 bg-attn-soft text-attn"
+        : "border-pos/30 bg-pos-soft text-pos-strong";
 
   const universeLabel = latest.universe_size ? `${latest.universe_size} names` : "dozens of names";
 
@@ -354,25 +385,28 @@ export default function Home() {
     : [];
 
   return (
-    <main className="mx-auto max-w-4xl px-5 sm:px-8">
+    <main className="mx-auto max-w-5xl px-5 pb-10 sm:px-8">
       {/* Header */}
-      <header className="flex h-16 items-center justify-between border-b border-line">
+      <header className="flex h-[68px] items-center justify-between border-b border-line">
         <span className="flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/avatar.jpg" alt="" className="h-8 w-8 rounded-full border border-line" />
-          <span className="text-[15px] font-semibold tracking-tight">East Equity Agent</span>
+          <img src="/avatar.jpg" alt="" className="h-9 w-9 rounded-full border border-line" />
+          <span className="flex flex-col leading-none">
+            <span className="text-[15px] font-semibold tracking-tight text-ink">East Equity</span>
+            <span className="ds-label mt-1">Agent</span>
+          </span>
         </span>
         <span className="flex items-center gap-2">
           {fresh && (
             <span
               title={fresh.detail}
-              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium font-[family-name:var(--font-geist-mono)] ${freshClass}`}
+              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-0.5 text-[11px] font-medium font-[family-name:var(--font-mono)] ${freshClass}`}
             >
               <span className="inline-block h-1.5 w-1.5 rounded-full bg-current" aria-hidden />
               {fresh.label}
             </span>
           )}
-          <span className="rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-800 font-[family-name:var(--font-geist-mono)]">
+          <span className="rounded-full border border-attn/40 bg-attn-soft px-2.5 py-0.5 text-[11px] font-medium text-attn font-[family-name:var(--font-mono)]">
             PAPER TRADING
           </span>
         </span>
@@ -389,20 +423,99 @@ export default function Home() {
           code.
         </p>
 
-        <dl className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-          {stats.map((s) => (
-            <div key={s.label} className="rounded-xl border border-line bg-white p-5">
-              <dt className="text-[13px] text-ink-3">{s.label}</dt>
-              <dd
-                className={`mt-2 whitespace-nowrap text-2xl lg:text-3xl font-medium tracking-tight font-[family-name:var(--font-geist-mono)] ${
-                  s.signed ? (s.positive ? "text-accent" : "text-red-700") : ""
+        {/* Overview stat cards (design system): title, big value with faded
+            decimals, sparkline, sign-colored ▲/▼ delta. */}
+        <div className="mt-10 grid grid-cols-1 gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="ds-card flex min-w-0 flex-col gap-3 overflow-hidden p-[18px]">
+            <div>
+              <h4 className="text-[17px] font-semibold tracking-tight text-ink">Portfolio value</h4>
+              <p className="mt-0.5 text-[13px] text-ink-3">Since $10,000 start</p>
+            </div>
+            <div className="flex items-end justify-between gap-2.5">
+              <div className="whitespace-nowrap text-[1.6rem] font-semibold leading-none tracking-tight text-ink">
+                {equityDollars}
+                {equityCents && <span className="text-faint">.{equityCents}</span>}
+              </div>
+              <Spark id="equity" data={equitySeries} direction={returnPct >= 0 ? "up" : "down"} />
+            </div>
+            {dayChangePct !== null ? (
+              <Delta value={dayChangePct} note="latest session" />
+            ) : (
+              <Delta value={returnPct} note="total return" />
+            )}
+          </div>
+
+          <div className="ds-card flex min-w-0 flex-col gap-3 overflow-hidden p-[18px]">
+            <div>
+              <h4 className="text-[17px] font-semibold tracking-tight text-ink">Total return</h4>
+              <p className="mt-0.5 text-[13px] text-ink-3">Net of modeled costs</p>
+            </div>
+            <div className="flex items-end justify-between gap-2.5">
+              <div
+                className={`num whitespace-nowrap text-[1.6rem] font-semibold leading-none tracking-tight ${
+                  returnPct >= 0 ? "text-pos" : "text-neg"
                 }`}
               >
-                {s.value}
-              </dd>
+                {returnPct >= 0 ? "▲" : "▼"} {returnPct >= 0 ? "+" : ""}
+                {returnPct.toFixed(2)}%
+              </div>
+              <Spark
+                id="return"
+                data={equitySeries}
+                direction={returnPct >= 0 ? "up" : "down"}
+              />
             </div>
-          ))}
-        </dl>
+            <span className="text-[13px] text-ink-3">Every fill, fee, and slip counted</span>
+          </div>
+
+          <div className="ds-card flex min-w-0 flex-col gap-3 overflow-hidden p-[18px]">
+            <div>
+              <h4 className="text-[17px] font-semibold tracking-tight text-ink">vs S&amp;P 500</h4>
+              <p className="mt-0.5 text-[13px] text-ink-3">Against buy-and-hold</p>
+            </div>
+            <div className="flex items-end justify-between gap-2.5">
+              <div
+                className={`num whitespace-nowrap text-[1.6rem] font-semibold leading-none tracking-tight ${
+                  excessPts === null
+                    ? "text-faint"
+                    : excessPts >= 0
+                      ? "text-pos"
+                      : "text-neg"
+                }`}
+              >
+                {excessPts === null
+                  ? "n/a"
+                  : `${excessPts >= 0 ? "▲ +" : "▼ "}${excessPts.toFixed(2)}%`}
+              </div>
+              {excessSeries.length >= 2 && (
+                <Spark
+                  id="excess"
+                  data={excessSeries}
+                  direction={excessPts !== null && excessPts >= 0 ? "up" : "down"}
+                />
+              )}
+            </div>
+            <span className="text-[13px] text-ink-3">Marked each session</span>
+          </div>
+
+          <div className="ds-card flex min-w-0 flex-col gap-3 overflow-hidden p-[18px]">
+            <div>
+              <h4 className="text-[17px] font-semibold tracking-tight text-ink">Cash</h4>
+              <p className="mt-0.5 text-[13px] text-ink-3">Uninvested buying power</p>
+            </div>
+            <div className="flex items-end justify-between gap-2.5">
+              <div className="whitespace-nowrap text-[1.6rem] font-semibold leading-none tracking-tight text-ink">
+                {usd(cash)}
+              </div>
+              {cashSeries.length >= 2 && (
+                <Spark id="cash" data={cashSeries} glow={false} direction="up" />
+              )}
+            </div>
+            <span className="text-[13px] text-ink-3">
+              <span className="num text-ink-2">{investedPct.toFixed(1)}%</span> of equity invested
+            </span>
+          </div>
+        </div>
 
         <p className="mt-8 text-[13px] text-ink-3">
           Last run {lastRun}. {latest.schedule_note ?? "Runs on weekdays"}.
@@ -412,8 +525,8 @@ export default function Home() {
             Built precisely so a silently-dead pipeline is visible here, not just in logs. */}
         {health && (
           <p
-            className={`mt-2 text-[13px] font-[family-name:var(--font-geist-mono)] ${
-              healthDegraded ? "text-red-700" : "text-ink-3"
+            className={`mt-2 text-[13px] font-[family-name:var(--font-mono)] ${
+              healthDegraded ? "text-neg" : "text-ink-3"
             }`}
           >
             Pipeline: {health.completed_scheduled_runs ?? 0}/{health.expected_runs_so_far ?? 0}{" "}
@@ -425,13 +538,13 @@ export default function Home() {
 
         {/* Risk halts: new BUYs are blocked until equity recovers. */}
         {riskHalts.length > 0 && (
-          <div className="mt-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3">
-            <p className="text-sm font-medium text-red-700">
+          <div className="mt-6 rounded-lg border border-neg/30 bg-neg-soft px-4 py-3">
+            <p className="text-sm font-medium text-neg">
               Risk halt active — new buys are blocked until equity recovers
             </p>
-            <ul className="mt-1 list-disc pl-5 text-[13px] text-red-700">
+            <ul className="mt-1 list-disc pl-5 text-[13px] text-neg">
               {riskHalts.map((h, i) => (
-                <li key={i} className="font-[family-name:var(--font-geist-mono)]">{clean(h)}</li>
+                <li key={i} className="font-[family-name:var(--font-mono)]">{clean(h)}</li>
               ))}
             </ul>
           </div>
@@ -439,7 +552,7 @@ export default function Home() {
       </section>
 
       {/* Equity curve — the chart card carries its own header and timeframe controls */}
-      <section className="border-t border-line py-12">
+      <section className="mt-5">
         <EquityChart points={history} startingCapital={STARTING_CAPITAL} events={latest.trade_events} />
         <p className="mt-3 text-[13px] text-ink-3">
           {usd(STARTING_CAPITAL)} starting capital, marked each session against buying and holding
@@ -449,21 +562,21 @@ export default function Home() {
 
       {/* Performance record, appears once trades have closed */}
       {perf && (
-        <section className="border-t border-line py-12">
+        <section className="ds-card mt-5 p-5 sm:p-7">
           <h2 className="text-lg font-semibold tracking-tight">Performance record</h2>
           <dl className="mt-6 grid grid-cols-2 gap-y-8 sm:grid-cols-4">
             {perfTiles.map((s) => (
               <div key={s.label} className="border-l border-line pl-4">
                 <dt className="text-[13px] text-ink-3">{s.label}</dt>
                 <dd
-                  className={`mt-1 text-xl font-medium tracking-tight font-[family-name:var(--font-geist-mono)] ${
+                  className={`mt-1 text-xl font-medium tracking-tight font-[family-name:var(--font-mono)] ${
                     s.accent ? "text-accent" : ""
                   }`}
                 >
                   {s.value}
                 </dd>
                 {s.sub && (
-                  <dd className="mt-0.5 text-[11px] text-ink-3 font-[family-name:var(--font-geist-mono)]">
+                  <dd className="mt-0.5 text-[11px] text-ink-3 font-[family-name:var(--font-mono)]">
                     {s.sub}
                   </dd>
                 )}
@@ -476,7 +589,7 @@ export default function Home() {
       {/* Confidence calibration, honesty feature: stated confidence vs realized win rate */}
       {latest.calibration && <Calibration data={latest.calibration} />}
       {latest.calibration && Object.keys(latest.calibration.by_confidence ?? {}).length > 0 && (
-        <section className="border-t border-line py-12">
+        <section className="ds-card mt-5 p-5 sm:p-7">
           <h2 className="text-lg font-semibold tracking-tight">Calibration curve</h2>
           <p className="mt-1 text-sm text-ink-2">
             Each confidence bucket plotted against perfect calibration - below the line is overconfidence.
@@ -488,7 +601,7 @@ export default function Home() {
       )}
 
       {/* Positions */}
-      <section className="border-t border-line py-12">
+      <section className="ds-card mt-5 p-5 sm:p-7">
         <h2 className="text-lg font-semibold tracking-tight">Open positions</h2>
         {positions.length === 0 ? (
           <div className="mt-6 rounded-lg border border-dashed border-line px-6 py-10 text-center">
@@ -510,32 +623,36 @@ export default function Home() {
               return (
                 <li key={p.ticker}>
                   <details className="group py-4">
-                    <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-4 gap-y-1 [&::-webkit-details-marker]:hidden">
-                      <span className="w-14 shrink-0 font-medium font-[family-name:var(--font-geist-mono)]">
+                    <summary className="flex cursor-pointer list-none items-center gap-3.5 rounded-lg px-1 transition-colors hover:bg-sunken/60 [&::-webkit-details-marker]:hidden">
+                      <span className="num flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-line bg-sunken text-[12px] font-semibold text-ink">
                         {p.ticker}
                       </span>
-                      <span className="text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">
-                        {p.quantity} sh @ ${p.avg_cost.toFixed(2)}
+                      <span className="min-w-0 flex-1">
+                        <span className="num block text-[14px] font-semibold text-ink">{p.ticker}</span>
+                        <span className="num mt-0.5 block text-[12px] text-faint">
+                          {p.quantity} sh @ ${p.avg_cost.toFixed(2)}
+                        </span>
                       </span>
-                      <span className="ml-auto flex items-baseline gap-4">
-                        <span className="text-sm font-[family-name:var(--font-geist-mono)]">
+                      <span className="flex flex-col items-end gap-0.5 text-right">
+                        <span className="num text-[14px] font-semibold text-ink">
                           {usd(p.market_value_usd)}
                         </span>
                         <span
-                          className={`text-sm font-[family-name:var(--font-geist-mono)] ${
-                            pnl >= 0 ? "text-accent" : "text-red-700"
+                          className={`num text-[12.5px] font-semibold ${
+                            pnl >= 0 ? "text-pos" : "text-neg"
                           }`}
                         >
+                          <span className="text-[0.8em]">{pnl >= 0 ? "▲" : "▼"}</span>{" "}
                           {pnl >= 0 ? "+" : ""}
                           {usd(pnl)} ({pnl >= 0 ? "+" : ""}
                           {pnlPct.toFixed(1)}%)
                         </span>
-                        <span
-                          className="shrink-0 text-ink-3 transition-transform group-open:rotate-90"
-                          aria-hidden
-                        >
-                          ›
-                        </span>
+                      </span>
+                      <span
+                        className="shrink-0 text-ink-3 transition-transform group-open:rotate-90"
+                        aria-hidden
+                      >
+                        ›
                       </span>
                     </summary>
 
@@ -562,7 +679,7 @@ export default function Home() {
                           ].map((s) => (
                             <div key={s.label} className="border-l border-line pl-3">
                               <div className="text-[12px] text-ink-3">{s.label}</div>
-                              <div className="mt-0.5 font-[family-name:var(--font-geist-mono)]">{s.value}</div>
+                              <div className="mt-0.5 font-[family-name:var(--font-mono)]">{s.value}</div>
                             </div>
                           ))}
                         </div>
@@ -575,8 +692,8 @@ export default function Home() {
                             <div>
                               <div className="text-[12px] text-ink-3">Cushion to stop</div>
                               <div
-                                className={`mt-0.5 text-sm font-[family-name:var(--font-geist-mono)] ${
-                                  risk.inside_noise_band ? "text-amber-700" : ""
+                                className={`mt-0.5 text-sm font-[family-name:var(--font-mono)] ${
+                                  risk.inside_noise_band ? "text-attn" : ""
                                 }`}
                               >
                                 {risk.cushion_in_atr.toFixed(1)}× ATR
@@ -590,14 +707,14 @@ export default function Home() {
                             <div className="min-w-[150px] max-w-[240px] flex-1">
                               <div className="flex items-baseline justify-between text-[12px] text-ink-3">
                                 <span>Horizon</span>
-                                <span className="font-[family-name:var(--font-geist-mono)]">
+                                <span className="font-[family-name:var(--font-mono)]">
                                   {p.days_held ?? 0}d / {horizon}d
                                 </span>
                               </div>
                               <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-line">
                                 <div
                                   className={`h-full rounded-full ${
-                                    horizonPct >= 100 ? "bg-red-700" : "bg-accent"
+                                    horizonPct >= 100 ? "bg-neg" : "bg-accent"
                                   }`}
                                   style={{ width: `${Math.min(100, Math.max(2, horizonPct))}%` }}
                                 />
@@ -669,7 +786,7 @@ export default function Home() {
 
       {/* Sector exposure / concentration */}
       {positions.length > 0 && (
-        <section className="border-t border-line py-12">
+        <section className="ds-card mt-5 p-5 sm:p-7">
           <h2 className="text-lg font-semibold tracking-tight">Sector exposure</h2>
           <p className="mt-1 text-sm text-ink-2">Where the book is concentrated, as a share of total equity.</p>
           <div className="mt-6">
@@ -680,15 +797,15 @@ export default function Home() {
 
       {/* What the agent is thinking */}
       {thinking && (
-        <section className="border-t border-line py-12">
+        <section className="ds-card mt-5 p-5 sm:p-7">
           <div className="flex items-baseline justify-between gap-4">
             <h2 className="text-lg font-semibold tracking-tight">What the agent is thinking</h2>
-            <span className="text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">{lastRun}</span>
+            <span className="text-[13px] text-ink-3 font-[family-name:var(--font-mono)]">{lastRun}</span>
           </div>
           <p className="mt-4 text-[15px] leading-relaxed text-ink-2">{clean(thinking)}</p>
 
           {macro && (
-            <div className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">
+            <div className="mt-6 flex flex-wrap gap-x-8 gap-y-2 text-[13px] text-ink-3 font-[family-name:var(--font-mono)]">
               {macro.cpi_yoy_pct && (
                 <span>CPI {macro.cpi_yoy_pct.latest}% {arrow(macro.cpi_yoy_pct.direction)}</span>
               )}
@@ -709,7 +826,7 @@ export default function Home() {
 
       {/* Watchlist */}
       {(latest.watchlist ?? []).length > 0 && (
-        <section className="border-t border-line py-12">
+        <section className="ds-card mt-5 p-5 sm:p-7">
           <h2 className="text-lg font-semibold tracking-tight">Watchlist</h2>
           <p className="mt-1 text-sm text-ink-2">
             The most compelling potential positions right now, ranked. Expand a name to read the
@@ -720,7 +837,7 @@ export default function Home() {
               <li key={w.ticker}>
                 <details className="group py-4">
                   <summary className="flex cursor-pointer list-none items-baseline gap-4 [&::-webkit-details-marker]:hidden">
-                    <span className="w-14 shrink-0 font-medium font-[family-name:var(--font-geist-mono)]">
+                    <span className="w-14 shrink-0 font-medium font-[family-name:var(--font-mono)]">
                       {w.ticker}
                     </span>
                     <span className="flex-1 text-sm text-ink-2 leading-relaxed">{clean(w.one_line)}</span>
@@ -731,7 +848,7 @@ export default function Home() {
                   <div className="pb-2 pl-[4.5rem] pr-6">
                     <p className="text-sm text-ink-2 leading-relaxed">{clean(w.thoughts)}</p>
                     {w.would_buy_at && (
-                      <p className="mt-2 text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">
+                      <p className="mt-2 text-[13px] text-ink-3 font-[family-name:var(--font-mono)]">
                         Would buy: {clean(w.would_buy_at)}
                       </p>
                     )}
@@ -747,13 +864,13 @@ export default function Home() {
       {watchlistOutcomes.length > 0 && <WatchlistOutcomes outcomes={watchlistOutcomes} />}
 
       {/* Latest activity */}
-      <section className="border-t border-line py-12">
+      <section className="ds-card mt-5 p-5 sm:p-7">
         <h2 className="text-lg font-semibold tracking-tight">Latest activity</h2>
 
         {latest.fills.length > 0 ? (
           <ul className="mt-4 space-y-2">
             {latest.fills.map((f, i) => (
-              <li key={i} className="text-sm font-[family-name:var(--font-geist-mono)]">
+              <li key={i} className="text-sm font-[family-name:var(--font-mono)]">
                 {f.action === "BUY" ? "Opened" : "Closed"} {f.ticker}: {f.quantity} shares at $
                 {f.fill_price}
               </li>
@@ -769,14 +886,14 @@ export default function Home() {
             expired) BEFORE the agent ran — shown with the rule that fired, so a
             forced exit is never a mystery line in the fills. */}
         {forcedExits.length > 0 && (
-          <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
-            <h3 className="text-sm font-medium text-amber-900">
+          <div className="mt-6 rounded-lg border border-attn/40 bg-attn-soft px-4 py-3">
+            <h3 className="text-sm font-medium text-attn">
               Closed by the safety layer this run
             </h3>
             <ul className="mt-2 space-y-1.5">
               {forcedExits.map((fe, i) => (
-                <li key={i} className="text-[13px] text-amber-900">
-                  <span className="font-[family-name:var(--font-geist-mono)]">{fe.ticker}</span>
+                <li key={i} className="text-[13px] text-attn">
+                  <span className="font-[family-name:var(--font-mono)]">{fe.ticker}</span>
                   {": "}
                   {fe.reason === "stop_loss_breached"
                     ? `stop loss breached (last $${fe.last_price ?? "?"} vs stop $${fe.stop_loss ?? "?"})`
@@ -795,7 +912,7 @@ export default function Home() {
             <ul className="mt-2 space-y-1.5">
               {rejected.map((p, i) => (
                 <li key={i} className="text-sm text-ink-2">
-                  <span className="font-[family-name:var(--font-geist-mono)]">
+                  <span className="font-[family-name:var(--font-mono)]">
                     {String(p.proposal.ticker)}
                   </span>
                   : {p.reasons.join(", ")}
@@ -815,7 +932,7 @@ export default function Home() {
 
       {/* Closed results */}
       {closedTrades.length > 0 && (
-        <section className="border-t border-line py-12">
+        <section className="ds-card mt-5 p-5 sm:p-7">
           <h2 className="text-lg font-semibold tracking-tight">Closed results</h2>
           <p className="mt-1 text-sm text-ink-2">
             Every finished trade, newest first, scored against its own written plan.
@@ -826,7 +943,7 @@ export default function Home() {
 
       {/* Costs & drag over time */}
       {closedTrades.length > 0 && (
-        <section className="border-t border-line py-12">
+        <section className="ds-card mt-5 p-5 sm:p-7">
           <h2 className="text-lg font-semibold tracking-tight">Costs and income over time</h2>
           <p className="mt-1 text-sm text-ink-2">
             Cumulative trading fees paid versus dividends received - the honest drag on the record.
@@ -842,7 +959,7 @@ export default function Home() {
 
       {/* What improved */}
       {improvements.length > 0 && (
-        <section className="border-t border-line py-12">
+        <section className="ds-card mt-5 p-5 sm:p-7">
           <h2 className="text-lg font-semibold tracking-tight">What improved</h2>
           <p className="mt-1 max-w-2xl text-sm text-ink-2">
             After every run the agent writes down one concrete thing that would have made it sharper -
@@ -852,7 +969,7 @@ export default function Home() {
           <ul className="mt-6 space-y-5">
             {improvements.slice(0, 3).map((im, i) => (
               <li key={i} className="flex gap-5">
-                <span className="shrink-0 text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)] pt-0.5">
+                <span className="shrink-0 text-[13px] text-ink-3 font-[family-name:var(--font-mono)] pt-0.5">
                   {im.date}
                 </span>
                 <p className="text-sm text-ink-2 leading-relaxed">{clean(im.note)}</p>
@@ -868,7 +985,7 @@ export default function Home() {
               <ul className="mt-5 space-y-5">
                 {improvements.slice(3).map((im, i) => (
                   <li key={i} className="flex gap-5">
-                    <span className="shrink-0 text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)] pt-0.5">
+                    <span className="shrink-0 text-[13px] text-ink-3 font-[family-name:var(--font-mono)] pt-0.5">
                       {im.date}
                     </span>
                     <p className="text-sm text-ink-2 leading-relaxed">{clean(im.note)}</p>
@@ -881,7 +998,7 @@ export default function Home() {
       )}
 
       {/* How it works */}
-      <section className="border-t border-line py-12">
+      <section className="ds-card mt-5 p-5 sm:p-7">
         <h2 className="text-lg font-semibold tracking-tight">How it works</h2>
         <div className="mt-6 grid gap-8 sm:grid-cols-3">
           <div>

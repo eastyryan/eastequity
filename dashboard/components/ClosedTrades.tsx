@@ -48,7 +48,7 @@ export default function ClosedTrades({ trades }: { trades: ClosedTrade[] }) {
             <li key={`${t.ticker}-${t.closed_at}-${i}`} className="py-4">
               <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
                 <div className="flex items-baseline gap-3">
-                  <span className="font-medium font-[family-name:var(--font-geist-mono)]">{t.ticker}</span>
+                  <span className="font-medium font-[family-name:var(--font-mono)]">{t.ticker}</span>
                   <span className="text-[13px] text-ink-3">{t.verdict}</span>
                   {t.gap_modeled && (
                     <span className="rounded border border-line px-1.5 py-px text-[11px] text-ink-3">
@@ -57,8 +57,8 @@ export default function ClosedTrades({ trades }: { trades: ClosedTrade[] }) {
                   )}
                 </div>
                 <span
-                  className={`font-[family-name:var(--font-geist-mono)] text-sm ${
-                    headlinePnl >= 0 ? "text-accent" : "text-red-700"
+                  className={`font-[family-name:var(--font-mono)] text-sm ${
+                    headlinePnl >= 0 ? "text-accent" : "text-neg"
                   }`}
                 >
                   {headlinePnl >= 0 ? "+" : ""}
@@ -66,7 +66,7 @@ export default function ClosedTrades({ trades }: { trades: ClosedTrade[] }) {
                   {t.r_multiple !== null && ` (${t.r_multiple >= 0 ? "+" : ""}${t.r_multiple}R)`}
                 </span>
               </div>
-              <p className="mt-1 text-[13px] text-ink-3 font-[family-name:var(--font-geist-mono)]">
+              <p className="mt-1 text-[13px] text-ink-3 font-[family-name:var(--font-mono)]">
                 ${t.entry_price.toFixed(2)} to ${t.exit_price.toFixed(2)} over {t.days_held}d, closed{" "}
                 {t.closed_at}
                 {t.dividends_usd ? ` · +${usd2(t.dividends_usd)} div` : ""}
@@ -87,7 +87,7 @@ export default function ClosedTrades({ trades }: { trades: ClosedTrade[] }) {
       {trades.length > visible && (
         <button
           onClick={() => setVisible((v) => v + PAGE)}
-          className="mt-4 rounded-md border border-line px-3.5 py-1.5 text-sm text-ink-2 hover:border-zinc-300 hover:text-ink active:scale-[0.98]"
+          className="mt-4 rounded-md border border-line px-3.5 py-1.5 text-sm text-ink-2 hover:border-line-2 hover:text-ink active:scale-[0.98]"
         >
           Show older trades
         </button>

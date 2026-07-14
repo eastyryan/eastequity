@@ -24,7 +24,7 @@ export default function Calibration({ data }: { data: CalibrationData }) {
       </p>
 
       {hc?.inflated && (
-        <div className="mt-6 flex gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <div className="mt-6 flex gap-3 rounded-lg border border-attn/40 bg-attn-soft px-4 py-3 text-sm text-attn">
           <span aria-hidden className="mt-0.5 select-none leading-none">
             &#9650;
           </span>
@@ -50,10 +50,10 @@ export default function Calibration({ data }: { data: CalibrationData }) {
                 <th className="pb-2 pl-4 text-right font-normal">Gap</th>
               </tr>
             </thead>
-            <tbody className="font-[family-name:var(--font-geist-mono)]">
+            <tbody className="font-[family-name:var(--font-mono)]">
               {buckets.map(([bucket, b]) => {
                 const gap = b.calibration_gap_pct;
-                const gapClass = gap < 0 ? "text-red-700" : gap > 0 ? "text-accent" : "text-ink-2";
+                const gapClass = gap < 0 ? "text-neg" : gap > 0 ? "text-accent" : "text-ink-2";
                 return (
                   <tr key={bucket} className="border-b border-line/60">
                     <td className="py-2.5 text-left">{bucket}</td>

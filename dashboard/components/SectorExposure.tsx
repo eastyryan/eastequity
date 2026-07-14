@@ -56,7 +56,7 @@ export default function SectorExposure({
           <li key={s.label}>
             <div className="flex items-baseline justify-between gap-3 text-sm">
               <span className={s.isCash ? "text-ink-2" : "font-medium"}>{s.label}</span>
-              <span className="font-[family-name:var(--font-geist-mono)] text-ink-2">{pctStr(s.pct)}</span>
+              <span className="font-[family-name:var(--font-mono)] text-ink-2">{pctStr(s.pct)}</span>
             </div>
             <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-line">
               <div
@@ -70,7 +70,7 @@ export default function SectorExposure({
 
       <p className="mt-4 text-[12px] text-ink-3">
         Most concentrated:{" "}
-        <span className="font-[family-name:var(--font-geist-mono)]">{topSector.label}</span> at{" "}
+        <span className="font-[family-name:var(--font-mono)]">{topSector.label}</span> at{" "}
         {pctStr(topSector.pct)} of equity.
       </p>
     </div>
