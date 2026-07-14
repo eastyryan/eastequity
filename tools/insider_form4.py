@@ -28,6 +28,13 @@ SCAN_FILING_DAYS = 135
 # prolific filers). Within 120 days this is rarely reached.
 MAX_FILINGS_SCAN = 60
 
+# BUNDLE WEIGHT CAP: the raw per-trade dump was >50% of the entire context
+# bundle (497KB on 2026-07-14 - sponsor unwinds run to dozens of identical
+# rows) and starved the cloud brain's context window until deep-review runs
+# died mid-session. The classified summary carries the signal; only the most
+# decision-relevant rows are kept for drill-down, with the omission disclosed.
+MAX_TRANSACTIONS_IN_BUNDLE = 15
+
 
 def _get(url: str):
     from tools.net import get_sec
@@ -214,6 +221,21 @@ def get_insider_activity(tickers: list[str]) -> dict:
                 "institutional_entity_trades": sum(
                     1 for x in entry["transactions"] if x["is_institutional_entity"]),
             }
+            # Truncate AFTER the summary is computed from the full list, keeping
+            # discretionary officer/director trades first, then largest notional.
+            full = entry["transactions"]
+            if len(full) > MAX_TRANSACTIONS_IN_BUNDLE:
+                keep = sorted(
+                    full,
+                    key=lambda x: (not (x.get("role") in ("officer", "director")
+                                        and not x.get("is_10b5_1_plan")
+                                        and not x.get("is_institutional_entity")),
+                                   -(x.get("notional_usd") or 0)))
+                entry["transactions"] = keep[:MAX_TRANSACTIONS_IN_BUNDLE]
+                entry["transactions_omitted"] = len(full) - MAX_TRANSACTIONS_IN_BUNDLE
+                entry["transactions_note"] = (
+                    "raw rows truncated for bundle weight - the summary above is "
+                    "computed from ALL rows; omitted rows are routine plan/sponsor flow")
         except Exception as e:
             entry["error"] = f"{type(e).__name__}: {e}"
         out["tickers"][t.upper()] = entry
