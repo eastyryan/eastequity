@@ -2071,6 +2071,26 @@ def main() -> int:
                                                "feeds (news/filings/insiders) failed"}
             print("  (partial degradation - some research feeds failed; labeled)")
 
+        # Per-position charts need full-network price history. Build them HERE in
+        # the gather path (the GitHub Action and the local relay both have live
+        # feeds) and commit the file alongside data/charts, so the blocked cloud
+        # trade path only has to PRESERVE it. Without this, position_charts.json
+        # could only ever be populated on a full-network trade run - on cloud-only
+        # operation it stayed empty. Guarded exactly like refresh_dashboard: never
+        # overwrite a good file with {} when a fetch comes back empty.
+        try:
+            positions = (context.get("portfolio") or {}).get("positions", [])
+            pcs = build_position_charts(positions)
+            pc_file = ROOT / "dashboard" / "data" / "position_charts.json"
+            pc_file.parent.mkdir(parents=True, exist_ok=True)
+            if pcs or not positions:
+                pc_file.write_text(json.dumps(_json_safe(pcs), indent=2))
+                print(f"  (gather: position_charts for {list(pcs.keys()) or 'no positions'})")
+            else:
+                print("  (gather: position_charts feed empty - keeping last-good file)")
+        except Exception as e:
+            print(f"  (gather position_charts skipped: {e})")
+
         out = ROOT / "state" / f"context_{run_id}.json"
         out.write_text(json.dumps(_json_safe(context), indent=2, default=str))
         print(f"CONTEXT_FILE={out}")
