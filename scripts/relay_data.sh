@@ -19,7 +19,7 @@ mkdir -p logs
   OUT=$(.venv/bin/python -W ignore orchestrator.py --gather-only 2>&1 | grep -o 'CONTEXT_FILE=.*' | cut -d= -f2-)
   [ -s "$OUT" ] && cp "$OUT" data/cloud_context.json
 
-  git add data/cloud_context.json data/charts journal/x_posts.jsonl 2>/dev/null
+  git add data/cloud_context.json data/charts dashboard/data/position_charts.json journal/x_posts.jsonl 2>/dev/null
   # Keep the authoritative ledger + kill switch synced from this node. Staged
   # separately and guarded so a missing file never aborts the data commit
   # (git add is atomic — one bad pathspec drops the whole add). `git add -A`
