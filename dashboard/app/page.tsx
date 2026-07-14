@@ -115,6 +115,24 @@ type Latest = {
   as_of_et?: string;
   trade_events?: TradeEvent[];
   watchlist_outcomes?: WatchlistOutcome[];
+  health?: {
+    as_of_et?: string;
+    expected_runs_so_far?: number;
+    completed_scheduled_runs?: number;
+    missed?: number;
+    bundle_age_hours?: number | null;
+    status?: string;
+  } | null;
+  risk_halts?: string[];
+  forced_exits?: {
+    ticker: string;
+    reason: string;
+    last_price?: number | null;
+    stop_loss?: number | null;
+    days_held?: number | null;
+    horizon?: number | null;
+    note?: string;
+  }[];
 };
 
 type TradeEvent = { date: string; ticker: string; action: "BUY" | "SELL_TO_CLOSE"; verdict?: string | null };
@@ -279,6 +297,10 @@ export default function Home() {
   const closedTrades = latest.closed_trades ?? [];
   const improvements = latest.improvements ?? [];
   const rejected = latest.proposals.filter((p) => !p.approved);
+  const health = latest.health ?? null;
+  const healthDegraded = !!health && (health.status ?? "ok") !== "ok";
+  const riskHalts = latest.risk_halts ?? [];
+  const forcedExits = latest.forced_exits ?? [];
 
   const fresh = freshness(latest);
   const freshClass =
@@ -385,6 +407,35 @@ export default function Home() {
         <p className="mt-8 text-[13px] text-ink-3">
           Last run {lastRun}. {latest.schedule_note ?? "Runs on weekdays"}.
         </p>
+
+        {/* Pipeline heartbeat: scheduled runs completed vs expected + data-bundle age.
+            Built precisely so a silently-dead pipeline is visible here, not just in logs. */}
+        {health && (
+          <p
+            className={`mt-2 text-[13px] font-[family-name:var(--font-geist-mono)] ${
+              healthDegraded ? "text-red-700" : "text-ink-3"
+            }`}
+          >
+            Pipeline: {health.completed_scheduled_runs ?? 0}/{health.expected_runs_so_far ?? 0}{" "}
+            scheduled runs today
+            {health.bundle_age_hours != null && <> · data bundle {health.bundle_age_hours}h old</>}
+            {healthDegraded && <> · {health.status}</>}
+          </p>
+        )}
+
+        {/* Risk halts: new BUYs are blocked until equity recovers. */}
+        {riskHalts.length > 0 && (
+          <div className="mt-6 rounded-lg border border-red-300 bg-red-50 px-4 py-3">
+            <p className="text-sm font-medium text-red-700">
+              Risk halt active — new buys are blocked until equity recovers
+            </p>
+            <ul className="mt-1 list-disc pl-5 text-[13px] text-red-700">
+              {riskHalts.map((h, i) => (
+                <li key={i} className="font-[family-name:var(--font-geist-mono)]">{clean(h)}</li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
 
       {/* Equity curve — the chart card carries its own header and timeframe controls */}
@@ -712,6 +763,30 @@ export default function Home() {
           <p className="mt-2 text-sm text-ink-2">
             No orders on the last run.
           </p>
+        )}
+
+        {/* Safety-layer exits: closed by deterministic code (stop breached / horizon
+            expired) BEFORE the agent ran — shown with the rule that fired, so a
+            forced exit is never a mystery line in the fills. */}
+        {forcedExits.length > 0 && (
+          <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3">
+            <h3 className="text-sm font-medium text-amber-900">
+              Closed by the safety layer this run
+            </h3>
+            <ul className="mt-2 space-y-1.5">
+              {forcedExits.map((fe, i) => (
+                <li key={i} className="text-[13px] text-amber-900">
+                  <span className="font-[family-name:var(--font-geist-mono)]">{fe.ticker}</span>
+                  {": "}
+                  {fe.reason === "stop_loss_breached"
+                    ? `stop loss breached (last $${fe.last_price ?? "?"} vs stop $${fe.stop_loss ?? "?"})`
+                    : fe.reason === "horizon_expired"
+                      ? `holding horizon expired (${fe.days_held ?? "?"}d of ${fe.horizon ?? "?"}d)`
+                      : clean(fe.reason)}
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
 
         {rejected.length > 0 && (
