@@ -556,6 +556,16 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         for t, px in _light_prices(missing_held).items():
             scan_prices[t] = px
 
+    # Mark the book to today's prices EVERY run, not just when a trade fills.
+    # Without this, hold days freeze last_price/equity at the last fill, so the
+    # brain reasons on stale stop cushions and the published equity flat-lines.
+    if held and scan_prices:
+        try:
+            simulated_broker.mark_to_market(scan_prices)
+            portfolio = get_portfolio_state()
+        except Exception as e:
+            print(f"  (mark-to-market failed: {e})")
+
     print("  • position histories...")
     histories = get_position_histories(held) if held else {"status": "skipped"}
 
@@ -1934,6 +1944,14 @@ def main() -> int:
         # Cloud mode: the scheduled agent already did the thinking; act on its output.
         print("[1-2/5] Loading saved context + brain response (cloud mode)...")
         context = json.loads(Path(args.context).read_text())
+        # Mark to the bundle's prices before re-reading: a <=1h-old (even labeled-stale)
+        # mark beats a book silently frozen at the last fill.
+        bundle_prices = (context.get("universe_scan") or {}).get("prices") or {}
+        if bundle_prices:
+            try:
+                simulated_broker.mark_to_market(bundle_prices)
+            except Exception as e:
+                print(f"  (mark-to-market from bundle failed: {e})")
         context["portfolio"] = get_portfolio_state()
         if not args.news_only:
             forced_exit_fills = apply_safety_layer(context, cfg, run_id)
@@ -2029,9 +2047,16 @@ def main() -> int:
     fills = forced_exit_fills + execute(approved, context, cfg, run_id)
 
     print("[5/5] Journaling + dashboard + X draft...")
-    if fills:  # the snapshot from step 1 predates execution - re-read before publishing
-        simulated_broker.mark_to_market(context["universe_scan"].get("prices", {}))
-        context["portfolio"] = get_portfolio_state()
+    # ALWAYS re-mark and re-read before publishing (not just when a trade filled):
+    # the step-1 snapshot predates execution, and on hold days the marks would
+    # otherwise stay frozen at the last fill, flat-lining the published equity.
+    publish_prices = (context.get("universe_scan") or {}).get("prices") or {}
+    if publish_prices:
+        try:
+            simulated_broker.mark_to_market(publish_prices)
+        except Exception as e:
+            print(f"  (mark-to-market failed: {e})")
+    context["portfolio"] = get_portfolio_state()
     refresh_dashboard(context, response, results, fills, run_id, no_trade_reason,
                       parsed["commentary"], parsed["watchlist"])
     draft_x_summary(fills, results, context, run_id, parsed.get("x_post"))
