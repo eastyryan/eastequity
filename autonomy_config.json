@@ -109,6 +109,12 @@
       "catalysts",
       "position_size_usd"
     ],
+    "required_sell_fields": [
+      "ticker",
+      "action",
+      "thesis"
+    ],
+    "_required_sell_fields_note": "SELL_TO_CLOSE needs only these; the BUY-oriented required_proposal_fields list used to reject legitimate discretionary exits for missing stop_loss/target_price.",
     "min_confidence": 0.6,
     "min_risk_reward_ratio": 1.0,
     "min_target_upside_pct": 0.1,

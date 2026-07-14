@@ -66,8 +66,23 @@ def stop_floor_pct(atr_pct, expected_move_pct, cfg: dict) -> float | None:
 
 # --- individual rule checks -------------------------------------------------
 
+# Non-BUY actions carry no entry geometry: a discretionary exit only needs to say
+# what it is selling and why. Requiring the BUY schema (stop_loss, target_price,
+# position_size_usd...) on a SELL used to reject legitimate exits outright.
+_REQUIRED_SELL_FIELDS = ["ticker", "action", "thesis"]
+_REQUIRED_HOLD_FIELDS = ["ticker", "action"]
+
+
 def _check_required_fields(p: dict, cfg: dict, reasons: list[str]) -> None:
-    for f in cfg["trade_quality_requirements"]["required_proposal_fields"]:
+    action = str(p.get("action", "")).upper()
+    q = cfg["trade_quality_requirements"]
+    if action == "SELL_TO_CLOSE":
+        fields = q.get("required_sell_fields", _REQUIRED_SELL_FIELDS)
+    elif action == "HOLD":
+        fields = _REQUIRED_HOLD_FIELDS
+    else:
+        fields = q["required_proposal_fields"]
+    for f in fields:
         if f not in p or p[f] in (None, ""):
             reasons.append(f"missing_required_field:{f}")
 
@@ -94,19 +109,23 @@ def _check_universe(p: dict, cfg: dict, universe: set[str], reasons: list[str]) 
         return
     if ticker in cfg["hard_rules"]["forbidden_ticker_patterns"]:
         reasons.append(f"forbidden_ticker:{ticker} (leveraged/inverse product)")
-    if not cfg["universe"]["allow_off_universe_trades"] and ticker not in universe:
+    # Universe membership gates ENTRIES only: a holding removed from the universe
+    # in a weekly review must still be sellable, or the position is trapped.
+    if str(p.get("action", "")).upper() == "BUY" and \
+            not cfg["universe"]["allow_off_universe_trades"] and ticker not in universe:
         reasons.append(f"off_universe_ticker:{ticker}")
 
 
 def _check_swing_rules(p: dict, cfg: dict, reasons: list[str]) -> None:
     sw = cfg["swing_rules"]
-    horizon = p.get("holding_horizon_days")
-    if not isinstance(horizon, (int, float)):
-        reasons.append("holding_horizon_days_not_numeric")
-    elif not sw["min_holding_horizon_days"] <= horizon <= sw["max_holding_horizon_days"]:
-        reasons.append(
-            f"horizon_out_of_swing_range:{horizon}d "
-            f"(allowed {sw['min_holding_horizon_days']}-{sw['max_holding_horizon_days']}d)")
+    if str(p.get("action", "")).upper() == "BUY":  # horizon is an entry field
+        horizon = p.get("holding_horizon_days")
+        if not isinstance(horizon, (int, float)):
+            reasons.append("holding_horizon_days_not_numeric")
+        elif not sw["min_holding_horizon_days"] <= horizon <= sw["max_holding_horizon_days"]:
+            reasons.append(
+                f"horizon_out_of_swing_range:{horizon}d "
+                f"(allowed {sw['min_holding_horizon_days']}-{sw['max_holding_horizon_days']}d)")
     if sw["reject_intraday_language"]:
         text = str(p.get("thesis", "")).lower()
         for term in ("day trade", "intraday", "scalp", "same-day"):
@@ -115,6 +134,8 @@ def _check_swing_rules(p: dict, cfg: dict, reasons: list[str]) -> None:
 
 
 def _check_prices_and_rr(p: dict, cfg: dict, reasons: list[str]) -> None:
+    if str(p.get("action", "")).upper() != "BUY":
+        return  # price geometry checks apply to entries only
     q = cfg["trade_quality_requirements"]
     try:
         entry = float(p["entry_price_max"])
@@ -123,8 +144,6 @@ def _check_prices_and_rr(p: dict, cfg: dict, reasons: list[str]) -> None:
     except (KeyError, TypeError, ValueError):
         reasons.append("prices_not_numeric")
         return
-    if str(p.get("action", "")).upper() != "BUY":
-        return  # price geometry checks apply to entries
     if not (stop < entry < target):
         reasons.append(f"price_geometry_invalid: require stop({stop}) < entry({entry}) < target({target})")
         return
@@ -202,6 +221,11 @@ def _check_market_cap(p: dict, cfg: dict, market_context: dict, reasons: list[st
 
 def _check_confidence(p: dict, cfg: dict, reasons: list[str]) -> None:
     conf = p.get("confidence")
+    if str(p.get("action", "")).upper() != "BUY":
+        # Exits don't need a confidence score; sanity-check the range only if given.
+        if conf is not None and (not isinstance(conf, (int, float)) or not 0 <= conf <= 1):
+            reasons.append("confidence_not_in_0_1")
+        return
     if not isinstance(conf, (int, float)) or not 0 <= conf <= 1:
         reasons.append("confidence_not_in_0_1")
     elif conf < cfg["trade_quality_requirements"]["min_confidence"]:
@@ -309,6 +333,18 @@ def _check_sell_fraction(p: dict, reasons: list[str]) -> None:
         reasons.append(f"invalid_sell_fraction:{f} (must be in (0, 1])")
 
 
+def _check_sell_position(p: dict, portfolio: dict, reasons: list[str]) -> None:
+    """A SELL_TO_CLOSE must reference a ticker we actually hold. Previously this
+    only surfaced at the broker (rejected_no_position) AFTER the proposal was
+    journaled as approved."""
+    if str(p.get("action", "")).upper() != "SELL_TO_CLOSE":
+        return
+    ticker = str(p.get("ticker", "")).upper()
+    held = {str(pos.get("ticker", "")).upper() for pos in portfolio.get("positions", [])}
+    if ticker not in held:
+        reasons.append(f"sell_ticker_not_held:{ticker}")
+
+
 # --- entry point --------------------------------------------------------------
 
 def validate_proposals(proposals: list[dict], portfolio: dict,
@@ -336,6 +372,7 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
         _check_volatility_stop(p, cfg, market_context or {}, reasons)
         _check_market_cap(p, cfg, market_context or {}, reasons)
         _check_sell_fraction(p, reasons)
+        _check_sell_position(p, portfolio, reasons)
         _check_confidence(p, cfg, reasons)
         _check_sizing(p, cfg, portfolio, reasons)
         if str(p.get("action", "")).upper() == "BUY":

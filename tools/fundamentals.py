@@ -100,8 +100,16 @@ def _span_days(u: dict):
         return None
 
 
+# Periodic forms whose XBRL facts feed the deep-fundamentals series. Includes
+# foreign-private-issuer forms (20-F/40-F annuals, 6-K interims) so universe
+# names like TSM/ASML/ARM don't silently return blank quality_ratios — mirrors
+# the form set sec_filings.dedupe_facts already accepts.
+ACCEPTED_FORMS = ("10-Q", "10-K", "10-Q/A", "10-K/A",
+                  "20-F", "40-F", "20-F/A", "40-F/A", "6-K", "6-K/A")
+
+
 def _rows_from_units(units: list, instant: bool, keep: int) -> list:
-    """Dedupe/sort 10-Q & 10-K facts, newest last, keep the last `keep` periods.
+    """Dedupe/sort periodic-filing facts, newest last, keep the last `keep` periods.
 
     NEVER filter on the `frame` field: for recently reported quarters the
     frame-annotated entry is often the ONLY copy (unframed twins appear later as
@@ -110,7 +118,7 @@ def _rows_from_units(units: list, instant: bool, keep: int) -> list:
     prefers the LATEST-FILED entry so restatements/amendments win."""
     by_period: dict = {}
     for u in units:
-        if u.get("form") not in ("10-Q", "10-K", "10-Q/A", "10-K/A"):
+        if u.get("form") not in ACCEPTED_FORMS:
             continue
         key = (u.get("start"), u.get("end"))
         prev = by_period.get(key)

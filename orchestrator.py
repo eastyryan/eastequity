@@ -236,13 +236,22 @@ def _json_safe(obj):
     return obj
 
 
+def expected_slots(weekday: bool) -> list[float]:
+    """Scheduled run slots (ET hours) for a weekday vs a weekend day.
+    KEEP IN SYNC with the slot gate in scripts/run_cycle.sh: weekdays run at
+    midnight, 6am, 9am, hourly 10am-4pm, and 5:30pm (11 slots — midnight and
+    5:30pm are news/research-only but still journal a run summary); weekends
+    run news-only at midnight and 11:59pm."""
+    return [0, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17.5] if weekday else [0, 23.98]
+
+
 def build_health() -> dict:
     """Runs heartbeat: expected schedule slots so far today (ET) vs runs actually
     journaled. A silently-dead pipeline (the plan-mode parse bug ran for DAYS
     unnoticed) now shows up on the dashboard as missed runs instead of nothing."""
     now = _et_now()
     weekday = now.weekday() < 5
-    slots = ([6, 9, 10, 12, 14, 16, 17.5] if weekday else [23.98])
+    slots = expected_slots(weekday)
     now_h = now.hour + now.minute / 60
     expected = sum(1 for s in slots if s <= now_h)
     completed = 0
