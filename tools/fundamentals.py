@@ -99,6 +99,29 @@ INSTANT_CONCEPTS = {"inventory", "accounts_receivable", "total_current_assets",
 STALE_DAYS = 550  # a tag whose newest fact is older than this lost to a fresher fallback
 
 
+def _merged_facts(facts: dict) -> dict:
+    """us-gaap merged OVER ifrs-full (us-gaap wins tag collisions) so foreign
+    private issuers aren't invisible. Local copy of sec_filings.merged_facts:
+    tests inject a minimal fake tools.sec_filings, so this module must not
+    depend on the real one for pure helpers."""
+    f = facts.get("facts", {})
+    merged = dict(f.get("ifrs-full") or {})
+    merged.update(f.get("us-gaap") or {})
+    return merged
+
+
+def _reporting_currencies(fact_dict: dict) -> set:
+    """3-letter currency units present across a company's monetary facts.
+    (Local copy - see _merged_facts docstring.)"""
+    ccys: set = set()
+    for tag_data in fact_dict.values():
+        for unit in (tag_data.get("units") or {}):
+            u = str(unit).split("/")[0]
+            if len(u) == 3 and u.isalpha() and u.isupper():
+                ccys.add(u)
+    return ccys
+
+
 def _span_days(u: dict):
     try:
         return (date.fromisoformat(u["end"]) - date.fromisoformat(u["start"])).days
@@ -412,8 +435,7 @@ def get_deep_fundamentals(ticker: str) -> dict:
         facts = get_company_facts(cik)  # shared TTL cache (see sec_filings)
     except Exception as e:
         return {"status": "error", "reason": f"companyfacts unavailable: {e}"}
-    from tools.sec_filings import merged_facts, reporting_currencies
-    gaap = merged_facts(facts)  # us-gaap + ifrs-full (foreign filers)
+    gaap = _merged_facts(facts)  # us-gaap + ifrs-full (foreign filers)
 
     quarterly = {}
     for concept, tags in CONCEPT_TAGS.items():
@@ -953,7 +975,7 @@ def get_deep_fundamentals(ticker: str) -> dict:
     # empty series by design - LABEL it so blank ratios read as "not translatable",
     # never as "no data exists".
     currency_note = None
-    ccys = reporting_currencies(gaap)
+    ccys = _reporting_currencies(gaap)
     if ccys and "USD" not in ccys:
         currency_note = (f"filer reports in {sorted(ccys)}; USD-denominated deep "
                          f"fundamentals unavailable - do not fabricate USD figures")
