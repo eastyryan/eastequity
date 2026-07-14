@@ -44,6 +44,24 @@ def seed_state(tmp: Path) -> None:
     }, indent=2))
 
 
+try:  # pytest-only: seed a temp book ONCE per module (tests share state in file
+    # order, mirroring the __main__ script flow below). Without this, pytest
+    # collection ran these against the REAL ledger in isolation and against
+    # whatever STATE_FILE a prior test left behind in a full suite.
+    import pytest
+
+    @pytest.fixture(scope="module", autouse=True)
+    def _tmp_book(tmp_path_factory):
+        orig = simulated_broker.STATE_FILE
+        tmp_state = tmp_path_factory.mktemp("mtm") / "portfolio.json"
+        seed_state(tmp_state)
+        simulated_broker.STATE_FILE = tmp_state
+        yield
+        simulated_broker.STATE_FILE = orig
+except ImportError:  # plain-script mode
+    pass
+
+
 def test_marks_update():
     print("fresh prices update marks and equity:")
     state = simulated_broker.mark_to_market({"DELL": 427.11, "HPE": 47.24})

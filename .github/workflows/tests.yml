@@ -1,0 +1,29 @@
+name: Tests
+
+# The suite existed for weeks with no runner anywhere (the local venv didn't
+# even have pytest), so order-dependent breakage accumulated unnoticed.
+# Data-only commits (relay bundles, dashboard refreshes) skip this via `paths`.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "**.py"
+      - "requirements.txt"
+      - "autonomy_config.json"
+      - ".github/workflows/tests.yml"
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt pytest
+      - run: python -m pytest tests/ -q

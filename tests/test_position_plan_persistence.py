@@ -43,6 +43,25 @@ def buy(plan, size=900.0, ref=450.0):
     return simulated_broker.readback(order["order_id"])
 
 
+try:  # pytest-only: seed a temp EMPTY book once per module (tests share state
+    # in file order, mirroring the __main__ script flow) - never the real ledger.
+    import pytest
+
+    @pytest.fixture(scope="module", autouse=True)
+    def _tmp_book(tmp_path_factory):
+        orig = simulated_broker.STATE_FILE
+        tmp_state = tmp_path_factory.mktemp("plans") / "portfolio.json"
+        tmp_state.write_text(json.dumps({
+            "cash_usd": 10000.0, "total_equity_usd": 10000.0,
+            "positions": [], "pending_orders": {}, "history": [],
+        }))
+        simulated_broker.STATE_FILE = tmp_state
+        yield
+        simulated_broker.STATE_FILE = orig
+except ImportError:  # plain-script mode
+    pass
+
+
 def test_new_position_carries_plan():
     print("new BUY persists the numeric plan on the position:")
     fill = buy(PLAN_A)
