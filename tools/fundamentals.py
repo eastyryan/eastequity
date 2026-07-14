@@ -49,20 +49,25 @@ from datetime import date
 # wins (companies switch tags; a stale series must not shadow a live one).
 # Tag lists largely adapted from ~/finance/lib/edgar.ts (Ledgerline).
 CONCEPT_TAGS = {
-    "operating_income": ["OperatingIncomeLoss"],
+    # IFRS synonyms appear LAST in each list: recency ties prefer the us-gaap
+    # tag, but a foreign filer whose only live series is the IFRS tag still wins.
+    "operating_income": ["OperatingIncomeLoss", "ProfitLossFromOperatingActivities"],
     "rd_expense": ["ResearchAndDevelopmentExpense",
                    "ResearchAndDevelopmentExpenseExcludingAcquiredInProcessCost"],
     "sga_expense": ["SellingGeneralAndAdministrativeExpense",
                     "GeneralAndAdministrativeExpense"],
     "interest_expense": ["InterestExpense", "InterestExpenseNonoperating",
-                         "InterestAndDebtExpense", "InterestExpenseDebt"],
-    "eps_diluted": ["EarningsPerShareDiluted"],
-    "inventory": ["InventoryNet", "InventoryFinishedGoodsNetOfReserves"],
+                         "InterestAndDebtExpense", "InterestExpenseDebt",
+                         "FinanceCosts"],
+    "eps_diluted": ["EarningsPerShareDiluted", "DilutedEarningsLossPerShare"],
+    "inventory": ["InventoryNet", "InventoryFinishedGoodsNetOfReserves",
+                  "Inventories"],
     "accounts_receivable": ["AccountsReceivableNetCurrent", "ReceivablesNetCurrent"],
-    "total_current_assets": ["AssetsCurrent"],
-    "total_current_liabilities": ["LiabilitiesCurrent"],
+    "total_current_assets": ["AssetsCurrent", "CurrentAssets"],
+    "total_current_liabilities": ["LiabilitiesCurrent", "CurrentLiabilities"],
     "stockholders_equity": ["StockholdersEquity",
-                            "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"],
+                            "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+                            "Equity", "EquityAttributableToOwnersOfParent"],
     "deferred_revenue": ["ContractWithCustomerLiabilityCurrent",
                          "ContractWithCustomerLiability",
                          "DeferredRevenueCurrent", "DeferredRevenue"],
@@ -77,6 +82,7 @@ CONCEPT_TAGS = {
                                   "DepreciationAmortizationAndAccretionNet",
                                   "DepreciationAndAmortization",
                                   "DepreciationAmortizationAndAccretion",
+                                  "DepreciationAndAmortisationExpense",
                                   "Depreciation"],
 }
 
@@ -406,7 +412,8 @@ def get_deep_fundamentals(ticker: str) -> dict:
         facts = get_company_facts(cik)  # shared TTL cache (see sec_filings)
     except Exception as e:
         return {"status": "error", "reason": f"companyfacts unavailable: {e}"}
-    gaap = facts.get("facts", {}).get("us-gaap", {})
+    from tools.sec_filings import merged_facts, reporting_currencies
+    gaap = merged_facts(facts)  # us-gaap + ifrs-full (foreign filers)
 
     quarterly = {}
     for concept, tags in CONCEPT_TAGS.items():
@@ -423,7 +430,8 @@ def get_deep_fundamentals(ticker: str) -> dict:
         "Revenues", "RevenuesNetOfInterestExpense",
         "RevenueFromContractWithCustomerExcludingAssessedTax",
         "RevenueFromContractWithCustomerIncludingAssessedTax",
-        "SalesRevenueNet"], instant=False, keep=24))
+        "SalesRevenueNet",
+        "Revenue", "RevenueFromContractsWithCustomers"], instant=False, keep=24))
     gross = _quarterly(_series(gaap, ["GrossProfit"], instant=False, keep=24))
     # SBC: prefer the income-statement tag (a 3-month context is usually filed
     # every quarter) over the cash-flow tag (YTD-only, which silently dropped
@@ -433,20 +441,26 @@ def get_deep_fundamentals(ticker: str) -> dict:
         instant=False, keep=24)
     sbc = _quarterly(sbc_rows)
     shares = _quarterly(_series(gaap, [
-        "WeightedAverageNumberOfDilutedSharesOutstanding"], instant=False, keep=24))
+        "WeightedAverageNumberOfDilutedSharesOutstanding",
+        "AdjustedWeightedAverageShares"], instant=False, keep=24))
     cash = _series(gaap, [
         "CashAndCashEquivalentsAtCarryingValue",
-        "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"],
+        "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+        "CashAndCashEquivalents"],
         instant=True, keep=8)
     ocf = _series(gaap, [
         "NetCashProvidedByUsedInOperatingActivities",
-        "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations"],
+        "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations",
+        "CashFlowsFromUsedInOperatingActivities"],
         instant=False, keep=12)
     capex = _series(gaap, [
         "PaymentsToAcquirePropertyPlantAndEquipment",
-        "PaymentsToAcquireProductiveAssets", "PaymentsForCapitalImprovements"],
+        "PaymentsToAcquireProductiveAssets", "PaymentsForCapitalImprovements",
+        "PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities"],
         instant=False, keep=12)
-    op_inc_q = _quarterly(_series(gaap, ["OperatingIncomeLoss"], instant=False, keep=24))
+    op_inc_q = _quarterly(_series(gaap, [
+        "OperatingIncomeLoss", "ProfitLossFromOperatingActivities"],
+        instant=False, keep=24))
 
     ratios, omitted = {}, {}
     rev_l, rev_o = _latest(revenue), _year_ago(revenue)
@@ -935,11 +949,21 @@ def get_deep_fundamentals(ticker: str) -> dict:
     if omitted:
         quality["omitted"] = omitted
 
+    # Non-USD reporters (TSM in TWD, ASML in EUR): the USD unit filter yields
+    # empty series by design - LABEL it so blank ratios read as "not translatable",
+    # never as "no data exists".
+    currency_note = None
+    ccys = reporting_currencies(gaap)
+    if ccys and "USD" not in ccys:
+        currency_note = (f"filer reports in {sorted(ccys)}; USD-denominated deep "
+                         f"fundamentals unavailable - do not fabricate USD figures")
+
     return {
         "status": "ok",
         "ticker": ticker.upper(),
         "cik": cik,
         "company": facts.get("entityName"),
+        "currency_note": currency_note,
         "note": ("quarterly_facts: instant rows are balance-sheet snapshots; "
                  "duration rows include period_days - rows spanning >100 days are "
                  "YTD-cumulative, not single quarters. quality_ratios are "

@@ -87,6 +87,29 @@ def get_company_facts(cik_or_ticker) -> dict:
     return data
 
 
+def merged_facts(facts: dict) -> dict:
+    """One fact dict across taxonomies: us-gaap merged OVER ifrs-full (us-gaap
+    wins tag-name collisions). Foreign private issuers (TSM/ASML/ARM) file
+    under IFRS, so reading us-gaap alone made them invisible. Downstream unit
+    selection stays USD-only — non-USD reporters yield empty series, labeled
+    via reporting_currencies() instead of silently blank."""
+    f = facts.get("facts", {})
+    merged = dict(f.get("ifrs-full") or {})
+    merged.update(f.get("us-gaap") or {})
+    return merged
+
+
+def reporting_currencies(fact_dict: dict) -> set:
+    """3-letter currency units present across a company's monetary facts."""
+    ccys: set = set()
+    for tag_data in fact_dict.values():
+        for unit in (tag_data.get("units") or {}):
+            u = str(unit).split("/")[0]
+            if len(u) == 3 and u.isalpha() and u.isupper():
+                ccys.add(u)
+    return ccys
+
+
 def evict_facts(cik_or_ticker) -> None:
     """Drop one company's facts from the in-memory cache. Full-universe sweeps
     (~111 multi-MB payloads) would otherwise hold gigabytes in RAM."""
@@ -176,7 +199,7 @@ def get_filing_brief(ticker: str) -> dict:
         facts_out = {}
         try:
             facts = get_company_facts(cik)  # shared TTL cache (see get_company_facts)
-            gaap = facts.get("facts", {}).get("us-gaap", {})
+            gaap = merged_facts(facts)  # us-gaap + ifrs-full (foreign filers)
             # Umbrella concepts FIRST: `Revenues` is the GAAP top line; the ASC-606
             # contract tags are SUBSETS that understate fintechs (MELI: interest income
             # outside contract revenue, -31%) and misstate utilities (TLN: derivative
@@ -184,12 +207,18 @@ def get_filing_brief(ticker: str) -> dict:
             # died in 2014). Ties on recency go to the earlier (more inclusive) tag;
             # a strictly newer subset tag still wins (ORCL's `Revenues` died in 2022).
             for label, tags in {
+                # IFRS synonyms LAST: ties on recency prefer the us-gaap tag;
+                # strict recency still lets the IFRS tag win when it is the only
+                # live series (foreign private issuers).
                 "revenue": ["Revenues", "RevenuesNetOfInterestExpense",
                             "RevenueFromContractWithCustomerExcludingAssessedTax",
-                            "RevenueFromContractWithCustomerIncludingAssessedTax"],
-                "net_income": ["NetIncomeLoss"],
+                            "RevenueFromContractWithCustomerIncludingAssessedTax",
+                            "Revenue", "RevenueFromContractsWithCustomers"],
+                "net_income": ["NetIncomeLoss", "ProfitLoss",
+                               "ProfitLossAttributableToOwnersOfParent"],
                 "gross_profit": ["GrossProfit"],
-                "capex": ["PaymentsToAcquirePropertyPlantAndEquipment"],
+                "capex": ["PaymentsToAcquirePropertyPlantAndEquipment",
+                          "PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities"],
             }.items():
                 # Recency-aware tag choice: a company can switch tags; the first tag
                 # with data may have gone stale. Pick the tag whose series is newest;
@@ -222,11 +251,14 @@ def get_filing_brief(ticker: str) -> dict:
             # period_days lets the brain interpret them correctly.
             from datetime import date as _date
             for label, tags in {
-                "cash_and_equivalents": ["CashAndCashEquivalentsAtCarryingValue"],
+                "cash_and_equivalents": ["CashAndCashEquivalentsAtCarryingValue",
+                                         "CashAndCashEquivalents"],
                 "long_term_debt": ["LongTermDebt", "LongTermDebtNoncurrent"],
-                "operating_cash_flow": ["NetCashProvidedByUsedInOperatingActivities"],
+                "operating_cash_flow": ["NetCashProvidedByUsedInOperatingActivities",
+                                        "CashFlowsFromUsedInOperatingActivities"],
                 "stock_based_compensation": ["ShareBasedCompensation"],
-                "diluted_shares": ["WeightedAverageNumberOfDilutedSharesOutstanding"],
+                "diluted_shares": ["WeightedAverageNumberOfDilutedSharesOutstanding",
+                                   "AdjustedWeightedAverageShares"],
             }.items():
                 best_rows, best_end = None, ""
                 for tag in tags:
@@ -249,6 +281,14 @@ def get_filing_brief(ticker: str) -> dict:
                                 pass
                         out_rows.append(row)
                     facts_out[label] = out_rows
+            # Non-USD reporters (TSM in TWD, ASML in EUR): the USD unit filter
+            # correctly yields nothing - SAY so instead of looking silently blank.
+            ccys = reporting_currencies(gaap)
+            if ccys and "USD" not in ccys:
+                facts_out["currency_note"] = (
+                    f"filer reports in {sorted(ccys)}; USD-denominated fundamentals "
+                    f"unavailable - reason from filings prose/estimates, never "
+                    f"fabricate USD figures")
         except Exception as e:
             facts_out = {"error": f"companyfacts unavailable: {e}"}
 
