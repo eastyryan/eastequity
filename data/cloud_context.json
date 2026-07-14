@@ -1,5 +1,5 @@
 {
-  "run_date": "2026-07-14T05:59:39.289293+00:00",
+  "run_date": "2026-07-14T06:55:37.605109+00:00",
   "as_of_et": "2026-07-14",
   "digest": {
     "note": "READ FIRST: per focus name, the key statement numbers (each with its quarter-end date - cite them WITH the date), leverage/cash-flow reads, next earnings (when fresh statements arrive), and today's fast-moving signals. Full detail lives in the sections below; dig there before proposing, but this card is the always-current financial identity.",
@@ -309,8 +309,10 @@
         "risk_reward_ratio",
         "macro_context",
         "catalysts",
-        "position_size_usd"
+        "position_size_usd",
+        "variant_perception"
       ],
+      "_variant_perception_note": "Every BUY must state the market's misunderstanding explicitly: what consensus believes, what the agent believes differently, the specific mispriced mechanism, and the event/date when the market finds out. Enforced as a required BUY field; format documented in CLAUDE.md.",
       "required_sell_fields": [
         "ticker",
         "action",
@@ -788,7 +790,7 @@
         "lane": "contrarian_reversal",
         "valuation": {
           "trailing_pe": 54.38614,
-          "forward_pe": 35.958015,
+          "forward_pe": 35.56249,
           "price_to_sales_ttm": 21.445803,
           "ev_to_ebitda": null
         },
@@ -816,7 +818,7 @@
           "eps_revision_direction": "up"
         },
         "post_earnings_drift_candidate": false,
-        "fwd_pe_to_growth": 2.62
+        "fwd_pe_to_growth": 2.6
       },
       {
         "ticker": "DASH",
@@ -1676,7 +1678,7 @@
         "swing_setup_score": 4.71,
         "lane": "supplier_pullback",
         "valuation": {
-          "trailing_pe": 278.5,
+          "trailing_pe": 242.98657,
           "forward_pe": 84.05419,
           "price_to_sales_ttm": 61.96876,
           "ev_to_ebitda": 261.009
@@ -1768,7 +1770,7 @@
           "trailing_pe": 22.125149,
           "forward_pe": 6.2617593,
           "price_to_sales_ttm": 11.722549,
-          "ev_to_ebitda": 15.224
+          "ev_to_ebitda": 15.21
         },
         "market_cap_usd": 1058241380352,
         "analyst_ratings": {
@@ -2858,27 +2860,7 @@
           "read": "neutral"
         },
         "swing_setup_score": 7.12,
-        "valuation": {
-          "trailing_pe": 667.28204,
-          "forward_pe": 90.32097,
-          "price_to_sales_ttm": 25.227205,
-          "ev_to_ebitda": 2574.021
-        },
-        "market_cap_usd": 92635078656,
-        "analyst_ratings": {
-          "recommendation_key": "strong_buy",
-          "recommendation_mean": 1.45652,
-          "n_analysts": 46,
-          "target_mean_price": 247.68239,
-          "target_vs_price_pct": -4.8
-        },
-        "short_interest": {
-          "shares_short": 14725487,
-          "short_pct_float": 5.13,
-          "days_to_cover": 2.53,
-          "shares_short_prior_month": 14139488,
-          "month_over_month": "rising"
-        },
+        "valuation": null,
         "days_to_earnings": 23,
         "days_since_earnings": 67,
         "analyst_estimates": {
@@ -2888,7 +2870,7 @@
           "eps_revision_direction": "up"
         },
         "post_earnings_drift_candidate": false,
-        "fwd_pe_to_growth": 3.35
+        "fwd_pe_to_growth": null
       },
       {
         "ticker": "SNOW",
@@ -3123,7 +3105,7 @@
         },
         "swing_setup_score": 6.4,
         "valuation": {
-          "trailing_pe": 289.73685,
+          "trailing_pe": 284.74136,
           "forward_pe": 80.18546,
           "price_to_sales_ttm": 25.380144,
           "ev_to_ebitda": 180.798
@@ -8074,7 +8056,6 @@
       "ticker": "DELL",
       "cik": "0001571996",
       "company": "Dell Technologies Inc.",
-      "currency_note": null,
       "note": "quarterly_facts: instant rows are balance-sheet snapshots; duration rows include period_days - rows spanning >100 days are YTD-cumulative, not single quarters. quality_ratios are pre-computed - do not recompute them.",
       "quarterly_facts": {
         "operating_income": [
@@ -8817,7 +8798,6 @@
       "ticker": "HPE",
       "cik": "0001645590",
       "company": "HEWLETT PACKARD ENTERPRISE COMPANY",
-      "currency_note": null,
       "note": "quarterly_facts: instant rows are balance-sheet snapshots; duration rows include period_days - rows spanning >100 days are YTD-cumulative, not single quarters. quality_ratios are pre-computed - do not recompute them.",
       "quarterly_facts": {
         "operating_income": [
@@ -9547,7 +9527,6 @@
       "ticker": "NET",
       "cik": "0001477333",
       "company": "CLOUDFLARE, INC.",
-      "currency_note": null,
       "note": "quarterly_facts: instant rows are balance-sheet snapshots; duration rows include period_days - rows spanning >100 days are YTD-cumulative, not single quarters. quality_ratios are pre-computed - do not recompute them.",
       "quarterly_facts": {
         "operating_income": [
@@ -10253,7 +10232,6 @@
       "ticker": "OKTA",
       "cik": "0001660134",
       "company": "Okta, Inc.",
-      "currency_note": null,
       "note": "quarterly_facts: instant rows are balance-sheet snapshots; duration rows include period_days - rows spanning >100 days are YTD-cumulative, not single quarters. quality_ratios are pre-computed - do not recompute them.",
       "quarterly_facts": {
         "operating_income": [
@@ -10883,7 +10861,7 @@
             "value": null,
             "trend": "flat",
             "reason": "d_and_a_unavailable",
-            "note": "EBITDA not computed: no trailing-twelve-month D&A add-back found (tried DepreciationDepletionAndAmortization/DepreciationAmortizationAndAccretionNet/DepreciationAndAmortization/DepreciationAmortizationAndAccretion/DepreciationAndAmortisationExpense/Depreciation); TTM EBIT (operating income) was 159000000"
+            "note": "EBITDA not computed: no trailing-twelve-month D&A add-back found (tried DepreciationDepletionAndAmortization/DepreciationAmortizationAndAccretionNet/DepreciationAndAmortization/DepreciationAmortizationAndAccretion/Depreciation); TTM EBIT (operating income) was 159000000"
           },
           "net_debt_to_ebitda": {
             "value": null,
@@ -10929,7 +10907,6 @@
       "ticker": "S",
       "cik": "0001583708",
       "company": "SENTINELONE, INC",
-      "currency_note": null,
       "note": "quarterly_facts: instant rows are balance-sheet snapshots; duration rows include period_days - rows spanning >100 days are YTD-cumulative, not single quarters. quality_ratios are pre-computed - do not recompute them.",
       "quarterly_facts": {
         "operating_income": [
@@ -11635,7 +11612,6 @@
       "ticker": "AMD",
       "cik": "0000002488",
       "company": "ADVANCED MICRO DEVICES INC",
-      "currency_note": null,
       "note": "quarterly_facts: instant rows are balance-sheet snapshots; duration rows include period_days - rows spanning >100 days are YTD-cumulative, not single quarters. quality_ratios are pre-computed - do not recompute them.",
       "quarterly_facts": {
         "operating_income": [
@@ -12329,7 +12305,7 @@
             "value": null,
             "trend": "flat",
             "reason": "d_and_a_unavailable",
-            "note": "EBITDA not computed: no trailing-twelve-month D&A add-back found (tried DepreciationDepletionAndAmortization/DepreciationAmortizationAndAccretionNet/DepreciationAndAmortization/DepreciationAmortizationAndAccretion/DepreciationAndAmortisationExpense/Depreciation); TTM EBIT (operating income) was 3418000000"
+            "note": "EBITDA not computed: no trailing-twelve-month D&A add-back found (tried DepreciationDepletionAndAmortization/DepreciationAmortizationAndAccretionNet/DepreciationAndAmortization/DepreciationAmortizationAndAccretion/Depreciation); TTM EBIT (operating income) was 3418000000"
           },
           "net_debt_to_ebitda": {
             "value": null,
@@ -12371,7 +12347,6 @@
       "ticker": "RBRK",
       "cik": "0001943896",
       "company": "RUBRIK, INC.",
-      "currency_note": null,
       "note": "quarterly_facts: instant rows are balance-sheet snapshots; duration rows include period_days - rows spanning >100 days are YTD-cumulative, not single quarters. quality_ratios are pre-computed - do not recompute them.",
       "quarterly_facts": {
         "operating_income": [
@@ -13086,7 +13061,6 @@
       "ticker": "HOOD",
       "cik": "0001783879",
       "company": "Robinhood Markets, Inc.",
-      "currency_note": null,
       "note": "quarterly_facts: instant rows are balance-sheet snapshots; duration rows include period_days - rows spanning >100 days are YTD-cumulative, not single quarters. quality_ratios are pre-computed - do not recompute them.",
       "quarterly_facts": {
         "rd_expense": [
@@ -13574,7 +13548,6 @@
       "ticker": "DASH",
       "cik": "0001792789",
       "company": "DOORDASH, INC.",
-      "currency_note": null,
       "note": "quarterly_facts: instant rows are balance-sheet snapshots; duration rows include period_days - rows spanning >100 days are YTD-cumulative, not single quarters. quality_ratios are pre-computed - do not recompute them.",
       "quarterly_facts": {
         "operating_income": [
@@ -14227,7 +14200,6 @@
       "ticker": "AXON",
       "cik": "0001069183",
       "company": "Axon Enterprise, Inc.",
-      "currency_note": null,
       "note": "quarterly_facts: instant rows are balance-sheet snapshots; duration rows include period_days - rows spanning >100 days are YTD-cumulative, not single quarters. quality_ratios are pre-computed - do not recompute them.",
       "quarterly_facts": {
         "operating_income": [
@@ -14970,7 +14942,6 @@
       "ticker": "SMR",
       "cik": "0001822966",
       "company": "NUSCALE POWER CORPORATION",
-      "currency_note": null,
       "note": "quarterly_facts: instant rows are balance-sheet snapshots; duration rows include period_days - rows spanning >100 days are YTD-cumulative, not single quarters. quality_ratios are pre-computed - do not recompute them.",
       "quarterly_facts": {
         "operating_income": [
@@ -15464,7 +15435,7 @@
             "value": null,
             "trend": "flat",
             "reason": "d_and_a_unavailable",
-            "note": "EBITDA not computed: no trailing-twelve-month D&A add-back found (tried DepreciationDepletionAndAmortization/DepreciationAmortizationAndAccretionNet/DepreciationAndAmortization/DepreciationAmortizationAndAccretion/DepreciationAndAmortisationExpense/Depreciation); TTM EBIT (operating income) was -674373000"
+            "note": "EBITDA not computed: no trailing-twelve-month D&A add-back found (tried DepreciationDepletionAndAmortization/DepreciationAmortizationAndAccretionNet/DepreciationAndAmortization/DepreciationAmortizationAndAccretion/Depreciation); TTM EBIT (operating income) was -674373000"
           },
           "net_debt_to_ebitda": {
             "value": null,
@@ -15511,7 +15482,6 @@
       "ticker": "SMCI",
       "cik": "0001375365",
       "company": "SUPER MICRO COMPUTER, INC.",
-      "currency_note": null,
       "note": "quarterly_facts: instant rows are balance-sheet snapshots; duration rows include period_days - rows spanning >100 days are YTD-cumulative, not single quarters. quality_ratios are pre-computed - do not recompute them.",
       "quarterly_facts": {
         "operating_income": [
@@ -16404,7 +16374,7 @@
   },
   "fundamental_screen": {
     "as_of": "2026-07-13T13:07:48.458199+00:00",
-    "age_hours": 16.8,
+    "age_hours": 17.7,
     "names_covered": 0,
     "note": "Full-universe estimate screen, refreshed pre-market (6am/9am ET, gated on true America/New_York time). top_upward_revisions = fundamental inflections regardless of price - candidates the momentum funnel may not surface. estimate_changes_since_previous = what moved THIS MORNING (earnings/guidance). Each row may carry revision_direction (up/down/flat) and eps_growth_next_yr_pct (forward EPS growth) - judge a multiple against growth, not news tone.",
     "top_upward_revisions": [],
@@ -16464,11 +16434,11 @@
         "expiry": "2026-07-24",
         "days_to_expiry": 10,
         "spot": 139.53,
-        "expected_move_pct": 8.35,
-        "atm_iv_pct": 60.2,
+        "expected_move_pct": 8.87,
+        "atm_iv_pct": 0.4,
         "put_call_volume_ratio": 0.67,
-        "iv_skew_pct": 2.4,
-        "skew_read": "balanced",
+        "iv_skew_pct": 4.5,
+        "skew_read": "puts_bid_over_calls (downside protection in demand)",
         "unusual_strikes": []
       },
       "S": {
@@ -16607,7 +16577,7 @@
       },
       "OKTA": {
         "atr_pct": 5.14,
-        "expected_move_pct": 8.35,
+        "expected_move_pct": 8.87,
         "min_stop_distance_pct": 5.14,
         "tradeable": true
       },
@@ -16882,7 +16852,7 @@
   },
   "news_and_catalysts": {
     "status": "ok",
-    "as_of": "2026-07-14T05:57:49.777244+00:00",
+    "as_of": "2026-07-14T06:52:02.159148+00:00",
     "news_max_age_days": 7,
     "tickers": {
       "DELL": {
@@ -16897,13 +16867,13 @@
             "title": "The Overlooked Growth Engine Powering Cisco Systems Stock",
             "published": "2026-07-13T22:04:44Z",
             "url": "https://www.trefis.com/articles/606816/the-overlooked-growth-engine-powering-cisco-systems-stock/2026-07-13",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "Dell Technologies (DELL) Registers a Bigger Fall Than the Market: Important Facts to Note",
             "published": "2026-07-13T21:45:03Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/dell-technologies-dell-registers-bigger-214503508.html",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "Nvidia, AMD, Microsoft Partnerships \u2014 And These Clues \u2014 Fuel Dell Stock",
@@ -16921,7 +16891,7 @@
             "title": "Missed DELL\u2019s 248% Run? IGPT Quietly Turned $10K Into $16,600",
             "published": "2026-07-13T17:17:36Z",
             "url": "https://247wallst.com/investing/etf/2026/07/13/missed-dells-248-run-igpt-quietly-turned-10k-into-16600/",
-            "age_days": 0.5
+            "age_days": 0.6
           }
         ],
         "next_earnings": "2026-09-03",
@@ -16974,19 +16944,19 @@
             "title": "SanDisk Stock's Run Hides Its Real Portfolio Job",
             "published": "2026-07-13T22:16:00Z",
             "url": "https://www.trefis.com/articles/606817/sandisk-stocks-run-hides-its-real-portfolio-job/2026-07-13",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "The Overlooked Growth Engine Powering Cisco Systems Stock",
             "published": "2026-07-13T22:04:44Z",
             "url": "https://www.trefis.com/articles/606816/the-overlooked-growth-engine-powering-cisco-systems-stock/2026-07-13",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "ANET's Robust Portfolio Fuels Revenue Growth: More Upside Ahead?",
             "published": "2026-07-13T14:42:00Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/anets-robust-portfolio-fuels-revenue-144200050.html",
-            "age_days": 0.6
+            "age_days": 0.7
           },
           {
             "title": "Buy These 4 Tech Stocks That Are Still Cheap Despite 100%+ YTD Rally",
@@ -17045,7 +17015,7 @@
             "title": "The New Cyber Front Line: Pax8\u202fCorporate VP Oguo\u202fAtuanya, CrowdStrike VP Daniel Danielli, Live from Pax8 Beyond 2026",
             "published": "2026-07-13T19:35:04Z",
             "url": "https://tech.yahoo.com/cybersecurity/articles/cyber-front-line-pax8-corporate-193504598.html",
-            "age_days": 0.4
+            "age_days": 0.5
           },
           {
             "title": "Oracle Is Now Down 28% in a Month. Will the 52-Week Low of $132 Hold or Fold?",
@@ -17057,7 +17027,7 @@
             "title": "Cloudflare Draws Fresh Price Target Hikes Ahead Of Earnings \u2014 Analysts See Another 30% Growth Quarter",
             "published": "2026-07-13T12:11:21Z",
             "url": "https://stocktwits.com/news-articles/markets/equity/net-stock-price-target-hikes-ahead-of-cloudflare-q2-earnings/cZmzoZ8R7YG",
-            "age_days": 0.7
+            "age_days": 0.8
           },
           {
             "title": "1 Unpopular Stock That Deserves a Second Chance and 2 We Question",
@@ -17075,7 +17045,7 @@
             "title": "Wall Street Says Investors Are Missing Cloudflare\u2019s Biggest AI Opportunity",
             "published": "2026-07-12T15:00:02Z",
             "url": "https://www.barchart.com/story/news/3244229/wall-street-says-investors-are-missing-cloudflares-biggest-ai-opportunity",
-            "age_days": 1.6
+            "age_days": 1.7
           }
         ],
         "next_earnings": "2026-07-30",
@@ -17140,7 +17110,7 @@
             "title": "Okta (OKTA) Suffers a Larger Drop Than the General Market: Key Insights",
             "published": "2026-07-08T22:00:04Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/okta-okta-suffers-larger-drop-220004897.html",
-            "age_days": 5.3
+            "age_days": 5.4
           },
           {
             "title": "Own ServiceNow For AI? Gen Digital's Numbers Speak Louder",
@@ -17196,6 +17166,12 @@
       "S": {
         "headlines": [
           {
+            "title": "Cisco (CSCO) Eyes SentinelOne As Italy And Bahrain Data Center Push Expands",
+            "published": "2026-07-14T06:10:43Z",
+            "url": "https://finance.yahoo.com/markets/stocks/articles/cisco-csco-eyes-sentinelone-italy-061043025.html",
+            "age_days": 0.0
+          },
+          {
             "title": "Elastic, Veeva Systems, and SentinelOne Shares Are Soaring, What You Need To Know",
             "published": "2026-07-14T02:06:39Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/elastic-veeva-systems-sentinelone-shares-020639513.html",
@@ -17211,7 +17187,7 @@
             "title": "SentinelOne (S) Stock Declines While Market Improves: Some Information for Investors",
             "published": "2026-07-10T22:00:05Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/sentinelone-stock-declines-while-market-220005187.html",
-            "age_days": 3.3
+            "age_days": 3.4
           },
           {
             "title": "Can Platformization Drive Palo Alto Networks' Next Growth Phase?",
@@ -17223,12 +17199,6 @@
             "title": "4 Cybersecurity Stocks to Watch in July as AI-Driven Threats Rise",
             "published": "2026-07-10T14:57:00Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/4-cybersecurity-stocks-watch-july-145700651.html",
-            "age_days": 3.6
-          },
-          {
-            "title": "Brokers Suggest Investing in SentinelOne (S): Read This Before Placing a Bet",
-            "published": "2026-07-10T13:30:04Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/brokers-suggest-investing-sentinelone-read-133004925.html",
             "age_days": 3.7
           }
         ],
@@ -17276,31 +17246,31 @@
             "title": "SK Hynix stock falls, leads broader chip sector declines as AI trade angst returns",
             "published": "2026-07-13T12:07:51Z",
             "url": "https://finance.yahoo.com/markets/article/sk-hynix-stock-falls-leads-broader-chip-sector-declines-as-ai-trade-angst-returns-120751185.html",
-            "age_days": 0.7
+            "age_days": 0.8
           },
           {
             "title": "The whole chip trade is waiting on one report",
             "published": "2026-07-14T00:37:00Z",
             "url": "https://www.thestreet.com/investing/stocks/chip-trade-waiting-on-taiwan-semiconductor-tsm-report",
-            "age_days": 0.2
+            "age_days": 0.3
           },
           {
             "title": "Trump Reinstates the Iran Blockade and Demands a 20% Toll as America Becomes Hormuz\u2019s \u201cGuardian\u201d",
             "published": "2026-07-14T00:16:38Z",
             "url": "https://247wallst.com/investing/2026/07/13/trump-reinstates-the-iran-blockade-and-demands-a-20-toll-as-america-becomes-hormuzs-guardian/",
-            "age_days": 0.2
+            "age_days": 0.3
           },
           {
             "title": "Advanced Micro Devices (AMD) Suffers a Larger Drop Than the General Market: Key Insights",
             "published": "2026-07-13T21:45:01Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/advanced-micro-devices-amd-suffers-214501805.html",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "TSMC Sales Jump 36% as Memory Stocks Plunge. What It Means for NVIDIA and AMD",
             "published": "2026-07-13T21:45:00Z",
             "url": "https://247wallst.com/investing/2026/07/13/tsmc-sales-jump-36-as-memory-stocks-plunge-what-it-means-for-nvidia-and-amd/",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "Why TSMC\u2019s Record Revenue Isn\u2019t Reviving the AI Trade",
@@ -17359,7 +17329,7 @@
             "title": "EXCLUSIVE: Rackspace CFO Says AI Winners Will \u2018Own The Outcome,\u2019 Not the GPUs",
             "published": "2026-07-14T00:31:14Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/exclusive-rackspace-cfo-says-ai-003114459.html",
-            "age_days": 0.2
+            "age_days": 0.3
           },
           {
             "title": "Rubrik (RBRK) is One of the Best Up and Coming Stocks to Invest In Right Now, Here\u2019s Why",
@@ -17377,7 +17347,7 @@
             "title": "Rackspace Technology Cuts 2026 Outlook as $250M Stock Sale Fuels AI Push",
             "published": "2026-07-11T03:02:02Z",
             "url": "https://www.marketbeat.com/instant-alerts/rackspace-technology-cuts-2026-outlook-as-250m-stock-sale-fuels-ai-push-2026-07-10/?utm_source=yahoofinance&utm_medium=yahoofinance",
-            "age_days": 3.1
+            "age_days": 3.2
           },
           {
             "title": "IPO Stock Of The Week: Rubrik Flirts With Buy Point Amid Path To Profitability",
@@ -17430,7 +17400,7 @@
             "title": "Robinhood Reportedly Eyes First Credit Card-Backed Bond Sale Worth Up To $500M: Retail Cheers 'Positive' Signal",
             "published": "2026-07-14T05:12:58Z",
             "url": "https://stocktwits.com/news-articles/markets/equity/robinhood-reportedly-eyes-first-credit-card-backed-bond-sale-worth-up-to-500-m-retail-cheers-positive-signal/cZZbZlwR7pT",
-            "age_days": 0.0
+            "age_days": 0.1
           },
           {
             "title": "Analysts stunned by Robinhood's $3.1 billion debut week",
@@ -17442,7 +17412,7 @@
             "title": "Robinhood explores first credit card-backed bond sale - report",
             "published": "2026-07-13T19:38:55Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/robinhood-explores-first-credit-card-193855117.html",
-            "age_days": 0.4
+            "age_days": 0.5
           },
           {
             "title": "Kalshi Pro Launches as Robinhood Plans to Go Its Own Way",
@@ -17460,7 +17430,7 @@
             "title": "Robinhood Chain's Early Momentum Is Being Driven By Meme Coins, Not Tokenized Stocks",
             "published": "2026-07-13T16:59:36Z",
             "url": "https://decrypt.co/373398/robinhood-chain-momentum-meme-coins-not-tokenized-stocks",
-            "age_days": 0.5
+            "age_days": 0.6
           }
         ],
         "next_earnings": "2026-07-29",
@@ -17519,7 +17489,7 @@
             "title": "Chargeback Disputes Hit 158 Million, Up 29% Since 2021",
             "published": "2026-07-13T12:30:18Z",
             "url": "https://finance.yahoo.com/small-business/articles/chargeback-disputes-hit-158-million-123018678.html",
-            "age_days": 0.7
+            "age_days": 0.8
           },
           {
             "title": "Uber and DoorDash Drivers Think They Have No 401(k). The IRS Lets Them Build a $72,000 One but Almost Nobody Does",
@@ -17584,25 +17554,25 @@
             "title": "Axon Enterprise (AXON) Registers a Bigger Fall Than the Market: Important Facts to Note",
             "published": "2026-07-13T22:00:06Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/axon-enterprise-axon-registers-bigger-220006439.html",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "Axon Enterprise's Quarterly Earnings Preview: What You Need to Know",
             "published": "2026-07-13T15:03:21Z",
             "url": "https://www.barchart.com/story/news/3255526/axon-enterprise-s-quarterly-earnings-preview-what-you-need-to-know",
-            "age_days": 0.6
+            "age_days": 0.7
           },
           {
             "title": "How AppLovin (APP) Is Using AI to Expand Beyond Mobile Gaming Into E-Commerce Advertising",
             "published": "2026-07-12T17:25:26Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/applovin-nasdaq-app-using-ai-122026029.html",
-            "age_days": 1.5
+            "age_days": 1.6
           },
           {
             "title": "Coinbase, Lyft, and Axon prove there's more going on in markets than the 'Magnificent 7'",
             "published": "2026-07-12T12:30:00Z",
             "url": "https://finance.yahoo.com/markets/article/coinbase-lyft-and-axon-prove-theres-more-going-on-in-markets-than-the-magnificent-7-123000539.html",
-            "age_days": 1.7
+            "age_days": 1.8
           },
           {
             "title": "Axon (AXON) Upgraded to Strong Buy: Here's What You Should Know",
@@ -17691,7 +17661,7 @@
             "title": "Why NuScale Power (SMR) Is Down 7.4% After Mounting Delays, Weak Results And No Firm Contracts",
             "published": "2026-07-11T15:08:21Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/why-nuscale-power-smr-down-150821532.html",
-            "age_days": 2.6
+            "age_days": 2.7
           }
         ],
         "next_earnings": "2026-08-05",
@@ -17744,13 +17714,13 @@
             "title": "Why Super Micro Computer (SMCI) Dipped More Than Broader Market Today",
             "published": "2026-07-13T21:45:05Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/why-super-micro-computer-smci-214505417.html",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "Missed DELL\u2019s 248% Run? IGPT Quietly Turned $10K Into $16,600",
             "published": "2026-07-13T17:17:36Z",
             "url": "https://247wallst.com/investing/etf/2026/07/13/missed-dells-248-run-igpt-quietly-turned-10k-into-16600/",
-            "age_days": 0.5
+            "age_days": 0.6
           },
           {
             "title": "Super Micro Computer (SMCI) Introduces DCBBS Blueprint for HPC",
