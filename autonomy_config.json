@@ -126,11 +126,19 @@
     "min_stop_expected_move_fraction": 0.5,
     "_volatility_stop_note": "A stop tighter than the name's noise is not protection - it exits on ordinary volatility, not on a broken thesis. The stop must sit at least max(min_stop_atr_multiple x 14d-ATR%, min_stop_expected_move_fraction x options expected_move%) below entry. Enforced only when volatility data is present (fail-open). If that floor exceeds max_stop_loss_distance_pct, the name is too volatile for a valid swing stop and is rejected."
   },
+  "llm": {
+    "brain_model": "claude-opus-4-8",
+    "risk_desk_model": "claude-opus-4-8",
+    "allowed_tools": "Read Glob Grep WebSearch WebFetch",
+    "_note": "Every claude -p invocation pins --model (public track record stays reproducible across CLI-default changes) and --allowedTools (exactly what CLAUDE.md instructs: Read the chart PNGs, WebSearch/WebFetch to verify catalysts - and nothing that can write, so an injected headline can never touch the ledger). Missing block falls back to CLI defaults."
+  },
   "risk_controls": {
     "kill_switch_file": "state/KILL_SWITCH",
     "max_daily_loss_pct_halt": 0.03,
     "max_drawdown_pct_halt": 0.15,
     "require_broker_readback_confirmation": true,
+    "require_risk_desk_for_buys": false,
+    "_require_risk_desk_note": "When true, BUYs are rejected (risk_desk_unavailable) instead of passing unreviewed where the claude CLI is absent (cloud sandboxes). False preserves pass-through until a cloud review path exists.",
     "max_orders_per_run": 3,
     "market_hours_only": true,
     "cross_node_lease_enabled": true,

@@ -850,9 +850,36 @@ def ask_claude(context: dict, run_id: str, news_only: bool = False) -> str:
     return _run_claude(prompt)
 
 
-def _run_claude(prompt: str) -> str:
+def _llm_settings() -> dict:
+    """The llm config block, fail-soft: missing block/file -> {} (CLI defaults)."""
+    try:
+        return validator.load_config().get("llm") or {}
+    except Exception:
+        return {}
+
+
+def _claude_cmd(prompt: str, model: str | None, allowed_tools: str | None) -> list[str]:
+    """Build the headless claude invocation (pure - offline-testable).
+
+    Pinning --model keeps the public track record reproducible across CLI-default
+    changes. --allowedTools grants exactly what CLAUDE.md instructs the brain to
+    do (Read the chart PNGs, WebSearch/WebFetch to verify catalysts) and nothing
+    that can write - an injected headline must never be able to touch the ledger.
+    The installed CLI accepts a space/comma-separated tool list as one argument."""
+    cmd = ["claude", "-p", prompt]
+    if model:
+        cmd += ["--model", model]
+    if allowed_tools:
+        cmd += ["--allowedTools", allowed_tools]
+    return cmd
+
+
+def _run_claude(prompt: str, model: str | None = None) -> str:
     import time
     last_err = ""
+    llm = _llm_settings()
+    model = model or llm.get("brain_model")
+    allowed_tools = llm.get("allowed_tools")
     # NOTE: no --permission-mode plan. Newer Claude Code (2.x) diverts a plan-mode
     # answer to a plan file and returns only a prose summary on stdout, so our JSON
     # block never appears and parsing falls back to a no-trade. The default headless
@@ -860,7 +887,7 @@ def _run_claude(prompt: str) -> str:
     # we parse - matching universe_review(), which already runs claude -p without plan mode.
     for attempt in (1, 2):  # one retry: overnight runs can hit transient/usage errors
         result = subprocess.run(
-            ["claude", "-p", prompt],
+            _claude_cmd(prompt, model, allowed_tools),
             cwd=ROOT, capture_output=True, text=True, timeout=1800,
         )
         if result.returncode == 0:
@@ -884,9 +911,29 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
     buys = [p for p in proposals if str(p.get("action", "")).upper() == "BUY"]
     if not buys:
         return proposals
+
+    def _no_desk(reason: str) -> list[dict]:
+        """CLI absent or review failed: pass-through by default, or reject BUYs
+        when risk_controls.require_risk_desk_for_buys is set (cloud discipline)."""
+        rc = {}
+        try:
+            rc = validator.load_config().get("risk_controls") or {}
+        except Exception:
+            pass
+        if not rc.get("require_risk_desk_for_buys"):
+            print(f"  ({reason} - proposals pass unreviewed)")
+            return proposals
+        kept = []
+        for p in proposals:
+            if str(p.get("action", "")).upper() == "BUY":
+                print(f"  RISK DESK REQUIRED - BUY {p.get('ticker')} rejected ({reason})")
+                journal.log_rejection(p, [f"risk_desk_unavailable:{reason}"], run_id)
+            else:
+                kept.append(p)
+        return kept
+
     if shutil.which("claude") is None:
-        print("  (risk desk unavailable in this environment - proposals pass unreviewed)")
-        return proposals
+        return _no_desk("risk desk unavailable in this environment")
     prompt = (
         "You are the RISK DESK for a paper-trading fund. Another analyst proposed the "
         f"trades in this JSON: {json.dumps(buys)}. The full market context is at "
@@ -900,10 +947,9 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
         "(max -0.10) for approved-with-reservations."
     )
     try:
-        out = _run_claude(prompt)
+        out = _run_claude(prompt, model=_llm_settings().get("risk_desk_model"))
     except Exception as e:
-        print(f"  risk desk failed ({e}) - proposals pass unreviewed")
-        return proposals
+        return _no_desk(f"risk desk failed ({str(e)[:120]})")
     reviews = {}
     for block in reversed(re.findall(r"```json\s*(.*?)```", out, re.DOTALL)):
         try:
@@ -914,8 +960,7 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
         except (json.JSONDecodeError, KeyError, TypeError):
             continue
     if not reviews:
-        print("  risk desk output unparsable - proposals pass unreviewed")
-        return proposals
+        return _no_desk("risk desk output unparsable")
     kept = []
     for p in proposals:
         r = reviews.get(str(p.get("ticker", "")).upper())
@@ -1584,13 +1629,13 @@ def self_review(run_id: str) -> int:
         "sentences for the public dashboard: what you got right, what you got wrong, "
         "whether last week's change stuck, and the ONE change you are making next week."
     )
-    result = subprocess.run(["claude", "-p", prompt],
-                            cwd=ROOT, capture_output=True, text=True, timeout=1800)
-    if result.returncode != 0:
-        print(f"self-review failed: {result.stderr[:500]}{result.stdout[:500]}")
+    try:
+        out = _run_claude(prompt)  # pinned model + tool allowlist, with retry
+    except Exception as e:
+        print(f"self-review failed: {str(e)[:800]}")
         return 1
-    m = re.search(r"Self-review:\s*(.+)", result.stdout, re.DOTALL)
-    summary = (m.group(1).strip() if m else result.stdout.strip())[:2000]
+    m = re.search(r"Self-review:\s*(.+)", out, re.DOTALL)
+    summary = (m.group(1).strip() if m else out.strip())[:2000]
     journal.log_improvement(f"Weekly self-review: {summary}", run_id)
     _write_review_to_dashboard = ROOT / "dashboard" / "data" / "latest.json"
     if _write_review_to_dashboard.exists():
@@ -1730,12 +1775,12 @@ def universe_review(run_id: str) -> int:
         "\"ai_exposure_updates\": {\"TICK\": {\"exposure\": \"...\", \"reason\": \"...\"}}, "
         "\"rationale\": \"3-5 plain sentences for the public improvement log\"}."
     )
-    result = subprocess.run(["claude", "-p", prompt], cwd=ROOT,
-                            capture_output=True, text=True, timeout=1800)
-    if result.returncode != 0:
-        print(f"universe review failed: {result.stderr[:300]}{result.stdout[:300]}")
+    try:
+        out = _run_claude(prompt)  # pinned model + tool allowlist, with retry
+    except Exception as e:
+        print(f"universe review failed: {str(e)[:600]}")
         return 1
-    blocks = re.findall(r"```json\s*(.*?)```", result.stdout, re.DOTALL)
+    blocks = re.findall(r"```json\s*(.*?)```", out, re.DOTALL)
     data = None
     for block in reversed(blocks):
         try:
