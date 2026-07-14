@@ -177,6 +177,31 @@ def _rel_strength(name_ret, bench_ret):
 # The trend/volume stack answers "is this a setup?"; these answer "is NOW the entry?"
 # None of them feed swing_setup_score - re-ranking the funnel is a separate decision.
 
+def _short_interest_from_info(info: dict):
+    """Short-interest snapshot from a yfinance info dict. Pure/testable; None
+    when nothing useful is present. Read it two-sided: a rising short base into
+    strength is squeeze fuel AND evidence someone is paying to bet against the
+    name — cite which reading the thesis takes."""
+    if not isinstance(info, dict):
+        return None
+    shares_short = info.get("sharesShort")
+    prior = info.get("sharesShortPriorMonth")
+    direction = None
+    if isinstance(shares_short, (int, float)) and isinstance(prior, (int, float)) and prior > 0:
+        chg = shares_short / prior - 1
+        direction = "rising" if chg > 0.02 else "falling" if chg < -0.02 else "flat"
+    pct_float = info.get("shortPercentOfFloat")
+    out = {
+        "shares_short": shares_short,
+        "short_pct_float": (round(pct_float * 100, 2)
+                            if isinstance(pct_float, (int, float)) else None),
+        "days_to_cover": info.get("shortRatio"),
+        "shares_short_prior_month": prior,
+        "month_over_month": direction,
+    }
+    return out if any(v is not None for v in out.values()) else None
+
+
 def _rsi14(closes, period: int = 14):
     """Wilder RSI. None with fewer than period+1 closes."""
     if not closes or len(closes) < period + 1:
@@ -557,10 +582,11 @@ def scan_universe(top_n: int = 15) -> dict:
                 "ev_to_ebitda": info.get("enterpriseToEbitda"),
             }
             r["market_cap_usd"] = info.get("marketCap")  # feeds the $1B floor
-            # Analyst consensus rides along at zero extra network cost (info is
-            # already fetched). Sentiment context, not a signal.
+            # Analyst consensus + short interest ride along at zero extra network
+            # cost (info is already fetched). Sentiment context, not signals.
             from tools.news_catalysts import _ratings_from_info
             r["analyst_ratings"] = _ratings_from_info(info)
+            r["short_interest"] = _short_interest_from_info(info)
         except Exception:
             r["valuation"] = None
         # Earnings clock: swing entries and binary prints interact constantly.

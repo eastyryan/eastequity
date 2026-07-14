@@ -55,6 +55,27 @@ def _filter_recent(items: list, now: datetime, max_age_days: float = NEWS_MAX_AG
     return out
 
 
+def _beat_streak(surprise_pcts: list) -> int:
+    """Consecutive positive EPS surprises counting back from the most recent
+    quarter. None/zero/negative breaks the streak. Pure function."""
+    streak = 0
+    for s in reversed(surprise_pcts):
+        if isinstance(s, (int, float)) and s > 0:
+            streak += 1
+        else:
+            break
+    return streak
+
+
+def _surprise_pct(value):
+    """Normalize yfinance surprisePercent: modern versions emit a fraction
+    (0.053 = +5.3%); values already looking like percents pass through. NaN and
+    non-numbers -> None."""
+    if not isinstance(value, (int, float)) or value != value:
+        return None
+    return round(value * 100, 1) if abs(value) <= 1.5 else round(value, 1)
+
+
 def _ratings_from_info(info: dict):
     """Analyst consensus snapshot from a yfinance info dict. Pure/testable;
     returns None when nothing useful is present. recommendation_mean scale:
@@ -108,6 +129,28 @@ def get_news_and_catalysts(tickers: list[str], max_headlines: int = 6,
                 entry["analyst_ratings"] = _ratings_from_info(tk.info)
             except Exception:
                 entry["analyst_ratings"] = None
+            try:  # sell-side scoreboard: did management beat the number, quarter by quarter
+                eh = tk.earnings_history
+                quarters = []
+                if eh is not None and len(eh):
+                    for idx, row in eh.iterrows():
+                        actual = row.get("epsActual")
+                        est = row.get("epsEstimate")
+                        quarters.append({
+                            "period": str(idx)[:10],
+                            "eps_actual": (round(float(actual), 2)
+                                           if actual == actual and actual is not None else None),
+                            "eps_estimate": (round(float(est), 2)
+                                             if est == est and est is not None else None),
+                            "surprise_pct": _surprise_pct(row.get("surprisePercent")),
+                        })
+                if quarters:
+                    entry["earnings_surprises"] = {
+                        "quarters": quarters[-8:],
+                        "beat_streak": _beat_streak([q["surprise_pct"] for q in quarters]),
+                    }
+            except Exception:
+                pass
         except Exception as e:
             entry["error"] = str(e)
         out["tickers"][t.upper()] = entry

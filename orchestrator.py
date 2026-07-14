@@ -204,19 +204,12 @@ def preflight(cfg: dict, run_id: str, news_only: bool = False,
 # Steps 2 — Context gathering (all deterministic Python, all fail-soft)
 # ---------------------------------------------------------------------------
 def _light_prices(tickers: list) -> dict:
-    """Last closes for a small ticker list without a full universe scan."""
+    """Last closes for a small ticker list without a full universe scan.
+    Routed through the tools.prices seam (Polygon when POLYGON_API_KEY is set,
+    else yfinance — identical to the old inline behavior)."""
     try:
-        import yfinance as yf
-        data = yf.download(tickers, period="5d", interval="1d", group_by="ticker",
-                           auto_adjust=True, progress=False, threads=True)
-        out = {}
-        for t in tickers:
-            try:
-                df = data[t].dropna() if len(tickers) > 1 else data.dropna()
-                out[t] = round(float(df["Close"].iloc[-1]), 2)
-            except Exception:
-                continue
-        return out
+        from tools.prices import get_closes
+        return get_closes(tickers)
     except Exception:
         return {}
 
@@ -1292,6 +1285,21 @@ def _sector_map() -> dict:
         return {}
 
 
+def _sector_exposure(portfolio: dict) -> list[dict]:
+    """Market value + share of equity per sector for the open book — the
+    machine-readable counterpart of the enforced sector-concentration cap."""
+    smap = _sector_map()
+    equity = portfolio.get("total_equity_usd") or 0
+    by: dict = {}
+    for p in portfolio.get("positions", []):
+        s = smap.get(str(p.get("ticker", "")).upper()) or "unmapped"
+        by[s] = by.get(s, 0.0) + (p.get("market_value_usd") or 0.0)
+    return sorted(({"sector": s, "value_usd": round(v, 2),
+                    "pct_of_equity": round(v / equity * 100, 1) if equity else None}
+                   for s, v in by.items()),
+                  key=lambda d: -(d["value_usd"] or 0))
+
+
 def build_trade_events() -> list[dict]:
     """Every filled BUY/SELL with its ET date - the equity curve annotates these so the
     line tells a story (entries, exits, stop-outs) instead of being an anonymous squiggle."""
@@ -1490,6 +1498,17 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
         "performance_breakdown": build_performance_breakdown(closed),
         "calibration": compute_calibration(closed),
         "position_risk": (context.get("position_stop_cushion") or {}).get("positions", {}),
+        "sector_exposure": _sector_exposure(context["portfolio"]),
+        "sector_concentration_cap_pct": (
+            validator.load_config().get("position_sizing", {})
+            .get("max_sector_concentration_pct")),
+        # Oldest per-position corporate-actions marker: an aging date here means
+        # dividend/split processing is lagging (usually a cloud sandbox blocking
+        # yfinance) - visibility only, the cutoff logic prevents double-credits.
+        "corporate_actions_processed_through": min(
+            (p.get("actions_processed_through")
+             for p in context["portfolio"].get("positions", [])
+             if p.get("actions_processed_through")), default=None),
         "data_quality": context.get("data_quality"),
         "stale_data_notice": context.get("stale_data_notice"),
         "risk_halts": context.get("risk_halts") or [],
@@ -1725,6 +1744,24 @@ def _unpriceable(tickers: list) -> set:
 # ---------------------------------------------------------------------------
 # Weekly universe review: the agent curates its own watchable universe.
 # ---------------------------------------------------------------------------
+def _universe_log_append(entry: dict) -> None:
+    """Append to the public universe changelog — INCLUDING failed/rejected
+    reviews, so the dashboard explains why the universe did not change instead
+    of rendering an eternally-empty section (the log used to be written only on
+    a fully successful review, which had never happened)."""
+    log_file = ROOT / "dashboard" / "data" / "universe_log.json"
+    try:
+        ulog = json.loads(log_file.read_text()) if log_file.exists() else []
+    except Exception:
+        ulog = []
+    ulog.append(entry)
+    try:
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+        log_file.write_text(json.dumps(ulog[-100:], indent=2))
+    except Exception as e:
+        print(f"  (universe_log write failed: {e})")
+
+
 def universe_review(run_id: str) -> int:
     """The agent researches the broad market (web search enabled) and proposes
     edits to data/universe.json. Deterministic guardrails cap what can change:
@@ -1777,10 +1814,15 @@ def universe_review(run_id: str) -> int:
         "\"ai_exposure_updates\": {\"TICK\": {\"exposure\": \"...\", \"reason\": \"...\"}}, "
         "\"rationale\": \"3-5 plain sentences for the public improvement log\"}."
     )
+    universe_size = len({t.upper() for ts in current["sectors"].values() for t in ts})
+    _fail_entry = {"date": _et_date(), "added": [], "removed": [],
+                   "dropped_unpriceable": [], "size": universe_size}
     try:
         out = _run_claude(prompt)  # pinned model + tool allowlist, with retry
     except Exception as e:
         print(f"universe review failed: {str(e)[:600]}")
+        _universe_log_append({**_fail_entry, "status": "error",
+                              "rationale": f"Weekly review failed to run: {str(e)[:200]}"})
         return 1
     blocks = re.findall(r"```json\s*(.*?)```", out, re.DOTALL)
     data = None
@@ -1794,6 +1836,9 @@ def universe_review(run_id: str) -> int:
             continue
     if data is None:
         print("universe review: no parsable proposal, universe unchanged")
+        _universe_log_append({**_fail_entry, "status": "unparsable",
+                              "rationale": "Review produced no machine-readable proposal; "
+                                           "universe unchanged."})
         return 1
 
     # Deterministic guardrails - the agent proposes, code disposes.
@@ -1817,6 +1862,9 @@ def universe_review(run_id: str) -> int:
         journal.log_improvement(
             f"Universe review rejected by guardrails ({'; '.join(problems)}) - no changes.",
             run_id)
+        _universe_log_append({**_fail_entry, "status": "rejected",
+                              "rationale": f"Rejected by guardrails: {'; '.join(problems)}. "
+                                           f"Universe unchanged."})
         return 1
 
     # Price-validate ADDED names: the review has no web access in the cloud sandbox and
@@ -1876,15 +1924,10 @@ def universe_review(run_id: str) -> int:
             f"({len(new_tickers)} names){drop_note}. {data.get('rationale', '')}")
     journal.log_improvement(note, run_id)
     # Persistent public log of universe changes (for the dashboard changelog).
-    log_file = ROOT / "dashboard" / "data" / "universe_log.json"
-    try:
-        ulog = json.loads(log_file.read_text()) if log_file.exists() else []
-    except Exception:
-        ulog = []
-    ulog.append({"date": _et_date(), "added": sorted(added), "removed": sorted(removed),
-                 "dropped_unpriceable": sorted(dropped), "size": len(new_tickers),
-                 "rationale": data.get("rationale", "")})
-    log_file.write_text(json.dumps(ulog[-100:], indent=2))
+    _universe_log_append({"date": _et_date(), "status": "applied",
+                          "added": sorted(added), "removed": sorted(removed),
+                          "dropped_unpriceable": sorted(dropped), "size": len(new_tickers),
+                          "rationale": data.get("rationale", "")})
     if latest_file.exists():
         d = json.loads(latest_file.read_text())
         d["improvements"] = ([{"date": _et_date(), "note": note}]

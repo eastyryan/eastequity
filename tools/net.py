@@ -30,13 +30,39 @@ DIRECT_TIMEOUT = (5, 20)
 PROXY_TIMEOUT = (4, 8)
 
 
-def get_sec(url: str) -> requests.Response:
-    """GET a sec.gov URL, falling back to the Vercel proxy if blocked."""
-    time.sleep(0.15)  # stay well under SEC's 10 req/s limit
+def _retry_after_seconds(header_val, attempt: int, base: float = 2.0,
+                         cap: float = 30.0) -> float:
+    """Backoff for a throttle response: honor a numeric Retry-After header,
+    else exponential (base * 2^attempt), always capped. Pure/testable."""
     try:
-        r = requests.get(url, headers=SEC_HEADERS, timeout=DIRECT_TIMEOUT)
+        return min(float(header_val), cap)
+    except (TypeError, ValueError):
+        return min(base * (2 ** attempt), cap)
+
+
+def get_with_throttle_retry(url: str, *, headers=None, params=None,
+                            timeout=DIRECT_TIMEOUT, retries: int = 2) -> requests.Response:
+    """GET that retries ONLY throttle responses (429/503) with bounded backoff,
+    honoring Retry-After. Connection errors propagate immediately — in the cloud
+    sandbox a blocked host must fail fast, never stack sleeps."""
+    attempt = 0
+    while True:
+        r = requests.get(url, headers=headers, params=params, timeout=timeout)
+        if r.status_code in (429, 503) and attempt < retries:
+            time.sleep(_retry_after_seconds(r.headers.get("Retry-After"), attempt))
+            attempt += 1
+            continue
         r.raise_for_status()
         return r
+
+
+def get_sec(url: str) -> requests.Response:
+    """GET a sec.gov URL, falling back to the Vercel proxy if blocked.
+    Direct attempt retries 429/503 throttles with backoff (rate-limit hardening);
+    a blocked/unreachable host still fails fast to the proxy."""
+    time.sleep(0.15)  # stay well under SEC's 10 req/s limit
+    try:
+        return get_with_throttle_retry(url, headers=SEC_HEADERS, timeout=DIRECT_TIMEOUT)
     except requests.RequestException:
         r = requests.get(f"{PROXY_BASE}/sec", params={"url": url}, timeout=PROXY_TIMEOUT)
         r.raise_for_status()
