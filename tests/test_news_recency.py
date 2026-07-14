@@ -14,7 +14,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from tools.news_catalysts import _filter_recent, _parse_pubdate, _ratings_from_info
+from tools.news_catalysts import (_filter_recent, _headlines_from_finnhub,
+                                  _merge_headlines, _parse_pubdate, _ratings_from_info)
 
 NOW = datetime(2026, 7, 13, 12, 0, tzinfo=timezone.utc)
 
@@ -71,8 +72,29 @@ def test_ratings_from_info():
     check("non-dict -> None", _ratings_from_info(None) is None)
 
 
+def test_finnhub_merge():
+    print("_headlines_from_finnhub / _merge_headlines (optional Finnhub layer):")
+    payload = [
+        {"headline": "NVDA wins big order", "datetime": 1784023200, "url": "https://f/1"},
+        {"headline": "", "datetime": 1784023200},
+        {"headline": "No timestamp", "datetime": None, "url": "https://f/2"},
+    ]
+    out = _headlines_from_finnhub(payload)
+    check("finnhub rows mapped to headline shape (unix ts -> iso)",
+          len(out) == 2 and out[0]["published"] == "2026-07-14T10:00:00+00:00"
+          and out[0]["title"] == "NVDA wins big order", str(out))
+    check("finnhub non-list payload -> []", _headlines_from_finnhub({"error": "x"}) == [])
+    base = [{"title": "NVDA Wins Big Order!", "published": None, "url": "https://y/1"},
+            {"title": None, "published": None, "url": "https://y/2"}]
+    merged = _merge_headlines(base, out)
+    check("merge dedupes by title, base rows untouched",
+          merged[:2] == base and [m["title"] for m in merged[2:]] == ["No timestamp"],
+          str(merged))
+
+
 if __name__ == "__main__":
-    for fn in (test_filter_recent, test_parse_pubdate, test_ratings_from_info):
+    for fn in (test_filter_recent, test_parse_pubdate, test_ratings_from_info,
+               test_finnhub_merge):
         fn()
     print()
     if FAILURES:
