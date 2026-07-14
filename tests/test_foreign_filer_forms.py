@@ -65,13 +65,12 @@ def test_non_periodic_forms_still_excluded():
 
 
 def test_heartbeat_slots():
-    print("runs-heartbeat expected slots match scripts/run_cycle.sh:")
+    print("runs-heartbeat expected slots match scripts/run_cycle.sh (7-slot policy):")
     import orchestrator
     wk = orchestrator.expected_slots(True)
     we = orchestrator.expected_slots(False)
-    check("11 weekday slots", len(wk) == 11, f"got {len(wk)}: {wk}")
-    check("hourly 10am-4pm present", all(h in wk for h in (10, 11, 12, 13, 14, 15, 16)))
-    check("midnight + 5:30pm present", 0 in wk and 17.5 in wk)
+    check("7 weekday slots", len(wk) == 7, f"got {len(wk)}: {wk}")
+    check("the seven: 6,9,10,12,2,4,5:30", wk == [6, 9, 10, 12, 14, 16, 17.5], str(wk))
     check("2 weekend slots (midnight + 11:59pm)", len(we) == 2 and 0 in we, f"got {we}")
 
 

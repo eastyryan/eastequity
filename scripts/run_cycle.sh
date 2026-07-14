@@ -20,10 +20,11 @@ HHMM=$(date +%H%M)
 if [ "$1" = "--scheduled" ]; then
   shift
   if [ "$DOW" -le 5 ]; then
-    # Weekdays: 6am, 9am, hourly 10am-4pm, 5:30pm, midnight
+    # Weekdays: SEVEN slots (user policy 2026-07-13) - 6am, 9am, 10am, 12pm,
+    # 2pm, 4pm, 5:30pm. Overnight/weekend news is covered by the cloud routines.
     # KEEP IN SYNC with expected_slots() in orchestrator.py (runs heartbeat).
     case "$HHMM" in
-      0600|0900|1000|1100|1200|1300|1400|1500|1600|1730|0000) ;;
+      0600|0900|1000|1200|1400|1600|1730) ;;
       *) exit 0 ;;
     esac
   else
@@ -40,12 +41,12 @@ if [ "$DOW" -ge 6 ]; then
   exit $?
 fi
 
-# Slot-aware depth: midnight is a news review; 5:30pm is a FULL-RESEARCH review
-# (all names, deep research) with NO trading; market-day slots incl. 6am/9am
-# pre-market are full trading cycles (pre-market data matters).
+# Slot-aware depth: 5:30pm is a FULL-RESEARCH review (all names, deep research)
+# with NO trading; market-day slots incl. 6am/9am pre-market are full cycles
+# (pre-market data matters; the market-hours gate makes them research/exit-only).
 case "$HHMM" in
-  0000|1730) EXTRA="--news-only" ;;
-  *)         EXTRA="" ;;
+  1730) EXTRA="--news-only" ;;
+  *)    EXTRA="" ;;
 esac
 .venv/bin/python -W ignore orchestrator.py $EXTRA "$@" >> logs/cron.log 2>&1
 

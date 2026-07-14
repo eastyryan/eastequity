@@ -231,11 +231,13 @@ def _json_safe(obj):
 
 def expected_slots(weekday: bool) -> list[float]:
     """Scheduled run slots (ET hours) for a weekday vs a weekend day.
-    KEEP IN SYNC with the slot gate in scripts/run_cycle.sh: weekdays run at
-    midnight, 6am, 9am, hourly 10am-4pm, and 5:30pm (11 slots — midnight and
-    5:30pm are news/research-only but still journal a run summary); weekends
-    run news-only at midnight and 11:59pm."""
-    return [0, 6, 9, 10, 11, 12, 13, 14, 15, 16, 17.5] if weekday else [0, 23.98]
+    KEEP IN SYNC with the slot gate in scripts/run_cycle.sh and the cloud
+    routines: weekdays run SEVEN slots (user policy 2026-07-13) — 6am, 9am,
+    10am, 12pm, 2pm, 4pm, 5:30pm (5:30 is a research review, no trading, but
+    still journals a run summary); weekends run news-only at midnight and
+    11:59pm. The nightly cloud midnight news run may journal an extra completed
+    run — the heartbeat only alarms on MISSING runs, so that is harmless."""
+    return [6, 9, 10, 12, 14, 16, 17.5] if weekday else [0, 23.98]
 
 
 def build_health() -> dict:
@@ -1473,8 +1475,8 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "run_id": run_id,
         "mode": context["trading_mode"],
-        "schedule_note": "Runs hourly during market hours, plus pre-market, evening, "
-                         "midnight, and weekend news checks",
+        "schedule_note": "Runs at 6am, 9am, 10am, 12pm, 2pm and 4pm ET, a 5:30pm "
+                         "research review, plus overnight and weekend news checks",
         "portfolio": {
             "cash_usd": context["portfolio"].get("cash_usd"),
             "total_equity_usd": context["portfolio"].get("total_equity_usd"),

@@ -35,70 +35,24 @@ def _keys() -> dict | None:
     return keys if all(keys.values()) else None
 
 
-def _style(text: str, offset_upper: int, offset_lower: int,
-           digits_offset: int | None = None) -> str:
-    out = []
-    for ch in text:
-        if "A" <= ch <= "Z":
-            out.append(chr(ord(ch) - 65 + offset_upper))
-        elif "a" <= ch <= "z":
-            out.append(chr(ord(ch) - 97 + offset_lower))
-        elif digits_offset and "0" <= ch <= "9":
-            out.append(chr(ord(ch) - 48 + digits_offset))
-        else:
-            out.append(ch)
-    return "".join(out)
-
-
-def bold(text: str) -> str:
-    return _style(text, 0x1D5D4, 0x1D5EE, 0x1D7EC)  # sans-serif bold
-
-
-def italic(text: str) -> str:
-    return _style(text, 0x1D608, 0x1D622)  # sans-serif italic (digits stay plain)
-
-
-def _is_url(token: str) -> bool:
-    return bool(re.search(r"https?://|www\.|\.[a-z]{2,4}(/|$)", token))
-
-
-def _is_cashtag(token: str) -> bool:
-    return bool(re.fullmatch(r"\$[A-Za-z]{1,5}[.,!?:;)]*", token))
-
-
 def journal_header(date=None) -> str:
     from datetime import datetime as _dt
     d = date or _dt.now()
-    return bold(f"East Equity Agent Journal - {d.strftime('%B %-d, %Y')}")
+    return f"East Equity Agent Journal - {d.strftime('%B %-d, %Y')}"
 
 
 def format_for_x(text: str) -> str:
-    """House style: **Company (TICK)** markers become Unicode bold; everything
-    else (the agent's own commentary) becomes Unicode italic. URLs and the
-    closing disclaimer line stay plain so they remain clickable/readable."""
-    lines_out = []
-    for line in text.split("\n"):
-        if line.strip().lower().startswith("this is a paper"):
-            lines_out.append(line)
-            continue
-        parts = re.split(r"\*\*(.+?)\*\*", line)
-        styled = []
-        for i, part in enumerate(parts):
-            if i % 2 == 1:
-                styled.append(bold(part))
-            else:
-                styled.append(" ".join(
-                    tok if (_is_url(tok) or _is_cashtag(tok)) else italic(tok)
-                    for tok in part.split(" ")))
-        lines_out.append("".join(styled))
-    out = "\n".join(lines_out)
-    # X allows at most ONE cashtag per post (platform rule). Keep the first for
-    # the hotlink; later ones become bold plain tickers.
+    """Standard X font throughout (user direction 2026-07-13): the old Unicode
+    sans-bold/italic styling rendered as a non-native typeface on X, so all
+    mathematical-alphanumeric conversion is gone. **markers** from the brain's
+    memo are simply stripped to plain text. Platform rule kept: at most ONE
+    cashtag per post — the first $TICK stays (hotlink), later ones lose the $."""
+    out = re.sub(r"\*\*(.+?)\*\*", r"\1", text)
     seen = [0]
 
     def _decash(m):
         seen[0] += 1
-        return m.group(0) if seen[0] == 1 else bold(m.group(1))
+        return m.group(0) if seen[0] == 1 else m.group(1)
 
     return re.sub(r"\$([A-Za-z]{1,5})\b", _decash, out)
 
