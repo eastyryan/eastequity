@@ -120,7 +120,10 @@ def get_insider_activity(tickers: list[str]) -> dict:
                    "notable_discretionary_selling (>$1M non-plan officer sales) deserves a "
                    "sentence in your risk map. Form 3 count = new insiders registering. "
                    "Entity filers (funds/LPs) and 10b5-1 plan trades (structured flag OR "
-                   "footnote text) are excluded from the discretionary tallies.",
+                   "footnote text) are excluded from the discretionary tallies. "
+                   "DRILL DOWN via by_ticker[T] for the compact signal+summary "
+                   "(distinct_discretionary_buyers etc.) WITHOUT paging the raw Form-4 "
+                   "dump; tickers[T].transactions holds the full per-trade detail.",
            "tickers": {}}
     for t in tickers:
         cik = ticker_to_cik(t)
@@ -206,6 +209,23 @@ def get_insider_activity(tickers: list[str]) -> dict:
         except Exception as e:
             entry["error"] = f"{type(e).__name__}: {e}"
         out["tickers"][t.upper()] = entry
+
+    # Compact per-ticker view at the key the digest points to. Same signal +
+    # summary the brain needs to weight a name, minus the (large) raw transaction
+    # list - so a drill-down on insider_activity.by_ticker[T] resolves without
+    # paging the full Form-4 feed. distinct_discretionary_buyers is surfaced at
+    # the top level too (a single $55M buyer is NOT a 2+ cluster - the digest was
+    # ambiguous about this on 2026-07-14).
+    out["by_ticker"] = {}
+    for tk, e in out["tickers"].items():
+        summ = e.get("summary") or {}
+        out["by_ticker"][tk] = {
+            "signal": summ.get("signal"),
+            "distinct_discretionary_buyers": summ.get("distinct_discretionary_buyers"),
+            "new_insider_form3_filings": e.get("new_insider_form3_filings", 0),
+            "summary": summ or None,
+            "error": e.get("error"),
+        }
     return out
 
 

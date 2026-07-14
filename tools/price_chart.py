@@ -23,9 +23,13 @@ def render_charts(tickers: list[str]) -> list[str]:
     import yfinance as yf
 
     CHART_DIR.mkdir(parents=True, exist_ok=True)
-    # Prune stale charts so the folder only holds this run's focus names.
-    for old in CHART_DIR.glob("*.png"):
-        old.unlink()
+    # DO NOT prune up front. On cloud runs the live yfinance feed is blocked, so
+    # every fetch below fails - if we deleted first we would wipe the charts the
+    # relay already committed and hand the brain an empty folder (the exact bug
+    # observed 2026-07-14). Instead we overwrite each chart only after its fetch
+    # succeeds, and prune stale NON-focus names at the end. A focus name whose
+    # fetch fails this run keeps its last-good (relay-committed) chart.
+    focus_set = {str(t).upper() for t in tickers}
 
     rendered = []
     for t in tickers:
@@ -106,6 +110,15 @@ def render_charts(tickers: list[str]) -> list[str]:
             rendered.append(str(out))
         except Exception:
             continue
+
+    # Prune only charts that are NOT part of this run's focus set (leftovers from
+    # a previous focus). Focus names we could not refresh keep their prior chart.
+    for old in CHART_DIR.glob("*.png"):
+        if old.stem.upper() not in focus_set:
+            try:
+                old.unlink()
+            except OSError:
+                pass
     return rendered
 
 
