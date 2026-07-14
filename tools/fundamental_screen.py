@@ -69,6 +69,16 @@ def _fetch_row(ticker: str) -> dict | None:
             if rev is not None:
                 row["revision_direction"] = ("up" if rev > 0.1 else
                                              "down" if rev < -0.1 else "flat")
+        # Next-fiscal-year EPS estimate from the SAME eps_trend frame already
+        # fetched above - zero extra network. Powers next-year forward P/E
+        # downstream. Isolated so a missing/NaN "+1y" row never nulls the rest.
+        try:
+            if trend is not None and "+1y" in trend.index:
+                nxt = float(trend.loc["+1y", "current"])
+                if nxt == nxt:  # NaN-safe
+                    row["eps_estimate_next_yr"] = round(nxt, 2)
+        except Exception:
+            pass
         # Forward EPS growth (next fiscal year), from the same estimate calls -
         # lets the brain judge whether a multiple is deserved (PEG-ish) without
         # a separate price fetch. Isolated so a miss never nulls the whole row.
@@ -143,8 +153,11 @@ def get_screen(tickers: list[str] | None = None, force: bool = False) -> dict:
                  "top_upward_revisions = fundamental inflections regardless of price - "
                  "candidates the momentum funnel may not surface. "
                  "estimate_changes_since_previous = what moved THIS MORNING (earnings/guidance). "
-                 "Each row may carry revision_direction (up/down/flat) and "
-                 "eps_growth_next_yr_pct (forward EPS growth) - judge a multiple against "
+                 "Each row may carry revision_direction (up/down/flat), "
+                 "eps_growth_next_yr_pct (forward EPS growth), and "
+                 "eps_estimate_current_yr / eps_estimate_next_yr (current/next "
+                 "fiscal-year EPS estimates - the scanner's fwd_pe_est divides last "
+                 "close by the current-year figure) - judge a multiple against "
                  "growth, not news tone."),
         "top_upward_revisions": top_revisions[:10],
         "top_downward_revisions": top_revisions[-5:][::-1] if len(top_revisions) > 5 else [],

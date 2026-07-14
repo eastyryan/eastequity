@@ -173,6 +173,91 @@ def _rel_strength(name_ret, bench_ret):
     return name_ret - bench_ret
 
 
+# --- sector comps: peer-relative valuation (pure Python, offline-testable) ---
+# Minimum same-sector data points before a sector median is quoted. Below this a
+# "median" of 2-3 names is noise wearing a statistic's clothes: comps then report
+# None medians while still disclosing the true coverage counts.
+MIN_SECTOR_PEERS = 4
+
+
+def _median(vals):
+    """Median of a list of numbers; None when empty. Pure."""
+    if not vals:
+        return None
+    s = sorted(vals)
+    mid = len(s) // 2
+    return s[mid] if len(s) % 2 else (s[mid - 1] + s[mid]) / 2
+
+
+def build_sector_comps(rows) -> dict:
+    """Peer-relative valuation per ticker, computed over ALL scanned rows so the
+    sector medians rest on the whole universe (not just the ~25 surfaced names).
+
+    Input rows need "ticker" and "sector", plus optionally:
+      fwd_pe_est     - estimated forward P/E. Missing or non-positive values
+                       (negative-EPS names) are EXCLUDED from the sector pool -
+                       a negative P/E is meaningless, not cheap.
+      fwd_growth_pct - forward growth %. Any real number counts (negative
+                       growth is data, not missing data).
+
+    Returns {ticker: {sector, fwd_pe_est, sector_median_fwd_pe,
+    fwd_pe_premium_pct ((own/median - 1) * 100; negative = discount),
+    fwd_growth_pct, sector_median_fwd_growth_pct, growth_vs_sector_pp
+    (own - median, percentage points), pe_rank_in_sector ("3/17 cheapest";
+    rank 1 = lowest fwd P/E among sector names WITH a valid estimate),
+    coverage {pe_n, growth_n}}}.
+
+    HONESTY: medians require >= MIN_SECTOR_PEERS same-sector data points, else
+    None - and coverage always reports the true denominators so every derived
+    number is auditable. The rank string carries its own denominator, so it is
+    quoted whenever the name has a valid estimate."""
+    pe_pool: dict[str, list[float]] = {}
+    growth_pool: dict[str, list[float]] = {}
+    for r in rows:
+        sec = r.get("sector")
+        if not sec:
+            continue
+        pe = r.get("fwd_pe_est")
+        if isinstance(pe, (int, float)) and not isinstance(pe, bool) and pe > 0:
+            pe_pool.setdefault(sec, []).append(float(pe))
+        g = r.get("fwd_growth_pct")
+        if isinstance(g, (int, float)) and not isinstance(g, bool):
+            growth_pool.setdefault(sec, []).append(float(g))
+
+    out: dict[str, dict] = {}
+    for r in rows:
+        t, sec = r.get("ticker"), r.get("sector")
+        if not t or not sec:
+            continue
+        pes = pe_pool.get(sec, [])
+        gs = growth_pool.get(sec, [])
+        med_pe = _median(pes) if len(pes) >= MIN_SECTOR_PEERS else None
+        med_g = _median(gs) if len(gs) >= MIN_SECTOR_PEERS else None
+        pe = r.get("fwd_pe_est")
+        own_pe = (float(pe) if isinstance(pe, (int, float))
+                  and not isinstance(pe, bool) and pe > 0 else None)
+        g = r.get("fwd_growth_pct")
+        own_g = (float(g) if isinstance(g, (int, float))
+                 and not isinstance(g, bool) else None)
+        rank = (f"{1 + sum(1 for p in pes if p < own_pe)}/{len(pes)} cheapest"
+                if own_pe is not None and pes else None)
+        out[t] = {
+            "sector": sec,
+            "fwd_pe_est": own_pe,
+            "sector_median_fwd_pe": round(med_pe, 2) if med_pe is not None else None,
+            "fwd_pe_premium_pct": (round((own_pe / med_pe - 1) * 100, 1)
+                                   if own_pe is not None and med_pe is not None else None),
+            "fwd_growth_pct": own_g,
+            "sector_median_fwd_growth_pct": (round(med_g, 1)
+                                             if med_g is not None else None),
+            "growth_vs_sector_pp": (round(own_g - med_g, 1)
+                                    if own_g is not None and med_g is not None else None),
+            "pe_rank_in_sector": rank,
+            "coverage": {"pe_n": len(pes), "growth_n": len(gs)},
+        }
+    return out
+
+
 # --- entry-timing indicators (pure Python, list-in/scalar-out, offline-testable) ---
 # The trend/volume stack answers "is this a setup?"; these answer "is NOW the entry?"
 # None of them feed swing_setup_score - re-ranking the funnel is a separate decision.
@@ -441,6 +526,16 @@ def scan_universe(top_n: int = 15) -> dict:
             adx, di_plus, di_minus = _adx14(high_list, low_list, close_list)
             gap_analysis = _gap_events(open_list, close_list)
 
+            # Estimated forward P/E for EVERY scanned name at ZERO extra network
+            # cost: today's close over the cached pre-market screen's current-
+            # fiscal-year EPS estimate. The estimate snapshot refreshes 6am/9am
+            # ET, so it may be ~a day old relative to this close - an ESTIMATE,
+            # honestly labeled as such. None when the screen missed the name or
+            # the estimate is <= 0 (a negative-EPS "forward P/E" is meaningless).
+            eps_cy = (screen_rows.get(t) or {}).get("eps_estimate_current_yr")
+            fwd_pe_est = (round(last / eps_cy, 2)
+                          if isinstance(eps_cy, (int, float)) and eps_cy > 0 else None)
+
             # Derived trend booleans (None when the underlying SMA has too little history).
             above_50 = last > sma50
             above_200 = (last > sma200) if sma200 is not None else None
@@ -505,6 +600,9 @@ def scan_universe(top_n: int = 15) -> dict:
                 # Business-reality: what this company sells relative to the AI wave.
                 "ai_exposure": (ai_exposure.get(t) or {}).get("exposure"),
                 "ai_exposure_reason": (ai_exposure.get(t) or {}).get("reason"),
+                # Estimated fwd P/E (close / cached current-FY EPS estimate; the
+                # estimate snapshot may be ~a day old). None = no usable estimate.
+                "fwd_pe_est": fwd_pe_est,
                 "volume_signal": volume_signal,
                 "swing_setup_score": round(score, 2),
             })
@@ -637,6 +735,22 @@ def scan_universe(top_n: int = 15) -> dict:
                                  if isinstance(fpe, (int, float)) and isinstance(g, (int, float))
                                  and fpe > 0 and g > 0 else None)
 
+    # Sector comps: peer-relative valuation computed over ALL scanned rows (so
+    # the medians rest on the full universe - not the dishonestly-thin ~25
+    # surfaced names), attached ONLY to surfaced rows to keep the bundle slim.
+    # Growth basis is the cached screen's current-FY revenue-growth estimate;
+    # like fwd_pe_est, that snapshot may be ~a day old. Distinct from (and
+    # leaves untouched) sector_relative_strength, which is price momentum.
+    comps = build_sector_comps([
+        {"ticker": r["ticker"], "sector": r["sector"],
+         "fwd_pe_est": r.get("fwd_pe_est"),
+         "fwd_growth_pct": (screen_rows.get(r["ticker"]) or {}).get("fwd_revenue_growth_pct")}
+        for r in rows])
+    for r in rows[:top_n] + contrarian + deep_value + supplier_pullbacks:
+        sc = comps.get(r["ticker"])
+        if sc:
+            r["sector_comps"] = sc
+
     # Sector relative strength: which parts of the AI stack money is rotating
     # into or out of. Computed over the whole universe, not just top setups.
     by_sector: dict[str, list[dict]] = {}
@@ -659,6 +773,12 @@ def scan_universe(top_n: int = 15) -> dict:
         "status": "ok",
         "scanned": len(rows),
         "note": "Ranked by deterministic swing_setup_score; agent must apply judgment and research before proposing.",
+        "sector_comps_note": ("sector_comps (on surfaced rows): fwd_pe_est = last close / "
+                              "cached pre-market current-FY EPS estimate (snapshot may be "
+                              "~a day old); growth = current-FY revenue-growth estimate. "
+                              "Medians span ALL scanned names with data - coverage.pe_n/"
+                              "growth_n are the true denominators; medians under "
+                              f"{MIN_SECTOR_PEERS} same-sector data points report None."),
         "top_setups": rows[:top_n],
         "prices": {r["ticker"]: r["last_close"] for r in rows},
         # 14-day ATR% for EVERY scanned name (not just top_setups), so the
