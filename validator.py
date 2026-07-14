@@ -14,6 +14,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -36,6 +37,57 @@ def load_universe() -> set[str]:
     for sector_tickers in data["sectors"].values():
         tickers.update(t.upper() for t in sector_tickers)
     return tickers
+
+
+def load_sector_map() -> dict:
+    """{TICKER: sector} from data/universe.json (for the concentration cap)."""
+    data = json.loads((ROOT / "data" / "universe.json").read_text())
+    return {t.upper(): sector
+            for sector, tickers in data["sectors"].items() for t in tickers}
+
+
+def is_market_hours(now_et) -> bool:
+    """Regular US session: Mon-Fri 9:30am-4:00pm ET. Holidays are handled by the
+    run-day gate upstream; this only gates order placement (BUYs) within a day."""
+    if now_et.weekday() >= 5:
+        return False
+    minutes = now_et.hour * 60 + now_et.minute
+    return 9 * 60 + 30 <= minutes <= 16 * 60
+
+
+def risk_halt_reasons(current_equity, equity_history: list, cfg: dict,
+                      today_et: str | None = None) -> list[str]:
+    """Auto-recovering BUY halts computed from the published equity history.
+    Pure function (caller supplies the history list and today's ET date) so it
+    is offline-testable.
+
+    - daily_loss_halt: equity down more than risk_controls.max_daily_loss_pct_halt
+      vs the last equity point BEFORE today (the day-start reference).
+    - drawdown_halt: equity below (1 - max_drawdown_pct_halt) x the all-time peak.
+
+    Halts block NEW BUYS only — sells and forced exits always proceed — and clear
+    automatically once equity recovers. Fail-open on missing/garbage inputs."""
+    rc = cfg.get("risk_controls", {})
+    out: list[str] = []
+    if not isinstance(current_equity, (int, float)) or current_equity <= 0:
+        return out
+    hist = [h for h in (equity_history or [])
+            if isinstance(h, dict) and isinstance(h.get("equity"), (int, float))]
+    daily = rc.get("max_daily_loss_pct_halt")
+    if isinstance(daily, (int, float)) and daily > 0 and today_et:
+        prior = [h for h in hist if str(h.get("date", "")) < today_et]
+        if prior and prior[-1]["equity"] > 0:
+            ref = prior[-1]["equity"]
+            if current_equity <= ref * (1 - daily):
+                out.append(f"daily_loss_halt:{current_equity / ref - 1:.1%} today "
+                           f"(limit -{daily:.0%})")
+    dd = rc.get("max_drawdown_pct_halt")
+    if isinstance(dd, (int, float)) and dd > 0 and hist:
+        peak = max(max(h["equity"] for h in hist), current_equity)
+        if peak > 0 and current_equity <= peak * (1 - dd):
+            out.append(f"drawdown_halt:{current_equity / peak - 1:.1%} from peak "
+                       f"{peak:.0f} (limit -{dd:.0%})")
+    return out
 
 
 def kill_switch_active(cfg: dict) -> bool:
@@ -296,6 +348,14 @@ def _check_sizing(p: dict, cfg: dict, portfolio: dict, reasons: list[str]) -> No
     invested = sum(pos.get("market_value_usd", 0) for pos in open_positions)
     if invested + size > equity * ps["max_total_exposure_pct"]:
         reasons.append("total_exposure_cap_exceeded")
+    # Cash reserve floor: measured on actual cash, so it still bites when marks
+    # drift and the exposure cap (market value vs equity) alone would not.
+    reserve_pct = ps.get("min_cash_reserve_pct")
+    cash = portfolio.get("cash_usd")
+    if isinstance(reserve_pct, (int, float)) and reserve_pct > 0 \
+            and isinstance(cash, (int, float)) and cash - size < equity * reserve_pct:
+        reasons.append(f"cash_reserve_floor_breached:cash_after_buy "
+                       f"{cash - size:.0f} < {reserve_pct:.0%} of {equity:.0f}")
     held = next((pos for pos in open_positions
                  if pos["ticker"] == str(p.get("ticker", "")).upper()), None)
     if held is not None:
@@ -320,6 +380,62 @@ def _check_sizing(p: dict, cfg: dict, portfolio: dict, reasons: list[str]) -> No
             if combined > max_usd or combined > equity * max_pct:
                 reasons.append(f"combined_position_exceeds_cap:{combined:.0f} > "
                                f"{min(max_usd, equity * max_pct):.0f}")
+
+
+def _check_sector_concentration(p: dict, cfg: dict, portfolio: dict,
+                                sector_map: dict, reasons: list[str]) -> None:
+    """position_sizing.max_sector_concentration_pct: same-sector market value
+    plus the proposed size must stay under the cap. Fail-open when the ticker
+    has no sector mapping (off-universe names are caught elsewhere)."""
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    cap = cfg["position_sizing"].get("max_sector_concentration_pct")
+    if not isinstance(cap, (int, float)) or cap <= 0:
+        return
+    sector = sector_map.get(str(p.get("ticker", "")).upper())
+    if not sector:
+        return  # no mapping -> fail open
+    size = p.get("position_size_usd")
+    if not isinstance(size, (int, float)):
+        return  # _check_sizing reports the bad size
+    equity = portfolio.get("total_equity_usd",
+                           cfg["position_sizing"]["starting_capital_usd"])
+    same_sector = sum(
+        pos.get("market_value_usd", 0) for pos in portfolio.get("positions", [])
+        if sector_map.get(str(pos.get("ticker", "")).upper()) == sector)
+    if same_sector + size > equity * cap:
+        reasons.append(f"sector_concentration_exceeded:{sector} "
+                       f"{same_sector + size:.0f} > {cap:.0%} of {equity:.0f}")
+
+
+def _check_entry_cooldown(p: dict, cfg: dict, portfolio: dict, reasons: list[str]) -> None:
+    """swing_rules.min_days_between_entries_same_ticker: a fresh BUY within N days
+    of the last FILLED buy on the same ticker is churn, not a new thesis. Applies
+    to re-entries after a close AND to scale-in adds."""
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    days = cfg["swing_rules"].get("min_days_between_entries_same_ticker")
+    if not isinstance(days, (int, float)) or days <= 0:
+        return
+    ticker = str(p.get("ticker", "")).upper()
+    last_buy = None
+    for rec in portfolio.get("history", []):
+        if not isinstance(rec, dict):
+            continue
+        if str(rec.get("ticker", "")).upper() == ticker \
+                and str(rec.get("action", "")).upper() == "BUY" \
+                and rec.get("status") == "filled":
+            ts = rec.get("filled_at") or rec.get("submitted_at")
+            if isinstance(ts, str) and (last_buy is None or ts > last_buy):
+                last_buy = ts
+    if not last_buy:
+        return
+    try:
+        elapsed = (datetime.now(timezone.utc) - datetime.fromisoformat(last_buy)).days
+    except (ValueError, TypeError):
+        return  # unparseable timestamp -> fail open
+    if elapsed < days:
+        reasons.append(f"entry_cooldown:{elapsed}d_since_last_buy < {days:.0f}d")
 
 
 def _check_sell_fraction(p: dict, reasons: list[str]) -> None:
@@ -356,6 +472,7 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
     open and all other rules still apply (backward compatible)."""
     cfg = load_config()
     universe = load_universe()
+    sector_map = load_sector_map()
     results: list[ValidationResult] = []
 
     if kill_switch_active(cfg):
@@ -375,6 +492,8 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
         _check_sell_position(p, portfolio, reasons)
         _check_confidence(p, cfg, reasons)
         _check_sizing(p, cfg, portfolio, reasons)
+        _check_sector_concentration(p, cfg, portfolio, sector_map, reasons)
+        _check_entry_cooldown(p, cfg, portfolio, reasons)
         if str(p.get("action", "")).upper() == "BUY":
             buys_this_batch += 1
             if buys_this_batch > cfg["swing_rules"]["max_new_positions_per_day"]:

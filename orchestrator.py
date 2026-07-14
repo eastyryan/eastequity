@@ -991,10 +991,19 @@ def execute(approved: list[validator.ValidationResult], context: dict,
                 buys_today += 1
     max_buys_per_day = cfg["swing_rules"]["max_new_positions_per_day"]
 
+    # risk_controls.market_hours_only: BUYs place only during the regular session
+    # (Mon-Fri 9:30-4 ET). Pre-market slots become research/exit-only - this also
+    # closes a look-ahead exploit where a 6am BUY filled at YESTERDAY's close
+    # after overnight news. Sells and forced exits are always allowed (risk-reducing).
+    market_hours_only = cfg["risk_controls"].get("market_hours_only", False)
+
     for vr in approved[:max_orders]:
         p = vr.proposal
         if p["action"] == "BUY" and buys_today >= max_buys_per_day:
             journal.log_rejection(p, [f"max_new_positions_per_day_reached:{buys_today}"], run_id)
+            continue
+        if p["action"] == "BUY" and market_hours_only and not validator.is_market_hours(_et_now()):
+            journal.log_rejection(p, ["outside_market_hours"], run_id)
             continue
         ref = prices.get(p["ticker"].upper())
         if ref is None:
@@ -1019,6 +1028,9 @@ def execute(approved: list[validator.ValidationResult], context: dict,
                                             "confidence")}
                      if p["action"] == "BUY" else None),
         })
+        # risk_controls.require_broker_readback_confirmation: readback is ALWAYS
+        # performed and a non-filled readback is a rejection - the flag documents
+        # the contract and can only ever tighten it, never loosen it.
         fill = simulated_broker.readback(order["order_id"])  # mandatory readback
         if fill is None or fill.get("status") != "filled":
             journal.log_rejection(p, [f"fill_failed:{(fill or {}).get('status')}"], run_id)
@@ -1433,6 +1445,7 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
         "position_risk": (context.get("position_stop_cushion") or {}).get("positions", {}),
         "data_quality": context.get("data_quality"),
         "stale_data_notice": context.get("stale_data_notice"),
+        "risk_halts": context.get("risk_halts") or [],
         "universe_size": len(validator.load_universe()),
         "health": build_health(),
         "total_dividends_usd": round(sum(
@@ -2026,6 +2039,25 @@ def main() -> int:
     # run may have traded while the brain was thinking.
     live_portfolio = get_portfolio_state()
     context["portfolio"] = live_portfolio
+
+    # Auto-recovering risk halts (daily loss / max drawdown vs the published
+    # equity history): BUYs are blocked while breached, sells still proceed, and
+    # trading resumes on its own when equity recovers. Fail-open on any error.
+    risk_halts = []
+    try:
+        hist_file = ROOT / "dashboard" / "data" / "equity_history.json"
+        equity_hist = json.loads(hist_file.read_text()) if hist_file.exists() else []
+        risk_halts = validator.risk_halt_reasons(
+            live_portfolio.get("total_equity_usd"), equity_hist, cfg, today_et=_et_date())
+    except Exception as e:
+        print(f"  (risk-halt check failed open: {e})")
+    context["risk_halts"] = risk_halts
+    if risk_halts:
+        print(f"  RISK HALT ACTIVE: {risk_halts} - new BUYs blocked this run")
+        for p in proposals:
+            if str(p.get("action", "")).upper() == "BUY":
+                journal.log_rejection(p, risk_halts, run_id)
+        proposals = [p for p in proposals if str(p.get("action", "")).upper() != "BUY"]
     # Rebuild the volatility map from the (possibly file-loaded) context so the
     # stop floor the validator enforces matches the stop_engineering shown to the brain.
     market_context = build_volatility_context(
