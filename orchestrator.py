@@ -653,6 +653,10 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
             "ai_exposure": row.get("ai_exposure"),
             "insider_signal": ((insiders.get("tickers", {}).get(t) or {}).get("summary") or {}).get("signal")
                               if isinstance(insiders, dict) else None,
+            # Echo the buyer count so "insider_buying" vs a real 2+ "bullish_cluster"
+            # is unambiguous in the digest itself (no drill-down needed).
+            "insider_distinct_buyers": ((insiders.get("tickers", {}).get(t) or {}).get("summary") or {}).get("distinct_discretionary_buyers")
+                              if isinstance(insiders, dict) else None,
             "13f_net_activity": ((smart_money.get("by_ticker") or {}).get(t) or {}).get("net_activity")
                                 if isinstance(smart_money, dict) else None,
             "deal_8ks_recent": len(((partnerships.get("tickers", {}).get(t) or {})
@@ -1530,8 +1534,16 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
     positions = context["portfolio"].get("positions", [])
     prices = context.get("universe_scan", {}).get("prices", {})
     try:
-        (dash / "position_charts.json").write_text(
-            json.dumps(_json_safe(build_position_charts(positions)), indent=2))
+        pos_charts = build_position_charts(positions)
+        # On a blocked live feed build_position_charts returns {} for every held
+        # name. Overwriting the file with {} wipes the per-position tape from the
+        # dashboard (frozen-looking charts). Only rewrite when we either got fresh
+        # bars OR there genuinely are no open positions; otherwise keep last-good.
+        pc_file = dash / "position_charts.json"
+        if pos_charts or not positions:
+            pc_file.write_text(json.dumps(_json_safe(pos_charts), indent=2))
+        else:
+            print("  (position_charts: live feed empty - keeping last-good file)")
     except Exception as e:
         print(f"  (position_charts write failed: {e})")
     try:
