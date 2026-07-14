@@ -113,12 +113,18 @@ def render_charts(tickers: list[str]) -> list[str]:
 
     # Prune only charts that are NOT part of this run's focus set (leftovers from
     # a previous focus). Focus names we could not refresh keep their prior chart.
-    for old in CHART_DIR.glob("*.png"):
-        if old.stem.upper() not in focus_set:
-            try:
-                old.unlink()
-            except OSError:
-                pass
+    # NEVER prune when this run rendered nothing: a zero-render means the price
+    # feed is blocked (cloud sandbox) and the focus set came from a degraded scan
+    # (holdings only) - pruning then deletes every relay-committed chart, and the
+    # deletion commit later collides with the relay/Action re-adding the same
+    # binary PNGs (the add/add rebase wedge of 2026-07-14).
+    if rendered:
+        for old in CHART_DIR.glob("*.png"):
+            if old.stem.upper() not in focus_set:
+                try:
+                    old.unlink()
+                except OSError:
+                    pass
     return rendered
 
 
