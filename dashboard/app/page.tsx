@@ -387,16 +387,13 @@ export default function Home() {
         </p>
       </section>
 
-      {/* Equity curve */}
+      {/* Equity curve — the chart card carries its own header and timeframe controls */}
       <section className="border-t border-line py-12">
-        <h2 className="text-lg font-semibold tracking-tight">Equity curve</h2>
-        <p className="mt-1 text-sm text-ink-2">
+        <EquityChart points={history} startingCapital={STARTING_CAPITAL} events={latest.trade_events} />
+        <p className="mt-3 text-[13px] text-ink-3">
           {usd(STARTING_CAPITAL)} starting capital, marked each session against buying and holding
           the S&amp;P 500.
         </p>
-        <div className="mt-6">
-          <EquityChart points={history} startingCapital={STARTING_CAPITAL} events={latest.trade_events} />
-        </div>
       </section>
 
       {/* Performance record, appears once trades have closed */}
