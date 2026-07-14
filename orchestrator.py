@@ -1011,6 +1011,13 @@ def execute(approved: list[validator.ValidationResult], context: dict,
             # ATR lets the broker vol-scale slippage and model an entry gap (a $400 name
             # swinging 7%/day costs more to fill than a flat 10bps implies).
             "atr_pct": atr_map.get(p["ticker"].upper()),
+            # Numeric plan persisted ONTO the position at fill time, so stop/horizon
+            # enforcement survives journal pruning and ticker re-buys. Thesis and the
+            # rest of the narrative stay in the proposals journal.
+            "plan": ({k: p.get(k) for k in ("stop_loss", "target_price",
+                                            "holding_horizon_days", "entry_price_max",
+                                            "confidence")}
+                     if p["action"] == "BUY" else None),
         })
         fill = simulated_broker.readback(order["order_id"])  # mandatory readback
         if fill is None or fill.get("status") != "filled":
@@ -1884,6 +1891,16 @@ def main() -> int:
         print(f"=== East Equity Agent universe freshness audit {run_id} ===")
         return run_freshness_audit(run_id)
     print(f"=== East Equity Agent run {run_id} (mode: {cfg['mode']['trading_mode']}) ===")
+
+    # Idempotent migration: positions opened before plan persistence get their
+    # journal-derived stop/target/horizon written onto the position record.
+    try:
+        from tools.portfolio_state import backfill_position_plans
+        n = backfill_position_plans()
+        if n:
+            print(f"  (backfilled persisted plans onto {n} position(s))")
+    except Exception as e:
+        print(f"  (plan backfill skipped: {e})")
 
     if args.gather_only:
         # Pure data collection (used by the relay/Action): no preflight gates,

@@ -242,14 +242,19 @@ def readback(order_id: str) -> dict | None:
                 existing["buy_commission_usd"] = round(
                     existing.get("buy_commission_usd", 0.0) + commission, 4)
                 existing["adds_count"] = int(existing.get("adds_count", 0)) + 1
+                if order.get("plan"):  # latest BUY's plan governs the merged position
+                    existing["plan"] = order["plan"]
             else:
-                state["positions"].append({
+                new_pos = {
                     "ticker": order["ticker"].upper(), "quantity": qty,
                     "avg_cost": avg_cost, "market_value_usd": notional,
                     "opened_at": datetime.now(timezone.utc).isoformat(),
                     "proposal_id": order.get("proposal_id"),
                     "buy_commission_usd": commission,
-                })
+                }
+                if order.get("plan"):  # numeric stop/target/horizon persisted with the lot
+                    new_pos["plan"] = order["plan"]
+                state["positions"].append(new_pos)
             fill = {**order, "status": "filled", "fill_price": fill_price,
                     "quantity": qty, "notional_usd": notional,
                     "is_add": is_add,
