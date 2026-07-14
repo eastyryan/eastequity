@@ -1,5 +1,5 @@
 {
-  "run_date": "2026-07-13T23:55:21.343467+00:00",
+  "run_date": "2026-07-14T00:55:30.141958+00:00",
   "as_of_et": "2026-07-13",
   "digest": {
     "note": "READ FIRST: per focus name, the key statement numbers (each with its quarter-end date - cite them WITH the date), leverage/cash-flow reads, next earnings (when fresh statements arrive), and today's fast-moving signals. Full detail lives in the sections below; dig there before proposing, but this card is the always-current financial identity.",
@@ -19,6 +19,8 @@
         "days_to_earnings": 51,
         "last_close": 427.11,
         "rel_strength_1m_pct": 11.9,
+        "rsi_14": 57.2,
+        "macd_state": "below_zero",
         "volume_read": "no_supply_pullback",
         "ai_exposure": "ai_supplier",
         "insider_signal": "notable_discretionary_selling",
@@ -40,6 +42,8 @@
         "days_to_earnings": 51,
         "last_close": 47.24,
         "rel_strength_1m_pct": 0.6,
+        "rsi_14": 55.8,
+        "macd_state": "below_zero",
         "volume_read": "no_supply_pullback",
         "ai_exposure": "ai_supplier",
         "insider_signal": "notable_discretionary_selling",
@@ -60,6 +64,8 @@
         "days_to_earnings": 16,
         "last_close": 269.53,
         "rel_strength_1m_pct": 19.2,
+        "rsi_14": 64.9,
+        "macd_state": "above_zero",
         "volume_read": "neutral",
         "ai_exposure": "ai_beneficiary",
         "insider_signal": "routine_or_sponsor_selling_only",
@@ -79,6 +85,8 @@
         "days_to_earnings": 42,
         "last_close": 139.53,
         "rel_strength_1m_pct": 17.9,
+        "rsi_14": 62.5,
+        "macd_state": "above_zero",
         "volume_read": "neutral",
         "ai_exposure": "ai_beneficiary",
         "insider_signal": "routine_or_sponsor_selling_only",
@@ -99,6 +107,8 @@
         "days_to_earnings": 44,
         "last_close": 18.55,
         "rel_strength_1m_pct": 21.9,
+        "rsi_14": 63.8,
+        "macd_state": "above_zero",
         "volume_read": "neutral",
         "ai_exposure": "ai_beneficiary",
         "insider_signal": "notable_discretionary_selling",
@@ -118,6 +128,8 @@
         "days_to_earnings": 21,
         "last_close": 534.39,
         "rel_strength_1m_pct": 14.6,
+        "rsi_14": 53.1,
+        "macd_state": "below_zero",
         "volume_read": "neutral",
         "ai_exposure": "ai_supplier",
         "insider_signal": "notable_discretionary_selling",
@@ -138,6 +150,8 @@
         "days_to_earnings": 56,
         "last_close": 83.84,
         "rel_strength_1m_pct": 14.0,
+        "rsi_14": 60.8,
+        "macd_state": "above_zero",
         "volume_read": "no_supply_pullback",
         "ai_exposure": "ai_beneficiary",
         "insider_signal": "routine_or_sponsor_selling_only",
@@ -156,6 +170,8 @@
         "days_to_earnings": 15,
         "last_close": 109.86,
         "rel_strength_1m_pct": 23.7,
+        "rsi_14": 58.9,
+        "macd_state": "above_zero",
         "volume_read": "no_supply_pullback",
         "ai_exposure": "ai_beneficiary",
         "insider_signal": "insider_buying",
@@ -177,6 +193,8 @@
         "days_to_earnings": 22,
         "last_close": 189.57,
         "rel_strength_1m_pct": 22.0,
+        "rsi_14": 61.0,
+        "macd_state": "above_zero",
         "volume_read": "no_supply_pullback",
         "ai_exposure": "ai_neutral",
         "insider_signal": "routine_or_sponsor_selling_only",
@@ -198,6 +216,8 @@
         "days_to_earnings": 20,
         "last_close": 547.03,
         "rel_strength_1m_pct": 18.7,
+        "rsi_14": 56.6,
+        "macd_state": "above_zero",
         "volume_read": "neutral",
         "ai_exposure": "ai_beneficiary",
         "insider_signal": "notable_discretionary_selling",
@@ -216,6 +236,8 @@
         "days_to_earnings": 22,
         "last_close": 8.35,
         "rel_strength_1m_pct": -13.7,
+        "rsi_14": 34.5,
+        "macd_state": "below_zero",
         "volume_read": "neutral",
         "ai_exposure": "ai_supplier",
         "insider_signal": "routine_or_sponsor_selling_only",
@@ -237,6 +259,8 @@
         "days_to_earnings": 21,
         "last_close": 27.66,
         "rel_strength_1m_pct": -9.0,
+        "rsi_14": 41.9,
+        "macd_state": "below_zero",
         "volume_read": "neutral",
         "ai_exposure": "ai_supplier",
         "insider_signal": "no_open_market_activity",
@@ -248,7 +272,7 @@
   "trading_mode": "paper",
   "run_depth": "full",
   "hard_limits": {
-    "effective_max_position_usd": 997.97,
+    "effective_max_position_usd": 992.14,
     "position_sizing": {
       "starting_capital_usd": 10000,
       "max_position_pct_of_portfolio": 0.1,
@@ -287,6 +311,12 @@
         "catalysts",
         "position_size_usd"
       ],
+      "required_sell_fields": [
+        "ticker",
+        "action",
+        "thesis"
+      ],
+      "_required_sell_fields_note": "SELL_TO_CLOSE needs only these; the BUY-oriented required_proposal_fields list used to reject legitimate discretionary exits for missing stop_loss/target_price.",
       "min_confidence": 0.6,
       "min_risk_reward_ratio": 1.0,
       "min_target_upside_pct": 0.1,
@@ -393,17 +423,24 @@
     "broker": "simulation",
     "mode": "paper",
     "cash_usd": 8200.01,
-    "total_equity_usd": 9979.74,
+    "total_equity_usd": 9921.37,
     "positions": [
       {
         "ticker": "DELL",
         "quantity": 2.2189,
         "avg_cost": 450.6702,
-        "market_value_usd": 980.53,
+        "market_value_usd": 947.71,
         "opened_at": "2026-07-09T21:41:38.155448+00:00",
         "proposal_id": "20260709-5a9364",
-        "last_price": 441.9,
-        "actions_processed_through": "2026-07-10",
+        "last_price": 427.11,
+        "actions_processed_through": "2026-07-14",
+        "plan": {
+          "stop_loss": 408.0,
+          "target_price": 525.0,
+          "holding_horizon_days": 45,
+          "entry_price_max": 458.0,
+          "confidence": 0.66
+        },
         "original_plan": {
           "thesis": "Dell is the best risk/reward in an extended AI-server complex: it pairs elite momentum (+143% 3m, +202% 6m) with the cheapest valuation in the group (forward P/E ~20.9, P/S 2.2) and a constructive entry, having pulled back only 2.2% from its 20-day high while sitting 4.1% off its 52-week high near a buy point. The 29% collapse in Super Micro is a direct tailwind, consolidating enterprise/AI-server share toward Dell as customers de-risk suppliers. Q1 fundamentals (revenue $23.4B, net income $965M) confirm profitable scale, and the current tape ('Dell Stock Nears Buy Point') shows institutional demand building. With no earnings until 9/3, a 45-day swing captures the momentum leg without event risk.",
           "stop_loss": 408.0,
@@ -427,11 +464,18 @@
         "ticker": "HPE",
         "quantity": 16.3771,
         "avg_cost": 48.8488,
-        "market_value_usd": 799.2,
+        "market_value_usd": 773.65,
         "opened_at": "2026-07-10T19:14:48.307774+00:00",
         "proposal_id": "20260710-ce5923",
-        "last_price": 48.8,
-        "actions_processed_through": "2026-07-10",
+        "last_price": 47.24,
+        "actions_processed_through": "2026-07-14",
+        "plan": {
+          "stop_loss": 44.75,
+          "target_price": 56.5,
+          "holding_horizon_days": 40,
+          "entry_price_max": 49.25,
+          "confidence": 0.67
+        },
         "original_plan": {
           "thesis": "HPE is the cheapest name in the AI-server complex at a 12.2x forward P/E on 31% forward revenue growth, yet carries the group's largest positive earnings signal: a +40.5% 30-day EPS revision. It just delivered a record Q2 and closed the Juniper Networks acquisition, which expands its networking franchise and is driving analyst numbers sharply higher (the Q trailing net loss reflects one-time acquisition/charge items the market and estimates are looking through). Despite a 19% post-report pop it still sits 23.9% below its 52-week high with room to reclaim, while only 4.5% off its 20-day high \u2014 consolidating, not extended. The same SMCI-collapse dynamic consolidating server share toward established OEMs that supports my DELL position reinforces HPE. At a defensive 12x multiple it is the highest-quality way to add exposure without over-paying into a rising-yield tape.",
           "stop_loss": 44.75,
@@ -697,6 +741,24 @@
         "pullback_from_20d_high_pct": -8.5,
         "volume_surge_5d_vs_3m": 0.65,
         "atr_pct": 6.1,
+        "rsi_14": 58.9,
+        "macd": {
+          "hist": 0.1057,
+          "hist_direction": "falling",
+          "state": "above_zero"
+        },
+        "adx_14": 28.9,
+        "di_plus": 27.6,
+        "di_minus": 15.2,
+        "gap_analysis": {
+          "count_20d": 6,
+          "last": {
+            "sessions_ago": 1,
+            "pct": 3.5,
+            "direction": "up",
+            "filled": true
+          }
+        },
         "rel_strength_1m_pct": 23.7,
         "rel_strength_3m_pct": 48.2,
         "avg_dollar_volume_20d_usd": 3029048966,
@@ -724,6 +786,20 @@
           "ev_to_ebitda": null
         },
         "market_cap_usd": 98929491968,
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.71429,
+          "n_analysts": 26,
+          "target_mean_price": 117.43846,
+          "target_vs_price_pct": 6.9
+        },
+        "short_interest": {
+          "shares_short": 37497084,
+          "short_pct_float": 4.81,
+          "days_to_cover": 1.11,
+          "shares_short_prior_month": 34408802,
+          "month_over_month": "rising"
+        },
         "days_to_earnings": 15,
         "days_since_earnings": 76,
         "analyst_estimates": {
@@ -754,6 +830,24 @@
         "pullback_from_20d_high_pct": -4.8,
         "volume_surge_5d_vs_3m": 0.78,
         "atr_pct": 4.37,
+        "rsi_14": 61.0,
+        "macd": {
+          "hist": 0.6539,
+          "hist_direction": "falling",
+          "state": "above_zero"
+        },
+        "adx_14": 32.5,
+        "di_plus": 23.6,
+        "di_minus": 14.1,
+        "gap_analysis": {
+          "count_20d": 2,
+          "last": {
+            "sessions_ago": 4,
+            "pct": 3.1,
+            "direction": "up",
+            "filled": false
+          }
+        },
         "rel_strength_1m_pct": 22.0,
         "rel_strength_3m_pct": 13.7,
         "avg_dollar_volume_20d_usd": 883431674,
@@ -778,9 +872,23 @@
           "trailing_pe": 89.84361,
           "forward_pe": 24.410315,
           "price_to_sales_ttm": 5.610977,
-          "ev_to_ebitda": 60.256
+          "ev_to_ebitda": 59.53
         },
         "market_cap_usd": 82599198720,
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.5814,
+          "n_analysts": 41,
+          "target_mean_price": 246.1805,
+          "target_vs_price_pct": 29.9
+        },
+        "short_interest": {
+          "shares_short": 21383277,
+          "short_pct_float": 5.23,
+          "days_to_cover": 4.08,
+          "shares_short_prior_month": 17484142,
+          "month_over_month": "rising"
+        },
         "days_to_earnings": 22,
         "days_since_earnings": 68,
         "analyst_estimates": {
@@ -811,6 +919,24 @@
         "pullback_from_20d_high_pct": -17.7,
         "volume_surge_5d_vs_3m": 0.93,
         "atr_pct": 7.06,
+        "rsi_14": 56.6,
+        "macd": {
+          "hist": 3.2176,
+          "hist_direction": "falling",
+          "state": "above_zero"
+        },
+        "adx_14": 34.3,
+        "di_plus": 35.4,
+        "di_minus": 20.8,
+        "gap_analysis": {
+          "count_20d": 5,
+          "last": {
+            "sessions_ago": 2,
+            "pct": -3.0,
+            "direction": "down",
+            "filled": false
+          }
+        },
         "rel_strength_1m_pct": 18.7,
         "rel_strength_3m_pct": 47.6,
         "avg_dollar_volume_20d_usd": 616755972,
@@ -835,9 +961,23 @@
           "trailing_pe": 219.69078,
           "forward_pe": 51.73663,
           "price_to_sales_ttm": 14.779783,
-          "ev_to_ebitda": 454.089
+          "ev_to_ebitda": 439.36
         },
         "market_cap_usd": 44091756544,
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.6,
+          "n_analysts": 18,
+          "target_mean_price": 670.3711,
+          "target_vs_price_pct": 22.5
+        },
+        "short_interest": {
+          "shares_short": 4074449,
+          "short_pct_float": 6.0,
+          "days_to_cover": 3.42,
+          "shares_short_prior_month": 3294993,
+          "month_over_month": "rising"
+        },
         "days_to_earnings": 20,
         "days_since_earnings": 68,
         "analyst_estimates": {
@@ -868,6 +1008,24 @@
         "pullback_from_20d_high_pct": -4.9,
         "volume_surge_5d_vs_3m": 1.89,
         "atr_pct": 3.61,
+        "rsi_14": 58.2,
+        "macd": {
+          "hist": 0.0963,
+          "hist_direction": "falling",
+          "state": "above_zero"
+        },
+        "adx_14": 25.7,
+        "di_plus": 34.1,
+        "di_minus": 16.6,
+        "gap_analysis": {
+          "count_20d": 1,
+          "last": {
+            "sessions_ago": 13,
+            "pct": -2.1,
+            "direction": "down",
+            "filled": true
+          }
+        },
         "rel_strength_1m_pct": 14.1,
         "rel_strength_3m_pct": -19.2,
         "avg_dollar_volume_20d_usd": 768459830,
@@ -895,6 +1053,20 @@
           "ev_to_ebitda": null
         },
         "market_cap_usd": 66032721920,
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.63636,
+          "n_analysts": 22,
+          "target_mean_price": 17.91364,
+          "target_vs_price_pct": 31.0
+        },
+        "short_interest": {
+          "shares_short": 148358897,
+          "short_pct_float": 3.94,
+          "days_to_cover": 2.44,
+          "shares_short_prior_month": 143680038,
+          "month_over_month": "rising"
+        },
         "days_to_earnings": 30,
         "days_since_earnings": 60,
         "analyst_estimates": {
@@ -925,6 +1097,19 @@
         "pullback_from_20d_high_pct": -1.6,
         "volume_surge_5d_vs_3m": 0.68,
         "atr_pct": 3.18,
+        "rsi_14": 70.0,
+        "macd": {
+          "hist": 21.6066,
+          "hist_direction": "falling",
+          "state": "above_zero"
+        },
+        "adx_14": 22.2,
+        "di_plus": 37.2,
+        "di_minus": 14.7,
+        "gap_analysis": {
+          "count_20d": 0,
+          "last": null
+        },
         "rel_strength_1m_pct": 14.0,
         "rel_strength_3m_pct": -5.3,
         "avg_dollar_volume_20d_usd": 742393979,
@@ -952,6 +1137,20 @@
           "ev_to_ebitda": 25.724
         },
         "market_cap_usd": 94666850304,
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.54167,
+          "n_analysts": 24,
+          "target_mean_price": 2208.625,
+          "target_vs_price_pct": 18.3
+        },
+        "short_interest": {
+          "shares_short": 1001769,
+          "short_pct_float": 1.98,
+          "days_to_cover": 2.0,
+          "shares_short_prior_month": 1104412,
+          "month_over_month": "falling"
+        },
         "days_to_earnings": 22,
         "days_since_earnings": 67,
         "analyst_estimates": {
@@ -984,6 +1183,24 @@
         "pullback_from_20d_high_pct": -29.5,
         "volume_surge_5d_vs_3m": 0.74,
         "atr_pct": 8.81,
+        "rsi_14": 34.5,
+        "macd": {
+          "hist": -0.1257,
+          "hist_direction": "falling",
+          "state": "below_zero"
+        },
+        "adx_14": 15.8,
+        "di_plus": 14.6,
+        "di_minus": 27.4,
+        "gap_analysis": {
+          "count_20d": 9,
+          "last": {
+            "sessions_ago": 3,
+            "pct": -2.3,
+            "direction": "down",
+            "filled": true
+          }
+        },
         "rel_strength_1m_pct": -13.7,
         "rel_strength_3m_pct": -19.9,
         "avg_dollar_volume_20d_usd": 290946745,
@@ -1011,6 +1228,20 @@
           "ev_to_ebitda": -9.589
         },
         "market_cap_usd": 2889983488,
+        "analyst_ratings": {
+          "recommendation_key": "hold",
+          "recommendation_mean": 2.52941,
+          "n_analysts": 14,
+          "target_mean_price": 15.35714,
+          "target_vs_price_pct": 83.9
+        },
+        "short_interest": {
+          "shares_short": 72269016,
+          "short_pct_float": 23.74,
+          "days_to_cover": 1.91,
+          "shares_short_prior_month": 60796029,
+          "month_over_month": "rising"
+        },
         "days_to_earnings": 22,
         "days_since_earnings": 67,
         "analyst_estimates": {
@@ -1041,6 +1272,24 @@
         "pullback_from_20d_high_pct": -24.8,
         "volume_surge_5d_vs_3m": 0.61,
         "atr_pct": 6.89,
+        "rsi_14": 41.9,
+        "macd": {
+          "hist": -0.113,
+          "hist_direction": "rising",
+          "state": "below_zero"
+        },
+        "adx_14": 22.0,
+        "di_plus": 20.6,
+        "di_minus": 31.1,
+        "gap_analysis": {
+          "count_20d": 11,
+          "last": {
+            "sessions_ago": 0,
+            "pct": -2.5,
+            "direction": "down",
+            "filled": false
+          }
+        },
         "rel_strength_1m_pct": -9.0,
         "rel_strength_3m_pct": -1.0,
         "avg_dollar_volume_20d_usd": 1488549534,
@@ -1068,6 +1317,20 @@
           "ev_to_ebitda": 15.756
         },
         "market_cap_usd": 17892507648,
+        "analyst_ratings": {
+          "recommendation_key": "hold",
+          "recommendation_mean": 2.84211,
+          "n_analysts": 16,
+          "target_mean_price": 37.25,
+          "target_vs_price_pct": 34.7
+        },
+        "short_interest": {
+          "shares_short": 103192503,
+          "short_pct_float": 20.83,
+          "days_to_cover": 1.38,
+          "shares_short_prior_month": 74475797,
+          "month_over_month": "rising"
+        },
         "days_to_earnings": 21,
         "days_since_earnings": 69,
         "analyst_estimates": {
@@ -1098,6 +1361,24 @@
         "pullback_from_20d_high_pct": -8.7,
         "volume_surge_5d_vs_3m": 0.6,
         "atr_pct": 5.11,
+        "rsi_14": 52.0,
+        "macd": {
+          "hist": 1.3594,
+          "hist_direction": "falling",
+          "state": "above_zero"
+        },
+        "adx_14": 16.5,
+        "di_plus": 26.2,
+        "di_minus": 20.5,
+        "gap_analysis": {
+          "count_20d": 3,
+          "last": {
+            "sessions_ago": 3,
+            "pct": -2.1,
+            "direction": "down",
+            "filled": false
+          }
+        },
         "rel_strength_1m_pct": 10.2,
         "rel_strength_3m_pct": 9.6,
         "avg_dollar_volume_20d_usd": 424582232,
@@ -1125,6 +1406,20 @@
           "ev_to_ebitda": -349.738
         },
         "market_cap_usd": 22933645312,
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.52174,
+          "n_analysts": 44,
+          "target_mean_price": 192.57614,
+          "target_vs_price_pct": 35.8
+        },
+        "short_interest": {
+          "shares_short": 8285100,
+          "short_pct_float": 7.87,
+          "days_to_cover": 1.68,
+          "shares_short_prior_month": 12067282,
+          "month_over_month": "falling"
+        },
         "days_to_earnings": 50,
         "days_since_earnings": 48,
         "analyst_estimates": {
@@ -1155,6 +1450,24 @@
         "pullback_from_20d_high_pct": -2.2,
         "volume_surge_5d_vs_3m": 0.52,
         "atr_pct": 5.03,
+        "rsi_14": 58.6,
+        "macd": {
+          "hist": 1.2371,
+          "hist_direction": "rising",
+          "state": "above_zero"
+        },
+        "adx_14": 13.8,
+        "di_plus": 31.3,
+        "di_minus": 25.0,
+        "gap_analysis": {
+          "count_20d": 12,
+          "last": {
+            "sessions_ago": 1,
+            "pct": 2.2,
+            "direction": "up",
+            "filled": true
+          }
+        },
         "rel_strength_1m_pct": 1.4,
         "rel_strength_3m_pct": 23.5,
         "avg_dollar_volume_20d_usd": 2235170478,
@@ -1182,6 +1495,20 @@
           "ev_to_ebitda": 38.779
         },
         "market_cap_usd": 114743336960,
+        "analyst_ratings": {
+          "recommendation_key": "strong_buy",
+          "recommendation_mean": 1.41667,
+          "n_analysts": 46,
+          "target_mean_price": 140.94849,
+          "target_vs_price_pct": 26.7
+        },
+        "short_interest": {
+          "shares_short": 62126642,
+          "short_pct_float": 6.03,
+          "days_to_cover": 2.13,
+          "shares_short_prior_month": 61047279,
+          "month_over_month": "flat"
+        },
         "days_to_earnings": 8,
         "days_since_earnings": 82,
         "analyst_estimates": {
@@ -1212,6 +1539,24 @@
         "pullback_from_20d_high_pct": -10.8,
         "volume_surge_5d_vs_3m": 0.55,
         "atr_pct": 6.31,
+        "rsi_14": 45.6,
+        "macd": {
+          "hist": 1.3904,
+          "hist_direction": "falling",
+          "state": "above_zero"
+        },
+        "adx_14": 13.2,
+        "di_plus": 23.5,
+        "di_minus": 25.7,
+        "gap_analysis": {
+          "count_20d": 8,
+          "last": {
+            "sessions_ago": 1,
+            "pct": 5.2,
+            "direction": "up",
+            "filled": true
+          }
+        },
         "rel_strength_1m_pct": -1.3,
         "rel_strength_3m_pct": -16.8,
         "avg_dollar_volume_20d_usd": 1156648413,
@@ -1234,11 +1579,25 @@
         "lane": "deep_value_200w",
         "valuation": {
           "trailing_pe": 57.856617,
-          "forward_pe": 32.431705,
+          "forward_pe": 32.31649,
           "price_to_sales_ttm": 6.5957766,
           "ev_to_ebitda": 39.339
         },
         "market_cap_usd": 41460817920,
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.94118,
+          "n_analysts": 30,
+          "target_mean_price": 226.53568,
+          "target_vs_price_pct": 44.0
+        },
+        "short_interest": {
+          "shares_short": 24859937,
+          "short_pct_float": 11.32,
+          "days_to_cover": 2.83,
+          "shares_short_prior_month": 24369222,
+          "month_over_month": "rising"
+        },
         "days_to_earnings": 16,
         "days_since_earnings": 67,
         "analyst_estimates": {
@@ -1271,6 +1630,24 @@
         "pullback_from_20d_high_pct": -27.5,
         "volume_surge_5d_vs_3m": 0.72,
         "atr_pct": 13.15,
+        "rsi_14": 47.0,
+        "macd": {
+          "hist": -10.0042,
+          "hist_direction": "falling",
+          "state": "below_zero"
+        },
+        "adx_14": 29.5,
+        "di_plus": 23.0,
+        "di_minus": 28.5,
+        "gap_analysis": {
+          "count_20d": 14,
+          "last": {
+            "sessions_ago": 0,
+            "pct": -3.0,
+            "direction": "down",
+            "filled": false
+          }
+        },
         "rel_strength_1m_pct": 5.9,
         "rel_strength_3m_pct": 132.4,
         "avg_dollar_volume_20d_usd": 2204677720,
@@ -1298,6 +1675,20 @@
           "ev_to_ebitda": 261.009
         },
         "market_cap_usd": 62058242048,
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.88462,
+          "n_analysts": 22,
+          "target_mean_price": 272.46774,
+          "target_vs_price_pct": -24.7
+        },
+        "short_interest": {
+          "shares_short": 12676294,
+          "short_pct_float": 9.74,
+          "days_to_cover": 1.96,
+          "shares_short_prior_month": 11906625,
+          "month_over_month": "rising"
+        },
         "days_to_earnings": 21,
         "days_since_earnings": 69,
         "analyst_estimates": {
@@ -1328,6 +1719,24 @@
         "pullback_from_20d_high_pct": -25.3,
         "volume_surge_5d_vs_3m": 0.79,
         "atr_pct": 10.46,
+        "rsi_14": 46.2,
+        "macd": {
+          "hist": -28.8122,
+          "hist_direction": "falling",
+          "state": "below_zero"
+        },
+        "adx_14": 19.3,
+        "di_plus": 24.6,
+        "di_minus": 37.0,
+        "gap_analysis": {
+          "count_20d": 16,
+          "last": {
+            "sessions_ago": 0,
+            "pct": -5.2,
+            "direction": "down",
+            "filled": false
+          }
+        },
         "rel_strength_1m_pct": 1.5,
         "rel_strength_3m_pct": 112.3,
         "avg_dollar_volume_20d_usd": 49043379548,
@@ -1352,9 +1761,23 @@
           "trailing_pe": 21.170359,
           "forward_pe": 6.2617593,
           "price_to_sales_ttm": 11.722549,
-          "ev_to_ebitda": 15.924
+          "ev_to_ebitda": 15.21
         },
         "market_cap_usd": 1058241380352,
+        "analyst_ratings": {
+          "recommendation_key": "strong_buy",
+          "recommendation_mean": 1.42222,
+          "n_analysts": 42,
+          "target_mean_price": 1486.0,
+          "target_vs_price_pct": 58.6
+        },
+        "short_interest": {
+          "shares_short": 31669690,
+          "short_pct_float": 2.81,
+          "days_to_cover": 0.55,
+          "shares_short_prior_month": 37549121,
+          "month_over_month": "falling"
+        },
         "days_to_earnings": 71,
         "days_since_earnings": 19,
         "analyst_estimates": {
@@ -1385,6 +1808,24 @@
         "pullback_from_20d_high_pct": -23.3,
         "volume_surge_5d_vs_3m": 0.71,
         "atr_pct": 11.95,
+        "rsi_14": 47.6,
+        "macd": {
+          "hist": -4.0784,
+          "hist_direction": "falling",
+          "state": "below_zero"
+        },
+        "adx_14": 22.6,
+        "di_plus": 21.3,
+        "di_minus": 22.4,
+        "gap_analysis": {
+          "count_20d": 13,
+          "last": {
+            "sessions_ago": 0,
+            "pct": -3.3,
+            "direction": "down",
+            "filled": false
+          }
+        },
         "rel_strength_1m_pct": -3.9,
         "rel_strength_3m_pct": 87.5,
         "avg_dollar_volume_20d_usd": 2056187925,
@@ -1412,6 +1853,20 @@
           "ev_to_ebitda": 89.139
         },
         "market_cap_usd": 44172886016,
+        "analyst_ratings": {
+          "recommendation_key": "none",
+          "recommendation_mean": null,
+          "n_analysts": 19,
+          "target_mean_price": 269.81342,
+          "target_vs_price_pct": 13.9
+        },
+        "short_interest": {
+          "shares_short": 5334875,
+          "short_pct_float": 3.21,
+          "days_to_cover": 0.45,
+          "shares_short_prior_month": 10279546,
+          "month_over_month": "falling"
+        },
         "days_to_earnings": 50,
         "days_since_earnings": 42,
         "analyst_estimates": {
@@ -1442,6 +1897,24 @@
         "pullback_from_20d_high_pct": -28.9,
         "volume_surge_5d_vs_3m": 0.96,
         "atr_pct": 14.7,
+        "rsi_14": 45.7,
+        "macd": {
+          "hist": -56.0602,
+          "hist_direction": "falling",
+          "state": "below_zero"
+        },
+        "adx_14": 24.6,
+        "di_plus": 28.0,
+        "di_minus": 30.2,
+        "gap_analysis": {
+          "count_20d": 14,
+          "last": {
+            "sessions_ago": 0,
+            "pct": -6.6,
+            "direction": "down",
+            "filled": false
+          }
+        },
         "rel_strength_1m_pct": -1.7,
         "rel_strength_3m_pct": 86.0,
         "avg_dollar_volume_20d_usd": 22972248994,
@@ -1466,9 +1939,23 @@
           "trailing_pe": 57.11259,
           "forward_pe": 8.03954,
           "price_to_sales_ttm": 18.802929,
-          "ev_to_ebitda": 49.751
+          "ev_to_ebitda": 43.39
         },
         "market_cap_usd": 247897817088,
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.54545,
+          "n_analysts": 22,
+          "target_mean_price": 2035.0454,
+          "target_vs_price_pct": 21.6
+        },
+        "short_interest": {
+          "shares_short": 7197631,
+          "short_pct_float": 7.59,
+          "days_to_cover": 0.63,
+          "shares_short_prior_month": 9209981,
+          "month_over_month": "falling"
+        },
         "days_to_earnings": 22,
         "days_since_earnings": 74,
         "analyst_estimates": {
@@ -1499,6 +1986,24 @@
         "pullback_from_20d_high_pct": -24.8,
         "volume_surge_5d_vs_3m": 1.01,
         "atr_pct": 10.33,
+        "rsi_14": 46.3,
+        "macd": {
+          "hist": -17.5746,
+          "hist_direction": "rising",
+          "state": "below_zero"
+        },
+        "adx_14": 24.2,
+        "di_plus": 22.3,
+        "di_minus": 29.7,
+        "gap_analysis": {
+          "count_20d": 12,
+          "last": {
+            "sessions_ago": 0,
+            "pct": -4.5,
+            "direction": "down",
+            "filled": false
+          }
+        },
         "rel_strength_1m_pct": 2.0,
         "rel_strength_3m_pct": 60.6,
         "avg_dollar_volume_20d_usd": 4568971517,
@@ -1519,7 +2024,27 @@
         },
         "swing_setup_score": 2.36,
         "lane": "supplier_pullback",
-        "valuation": null,
+        "valuation": {
+          "trailing_pe": 81.501884,
+          "forward_pe": 31.0545,
+          "price_to_sales_ttm": 17.686298,
+          "ev_to_ebitda": 55.782
+        },
+        "market_cap_usd": 194726133760,
+        "analyst_ratings": {
+          "recommendation_key": "strong_buy",
+          "recommendation_mean": 1.44,
+          "n_analysts": 23,
+          "target_mean_price": 975.13043,
+          "target_vs_price_pct": 13.3
+        },
+        "short_interest": {
+          "shares_short": 6584569,
+          "short_pct_float": 3.33,
+          "days_to_cover": 1.45,
+          "shares_short_prior_month": 9050053,
+          "month_over_month": "falling"
+        },
         "days_to_earnings": 14,
         "days_since_earnings": 76,
         "analyst_estimates": {
@@ -1529,7 +2054,7 @@
           "eps_revision_direction": "up"
         },
         "post_earnings_drift_candidate": false,
-        "fwd_pe_to_growth": null
+        "fwd_pe_to_growth": 0.96
       }
     ],
     "benchmark_trend": {
@@ -1673,6 +2198,24 @@
         "pullback_from_20d_high_pct": -3.8,
         "volume_surge_5d_vs_3m": 0.77,
         "atr_pct": 4.79,
+        "rsi_14": 64.9,
+        "macd": {
+          "hist": 3.37,
+          "hist_direction": "falling",
+          "state": "above_zero"
+        },
+        "adx_14": 19.8,
+        "di_plus": 28.2,
+        "di_minus": 15.3,
+        "gap_analysis": {
+          "count_20d": 1,
+          "last": {
+            "sessions_ago": 4,
+            "pct": 4.7,
+            "direction": "up",
+            "filled": false
+          }
+        },
         "rel_strength_1m_pct": 19.2,
         "rel_strength_3m_pct": 50.9,
         "avg_dollar_volume_20d_usd": 662304314,
@@ -1699,6 +2242,20 @@
           "ev_to_ebitda": -2597.112
         },
         "market_cap_usd": 95666855936,
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.88235,
+          "n_analysts": 31,
+          "target_mean_price": 247.51968,
+          "target_vs_price_pct": -8.2
+        },
+        "short_interest": {
+          "shares_short": 9277677,
+          "short_pct_float": 3.28,
+          "days_to_cover": 2.36,
+          "shares_short_prior_month": 8826367,
+          "month_over_month": "rising"
+        },
         "days_to_earnings": 16,
         "days_since_earnings": 67,
         "analyst_estimates": {
@@ -1729,6 +2286,24 @@
         "pullback_from_20d_high_pct": -8.9,
         "volume_surge_5d_vs_3m": 0.73,
         "atr_pct": 5.14,
+        "rsi_14": 62.5,
+        "macd": {
+          "hist": 0.0402,
+          "hist_direction": "falling",
+          "state": "above_zero"
+        },
+        "adx_14": 43.3,
+        "di_plus": 28.7,
+        "di_minus": 15.8,
+        "gap_analysis": {
+          "count_20d": 2,
+          "last": {
+            "sessions_ago": 2,
+            "pct": -2.8,
+            "direction": "down",
+            "filled": true
+          }
+        },
         "rel_strength_1m_pct": 17.9,
         "rel_strength_3m_pct": 111.2,
         "avg_dollar_volume_20d_usd": 400439070,
@@ -1755,6 +2330,20 @@
           "ev_to_ebitda": 82.672
         },
         "market_cap_usd": 24251340800,
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.75,
+          "n_analysts": 42,
+          "target_mean_price": 122.95048,
+          "target_vs_price_pct": -11.9
+        },
+        "short_interest": {
+          "shares_short": 8603620,
+          "short_pct_float": 5.8,
+          "days_to_cover": 2.05,
+          "shares_short_prior_month": 8045410,
+          "month_over_month": "rising"
+        },
         "days_to_earnings": 42,
         "days_since_earnings": 46,
         "analyst_estimates": {
@@ -1785,6 +2374,24 @@
         "pullback_from_20d_high_pct": -2.6,
         "volume_surge_5d_vs_3m": 0.83,
         "atr_pct": 5.18,
+        "rsi_14": 63.8,
+        "macd": {
+          "hist": 0.2637,
+          "hist_direction": "falling",
+          "state": "above_zero"
+        },
+        "adx_14": 30.9,
+        "di_plus": 27.7,
+        "di_minus": 9.5,
+        "gap_analysis": {
+          "count_20d": 2,
+          "last": {
+            "sessions_ago": 2,
+            "pct": -2.4,
+            "direction": "down",
+            "filled": true
+          }
+        },
         "rel_strength_1m_pct": 21.9,
         "rel_strength_3m_pct": 44.8,
         "avg_dollar_volume_20d_usd": 103069679,
@@ -1811,6 +2418,20 @@
           "ev_to_ebitda": -21.975
         },
         "market_cap_usd": 6359008768,
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.82857,
+          "n_analysts": 31,
+          "target_mean_price": 19.45161,
+          "target_vs_price_pct": 4.9
+        },
+        "short_interest": {
+          "shares_short": 23106360,
+          "short_pct_float": 6.97,
+          "days_to_cover": 3.25,
+          "shares_short_prior_month": 21691492,
+          "month_over_month": "rising"
+        },
         "days_to_earnings": 44,
         "days_since_earnings": 46,
         "analyst_estimates": {
@@ -1841,6 +2462,24 @@
         "pullback_from_20d_high_pct": -8.6,
         "volume_surge_5d_vs_3m": 0.66,
         "atr_pct": 7.19,
+        "rsi_14": 53.1,
+        "macd": {
+          "hist": -3.5774,
+          "hist_direction": "falling",
+          "state": "below_zero"
+        },
+        "adx_14": 21.9,
+        "di_plus": 28.9,
+        "di_minus": 21.1,
+        "gap_analysis": {
+          "count_20d": 13,
+          "last": {
+            "sessions_ago": 0,
+            "pct": -3.6,
+            "direction": "down",
+            "filled": false
+          }
+        },
         "rel_strength_1m_pct": 14.6,
         "rel_strength_3m_pct": 107.5,
         "avg_dollar_volume_20d_usd": 14639977072,
@@ -1867,6 +2506,20 @@
           "ev_to_ebitda": 121.295
         },
         "market_cap_usd": 871376683008,
+        "analyst_ratings": {
+          "recommendation_key": "strong_buy",
+          "recommendation_mean": 1.48077,
+          "n_analysts": 48,
+          "target_mean_price": 516.125,
+          "target_vs_price_pct": -3.4
+        },
+        "short_interest": {
+          "shares_short": 41583210,
+          "short_pct_float": 2.56,
+          "days_to_cover": 1.3,
+          "shares_short_prior_month": 44067722,
+          "month_over_month": "falling"
+        },
         "days_to_earnings": 21,
         "days_since_earnings": 69,
         "analyst_estimates": {
@@ -1897,6 +2550,24 @@
         "pullback_from_20d_high_pct": -7.3,
         "volume_surge_5d_vs_3m": 0.71,
         "atr_pct": 5.85,
+        "rsi_14": 60.8,
+        "macd": {
+          "hist": 0.4983,
+          "hist_direction": "falling",
+          "state": "above_zero"
+        },
+        "adx_14": 30.5,
+        "di_plus": 27.4,
+        "di_minus": 15.9,
+        "gap_analysis": {
+          "count_20d": 4,
+          "last": {
+            "sessions_ago": 2,
+            "pct": -2.0,
+            "direction": "down",
+            "filled": true
+          }
+        },
         "rel_strength_1m_pct": 14.0,
         "rel_strength_3m_pct": 80.8,
         "avg_dollar_volume_20d_usd": 251766778,
@@ -1920,9 +2591,23 @@
           "trailing_pe": null,
           "forward_pe": 128.84981,
           "price_to_sales_ttm": 12.111828,
-          "ev_to_ebitda": -58.503
+          "ev_to_ebitda": -58.115
         },
         "market_cap_usd": 17256665088,
+        "analyst_ratings": {
+          "recommendation_key": "strong_buy",
+          "recommendation_mean": 1.11111,
+          "n_analysts": 26,
+          "target_mean_price": 94.76923,
+          "target_vs_price_pct": 13.0
+        },
+        "short_interest": {
+          "shares_short": 13029558,
+          "short_pct_float": 8.22,
+          "days_to_cover": 2.71,
+          "shares_short_prior_month": 15998613,
+          "month_over_month": "falling"
+        },
         "days_to_earnings": 56,
         "days_since_earnings": 39,
         "analyst_estimates": {
@@ -1953,6 +2638,24 @@
         "pullback_from_20d_high_pct": -2.8,
         "volume_surge_5d_vs_3m": 0.7,
         "atr_pct": 4.16,
+        "rsi_14": 62.4,
+        "macd": {
+          "hist": -0.452,
+          "hist_direction": "falling",
+          "state": "bear_cross_recent"
+        },
+        "adx_14": 50.1,
+        "di_plus": 26.9,
+        "di_minus": 7.6,
+        "gap_analysis": {
+          "count_20d": 2,
+          "last": {
+            "sessions_ago": 2,
+            "pct": -2.2,
+            "direction": "down",
+            "filled": true
+          }
+        },
         "rel_strength_1m_pct": 12.1,
         "rel_strength_3m_pct": 98.9,
         "avg_dollar_volume_20d_usd": 796856864,
@@ -1979,6 +2682,20 @@
           "ev_to_ebitda": 48.679
         },
         "market_cap_usd": 117677981696,
+        "analyst_ratings": {
+          "recommendation_key": "hold",
+          "recommendation_mean": 2.75,
+          "n_analysts": 37,
+          "target_mean_price": 114.86486,
+          "target_vs_price_pct": -28.5
+        },
+        "short_interest": {
+          "shares_short": 15056605,
+          "short_pct_float": 2.49,
+          "days_to_cover": 2.12,
+          "shares_short_prior_month": 16866836,
+          "month_over_month": "falling"
+        },
         "days_to_earnings": 15,
         "days_since_earnings": 68,
         "analyst_estimates": {
@@ -2009,6 +2726,24 @@
         "pullback_from_20d_high_pct": -7.3,
         "volume_surge_5d_vs_3m": 0.77,
         "atr_pct": 7.22,
+        "rsi_14": 57.2,
+        "macd": {
+          "hist": -3.3751,
+          "hist_direction": "falling",
+          "state": "below_zero"
+        },
+        "adx_14": 29.2,
+        "di_plus": 24.2,
+        "di_minus": 17.4,
+        "gap_analysis": {
+          "count_20d": 9,
+          "last": {
+            "sessions_ago": 2,
+            "pct": 2.7,
+            "direction": "up",
+            "filled": true
+          }
+        },
         "rel_strength_1m_pct": 11.9,
         "rel_strength_3m_pct": 130.4,
         "avg_dollar_volume_20d_usd": 2960289604,
@@ -2035,6 +2770,20 @@
           "ev_to_ebitda": 21.49
         },
         "market_cap_usd": 275973865472,
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.77778,
+          "n_analysts": 23,
+          "target_mean_price": 487.26086,
+          "target_vs_price_pct": 14.1
+        },
+        "short_interest": {
+          "shares_short": 12975131,
+          "short_pct_float": 4.29,
+          "days_to_cover": 1.28,
+          "shares_short_prior_month": 18961953,
+          "month_over_month": "falling"
+        },
         "days_to_earnings": 51,
         "days_since_earnings": 46,
         "analyst_estimates": {
@@ -2065,6 +2814,24 @@
         "pullback_from_20d_high_pct": -4.2,
         "volume_surge_5d_vs_3m": 0.82,
         "atr_pct": 5.0,
+        "rsi_14": 62.2,
+        "macd": {
+          "hist": 0.3956,
+          "hist_direction": "falling",
+          "state": "above_zero"
+        },
+        "adx_14": 30.1,
+        "di_plus": 28.3,
+        "di_minus": 18.5,
+        "gap_analysis": {
+          "count_20d": 5,
+          "last": {
+            "sessions_ago": 5,
+            "pct": -4.1,
+            "direction": "down",
+            "filled": true
+          }
+        },
         "rel_strength_1m_pct": 10.8,
         "rel_strength_3m_pct": 136.4,
         "avg_dollar_volume_20d_usd": 1127228408,
@@ -2091,6 +2858,20 @@
           "ev_to_ebitda": 2574.021
         },
         "market_cap_usd": 92635078656,
+        "analyst_ratings": {
+          "recommendation_key": "strong_buy",
+          "recommendation_mean": 1.45652,
+          "n_analysts": 46,
+          "target_mean_price": 247.68239,
+          "target_vs_price_pct": -4.8
+        },
+        "short_interest": {
+          "shares_short": 14725487,
+          "short_pct_float": 5.13,
+          "days_to_cover": 2.53,
+          "shares_short_prior_month": 14139488,
+          "month_over_month": "rising"
+        },
         "days_to_earnings": 23,
         "days_since_earnings": 67,
         "analyst_estimates": {
@@ -2121,6 +2902,24 @@
         "pullback_from_20d_high_pct": -2.3,
         "volume_surge_5d_vs_3m": 0.49,
         "atr_pct": 4.67,
+        "rsi_14": 68.4,
+        "macd": {
+          "hist": -0.1192,
+          "hist_direction": "rising",
+          "state": "bear_cross_recent"
+        },
+        "adx_14": 32.4,
+        "di_plus": 28.3,
+        "di_minus": 13.4,
+        "gap_analysis": {
+          "count_20d": 2,
+          "last": {
+            "sessions_ago": 2,
+            "pct": -2.1,
+            "direction": "down",
+            "filled": true
+          }
+        },
         "rel_strength_1m_pct": 8.4,
         "rel_strength_3m_pct": 111.3,
         "avg_dollar_volume_20d_usd": 1341040660,
@@ -2147,6 +2946,20 @@
           "ev_to_ebitda": -82.483
         },
         "market_cap_usd": 93114089472,
+        "analyst_ratings": {
+          "recommendation_key": "none",
+          "recommendation_mean": null,
+          "n_analysts": 48,
+          "target_mean_price": 292.53418,
+          "target_vs_price_pct": 8.9
+        },
+        "short_interest": {
+          "shares_short": 23049651,
+          "short_pct_float": 6.82,
+          "days_to_cover": 2.71,
+          "shares_short_prior_month": 21254848,
+          "month_over_month": "rising"
+        },
         "days_to_earnings": 43,
         "days_since_earnings": 47,
         "analyst_estimates": {
@@ -2177,6 +2990,24 @@
         "pullback_from_20d_high_pct": -4.6,
         "volume_surge_5d_vs_3m": 0.94,
         "atr_pct": 5.98,
+        "rsi_14": 58.5,
+        "macd": {
+          "hist": 1.7733,
+          "hist_direction": "falling",
+          "state": "bull_cross_recent"
+        },
+        "adx_14": 20.5,
+        "di_plus": 31.3,
+        "di_minus": 13.7,
+        "gap_analysis": {
+          "count_20d": 8,
+          "last": {
+            "sessions_ago": 2,
+            "pct": 3.3,
+            "direction": "up",
+            "filled": false
+          }
+        },
         "rel_strength_1m_pct": 15.8,
         "rel_strength_3m_pct": 12.4,
         "avg_dollar_volume_20d_usd": 1483752293,
@@ -2203,6 +3034,20 @@
           "ev_to_ebitda": 50.918
         },
         "market_cap_usd": 228098523136,
+        "analyst_ratings": {
+          "recommendation_key": "strong_buy",
+          "recommendation_mean": 1.3,
+          "n_analysts": 27,
+          "target_mean_price": 190.0881,
+          "target_vs_price_pct": 4.9
+        },
+        "short_interest": {
+          "shares_short": 21632457,
+          "short_pct_float": 2.08,
+          "days_to_cover": 2.62,
+          "shares_short_prior_month": 21269942,
+          "month_over_month": "flat"
+        },
         "days_to_earnings": 21,
         "days_since_earnings": 69,
         "analyst_estimates": {
@@ -2233,6 +3078,24 @@
         "pullback_from_20d_high_pct": -10.3,
         "volume_surge_5d_vs_3m": 0.88,
         "atr_pct": 5.3,
+        "rsi_14": 59.8,
+        "macd": {
+          "hist": -1.6147,
+          "hist_direction": "falling",
+          "state": "bear_cross_recent"
+        },
+        "adx_14": 48.0,
+        "di_plus": 29.0,
+        "di_minus": 15.3,
+        "gap_analysis": {
+          "count_20d": 1,
+          "last": {
+            "sessions_ago": 5,
+            "pct": -2.6,
+            "direction": "down",
+            "filled": true
+          }
+        },
         "rel_strength_1m_pct": 21.9,
         "rel_strength_3m_pct": 101.6,
         "avg_dollar_volume_20d_usd": 2536709972,
@@ -2256,9 +3119,23 @@
           "trailing_pe": 289.73685,
           "forward_pe": 80.18546,
           "price_to_sales_ttm": 25.380144,
-          "ev_to_ebitda": 178.386
+          "ev_to_ebitda": 180.798
         },
         "market_cap_usd": 269194493952,
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.62963,
+          "n_analysts": 49,
+          "target_mean_price": 324.14368,
+          "target_vs_price_pct": -1.9
+        },
+        "short_interest": {
+          "shares_short": 25002502,
+          "short_pct_float": 3.09,
+          "days_to_cover": 2.79,
+          "shares_short_prior_month": 25677921,
+          "month_over_month": "falling"
+        },
         "days_to_earnings": 35,
         "days_since_earnings": 41,
         "analyst_estimates": {
@@ -2289,6 +3166,24 @@
         "pullback_from_20d_high_pct": -7.5,
         "volume_surge_5d_vs_3m": 0.75,
         "atr_pct": 5.76,
+        "rsi_14": 55.8,
+        "macd": {
+          "hist": -0.1787,
+          "hist_direction": "rising",
+          "state": "below_zero"
+        },
+        "adx_14": 25.7,
+        "di_plus": 31.0,
+        "di_minus": 23.3,
+        "gap_analysis": {
+          "count_20d": 6,
+          "last": {
+            "sessions_ago": 2,
+            "pct": 2.7,
+            "direction": "up",
+            "filled": false
+          }
+        },
         "rel_strength_1m_pct": 0.6,
         "rel_strength_3m_pct": 79.8,
         "avg_dollar_volume_20d_usd": 1018031015,
@@ -2315,6 +3210,20 @@
           "ev_to_ebitda": 13.963
         },
         "market_cap_usd": 62555377664,
+        "analyst_ratings": {
+          "recommendation_key": "none",
+          "recommendation_mean": null,
+          "n_analysts": 19,
+          "target_mean_price": 64.12947,
+          "target_vs_price_pct": 35.8
+        },
+        "short_interest": {
+          "shares_short": 67772233,
+          "short_pct_float": 5.83,
+          "days_to_cover": 1.69,
+          "shares_short_prior_month": 62145275,
+          "month_over_month": "rising"
+        },
         "days_to_earnings": 51,
         "days_since_earnings": 42,
         "analyst_estimates": {
@@ -2345,6 +3254,24 @@
         "pullback_from_20d_high_pct": -10.3,
         "volume_surge_5d_vs_3m": 0.58,
         "atr_pct": 5.11,
+        "rsi_14": 57.5,
+        "macd": {
+          "hist": -0.4104,
+          "hist_direction": "falling",
+          "state": "bear_cross_recent"
+        },
+        "adx_14": 36.4,
+        "di_plus": 26.9,
+        "di_minus": 15.2,
+        "gap_analysis": {
+          "count_20d": 1,
+          "last": {
+            "sessions_ago": 5,
+            "pct": -2.3,
+            "direction": "down",
+            "filled": true
+          }
+        },
         "rel_strength_1m_pct": 12.5,
         "rel_strength_3m_pct": 87.8,
         "avg_dollar_volume_20d_usd": 1811501644,
@@ -2368,9 +3295,23 @@
           "trailing_pe": null,
           "forward_pe": 120.33249,
           "price_to_sales_ttm": 37.56058,
-          "ev_to_ebitda": 3150.892
+          "ev_to_ebitda": 3163.423
         },
         "market_cap_usd": 191341101056,
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.67308,
+          "n_analysts": 49,
+          "target_mean_price": 184.32101,
+          "target_vs_price_pct": -1.9
+        },
+        "short_interest": {
+          "shares_short": 28542928,
+          "short_pct_float": 2.85,
+          "days_to_cover": 1.95,
+          "shares_short_prior_month": 30045724,
+          "month_over_month": "falling"
+        },
         "days_to_earnings": 49,
         "days_since_earnings": 40,
         "analyst_estimates": {
@@ -2401,6 +3342,24 @@
         "pullback_from_20d_high_pct": -2.6,
         "volume_surge_5d_vs_3m": 0.8,
         "atr_pct": 3.34,
+        "rsi_14": 54.6,
+        "macd": {
+          "hist": -0.167,
+          "hist_direction": "rising",
+          "state": "below_zero"
+        },
+        "adx_14": 22.1,
+        "di_plus": 22.2,
+        "di_minus": 19.8,
+        "gap_analysis": {
+          "count_20d": 1,
+          "last": {
+            "sessions_ago": 13,
+            "pct": -2.5,
+            "direction": "down",
+            "filled": true
+          }
+        },
         "rel_strength_1m_pct": -2.8,
         "rel_strength_3m_pct": 35.0,
         "avg_dollar_volume_20d_usd": 2622305098,
@@ -2427,6 +3386,20 @@
           "ev_to_ebitda": 29.076
         },
         "market_cap_usd": 470016065536,
+        "analyst_ratings": {
+          "recommendation_key": "none",
+          "recommendation_mean": null,
+          "n_analysts": 22,
+          "target_mean_price": 127.18091,
+          "target_vs_price_pct": 6.7
+        },
+        "short_interest": {
+          "shares_short": 53800162,
+          "short_pct_float": 1.37,
+          "days_to_cover": 2.04,
+          "shares_short_prior_month": 61949954,
+          "month_over_month": "falling"
+        },
         "days_to_earnings": 29,
         "days_since_earnings": 61,
         "analyst_estimates": {
@@ -2457,6 +3430,19 @@
         "pullback_from_20d_high_pct": -2.6,
         "volume_surge_5d_vs_3m": 0.82,
         "atr_pct": 3.28,
+        "rsi_14": 55.8,
+        "macd": {
+          "hist": 0.0875,
+          "hist_direction": "falling",
+          "state": "above_zero"
+        },
+        "adx_14": 21.2,
+        "di_plus": 21.3,
+        "di_minus": 21.6,
+        "gap_analysis": {
+          "count_20d": 0,
+          "last": null
+        },
         "rel_strength_1m_pct": 9.8,
         "rel_strength_3m_pct": 2.9,
         "avg_dollar_volume_20d_usd": 497835065,
@@ -2478,11 +3464,25 @@
         "swing_setup_score": 5.73,
         "valuation": {
           "trailing_pe": 36.041874,
-          "forward_pe": 24.191055,
+          "forward_pe": 24.135195,
           "price_to_sales_ttm": 6.867049,
-          "ev_to_ebitda": 30.063
+          "ev_to_ebitda": 29.544
         },
         "market_cap_usd": 86847569920,
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 2.11628,
+          "n_analysts": 37,
+          "target_mean_price": 156.47298,
+          "target_vs_price_pct": 6.9
+        },
+        "short_interest": {
+          "shares_short": 14889750,
+          "short_pct_float": 3.61,
+          "days_to_cover": 3.69,
+          "shares_short_prior_month": 14725573,
+          "month_over_month": "flat"
+        },
         "days_to_earnings": 23,
         "days_since_earnings": 67,
         "analyst_estimates": {
@@ -2492,7 +3492,7 @@
           "eps_revision_direction": "up"
         },
         "post_earnings_drift_candidate": false,
-        "fwd_pe_to_growth": 1.72
+        "fwd_pe_to_growth": 1.71
       }
     ],
     "prices": {
@@ -15385,7 +16385,7 @@
   },
   "fundamental_screen": {
     "as_of": "2026-07-13T13:07:48.458199+00:00",
-    "age_hours": 10.7,
+    "age_hours": 11.7,
     "names_covered": 0,
     "note": "Full-universe estimate screen, refreshed pre-market (6am/9am ET, gated on true America/New_York time). top_upward_revisions = fundamental inflections regardless of price - candidates the momentum funnel may not surface. estimate_changes_since_previous = what moved THIS MORNING (earnings/guidance). Each row may carry revision_direction (up/down/flat) and eps_growth_next_yr_pct (forward EPS growth) - judge a multiple against growth, not news tone.",
     "top_upward_revisions": [],
@@ -15402,9 +16402,9 @@
         "days_to_expiry": 11,
         "spot": 427.11,
         "expected_move_pct": 11.47,
-        "atm_iv_pct": 79.5,
+        "atm_iv_pct": 83.0,
         "put_call_volume_ratio": 1.29,
-        "iv_skew_pct": 5.2,
+        "iv_skew_pct": 5.5,
         "skew_read": "puts_bid_over_calls (downside protection in demand)",
         "unusual_strikes": []
       },
@@ -15414,9 +16414,9 @@
         "days_to_expiry": 11,
         "spot": 47.24,
         "expected_move_pct": 10.28,
-        "atm_iv_pct": 71.2,
+        "atm_iv_pct": 74.4,
         "put_call_volume_ratio": 1.3,
-        "iv_skew_pct": 2.2,
+        "iv_skew_pct": 2.3,
         "skew_read": "balanced",
         "unusual_strikes": []
       },
@@ -15426,9 +16426,9 @@
         "days_to_expiry": 11,
         "spot": 269.53,
         "expected_move_pct": 8.14,
-        "atm_iv_pct": 56.3,
+        "atm_iv_pct": 58.8,
         "put_call_volume_ratio": 2.31,
-        "iv_skew_pct": 2.3,
+        "iv_skew_pct": 2.4,
         "skew_read": "balanced",
         "unusual_strikes": [
           {
@@ -15446,9 +16446,9 @@
         "days_to_expiry": 11,
         "spot": 139.53,
         "expected_move_pct": 8.35,
-        "atm_iv_pct": 57.6,
+        "atm_iv_pct": 60.2,
         "put_call_volume_ratio": 0.67,
-        "iv_skew_pct": 2.3,
+        "iv_skew_pct": 2.4,
         "skew_read": "balanced",
         "unusual_strikes": []
       },
@@ -15458,9 +16458,9 @@
         "days_to_expiry": 11,
         "spot": 18.55,
         "expected_move_pct": 7.95,
-        "atm_iv_pct": 55.0,
+        "atm_iv_pct": 57.4,
         "put_call_volume_ratio": 0.82,
-        "iv_skew_pct": 7.7,
+        "iv_skew_pct": 8.2,
         "skew_read": "puts_bid_over_calls (downside protection in demand)",
         "unusual_strikes": []
       },
@@ -15470,9 +16470,9 @@
         "days_to_expiry": 7,
         "spot": 534.39,
         "expected_move_pct": 8.15,
-        "atm_iv_pct": 69.0,
+        "atm_iv_pct": 73.8,
         "put_call_volume_ratio": 0.89,
-        "iv_skew_pct": 5.4,
+        "iv_skew_pct": 5.7,
         "skew_read": "puts_bid_over_calls (downside protection in demand)",
         "unusual_strikes": []
       },
@@ -15482,9 +16482,9 @@
         "days_to_expiry": 11,
         "spot": 83.84,
         "expected_move_pct": 9.42,
-        "atm_iv_pct": 65.1,
+        "atm_iv_pct": 68.0,
         "put_call_volume_ratio": 0.45,
-        "iv_skew_pct": 6.7,
+        "iv_skew_pct": 7.0,
         "skew_read": "puts_bid_over_calls (downside protection in demand)",
         "unusual_strikes": []
       },
@@ -15494,9 +16494,9 @@
         "days_to_expiry": 11,
         "spot": 109.86,
         "expected_move_pct": 9.65,
-        "atm_iv_pct": 66.7,
+        "atm_iv_pct": 69.7,
         "put_call_volume_ratio": 0.41,
-        "iv_skew_pct": 2.0,
+        "iv_skew_pct": 2.1,
         "skew_read": "balanced",
         "unusual_strikes": [
           {
@@ -15521,9 +16521,9 @@
         "days_to_expiry": 11,
         "spot": 189.57,
         "expected_move_pct": 7.12,
-        "atm_iv_pct": 51.6,
+        "atm_iv_pct": 51.4,
         "put_call_volume_ratio": 0.87,
-        "iv_skew_pct": 3.8,
+        "iv_skew_pct": 4.7,
         "skew_read": "puts_bid_over_calls (downside protection in demand)",
         "unusual_strikes": []
       },
@@ -15533,7 +16533,7 @@
         "days_to_expiry": 11,
         "spot": 547.03,
         "expected_move_pct": 9.29,
-        "atm_iv_pct": 64.3,
+        "atm_iv_pct": 67.2,
         "put_call_volume_ratio": 1.5,
         "iv_skew_pct": -1.0,
         "skew_read": "balanced",
@@ -15545,7 +16545,7 @@
         "days_to_expiry": 11,
         "spot": 8.35,
         "expected_move_pct": 13.11,
-        "atm_iv_pct": 89.4,
+        "atm_iv_pct": 93.5,
         "put_call_volume_ratio": 0.6,
         "iv_skew_pct": -1.8,
         "skew_read": "balanced",
@@ -15557,9 +16557,9 @@
         "days_to_expiry": 11,
         "spot": 27.66,
         "expected_move_pct": 12.08,
-        "atm_iv_pct": 83.7,
+        "atm_iv_pct": 87.5,
         "put_call_volume_ratio": 0.65,
-        "iv_skew_pct": 1.3,
+        "iv_skew_pct": 1.4,
         "skew_read": "balanced",
         "unusual_strikes": []
       }
@@ -15646,27 +16646,27 @@
     "note": "For each open position: room left between today's price and your recorded stop, measured in the name's own ATR. cushion_in_atr < 1 (inside_noise_band true) means one ordinary session could hit the stop - decide deliberately (hold through it, or exit on your terms) rather than get noise-stopped. The safety layer still enforces the recorded stop on a closing basis.",
     "positions": {
       "DELL": {
-        "last_price": 441.9,
+        "last_price": 427.11,
         "recorded_stop": 408.0,
-        "cushion_to_stop_pct": 7.67,
+        "cushion_to_stop_pct": 4.47,
         "atr_pct": 7.22,
         "expected_move_pct": 11.47,
-        "cushion_in_atr": 1.06,
-        "inside_noise_band": false,
+        "cushion_in_atr": 0.62,
+        "inside_noise_band": true,
         "stop_distance_from_entry_pct": 10.92,
-        "unrealized_pnl_pct": -1.95,
+        "unrealized_pnl_pct": -5.23,
         "stalled": false
       },
       "HPE": {
-        "last_price": 48.8,
+        "last_price": 47.24,
         "recorded_stop": 44.75,
-        "cushion_to_stop_pct": 8.3,
+        "cushion_to_stop_pct": 5.27,
         "atr_pct": 5.76,
         "expected_move_pct": 10.28,
-        "cushion_in_atr": 1.44,
-        "inside_noise_band": false,
+        "cushion_in_atr": 0.92,
+        "inside_noise_band": true,
         "stop_distance_from_entry_pct": 9.14,
-        "unrealized_pnl_pct": -0.1,
+        "unrealized_pnl_pct": -3.29,
         "stalled": false
       }
     }
@@ -15863,427 +16863,926 @@
   },
   "news_and_catalysts": {
     "status": "ok",
-    "as_of": "2026-07-13T23:51:54.585976+00:00",
+    "as_of": "2026-07-14T00:51:50.468964+00:00",
+    "news_max_age_days": 7,
     "tickers": {
       "DELL": {
         "headlines": [
           {
             "title": "Arista Networks Stock Has A Higher Target, But The Market Wants Proof",
             "published": "2026-07-13T22:47:08Z",
-            "url": "https://www.trefis.com/articles/606843/arista-networks-stock-has-a-higher-target-but-the-market-wants-proof/2026-07-13"
+            "url": "https://www.trefis.com/articles/606843/arista-networks-stock-has-a-higher-target-but-the-market-wants-proof/2026-07-13",
+            "age_days": 0.1
           },
           {
             "title": "The Overlooked Growth Engine Powering Cisco Systems Stock",
             "published": "2026-07-13T22:04:44Z",
-            "url": "https://www.trefis.com/articles/606816/the-overlooked-growth-engine-powering-cisco-systems-stock/2026-07-13"
+            "url": "https://www.trefis.com/articles/606816/the-overlooked-growth-engine-powering-cisco-systems-stock/2026-07-13",
+            "age_days": 0.1
           },
           {
             "title": "Dell Technologies (DELL) Registers a Bigger Fall Than the Market: Important Facts to Note",
             "published": "2026-07-13T21:45:03Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/dell-technologies-dell-registers-bigger-214503508.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/dell-technologies-dell-registers-bigger-214503508.html",
+            "age_days": 0.1
           },
           {
             "title": "Nvidia, AMD, Microsoft Partnerships \u2014 And These Clues \u2014 Fuel Dell Stock",
             "published": "2026-07-13T19:02:15Z",
-            "url": "https://www.investors.com/research/how-to-find-the-best-stocks-to-buy/dell-stock-nvidia-amd-microsoft-partnerships-ai-data-centers-fuel-demand/?src=A00220&yptr=yahoo"
+            "url": "https://www.investors.com/research/how-to-find-the-best-stocks-to-buy/dell-stock-nvidia-amd-microsoft-partnerships-ai-data-centers-fuel-demand/?src=A00220&yptr=yahoo",
+            "age_days": 0.2
+          },
+          {
+            "title": "PC Shipments Fell in Q2, but AI Optimism Is Set to Keep Growing and Push DELL Stock Higher",
+            "published": "2026-07-13T18:21:48Z",
+            "url": "https://www.barchart.com/story/news/3258830/pc-shipments-fell-in-q2-but-ai-optimism-is-set-to-keep-growing-and-push-dell-stock-higher",
+            "age_days": 0.3
           },
           {
             "title": "Missed DELL\u2019s 248% Run? IGPT Quietly Turned $10K Into $16,600",
             "published": "2026-07-13T17:17:36Z",
-            "url": "https://247wallst.com/investing/etf/2026/07/13/missed-dells-248-run-igpt-quietly-turned-10k-into-16600/"
-          },
-          {
-            "title": "DigitalOcean's Q2 Preview Signals AI-Driven Growth & Enterprise Wins",
-            "published": "2026-07-13T17:01:00Z",
-            "url": "https://finance.yahoo.com/technology/ai/articles/digitaloceans-q2-preview-signals-ai-170100448.html"
+            "url": "https://247wallst.com/investing/etf/2026/07/13/missed-dells-248-run-igpt-quietly-turned-10k-into-16600/",
+            "age_days": 0.3
           }
         ],
-        "next_earnings": "2026-09-03"
+        "next_earnings": "2026-09-03",
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.77778,
+          "n_analysts": 23,
+          "target_mean_price": 487.26086,
+          "target_vs_price_pct": 14.1
+        },
+        "earnings_surprises": {
+          "quarters": [
+            {
+              "period": "2025-07-31",
+              "eps_actual": 2.32,
+              "eps_estimate": 2.29,
+              "surprise_pct": 1.2
+            },
+            {
+              "period": "2025-10-31",
+              "eps_actual": 2.59,
+              "eps_estimate": 2.48,
+              "surprise_pct": 4.6
+            },
+            {
+              "period": "2026-01-31",
+              "eps_actual": 3.89,
+              "eps_estimate": 3.51,
+              "surprise_pct": 10.7
+            },
+            {
+              "period": "2026-04-30",
+              "eps_actual": 4.86,
+              "eps_estimate": 2.96,
+              "surprise_pct": 64.0
+            }
+          ],
+          "beat_streak": 4
+        }
       },
       "HPE": {
         "headlines": [
           {
             "title": "Arista Networks Stock Has A Higher Target, But The Market Wants Proof",
             "published": "2026-07-13T22:47:08Z",
-            "url": "https://www.trefis.com/articles/606843/arista-networks-stock-has-a-higher-target-but-the-market-wants-proof/2026-07-13"
+            "url": "https://www.trefis.com/articles/606843/arista-networks-stock-has-a-higher-target-but-the-market-wants-proof/2026-07-13",
+            "age_days": 0.1
           },
           {
             "title": "SanDisk Stock's Run Hides Its Real Portfolio Job",
             "published": "2026-07-13T22:16:00Z",
-            "url": "https://www.trefis.com/articles/606817/sandisk-stocks-run-hides-its-real-portfolio-job/2026-07-13"
+            "url": "https://www.trefis.com/articles/606817/sandisk-stocks-run-hides-its-real-portfolio-job/2026-07-13",
+            "age_days": 0.1
           },
           {
             "title": "The Overlooked Growth Engine Powering Cisco Systems Stock",
             "published": "2026-07-13T22:04:44Z",
-            "url": "https://www.trefis.com/articles/606816/the-overlooked-growth-engine-powering-cisco-systems-stock/2026-07-13"
+            "url": "https://www.trefis.com/articles/606816/the-overlooked-growth-engine-powering-cisco-systems-stock/2026-07-13",
+            "age_days": 0.1
           },
           {
             "title": "ANET's Robust Portfolio Fuels Revenue Growth: More Upside Ahead?",
             "published": "2026-07-13T14:42:00Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/anets-robust-portfolio-fuels-revenue-144200050.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/anets-robust-portfolio-fuels-revenue-144200050.html",
+            "age_days": 0.4
           },
           {
             "title": "Buy These 4 Tech Stocks That Are Still Cheap Despite 100%+ YTD Rally",
             "published": "2026-07-13T12:55:00Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/buy-4-tech-stocks-still-125500812.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/buy-4-tech-stocks-still-125500812.html",
+            "age_days": 0.5
           },
           {
             "title": "Pushing the Edge: Super Micro Computer Reboots the AI Landscape",
             "published": "2026-07-11T11:55:00Z",
-            "url": "https://www.marketbeat.com/articles/pushing-the-edge-super-micro-computer-reboots-the-ai-landscape/?utm_source=yahoofinance&utm_medium=yahoofinance"
+            "url": "https://www.marketbeat.com/articles/pushing-the-edge-super-micro-computer-reboots-the-ai-landscape/?utm_source=yahoofinance&utm_medium=yahoofinance",
+            "age_days": 2.5
           }
         ],
-        "next_earnings": "2026-06-01"
+        "next_earnings": "2026-06-01",
+        "analyst_ratings": {
+          "recommendation_key": "none",
+          "recommendation_mean": null,
+          "n_analysts": 19,
+          "target_mean_price": 64.12947,
+          "target_vs_price_pct": 35.8
+        },
+        "earnings_surprises": {
+          "quarters": [
+            {
+              "period": "2025-07-31",
+              "eps_actual": 0.44,
+              "eps_estimate": 0.42,
+              "surprise_pct": 5.4
+            },
+            {
+              "period": "2025-10-31",
+              "eps_actual": 0.62,
+              "eps_estimate": 0.58,
+              "surprise_pct": 6.6
+            },
+            {
+              "period": "2026-01-31",
+              "eps_actual": 0.65,
+              "eps_estimate": 0.59,
+              "surprise_pct": 10.8
+            },
+            {
+              "period": "2026-04-30",
+              "eps_actual": 0.79,
+              "eps_estimate": 0.53,
+              "surprise_pct": 48.0
+            }
+          ],
+          "beat_streak": 4
+        }
       },
       "NET": {
         "headlines": [
           {
             "title": "The New Cyber Front Line: Pax8\u202fCorporate VP Oguo\u202fAtuanya, CrowdStrike VP Daniel Danielli, Live from Pax8 Beyond 2026",
             "published": "2026-07-13T19:35:04Z",
-            "url": "https://tech.yahoo.com/cybersecurity/articles/cyber-front-line-pax8-corporate-193504598.html"
+            "url": "https://tech.yahoo.com/cybersecurity/articles/cyber-front-line-pax8-corporate-193504598.html",
+            "age_days": 0.2
           },
           {
             "title": "Oracle Is Now Down 28% in a Month. Will the 52-Week Low of $132 Hold or Fold?",
             "published": "2026-07-13T18:31:14Z",
-            "url": "https://247wallst.com/investing/2026/07/13/oracle-is-now-down-28-in-a-month-will-the-52-week-low-of-132-hold-or-fold/"
+            "url": "https://247wallst.com/investing/2026/07/13/oracle-is-now-down-28-in-a-month-will-the-52-week-low-of-132-hold-or-fold/",
+            "age_days": 0.3
           },
           {
             "title": "Cloudflare Draws Fresh Price Target Hikes Ahead Of Earnings \u2014 Analysts See Another 30% Growth Quarter",
             "published": "2026-07-13T12:11:21Z",
-            "url": "https://stocktwits.com/news-articles/markets/equity/net-stock-price-target-hikes-ahead-of-cloudflare-q2-earnings/cZmzoZ8R7YG"
+            "url": "https://stocktwits.com/news-articles/markets/equity/net-stock-price-target-hikes-ahead-of-cloudflare-q2-earnings/cZmzoZ8R7YG",
+            "age_days": 0.5
           },
           {
             "title": "1 Unpopular Stock That Deserves a Second Chance and 2 We Question",
             "published": "2026-07-13T11:50:39Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/1-unpopular-stock-deserves-second-115039760.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/1-unpopular-stock-deserves-second-115039760.html",
+            "age_days": 0.5
           },
           {
             "title": "Why Did NET, ETSY, CROX Stocks Surge To 52-Week Highs Last Week?",
             "published": "2026-07-13T04:05:57Z",
-            "url": "https://stocktwits.com/news-articles/markets/equity/why-did-net-etsy-crox-stocks-surge-to-52-week-highs-last-week/cZmzQnJR7oQ"
+            "url": "https://stocktwits.com/news-articles/markets/equity/why-did-net-etsy-crox-stocks-surge-to-52-week-highs-last-week/cZmzQnJR7oQ",
+            "age_days": 0.9
           },
           {
             "title": "Wall Street Says Investors Are Missing Cloudflare\u2019s Biggest AI Opportunity",
             "published": "2026-07-12T15:00:02Z",
-            "url": "https://www.barchart.com/story/news/3244229/wall-street-says-investors-are-missing-cloudflares-biggest-ai-opportunity"
+            "url": "https://www.barchart.com/story/news/3244229/wall-street-says-investors-are-missing-cloudflares-biggest-ai-opportunity",
+            "age_days": 1.4
           }
         ],
-        "next_earnings": "2026-07-30"
+        "next_earnings": "2026-07-30",
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.88235,
+          "n_analysts": 31,
+          "target_mean_price": 247.51968,
+          "target_vs_price_pct": -8.2
+        },
+        "earnings_surprises": {
+          "quarters": [
+            {
+              "period": "2025-06-30",
+              "eps_actual": 0.21,
+              "eps_estimate": 0.18,
+              "surprise_pct": 15.5
+            },
+            {
+              "period": "2025-09-30",
+              "eps_actual": 0.27,
+              "eps_estimate": 0.23,
+              "surprise_pct": 15.4
+            },
+            {
+              "period": "2025-12-31",
+              "eps_actual": 0.28,
+              "eps_estimate": 0.27,
+              "surprise_pct": 3.2
+            },
+            {
+              "period": "2026-03-31",
+              "eps_actual": 0.25,
+              "eps_estimate": 0.23,
+              "surprise_pct": 7.0
+            }
+          ],
+          "beat_streak": 4
+        }
       },
       "OKTA": {
         "headlines": [
           {
             "title": "Stock Indexes Settle Higher as Geopolitical Risks Ease",
             "published": "2026-07-10T20:37:16Z",
-            "url": "https://www.barchart.com/story/news/3230949/stock-indexes-settle-higher-as-geopolitical-risks-ease"
+            "url": "https://www.barchart.com/story/news/3230949/stock-indexes-settle-higher-as-geopolitical-risks-ease",
+            "age_days": 3.2
           },
           {
             "title": "AI Agent Security Boosts Okta Shares",
             "published": "2026-07-10T15:30:28Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/ai-agent-security-boosts-okta-153028006.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/ai-agent-security-boosts-okta-153028006.html",
+            "age_days": 3.4
           },
           {
             "title": "Okta (OKTA) Suffers a Larger Drop Than the General Market: Key Insights",
             "published": "2026-07-08T22:00:04Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/okta-okta-suffers-larger-drop-220004897.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/okta-okta-suffers-larger-drop-220004897.html",
+            "age_days": 5.1
           },
           {
             "title": "Own ServiceNow For AI? Gen Digital's Numbers Speak Louder",
             "published": "2026-07-08T11:27:46Z",
-            "url": "https://www.trefis.com/articles/606165/own-servicenow-for-ai-gen-digitals-numbers-speak-louder/2026-07-08"
+            "url": "https://www.trefis.com/articles/606165/own-servicenow-for-ai-gen-digitals-numbers-speak-louder/2026-07-08",
+            "age_days": 5.6
           },
           {
             "title": "What Fortinet Stock Was Telling Wall Street About AI Before It Doubled",
             "published": "2026-07-07T20:59:49Z",
-            "url": "https://www.trefis.com/articles/605932/what-fortinet-stock-was-telling-wall-street-about-ai-before-it-doubled/2026-07-07"
+            "url": "https://www.trefis.com/articles/605932/what-fortinet-stock-was-telling-wall-street-about-ai-before-it-doubled/2026-07-07",
+            "age_days": 6.2
           },
           {
             "title": "SailPoint and the Rise of AI Agents in Identity Security: What's Ahead?",
             "published": "2026-07-07T18:44:00Z",
-            "url": "https://finance.yahoo.com/technology/ai/articles/sailpoint-rise-ai-agents-identity-184400183.html"
+            "url": "https://finance.yahoo.com/technology/ai/articles/sailpoint-rise-ai-agents-identity-184400183.html",
+            "age_days": 6.3
           }
         ],
-        "next_earnings": "2026-08-25"
+        "next_earnings": "2026-08-25",
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.75,
+          "n_analysts": 42,
+          "target_mean_price": 122.95048,
+          "target_vs_price_pct": -11.9
+        },
+        "earnings_surprises": {
+          "quarters": [
+            {
+              "period": "2025-07-31",
+              "eps_actual": 0.91,
+              "eps_estimate": 0.85,
+              "surprise_pct": 7.6
+            },
+            {
+              "period": "2025-10-31",
+              "eps_actual": 0.82,
+              "eps_estimate": 0.76,
+              "surprise_pct": 8.0
+            },
+            {
+              "period": "2026-01-31",
+              "eps_actual": 0.9,
+              "eps_estimate": 0.85,
+              "surprise_pct": 6.3
+            },
+            {
+              "period": "2026-04-30",
+              "eps_actual": 0.91,
+              "eps_estimate": 0.85,
+              "surprise_pct": 6.7
+            }
+          ],
+          "beat_streak": 4
+        }
       },
       "S": {
         "headlines": [
           {
             "title": "The $6 Billion Cybersecurity Prize Tech Giants Are Circling",
             "published": "2026-07-13T13:15:41Z",
-            "url": "https://247wallst.com/investing/2026/07/13/the-6-billion-cybersecurity-prize-tech-giants-are-circling/"
+            "url": "https://247wallst.com/investing/2026/07/13/the-6-billion-cybersecurity-prize-tech-giants-are-circling/",
+            "age_days": 0.5
           },
           {
             "title": "SentinelOne (S) Stock Declines While Market Improves: Some Information for Investors",
             "published": "2026-07-10T22:00:05Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/sentinelone-stock-declines-while-market-220005187.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/sentinelone-stock-declines-while-market-220005187.html",
+            "age_days": 3.1
           },
           {
             "title": "Can Platformization Drive Palo Alto Networks' Next Growth Phase?",
             "published": "2026-07-10T15:41:00Z",
-            "url": "https://finance.yahoo.com/technology/articles/platformization-drive-palo-alto-networks-154100623.html"
+            "url": "https://finance.yahoo.com/technology/articles/platformization-drive-palo-alto-networks-154100623.html",
+            "age_days": 3.4
           },
           {
             "title": "4 Cybersecurity Stocks to Watch in July as AI-Driven Threats Rise",
             "published": "2026-07-10T14:57:00Z",
-            "url": "https://finance.yahoo.com/technology/ai/articles/4-cybersecurity-stocks-watch-july-145700651.html"
+            "url": "https://finance.yahoo.com/technology/ai/articles/4-cybersecurity-stocks-watch-july-145700651.html",
+            "age_days": 3.4
           },
           {
             "title": "Brokers Suggest Investing in SentinelOne (S): Read This Before Placing a Bet",
             "published": "2026-07-10T13:30:04Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/brokers-suggest-investing-sentinelone-read-133004925.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/brokers-suggest-investing-sentinelone-read-133004925.html",
+            "age_days": 3.5
           },
           {
             "title": "CVLT Grew. The Stock Did Not. Someone Is Wrong",
             "published": "2026-07-10T00:40:42Z",
-            "url": "https://www.trefis.com/articles/606426/cvlt-grew-the-stock-did-not-someone-is-wrong/2026-07-09"
+            "url": "https://www.trefis.com/articles/606426/cvlt-grew-the-stock-did-not-someone-is-wrong/2026-07-09",
+            "age_days": 4.0
           }
         ],
-        "next_earnings": "2026-08-27"
+        "next_earnings": "2026-08-27",
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.82857,
+          "n_analysts": 31,
+          "target_mean_price": 19.45161,
+          "target_vs_price_pct": 4.9
+        },
+        "earnings_surprises": {
+          "quarters": [
+            {
+              "period": "2025-07-31",
+              "eps_actual": -0.22,
+              "eps_estimate": -0.19,
+              "surprise_pct": -15.0
+            },
+            {
+              "period": "2025-10-31",
+              "eps_actual": -0.18,
+              "eps_estimate": -0.17,
+              "surprise_pct": -2.9
+            },
+            {
+              "period": "2026-01-31",
+              "eps_actual": -0.33,
+              "eps_estimate": -0.18,
+              "surprise_pct": -79.2
+            },
+            {
+              "period": "2026-04-30",
+              "eps_actual": -0.23,
+              "eps_estimate": -0.24,
+              "surprise_pct": 2.8
+            }
+          ],
+          "beat_streak": 1
+        }
       },
       "AMD": {
         "headlines": [
           {
             "title": "SK Hynix stock falls, leads broader chip sector declines as AI trade angst returns",
             "published": "2026-07-13T12:07:51Z",
-            "url": "https://finance.yahoo.com/markets/article/sk-hynix-stock-falls-leads-broader-chip-sector-declines-as-ai-trade-angst-returns-120751185.html"
+            "url": "https://finance.yahoo.com/markets/article/sk-hynix-stock-falls-leads-broader-chip-sector-declines-as-ai-trade-angst-returns-120751185.html",
+            "age_days": 0.5
+          },
+          {
+            "title": "The whole chip trade is waiting on one report",
+            "published": "2026-07-14T00:37:00Z",
+            "url": "https://www.thestreet.com/investing/stocks/chip-trade-waiting-on-taiwan-semiconductor-tsm-report",
+            "age_days": 0.0
+          },
+          {
+            "title": "Trump Reinstates the Iran Blockade and Demands a 20% Toll as America Becomes Hormuz\u2019s \u201cGuardian\u201d",
+            "published": "2026-07-14T00:16:38Z",
+            "url": "https://247wallst.com/investing/2026/07/13/trump-reinstates-the-iran-blockade-and-demands-a-20-toll-as-america-becomes-hormuzs-guardian/",
+            "age_days": 0.0
           },
           {
             "title": "Advanced Micro Devices (AMD) Suffers a Larger Drop Than the General Market: Key Insights",
             "published": "2026-07-13T21:45:01Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/advanced-micro-devices-amd-suffers-214501805.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/advanced-micro-devices-amd-suffers-214501805.html",
+            "age_days": 0.1
           },
           {
             "title": "TSMC Sales Jump 36% as Memory Stocks Plunge. What It Means for NVIDIA and AMD",
             "published": "2026-07-13T21:45:00Z",
-            "url": "https://247wallst.com/investing/2026/07/13/tsmc-sales-jump-36-as-memory-stocks-plunge-what-it-means-for-nvidia-and-amd/"
+            "url": "https://247wallst.com/investing/2026/07/13/tsmc-sales-jump-36-as-memory-stocks-plunge-what-it-means-for-nvidia-and-amd/",
+            "age_days": 0.1
           },
           {
             "title": "Why TSMC\u2019s Record Revenue Isn\u2019t Reviving the AI Trade",
             "published": "2026-07-13T20:50:00Z",
-            "url": "https://www.barrons.com/articles/tsmc-stock-taiwan-semiconductor-record-revenue-ai-9d5ffe6c?siteid=yhoof2&yptr=yahoo"
-          },
-          {
-            "title": "Stocks to Watch: SK Hynix, SpaceX, Intel",
-            "published": "2026-07-13T20:47:12Z",
-            "url": "https://www.wsj.com/livecoverage/stock-market-today-dow-sp-500-nasdaq-07-13-2026/card/stocks-to-watch-sk-hynix-intel-akzo-nobel-Kz6QtkxLQjQNjN4ji1kT?siteid=yhoof2&yptr=yahoo"
-          },
-          {
-            "title": "U.S. Stocks Fall as AI Selloff, Oil Jump Rattle Markets",
-            "published": "2026-07-13T20:43:00Z",
-            "url": "https://www.wsj.com/finance/stocks/u-s-stocks-fall-as-ai-selloff-oil-jump-rattle-markets-d51727c8?siteid=yhoof2&yptr=yahoo"
+            "url": "https://www.barrons.com/articles/tsmc-stock-taiwan-semiconductor-record-revenue-ai-9d5ffe6c?siteid=yhoof2&yptr=yahoo",
+            "age_days": 0.2
           }
         ],
-        "next_earnings": "2026-08-04"
+        "next_earnings": "2026-08-04",
+        "analyst_ratings": {
+          "recommendation_key": "strong_buy",
+          "recommendation_mean": 1.48077,
+          "n_analysts": 48,
+          "target_mean_price": 516.125,
+          "target_vs_price_pct": -3.4
+        },
+        "earnings_surprises": {
+          "quarters": [
+            {
+              "period": "2025-06-30",
+              "eps_actual": 0.48,
+              "eps_estimate": 0.48,
+              "surprise_pct": -0.5
+            },
+            {
+              "period": "2025-09-30",
+              "eps_actual": 1.2,
+              "eps_estimate": 1.17,
+              "surprise_pct": 2.5
+            },
+            {
+              "period": "2025-12-31",
+              "eps_actual": 1.53,
+              "eps_estimate": 1.32,
+              "surprise_pct": 16.0
+            },
+            {
+              "period": "2026-03-31",
+              "eps_actual": 1.37,
+              "eps_estimate": 1.29,
+              "surprise_pct": 5.8
+            }
+          ],
+          "beat_streak": 3
+        }
       },
       "RBRK": {
         "headlines": [
           {
             "title": "Rubrik (RBRK) is One of the Best Up and Coming Stocks to Invest In Right Now, Here\u2019s Why",
             "published": "2026-07-12T16:33:43Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/rubrik-rbrk-one-best-coming-132543301.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/rubrik-rbrk-one-best-coming-132543301.html",
+            "age_days": 1.3
           },
           {
             "title": "Rubrik (RBRK) Launches Agentic-First Rubrik AI Platform",
             "published": "2026-07-11T16:27:03Z",
-            "url": "https://finance.yahoo.com/technology/ai/articles/rubrik-rbrk-launches-agentic-first-162703119.html"
+            "url": "https://finance.yahoo.com/technology/ai/articles/rubrik-rbrk-launches-agentic-first-162703119.html",
+            "age_days": 2.4
           },
           {
             "title": "Rackspace Technology Cuts 2026 Outlook as $250M Stock Sale Fuels AI Push",
             "published": "2026-07-11T03:02:02Z",
-            "url": "https://www.marketbeat.com/instant-alerts/rackspace-technology-cuts-2026-outlook-as-250m-stock-sale-fuels-ai-push-2026-07-10/?utm_source=yahoofinance&utm_medium=yahoofinance"
+            "url": "https://www.marketbeat.com/instant-alerts/rackspace-technology-cuts-2026-outlook-as-250m-stock-sale-fuels-ai-push-2026-07-10/?utm_source=yahoofinance&utm_medium=yahoofinance",
+            "age_days": 2.9
           },
           {
             "title": "IPO Stock Of The Week: Rubrik Flirts With Buy Point Amid Path To Profitability",
             "published": "2026-07-10T18:18:26Z",
-            "url": "https://www.investors.com/stock-lists/ipo-analysis/rubrik-stock-rbrk/?src=A00220&yptr=yahoo"
+            "url": "https://www.investors.com/stock-lists/ipo-analysis/rubrik-stock-rbrk/?src=A00220&yptr=yahoo",
+            "age_days": 3.3
           },
           {
             "title": "Rubrik unveils $500 million UK investment, names London as European HQ",
             "published": "2026-07-09T07:05:04Z",
-            "url": "https://finance.yahoo.com/technology/ai/articles/rubrik-unveils-500-million-uk-070504465.html"
-          },
-          {
-            "title": "CTSH Expands AI Portfolio With OpenAI: Buy, Sell, or Hold The Stock?",
-            "published": "2026-07-03T15:01:00Z",
-            "url": "https://finance.yahoo.com/technology/ai/articles/ctsh-expands-ai-portfolio-openai-150100326.html"
+            "url": "https://finance.yahoo.com/technology/ai/articles/rubrik-unveils-500-million-uk-070504465.html",
+            "age_days": 4.7
           }
         ],
-        "next_earnings": "2026-06-04"
+        "next_earnings": "2026-06-04",
+        "analyst_ratings": {
+          "recommendation_key": "strong_buy",
+          "recommendation_mean": 1.11111,
+          "n_analysts": 26,
+          "target_mean_price": 94.76923,
+          "target_vs_price_pct": 13.0
+        },
+        "earnings_surprises": {
+          "quarters": [
+            {
+              "period": "2025-07-31",
+              "eps_actual": -0.03,
+              "eps_estimate": -0.34,
+              "surprise_pct": 91.2
+            },
+            {
+              "period": "2025-10-31",
+              "eps_actual": 0.1,
+              "eps_estimate": -0.17,
+              "surprise_pct": 1.6
+            },
+            {
+              "period": "2026-01-31",
+              "eps_actual": 0.04,
+              "eps_estimate": -0.11,
+              "surprise_pct": 136.9
+            },
+            {
+              "period": "2026-04-30",
+              "eps_actual": 0.16,
+              "eps_estimate": -0.03,
+              "surprise_pct": 6.7
+            }
+          ],
+          "beat_streak": 4
+        }
       },
       "HOOD": {
         "headlines": [
           {
             "title": "Analysts stunned by Robinhood's $3.1 billion debut week",
             "published": "2026-07-13T20:33:25Z",
-            "url": "https://www.thestreet.com/crypto/markets/analysts-stunned-by-robinhoods-3-1-billion-debut-week"
+            "url": "https://www.thestreet.com/crypto/markets/analysts-stunned-by-robinhoods-3-1-billion-debut-week",
+            "age_days": 0.2
           },
           {
             "title": "Robinhood explores first credit card-backed bond sale - report",
             "published": "2026-07-13T19:38:55Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/robinhood-explores-first-credit-card-193855117.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/robinhood-explores-first-credit-card-193855117.html",
+            "age_days": 0.2
           },
           {
             "title": "Kalshi Pro Launches as Robinhood Plans to Go Its Own Way",
             "published": "2026-07-13T19:02:53Z",
-            "url": "https://app.moby.co/home/news/news-kalshi-pro-launches-as-robinhood-plans-to-go-their-own-way?utm_source=yahoo_finance&utm_medium=rss"
+            "url": "https://app.moby.co/home/news/news-kalshi-pro-launches-as-robinhood-plans-to-go-their-own-way?utm_source=yahoo_finance&utm_medium=rss",
+            "age_days": 0.2
           },
           {
             "title": "Robinhood Eyes Its First Bond Sale Backed by Credit Card Bills",
             "published": "2026-07-13T18:14:20Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/robinhood-eyes-first-bond-sale-181420168.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/robinhood-eyes-first-bond-sale-181420168.html",
+            "age_days": 0.3
           },
           {
             "title": "Robinhood Chain's Early Momentum Is Being Driven By Meme Coins, Not Tokenized Stocks",
             "published": "2026-07-13T16:59:36Z",
-            "url": "https://decrypt.co/373398/robinhood-chain-momentum-meme-coins-not-tokenized-stocks"
+            "url": "https://decrypt.co/373398/robinhood-chain-momentum-meme-coins-not-tokenized-stocks",
+            "age_days": 0.3
           },
           {
             "title": "Cathie Wood Loads Up on SpaceX, Meta, Eli Lilly and Circle Group",
             "published": "2026-07-13T16:52:27Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/cathie-wood-loads-spacex-meta-165227529.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/cathie-wood-loads-spacex-meta-165227529.html",
+            "age_days": 0.3
           }
         ],
-        "next_earnings": "2026-07-29"
+        "next_earnings": "2026-07-29",
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.71429,
+          "n_analysts": 26,
+          "target_mean_price": 117.43846,
+          "target_vs_price_pct": 6.9
+        },
+        "earnings_surprises": {
+          "quarters": [
+            {
+              "period": "2025-06-30",
+              "eps_actual": 0.42,
+              "eps_estimate": 0.31,
+              "surprise_pct": 36.0
+            },
+            {
+              "period": "2025-09-30",
+              "eps_actual": 0.61,
+              "eps_estimate": 0.54,
+              "surprise_pct": 12.1
+            },
+            {
+              "period": "2025-12-31",
+              "eps_actual": 0.66,
+              "eps_estimate": 0.64,
+              "surprise_pct": 3.8
+            },
+            {
+              "period": "2026-03-31",
+              "eps_actual": 0.38,
+              "eps_estimate": 0.39,
+              "surprise_pct": -2.0
+            }
+          ],
+          "beat_streak": 0
+        }
       },
       "DASH": {
         "headlines": [
           {
             "title": "3 Growth Stocks with All-Star Potential",
             "published": "2026-07-13T18:30:39Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/3-growth-stocks-star-potential-183039341.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/3-growth-stocks-star-potential-183039341.html",
+            "age_days": 0.3
+          },
+          {
+            "title": "This Volatile Growth Stock Is Up 50% In 3 Months. Don\u2019t Rush to Buy Now.",
+            "published": "2026-07-13T17:51:40Z",
+            "url": "https://www.barchart.com/story/news/3258197/this-volatile-growth-stock-is-up-50-in-3-months-dont-rush-to-buy-now",
+            "age_days": 0.3
           },
           {
             "title": "Chargeback Disputes Hit 158 Million, Up 29% Since 2021",
             "published": "2026-07-13T12:30:18Z",
-            "url": "https://finance.yahoo.com/small-business/articles/chargeback-disputes-hit-158-million-123018678.html"
+            "url": "https://finance.yahoo.com/small-business/articles/chargeback-disputes-hit-158-million-123018678.html",
+            "age_days": 0.5
           },
           {
             "title": "Uber and DoorDash Drivers Think They Have No 401(k). The IRS Lets Them Build a $72,000 One but Almost Nobody Does",
             "published": "2026-07-10T22:30:48Z",
-            "url": "https://247wallst.com/personal-finance/2026/07/10/uber-and-doordash-drivers-think-they-have-no-401k-the-irs-lets-them-build-a-72000-one-but-almost-nobody-does/"
+            "url": "https://247wallst.com/personal-finance/2026/07/10/uber-and-doordash-drivers-think-they-have-no-401k-the-irs-lets-them-build-a-72000-one-but-almost-nobody-does/",
+            "age_days": 3.1
           },
           {
             "title": "DoorDash vs. Uber Technologies: Which Media Stock Is a Better Buy in 2026?",
             "published": "2026-07-10T17:49:51Z",
-            "url": "https://www.fool.com/coverage/better-buy/2026/07/10/doordash-vs-uber-technologies-which-media-stock-is-a-better-buy-in-2026/"
+            "url": "https://www.fool.com/coverage/better-buy/2026/07/10/doordash-vs-uber-technologies-which-media-stock-is-a-better-buy-in-2026/",
+            "age_days": 3.3
           },
           {
             "title": "Collect 15% On DASH Stock Now, And Still Keep 21% Of Upside",
             "published": "2026-07-09T21:02:04Z",
-            "url": "https://www.trefis.com/articles/606421/collect-15-on-dash-stock-now-and-still-keep-21-of-upside/2026-07-09"
-          },
-          {
-            "title": "Domino's Quarterly Results Likely Impacted by Macro Pressures, Promotions, UBS Says",
-            "published": "2026-07-08T20:24:28Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/domino-apos-quarterly-results-likely-202428834.html"
+            "url": "https://www.trefis.com/articles/606421/collect-15-on-dash-stock-now-and-still-keep-21-of-upside/2026-07-09",
+            "age_days": 4.2
           }
         ],
-        "next_earnings": "2026-08-05"
+        "next_earnings": "2026-08-05",
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.5814,
+          "n_analysts": 41,
+          "target_mean_price": 246.1805,
+          "target_vs_price_pct": 29.9
+        },
+        "earnings_surprises": {
+          "quarters": [
+            {
+              "period": "2025-06-30",
+              "eps_actual": 0.65,
+              "eps_estimate": 0.43,
+              "surprise_pct": 49.5
+            },
+            {
+              "period": "2025-09-30",
+              "eps_actual": 0.55,
+              "eps_estimate": 0.68,
+              "surprise_pct": -18.7
+            },
+            {
+              "period": "2025-12-31",
+              "eps_actual": 0.48,
+              "eps_estimate": 0.58,
+              "surprise_pct": -17.7
+            },
+            {
+              "period": "2026-03-31",
+              "eps_actual": 0.42,
+              "eps_estimate": 0.36,
+              "surprise_pct": 15.4
+            }
+          ],
+          "beat_streak": 1
+        }
       },
       "AXON": {
         "headlines": [
           {
             "title": "Axon Enterprise (AXON) Registers a Bigger Fall Than the Market: Important Facts to Note",
             "published": "2026-07-13T22:00:06Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/axon-enterprise-axon-registers-bigger-220006439.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/axon-enterprise-axon-registers-bigger-220006439.html",
+            "age_days": 0.1
           },
           {
             "title": "Axon Enterprise's Quarterly Earnings Preview: What You Need to Know",
             "published": "2026-07-13T15:03:21Z",
-            "url": "https://www.barchart.com/story/news/3255526/axon-enterprise-s-quarterly-earnings-preview-what-you-need-to-know"
+            "url": "https://www.barchart.com/story/news/3255526/axon-enterprise-s-quarterly-earnings-preview-what-you-need-to-know",
+            "age_days": 0.4
           },
           {
             "title": "How AppLovin (APP) Is Using AI to Expand Beyond Mobile Gaming Into E-Commerce Advertising",
             "published": "2026-07-12T17:25:26Z",
-            "url": "https://finance.yahoo.com/technology/ai/articles/applovin-nasdaq-app-using-ai-122026029.html"
+            "url": "https://finance.yahoo.com/technology/ai/articles/applovin-nasdaq-app-using-ai-122026029.html",
+            "age_days": 1.3
           },
           {
             "title": "Coinbase, Lyft, and Axon prove there's more going on in markets than the 'Magnificent 7'",
             "published": "2026-07-12T12:30:00Z",
-            "url": "https://finance.yahoo.com/markets/article/coinbase-lyft-and-axon-prove-theres-more-going-on-in-markets-than-the-magnificent-7-123000539.html"
+            "url": "https://finance.yahoo.com/markets/article/coinbase-lyft-and-axon-prove-theres-more-going-on-in-markets-than-the-magnificent-7-123000539.html",
+            "age_days": 1.5
           },
           {
             "title": "Axon (AXON) Upgraded to Strong Buy: Here's What You Should Know",
             "published": "2026-07-09T16:00:04Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/axon-axon-upgraded-strong-buy-160004315.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/axon-axon-upgraded-strong-buy-160004315.html",
+            "age_days": 4.4
           },
           {
             "title": "Investors Heavily Search Axon Enterprise, Inc (AXON): Here is What You Need to Know",
             "published": "2026-07-09T13:00:04Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/investors-heavily-search-axon-enterprise-130004676.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/investors-heavily-search-axon-enterprise-130004676.html",
+            "age_days": 4.5
           }
         ],
-        "next_earnings": "2026-08-03"
+        "next_earnings": "2026-08-03",
+        "analyst_ratings": {
+          "recommendation_key": "buy",
+          "recommendation_mean": 1.6,
+          "n_analysts": 18,
+          "target_mean_price": 670.3711,
+          "target_vs_price_pct": 22.5
+        },
+        "earnings_surprises": {
+          "quarters": [
+            {
+              "period": "2025-06-30",
+              "eps_actual": 2.12,
+              "eps_estimate": 1.46,
+              "surprise_pct": 45.0
+            },
+            {
+              "period": "2025-09-30",
+              "eps_actual": 1.17,
+              "eps_estimate": 1.54,
+              "surprise_pct": -24.1
+            },
+            {
+              "period": "2025-12-31",
+              "eps_actual": 2.15,
+              "eps_estimate": 1.6,
+              "surprise_pct": 34.5
+            },
+            {
+              "period": "2026-03-31",
+              "eps_actual": 1.61,
+              "eps_estimate": 1.6,
+              "surprise_pct": 0.8
+            }
+          ],
+          "beat_streak": 2
+        }
       },
       "SMR": {
         "headlines": [
           {
             "title": "SpaceX Just Did Something NuScale Power Investors Should Be Watching",
             "published": "2026-07-13T20:50:00Z",
-            "url": "https://www.fool.com/investing/2026/07/13/spacex-just-did-something-nuscale-power/"
+            "url": "https://www.fool.com/investing/2026/07/13/spacex-just-did-something-nuscale-power/",
+            "age_days": 0.2
           },
           {
             "title": "Can X-Energy's Capital-Light Model Drive Long-Term Growth?",
             "published": "2026-07-13T16:32:00Z",
-            "url": "https://finance.yahoo.com/energy/articles/x-energys-capital-light-model-163200663.html"
+            "url": "https://finance.yahoo.com/energy/articles/x-energys-capital-light-model-163200663.html",
+            "age_days": 0.3
           },
           {
             "title": "After an 83% Correction, Where Will NuScale Power Stock Be in 3 Years?",
             "published": "2026-07-13T11:48:00Z",
-            "url": "https://www.fool.com/investing/2026/07/13/after-a-x-run-where-will-hot-ticker-be-in-3-years/"
+            "url": "https://www.fool.com/investing/2026/07/13/after-a-x-run-where-will-hot-ticker-be-in-3-years/",
+            "age_days": 0.5
           },
           {
             "title": "What Does the Sale of NuScale Stock by the CFO Mean to Investors?",
             "published": "2026-07-11T20:06:01Z",
-            "url": "https://www.fool.com/coverage/filings/2026/07/11/what-does-the-sale-of-nuscale-stock-by-the-cfo-mean-to-investors/"
+            "url": "https://www.fool.com/coverage/filings/2026/07/11/what-does-the-sale-of-nuscale-stock-by-the-cfo-mean-to-investors/",
+            "age_days": 2.2
           },
           {
             "title": "Why NuScale Power (SMR) Is Down 7.4% After Mounting Delays, Weak Results And No Firm Contracts",
             "published": "2026-07-11T15:08:21Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/why-nuscale-power-smr-down-150821532.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/why-nuscale-power-smr-down-150821532.html",
+            "age_days": 2.4
           },
           {
             "title": "Nuclear Energy Stock SMR Is Trading Under $10: Bargain Buy or Value Trap?",
             "published": "2026-07-11T14:05:00Z",
-            "url": "https://www.fool.com/investing/2026/07/11/nuclear-energy-stock-smr-under-10-buy-trap/"
+            "url": "https://www.fool.com/investing/2026/07/11/nuclear-energy-stock-smr-under-10-buy-trap/",
+            "age_days": 2.4
           }
         ],
-        "next_earnings": "2026-08-05"
+        "next_earnings": "2026-08-05",
+        "analyst_ratings": {
+          "recommendation_key": "hold",
+          "recommendation_mean": 2.52941,
+          "n_analysts": 14,
+          "target_mean_price": 15.35714,
+          "target_vs_price_pct": 83.9
+        },
+        "earnings_surprises": {
+          "quarters": [
+            {
+              "period": "2025-06-30",
+              "eps_actual": -0.13,
+              "eps_estimate": -0.11,
+              "surprise_pct": -16.1
+            },
+            {
+              "period": "2025-09-30",
+              "eps_actual": -1.85,
+              "eps_estimate": -0.14,
+              "surprise_pct": -11.8
+            },
+            {
+              "period": "2025-12-31",
+              "eps_actual": -0.8,
+              "eps_estimate": -0.15,
+              "surprise_pct": -4.3
+            },
+            {
+              "period": "2026-03-31",
+              "eps_actual": -0.14,
+              "eps_estimate": -0.14,
+              "surprise_pct": -1.5
+            }
+          ],
+          "beat_streak": 0
+        }
       },
       "SMCI": {
         "headlines": [
           {
             "title": "Why Super Micro Computer (SMCI) Dipped More Than Broader Market Today",
             "published": "2026-07-13T21:45:05Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/why-super-micro-computer-smci-214505417.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/why-super-micro-computer-smci-214505417.html",
+            "age_days": 0.1
           },
           {
             "title": "Missed DELL\u2019s 248% Run? IGPT Quietly Turned $10K Into $16,600",
             "published": "2026-07-13T17:17:36Z",
-            "url": "https://247wallst.com/investing/etf/2026/07/13/missed-dells-248-run-igpt-quietly-turned-10k-into-16600/"
+            "url": "https://247wallst.com/investing/etf/2026/07/13/missed-dells-248-run-igpt-quietly-turned-10k-into-16600/",
+            "age_days": 0.3
           },
           {
             "title": "Super Micro Computer (SMCI) Introduces DCBBS Blueprint for HPC",
             "published": "2026-07-11T21:12:02Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/super-micro-computer-smci-introduces-160002387.html"
+            "url": "https://finance.yahoo.com/markets/stocks/articles/super-micro-computer-smci-introduces-160002387.html",
+            "age_days": 2.2
           },
           {
             "title": "Pushing the Edge: Super Micro Computer Reboots the AI Landscape",
             "published": "2026-07-11T11:55:00Z",
-            "url": "https://www.marketbeat.com/articles/pushing-the-edge-super-micro-computer-reboots-the-ai-landscape/?utm_source=yahoofinance&utm_medium=yahoofinance"
+            "url": "https://www.marketbeat.com/articles/pushing-the-edge-super-micro-computer-reboots-the-ai-landscape/?utm_source=yahoofinance&utm_medium=yahoofinance",
+            "age_days": 2.5
           },
           {
             "title": "Missed Nvidia\u2019s Run? SMH Holders Made 113% Over 12 Months Anyway",
             "published": "2026-07-10T23:00:44Z",
-            "url": "https://247wallst.com/investing/etf/2026/07/10/missed-nvidias-run-smh-holders-made-113-over-12-months-anyway/"
+            "url": "https://247wallst.com/investing/etf/2026/07/10/missed-nvidias-run-smh-holders-made-113-over-12-months-anyway/",
+            "age_days": 3.1
           },
           {
             "title": "How Hewlett Packard Built A Fortress Out Of Its Backlog",
             "published": "2026-07-10T21:12:27Z",
-            "url": "https://www.trefis.com/articles/606606/how-hewlett-packard-built-a-fortress-out-of-its-backlog/2026-07-10"
+            "url": "https://www.trefis.com/articles/606606/how-hewlett-packard-built-a-fortress-out-of-its-backlog/2026-07-10",
+            "age_days": 3.2
           }
         ],
-        "next_earnings": "2026-08-04"
+        "next_earnings": "2026-08-04",
+        "analyst_ratings": {
+          "recommendation_key": "hold",
+          "recommendation_mean": 2.84211,
+          "n_analysts": 16,
+          "target_mean_price": 37.25,
+          "target_vs_price_pct": 34.7
+        },
+        "earnings_surprises": {
+          "quarters": [
+            {
+              "period": "2025-06-30",
+              "eps_actual": 0.41,
+              "eps_estimate": 0.44,
+              "surprise_pct": -6.6
+            },
+            {
+              "period": "2025-09-30",
+              "eps_actual": 0.35,
+              "eps_estimate": 0.39,
+              "surprise_pct": -10.1
+            },
+            {
+              "period": "2025-12-31",
+              "eps_actual": 0.69,
+              "eps_estimate": 0.49,
+              "surprise_pct": 41.4
+            },
+            {
+              "period": "2026-03-31",
+              "eps_actual": 0.84,
+              "eps_estimate": 0.62,
+              "surprise_pct": 34.5
+            }
+          ],
+          "beat_streak": 2
+        }
       }
     }
   },
