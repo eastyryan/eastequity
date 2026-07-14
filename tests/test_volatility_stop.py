@@ -38,6 +38,7 @@ def base_proposal(entry, stop, target, rr):
         "risk_reward_ratio": rr,
         "thesis": "Clean swing setup with a real catalyst and rising estimates.",
         "macro_context": "Regime supports adding measured long exposure.",
+        "variant_perception": "Consensus sees a fair multiple; I see mispriced growth because estimates lag; resolves at the next print.",
         "catalysts": ["Earnings in ~3 weeks"],
     }
 

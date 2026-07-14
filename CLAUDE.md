@@ -176,6 +176,28 @@ Beyond filings/13F/news, every run now includes:
   cite a price target as your own target. Headlines in news_and_catalysts now carry
   age_days (older than ~7 days are filtered out; age_days null = date unknown) - weight
   fresh news over stale, and say the age when a headline is load-bearing.
+- **portfolio_risk** - correlation/beta math for the CURRENT book and top candidates
+  (90d daily returns vs SPY). This is the diversification dimension your process lacked:
+  shared_left_tail=true means every holding falls together in the same shock - when it is
+  true, a candidate whose correlation profile is INVERSE to that shock scenario (low/negative
+  corr_to_book, diversifier=true) can be worth MORE to the book than a higher-conviction
+  clone of what you already own. Conversely a new BUY >0.7 correlated to a clustered book
+  must say why it deserves capital beyond its solo merits (the risk desk will ask). Cite
+  the actual numbers ("0.86 correlated to DELL") - never vibe about diversification.
+- **market_news** - market-wide headlines from the last ~24h (RSS sweep). Tape context for
+  the macro read and for spotting what is moving EVERYTHING today; never a single-name
+  thesis source by itself.
+- **todays_8ks** - 8-K filings TODAY across the ENTIRE universe (one EDGAR index sweep),
+  not just focus names. A material 8-K on a name outside the focus set may be the day's
+  real opportunity - WebFetch the filing before dismissing it, and consider promoting the
+  name to your watchlist with a trigger.
+- **sector_comps** (on surfaced rows) - peer-relative valuation with HONEST coverage
+  counts: own fwd_pe_est vs sector_median_fwd_pe (premium/discount %), growth vs sector
+  median (pp), pe_rank_in_sector. This is how you argue an LPL-style consensus error
+  quantitatively ("10.6x vs sector 13x on similar growth"). Check coverage.pe_n before
+  citing a median - a thin denominator is disclosed, respect it. fwd_pe_est is null on
+  negative-EPS names - NEVER read null as cheap. A discount is only a thesis when you
+  can name the MECHANISM consensus gets wrong (variant_perception).
 - **Deeper fundamentals** in sec_filings: cash, long_term_debt, operating_cash_flow (check
   period_days - flow rows may be year-to-date), stock_based_compensation, diluted_shares.
   A cheap multiple with heavy debt or SBC-inflated earnings is not cheap - say so.
@@ -280,8 +302,10 @@ Beyond filings/13F/news, every run now includes:
    decision — book it and free the capital.
 3. **Universe scan** — identify at most 3 candidates with swing-quality setups.
 4. **Deep research** — for top candidates, pull latest 10-K/10-Q summaries, 13F activity,
-   and news. You may use WebSearch to verify catalysts and check for breaking news the
-   context bundle missed. Cite specifics (numbers, dates, filings), not vibes.
+   and news. WebSearch is MANDATORY for any name you are about to PROPOSE: verify the
+   catalyst is still live and check for breaking news the bundle missed, then cite what
+   you found (or state "web check: nothing new" explicitly). For other research it
+   remains optional. Cite specifics (numbers, dates, filings), not vibes.
 5. **Thesis & proposal** — output structured JSON proposals (schema below).
 
 ## Trade Proposal JSON Schema
@@ -306,7 +330,8 @@ Output proposals inside a fenced ```json block as a list under key `"proposals"`
       "scenarios": {"bull": {"price": 240, "prob": 0.3}, "base": {"price": 215, "prob": 0.45}, "bear": {"price": 170, "prob": 0.25}},
       "catalysts": ["Specific catalyst with expected date/window"],
       "macro_context": "One-paragraph regime alignment statement.",
-      "risk_map": "What kills this trade and how we'd know early."
+      "risk_map": "What kills this trade and how we'd know early.",
+      "variant_perception": "REQUIRED on every BUY (validator-enforced). Four sentences, no filler: (1) CONSENSUS: what the market/street believes, cited from the bundle (mean target, rating, multiple vs peers, positioning). (2) MY VIEW: what you believe differently. (3) MECHANISM: the specific thing consensus is mispricing and WHY their model is wrong (e.g. 'sell-side NII models assume rate cuts; in a higher-for-longer regime cash-sweep revenue does the opposite'). (4) RESOLUTION: the dated event or observable data where the market finds out you were right."
     }
   ],
   "no_trade_reason": "Required if proposals is empty.",

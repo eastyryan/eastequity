@@ -72,6 +72,7 @@ def _proposal(ticker="DELL", size=1000):
             "position_size_usd": size, "entry_price_max": 450.0, "stop_loss": 412.0,
             "target_price": 510.0, "holding_horizon_days": 30, "confidence": 0.7,
             "risk_reward_ratio": 1.6, "thesis": "clean setup", "macro_context": "ok",
+            "variant_perception": "Consensus sees X; I see Y because Z; resolves at earnings.",
             "catalysts": ["x"]}
 
 

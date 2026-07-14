@@ -583,6 +583,40 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
             pass
     watchlist_alerts = check_watchlist_triggers(prev_watchlist, scan.get("prices", {}))
 
+    # Market-wide tape context (keyless RSS + optional Finnhub): cheap enough for
+    # every run depth. Fail-soft - a dead feed never blocks a cycle.
+    print("  • market-wide news...")
+    try:
+        from tools.market_news import get_market_news
+        market_news = get_market_news()
+    except Exception as e:
+        market_news = {"status": "error", "reason": str(e)[:150]}
+
+    # Universe-wide 8-K sweep (ONE EDGAR daily-index request): material news for
+    # ALL watchable names, not just the ~12 focus names. Skipped on light runs.
+    todays_8ks = {"status": "skipped_light_run"} if light else {}
+    if not light:
+        print("  • universe 8-K sweep...")
+        try:
+            from tools.filings_sweep import today_8ks
+            todays_8ks = today_8ks(sorted(validator.load_universe()))
+        except Exception as e:
+            todays_8ks = {"status": "error", "reason": str(e)[:150]}
+
+    # Portfolio correlation/beta: quantifies the book's common left tail and each
+    # top candidate's diversification value BEFORE the brain reasons about adds.
+    print("  • portfolio correlation/beta...")
+    try:
+        from tools.correlation import get_portfolio_risk
+        _cand = [r.get("ticker") for r in (scan.get("top_setups") or [])[:5]
+                 if r.get("ticker") and r.get("ticker") not in held]
+        portfolio_risk = get_portfolio_risk(
+            [{"ticker": p["ticker"], "market_value_usd": p.get("market_value_usd", 0)}
+             for p in portfolio.get("positions", [])],
+            candidates=_cand)
+    except Exception as e:
+        portfolio_risk = {"status": "error", "reason": str(e)[:150]}
+
     # The agent's own track record: what it predicted vs. what actually happened.
     closed = compute_closed_trades()
     hist_file = ROOT / "dashboard" / "data" / "equity_history.json"
@@ -750,6 +784,28 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
         },
         "smart_money_13f": smart_money,
         "news_and_catalysts": news,
+        "market_news": {
+            "note": "Market-wide headlines (last ~24h) for tape context - what is "
+                    "moving EVERYTHING today, not just your focus names. Weigh it in "
+                    "the macro/regime read; never build a single-name thesis on it alone.",
+            **(market_news if isinstance(market_news, dict) else {}),
+        },
+        "todays_8ks": {
+            "note": "8-K filings TODAY across the ENTIRE universe (one EDGAR index "
+                    "sweep). An 8-K on a non-focus name may be the day's real "
+                    "opportunity - pull the filing with WebFetch if the form looks "
+                    "material before dismissing it.",
+            **(todays_8ks if isinstance(todays_8ks, dict) else {}),
+        },
+        "portfolio_risk": {
+            "note": "Correlation/beta math for the CURRENT book + top candidates. "
+                    "shared_left_tail=true means every holding falls together in the "
+                    "same shock - a new BUY >0.7 correlated to the book must justify "
+                    "why it deserves to exist beyond its solo merits; a candidate "
+                    "flagged diversifier=true is worth extra attention when the book "
+                    "is clustered.",
+            **(portfolio_risk if isinstance(portfolio_risk, dict) else {}),
+        },
         "insider_activity": insiders,
         "partnerships": partnerships,
         "track_record": track_record,
@@ -941,6 +997,11 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
         f"{context_file} - read it. Your job is to try to KILL each trade: attack the "
         "thesis with the data (valuation, estimate revisions, insider selling, earnings "
         "timing, macro, entry geometry, portfolio concentration vs existing holdings). "
+        "Attack the variant_perception hardest: if the claimed consensus view is a straw "
+        "man, the mispriced mechanism is vague, or there is no dated event where the "
+        "market learns the analyst is right, say so. Check portfolio_risk in the context: "
+        "a new BUY that is >0.7 correlated to an already-clustered book needs a reason "
+        "to exist beyond its solo merits. "
         "Be a skeptic, not a contrarian for sport - approve genuinely sound trades. "
         "Output ONLY a ```json block: {\"reviews\": [{\"ticker\": \"X\", "
         "\"verdict\": \"approve\"|\"veto\", \"objection\": \"one paragraph\", "
@@ -1282,6 +1343,20 @@ def _to_et_date(iso_ts: str | None) -> str | None:
             return iso_ts[:10]
 
 
+def _proposal_ev(p: dict):
+    """Probability-weighted expected value derived from a BUY proposal's own
+    scenarios - published next to the proposal so every thesis carries its
+    honest math. None for non-BUYs or when scenarios are unusable."""
+    try:
+        if str(p.get("action", "")).upper() != "BUY":
+            return None
+        from tools.scenario_ev import expected_value
+        return expected_value(p.get("scenarios"), p.get("entry_price_max"),
+                              p.get("holding_horizon_days"))
+    except Exception:
+        return None
+
+
 def _sector_map() -> dict:
     """ticker -> sector, from data/universe.json (for dashboard exposure)."""
     try:
@@ -1497,7 +1572,8 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
         "macro_regime_hint": context["macro_regime"].get("regime_hint"),
         "latest_reasoning": response,
         "proposals": [{"proposal": r.proposal, "approved": r.approved,
-                       "reasons": r.reasons} for r in results],
+                       "reasons": r.reasons,
+                       "scenario_ev": _proposal_ev(r.proposal)} for r in results],
         "fills": fills,
         "closed_trades": closed[::-1],
         "performance": compute_performance_stats(closed, hist),
@@ -1793,12 +1869,22 @@ def universe_review(run_id: str) -> int:
 
     print("  • fresh sector scan for the review...")
     scan = scan_universe(top_n=10)
+    # Broad-market discovery sweep: candidates OUTSIDE the current universe so the
+    # review curates from the whole market, not just names the model already knows.
+    print("  • discovery sweep (broad market, ex-universe)...")
+    try:
+        from tools.discovery_screen import run_discovery
+        discovery = run_discovery()
+    except Exception as e:
+        discovery = {"status": "error", "reason": str(e)[:150]}
+
     bundle = {
         "as_of_et": _et_date(),
         "current_universe": current,
         "protected_tickers_never_remove": sorted(protected),
         "sector_relative_strength": scan.get("sector_relative_strength"),
         "top_setups_now": scan.get("top_setups"),
+        "discovery_candidates": discovery,
         "track_record_breakdowns": build_performance_breakdown(compute_closed_trades()),
     }
     review_file = ROOT / "state" / f"universe_review_{run_id}.json"
@@ -1817,7 +1903,10 @@ def universe_review(run_id: str) -> int:
         "Constraints (code-enforced): US-listed common equities only, MINIMUM $1B market "
         "cap (sub-billion adds are dropped), no leveraged/inverse "
         "products, never remove the protected tickers, max 10 adds and 10 removals, final "
-        "size 90-140 names. Removing a name is healthy - a universe that only grows is a "
+        "size 150-220 names. The bundle's discovery_candidates section (when present) is a "
+        "broad-market momentum/RS sweep of ~600 liquid names OUTSIDE the current universe - "
+        "treat it as your candidate shortlist so curation picks from the whole market, not "
+        "just names you already know. Removing a name is healthy - a universe that only grows is a "
         "museum. ALSO maintain the AI-exposure map (data/ai_exposure.json in the bundle "
         "context): classify every ADDED name and refresh any existing label your research "
         "contradicts, using exactly one of ai_supplier / ai_beneficiary / ai_neutral / "
@@ -1860,8 +1949,8 @@ def universe_review(run_id: str) -> int:
     old_tickers = {t.upper() for ts in current["sectors"].values() for t in ts}
     added, removed = new_tickers - old_tickers, old_tickers - new_tickers
     problems = []
-    if not 90 <= len(new_tickers) <= 140:
-        problems.append(f"size {len(new_tickers)} outside 90-140")
+    if not 150 <= len(new_tickers) <= 220:
+        problems.append(f"size {len(new_tickers)} outside 150-220")
     if len(added) > 10 or len(removed) > 10:
         problems.append(f"too many changes (+{len(added)}/-{len(removed)}, max 10 each)")
     if removed & protected:
