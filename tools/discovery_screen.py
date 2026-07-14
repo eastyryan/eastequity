@@ -267,8 +267,19 @@ def run_discovery(top_n: int = 25) -> dict:
 
 def _write_output(out: dict) -> None:
     """Persist the sweep for the Sunday universe review. Fail-soft: a write error is
-    recorded in the returned dict, never raised."""
+    recorded in the returned dict, never raised. KEEP-LAST-GOOD: a sweep that found
+    nothing (blocked/flaky feed) must not replace a real candidate list with an
+    empty one wearing a fresh timestamp - the review would then curate from nothing."""
     try:
+        if not out.get("top_candidates") and OUTPUT_PATH.exists():
+            try:
+                prior = json.loads(OUTPUT_PATH.read_text())
+                if prior.get("top_candidates"):
+                    out["write_skipped"] = ("empty sweep - kept last-good candidate "
+                                            "file from " + str(prior.get("as_of")))
+                    return
+            except Exception:
+                pass  # prior file unreadable - writing the fresh (even empty) one is fine
         OUTPUT_PATH.write_text(json.dumps(out, indent=1) + "\n")
     except Exception as e:
         out["write_error"] = type(e).__name__

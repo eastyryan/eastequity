@@ -21,8 +21,34 @@ PLAN_NUMERIC_FIELDS = ("stop_loss", "target_price", "holding_horizon_days",
                        "entry_price_max", "confidence")
 
 
+def filled_buy_proposal_ids() -> dict:
+    """{TICKER: {proposal_id, ...}} of FILLED BUYs from the broker ledger.
+
+    Journal-plan joins must be restricted to proposals that actually filled: the
+    proposals journal logs rejected/unfilled proposals too, and the old "latest
+    BUY per ticker" join let a later REJECTED proposal overwrite the real plan
+    (the HPE 2026-07-10 incident: the enforced stop/confidence came from a
+    size-cap-rejected proposal, not the $800 fill)."""
+    out: dict[str, set] = {}
+    try:
+        history = json.loads((ROOT / "state" / "portfolio.json").read_text()).get("history", [])
+    except Exception:
+        return out
+    for fill in history:
+        if not isinstance(fill, dict) or fill.get("status") != "filled":
+            continue
+        if str(fill.get("action", "")).upper() != "BUY":
+            continue
+        pid = fill.get("proposal_id")
+        if pid:
+            out.setdefault(str(fill.get("ticker", "")).upper(), set()).add(pid)
+    return out
+
+
 def _journal_plans() -> dict:
-    """Latest BUY proposal per ticker from the proposals journal (narrative + numbers)."""
+    """Latest FILLED BUY proposal per ticker from the proposals journal
+    (narrative + numbers). Rejected/unfilled proposals are never a plan source."""
+    filled = filled_buy_proposal_ids()
     plans: dict = {}
     for f in sorted((ROOT / "journal" / "proposals").glob("*.jsonl")):
         for line in f.read_text().splitlines():
@@ -32,7 +58,10 @@ def _journal_plans() -> dict:
                 continue
             p = rec.get("proposal", {})
             if p.get("action") == "BUY":
-                plans[p.get("ticker", "").upper()] = {
+                tk = p.get("ticker", "").upper()
+                if rec.get("run_id") not in filled.get(tk, ()):
+                    continue  # rejected or never filled - not this position's plan
+                plans[tk] = {
                     "thesis": p.get("thesis"), "stop_loss": p.get("stop_loss"),
                     "target_price": p.get("target_price"),
                     "entry_price_max": p.get("entry_price_max"),
@@ -78,10 +107,38 @@ def get_portfolio_state() -> dict:
     return {"status": "ok", "broker": broker, "mode": cfg["mode"]["trading_mode"], **state}
 
 
+def _proposal_numeric_plan(ticker: str, proposal_id: str | None) -> dict | None:
+    """Numeric plan from the exact journal proposal a fill's proposal_id points
+    at - the authoritative record of what was actually approved and filled."""
+    if not proposal_id:
+        return None
+    best = None
+    for f in sorted((ROOT / "journal" / "proposals").glob("*.jsonl")):
+        for line in f.read_text().splitlines():
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            p = rec.get("proposal", {})
+            if rec.get("run_id") == proposal_id and p.get("action") == "BUY" \
+                    and str(p.get("ticker", "")).upper() == ticker:
+                numeric = {k: p.get(k) for k in PLAN_NUMERIC_FIELDS
+                           if p.get(k) is not None}
+                if numeric:
+                    best = numeric
+    return best
+
+
 def backfill_position_plans() -> int:
-    """Idempotent one-time migration: copy journal-derived numeric plans onto
-    positions opened before plan persistence existed, so stop/horizon enforcement
-    no longer depends on journal retention. Returns positions backfilled."""
+    """Idempotent migration + self-heal, run at the start of every cycle.
+
+    (1) Positions with no persisted plan get one from the journal (filled
+    proposals only). (2) Positions WITH a plan are reconciled against the
+    proposal their own proposal_id points at: if they differ and the position
+    was never scaled into (an add legitimately replaces the plan), the filled
+    proposal's plan wins. This repairs plans the old unfiltered join populated
+    from REJECTED proposals (HPE 2026-07-10: stop 44.75 from a rejected
+    proposal instead of the filled 43.75). Returns positions changed."""
     cfg = json.loads((ROOT / "autonomy_config.json").read_text())
     if cfg["mode"]["broker"] != "simulation":
         return 0
@@ -90,9 +147,15 @@ def backfill_position_plans() -> int:
     plans = _journal_plans()
     changed = 0
     for pos in state.get("positions", []):
+        tk = str(pos.get("ticker", "")).upper()
+        authoritative = _proposal_numeric_plan(tk, pos.get("proposal_id"))
         if pos.get("plan"):
+            if authoritative and int(pos.get("adds_count", 0) or 0) == 0 \
+                    and pos["plan"] != authoritative:
+                pos["plan"] = authoritative
+                changed += 1
             continue
-        jp = plans.get(str(pos.get("ticker", "")).upper())
+        jp = authoritative or plans.get(tk)
         if not jp:
             continue
         numeric = {k: jp.get(k) for k in PLAN_NUMERIC_FIELDS if jp.get(k) is not None}

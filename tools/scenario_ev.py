@@ -51,9 +51,15 @@ def expected_value(scenarios, entry_price, holding_horizon_days=None) -> dict:
         return _unusable("missing_scenarios")
 
     prob_sum = sum(p for _, p in rows)
-    ev = sum(p * (price / entry - 1.0) for price, p in rows)
-    up = sum(p * (price / entry - 1.0) for price, p in rows if price > entry)
-    down = sum(p * (price / entry - 1.0) for price, p in rows if price < entry)
+    if prob_sum <= 0:
+        return _unusable("missing_scenarios")
+    # NORMALIZE by prob_sum: probabilities that sum to 0.9 or 1.2 otherwise
+    # scale the EV magnitude by that same factor, publishing a confidently
+    # wrong number next to a soft warning. Normalization is a no-op when the
+    # scenarios already sum to 1; the warning below still discloses the slip.
+    ev = sum(p * (price / entry - 1.0) for price, p in rows) / prob_sum
+    up = sum(p * (price / entry - 1.0) for price, p in rows if price > entry) / prob_sum
+    down = sum(p * (price / entry - 1.0) for price, p in rows if price < entry) / prob_sum
 
     horizon = _f(holding_horizon_days)
     ev_ann = (ev * 365.0 / horizon

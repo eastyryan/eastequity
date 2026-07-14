@@ -313,6 +313,11 @@ def readback(order_id: str) -> dict | None:
                     # entry data stamped on the fill so closed-trade records never
                     # need fragile open/close pairing (adds/partials break pairing)
                     "avg_cost": entry_cost, "position_opened_at": opened_at,
+                    # the position's own persisted plan travels with the close, so
+                    # verdict/R-multiple/calibration grading never depends on a
+                    # journal join that a later proposal could have overwritten
+                    "entry_plan": pos.get("plan"),
+                    "entry_proposal_id": pos.get("proposal_id"),
                     "realized_pnl_usd": price_pnl,               # price-only, net of fees
                     "total_realized_pnl_usd": round(price_pnl + divs, 2),  # + carried dividends
                     "dividends_received_usd": divs,

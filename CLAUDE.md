@@ -231,15 +231,11 @@ Beyond filings/13F/news, every run now includes:
   the loser and consider whether the displaced incumbent is now cheaper than the winner.
   (5) REACTION vs MATERIALITY - if the stock barely moved on a quantified, multi-year
   agreement, that may be the overlooked opportunity; if it ripped on slideware, that is
-  the risk. Partnership theses must cite the 8-K/filing, not just a headline. Per focus name: the newest period our extracted
-  fundamentals reach (current_through) vs the period the latest filed 10-Q/10-K covers
-  (latest_filing_period). If a name appears in stale_tickers (or its sec_filings entry
-  carries stale_fundamentals_warning), its fundamental numbers are NOT the latest reported
-  quarter: do NOT cite them as current, do NOT build a thesis on them, say plainly that the
-  fundamental data is stale, and reason from price/news/estimates instead. ALWAYS state the
-  quarter-end date next to every fundamental figure you cite ("revenue $43.8B, Q ended
-  2026-05-01") so a reader can verify recency at a glance - an unlabeled number is treated
-  as an error.
+  the risk. Cite the 8-K/filing whenever one exists. Headlines often LEAD the filing
+  (an 8-K can lag a material agreement by up to 4 business days) and that early window
+  is exactly where a swing entry lives - a headline-first deal is tradeable, but say
+  plainly that the filing has not landed yet, treat the terms as UNCONFIRMED until it
+  does, and expect the risk desk to ask what happens if the 8-K walks the story back.
 - **Risk desk**: every BUY you propose faces an independent adversarial review that can
   veto it or cut its confidence. Write theses that survive attack - address the strongest
   objection preemptively in your risk_map.
@@ -272,9 +268,10 @@ Beyond filings/13F/news, every run now includes:
   your JSON block: [{"ticker": "DELL", "metric": "revenue", "period": "FY2027Q2",
   "guide_low": 24.5, "guide_high": 25.5, "unit": "usd_billions", "source": "8-K 2026-05-28"}].
   Period is the COMPANY'S fiscal label; use the exact numbers stated. The bundle's
-  guidance_ledger shows graded history: cite consecutive_beats as receipts ("3rd straight
-  revenue beat"); treat pending_guidance as the bar management must clear at the next
-  print - never claim a streak the ledger does not show. If a pending entry's note reads
+  guidance_ledger shows graded history: cite consecutive_beats as receipts - it is
+  PER METRIC ({"revenue": n, "eps": m}), so "3rd straight revenue beat" means
+  consecutive_beats.revenue == 3; treat pending_guidance as the bar management must
+  clear at the next print - never claim a streak the ledger does not show. If a pending entry's note reads
   `unit_mismatch`, you mislabeled the `unit` on a prior guidance_entries submission (e.g.
   "usd" for a value that meant billions) - re-submit with the suggested unit so it grades.
 - **track_record.calibration** - your realized win rate bucketed by the confidence you
@@ -288,7 +285,8 @@ Beyond filings/13F/news, every run now includes:
 
 ## Required Process (every run)
 
-1. **Macro regime check** — run the macro tool; state whether the regime supports adding
+1. **Macro regime check** — read the macro_regime block in the context bundle; state
+   whether the regime supports adding
    long swing exposure to AI/data-center names. If hostile, bias toward HOLD/trim. Each
    indicator now carries as_of/units/frequency and a DATE-correct 3-months-ago read (the
    old fixed-offset comparison was years off for monthly series like CPI/unemployment).
@@ -371,6 +369,9 @@ trigger hits.
 Rules the validator enforces (know them so you don't waste runs):
 - confidence ≥ 0.60; target upside ≥ 10% of entry; risk_reward_ratio ≥ 1.0
   (never risk more than the expected gain - computed from prices, must match yours)
+- every BUY must carry variant_perception, risk_map, AND scenarios (the bull/base/bear
+  block with probabilities) - a missing field is an automatic rejection; scenarios also
+  power the published probability-weighted expected value next to your proposal
 - stop_loss < entry_price_max < target_price; stop within 15% of entry
 - **stop outside the volatility noise band**: your stop must sit at least
   `stop_engineering.floors[TICKER].min_stop_distance_pct` below entry - the larger of

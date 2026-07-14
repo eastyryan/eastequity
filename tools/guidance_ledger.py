@@ -37,11 +37,14 @@ CLI: python -m tools.guidance_ledger DELL      (auto_grade + summary)
 
 from __future__ import annotations
 
+import fcntl
+import functools
 import json
 import math
 import os
 import re
 import tempfile
+from contextlib import contextmanager
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
@@ -71,7 +74,42 @@ def _load_ledger() -> dict:
         data = json.loads(LEDGER_FILE.read_text())
         return data if isinstance(data, dict) else {}
     except (json.JSONDecodeError, OSError):
+        # A corrupt ledger must NOT silently become {}: the next save would
+        # atomically persist the empty dict and wipe every graded receipt.
+        # Preserve the bytes under a .corrupt name so history is recoverable.
+        try:
+            backup = LEDGER_FILE.with_name(
+                LEDGER_FILE.stem
+                + f".corrupt-{datetime.now(timezone.utc):%Y%m%dT%H%M%S}.json")
+            LEDGER_FILE.rename(backup)
+            print(f"  (guidance ledger unreadable - preserved as {backup.name})")
+        except OSError:
+            pass
         return {}
+
+
+@contextmanager
+def _ledger_lock():
+    """Exclusive cross-process lock over ledger read-modify-write cycles.
+    Without it, an overlapping manual + scheduled run each rewrite the whole
+    file and the last save silently drops the other's recorded guidance."""
+    lock_path = LEDGER_FILE.with_name(LEDGER_FILE.name + ".lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(lock_path, "w") as fh:
+        fcntl.flock(fh, fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(fh, fcntl.LOCK_UN)
+
+
+def _locked(fn):
+    """Run the wrapped read-modify-write function under _ledger_lock."""
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        with _ledger_lock():
+            return fn(*args, **kwargs)
+    return wrapper
 
 
 def _save_ledger(ledger: dict) -> None:
@@ -167,7 +205,10 @@ def _period_ends_for_ticker(ticker: str) -> dict:
     from tools.sec_filings import get_company_facts
 
     facts = get_company_facts(ticker)  # shared TTL cache (see sec_filings)
-    gaap = facts.get("facts", {}).get("us-gaap", {})
+    # us-gaap wins on tag collisions, but ifrs-full must be present too or
+    # foreign filers (ARM/ASML/TSM...) can never resolve periods/actuals.
+    _f = facts.get("facts", {})
+    gaap = {**_f.get("ifrs-full", {}), **_f.get("us-gaap", {})}
     for tag in ("Revenues", "RevenueFromContractWithCustomerExcludingAssessedTax",
                 "RevenueFromContractWithCustomerIncludingAssessedTax", "NetIncomeLoss"):
         units = gaap.get(tag, {}).get("units", {}).get("USD")
@@ -181,6 +222,7 @@ def _period_ends_for_ticker(ticker: str) -> dict:
 # ---------------------------------------------------------------------------
 # record_guidance
 # ---------------------------------------------------------------------------
+@_locked
 def record_guidance(entries: list) -> dict:
     """Validate + dedupe + append guidance entries extracted by the brain.
 
@@ -275,7 +317,11 @@ def _unit_check(raw_actual: float, low: float, high: float, unit: str) -> tuple:
     stated = _UNIT_DIVISORS.get(unit, 1.0)
     implied = abs(raw_actual) / abs(mid)
     ratio = implied / stated
-    if 0.2 <= ratio <= 5.0:               # same order of magnitude -> consistent
+    # Real unit mislabels are >=1000x off (usd vs millions vs billions); genuine
+    # business outcomes can legitimately land several-fold outside the guide
+    # (a low-EPS name guiding $0.15 and printing $0.90 is a 6x BEAT, not a unit
+    # error). The old 0.2-5x band refused to grade exactly those blowouts.
+    if 0.02 <= ratio <= 50.0:             # far inside any unit-conversion factor
         return True, None, ratio
     factor = ratio if ratio >= 1 else (1.0 / ratio if ratio > 0 else float("inf"))
     suggested, best = None, None
@@ -283,13 +329,14 @@ def _unit_check(raw_actual: float, low: float, high: float, unit: str) -> tuple:
         if d <= 0:
             continue
         r = implied / d
-        if 0.2 <= r <= 5.0:
+        if 0.02 <= r <= 50.0:
             score = abs(math.log10(r))
             if best is None or score < best:
                 best, suggested = score, u
     return False, suggested, factor
 
 
+@_locked
 def grade_guidance(ticker: str, actuals: dict) -> list:
     """Grade ungraded ledger entries against supplied actuals.
 
@@ -420,7 +467,10 @@ def _actuals_from_edgar(ticker: str) -> dict:
     from tools.sec_filings import get_company_facts
 
     facts = get_company_facts(ticker)  # shared TTL cache (see sec_filings)
-    gaap = facts.get("facts", {}).get("us-gaap", {})
+    # us-gaap wins on tag collisions, but ifrs-full must be present too or
+    # foreign filers (ARM/ASML/TSM...) can never resolve periods/actuals.
+    _f = facts.get("facts", {})
+    gaap = {**_f.get("ifrs-full", {}), **_f.get("us-gaap", {})}
 
     out: dict = {}
     # Revenue: same tag preference order as tools.sec_filings.get_filing_brief
@@ -432,7 +482,9 @@ def _actuals_from_edgar(ticker: str) -> dict:
     for label, tags, additive in (
         ("revenue", ["Revenues", "RevenuesNetOfInterestExpense",
                      "RevenueFromContractWithCustomerExcludingAssessedTax",
-                     "RevenueFromContractWithCustomerIncludingAssessedTax"], True),
+                     "RevenueFromContractWithCustomerIncludingAssessedTax",
+                     "Revenue",  # ifrs-full umbrella tag (foreign filers)
+                     "RevenueFromContractsWithCustomers"], True),
         ("eps", ["EarningsPerShareDiluted", "EarningsPerShareBasic"], False),
     ):
         best_units, best_end = None, ""
@@ -485,24 +537,26 @@ def auto_grade(ticker: str) -> list:
         period_ends = {}
 
     # Annotate past-due entries we could NOT grade so the brain sees why.
-    ledger = _load_ledger()
-    changed = False
-    today = datetime.now(timezone.utc).date()
-    for entry in ledger.get(ticker, []):
-        if entry.get("verdict") is not None:
-            continue
-        if (entry["metric"], entry["period"]) in graded_keys:
-            continue
-        est_end = _period_estimated_end(entry["period"], period_ends)
-        if est_end and est_end < today and not entry.get("note"):
-            if entry["metric"] == "eps" and entry["period"].endswith("Q4"):
-                entry["note"] = "Q4 EPS not standalone in XBRL (non-additive); grade manually"
-            else:
-                entry["note"] = (f"period likely ended (~{est_end}) but no matching "
-                                 f"XBRL actual yet - not filed or fiscal mapping ambiguous")
-            changed = True
-    if changed:
-        _save_ledger(ledger)
+    # (Under the ledger lock: this is a read-modify-write over the whole file.)
+    with _ledger_lock():
+        ledger = _load_ledger()
+        changed = False
+        today = datetime.now(timezone.utc).date()
+        for entry in ledger.get(ticker, []):
+            if entry.get("verdict") is not None:
+                continue
+            if (entry["metric"], entry["period"]) in graded_keys:
+                continue
+            est_end = _period_estimated_end(entry["period"], period_ends)
+            if est_end and est_end < today and not entry.get("note"):
+                if entry["metric"] == "eps" and entry["period"].endswith("Q4"):
+                    entry["note"] = "Q4 EPS not standalone in XBRL (non-additive); grade manually"
+                else:
+                    entry["note"] = (f"period likely ended (~{est_end}) but no matching "
+                                     f"XBRL actual yet - not filed or fiscal mapping ambiguous")
+                changed = True
+        if changed:
+            _save_ledger(ledger)
     return graded
 
 
@@ -513,8 +567,9 @@ def get_ledger_summary(tickers: list) -> dict:
     """Per-ticker guidance track record for the brain's context bundle.
 
     consecutive_beats counts back from the most recently reported graded
-    period (ordered by fiscal period, not grading time) so "Nth consecutive
-    beat" claims are receipt-backed.
+    period (ordered by fiscal period, not grading time), PER METRIC
+    ({"revenue": n, "eps": m}), so "Nth consecutive revenue beat" claims are
+    receipt-backed and never truncated by the other metric's result.
     """
     ledger = _load_ledger()
     out = {}
@@ -524,14 +579,20 @@ def get_ledger_summary(tickers: list) -> dict:
         pending = [r for r in rows if r.get("verdict") is None]
         if not rows:
             continue
-        streak = 0
-        for r in reversed(graded):
-            if r["verdict"] == "beat":
-                streak += 1
-            else:
-                break
+        # Streaks are PER METRIC: a mixed revenue+eps walk let an interleaved
+        # EPS miss truncate a genuine revenue-beat streak (or vice versa), so
+        # "3rd straight revenue beat" could be under- or over-counted.
+        streaks: dict = {}
+        for metric in {r["metric"] for r in graded}:
+            s = 0
+            for r in reversed([g for g in graded if g["metric"] == metric]):
+                if r["verdict"] == "beat":
+                    s += 1
+                else:
+                    break
+            streaks[metric] = s
         out[t] = {
-            "consecutive_beats": streak,
+            "consecutive_beats": streaks,
             "total_graded": len(graded),
             "beats": sum(1 for r in graded if r["verdict"] == "beat"),
             "met": sum(1 for r in graded if r["verdict"] == "met"),

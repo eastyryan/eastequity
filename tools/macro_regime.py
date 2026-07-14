@@ -203,6 +203,10 @@ def get_macro_snapshot() -> dict:
                     "series_errors": {k: v.get("error") for k, v in ind.items() if "error" in v}}
 
         # Simple deterministic regime score — a hint, not a verdict. Claude interprets.
+        # Missing series score with deliberately-hostile defaults (never wrongly
+        # encourages buying), but the hint must SAY how much of it ran on
+        # placeholders - a mostly-defaulted label is not a macro read.
+        missing = sorted(k for k, v in ind.items() if "latest" not in v)
         score = 0
         if ind.get("hy_credit_spread", {}).get("latest", 5) < 4.0: score += 1
         if ind.get("vix", {}).get("latest", 25) < 20: score += 1
@@ -212,7 +216,11 @@ def get_macro_snapshot() -> dict:
         out["regime_hint"] = {
             "score_0_to_5": score,
             "label": "supportive" if score >= 4 else "neutral" if score >= 2 else "hostile",
-            "note": "Deterministic hint only — the agent must form its own regime view.",
+            "series_missing": missing or None,
+            "note": ("Deterministic hint only — the agent must form its own regime view."
+                     + (f" CAUTION: {len(missing)} series failed to load and scored "
+                        f"on conservative defaults ({', '.join(missing)})."
+                        if missing else "")),
         }
         return out
     except Exception as e:

@@ -97,6 +97,14 @@ def apply_corporate_actions() -> dict:
                 pos["avg_cost"] = round(pos["avg_cost"] / ratio, 4)
                 if pos.get("last_price"):
                     pos["last_price"] = round(pos["last_price"] / ratio, 4)
+                # The persisted plan's PRICE levels must scale too, or the exit
+                # guard compares post-split prices against pre-split stops and
+                # force-closes a healthy position as "stop_loss_breached".
+                plan = pos.get("plan")
+                if isinstance(plan, dict):
+                    for key in ("stop_loss", "target_price", "entry_price_max"):
+                        if isinstance(plan.get(key), (int, float)):
+                            plan[key] = round(plan[key] / ratio, 4)
                 record = {"type": "split", "ticker": ticker, "ratio": ratio,
                           "quantity": pos["quantity"], "avg_cost": pos["avg_cost"],
                           "date": event_dt.date().isoformat(),

@@ -296,6 +296,16 @@ def get_filing_brief(ticker: str) -> dict:
                "company": sub.get("name"), "recent_filings": filings,
                "latest_periodic_filing": latest_report,
                "quarterly_fundamentals": facts_out}
+        # A facts fetch that failed while submissions succeeded must NOT read as
+        # "fresh with no numbers": current_through stays None below, the stale
+        # cross-check never fires, and the freshness audit would count the name
+        # fresh. Label it explicitly so the bundle and the audit see the truth.
+        if "error" in facts_out:
+            out["fundamentals_unavailable"] = True
+            out["stale_fundamentals_warning"] = (
+                "Companyfacts fetch FAILED this run - fundamentals below are "
+                "absent, not absent-because-none-exist. Do not treat missing "
+                "numbers as data; reason from price/news and say the feed failed.")
         # Freshness cross-check: the submissions index is authoritative about WHICH
         # period the newest 10-Q/10-K covers. If our extracted fundamentals end
         # before that period, something upstream is stale - say so LOUDLY rather

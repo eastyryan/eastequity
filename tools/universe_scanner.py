@@ -772,6 +772,12 @@ def scan_universe(top_n: int = 15) -> dict:
         "sector_relative_strength": sector_rs,
         "status": "ok",
         "scanned": len(rows),
+        # Coverage honesty: per-name failures are skipped silently above, so a
+        # rate-limited feed can scan a fraction of the universe while looking
+        # healthy. Disclose the denominator; the orchestrator labels the bundle
+        # partial when coverage drops below ~80%.
+        "requested": len(tickers),
+        "scan_failures": len(tickers) - len(rows),
         "note": "Ranked by deterministic swing_setup_score; agent must apply judgment and research before proposing.",
         "sector_comps_note": ("sector_comps (on surfaced rows): fwd_pe_est = last close / "
                               "cached pre-market current-FY EPS estimate (snapshot may be "

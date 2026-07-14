@@ -172,6 +172,16 @@ def audit_universe(cross_check: bool = False, progress: bool = True,
     tickers = sorted({t.upper() for ts in universe["sectors"].values() for t in ts})
     audit = audit_freshness(tickers, cross_check=cross_check, evict=True,
                             progress=progress)
+    # NEVER overwrite the published artifact with an all-error audit: on a
+    # blocked/throttled EDGAR every name errors, and persisting that (with a
+    # fresh timestamp) would destroy the last-good audit and feed the bundle a
+    # "whole universe errored" summary that defeats the 8-day staleness guard.
+    if write_artifact and audit.get("audited", 0) > 0 and audit.get("fresh", 0) == 0 \
+            and len(audit.get("error_tickers", [])) == audit.get("audited"):
+        audit["artifact_error"] = ("not persisted: every name errored - feed almost "
+                                   "certainly down; keeping the last-good artifact")
+        print(f"  freshness audit NOT persisted ({audit['artifact_error']})")
+        write_artifact = False
     if write_artifact:
         try:
             from datetime import datetime, timezone

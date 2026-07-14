@@ -339,12 +339,15 @@ def get_smart_money(tickers, company_names=None, ticker_cusip=None) -> dict:
         learn_candidates: dict = {}
         learn_blocked: set = set()
 
+        managers_ok, managers_failed = 0, 0
         for mgr, cik in MANAGERS.items():
             try:
                 filings = _two_latest_13f(cik)
             except Exception as e:
                 holdings.append({"manager": mgr, "error": str(e)[:200]})
+                managers_failed += 1
                 continue
+            managers_ok += 1
             if not filings:
                 continue
             latest_period, latest = filings[0]
@@ -394,6 +397,17 @@ def get_smart_money(tickers, company_names=None, ticker_cusip=None) -> dict:
                         "value_delta_usd": d["value_delta_usd"],
                         "pct_share_change": d["pct_share_change"]})
 
+        # An all-managers fetch failure is a FEED outage: returning the usual
+        # shape would label every name no_tracked_activity ("none of the funds
+        # hold it") when the truth is "we fetched nothing" - and the note tells
+        # the brain no_tracked_activity is benign. Fail loudly instead.
+        if managers_failed and managers_ok == 0:
+            return {"status": "error",
+                    "reason": f"all {managers_failed} tracked-manager 13F fetches "
+                              "failed (SEC feed down/throttled) - no positioning "
+                              "data this run; absence is NOT no_tracked_activity",
+                    "managers_failed": managers_failed}
+
         # Persist confident new ticker->CUSIP pairs so later runs match by CUSIP
         # authoritatively instead of re-deriving them from issuer names. Fail-soft.
         learned = _resolve_learned(learn_candidates, learn_blocked, cusip_map)
@@ -430,7 +444,12 @@ def get_smart_money(tickers, company_names=None, ticker_cusip=None) -> dict:
                      "notable_increases/decreases name the biggest dollar moves; "
                      "holdings lists each manager's move. Matched by CUSIP when a map "
                      "is supplied, else strict issuer-name match. no_tracked_activity "
-                     "just means none of these 9 hold the name - NOT bearish."),
+                     "just means none of these 9 hold the name - NOT bearish."
+                     + (f" CAUTION: {managers_failed} of {managers_ok + managers_failed} "
+                        "manager fetches FAILED this run - activity may be undercounted."
+                        if managers_failed else "")),
+            "managers_fetched": managers_ok,
+            "managers_failed": managers_failed,
             "by_ticker": by_ticker,
             "holdings": holdings,
             "cusips_learned": cusips_learned,  # {TICKER: CUSIP} newly persisted this run

@@ -138,6 +138,7 @@ def get_insider_activity(tickers: list[str]) -> dict:
             scan_cutoff = date.today() - timedelta(days=SCAN_FILING_DAYS)
             tx_cutoff = date.today() - timedelta(days=WINDOW_DAYS)
             count = 0
+            fetch_errors = 0  # Form-4 XMLs we tried and failed to fetch
             for form, filed, accession, doc in zip(
                     recent["form"], recent["filingDate"],
                     recent["accessionNumber"], recent["primaryDocument"]):
@@ -164,6 +165,7 @@ def get_insider_activity(tickers: list[str]) -> dict:
                     url = f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{acc}/{xml_doc}"
                     entry["transactions"].extend(_parse_form4(_get(url).text))
                 except Exception:
+                    fetch_errors += 1  # throttled/blocked archive - MUST NOT read as "no activity"
                     continue
             # Keep only trades whose TRANSACTION date falls in the recency window;
             # open-market P/S (already the only codes parsed) are never crowded
@@ -190,11 +192,17 @@ def get_insider_activity(tickers: list[str]) -> dict:
                 signal = "notable_discretionary_selling"
             elif sells:
                 signal = "routine_or_sponsor_selling_only"
+            elif fetch_errors:
+                # Filings exist but every XML fetch failed: the truth is "we could
+                # not read the filings", never "insiders did nothing" - the two
+                # mean opposite things to a thesis leaning on insider quiet.
+                signal = "data_unavailable"
             else:
                 signal = "no_open_market_activity"
             entry["summary"] = {
                 "signal": signal,
                 "window_days": WINDOW_DAYS,
+                "filings_unfetched": fetch_errors,
                 "open_market_buys": len(buys),
                 "open_market_sells": len(sells),
                 "buy_notional_usd": round(sum(x["notional_usd"] for x in buys), 2),
@@ -226,6 +234,12 @@ def get_insider_activity(tickers: list[str]) -> dict:
             "summary": summ or None,
             "error": e.get("error"),
         }
+    # An all-tickers failure is a FEED outage, not a quiet market: degrade the
+    # top-level status so the orchestrator's partial-data label actually fires
+    # (it keys on this status) instead of the brain reading a clean empty.
+    if out["tickers"] and all(e.get("error") for e in out["tickers"].values()):
+        out["status"] = "error"
+        out["error"] = "insider feed unreachable for every requested ticker"
     return out
 
 

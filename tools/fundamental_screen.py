@@ -103,6 +103,17 @@ def refresh_screen(tickers: list[str]) -> dict:
             prev = json.loads(CACHE.read_text()).get("current", {})
         except Exception:
             prev = {}
+    # KEEP-LAST-GOOD: _fetch_row swallows per-name failures, so a flaky Yahoo
+    # estimates endpoint yields an empty/thin row set that would otherwise be
+    # persisted with a FRESH as_of - and a second bad refresh would push the
+    # last real snapshot out of `previous` entirely. A refresh that covered
+    # under half of what the previous snapshot covered is a feed problem, not
+    # an estimate wipeout: serve the previous snapshot unchanged.
+    prev_rows = prev.get("rows") or {}
+    if prev_rows and len(rows) < max(1, len(prev_rows) // 2):
+        print(f"  (fundamental screen: refresh returned {len(rows)} rows vs "
+              f"{len(prev_rows)} previously - feed degraded, keeping last-good)")
+        return prev
     snapshot = {"as_of": datetime.now(timezone.utc).isoformat(),
                 "rows": {r["ticker"]: r for r in rows}}
     CACHE.write_text(json.dumps({"previous": prev, "current": snapshot}, indent=1))

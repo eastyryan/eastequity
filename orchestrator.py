@@ -40,7 +40,8 @@ from tools.macro_regime import get_macro_snapshot
 from tools.news_catalysts import get_news_and_catalysts
 from tools.portfolio_state import get_portfolio_state
 from tools.position_history import get_position_histories
-from tools.watchlist_triggers import check_watchlist_triggers
+from tools.watchlist_triggers import (TRIGGER_TOLERANCE_PCT, check_watchlist_triggers,
+                                      parse_price_level)
 from tools.insider_form4 import get_insider_activity
 from tools.performance_breakdown import build_performance_breakdown
 from tools.fundamentals import get_deep_fundamentals
@@ -517,7 +518,12 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
                     filing_texts[t] = texts
                 refreshed.append(t)
                 try:
-                    if filed_key:
+                    # Cache ONLY a successful extraction. A partial-degradation run
+                    # (submissions OK -> real filed_key, but companyfacts throttled)
+                    # returns an error dict; caching it under the current filing key
+                    # would serve the frozen error until the NEXT filing - exactly
+                    # the post-earnings window that most needs fresh statements.
+                    if filed_key and (deep_fundamentals[t] or {}).get("status") == "ok":
                         cache_f.write_text(json.dumps(_json_safe(
                             {"filed_key": filed_key, "cached_at": _et_date(),
                              "deep": deep_fundamentals[t], "texts": texts}), default=str))
@@ -979,6 +985,12 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
             pass
         if not rc.get("require_risk_desk_for_buys"):
             print(f"  ({reason} - proposals pass unreviewed)")
+            # Leave a public trace: CLAUDE.md promises every BUY an adversarial
+            # review, so a run where that layer silently didn't exist must be
+            # visible in the journal, not just a log line nobody reads.
+            journal.log_improvement(
+                f"Risk desk did not run ({reason}) - {len(buys)} BUY proposal(s) "
+                f"passed to the validator unreviewed this run.", run_id)
             return proposals
         kept = []
         for p in proposals:
@@ -1165,14 +1177,22 @@ def _benchmark_close(ticker: str = "SPY") -> float | None:
 
 
 def _trade_plans() -> dict:
-    """Latest BUY proposal per ticker from the journal (thesis, stop, target, horizon)."""
+    """Latest FILLED BUY proposal per ticker from the journal (thesis, stop,
+    target, horizon). Rejected/unfilled proposals are excluded: the journal logs
+    every validated proposal, and an unfiltered 'latest per ticker' let a later
+    rejected proposal supply the plan a closed trade was graded against."""
+    from tools.portfolio_state import filled_buy_proposal_ids
+    filled = filled_buy_proposal_ids()
     plans: dict = {}
     for f in sorted((ROOT / "journal" / "proposals").glob("*.jsonl")):
         for line in f.read_text().splitlines():
             rec = json.loads(line)
             p = rec.get("proposal", {})
             if str(p.get("action", "")).upper() == "BUY" and p.get("ticker"):
-                plans[p["ticker"].upper()] = p
+                tk = p["ticker"].upper()
+                if rec.get("run_id") not in filled.get(tk, ()):
+                    continue
+                plans[tk] = p
     return plans
 
 
@@ -1193,6 +1213,10 @@ def compute_closed_trades() -> list[dict]:
             opens[t] = fill
         elif fill["action"] == "SELL_TO_CLOSE" and (fill.get("avg_cost") or t in opens):
             plan = plans.get(t, {})
+            # Grading numbers come from the position's OWN plan stamped on the
+            # sell fill (entry_plan) whenever present; the journal join is the
+            # legacy fallback and supplies the narrative (thesis) only.
+            entry_plan = fill.get("entry_plan") or {}
             # New-style fills stamp entry data directly (adds/partials make
             # open/close pairing unreliable); legacy fills fall back to pairing.
             if fill.get("avg_cost"):
@@ -1204,11 +1228,11 @@ def compute_closed_trades() -> list[dict]:
                 entry = float(entry_fill["fill_price"])
                 opened_ts = entry_fill["filled_at"]
             exit_px = float(fill["fill_price"])
-            stop = float(plan.get("stop_loss") or 0)
-            target = float(plan.get("target_price") or 0)
+            stop = float(entry_plan.get("stop_loss") or plan.get("stop_loss") or 0)
+            target = float(entry_plan.get("target_price") or plan.get("target_price") or 0)
             days_held = max((datetime.fromisoformat(fill["filled_at"])
                              - datetime.fromisoformat(opened_ts)).days, 0)
-            horizon = plan.get("holding_horizon_days")
+            horizon = entry_plan.get("holding_horizon_days") or plan.get("holding_horizon_days")
             if target and exit_px >= target * 0.995:
                 verdict = "Hit target"
             elif stop and exit_px <= stop * 1.005:
@@ -1233,7 +1257,7 @@ def compute_closed_trades() -> list[dict]:
                 "dividends_usd": round(divs, 2), "total_pnl_usd": round(total_pnl, 2),
                 "fees_usd": fill.get("fees_usd"), "gap_modeled": fill.get("gap_modeled", False),
                 "r_multiple": r_multiple, "verdict": verdict,
-                "confidence": plan.get("confidence"),
+                "confidence": entry_plan.get("confidence") or plan.get("confidence"),
                 "thesis": plan.get("thesis"),
             })
     return closed
@@ -1470,12 +1494,17 @@ def update_watchlist_outcomes(watchlist: list, prices: dict, positions: list) ->
             rec["latest_price"] = px
             base = rec.get("price_when_added") or px
             rec["move_pct_since_watched"] = round((px / base - 1) * 100, 1) if base else None
-        # Parse a numeric buy level out of would_buy_at (e.g. "near $170") and flag a hit.
-        lvl = None
-        m = re.search(r"\$?\s*(\d+(?:\.\d+)?)", str(w.get("would_buy_at") or ""))
-        if m:
-            lvl = float(m.group(1))
-        if lvl and px is not None and px <= lvl * 1.02:
+        # Buy level via the SAME $-anchored parser the trigger checker uses -
+        # the old first-bare-number regex read "50-over-200" as a $50 level and
+        # "7/29 earnings" as $7, so the public foresight grades were wrong.
+        lvl = parse_price_level(w.get("would_buy_at"))
+        if rec.get("parsed_level") != lvl:
+            # Level changed (or is no longer a price): a sticky hit graded
+            # against the OLD text is stale evidence - reset and regrade.
+            rec["parsed_level"] = lvl
+            rec["hit_buy_level"] = False
+            rec.pop("hit_date", None)
+        if lvl and px is not None and abs(px / lvl - 1) <= TRIGGER_TOLERANCE_PCT:
             rec["hit_buy_level"], rec["hit_date"] = True, rec.get("hit_date") or today
         rec["acted"] = tk in ever_bought
         tracked[tk] = rec
@@ -1629,7 +1658,15 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
     append_runs_index(run_id, context.get("trading_mode", "paper"), fills, commentary, no_trade_reason)
 
     # Full response lives in the per-run archive; latest.json stays slim for the site.
-    (dash / f"run_{run_id}.json").write_text(json.dumps(_json_safe(out), indent=2, default=str))
+    # The archive's closed_trades holds ONLY closes executed THIS run - the run
+    # page titles them "Closed on this run", and embedding the all-time list
+    # made every historical close reappear on every later run's page.
+    sell_tickers = {str(f.get("ticker", "")).upper() for f in (fills or [])
+                    if str(f.get("action", "")).upper() == "SELL_TO_CLOSE"}
+    run_out = {**out, "closed_trades": [
+        t for t in out["closed_trades"]
+        if t.get("closed_at") == today and t.get("ticker") in sell_tickers]}
+    (dash / f"run_{run_id}.json").write_text(json.dumps(_json_safe(run_out), indent=2, default=str))
     slim = {k: v for k, v in out.items() if k != "latest_reasoning"}
     (dash / "latest.json").write_text(json.dumps(_json_safe(slim), indent=2, default=str))
     # NOTE: equity_history (with benchmark_close) was already written at the top of this
@@ -1855,7 +1892,7 @@ def _universe_log_append(entry: dict) -> None:
 def universe_review(run_id: str) -> int:
     """The agent researches the broad market (web search enabled) and proposes
     edits to data/universe.json. Deterministic guardrails cap what can change:
-    held and watchlist names are untouchable, size stays 90-140, max 10 adds and
+    held and watchlist names are untouchable, size stays 150-220, max 10 adds and
     10 removals per review, tech/AI bias preserved."""
     universe_file = ROOT / "data" / "universe.json"
     current = json.loads(universe_file.read_text())
@@ -2111,6 +2148,23 @@ def main() -> int:
     if args.gather_only:
         # Pure data collection (used by the relay/Action): no preflight gates,
         # no lock, no budget - it must work on weekends and holidays too.
+        # Corporate actions are reconciled HERE because they need yfinance and
+        # the cloud trade path is network-blocked - once trading moved to the
+        # cloud, dividends could otherwise never credit on any node. Idempotent
+        # via each position's actions_processed_through marker; the relay
+        # commits the ledger only when the sentinel below says it changed.
+        if cfg["mode"]["trading_mode"] != "dry_run":
+            try:
+                ca = corporate_actions.apply_corporate_actions()
+                if ca.get("events"):
+                    print(f"  corporate actions on gather node: {len(ca['events'])} "
+                          f"event(s), dividends ${ca.get('dividends_credited_usd', 0)}, "
+                          f"splits {ca.get('splits_applied', 0)}")
+                    print("CORPORATE_ACTIONS_CHANGED=1")
+                if ca.get("errors"):
+                    print(f"  (corporate-actions errors on gather: {len(ca['errors'])})")
+            except Exception as e:
+                print(f"  (gather corporate actions skipped: {e})")
         context = gather_context(cfg, light=args.light)
         # Never hand the brain empty/partial data WITHOUT a label. Distinguish three
         # cases: full-degradation (scan/macro dead), partial (prices OK but research
@@ -2122,8 +2176,16 @@ def main() -> int:
         def _feed_ok(key: str) -> bool:
             v = context.get(key) or {}
             return isinstance(v, dict) and v.get("status") not in ("error", "unavailable")
-        partial = (not degraded) and not all(
-            _feed_ok(k) for k in ("news_and_catalysts", "sec_filings", "insider_activity"))
+        # Scan-coverage check: the scanner skips failed names silently, so a
+        # rate-limited Yahoo can price 30/182 names while top_setups still looks
+        # populated. Under ~80% coverage the bundle is partial, not healthy.
+        scan_ctx = context.get("universe_scan") or {}
+        low_coverage = bool(
+            not args.light and not degraded
+            and isinstance(scan_ctx.get("requested"), int) and scan_ctx["requested"] > 0
+            and scan_ctx.get("scanned", 0) < 0.8 * scan_ctx["requested"])
+        partial = (not degraded) and (low_coverage or not all(
+            _feed_ok(k) for k in ("news_and_catalysts", "sec_filings", "insider_activity")))
 
         relay = ROOT / "data" / "cloud_context.json"
         if degraded and relay.exists():
@@ -2155,10 +2217,15 @@ def main() -> int:
             context["data_quality"] = {"source": "degraded_empty", "stale": True}
             print("  (degraded and no relay bundle - handing a labeled empty context)")
         elif partial:
-            context["data_quality"] = {"source": "live_partial",
-                                       "note": "price scan OK but one or more research "
-                                               "feeds (news/filings/insiders) failed"}
-            print("  (partial degradation - some research feeds failed; labeled)")
+            note = ("universe scan covered only "
+                    f"{scan_ctx.get('scanned')}/{scan_ctx.get('requested')} names - "
+                    "missing names have no fresh prices; treat absent setups as "
+                    "unscanned, not unattractive"
+                    if low_coverage else
+                    "price scan OK but one or more research feeds "
+                    "(news/filings/insiders) failed")
+            context["data_quality"] = {"source": "live_partial", "note": note}
+            print(f"  (partial degradation - {note[:80]}; labeled)")
 
         # Per-position charts need full-network price history. Build them HERE in
         # the gather path (the GitHub Action and the local relay both have live

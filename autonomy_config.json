@@ -108,9 +108,12 @@
       "macro_context",
       "catalysts",
       "position_size_usd",
-      "variant_perception"
+      "variant_perception",
+      "risk_map",
+      "scenarios"
     ],
     "_variant_perception_note": "Every BUY must state the market's misunderstanding explicitly: what consensus believes, what the agent believes differently, the specific mispriced mechanism, and the event/date when the market finds out. Enforced as a required BUY field; format documented in CLAUDE.md.",
+    "_risk_map_scenarios_note": "risk_map and scenarios were always in the CLAUDE.md schema but not validator-enforced, so proposals omitted scenarios and the published scenario_ev stayed empty. Now required on every BUY.",
     "required_sell_fields": [
       "ticker",
       "action",

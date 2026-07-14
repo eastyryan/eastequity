@@ -61,7 +61,9 @@ def _agreement_8ks(recent: dict, cik: str, lookback_days: int = 120) -> list[dic
         if fdate < cutoff:
             continue
         if form == "8-K":
-            hit = sorted(set(str(items or "").split(",")) & set(ITEM_LABELS))
+            # strip(): EDGAR sometimes space-pads item lists ("2.02, 1.01") and
+            # an unstripped " 1.01" silently drops a material-agreement filing.
+            hit = sorted({s.strip() for s in str(items or "").split(",")} & set(ITEM_LABELS))
             if not hit:
                 continue
             labels = [ITEM_LABELS[i] for i in hit]
