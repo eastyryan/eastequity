@@ -652,6 +652,8 @@ def gather_context(cfg: dict, light: bool = False) -> dict:
             # daily-fresh layer
             "last_close": row.get("last_close"),
             "rel_strength_1m_pct": row.get("rel_strength_1m_pct"),
+            "rsi_14": row.get("rsi_14"),
+            "macd_state": (row.get("macd") or {}).get("state"),
             "volume_read": (row.get("volume_signal") or {}).get("read"),
             "ai_exposure": row.get("ai_exposure"),
             "insider_signal": ((insiders.get("tickers", {}).get(t) or {}).get("summary") or {}).get("signal")

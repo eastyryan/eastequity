@@ -154,6 +154,28 @@ Beyond filings/13F/news, every run now includes:
   cmf_20 > 0 sustained = closes near highs on volume (accumulation); updown_vol_ratio_25d
   > 1 = up-day volume dominating. Cite the volume read alongside entry geometry in every
   BUY thesis and in position reviews.
+- **Entry-timing indicators** (on every scanned row) - the trend/volume stack answers
+  "is this a setup?"; these answer "is NOW the entry?":
+  rsi_14 (Wilder) - overbought/oversold CONTEXT, never a standalone signal: in an
+  uptrend RSI > 70 is strength to monitor, not an automatic sell; the classic pullback
+  entry is RSI resetting to ~40-50 while trend structure holds.
+  macd {hist, hist_direction, state} - bull_cross_recent / bear_cross_recent means the
+  histogram flipped sign within ~5 sessions (the actionable moment); above_zero /
+  below_zero is the standing regime.
+  adx_14 with di_plus / di_minus - trend STRENGTH, not direction (<20 = chop: distrust
+  "breakouts" there; >25 = established trend; direction comes from DI+ vs DI-).
+  gap_analysis - >=2% open gaps in the last 20 sessions with direction and whether each
+  later CLOSED back through the pre-gap close ("filled"). An unfilled up-gap on volume
+  is institutional urgency; a quickly-filled gap is a failed move. Cite the relevant
+  indicator alongside entry geometry when timing matters to the thesis.
+- **analyst_ratings** (per focus name in news_and_catalysts, and on surfaced lane rows) -
+  consensus snapshot: recommendation_mean (1=strong buy .. 5=sell), recommendation_key,
+  n_analysts, target_mean_price and target_vs_price_pct. This is SENTIMENT CONTEXT, not
+  a signal: a crowded "strong buy" with the price above the mean target says expectations
+  are stretched; a rating upgrade cycle alongside rising estimates is corroboration. Never
+  cite a price target as your own target. Headlines in news_and_catalysts now carry
+  age_days (older than ~7 days are filtered out; age_days null = date unknown) - weight
+  fresh news over stale, and say the age when a headline is load-bearing.
 - **Deeper fundamentals** in sec_filings: cash, long_term_debt, operating_cash_flow (check
   period_days - flow rows may be year-to-date), stock_based_compensation, diluted_shares.
   A cheap multiple with heavy debt or SBC-inflated earnings is not cheap - say so.

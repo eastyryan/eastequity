@@ -173,6 +173,123 @@ def _rel_strength(name_ret, bench_ret):
     return name_ret - bench_ret
 
 
+# --- entry-timing indicators (pure Python, list-in/scalar-out, offline-testable) ---
+# The trend/volume stack answers "is this a setup?"; these answer "is NOW the entry?"
+# None of them feed swing_setup_score - re-ranking the funnel is a separate decision.
+
+def _rsi14(closes, period: int = 14):
+    """Wilder RSI. None with fewer than period+1 closes."""
+    if not closes or len(closes) < period + 1:
+        return None
+    gains = losses = 0.0
+    for i in range(1, period + 1):
+        d = closes[i] - closes[i - 1]
+        if d >= 0:
+            gains += d
+        else:
+            losses -= d
+    avg_gain, avg_loss = gains / period, losses / period
+    for i in range(period + 1, len(closes)):
+        d = closes[i] - closes[i - 1]
+        avg_gain = (avg_gain * (period - 1) + (d if d > 0 else 0.0)) / period
+        avg_loss = (avg_loss * (period - 1) + (-d if d < 0 else 0.0)) / period
+    if avg_loss == 0:
+        return 100.0
+    return 100.0 - 100.0 / (1.0 + avg_gain / avg_loss)
+
+
+def _ema_series(values, span: int):
+    """Simple recursive EMA over the whole list (seeded on the first value)."""
+    if not values:
+        return []
+    k = 2.0 / (span + 1)
+    out = [values[0]]
+    for v in values[1:]:
+        out.append(out[-1] + k * (v - out[-1]))
+    return out
+
+
+def _macd_state(closes, fast: int = 12, slow: int = 26,
+                signal: int = 9, cross_lookback: int = 5):
+    """MACD(12/26/9) histogram state. None under slow+signal bars.
+
+    state: bull_cross_recent / bear_cross_recent when the histogram changed sign
+    within the last `cross_lookback` sessions (the actionable moment), else
+    above_zero / below_zero (the standing regime)."""
+    if not closes or len(closes) < slow + signal:
+        return None
+    macd = [f - s for f, s in zip(_ema_series(closes, fast), _ema_series(closes, slow))]
+    hist = [m - s for m, s in zip(macd, _ema_series(macd, signal))]
+    state = "above_zero" if hist[-1] > 0 else "below_zero"
+    for i in range(1, min(cross_lookback, len(hist) - 1) + 1):
+        if (hist[-i] > 0) != (hist[-i - 1] > 0):
+            state = "bull_cross_recent" if hist[-i] > 0 else "bear_cross_recent"
+            break
+    return {"hist": round(hist[-1], 4),
+            "hist_direction": ("rising" if len(hist) >= 2 and hist[-1] > hist[-2]
+                               else "falling"),
+            "state": state}
+
+
+def _adx14(highs, lows, closes, period: int = 14):
+    """Wilder ADX with DI+/DI-. Returns (adx, di_plus, di_minus), all None when
+    fewer than 2*period+1 bars. ADX measures trend STRENGTH, not direction:
+    <20 = chop, >25 = established trend; DI+ vs DI- gives the direction."""
+    n = min(len(highs or []), len(lows or []), len(closes or []))
+    if n < 2 * period + 1:
+        return None, None, None
+    trs, pdms, ndms = [], [], []
+    for i in range(1, n):
+        trs.append(max(highs[i] - lows[i], abs(highs[i] - closes[i - 1]),
+                       abs(lows[i] - closes[i - 1])))
+        up, dn = highs[i] - highs[i - 1], lows[i - 1] - lows[i]
+        pdms.append(up if up > dn and up > 0 else 0.0)
+        ndms.append(dn if dn > up and dn > 0 else 0.0)
+    atr, pdm, ndm = sum(trs[:period]), sum(pdms[:period]), sum(ndms[:period])
+    di_p = di_n = 0.0
+    dxs = []
+    for i in range(period, len(trs)):
+        atr = atr - atr / period + trs[i]
+        pdm = pdm - pdm / period + pdms[i]
+        ndm = ndm - ndm / period + ndms[i]
+        di_p = 100.0 * pdm / atr if atr else 0.0
+        di_n = 100.0 * ndm / atr if atr else 0.0
+        denom = di_p + di_n
+        dxs.append(100.0 * abs(di_p - di_n) / denom if denom else 0.0)
+    if len(dxs) < period:
+        return None, None, None
+    adx = sum(dxs[:period]) / period
+    for x in dxs[period:]:
+        adx = (adx * (period - 1) + x) / period
+    return adx, di_p, di_n
+
+
+def _gap_events(opens, closes, sessions: int = 20, min_gap_pct: float = 2.0):
+    """Open gaps >= min_gap_pct vs the prior close over the trailing `sessions`.
+
+    Returns {"count_20d", "last": {sessions_ago, pct, direction, filled}|None},
+    or None with under 2 bars. "filled" = a LATER CLOSE traded back through the
+    pre-gap close (a conservative close-based proxy; intraday touches don't count).
+    An unfilled up-gap is urgency; a filled one is a failed move."""
+    n = min(len(opens or []), len(closes or []))
+    if n < 2:
+        return None
+    events = []
+    for i in range(max(1, n - sessions), n):
+        prev_close = closes[i - 1]
+        if not prev_close or opens[i] is None:
+            continue
+        gap = (opens[i] / prev_close - 1) * 100.0
+        if abs(gap) >= min_gap_pct:
+            later = closes[i:]
+            filled = (any(c is not None and c <= prev_close for c in later) if gap > 0
+                      else any(c is not None and c >= prev_close for c in later))
+            events.append({"sessions_ago": n - 1 - i, "pct": round(gap, 1),
+                           "direction": "up" if gap > 0 else "down",
+                           "filled": bool(filled)})
+    return {"count_20d": len(events), "last": events[-1] if events else None}
+
+
 def scan_universe(top_n: int = 15) -> dict:
     import pandas as pd
     import yfinance as yf
@@ -291,6 +408,14 @@ def scan_universe(top_n: int = 15) -> dict:
             volume_signal = analyze_volume(open_list, high_list, low_list,
                                            close_list, vol_list)
 
+            # Entry-timing layer: oscillators + trend strength + gap map. These
+            # answer "is NOW the entry?" on top of the setup/trend/volume stack;
+            # deliberately NOT folded into swing_setup_score.
+            rsi = _rsi14(close_list)
+            macd = _macd_state(close_list)
+            adx, di_plus, di_minus = _adx14(high_list, low_list, close_list)
+            gap_analysis = _gap_events(open_list, close_list)
+
             # Derived trend booleans (None when the underlying SMA has too little history).
             above_50 = last > sma50
             above_200 = (last > sma200) if sma200 is not None else None
@@ -338,6 +463,12 @@ def scan_universe(top_n: int = 15) -> dict:
                 "pullback_from_20d_high_pct": round(pullback_20d * 100, 1),
                 "volume_surge_5d_vs_3m": round(vol_surge, 2),
                 "atr_pct": round(atr_pct * 100, 2),
+                "rsi_14": round(rsi, 1) if rsi is not None else None,
+                "macd": macd,
+                "adx_14": round(adx, 1) if adx is not None else None,
+                "di_plus": round(di_plus, 1) if di_plus is not None else None,
+                "di_minus": round(di_minus, 1) if di_minus is not None else None,
+                "gap_analysis": gap_analysis,
                 "rel_strength_1m_pct": round(rel_1m * 100, 1) if rel_1m is not None else None,
                 "rel_strength_3m_pct": round(rel_3m * 100, 1) if rel_3m is not None else None,
                 "avg_dollar_volume_20d_usd": round(adv_usd) if adv_usd is not None else None,
@@ -426,6 +557,10 @@ def scan_universe(top_n: int = 15) -> dict:
                 "ev_to_ebitda": info.get("enterpriseToEbitda"),
             }
             r["market_cap_usd"] = info.get("marketCap")  # feeds the $1B floor
+            # Analyst consensus rides along at zero extra network cost (info is
+            # already fetched). Sentiment context, not a signal.
+            from tools.news_catalysts import _ratings_from_info
+            r["analyst_ratings"] = _ratings_from_info(info)
         except Exception:
             r["valuation"] = None
         # Earnings clock: swing entries and binary prints interact constantly.
