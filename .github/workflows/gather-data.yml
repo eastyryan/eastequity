@@ -42,7 +42,16 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Gather context bundle
         run: |
-          python orchestrator.py --gather-only | tee /tmp/gather.log
+          # Depth follows the ET slot map (schedule.slot_depths) so the bundle
+          # matches the trading slot it feeds: light pre-market, four fast
+          # holdings/watchlist slots, one full deep dive before 4pm ET.
+          # Exception: the Sunday 03:40 UTC gather (Sat 23:40 ET) builds the
+          # weekly breadth bundle for the Sunday-midnight market check-in.
+          DEPTH_ARGS="--auto-depth"
+          if [ "$(date -u +%u)" = "7" ] && [ "$(date -u +%H)" = "03" ]; then
+            DEPTH_ARGS="--depth weekly_market"
+          fi
+          python orchestrator.py --gather-only $DEPTH_ARGS | tee /tmp/gather.log
           CTX=$(grep -o 'CONTEXT_FILE=.*' /tmp/gather.log | cut -d= -f2-)
           test -s "$CTX"
           cp "$CTX" data/cloud_context.json

@@ -88,10 +88,39 @@ def depth_allows_new_buys(depth: str) -> bool:
     return depth in ("holdings_watchlist", "full")
 
 
-def slot_depth_from_hhmm(hhmm: str, cfg: dict | None = None) -> str:
-    """Map a clock slot 'HHMM' to a depth using config or defaults."""
+def slot_depth_from_hhmm(hhmm: str, cfg: dict | None = None,
+                         tolerance_minutes: int = 75) -> str:
+    """Map a clock time 'HHMM' (ET) to a depth using config or defaults.
+
+    Scheduled runs never land exactly on the slot (cloud routines fire a few
+    minutes past the hour; the gather workflow runs 20 min before each slot),
+    so this matches the NEAREST configured slot within tolerance_minutes.
+    Outside every slot's window it falls back to "full" (a manual off-schedule
+    run gets the complete cycle rather than a silently thinned one).
+    """
     slots = ((cfg or {}).get("schedule") or {}).get("slot_depths") or DEFAULT_SLOT_DEPTHS
-    return str(slots.get(hhmm) or slots.get(str(hhmm)) or "full")
+
+    def _mins(s: str) -> int:
+        return int(s[:2]) * 60 + int(s[2:])
+
+    try:
+        now_m = _mins(str(hhmm).strip().zfill(4))
+    except (TypeError, ValueError):
+        return "full"
+    best_depth, best_dist = None, None
+    for key, depth in slots.items():
+        # Skip annotation keys like "_note" and anything malformed.
+        if not (isinstance(key, str) and len(key) == 4 and key.isdigit()):
+            continue
+        if depth not in DEPTHS:
+            continue
+        dist = abs(now_m - _mins(key))
+        dist = min(dist, 1440 - dist)  # wrap around midnight
+        if best_dist is None or dist < best_dist:
+            best_depth, best_dist = depth, dist
+    if best_depth is not None and best_dist <= tolerance_minutes:
+        return str(best_depth)
+    return "full"
 
 
 def resolve_depth(

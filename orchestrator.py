@@ -124,6 +124,10 @@ def main() -> int:
     ap.add_argument("--depth", metavar="DEPTH",
                     help="run depth: light | holdings_watchlist | full | weekly_market | "
                          "evening_review (overrides --light when set)")
+    ap.add_argument("--auto-depth", action="store_true",
+                    help="resolve run depth from the ET clock via schedule.slot_depths "
+                         "(nearest slot; for cloud/scheduled runs — explicit --depth "
+                         "and --news-only still win)")
     ap.add_argument("--weekly-market", action="store_true",
                     help="weekly multi-sector market check-in (no trading; breadth map)")
     ap.add_argument("--gather-only", action="store_true",
@@ -145,6 +149,7 @@ def main() -> int:
             light_flag=args.light,
             news_only=args.news_only,
             weekly_market=args.weekly_market,
+            hhmm=f"{et_now():%H%M}" if args.auto_depth else None,
             cfg=cfg,
         )
     except ValueError as e:
@@ -305,6 +310,15 @@ def main() -> int:
             print(f"  (using full archive {load_path.name} for act-on)")
         context = json.loads(load_path.read_text())
         run_depth = context.get("run_depth") or run_depth
+        # Re-derive the trading gates from the bundle's ACTUAL depth: acting on
+        # a light/evening context without a matching --depth flag must not run
+        # with full-depth gating (BUYs would survive a no-BUY slot).
+        no_brain_orders = (
+            args.news_only
+            or run_depth in ("evening_review", "weekly_market")
+            or not depth_allows_new_buys(run_depth)
+        )
+        run_safety = run_depth not in ("evening_review",) and not args.news_only
         bundle_prices = (context.get("universe_scan") or {}).get("prices") or {}
         if bundle_prices:
             try:

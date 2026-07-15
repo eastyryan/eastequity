@@ -23,6 +23,9 @@ def check(name: str, cond: bool, detail: str = "") -> None:
     print(f"  [{status}] {name}" + (f" - {detail}" if detail and not cond else ""))
     if not cond:
         FAILURES.append(name)
+    # Assert so pytest actually fails on a failed check (print-only checks
+    # pass silently under `pytest -q`, which is what CI runs).
+    assert cond, f"{name}{' - ' + detail if detail else ''}"
 
 
 def test_resolve_precedence():
@@ -45,6 +48,28 @@ def test_slot_map():
     check("default keys cover weekday slots", set(DEFAULT_SLOT_DEPTHS) >= {"0900", "1000", "1200", "1400", "1600"})
 
 
+def test_nearest_slot_matching():
+    """Scheduled runs land minutes past the slot: nearest-match within tolerance."""
+    print("nearest-slot matching:")
+    check("0607 routine lag -> light", slot_depth_from_hhmm("0607") == "light")
+    check("0912 -> holdings_watchlist", slot_depth_from_hhmm("0912") == "holdings_watchlist")
+    check("1110 between hw slots -> hw", slot_depth_from_hhmm("1110") == "holdings_watchlist")
+    check("1540 pre-4pm gather -> full", slot_depth_from_hhmm("1540") == "full")
+    check("1610 -> full", slot_depth_from_hhmm("1610") == "full")
+    check("1740 -> evening_review", slot_depth_from_hhmm("1740") == "evening_review")
+    check("0007 midnight outside tolerance -> full", slot_depth_from_hhmm("0007") == "full")
+    check("2340 late night -> full", slot_depth_from_hhmm("2340") == "full")
+    check("garbage hhmm -> full", slot_depth_from_hhmm("noon") == "full")
+    noisy = {"schedule": {"slot_depths": {"0900": "holdings_watchlist",
+                                          "_note": "annotation", "bad": "light",
+                                          "1300": "not_a_depth"}}}
+    check("_note/malformed keys ignored", slot_depth_from_hhmm("0905", noisy) == "holdings_watchlist")
+    check("unknown depth value ignored", slot_depth_from_hhmm("1305", noisy) == "full")
+    check("resolve hhmm routes slot map", resolve_depth(hhmm="0607") == "light")
+    check("news_only beats slot map", resolve_depth(news_only=True, hhmm="1005") == "evening_review")
+    check("explicit beats slot map", resolve_depth(explicit="full", hhmm="0607") == "full")
+
+
 def test_buy_policy_and_budget():
     print("buy policy + budgets:")
     check("hw allows buys", depth_allows_new_buys("holdings_watchlist"))
@@ -64,6 +89,7 @@ def test_buy_policy_and_budget():
 if __name__ == "__main__":
     test_resolve_precedence()
     test_slot_map()
+    test_nearest_slot_matching()
     test_buy_policy_and_budget()
     if FAILURES:
         print(f"\n{len(FAILURES)} failure(s): {FAILURES}")
