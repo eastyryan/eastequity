@@ -227,6 +227,11 @@
       },
       "_note": "When ANY universe company reports earnings, force a FULL deep dive and promote the reporter(s) into deep-research focus. The 9am slot (morning) catches overnight + pre-market reporters; the 5:30pm slot (evening) catches that afternoon's after-hours reporters — 5:30 rather than 4:00 because after-hours prints are often not out by 4pm. Applies to scheduled (--auto-depth) runs; escalates that slot's depth to full only when a reporter is detected, otherwise the slot keeps its normal light/holdings_watchlist/evening_review depth."
     },
+    "live_prices": {
+      "enabled": true,
+      "max_age_min": 30,
+      "_note": "Holdings + watchlist intraday quotes are refreshed every few minutes during market hours by the live-prices Action into state/live_prices.json, and overlaid onto the bundle's daily-bar prices before stops are enforced. A snapshot older than max_age_min is NOT overlaid (a broken feed must not clobber a good daily bar) but IS flagged as stale so the run fails safe. GitHub throttles */5 crons, so real freshness is typically ~10-20 min, not 5."
+    },
     "weekly_market_checkin": {
       "enabled": true,
       "day": "Sun",

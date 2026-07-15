@@ -67,6 +67,7 @@ from runlib.analytics import (
 )
 from runlib.context_gather import gather_context
 from runlib.brain_io import (
+    apply_live_prices,
     apply_safety_layer,
     ask_claude,
     llm_settings,
@@ -342,6 +343,10 @@ def main() -> int:
             or not depth_allows_new_buys(run_depth)
         )
         run_safety = run_depth not in ("evening_review",) and not args.news_only
+        # Overlay the frequent holdings/watchlist live feed onto the bundle's
+        # daily-bar prices so an intraday stop breach is caught this run, not at
+        # the next sparse full gather.
+        apply_live_prices(context, cfg)
         bundle_prices = (context.get("universe_scan") or {}).get("prices") or {}
         if bundle_prices:
             try:
@@ -356,6 +361,7 @@ def main() -> int:
         print(f"[1/5] Gathering context (depth={run_depth})...")
         context = gather_context(cfg, light=args.light, depth=run_depth,
                                  earnings_trigger=earnings_trigger)
+        apply_live_prices(context, cfg)
         if run_safety:
             forced_exit_fills = apply_safety_layer(context, cfg, run_id)
         print("[2/5] Waking the brain (Claude)...")
