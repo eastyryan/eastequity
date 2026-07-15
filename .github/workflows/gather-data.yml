@@ -67,6 +67,11 @@ jobs:
           git add data/cloud_context.json data/charts dashboard/data/position_charts.json
           git diff --cached --quiet && { echo "no data changes"; exit 0; }
           git commit -m "Refresh market data bundle for cloud runs [vercel skip]"
+          # The gather also dirties tracked files we deliberately DON'T commit
+          # (concept memory, fundamental screen). They block `pull --rebase`
+          # ("You have unstaged changes") whenever a push races us — discard
+          # them; this runner is ephemeral and they're regenerated every run.
+          git checkout -- .
           # Rebase-and-retry so we replay on top of any concurrent trade-path
           # push instead of fighting it (our commit touches only data/, so it
           # never conflicts with the ledger's state/ changes).

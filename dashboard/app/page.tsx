@@ -11,6 +11,7 @@ import CostsChart from "@/components/CostsChart";
 import SectorExposure from "@/components/SectorExposure";
 import UniverseLog from "@/components/UniverseLog";
 import WatchlistOutcomes from "@/components/WatchlistOutcomes";
+import LiveQuotes from "@/components/LiveQuotes";
 
 type Position = {
   ticker: string;
@@ -599,6 +600,15 @@ export default function Home() {
           </div>
         </section>
       )}
+
+      {/* Near-live quotes for held + watched names (hydrates client-side) */}
+      <LiveQuotes
+        tickers={[
+          ...positions.map((p) => p.ticker),
+          ...(latest.watchlist ?? []).map((w) => w.ticker),
+        ].filter((t, i, a) => t && a.indexOf(t) === i)}
+        avgCost={Object.fromEntries(positions.map((p) => [p.ticker, p.avg_cost]))}
+      />
 
       {/* Positions */}
       <section className="ds-card mt-5 p-5 sm:p-7">
