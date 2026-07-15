@@ -10,6 +10,17 @@
 # when another node holds an unexpired lease; fail-open on git errors). The
 # kill switch is honored (preflight aborts on state/KILL_SWITCH). Do not add a
 # second orchestrator invocation to this script.
+#
+# RUN DEPTHS (2026-07-14 redesign — full runs were too slow on every slot):
+#   0600  light                 holdings/watchlist prices + exits only
+#   0900  holdings_watchlist    four fast trading cycles (holdings + watchlist deep)
+#   1000  holdings_watchlist
+#   1200  holdings_watchlist
+#   1400  holdings_watchlist
+#   1600  full                  one full-universe deep dive per day
+#   1730  evening_review        news-only research review
+#   Sun 0000 weekly_market      all-sector market check-in (no trading)
+# KEEP IN SYNC with expected_slots() + autonomy_config schedule.slot_depths.
 export PATH="/Users/eastonryan/.local/bin:/Users/eastonryan/.npm-global/bin:/usr/local/bin:/usr/bin:/bin"
 cd /Users/eastonryan/east-equity-agent
 mkdir -p logs
@@ -19,21 +30,33 @@ HHMM=$(date +%H%M)
 
 if [ "$1" = "--scheduled" ]; then
   shift
-  if [ "$DOW" -le 5 ]; then
-    # Weekdays: SEVEN slots (user policy 2026-07-13) - 6am, 9am, 10am, 12pm,
-    # 2pm, 4pm, 5:30pm. Overnight/weekend news is covered by the cloud routines.
-    # KEEP IN SYNC with expected_slots() in orchestrator.py (runs heartbeat).
+  if [ "$DOW" -eq 7 ]; then
+    # Sunday: weekly market check-in at midnight + late news
+    case "$HHMM" in
+      0000|2359) ;;
+      *) exit 0 ;;
+    esac
+  elif [ "$DOW" -eq 6 ]; then
+    # Saturday: news checks only
+    case "$HHMM" in
+      0000|2359) ;;
+      *) exit 0 ;;
+    esac
+  elif [ "$DOW" -le 5 ]; then
+    # Weekdays: SEVEN slots — 6am, 9am, 10am, 12pm, 2pm, 4pm, 5:30pm
     case "$HHMM" in
       0600|0900|1000|1200|1400|1600|1730) ;;
       *) exit 0 ;;
     esac
   else
-    # Weekends: midnight + 11:59pm news checks only
-    case "$HHMM" in
-      0000|2359) ;;
-      *) exit 0 ;;
-    esac
+    exit 0
   fi
+fi
+
+# Sunday midnight: weekly multi-sector market check-in (no trading).
+if [ "$DOW" -eq 7 ] && [ "$HHMM" = "0000" ]; then
+  .venv/bin/python -W ignore orchestrator.py --weekly-market "$@" >> logs/cron.log 2>&1
+  exit $?
 fi
 
 if [ "$DOW" -ge 6 ]; then
@@ -41,16 +64,22 @@ if [ "$DOW" -ge 6 ]; then
   exit $?
 fi
 
-# Slot-aware depth: 5:30pm is a FULL-RESEARCH review (all names, deep research)
-# with NO trading; market-day slots incl. 6am/9am pre-market are full cycles
-# (pre-market data matters; the market-hours gate makes them research/exit-only).
+# Slot-aware depth: four holdings/watchlist cycles, one full deep dive, light pre-market.
 case "$HHMM" in
+  0600) EXTRA="--depth light" ;;
+  0900|1000|1200|1400) EXTRA="--depth holdings_watchlist" ;;
+  1600) EXTRA="--depth full" ;;
   1730) EXTRA="--news-only" ;;
-  *)    EXTRA="" ;;
+  *)    EXTRA="--depth full" ;;
 esac
 .venv/bin/python -W ignore orchestrator.py $EXTRA "$@" >> logs/cron.log 2>&1
 
 # Friday 5:30pm slot chains the weekly self-review after the evening review.
 if [ "$DOW" = "5" ] && [ "$HHMM" = "1730" ]; then
   .venv/bin/python -W ignore orchestrator.py --self-review >> logs/cron.log 2>&1
+fi
+
+# Sunday evening also runs universe curation after the late news tick (when scheduled).
+if [ "$DOW" = "7" ] && [ "$HHMM" = "2359" ]; then
+  .venv/bin/python -W ignore orchestrator.py --universe-review >> logs/cron.log 2>&1
 fi

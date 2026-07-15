@@ -39,6 +39,8 @@ def base_proposal(entry, stop, target, rr):
         "thesis": "Clean swing setup with a real catalyst and rising estimates.",
         "macro_context": "Regime supports adding measured long exposure.",
         "variant_perception": "Consensus sees a fair multiple; I see mispriced growth because estimates lag; resolves at the next print.",
+        "thesis_invalidators": {"invalidating_print": "EPS guide cut or estimate cuts >5%", "invalidating_structure": "Close below the 50-DMA on rising volume", "time_box": "If no progress toward thesis in 25 trading days, exit"},
+        "demand_driver": "hyperscaler_server_capex",
         "catalysts": ["Earnings in ~3 weeks"],
     }
 

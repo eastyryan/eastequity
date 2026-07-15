@@ -258,6 +258,71 @@ def build_sector_comps(rows) -> dict:
     return out
 
 
+
+def multiple_vs_growth_read(pe_to_g) -> str:
+    """Short label for fwd P/E vs revenue growth: cheap_vs_growth (<1), fair (<2),
+    rich_vs_growth (>=2), n/a when pe_to_g is missing/invalid. Pure."""
+    if not isinstance(pe_to_g, (int, float)) or isinstance(pe_to_g, bool):
+        return "n/a"
+    if pe_to_g < 1:
+        return "cheap_vs_growth"
+    if pe_to_g < 2:
+        return "fair"
+    return "rich_vs_growth"
+
+
+def build_valuation_context(row: dict, screen_row=None) -> dict | None:
+    """Compact forward-valuation context for a surfaced row that already has
+    valuation set. Zero extra network: uses valuation.forward_pe, fwd_pe_est,
+    fwd_pe_to_growth, analyst_estimates, and optional cached fundamental_screen
+    fields. Pure / offline-testable. Returns None when valuation is missing.
+    """
+    if not isinstance(row, dict):
+        return None
+    val = row.get("valuation")
+    if not isinstance(val, dict) or not val:
+        return None
+    est = row.get("analyst_estimates") if isinstance(row.get("analyst_estimates"), dict) else {}
+    screen = screen_row if isinstance(screen_row, dict) else {}
+    pe_to_g = row.get("fwd_pe_to_growth")
+    growth = est.get("fwd_revenue_growth_pct")
+    if growth is None and isinstance(screen.get("fwd_revenue_growth_pct"), (int, float)):
+        growth = screen.get("fwd_revenue_growth_pct")
+    fwd_pe = val.get("forward_pe")
+    if not isinstance(fwd_pe, (int, float)) or isinstance(fwd_pe, bool):
+        fwd_pe = None
+    fwd_pe_est = row.get("fwd_pe_est")
+    if not isinstance(fwd_pe_est, (int, float)) or isinstance(fwd_pe_est, bool):
+        fwd_pe_est = None
+    ctx = {
+        "fwd_pe": fwd_pe,
+        "fwd_pe_est": fwd_pe_est,
+        "fwd_pe_to_growth": pe_to_g if isinstance(pe_to_g, (int, float))
+                           and not isinstance(pe_to_g, bool) else None,
+        "fwd_revenue_growth_pct": growth if isinstance(growth, (int, float))
+                                  and not isinstance(growth, bool) else None,
+        "multiple_vs_growth_read": multiple_vs_growth_read(pe_to_g),
+        "note": ("pe vs history is not available without extra history fetch; "
+                 "fwd_pe_est uses cached current-FY EPS (may be ~a day old)"),
+    }
+    # Zero-cost screen fields that help judge whether the multiple is deserved.
+    for k in ("revision_direction", "eps_revision_30d_pct", "eps_growth_next_yr_pct",
+              "eps_estimate_current_yr", "eps_estimate_next_yr"):
+        v = screen.get(k)
+        if v is not None:
+            ctx[k] = v
+    # Analyst revision direction from the live estimate block when screen missed it.
+    if "revision_direction" not in ctx:
+        d = est.get("eps_revision_direction")
+        if d is not None:
+            ctx["revision_direction"] = d
+    if "eps_revision_30d_pct" not in ctx:
+        r30 = est.get("eps_revision_30d_pct")
+        if r30 is not None:
+            ctx["eps_revision_30d_pct"] = r30
+    return ctx
+
+
 # --- entry-timing indicators (pure Python, list-in/scalar-out, offline-testable) ---
 # The trend/volume stack answers "is this a setup?"; these answer "is NOW the entry?"
 # None of them feed swing_setup_score - re-ranking the funnel is a separate decision.
@@ -400,7 +465,21 @@ def _gap_events(opens, closes, sessions: int = 20, min_gap_pct: float = 2.0):
     return {"count_20d": len(events), "last": events[-1] if events else None}
 
 
-def scan_universe(top_n: int = 15) -> dict:
+def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
+                 weekly: bool = False) -> dict:
+    """Scan the trading universe (or a ticker subset) for swing setups.
+
+    Args:
+        top_n: Number of top swing setups to surface.
+        tickers: Optional list/set of symbols to scan ONLY those (+ SPY for RS).
+                 Sector labels come from universe.json when known, else "unmapped".
+        enrich: If False, skip slow per-ticker yf.Ticker info / earnings_dates /
+                revenue_estimate calls. Price metrics, ATR, volume, fwd_pe_est
+                from screen cache, and contrarian/deep_value/supplier lanes still run.
+        weekly: If True, also return by_sector_leaders (top 3 per sector by
+                swing_setup_score with a slim field set). sector_relative_strength
+                is always included.
+    """
     import pandas as pd
     import yfinance as yf
 
@@ -409,7 +488,16 @@ def scan_universe(top_n: int = 15) -> dict:
     for sector, ts in sectors.items():
         for t in ts:
             ticker_sector.setdefault(t, sector)
-    tickers = sorted(ticker_sector)
+
+    if tickers is not None:
+        # Subset mode: only the requested symbols (+ SPY for RS, added below).
+        # Sector from universe map when known; otherwise "unmapped".
+        wanted = sorted({str(t).upper() for t in tickers if t})
+        for t in wanted:
+            ticker_sector.setdefault(t, "unmapped")
+        tickers = wanted
+    else:
+        tickers = sorted(ticker_sector)
 
     # 14mo (~294 sessions) so a true 200-DMA and a trailing-252-session 52-week high
     # survive after rolling. SPY rides along in the same batched download to power
@@ -482,6 +570,16 @@ def scan_universe(top_n: int = 15) -> dict:
             close_list = [float(x) for x in close.tolist()]
             high_list = [float(x) for x in high.tolist()]
             last = close_list[-1]
+            # Per-ticker bar date (the session this last_close belongs to) — first-class
+            # freshness so the brain does not treat a lagging close as live on catalyst days.
+            try:
+                bar_ts = df.index[-1]
+                if hasattr(bar_ts, "date") and callable(bar_ts.date):
+                    price_as_of = bar_ts.date().isoformat()
+                else:
+                    price_as_of = str(bar_ts)[:10]
+            except Exception:
+                price_as_of = None
             pct_1d = last / close_list[-2] - 1
             sma20 = float(close.rolling(20).mean().iloc[-1])
             sma50 = float(close.rolling(50).mean().iloc[-1])
@@ -568,6 +666,7 @@ def scan_universe(top_n: int = 15) -> dict:
             rows.append({
                 "ticker": t, "sector": ticker_sector[t],
                 "last_close": round(last, 2),
+                "price_as_of": price_as_of,  # YYYY-MM-DD of the bar used for last_close
                 "pct_change_1d": round(pct_1d * 100, 2),
                 "momentum_1m_pct": round(mom_1m * 100, 1),
                 "momentum_3m_pct": round(mom_3m * 100, 1),
@@ -669,71 +768,79 @@ def scan_universe(top_n: int = 15) -> dict:
 
     # Valuation + analyst-estimate context for top setups, contrarian, deep-value
     # AND supplier-pullback picks (per-ticker calls are slow, so not the whole universe).
-    for r in rows[:top_n] + contrarian + deep_value + supplier_pullbacks:
-        tk = yf.Ticker(r["ticker"])
-        try:
-            info = tk.info
-            r["valuation"] = {
-                "trailing_pe": info.get("trailingPE"),
-                "forward_pe": info.get("forwardPE"),
-                "price_to_sales_ttm": info.get("priceToSalesTrailing12Months"),
-                "ev_to_ebitda": info.get("enterpriseToEbitda"),
-            }
-            r["market_cap_usd"] = info.get("marketCap")  # feeds the $1B floor
-            # Analyst consensus + short interest ride along at zero extra network
-            # cost (info is already fetched). Sentiment context, not signals.
-            from tools.news_catalysts import _ratings_from_info
-            r["analyst_ratings"] = _ratings_from_info(info)
-            r["short_interest"] = _short_interest_from_info(info)
-        except Exception:
-            r["valuation"] = None
-        # Earnings clock: swing entries and binary prints interact constantly.
-        try:
-            from datetime import datetime, timezone
-            now = pd.Timestamp.now(tz="America/New_York")
-            ed = tk.earnings_dates
-            if ed is not None and len(ed.index):
-                past = [d for d in ed.index if d <= now]
-                future = [d for d in ed.index if d > now]
-                if future:
-                    r["days_to_earnings"] = (min(future) - now).days
-                if past:
-                    r["days_since_earnings"] = (now - max(past)).days
-        except Exception:
-            pass
-        # Is the multiple deserved? Forward growth + which way analysts are revising.
-        try:
-            est: dict = {}
-            rev = tk.revenue_estimate
-            if rev is not None and "growth" in rev and "0y" in rev.index:
-                est["fwd_revenue_growth_pct"] = round(float(rev.loc["0y", "growth"]) * 100, 1)
-                if "+1y" in rev.index:
-                    est["next_yr_revenue_growth_pct"] = round(float(rev.loc["+1y", "growth"]) * 100, 1)
-            trend = tk.eps_trend
-            if trend is not None and "0y" in trend.index:
-                cur, m30 = float(trend.loc["0y", "current"]), float(trend.loc["0y", "30daysAgo"])
-                if m30:
-                    est["eps_revision_30d_pct"] = round((cur - m30) / abs(m30) * 100, 2)
-                    est["eps_revision_direction"] = ("up" if cur > m30 else
-                                                     "down" if cur < m30 else "flat")
-            r["analyst_estimates"] = est or None
-        except Exception:
-            r["analyst_estimates"] = None
-        # Post-earnings drift: recently reported, estimates going up, price not yet
-        # rewarded. Historically the cleanest swing setup for 10-15% compounding.
-        dse = r.get("days_since_earnings")
-        revision_up = (r.get("analyst_estimates") or {}).get("eps_revision_direction") == "up"
-        r["post_earnings_drift_candidate"] = bool(
-            dse is not None and 0 <= dse <= 15 and revision_up
-            and r.get("momentum_1m_pct", 99) < 15)
-        # Fwd-multiple vs growth: which extended AI suppliers are CHEAP relative to
-        # their growth (memory names often print the lowest fwd multiples late-cycle -
-        # the brain must judge cycle-peak vs value; this just makes it visible).
-        fpe = (r.get("valuation") or {}).get("forward_pe")
-        g = (r.get("analyst_estimates") or {}).get("fwd_revenue_growth_pct")
-        r["fwd_pe_to_growth"] = (round(fpe / g, 2)
-                                 if isinstance(fpe, (int, float)) and isinstance(g, (int, float))
-                                 and fpe > 0 and g > 0 else None)
+    # enrich=False skips this entire block for shallow/fast scans; price metrics and
+    # lane selection still run from the batched download + screen cache.
+    if enrich:
+        for r in rows[:top_n] + contrarian + deep_value + supplier_pullbacks:
+            tk = yf.Ticker(r["ticker"])
+            try:
+                info = tk.info
+                r["valuation"] = {
+                    "trailing_pe": info.get("trailingPE"),
+                    "forward_pe": info.get("forwardPE"),
+                    "price_to_sales_ttm": info.get("priceToSalesTrailing12Months"),
+                    "ev_to_ebitda": info.get("enterpriseToEbitda"),
+                }
+                r["market_cap_usd"] = info.get("marketCap")  # feeds the $1B floor
+                # Analyst consensus + short interest ride along at zero extra network
+                # cost (info is already fetched). Sentiment context, not signals.
+                from tools.news_catalysts import _ratings_from_info
+                r["analyst_ratings"] = _ratings_from_info(info)
+                r["short_interest"] = _short_interest_from_info(info)
+            except Exception:
+                r["valuation"] = None
+            # Earnings clock: swing entries and binary prints interact constantly.
+            try:
+                from datetime import datetime, timezone
+                now = pd.Timestamp.now(tz="America/New_York")
+                ed = tk.earnings_dates
+                if ed is not None and len(ed.index):
+                    past = [d for d in ed.index if d <= now]
+                    future = [d for d in ed.index if d > now]
+                    if future:
+                        r["days_to_earnings"] = (min(future) - now).days
+                    if past:
+                        r["days_since_earnings"] = (now - max(past)).days
+            except Exception:
+                pass
+            # Is the multiple deserved? Forward growth + which way analysts are revising.
+            try:
+                est: dict = {}
+                rev = tk.revenue_estimate
+                if rev is not None and "growth" in rev and "0y" in rev.index:
+                    est["fwd_revenue_growth_pct"] = round(float(rev.loc["0y", "growth"]) * 100, 1)
+                    if "+1y" in rev.index:
+                        est["next_yr_revenue_growth_pct"] = round(float(rev.loc["+1y", "growth"]) * 100, 1)
+                trend = tk.eps_trend
+                if trend is not None and "0y" in trend.index:
+                    cur, m30 = float(trend.loc["0y", "current"]), float(trend.loc["0y", "30daysAgo"])
+                    if m30:
+                        est["eps_revision_30d_pct"] = round((cur - m30) / abs(m30) * 100, 2)
+                        est["eps_revision_direction"] = ("up" if cur > m30 else
+                                                         "down" if cur < m30 else "flat")
+                r["analyst_estimates"] = est or None
+            except Exception:
+                r["analyst_estimates"] = None
+            # Post-earnings drift: recently reported, estimates going up, price not yet
+            # rewarded. Historically the cleanest swing setup for 10-15% compounding.
+            dse = r.get("days_since_earnings")
+            revision_up = (r.get("analyst_estimates") or {}).get("eps_revision_direction") == "up"
+            r["post_earnings_drift_candidate"] = bool(
+                dse is not None and 0 <= dse <= 15 and revision_up
+                and r.get("momentum_1m_pct", 99) < 15)
+            # Fwd-multiple vs growth: which extended AI suppliers are CHEAP relative to
+            # their growth (memory names often print the lowest fwd multiples late-cycle -
+            # the brain must judge cycle-peak vs value; this just makes it visible).
+            fpe = (r.get("valuation") or {}).get("forward_pe")
+            g = (r.get("analyst_estimates") or {}).get("fwd_revenue_growth_pct")
+            r["fwd_pe_to_growth"] = (round(fpe / g, 2)
+                                     if isinstance(fpe, (int, float)) and isinstance(g, (int, float))
+                                     and fpe > 0 and g > 0 else None)
+            # Compact forward-valuation context (no extra network): pe vs growth read
+            # + zero-cost screen fields. Only when valuation was successfully set.
+            if r.get("valuation"):
+                r["valuation_context"] = build_valuation_context(
+                    r, screen_rows.get(r["ticker"]))
 
     # Sector comps: peer-relative valuation computed over ALL scanned rows (so
     # the medians rest on the full universe - not the dishonestly-thin ~25
@@ -764,7 +871,17 @@ def scan_universe(top_n: int = 15) -> dict:
          for s, xs in by_sector.items() if xs),
         key=lambda d: d["avg_momentum_1m_pct"], reverse=True)
 
-    return {
+    from datetime import datetime, timezone
+    scan_fetched_at = datetime.now(timezone.utc).isoformat()
+    prices_meta = {
+        r["ticker"]: {
+            "last_close": r["last_close"],
+            "price_as_of": r.get("price_as_of"),  # bar session date
+            "source": "daily_bar",
+        }
+        for r in rows
+    }
+    out = {
         "contrarian_setups": contrarian,
         "deep_value_200w": deep_value,
         "supplier_pullbacks": supplier_pullbacks,
@@ -778,6 +895,7 @@ def scan_universe(top_n: int = 15) -> dict:
         # partial when coverage drops below ~80%.
         "requested": len(tickers),
         "scan_failures": len(tickers) - len(rows),
+        "scan_fetched_at_utc": scan_fetched_at,
         "note": "Ranked by deterministic swing_setup_score; agent must apply judgment and research before proposing.",
         "sector_comps_note": ("sector_comps (on surfaced rows): fwd_pe_est = last close / "
                               "cached pre-market current-FY EPS estimate (snapshot may be "
@@ -787,11 +905,106 @@ def scan_universe(top_n: int = 15) -> dict:
                               f"{MIN_SECTOR_PEERS} same-sector data points report None."),
         "top_setups": rows[:top_n],
         "prices": {r["ticker"]: r["last_close"] for r in rows},
+        # Per-ticker freshness: bar date of last_close + when this scan finished.
+        # On catalyst days a 0.5h-old *bundle* can still embed a prior-session bar
+        # for a non-focus name — weight decisions by price_as_of, not only bundle age.
+        "prices_meta": prices_meta,
         # 14-day ATR% for EVERY scanned name (not just top_setups), so the
         # deterministic volatility-stop floor has universe-wide coverage - including
         # cloud runs, which read this straight from the relayed data bundle.
         "atr_by_ticker": {r["ticker"]: r["atr_pct"] for r in rows},
     }
+
+    # Weekly depth: per-sector leaders (top 3 by swing_setup_score) with a slim
+    # field set so the weekly pack can show rotation without shipping full rows.
+    if weekly:
+        leader_fields = (
+            "ticker", "last_close", "momentum_1m_pct", "rel_strength_1m_pct",
+            "pct_from_52w_high", "swing_setup_score", "liquid",
+        )
+        by_sector_leaders: dict[str, list[dict]] = {}
+        for s, xs in by_sector.items():
+            ranked = sorted(xs, key=lambda r: r.get("swing_setup_score") or 0,
+                            reverse=True)[:3]
+            by_sector_leaders[s] = [
+                {k: r.get(k) for k in leader_fields} for r in ranked
+            ]
+        out["by_sector_leaders"] = by_sector_leaders
+
+    return out
+
+
+def promote_focus_candidates(scan: dict, already: list[str],
+                             max_extra: int = 2) -> list[str]:
+    """Pick up to max_extra focus tickers not already in `already`.
+
+    Pure helper over a scan result dict (no network). Candidates must match at
+    least one of:
+      - post_earnings_drift_candidate is True
+      - high swing_setup_score among top_setups beyond the first 5
+      - liquid and analyst_estimates.eps_revision_direction == "up"
+
+    Prefer top_setups, then contrarian / deep_value / supplier lanes.
+    Returns a list of ticker strings (length <= max_extra).
+    """
+    if not isinstance(scan, dict) or max_extra <= 0:
+        return []
+    already_set = {str(t).upper() for t in (already or []) if t}
+    picked: list[str] = []
+    seen = set(already_set)
+
+    def _take(row: dict) -> bool:
+        """Append row's ticker if eligible; return True if list is full."""
+        if len(picked) >= max_extra:
+            return True
+        t = row.get("ticker")
+        if not t:
+            return False
+        tu = str(t).upper()
+        if tu in seen:
+            return False
+        picked.append(tu)
+        seen.add(tu)
+        return len(picked) >= max_extra
+
+    def _eps_up_liquid(row: dict) -> bool:
+        if not row.get("liquid"):
+            return False
+        est = row.get("analyst_estimates") or {}
+        return isinstance(est, dict) and est.get("eps_revision_direction") == "up"
+
+    def _score_key(row: dict):
+        s = row.get("swing_setup_score")
+        return s if isinstance(s, (int, float)) else -999
+
+    top = list(scan.get("top_setups") or [])
+    lanes: list[dict] = []
+    for key in ("contrarian_setups", "deep_value_200w", "supplier_pullbacks"):
+        lanes.extend(list(scan.get(key) or []))
+
+    # --- top_setups first ---
+    # 1) post-earnings drift
+    for r in top:
+        if r.get("post_earnings_drift_candidate") and _take(r):
+            return picked
+    # 2) high swing_setup_score among top_setups beyond the first 5
+    for r in sorted(top[5:], key=_score_key, reverse=True):
+        if _take(r):
+            return picked
+    # 3) liquid + EPS revision up
+    for r in top:
+        if _eps_up_liquid(r) and _take(r):
+            return picked
+
+    # --- side lanes next (same signal priority; no "beyond first 5" there) ---
+    for r in lanes:
+        if r.get("post_earnings_drift_candidate") and _take(r):
+            return picked
+    for r in lanes:
+        if _eps_up_liquid(r) and _take(r):
+            return picked
+
+    return picked
 
 
 if __name__ == "__main__":

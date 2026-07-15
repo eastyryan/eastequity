@@ -1,2101 +1,108 @@
-"""East Equity Agent — Orchestrator (the supervisor loop).
+"""East Equity Agent — Orchestrator (thin entrypoint).
 
-This is the only entry point for a trading run. It is deterministic scaffolding
-around a single Claude invocation:
+Deterministic scaffolding around a single Claude invocation. Heavy logic lives
+in runlib/ so this file stays a stable import surface for tests, tools, and
+scripts:
 
-    1.  Safety preflight (kill switch, mode, market day)
-    2.  Gather context with Python tools (macro, portfolio, scan, filings, 13F, news)
-    3.  Wake Claude ONCE with the full context bundle + CLAUDE.md rules
-    4.  Parse structured JSON proposals from Claude's response
-    5.  Validate every proposal with the pure-Python validator (validator.py)
-    6.  Execute approved proposals (simulation by default) + broker readback
-    7.  Journal everything, refresh dashboard data, draft X summary, log improvements
+    1. Safety preflight (kill switch, mode, market day)
+    2. Gather context (runlib.context_gather)
+    3. Wake Claude once with a SLIM tiered context pack
+    4. Parse proposals, process gates, shadow/runner marks
+    5. Validate (validator.py) + execute (simulation by default)
+    6. Journal, dashboard, X draft
 
-Claude never touches the broker. The validator never calls Claude. Swing bias
-and long-only rules live in autonomy_config.json and are enforced in step 5
-regardless of what the brain says.
-
-Run:  python orchestrator.py            (full run, honors trading_mode in config)
-      python orchestrator.py --research-only   (steps 1-4 only; no validate/execute)
+Run:  python orchestrator.py
+      python orchestrator.py --research-only
+      python orchestrator.py --depth holdings_watchlist
+      python orchestrator.py --gather-only
 """
 
 from __future__ import annotations
 
 import argparse
 import json
-import os
 import re
-import subprocess
 import sys
 import uuid
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
 
 import journal
 import validator
-from execution import corporate_actions, exit_guard, simulated_broker
-from tools.macro_regime import get_macro_snapshot
-from tools.news_catalysts import get_news_and_catalysts
+from execution import corporate_actions, simulated_broker
 from tools.portfolio_state import get_portfolio_state
-from tools.position_history import get_position_histories
-from tools.watchlist_triggers import (TRIGGER_TOLERANCE_PCT, check_watchlist_triggers,
-                                      parse_price_level)
-from tools.insider_form4 import get_insider_activity
-from tools.performance_breakdown import build_performance_breakdown
-from tools.fundamentals import get_deep_fundamentals
-from tools.filing_text import get_mdna_excerpt, get_latest_earnings_release
-from tools.guidance_ledger import auto_grade, get_ledger_summary, record_guidance
-from tools.options_signal import get_options_signals
-from tools.sec_filings import get_filing_brief
-from tools.smart_money_13f import get_smart_money
-from tools.universe_scanner import scan_universe
+from tools.guidance_ledger import record_guidance
 
-ROOT = Path(__file__).resolve().parent
+from runlib.core import ROOT, json_safe, et_date, et_now, to_et_date, light_prices
+from runlib.depths import (
+    DEPTHS,
+    depth_allows_new_buys,
+    depth_description,
+    resolve_depth,
+    slot_depth_from_hhmm,
+)
+from runlib.preflight import preflight, acquire_run_lock, release_run_lock
+from runlib.analytics import (
+    expected_slots,
+    build_health,
+    build_volatility_context,
+    build_stop_engineering,
+    build_position_stop_cushion,
+    compute_closed_trades,
+    compute_performance_stats,
+    compute_calibration,
+    recent_improvements,
+    proposal_ev,
+    sector_map,
+    sector_exposure,
+    build_trade_events,
+    build_position_charts,
+    update_watchlist_outcomes,
+    append_runs_index,
+    benchmark_close,
+    trade_plans,
+)
+from runlib.context_gather import gather_context
+from runlib.brain_io import (
+    apply_safety_layer,
+    ask_claude,
+    llm_settings,
+    claude_cmd,
+    run_claude,
+    adversarial_review,
+    parse_proposals,
+    execute,
+)
+from runlib.publish import refresh_dashboard, redeploy_dashboard, draft_x_summary
+from runlib.reviews import self_review, universe_review, run_freshness_audit
+from runlib.context_tiers import (
+    slim_context_for_brain,
+    compact_learning_pack,
+    write_tiered_context,
+)
+
 load_dotenv(ROOT / ".env")
 
-
 # ---------------------------------------------------------------------------
-# Step 1 — Safety preflight
+# Backward-compatible private aliases (tests + older tools)
 # ---------------------------------------------------------------------------
-LOCK_FILE = ROOT / "state" / "RUN_LOCK"
-LOCK_STALE_SECONDS = 45 * 60
+_json_safe = json_safe
+_et_date = et_date
+_et_now = et_now
+_to_et_date = to_et_date
+_light_prices = light_prices
+_claude_cmd = claude_cmd
+_run_claude = run_claude
+_llm_settings = llm_settings
+_sector_map = sector_map
+_sector_exposure = sector_exposure
+_proposal_ev = proposal_ev
+_benchmark_close = benchmark_close
+_trade_plans = trade_plans
 
 
-def acquire_run_lock(run_id: str) -> bool:
-    """One run at a time: concurrent cycles trade on stale portfolio snapshots."""
-    if LOCK_FILE.exists():
-        age = datetime.now().timestamp() - LOCK_FILE.stat().st_mtime
-        if age < LOCK_STALE_SECONDS:
-            return False
-        print(f"  (clearing stale run lock, {age/60:.0f} min old)")
-    LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
-    LOCK_FILE.write_text(run_id)
-    import atexit
-    atexit.register(release_run_lock)  # releases on every exit path, crashes included
-    return True
-
-
-def release_run_lock() -> None:
-    LOCK_FILE.unlink(missing_ok=True)
-
-
-def _node_id() -> str:
-    """Best-effort stable id for this execution node (cloud sandbox vs a Mac)."""
-    import socket
-    if os.environ.get("EE_NODE"):
-        return os.environ["EE_NODE"]
-    try:
-        return socket.gethostname() or "unknown-node"
-    except Exception:
-        return "unknown-node"
-
-
-def _read_remote_lease() -> dict | None:
-    """The lease as committed on origin/main (the shared source of truth). Fail-open:
-    returns None on any git/parse error so a lease can never brick the trader."""
-    try:
-        subprocess.run(["git", "fetch", "origin", "main"], cwd=ROOT,
-                       capture_output=True, timeout=60)
-        r = subprocess.run(["git", "show", "origin/main:state/RUN_LEASE.json"],
-                           cwd=ROOT, capture_output=True, text=True, timeout=30)
-        if r.returncode == 0 and r.stdout.strip():
-            return json.loads(r.stdout)
-    except Exception as e:
-        print(f"  (cross-node lease read failed, proceeding fail-open: {e})")
-    return None
-
-
-def acquire_cross_node_lease(run_id: str, cfg: dict, manual: bool = False) -> str | None:
-    """Advisory cross-node lease over the shared ledger, arbitrated through git.
-
-    Returns a halt reason if another NODE holds an unexpired lease (scheduled runs
-    stand down; manual runs only warn), else None after claiming the lease. Fail-OPEN
-    on any git/parse error - the lease only prevents the clear double-trade case, it
-    must never prevent trading because of an infra hiccup."""
-    rc = cfg.get("risk_controls", {})
-    if not rc.get("cross_node_lease_enabled", True):
-        return None
-    ttl_min = rc.get("cross_node_lease_ttl_minutes", 30)
-    now = datetime.now(timezone.utc)
-    lease_path = ROOT / "state" / "RUN_LEASE.json"
-
-    def _conflict(lease: dict | None) -> str | None:
-        if not lease:
-            return None
-        try:
-            exp = datetime.fromisoformat(lease["expires_at"])
-        except Exception:
-            return None  # unparseable -> fail open
-        if exp > now and lease.get("run_id") not in (None, run_id) \
-                and lease.get("holder") != _node_id():
-            return (f"cross-node lease held by {lease.get('holder')} "
-                    f"(run {lease.get('run_id')}) until {exp.isoformat()}")
-
-    conflict = _conflict(_read_remote_lease())
-    if conflict:
-        if manual:
-            print(f"  WARNING: {conflict} - proceeding anyway (manual run).")
-        else:
-            return f"{conflict} - standing down to avoid double-trading the ledger"
-
-    # Claim the lease and push it so the other node can see it before it trades.
-    lease = {"holder": _node_id(), "run_id": run_id, "acquired_at": now.isoformat(),
-             "expires_at": (now + timedelta(minutes=ttl_min)).isoformat()}
-    try:
-        lease_path.parent.mkdir(parents=True, exist_ok=True)
-        lease_path.write_text(json.dumps(lease, indent=2))
-        subprocess.run(["git", "add", "state/RUN_LEASE.json"], cwd=ROOT, capture_output=True)
-        c = subprocess.run(["git", "commit", "-m", "Acquire run lease [vercel skip]"],
-                           cwd=ROOT, capture_output=True, text=True)
-        if c.returncode == 0:
-            p = subprocess.run(["git", "push", "origin", "main"], cwd=ROOT,
-                               capture_output=True, text=True, timeout=120)
-            if p.returncode != 0:  # lost the push race - rebase and re-check the holder
-                rb = subprocess.run(["git", "pull", "--rebase", "origin", "main"],
-                                    cwd=ROOT, capture_output=True, text=True, timeout=120)
-                if rb.returncode != 0:
-                    subprocess.run(["git", "rebase", "--abort"], cwd=ROOT, capture_output=True)
-                    print("  (lease push race, rebase failed - proceeding fail-open)")
-                    return None
-                conflict = _conflict(_read_remote_lease())
-                if conflict and not manual:
-                    return f"lost the lease race: {conflict} - standing down"
-                subprocess.run(["git", "push", "origin", "main"], cwd=ROOT,
-                               capture_output=True, timeout=120)
-    except Exception as e:
-        print(f"  (cross-node lease claim failed, proceeding fail-open: {e})")
-    return None
-
-
-def preflight(cfg: dict, run_id: str, news_only: bool = False,
-              manual: bool = False) -> str | None:
-    """Return a halt reason string, or None if clear to proceed."""
-    if validator.kill_switch_active(cfg):
-        return "KILL_SWITCH file present — no runs until it is removed"
-    if not news_only and datetime.now().strftime("%a") not in cfg["schedule"]["run_days"]:
-        return "not a configured run day (weekend/holiday guard)"
-    # Usage budget: hard cap on SCHEDULED runs per day so the automation can never
-    # drain the subscription's usage pool. Manual (user-initiated) runs are marked
-    # in the journal and neither count toward nor are blocked by the budget.
-    if not manual:
-        cap = cfg["schedule"].get("max_completed_runs_per_day", 12)
-        runs_file = ROOT / "journal" / "runs" / f"{datetime.now(timezone.utc).date().isoformat()}.jsonl"
-        if runs_file.exists():
-            completed = 0
-            for line in runs_file.read_text().splitlines():
-                rec = json.loads(line)
-                if "halted" not in rec and not rec.get("manual"):
-                    completed += 1
-            if completed >= cap:
-                return f"daily run budget exhausted ({completed}/{cap}) - protecting usage limits"
-    if not acquire_run_lock(run_id):
-        return "another run is already in progress (RUN_LOCK held)"
-    # Cross-node lease: a scheduled run that trades the shared ledger stands down if
-    # another node (cloud vs local) already holds it. Skipped for news-only (never trades).
-    if not news_only:
-        lease_halt = acquire_cross_node_lease(run_id, cfg, manual=manual)
-        if lease_halt:
-            return lease_halt
-    return None
-
-
-# ---------------------------------------------------------------------------
-# Steps 2 — Context gathering (all deterministic Python, all fail-soft)
-# ---------------------------------------------------------------------------
-def _light_prices(tickers: list) -> dict:
-    """Last closes for a small ticker list without a full universe scan.
-    Routed through the tools.prices seam (Polygon when POLYGON_API_KEY is set,
-    else yfinance — identical to the old inline behavior)."""
-    try:
-        from tools.prices import get_closes
-        return get_closes(tickers)
-    except Exception:
-        return {}
-
-
-def _json_safe(obj):
-    """Recursively replace NaN/Infinity floats with None so every bundle we write
-    is STRICT JSON. yfinance/pandas leak NaN into estimate/valuation fields, and a
-    bare NaN token makes cloud_context.json unparseable for the cloud routine that
-    depends on it. Cheap insurance applied at every bundle/dashboard write."""
-    import math
-    if isinstance(obj, float):
-        return obj if math.isfinite(obj) else None
-    if isinstance(obj, dict):
-        return {k: _json_safe(v) for k, v in obj.items()}
-    if isinstance(obj, (list, tuple)):
-        return [_json_safe(v) for v in obj]
-    return obj
-
-
-def expected_slots(weekday: bool) -> list[float]:
-    """Scheduled run slots (ET hours) for a weekday vs a weekend day.
-    KEEP IN SYNC with the slot gate in scripts/run_cycle.sh and the cloud
-    routines: weekdays run SEVEN slots (user policy 2026-07-13) — 6am, 9am,
-    10am, 12pm, 2pm, 4pm, 5:30pm (5:30 is a research review, no trading, but
-    still journals a run summary); weekends run news-only at midnight and
-    11:59pm. The nightly cloud midnight news run may journal an extra completed
-    run — the heartbeat only alarms on MISSING runs, so that is harmless."""
-    return [6, 9, 10, 12, 14, 16, 17.5] if weekday else [0, 23.98]
-
-
-def build_health() -> dict:
-    """Runs heartbeat: expected schedule slots so far today (ET) vs runs actually
-    journaled. A silently-dead pipeline (the plan-mode parse bug ran for DAYS
-    unnoticed) now shows up on the dashboard as missed runs instead of nothing."""
-    now = _et_now()
-    weekday = now.weekday() < 5
-    slots = expected_slots(weekday)
-    now_h = now.hour + now.minute / 60
-    expected = sum(1 for s in slots if s <= now_h)
-    completed = 0
-    last_ts = None
-    from datetime import timedelta as _td
-    for delta in (0, 1):  # journal files are named by UTC date; today ET spans two
-        f = ROOT / "journal" / "runs" / f"{(datetime.now(timezone.utc) - _td(days=delta)).date().isoformat()}.jsonl"
-        if not f.exists():
-            continue
-        for line in f.read_text().splitlines():
-            try:
-                rec = json.loads(line)
-            except json.JSONDecodeError:
-                continue
-            d = _to_et_date(rec.get("ts"))
-            if d == _et_date() and "halted" not in rec and not rec.get("manual"):
-                completed += 1
-                last_ts = rec.get("ts") or last_ts
-    missed = max(0, expected - completed)
-    # Bundle-age alarm: the relay bundle is the cloud runs' data supply. If the
-    # gatherers (GH Action / local relay) die, the bundle ages - warn well BEFORE
-    # the 4h stale threshold so it gets fixed, not discovered after the fact.
-    bundle_age_h = None
-    try:
-        b = json.loads((ROOT / "data" / "cloud_context.json").read_text())
-        bundle_age_h = round((datetime.now(timezone.utc)
-                              - datetime.fromisoformat(b["run_date"])).total_seconds() / 3600, 1)
-    except Exception:
-        pass
-    market_hours = weekday and 9.5 <= now_h <= 16
-    bundle_alarm = bool(bundle_age_h is not None and
-                        (bundle_age_h > 2 if market_hours else bundle_age_h > 8))
-    status = "ok"
-    if missed > 1:
-        status = "DEGRADED - scheduled runs are being missed"
-    elif bundle_alarm:
-        status = f"WARNING - data bundle is {bundle_age_h}h old (gatherers may be down)"
-    return {
-        "as_of_et": now.isoformat(timespec="minutes"),
-        "expected_runs_so_far": expected,
-        "completed_scheduled_runs": completed,
-        "missed": missed,
-        "bundle_age_hours": bundle_age_h,
-        "last_scheduled_run_utc": last_ts,
-        "status": status,
-    }
-
-
-def _universe_audit_summary() -> dict | None:
-    """Compact summary of the latest ALL-universe freshness audit for the bundle.
-    None when no audit exists or it is too old to trust (>8 days)."""
-    f = ROOT / "dashboard" / "data" / "freshness_audit.json"
-    try:
-        a = json.loads(f.read_text())
-        audited_at = a.get("audited_at_et", "")
-        age_days = None
-        try:
-            age_days = (datetime.now(timezone.utc)
-                        - datetime.fromisoformat(audited_at)).days
-        except Exception:
-            pass
-        if age_days is not None and age_days > 8:
-            return None
-        return {"audited_at_et": audited_at, "audited": a.get("audited"),
-                "fresh": a.get("fresh"), "stale_tickers": a.get("stale_tickers", []),
-                "error_tickers": a.get("error_tickers", []),
-                "foreign_annual_filers": a.get("foreign_annual_filers", [])}
-    except Exception:
-        return None
-
-
-def build_volatility_context(scan: dict, options_signals: dict) -> dict:
-    """Per-ticker volatility for the deterministic stop floor: {TICKER: {atr_pct,
-    expected_move_pct}}. ATR comes from the scanner (every name; also present in the
-    relayed cloud bundle); expected move from options when that data loaded. This is
-    the single map fed to BOTH the validator and the brain-facing stop_engineering
-    block, so what the brain is told matches what the validator enforces."""
-    vol: dict[str, dict] = {}
-    scan = scan or {}
-    # ATR for the whole scanned universe (new field), with a fallback to the
-    # per-row atr on top_setups/contrarian for bundles gathered before that field.
-    for t, atr in (scan.get("atr_by_ticker") or {}).items():
-        vol.setdefault(t.upper(), {})["atr_pct"] = atr
-    for r in (scan.get("top_setups") or []) + (scan.get("contrarian_setups") or []):
-        t = str(r.get("ticker", "")).upper()
-        if t and r.get("atr_pct") is not None:
-            vol.setdefault(t, {}).setdefault("atr_pct", r["atr_pct"])
-    for t, sig in ((options_signals or {}).get("tickers") or {}).items():
-        if isinstance(sig, dict) and sig.get("expected_move_pct") is not None:
-            vol.setdefault(t.upper(), {})["expected_move_pct"] = sig["expected_move_pct"]
-    return vol
-
-
-def build_stop_engineering(focus: list, vol: dict, cfg: dict) -> dict:
-    """Brain-facing: the enforced minimum stop distance per focus name, so the agent
-    engineers stops OUTSIDE the noise band on the first try instead of being rejected."""
-    floors = {}
-    for t in focus:
-        t = str(t).upper()
-        v = vol.get(t)
-        if not v:
-            continue
-        floor = validator.stop_floor_pct(v.get("atr_pct"), v.get("expected_move_pct"), cfg)
-        if floor is None:
-            continue
-        floors[t] = {
-            "atr_pct": v.get("atr_pct"),
-            "expected_move_pct": v.get("expected_move_pct"),
-            "min_stop_distance_pct": round(floor * 100, 2),
-            "tradeable": floor <= cfg["trade_quality_requirements"]["max_stop_loss_distance_pct"],
-        }
-    return {
-        "note": "ENFORCED stop floor per name. Your stop_loss must sit at least "
-                "min_stop_distance_pct below entry or the validator rejects it "
-                "(stop_inside_noise_band). This is a floor, not a target - for a swing "
-                "hold, aim WIDER (roughly 1.5-2x ATR, or clearly beyond the expected "
-                "move) so ordinary volatility does not stop you out. If tradeable is "
-                "false the name is too volatile for a valid stop under the 15% cap; do "
-                "not propose it.",
-        "floors": floors,
-    }
-
-
-def build_position_stop_cushion(portfolio: dict, vol: dict, cfg: dict) -> dict:
-    """Per open position: how much room is left between today's price and the recorded
-    stop, measured in the name's own volatility. A cushion under ~1 ATR means an
-    ordinary session could trip the stop - the brain should decide deliberately
-    (hold through, or exit on its own terms) rather than be noise-stopped."""
-    out = {}
-    for pos in portfolio.get("positions", []):
-        t = str(pos.get("ticker", "")).upper()
-        plan = pos.get("original_plan") or {}
-        stop = plan.get("stop_loss")
-        last = pos.get("last_price")
-        v = vol.get(t) or {}
-        atr = v.get("atr_pct")
-        if not (stop and last):
-            continue
-        try:
-            stop, last = float(stop), float(last)
-        except (TypeError, ValueError):
-            continue
-        cushion_pct = (last - stop) / last * 100 if last else None
-        entry = plan.get("entry_price_max") or pos.get("avg_cost")
-        info = {
-            "last_price": round(last, 2),
-            "recorded_stop": round(stop, 2),
-            "cushion_to_stop_pct": round(cushion_pct, 2) if cushion_pct is not None else None,
-            "atr_pct": atr,
-            "expected_move_pct": v.get("expected_move_pct"),
-        }
-        if atr and cushion_pct is not None and atr > 0:
-            info["cushion_in_atr"] = round(cushion_pct / atr, 2)
-            info["inside_noise_band"] = cushion_pct < atr  # < ~1 average day's range
-        if entry:
-            try:
-                info["stop_distance_from_entry_pct"] = round((float(entry) - stop) / float(entry) * 100, 2)
-            except (TypeError, ValueError):
-                pass
-        # Stall detection (soft time stop, forces a DECISION not an exit): two weeks
-        # in with the price going nowhere is unpriced opportunity cost - the brain
-        # must justify continuing to hold or rotate. The horizon force-close
-        # remains the hard time stop.
-        days_held = pos.get("days_held")
-        avg_cost = pos.get("avg_cost")
-        try:
-            if days_held is not None and avg_cost:
-                pnl_pct = (last / float(avg_cost) - 1) * 100
-                info["unrealized_pnl_pct"] = round(pnl_pct, 2)
-                info["stalled"] = bool(days_held >= 14 and abs(pnl_pct) < 3.0)
-        except (TypeError, ValueError, ZeroDivisionError):
-            pass
-        out[t] = info
-    return out
-
-
-def gather_context(cfg: dict, light: bool = False) -> dict:
-    print("  • macro regime...")
-    macro = get_macro_snapshot()
-    print("  • portfolio state...")
-    portfolio = get_portfolio_state()
-
-    held = [p["ticker"] for p in portfolio.get("positions", [])]
-    if light:
-        # Light check: no universe scan or deep research. Prices for held +
-        # watchlist names only (needed for exits, marks, and trigger checks).
-        latest_file = ROOT / "dashboard" / "data" / "latest.json"
-        watch = []
-        if latest_file.exists():
-            watch = [w.get("ticker") for w in
-                     json.loads(latest_file.read_text()).get("watchlist", []) if w.get("ticker")]
-        tickers = list(dict.fromkeys(held + watch))
-        print(f"  • light price check on {tickers}...")
-        scan = {"status": "light", "note": "light run - no universe scan this cycle",
-                "top_setups": [], "prices": _light_prices(tickers)}
-        focus = held
-        print(f"  • news for holdings {focus}...")
-        filings = {t: {"status": "skipped_light_run"} for t in focus}
-        smart_money = {"status": "skipped_light_run"}
-        insiders = {"status": "skipped_light_run"}
-        partnerships = {"status": "skipped_light_run"}
-        news = get_news_and_catalysts(focus) if focus else {"status": "skipped"}
-        deep_fundamentals = {t: {"status": "skipped_light_run"} for t in focus}
-        filing_texts = {}
-        guidance = get_ledger_summary(held)
-        options_signals = get_options_signals(held) if held else {"status": "skipped"}
-        from tools.fundamental_screen import get_screen
-        fundamental_screen = get_screen(None)  # cached only, never refreshes
-    else:
-        print("  • universe scan...")
-        scan = scan_universe(top_n=15)
-
-        # Deep research on: current holdings + top-5 scanner candidates.
-        candidates = [r["ticker"] for r in scan.get("top_setups", [])[:5]]
-        focus = list(dict.fromkeys(held + candidates))
-
-        contrarian_picks = [r["ticker"] for r in scan.get("contrarian_setups", [])[:3]]
-        focus = list(dict.fromkeys(focus + contrarian_picks))
-
-        # Deep-value lane: strong names at/below their 200-WEEK MA get the full
-        # deep-research treatment too - the whole point is vetting whether the
-        # business is genuinely sound while the price sits on long-term support.
-        deep_value_picks = [r["ticker"] for r in scan.get("deep_value_200w", [])[:2]]
-        focus = list(dict.fromkeys(focus + deep_value_picks))
-
-        print("  • rendering candlestick charts...")
-        try:
-            from tools.price_chart import render_charts
-            render_charts(focus)
-        except Exception as e:
-            print(f"    (chart rendering failed: {e})")
-
-        print(f"  • deep research on {focus}...")
-        filings = {t: get_filing_brief(t) for t in focus}
-
-        # QUARTERLY-CLOCK CACHE: the three financial statements only change when a
-        # new 10-Q/10-K/20-F is FILED. Deep XBRL + filing prose are cached per name,
-        # keyed on the latest periodic filing date from the brief - a new filing
-        # invalidates automatically (the day after earnings, the key changes and
-        # everything refreshes). Fast-moving data (news, price/volume, options,
-        # insiders) is deliberately NOT cached - it refreshes every run.
-        deep_fundamentals, filing_texts = {}, {}
-        cache_dir = ROOT / "data" / "cache"
-        cache_dir.mkdir(parents=True, exist_ok=True)
-        reused, refreshed = [], []
-        for t in focus:
-            filed_key = ((filings.get(t) or {}).get("latest_periodic_filing") or {}).get("filed", "")
-            cache_f = cache_dir / f"quarterly_{t.upper()}.json"
-            cached = None
-            try:
-                if filed_key and cache_f.exists():
-                    blob = json.loads(cache_f.read_text())
-                    if blob.get("filed_key") == filed_key:
-                        cached = blob
-            except Exception:
-                cached = None
-            if cached:
-                deep_fundamentals[t] = cached["deep"]
-                if cached.get("texts") is not None:
-                    filing_texts[t] = cached["texts"]
-                reused.append(t)
-            else:
-                deep_fundamentals[t] = get_deep_fundamentals(t)
-                texts = None
-                if len(filing_texts) < 5:  # prose kept for the top-5 as before
-                    texts = {"mdna": get_mdna_excerpt(t, max_chars=10000),
-                             "earnings_release": get_latest_earnings_release(t, max_chars=8000)}
-                    filing_texts[t] = texts
-                refreshed.append(t)
-                try:
-                    # Cache ONLY a successful extraction. A partial-degradation run
-                    # (submissions OK -> real filed_key, but companyfacts throttled)
-                    # returns an error dict; caching it under the current filing key
-                    # would serve the frozen error until the NEXT filing - exactly
-                    # the post-earnings window that most needs fresh statements.
-                    if filed_key and (deep_fundamentals[t] or {}).get("status") == "ok":
-                        cache_f.write_text(json.dumps(_json_safe(
-                            {"filed_key": filed_key, "cached_at": _et_date(),
-                             "deep": deep_fundamentals[t], "texts": texts}), default=str))
-                except Exception:
-                    pass
-        print(f"    quarterly cache: {len(reused)} reused, {len(refreshed)} refreshed"
-              + (f" ({refreshed})" if refreshed else ""))
-        print("  • fundamental screen (full universe, cached)...")
-        try:
-            from tools.fundamental_screen import get_screen
-            all_universe = sorted(validator.load_universe())
-            fundamental_screen = get_screen(all_universe)
-        except Exception as e:
-            fundamental_screen = {"status": "error", "reason": str(e)[:200]}
-        print("  • options-derived signals...")
-        options_signals = get_options_signals(focus)
-        print("  • guidance ledger...")
-        for t in focus:
-            try:
-                auto_grade(t)
-            except Exception as e:
-                print(f"    (auto_grade {t} failed: {e})")
-        guidance = get_ledger_summary(focus)
-        smart_money = get_smart_money(focus) if focus else {"status": "skipped"}
-        news = get_news_and_catalysts(focus) if focus else {"status": "skipped"}
-        insiders = get_insider_activity(focus) if focus else {"status": "skipped"}
-        print("  • strategic partnerships / material deals...")
-        try:
-            from tools.partnerships import get_partnerships
-            partnerships = get_partnerships(focus) if focus else {"status": "skipped"}
-        except Exception as e:
-            partnerships = {"status": "error", "reason": str(e)[:150]}
-
-    # Held names that dropped out of the universe scan (e.g. removed in a weekly review)
-    # must STILL be priced, or mark_to_market and the safety layer freeze them at entry
-    # cost - which quietly flatters losers that fell out of the momentum funnel.
-    scan_prices = scan.setdefault("prices", {})
-    missing_held = [t for t in held if t not in scan_prices]
-    if missing_held:
-        for t, px in _light_prices(missing_held).items():
-            scan_prices[t] = px
-
-    # Mark the book to today's prices EVERY run, not just when a trade fills.
-    # Without this, hold days freeze last_price/equity at the last fill, so the
-    # brain reasons on stale stop cushions and the published equity flat-lines.
-    if held and scan_prices:
-        try:
-            simulated_broker.mark_to_market(scan_prices)
-            portfolio = get_portfolio_state()
-        except Exception as e:
-            print(f"  (mark-to-market failed: {e})")
-
-    print("  • position histories...")
-    histories = get_position_histories(held) if held else {"status": "skipped"}
-
-    print("  • watchlist triggers...")
-    prev_file = ROOT / "dashboard" / "data" / "latest.json"
-    prev_watchlist = []
-    if prev_file.exists():
-        try:
-            prev_watchlist = json.loads(prev_file.read_text()).get("watchlist") or []
-        except Exception:
-            pass
-    watchlist_alerts = check_watchlist_triggers(prev_watchlist, scan.get("prices", {}))
-
-    # Market-wide tape context (keyless RSS + optional Finnhub): cheap enough for
-    # every run depth. Fail-soft - a dead feed never blocks a cycle.
-    print("  • market-wide news...")
-    try:
-        from tools.market_news import get_market_news
-        market_news = get_market_news()
-    except Exception as e:
-        market_news = {"status": "error", "reason": str(e)[:150]}
-
-    # Universe-wide 8-K sweep (ONE EDGAR daily-index request): material news for
-    # ALL watchable names, not just the ~12 focus names. Skipped on light runs.
-    todays_8ks = {"status": "skipped_light_run"} if light else {}
-    if not light:
-        print("  • universe 8-K sweep...")
-        try:
-            from tools.filings_sweep import today_8ks
-            todays_8ks = today_8ks(sorted(validator.load_universe()))
-        except Exception as e:
-            todays_8ks = {"status": "error", "reason": str(e)[:150]}
-
-    # Portfolio correlation/beta: quantifies the book's common left tail and each
-    # top candidate's diversification value BEFORE the brain reasons about adds.
-    print("  • portfolio correlation/beta...")
-    try:
-        from tools.correlation import get_portfolio_risk
-        _cand = [r.get("ticker") for r in (scan.get("top_setups") or [])[:5]
-                 if r.get("ticker") and r.get("ticker") not in held]
-        portfolio_risk = get_portfolio_risk(
-            [{"ticker": p["ticker"], "market_value_usd": p.get("market_value_usd", 0)}
-             for p in portfolio.get("positions", [])],
-            candidates=_cand)
-    except Exception as e:
-        portfolio_risk = {"status": "error", "reason": str(e)[:150]}
-
-    # The agent's own track record: what it predicted vs. what actually happened.
-    closed = compute_closed_trades()
-    hist_file = ROOT / "dashboard" / "data" / "equity_history.json"
-    hist = json.loads(hist_file.read_text()) if hist_file.exists() else []
-    track_record = {
-        "note": "Your own past trades. Study what worked and what did not before proposing.",
-        "closed_trades": closed[-20:],
-        "performance": compute_performance_stats(closed, hist),
-        "breakdowns": build_performance_breakdown(closed),
-        "calibration": compute_calibration(closed),
-    }
-
-    # Fundamentals freshness: per focus name, does our extracted data reach the
-    # period covered by the newest filed 10-Q/10-K? Derived from the briefs already
-    # fetched (no extra network). stale=true names must never be cited as current.
-    fundamentals_freshness = {}
-    for t, br in (filings or {}).items():
-        if isinstance(br, dict) and br.get("status") == "ok":
-            fundamentals_freshness[t] = {
-                "current_through": br.get("fundamentals_current_through"),
-                "latest_filing_period": (br.get("latest_periodic_filing") or {}).get("period_end"),
-                "stale": bool(br.get("stale_fundamentals_warning")),
-            }
-    stale_names = sorted(t for t, v in fundamentals_freshness.items() if v["stale"])
-    if stale_names:
-        print(f"  !! STALE FUNDAMENTALS for {stale_names} - flagged to the brain")
-
-    # PER-NAME DIGEST: the financial identity card the brain reads FIRST. Key numbers
-    # from the statements (always labeled with their quarter-end - the backbone never
-    # goes out of view even though deep re-fetches are quarterly), plus everything
-    # that changes daily. Full detail remains below in the bundle for digging.
-    def _dig(t: str) -> dict:
-        br = filings.get(t) if isinstance(filings.get(t), dict) else {}
-        qf = br.get("quarterly_fundamentals") or {}
-        rev = (qf.get("revenue") or [])
-        ni = (qf.get("net_income") or [])
-        ratios = ((deep_fundamentals.get(t) or {}).get("quality_ratios") or {}).get("ratios") or {}
-
-        def rv(key):
-            v = ratios.get(key)
-            return v.get("value") if isinstance(v, dict) else v
-        row = next((r for r in (scan.get("top_setups") or []) + (scan.get("contrarian_setups") or [])
-                    + (scan.get("deep_value_200w") or []) + (scan.get("supplier_pullbacks") or [])
-                    if r.get("ticker") == t), {})
-        yoy = None
-        if len(rev) >= 5 and rev[-5].get("value_usd"):
-            yoy = round((rev[-1]["value_usd"] / rev[-5]["value_usd"] - 1) * 100, 1)
-        d = {
-            "latest_quarter_end": rev[-1]["period_end"] if rev else None,  # CITE THIS DATE
-            "revenue_usd": rev[-1]["value_usd"] if rev else None,
-            "revenue_yoy_pct": yoy,
-            "net_income_usd": ni[-1]["value_usd"] if ni else None,
-            "ttm_ebitda_usd": rv("ebitda_ttm_usd"),
-            "net_debt_to_ebitda": rv("net_debt_to_ebitda"),
-            "fcf_ttm_usd": rv("free_cash_flow_ttm_usd"),
-            "sbc_pct_of_revenue": rv("sbc_pct_of_revenue"),
-            "market_cap_usd": rv("market_cap_usd") or row.get("market_cap_usd"),
-            "fundamentals_stale": bool(br.get("stale_fundamentals_warning")),
-            "next_earnings": (news.get("tickers", {}).get(t) or {}).get("next_earnings")
-                             if isinstance(news, dict) else None,
-            "days_to_earnings": row.get("days_to_earnings"),
-            # daily-fresh layer
-            "last_close": row.get("last_close"),
-            "rel_strength_1m_pct": row.get("rel_strength_1m_pct"),
-            "rsi_14": row.get("rsi_14"),
-            "macd_state": (row.get("macd") or {}).get("state"),
-            "volume_read": (row.get("volume_signal") or {}).get("read"),
-            "ai_exposure": row.get("ai_exposure"),
-            "insider_signal": ((insiders.get("tickers", {}).get(t) or {}).get("summary") or {}).get("signal")
-                              if isinstance(insiders, dict) else None,
-            # Echo the buyer count so "insider_buying" vs a real 2+ "bullish_cluster"
-            # is unambiguous in the digest itself (no drill-down needed).
-            "insider_distinct_buyers": ((insiders.get("tickers", {}).get(t) or {}).get("summary") or {}).get("distinct_discretionary_buyers")
-                              if isinstance(insiders, dict) else None,
-            "13f_net_activity": ((smart_money.get("by_ticker") or {}).get(t) or {}).get("net_activity")
-                                if isinstance(smart_money, dict) else None,
-            "deal_8ks_recent": len(((partnerships.get("tickers", {}).get(t) or {})
-                                    .get("material_agreement_8ks") or []))
-                               if isinstance(partnerships, dict) else None,
-        }
-        return {k: v for k, v in d.items() if v is not None}
-    digest = {t: _dig(t) for t in focus}
-
-    # Volatility -> stop engineering. One source of truth (validator.stop_floor_pct)
-    # for both the brain-facing floors and the deterministic validation at execute time.
-    volatility = build_volatility_context(scan, options_signals)
-    stop_engineering = build_stop_engineering(focus, volatility, cfg)
-    position_stop_cushion = build_position_stop_cushion(portfolio, volatility, cfg)
-
-    return {
-        "run_date": datetime.now(timezone.utc).isoformat(),
-        "as_of_et": _et_date(),  # today's US MARKET date - cite this, not the UTC run_date
-        "digest": {
-            "note": "READ FIRST: per focus name, the key statement numbers (each with its "
-                    "quarter-end date - cite them WITH the date), leverage/cash-flow reads, "
-                    "next earnings (when fresh statements arrive), and today's fast-moving "
-                    "signals. Full detail lives in the sections below; dig there before "
-                    "proposing, but this card is the always-current financial identity.",
-            "by_ticker": digest,
-        },
-        "trading_mode": cfg["mode"]["trading_mode"],
-        "run_depth": "light" if light else "full",
-        # Hard limits the validator will enforce - size within them or be rejected.
-        "hard_limits": {
-            "effective_max_position_usd": round(min(
-                cfg["position_sizing"]["max_position_usd"],
-                portfolio.get("total_equity_usd", 0)
-                * cfg["position_sizing"]["max_position_pct_of_portfolio"]), 2),
-            "position_sizing": cfg["position_sizing"],
-            "quality": cfg["trade_quality_requirements"],
-            "swing": {k: cfg["swing_rules"][k] for k in
-                      ("min_holding_horizon_days", "max_holding_horizon_days",
-                       "max_new_positions_per_day")},
-        },
-        "benchmark_close": _benchmark_close(),
-        "macro_regime": macro,
-        "portfolio": portfolio,
-        "position_histories": {
-            "note": "Last 10 daily sessions for each CURRENT HOLDING, newest last, "
-                    "with 5-day change and distance from the 10-day high/low. Use "
-                    "this to judge whether a position is resting, breaking down, or "
-                    "extended - not just today's print vs the entry plan.",
-            **histories,
-        },
-        "watchlist_trigger_alerts": {
-            "note": "Deterministic check of YOUR OWN previous run's watchlist "
-                    "'would_buy_at' price levels against today's prices. Each alert "
-                    "means a name you said you wanted cheaper is now at or within 2% "
-                    "of your stated level - prioritize deep research on it this run "
-                    "and either propose or update the watchlist entry. Non-price "
-                    "triggers (earnings dates, conditions) are not checked here.",
-            "alerts": watchlist_alerts,
-        },
-        "universe_scan": scan,
-        "sec_filings": filings,
-        "fundamentals_freshness": {
-            "note": "Per focus name: the newest period our XBRL fundamentals reach vs the "
-                    "period the latest filed 10-Q/10-K actually covers. stale=true means "
-                    "the fundamentals below are NOT the latest reported quarter - do NOT "
-                    "cite them as current; flag the staleness and lean on price/news. "
-                    "universe_audit summarizes the weekly ALL-names sweep.",
-            "by_ticker": fundamentals_freshness,
-            "stale_tickers": stale_names,
-            "universe_audit": _universe_audit_summary(),
-        },
-        "deep_fundamentals": deep_fundamentals,
-        "filing_texts": filing_texts,
-        "filing_texts_note": (
-            "Real MD&A and press-release prose per focus ticker. When "
-            "earnings_release.contains_guidance_language is true, QUOTE the specific "
-            "guidance sentence (numbers and fiscal period) instead of paraphrasing. "
-            "mdna.section == 'document_start' means general filing text, not MD&A."),
-        "guidance_ledger": guidance,
-        "fundamental_screen": fundamental_screen,
-        "options_signals": options_signals,
-        "stop_engineering": stop_engineering,
-        "position_stop_cushion": {
-            "note": "For each open position: room left between today's price and your "
-                    "recorded stop, measured in the name's own ATR. cushion_in_atr < 1 "
-                    "(inside_noise_band true) means one ordinary session could hit the "
-                    "stop - decide deliberately (hold through it, or exit on your terms) "
-                    "rather than get noise-stopped. The safety layer still enforces the "
-                    "recorded stop on a closing basis.",
-            "positions": position_stop_cushion,
-        },
-        "smart_money_13f": smart_money,
-        "news_and_catalysts": news,
-        "market_news": {
-            "note": "Market-wide headlines (last ~24h) for tape context - what is "
-                    "moving EVERYTHING today, not just your focus names. Weigh it in "
-                    "the macro/regime read; never build a single-name thesis on it alone.",
-            **(market_news if isinstance(market_news, dict) else {}),
-        },
-        "todays_8ks": {
-            "note": "8-K filings TODAY across the ENTIRE universe (one EDGAR index "
-                    "sweep). An 8-K on a non-focus name may be the day's real "
-                    "opportunity - pull the filing with WebFetch if the form looks "
-                    "material before dismissing it.",
-            **(todays_8ks if isinstance(todays_8ks, dict) else {}),
-        },
-        "portfolio_risk": {
-            "note": "Correlation/beta math for the CURRENT book + top candidates. "
-                    "shared_left_tail=true means every holding falls together in the "
-                    "same shock - a new BUY >0.7 correlated to the book must justify "
-                    "why it deserves to exist beyond its solo merits; a candidate "
-                    "flagged diversifier=true is worth extra attention when the book "
-                    "is clustered.",
-            **(portfolio_risk if isinstance(portfolio_risk, dict) else {}),
-        },
-        "insider_activity": insiders,
-        "partnerships": partnerships,
-        "track_record": track_record,
-        # THE LOOP, forward half: the weekly self-review's lessons reach every
-        # trading run, so "the one change I'm making" actually changes behavior.
-        "lessons_learned": {
-            "note": "Your own most recent self-review conclusions and process notes. "
-                    "The CURRENT stated behavior change is binding until the next "
-                    "review grades it - honor it in this run's decisions.",
-            "recent": [n for n in recent_improvements(40)
-                       if str(n.get("note", "")).startswith("Weekly self-review:")
-                       or "[style-log]" in str(n.get("note", ""))][:5],
-        },
-    }
-
-
-# ---------------------------------------------------------------------------
-# Safety layer: deterministic corporate actions + forced exits, BEFORE the brain
-# ---------------------------------------------------------------------------
-def apply_safety_layer(context: dict, cfg: dict, run_id: str) -> list[dict]:
-    """Dividends/splits applied, then stops/horizons enforced - the brain can
-    never rationalize holding through its own written plan. Returns forced fills."""
-    if cfg["mode"]["trading_mode"] == "dry_run":
-        return []
-    ca = corporate_actions.apply_corporate_actions()
-    if ca.get("events") or ca.get("errors"):
-        context["corporate_actions"] = ca
-        context["portfolio"] = get_portfolio_state()
-        if ca.get("errors"):
-            print(f"  corporate-actions errors: {ca['errors']}")
-
-    prices = context["universe_scan"].get("prices", {})
-    # ATR per name lets the broker model stop gap-through (a stop rarely fills exactly
-    # at its level; price gaps beyond it). Same map the volatility-stop floor uses.
-    atr_map = context["universe_scan"].get("atr_by_ticker") or {}
-    forced = exit_guard.check_forced_exits(context["portfolio"], prices, atr_map)
-    if not forced:
-        return []
-    fills = exit_guard.execute_forced_exits(forced, prices, run_id, atr_map)
-    context["portfolio"] = get_portfolio_state()  # brain must see post-exit state
-    context["forced_exits"] = [
-        {**ex, "note": "Closed deterministically by the safety layer before this run; "
-                       "do not re-propose selling it. Explain the exit in your commentary."}
-        for ex in forced
-    ]
-    for f in fills:
-        print(f"  FORCED EXIT {f['ticker']} @ {f.get('fill_price')} "
-              f"({context['forced_exits'][0].get('reason', '?')})")
-    return fills
-
-
-# ---------------------------------------------------------------------------
-# Step 3 — Wake the brain (single Claude invocation via Claude Code CLI)
-# ---------------------------------------------------------------------------
-def ask_claude(context: dict, run_id: str, news_only: bool = False) -> str:
-    """Invoke Claude Code headlessly with CLAUDE.md rules + the context bundle."""
-    context_file = ROOT / "state" / f"context_{run_id}.json"
-    context_file.write_text(json.dumps(_json_safe(context), indent=2, default=str))
-
-    if not news_only and context.get("run_depth") == "light":
-        prompt = (
-            "You are running a LIGHT East Equity Agent check (pre-market/overnight slot). "
-            f"Read CLAUDE.md, then the context bundle at {context_file}. No universe scan "
-            "was done this cycle. Review each open position against its original plan and "
-            "the latest news; you MAY propose SELL_TO_CLOSE if a thesis has broken, but "
-            "propose NO new BUYs this run (they will be discarded). Refresh your commentary "
-            "and carry the watchlist forward (update thoughts only where news changed them). "
-            "Output the exact JSON block per CLAUDE.md. End with an 'Improvement note:' line."
-        )
-        return _run_claude(prompt)
-
-    if news_only:
-        prompt = (
-            "You are running a scheduled East Equity Agent NEWS REVIEW (markets are closed - "
-            f"no trading this run). Read CLAUDE.md, then the context bundle at {context_file}. "
-            "Review weekend/overnight news for current holdings and the whole universe: "
-            "earnings reports, guidance changes, analyst moves, macro developments. Update "
-            "your view of each holding and each watchlist name. Output the JSON block from "
-            "CLAUDE.md with proposals REQUIRED to be an empty list, no_trade_reason set to "
-            "'news review - markets closed', fresh commentary (lead with anything that "
-            "changes Monday's plan), and an updated watchlist. End with an "
-            "'Improvement note:' line."
-        )
-        return _run_claude(prompt)
-
-    prompt = (
-        f"Today's date in the US market timezone (ET) is {_et_date()} - use THIS date in "
-        f"any prose, never the UTC run_date. "
-        "You are running a scheduled East Equity Agent trading cycle. "
-        f"Read your system rules in CLAUDE.md, then read the full market/portfolio "
-        f"context bundle at {context_file}. Follow the Required Process exactly: "
-        "macro check, portfolio review (HOLD or SELL_TO_CLOSE each position against its "
-        "original plan), candidate analysis, then output your trade proposals in the "
-        "exact JSON schema from CLAUDE.md inside a ```json fenced block. "
-        "Long-only equities, swing horizon 3-90 days, high-conviction only. "
-        "Proposing nothing is acceptable — include no_trade_reason if so. "
-        "End with an 'Improvement note:' line."
-    )
-    return _run_claude(prompt)
-
-
-def _llm_settings() -> dict:
-    """The llm config block, fail-soft: missing block/file -> {} (CLI defaults)."""
-    try:
-        return validator.load_config().get("llm") or {}
-    except Exception:
-        return {}
-
-
-def _claude_cmd(prompt: str, model: str | None, allowed_tools: str | None) -> list[str]:
-    """Build the headless claude invocation (pure - offline-testable).
-
-    Pinning --model keeps the public track record reproducible across CLI-default
-    changes. --allowedTools grants exactly what CLAUDE.md instructs the brain to
-    do (Read the chart PNGs, WebSearch/WebFetch to verify catalysts) and nothing
-    that can write - an injected headline must never be able to touch the ledger.
-    The installed CLI accepts a space/comma-separated tool list as one argument."""
-    cmd = ["claude", "-p", prompt]
-    if model:
-        cmd += ["--model", model]
-    if allowed_tools:
-        cmd += ["--allowedTools", allowed_tools]
-    return cmd
-
-
-def _run_claude(prompt: str, model: str | None = None) -> str:
-    import time
-    last_err = ""
-    llm = _llm_settings()
-    model = model or llm.get("brain_model")
-    allowed_tools = llm.get("allowed_tools")
-    # NOTE: no --permission-mode plan. Newer Claude Code (2.x) diverts a plan-mode
-    # answer to a plan file and returns only a prose summary on stdout, so our JSON
-    # block never appears and parsing falls back to a no-trade. The default headless
-    # mode prints the full response (incl. the fenced ```json) to stdout, which is what
-    # we parse - matching universe_review(), which already runs claude -p without plan mode.
-    for attempt in (1, 2):  # one retry: overnight runs can hit transient/usage errors
-        result = subprocess.run(
-            _claude_cmd(prompt, model, allowed_tools),
-            cwd=ROOT, capture_output=True, text=True, timeout=1800,
-        )
-        if result.returncode == 0:
-            return result.stdout
-        last_err = (f"exit={result.returncode} stderr={result.stderr[:1000]} "
-                    f"stdout={result.stdout[:1000]}")
-        print(f"  claude attempt {attempt} failed: {last_err[:300]}")
-        if attempt == 1:
-            time.sleep(90)
-    raise RuntimeError(f"claude CLI failed after retry: {last_err}")
-
-
-# ---------------------------------------------------------------------------
-# Adversarial risk desk: an independent skeptic tries to kill every BUY.
-# ---------------------------------------------------------------------------
-def adversarial_review(proposals: list[dict], context_file: str, run_id: str) -> list[dict]:
-    """Second pass by a separate Claude session prompted to REFUTE each BUY.
-    Veto drops the proposal (journaled); survivors may get a confidence haircut.
-    Skipped where the claude CLI is unavailable (cloud sandboxes) - noted loudly."""
-    import shutil
-    buys = [p for p in proposals if str(p.get("action", "")).upper() == "BUY"]
-    if not buys:
-        return proposals
-
-    def _no_desk(reason: str) -> list[dict]:
-        """CLI absent or review failed: pass-through by default, or reject BUYs
-        when risk_controls.require_risk_desk_for_buys is set (cloud discipline)."""
-        rc = {}
-        try:
-            rc = validator.load_config().get("risk_controls") or {}
-        except Exception:
-            pass
-        if not rc.get("require_risk_desk_for_buys"):
-            print(f"  ({reason} - proposals pass unreviewed)")
-            # Leave a public trace: CLAUDE.md promises every BUY an adversarial
-            # review, so a run where that layer silently didn't exist must be
-            # visible in the journal, not just a log line nobody reads.
-            journal.log_improvement(
-                f"Risk desk did not run ({reason}) - {len(buys)} BUY proposal(s) "
-                f"passed to the validator unreviewed this run.", run_id)
-            return proposals
-        kept = []
-        for p in proposals:
-            if str(p.get("action", "")).upper() == "BUY":
-                print(f"  RISK DESK REQUIRED - BUY {p.get('ticker')} rejected ({reason})")
-                journal.log_rejection(p, [f"risk_desk_unavailable:{reason}"], run_id)
-            else:
-                kept.append(p)
-        return kept
-
-    if shutil.which("claude") is None:
-        return _no_desk("risk desk unavailable in this environment")
-    prompt = (
-        "You are the RISK DESK for a paper-trading fund. Another analyst proposed the "
-        f"trades in this JSON: {json.dumps(buys)}. The full market context is at "
-        f"{context_file} - read it. Your job is to try to KILL each trade: attack the "
-        "thesis with the data (valuation, estimate revisions, insider selling, earnings "
-        "timing, macro, entry geometry, portfolio concentration vs existing holdings). "
-        "Attack the variant_perception hardest: if the claimed consensus view is a straw "
-        "man, the mispriced mechanism is vague, or there is no dated event where the "
-        "market learns the analyst is right, say so. Check portfolio_risk in the context: "
-        "a new BUY that is >0.7 correlated to an already-clustered book needs a reason "
-        "to exist beyond its solo merits. "
-        "Be a skeptic, not a contrarian for sport - approve genuinely sound trades. "
-        "Output ONLY a ```json block: {\"reviews\": [{\"ticker\": \"X\", "
-        "\"verdict\": \"approve\"|\"veto\", \"objection\": \"one paragraph\", "
-        "\"confidence_adjustment\": 0.0}]} where confidence_adjustment is 0 or negative "
-        "(max -0.10) for approved-with-reservations."
-    )
-    try:
-        out = _run_claude(prompt, model=_llm_settings().get("risk_desk_model"))
-    except Exception as e:
-        return _no_desk(f"risk desk failed ({str(e)[:120]})")
-    reviews = {}
-    for block in reversed(re.findall(r"```json\s*(.*?)```", out, re.DOTALL)):
-        try:
-            data = json.loads(block)
-            if "reviews" in data:
-                reviews = {r["ticker"].upper(): r for r in data["reviews"]}
-                break
-        except (json.JSONDecodeError, KeyError, TypeError):
-            continue
-    if not reviews:
-        return _no_desk("risk desk output unparsable")
-    kept = []
-    for p in proposals:
-        r = reviews.get(str(p.get("ticker", "")).upper())
-        if r is None or str(p.get("action", "")).upper() != "BUY":
-            kept.append(p)
-            continue
-        if r.get("verdict") == "veto":
-            print(f"  RISK DESK VETO {p['ticker']}: {r.get('objection', '')[:120]}")
-            journal.log_rejection(p, [f"risk_desk_veto: {r.get('objection', '')[:300]}"], run_id)
-            continue
-        adj = min(float(r.get("confidence_adjustment", 0) or 0), 0)
-        if adj:
-            p["confidence"] = round(max(p.get("confidence", 0) + adj, 0), 2)
-            p["risk_desk_note"] = r.get("objection", "")[:300]
-            print(f"  risk desk haircut {p['ticker']}: {adj} -> {p['confidence']}")
-        kept.append(p)
-    return kept
-
-
-# ---------------------------------------------------------------------------
-# Step 4 — Parse structured proposals out of the brain's response
-# ---------------------------------------------------------------------------
-def parse_proposals(response: str) -> dict:
-    """Extract the structured output block: proposals, commentary, watchlist. Accepts a
-    fenced ```json block or, as a fallback, a bare JSON object containing a 'proposals'
-    key (so a run still parses if the model omits the fence)."""
-    candidates = re.findall(r"```json\s*(.*?)```", response, re.DOTALL)
-    # Fallback: any brace-balanced object mentioning "proposals", fence or not.
-    for m in re.finditer(r'\{[^{}]*"proposals"[\s\S]*?\}\s*$', response):
-        candidates.append(m.group(0))
-    for block in reversed(candidates):  # last valid block wins
-        try:
-            data = json.loads(block)
-            if isinstance(data, dict) and "proposals" in data:
-                return {
-                    "proposals": data["proposals"],
-                    "no_trade_reason": data.get("no_trade_reason"),
-                    "commentary": data.get("commentary"),
-                    "watchlist": (data.get("watchlist") or [])[:10],
-                    "x_post": data.get("x_post"),
-                    "guidance_entries": (data.get("guidance_entries") or [])[:20],
-                }
-        except json.JSONDecodeError:
-            continue
-    # Graceful public-facing fallback (this text can surface on the dashboard).
-    return {"proposals": [],
-            "no_trade_reason": "No trade this run; the agent's written review did not include a "
-                               "machine-readable order block, so no orders were placed.",
-            "commentary": None, "watchlist": [], "x_post": None, "guidance_entries": []}
-
-
-# ---------------------------------------------------------------------------
-# Step 6 — Execution (approved proposals only; broker readback required)
-# ---------------------------------------------------------------------------
-def execute(approved: list[validator.ValidationResult], context: dict,
-            cfg: dict, run_id: str) -> list[dict]:
-    fills = []
-    prices = context["universe_scan"].get("prices", {})
-    atr_map = context["universe_scan"].get("atr_by_ticker") or {}
-    max_orders = cfg["risk_controls"]["max_orders_per_run"]
-
-    if cfg["mode"]["trading_mode"] == "dry_run":
-        print("  DRY RUN — approved proposals journaled, no orders placed.")
-        return fills
-
-    # Per-DAY new-position cap across multiple intraday runs (validator only sees one batch).
-    today = datetime.now(timezone.utc).date().isoformat()
-    trades_file = ROOT / "journal" / "trades" / f"{today}.jsonl"
-    buys_today = 0
-    if trades_file.exists():
-        for line in trades_file.read_text().splitlines():
-            if json.loads(line).get("fill", {}).get("action") == "BUY":
-                buys_today += 1
-    max_buys_per_day = cfg["swing_rules"]["max_new_positions_per_day"]
-
-    # risk_controls.market_hours_only: BUYs place only during the regular session
-    # (Mon-Fri 9:30-4 ET). Pre-market slots become research/exit-only - this also
-    # closes a look-ahead exploit where a 6am BUY filled at YESTERDAY's close
-    # after overnight news. Sells and forced exits are always allowed (risk-reducing).
-    market_hours_only = cfg["risk_controls"].get("market_hours_only", False)
-
-    for vr in approved[:max_orders]:
-        p = vr.proposal
-        if p["action"] == "BUY" and buys_today >= max_buys_per_day:
-            journal.log_rejection(p, [f"max_new_positions_per_day_reached:{buys_today}"], run_id)
-            continue
-        if p["action"] == "BUY" and market_hours_only and not validator.is_market_hours(_et_now()):
-            journal.log_rejection(p, ["outside_market_hours"], run_id)
-            continue
-        ref = prices.get(p["ticker"].upper())
-        if ref is None:
-            journal.log_rejection(p, ["no_reference_price_available"], run_id)
-            continue
-        if p["action"] == "BUY" and ref > float(p["entry_price_max"]):
-            journal.log_rejection(p, [f"price_above_entry_max:{ref}>{p['entry_price_max']}"], run_id)
-            continue
-        order = simulated_broker.place_order({
-            "ticker": p["ticker"], "action": p["action"],
-            "position_size_usd": p.get("position_size_usd"),
-            "reference_price": ref, "proposal_id": run_id,
-            "sell_fraction": p.get("sell_fraction"),  # partial exits (validated)
-            # ATR lets the broker vol-scale slippage and model an entry gap (a $400 name
-            # swinging 7%/day costs more to fill than a flat 10bps implies).
-            "atr_pct": atr_map.get(p["ticker"].upper()),
-            # Numeric plan persisted ONTO the position at fill time, so stop/horizon
-            # enforcement survives journal pruning and ticker re-buys. Thesis and the
-            # rest of the narrative stay in the proposals journal.
-            "plan": ({k: p.get(k) for k in ("stop_loss", "target_price",
-                                            "holding_horizon_days", "entry_price_max",
-                                            "confidence")}
-                     if p["action"] == "BUY" else None),
-        })
-        # risk_controls.require_broker_readback_confirmation: readback is ALWAYS
-        # performed and a non-filled readback is a rejection - the flag documents
-        # the contract and can only ever tighten it, never loosen it.
-        fill = simulated_broker.readback(order["order_id"])  # mandatory readback
-        if fill is None or fill.get("status") != "filled":
-            journal.log_rejection(p, [f"fill_failed:{(fill or {}).get('status')}"], run_id)
-            continue
-        journal.log_trade(order, fill, run_id)
-        fills.append(fill)
-        if fill["action"] == "BUY":
-            buys_today += 1
-        print(f"  FILLED {fill['action']} {fill['ticker']} "
-              f"{fill['quantity']} @ {fill['fill_price']}")
-    return fills
-
-
-# ---------------------------------------------------------------------------
-# Step 7 — Dashboard data + X summary
-# ---------------------------------------------------------------------------
-def _benchmark_close(ticker: str = "SPY") -> float | None:
-    try:
-        import yfinance as yf
-        h = yf.Ticker(ticker).history(period="5d")
-        return round(float(h["Close"].iloc[-1]), 2)
-    except Exception as e:
-        print(f"  WARNING: benchmark fetch failed ({e}) - S&P comparison will show a gap")
-        return None
-
-
-def _trade_plans() -> dict:
-    """Latest FILLED BUY proposal per ticker from the journal (thesis, stop,
-    target, horizon). Rejected/unfilled proposals are excluded: the journal logs
-    every validated proposal, and an unfiltered 'latest per ticker' let a later
-    rejected proposal supply the plan a closed trade was graded against."""
-    from tools.portfolio_state import filled_buy_proposal_ids
-    filled = filled_buy_proposal_ids()
-    plans: dict = {}
-    for f in sorted((ROOT / "journal" / "proposals").glob("*.jsonl")):
-        for line in f.read_text().splitlines():
-            rec = json.loads(line)
-            p = rec.get("proposal", {})
-            if str(p.get("action", "")).upper() == "BUY" and p.get("ticker"):
-                tk = p["ticker"].upper()
-                if rec.get("run_id") not in filled.get(tk, ()):
-                    continue
-                plans[tk] = p
-    return plans
-
-
-def compute_closed_trades() -> list[dict]:
-    """Closed trades with a thesis verdict, from the broker history + trade plans."""
-    state_file = ROOT / "state" / "portfolio.json"
-    if not state_file.exists():
-        return []
-    history = json.loads(state_file.read_text()).get("history", [])
-    plans = _trade_plans()
-    opens: dict[str, dict] = {}
-    closed = []
-    for fill in history:
-        if fill.get("status") != "filled":
-            continue
-        t = fill["ticker"].upper()
-        if fill["action"] == "BUY":
-            opens[t] = fill
-        elif fill["action"] == "SELL_TO_CLOSE" and (fill.get("avg_cost") or t in opens):
-            plan = plans.get(t, {})
-            # Grading numbers come from the position's OWN plan stamped on the
-            # sell fill (entry_plan) whenever present; the journal join is the
-            # legacy fallback and supplies the narrative (thesis) only.
-            entry_plan = fill.get("entry_plan") or {}
-            # New-style fills stamp entry data directly (adds/partials make
-            # open/close pairing unreliable); legacy fills fall back to pairing.
-            if fill.get("avg_cost"):
-                entry = float(fill["avg_cost"])
-                opened_ts = fill.get("position_opened_at") or fill["filled_at"]
-                opens.pop(t, None)
-            else:
-                entry_fill = opens.pop(t)
-                entry = float(entry_fill["fill_price"])
-                opened_ts = entry_fill["filled_at"]
-            exit_px = float(fill["fill_price"])
-            stop = float(entry_plan.get("stop_loss") or plan.get("stop_loss") or 0)
-            target = float(entry_plan.get("target_price") or plan.get("target_price") or 0)
-            days_held = max((datetime.fromisoformat(fill["filled_at"])
-                             - datetime.fromisoformat(opened_ts)).days, 0)
-            horizon = entry_plan.get("holding_horizon_days") or plan.get("holding_horizon_days")
-            if target and exit_px >= target * 0.995:
-                verdict = "Hit target"
-            elif stop and exit_px <= stop * 1.005:
-                verdict = "Stopped out"
-            elif horizon and days_held >= float(horizon):
-                verdict = "Time-limit exit"
-            else:
-                verdict = "Thesis exit"
-            r_multiple = round((exit_px - entry) / (entry - stop), 2) if stop and entry > stop else None
-            # pnl_usd stays price-only (net of fees) for trade GRADING; total_pnl_usd adds
-            # attributed dividends for honest RETURN. Dividends already hit cash when paid,
-            # so never sum both into the same total (see compute_performance_stats).
-            price_pnl = fill.get("realized_pnl_usd")
-            divs = fill.get("dividends_received_usd") or 0.0
-            total_pnl = fill.get("total_realized_pnl_usd")
-            if total_pnl is None:
-                total_pnl = (price_pnl or 0.0) + divs
-            closed.append({
-                "ticker": t, "entry_price": entry, "exit_price": exit_px,
-                "opened_at": _to_et_date(opened_ts), "closed_at": _to_et_date(fill["filled_at"]),
-                "days_held": days_held, "pnl_usd": price_pnl,
-                "dividends_usd": round(divs, 2), "total_pnl_usd": round(total_pnl, 2),
-                "fees_usd": fill.get("fees_usd"), "gap_modeled": fill.get("gap_modeled", False),
-                "r_multiple": r_multiple, "verdict": verdict,
-                "confidence": entry_plan.get("confidence") or plan.get("confidence"),
-                "thesis": plan.get("thesis"),
-            })
-    return closed
-
-
-def compute_performance_stats(closed: list[dict], equity_hist: list[dict]) -> dict | None:
-    if not closed:
-        return None
-    pnls = [t["pnl_usd"] or 0 for t in closed]          # price-only, net of fees
-    total_pnls = [t.get("total_pnl_usd", t["pnl_usd"] or 0) or 0 for t in closed]  # + dividends
-    wins = [p for p in pnls if p > 0]
-    rs = [t["r_multiple"] for t in closed if t["r_multiple"] is not None]
-    fees = sum((t.get("fees_usd") or {}).get(k, 0) or 0
-               for t in closed for k in ("commission", "sec_fee", "taf"))
-    peak, max_dd = 0.0, 0.0
-    for h in equity_hist:
-        peak = max(peak, h["equity"])
-        if peak:
-            max_dd = max(max_dd, (peak - h["equity"]) / peak)
-    return {
-        "closed_trades": len(closed),
-        "win_rate_pct": round(len(wins) / len(closed) * 100, 1),
-        "realized_pnl_usd": round(sum(pnls), 2),               # price-only
-        "realized_pnl_incl_dividends_usd": round(sum(total_pnls), 2),
-        "total_fees_paid_usd": round(fees, 2),                 # cost drag, shown for honesty
-        "avg_r_multiple": round(sum(rs) / len(rs), 2) if rs else None,
-        "avg_days_held": round(sum(t["days_held"] for t in closed) / len(closed), 1),
-        "max_drawdown_pct": round(max_dd * 100, 2),
-    }
-
-
-def compute_calibration(closed: list[dict]) -> dict | None:
-    """Are the brain's stated confidences honest? Bucket closed trades by the confidence
-    it claimed at entry and compare to the realized win rate. Directly feeds the CLAUDE.md
-    rule 'if your 0.70+ bucket wins <50%, your scale is inflated - recalibrate'. Returns
-    None until there is anything to measure."""
-    graded = [t for t in closed if isinstance(t.get("confidence"), (int, float))]
-    if not graded:
-        return None
-    buckets = {"0.60-0.69": (0.60, 0.70), "0.70-0.79": (0.70, 0.80), "0.80+": (0.80, 1.01)}
-    out = {}
-    for label, (lo, hi) in buckets.items():
-        rows = [t for t in graded if lo <= t["confidence"] < hi]
-        if not rows:
-            continue
-        wins = sum(1 for t in rows if (t.get("pnl_usd") or 0) > 0)
-        win_rate = round(wins / len(rows) * 100, 1)
-        avg_conf = round(sum(t["confidence"] for t in rows) / len(rows) * 100, 1)
-        out[label] = {"trades": len(rows), "win_rate_pct": win_rate,
-                      "avg_stated_confidence_pct": avg_conf,
-                      "calibration_gap_pct": round(win_rate - avg_conf, 1)}
-    high = [t for t in graded if t["confidence"] >= 0.70]
-    high_wr = round(sum(1 for t in high if (t.get("pnl_usd") or 0) > 0) / len(high) * 100, 1) if high else None
-    return {
-        "note": "Realized win rate vs the confidence you STATED at entry, by bucket. A "
-                "large negative calibration_gap_pct means your confidence is inflated; "
-                "cap stated confidence until the gap closes (per the Learning Protocol).",
-        "by_confidence": out,
-        "high_conf_0_70_plus": {"trades": len(high), "win_rate_pct": high_wr,
-                                "inflated": bool(high_wr is not None and len(high) >= 5 and high_wr < 50)},
-    }
-
-
-def recent_improvements(limit: int = 30) -> list[dict]:
-    notes = []
-    for f in sorted((ROOT / "journal" / "improvements").glob("*.jsonl")):
-        for line in f.read_text().splitlines():
-            rec = json.loads(line)
-            notes.append({"date": rec["ts"][:10], "note": rec["note"]})
-    return notes[-limit:][::-1]
-
-
-# ---------------------------------------------------------------------------
-# Time: user-facing dates use the MARKET timezone (ET), never UTC. An evening run
-# (after 8pm ET) is still ~02:00 UTC the NEXT day - stamping UTC would show viewers
-# "tomorrow's" date on the review blurb, the equity curve, and X posts.
-# ---------------------------------------------------------------------------
-def _et_now() -> datetime:
-    try:
-        from zoneinfo import ZoneInfo
-        return datetime.now(ZoneInfo("America/New_York"))
-    except Exception:
-        # tzdata unavailable (some minimal Linux images): approximate ET as UTC-4 (EDT).
-        # Only affects a date stamp; off by at most an hour near midnight in winter.
-        return datetime.now(timezone.utc) - timedelta(hours=4)
-
-
-def _et_date() -> str:
-    return _et_now().date().isoformat()
-
-
-def _to_et_date(iso_ts: str | None) -> str | None:
-    """Convert a UTC ISO timestamp to its ET calendar date (YYYY-MM-DD)."""
-    if not iso_ts:
-        return None
-    try:
-        dt = datetime.fromisoformat(iso_ts.replace("Z", "+00:00"))
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        from zoneinfo import ZoneInfo
-        return dt.astimezone(ZoneInfo("America/New_York")).date().isoformat()
-    except Exception:
-        try:
-            return (datetime.fromisoformat(iso_ts.replace("Z", "+00:00"))
-                    - timedelta(hours=4)).date().isoformat()
-        except Exception:
-            return iso_ts[:10]
-
-
-def _proposal_ev(p: dict):
-    """Probability-weighted expected value derived from a BUY proposal's own
-    scenarios - published next to the proposal so every thesis carries its
-    honest math. None for non-BUYs or when scenarios are unusable."""
-    try:
-        if str(p.get("action", "")).upper() != "BUY":
-            return None
-        from tools.scenario_ev import expected_value
-        return expected_value(p.get("scenarios"), p.get("entry_price_max"),
-                              p.get("holding_horizon_days"))
-    except Exception:
-        return None
-
-
-def _sector_map() -> dict:
-    """ticker -> sector, from data/universe.json (for dashboard exposure)."""
-    try:
-        sectors = json.loads((ROOT / "data" / "universe.json").read_text())["sectors"]
-        return {t.upper(): s for s, ts in sectors.items() for t in ts}
-    except Exception:
-        return {}
-
-
-def _sector_exposure(portfolio: dict) -> list[dict]:
-    """Market value + share of equity per sector for the open book — the
-    machine-readable counterpart of the enforced sector-concentration cap."""
-    smap = _sector_map()
-    equity = portfolio.get("total_equity_usd") or 0
-    by: dict = {}
-    for p in portfolio.get("positions", []):
-        s = smap.get(str(p.get("ticker", "")).upper()) or "unmapped"
-        by[s] = by.get(s, 0.0) + (p.get("market_value_usd") or 0.0)
-    return sorted(({"sector": s, "value_usd": round(v, 2),
-                    "pct_of_equity": round(v / equity * 100, 1) if equity else None}
-                   for s, v in by.items()),
-                  key=lambda d: -(d["value_usd"] or 0))
-
-
-def build_trade_events() -> list[dict]:
-    """Every filled BUY/SELL with its ET date - the equity curve annotates these so the
-    line tells a story (entries, exits, stop-outs) instead of being an anonymous squiggle."""
-    state_file = ROOT / "state" / "portfolio.json"
-    if not state_file.exists():
-        return []
-    history = json.loads(state_file.read_text()).get("history", [])
-    verdicts = {(t["ticker"].upper(), t["closed_at"]): t.get("verdict")
-                for t in compute_closed_trades()}
-    events = []
-    for fill in history:
-        if fill.get("status") != "filled":
-            continue
-        d = _to_et_date(fill.get("filled_at"))
-        ev = {"date": d, "ticker": fill["ticker"].upper(),
-              "action": fill["action"], "price": fill.get("fill_price")}
-        if fill["action"] == "SELL_TO_CLOSE":
-            ev["verdict"] = verdicts.get((fill["ticker"].upper(), d))
-        events.append(ev)
-    return events
-
-
-def build_position_charts(positions: list[dict]) -> dict:
-    """~90 daily OHLC bars per open holding plus its plan levels, for the per-position
-    charts (entry/stop/target drawn on the tape). Fail-soft: a blocked fetch just omits
-    that name. Written to its own file so latest.json stays slim."""
-    out = {}
-    if not positions:
-        return out
-    try:
-        import yfinance as yf
-    except Exception:
-        return out
-    for pos in positions:
-        t = pos.get("ticker", "").upper()
-        plan = pos.get("original_plan") or {}
-        try:
-            df = yf.download(t, period="5mo", interval="1d", auto_adjust=True,
-                             progress=False)
-            if df is None or df.empty:
-                continue
-            bars = []
-            for idx, row in df.tail(90).iterrows():
-                bars.append({
-                    "date": idx.date().isoformat(),
-                    "open": round(float(row["Open"]), 2), "high": round(float(row["High"]), 2),
-                    "low": round(float(row["Low"]), 2), "close": round(float(row["Close"]), 2),
-                })
-            out[t] = {
-                "bars": bars,
-                "avg_cost": pos.get("avg_cost"),
-                "last_price": pos.get("last_price"),
-                "entry": plan.get("entry_price_max"),
-                "stop": plan.get("stop_loss"),
-                "target": plan.get("target_price"),
-                "opened_at": _to_et_date(pos.get("opened_at")),
-            }
-        except Exception:
-            continue
-    return out
-
-
-def update_watchlist_outcomes(watchlist: list, prices: dict, positions: list) -> list[dict]:
-    """Track whether the agent's watchlist calls play out: when a name was first watched
-    and at what price, whether price later reached its stated would_buy_at level, whether
-    the agent actually bought it, and how far it has moved since. Persisted across runs so
-    the site can grade the agent's foresight, not just its trades."""
-    f = ROOT / "dashboard" / "data" / "watchlist_outcomes.json"
-    try:
-        tracked = {d["ticker"]: d for d in json.loads(f.read_text())} if f.exists() else {}
-    except Exception:
-        tracked = {}
-    held = {p.get("ticker", "").upper() for p in positions}
-    ever_bought = held | {e["ticker"].upper() for e in build_trade_events()
-                          if e["action"] == "BUY"}
-    today = _et_date()
-    current = {str(w.get("ticker", "")).upper(): w for w in (watchlist or []) if w.get("ticker")}
-
-    for tk, w in current.items():
-        px = prices.get(tk)
-        rec = tracked.get(tk) or {"ticker": tk, "first_watched": today,
-                                  "price_when_added": px, "hit_buy_level": False}
-        rec["currently_watched"] = True
-        rec["would_buy_at"] = w.get("would_buy_at")
-        rec["one_line"] = w.get("one_line")
-        if px is not None:
-            rec["latest_price"] = px
-            base = rec.get("price_when_added") or px
-            rec["move_pct_since_watched"] = round((px / base - 1) * 100, 1) if base else None
-        # Buy level via the SAME $-anchored parser the trigger checker uses -
-        # the old first-bare-number regex read "50-over-200" as a $50 level and
-        # "7/29 earnings" as $7, so the public foresight grades were wrong.
-        lvl = parse_price_level(w.get("would_buy_at"))
-        if rec.get("parsed_level") != lvl:
-            # Level changed (or is no longer a price): a sticky hit graded
-            # against the OLD text is stale evidence - reset and regrade.
-            rec["parsed_level"] = lvl
-            rec["hit_buy_level"] = False
-            rec.pop("hit_date", None)
-        if lvl and px is not None and abs(px / lvl - 1) <= TRIGGER_TOLERANCE_PCT:
-            rec["hit_buy_level"], rec["hit_date"] = True, rec.get("hit_date") or today
-        rec["acted"] = tk in ever_bought
-        tracked[tk] = rec
-
-    for tk, rec in tracked.items():
-        if tk not in current:
-            rec["currently_watched"] = False
-            rec.setdefault("dropped_date", today)
-            px = prices.get(tk)
-            if px is not None:
-                rec["latest_price"] = px
-                base = rec.get("price_when_added") or px
-                rec["move_pct_since_watched"] = round((px / base - 1) * 100, 1) if base else None
-            rec["acted"] = rec.get("acted") or (tk in ever_bought)
-
-    rows = sorted(tracked.values(),
-                  key=lambda r: (not r.get("currently_watched"), r.get("first_watched") or ""),
-                  reverse=False)[:60]
-    try:
-        f.write_text(json.dumps(_json_safe(rows), indent=2))
-    except Exception:
-        pass
-    return rows
-
-
-def append_runs_index(run_id: str, mode: str, fills: list, commentary: str | None,
-                      no_trade_reason: str | None) -> None:
-    """A compact index of every published run so the site can offer a browsable archive
-    linking each run's full reasoning (dashboard/data/run_<id>.json)."""
-    f = ROOT / "dashboard" / "data" / "runs_index.json"
-    try:
-        idx = json.loads(f.read_text()) if f.exists() else []
-    except Exception:
-        idx = []
-    headline = (commentary or no_trade_reason or "").strip().split(". ")[0][:180]
-    entry = {"run_id": run_id, "date": _et_date(), "mode": mode,
-             "n_fills": len(fills or []),
-             "tickers_traded": sorted({str(x.get("ticker", "")).upper() for x in (fills or [])}),
-             "headline": headline}
-    idx = [e for e in idx if e.get("run_id") != run_id]
-    idx.append(entry)
-    try:
-        f.write_text(json.dumps(idx[-400:], indent=2))
-    except Exception:
-        pass
-
-
-def refresh_dashboard(context: dict, response: str, results: list, fills: list,
-                      run_id: str, no_trade_reason: str | None = None,
-                      commentary: str | None = None,
-                      watchlist: list | None = None) -> None:
-    dash = ROOT / "dashboard" / "data"
-    dash.mkdir(parents=True, exist_ok=True)
-
-    # Append today's equity + benchmark to the track-record series first (last point wins).
-    hist_file = dash / "equity_history.json"
-    hist = json.loads(hist_file.read_text()) if hist_file.exists() else []
-    today = _et_date()  # market-timezone date, so evening runs don't stamp "tomorrow"
-    # A benchmark value, once recorded for a date, must survive every later
-    # rewrite of that day's entry - sandboxed runs can't refetch it.
-    prev_today = next((h for h in hist if h.get("date") == today), {})
-    bench = (context.get("benchmark_close") or _benchmark_close()
-             or prev_today.get("benchmark_close"))
-    hist = [h for h in hist if h["date"] != today]
-    hist.append({"date": today,
-                 "equity": context["portfolio"].get("total_equity_usd"),
-                 "cash": context["portfolio"].get("cash_usd"),
-                 "benchmark_close": bench})
-    hist_file.write_text(json.dumps(hist, indent=2))
-
-    closed = compute_closed_trades()
-    out = {
-        "no_trade_reason": no_trade_reason,
-        "commentary": commentary,
-        "watchlist": watchlist or [],
-        "generated_at": datetime.now(timezone.utc).isoformat(),
-        "run_id": run_id,
-        "mode": context["trading_mode"],
-        "schedule_note": "Runs at 6am, 9am, 10am, 12pm, 2pm and 4pm ET, a 5:30pm "
-                         "research review, plus overnight and weekend news checks",
-        "portfolio": {
-            "cash_usd": context["portfolio"].get("cash_usd"),
-            "total_equity_usd": context["portfolio"].get("total_equity_usd"),
-            # Attach sector to each position for the dashboard exposure view.
-            "positions": [{**p, "sector": _sector_map().get(p.get("ticker", "").upper())}
-                          for p in context["portfolio"].get("positions", [])],
-        },
-        "as_of_et": _et_date(),
-        "macro_snapshot": {
-            name: context["macro_regime"].get("indicators", {}).get(name)
-            for name in ("cpi_yoy_pct", "ten_year_yield", "vix",
-                         "yield_curve_10y2y", "hy_credit_spread")
-        } if context["macro_regime"].get("status") == "ok" else None,
-        "macro_regime_hint": context["macro_regime"].get("regime_hint"),
-        "latest_reasoning": response,
-        "proposals": [{"proposal": r.proposal, "approved": r.approved,
-                       "reasons": r.reasons,
-                       "scenario_ev": _proposal_ev(r.proposal)} for r in results],
-        "fills": fills,
-        "closed_trades": closed[::-1],
-        "performance": compute_performance_stats(closed, hist),
-        "performance_breakdown": build_performance_breakdown(closed),
-        "calibration": compute_calibration(closed),
-        "position_risk": (context.get("position_stop_cushion") or {}).get("positions", {}),
-        "sector_exposure": _sector_exposure(context["portfolio"]),
-        "sector_concentration_cap_pct": (
-            validator.load_config().get("position_sizing", {})
-            .get("max_sector_concentration_pct")),
-        # Oldest per-position corporate-actions marker: an aging date here means
-        # dividend/split processing is lagging (usually a cloud sandbox blocking
-        # yfinance) - visibility only, the cutoff logic prevents double-credits.
-        "corporate_actions_processed_through": min(
-            (p.get("actions_processed_through")
-             for p in context["portfolio"].get("positions", [])
-             if p.get("actions_processed_through")), default=None),
-        "data_quality": context.get("data_quality"),
-        "stale_data_notice": context.get("stale_data_notice"),
-        "risk_halts": context.get("risk_halts") or [],
-        "universe_size": len(validator.load_universe()),
-        "health": build_health(),
-        "total_dividends_usd": round(sum(
-            (pos.get("dividends_received_usd") or 0)
-            for pos in context["portfolio"].get("positions", [])), 2),
-        "forced_exits": context.get("forced_exits", []),
-        "improvements": recent_improvements(),
-        "trade_events": build_trade_events(),
-    }
-    dash = ROOT / "dashboard" / "data"
-    dash.mkdir(parents=True, exist_ok=True)
-
-    # Auxiliary data files (kept out of latest.json so it stays slim):
-    positions = context["portfolio"].get("positions", [])
-    prices = context.get("universe_scan", {}).get("prices", {})
-    try:
-        pos_charts = build_position_charts(positions)
-        # On a blocked live feed build_position_charts returns {} for every held
-        # name. Overwriting the file with {} wipes the per-position tape from the
-        # dashboard (frozen-looking charts). Only rewrite when we either got fresh
-        # bars OR there genuinely are no open positions; otherwise keep last-good.
-        pc_file = dash / "position_charts.json"
-        if pos_charts or not positions:
-            pc_file.write_text(json.dumps(_json_safe(pos_charts), indent=2))
-        else:
-            print("  (position_charts: live feed empty - keeping last-good file)")
-    except Exception as e:
-        print(f"  (position_charts write failed: {e})")
-    try:
-        out["watchlist_outcomes"] = update_watchlist_outcomes(watchlist or [], prices, positions)
-    except Exception as e:
-        print(f"  (watchlist outcomes failed: {e})")
-    append_runs_index(run_id, context.get("trading_mode", "paper"), fills, commentary, no_trade_reason)
-
-    # Full response lives in the per-run archive; latest.json stays slim for the site.
-    # The archive's closed_trades holds ONLY closes executed THIS run - the run
-    # page titles them "Closed on this run", and embedding the all-time list
-    # made every historical close reappear on every later run's page.
-    sell_tickers = {str(f.get("ticker", "")).upper() for f in (fills or [])
-                    if str(f.get("action", "")).upper() == "SELL_TO_CLOSE"}
-    run_out = {**out, "closed_trades": [
-        t for t in out["closed_trades"]
-        if t.get("closed_at") == today and t.get("ticker") in sell_tickers]}
-    (dash / f"run_{run_id}.json").write_text(json.dumps(_json_safe(run_out), indent=2, default=str))
-    slim = {k: v for k, v in out.items() if k != "latest_reasoning"}
-    (dash / "latest.json").write_text(json.dumps(_json_safe(slim), indent=2, default=str))
-    # NOTE: equity_history (with benchmark_close) was already written at the top of this
-    # function. A second write here used to re-append today's point WITHOUT benchmark_close,
-    # silently wiping the S&P comparison line every run - removed. Do not reintroduce it.
-
-
-def redeploy_dashboard() -> None:
-    """Publish fresh data by committing and pushing to GitHub; Vercel auto-deploys
-    from main. Fail-soft: a failed push logs loudly so numbers never go silently stale.
-
-    Persists the AUTHORITATIVE ledger (state/portfolio.json) and the kill switch so a
-    cloud trade is durable and a kill switch reaches every node - previously these were
-    never committed, so cloud fills were ephemeral. Retries on push races (the hourly
-    relay + gather Action push concurrently) instead of wedging the node permanently."""
-    import glob as _glob
-    try:
-        paths = ["dashboard/data", "journal", "state/portfolio.json"]
-        paths += _glob.glob(str(ROOT / "state" / "x_draft_*.txt"))
-        if (ROOT / "state" / "KILL_SWITCH").exists():
-            paths.append("state/KILL_SWITCH")
-        if (ROOT / "data" / "cusip_map.json").exists():
-            paths.append("data/cusip_map.json")  # learned ticker->CUSIP, must persist in cloud
-        if (ROOT / "data" / "ai_exposure.json").exists():
-            paths.append("data/ai_exposure.json")  # business-reality labels, review-maintained
-        # add -A so a REMOVED kill switch (all-clear) also propagates; ignore missing paths.
-        for p in paths:
-            subprocess.run(["git", "add", "-A", p], cwd=ROOT, capture_output=True, text=True)
-        r = subprocess.run(["git", "commit", "-m", "Update dashboard data after trading run"],
-                           cwd=ROOT, capture_output=True, text=True)
-        if r.returncode != 0:
-            print("  (no data changes to publish)")
-            return
-        # Push with rebase-retry so a concurrent relay/Action push can't strand us.
-        for attempt in range(3):
-            r = subprocess.run(["git", "push", "origin", "main"],
-                               cwd=ROOT, capture_output=True, text=True, timeout=120)
-            if r.returncode == 0:
-                print("  data pushed - Vercel deploying")
-                return
-            print(f"  push rejected (attempt {attempt + 1}/3), rebasing...")
-            rb = subprocess.run(["git", "pull", "--rebase", "origin", "main"],
-                                cwd=ROOT, capture_output=True, text=True, timeout=120)
-            if rb.returncode != 0:
-                subprocess.run(["git", "rebase", "--abort"], cwd=ROOT,
-                               capture_output=True, text=True)
-                print(f"  REBASE FAILED (site going stale): {rb.stderr[-300:]}")
-                return
-        print(f"  PUSH FAILED after retries (site going stale): {r.stderr[-300:]}")
-    except Exception as e:
-        print(f"  PUBLISH FAILED (site going stale): {e}")
-
-
-def draft_x_summary(fills: list, results: list, context: dict, run_id: str,
-                    x_post: str | None = None) -> None:
-    # Trade drafts get a _trade filename suffix so the poster prioritizes them.
-    suffix = "_trade" if fills else ""
-    path = ROOT / "state" / f"x_draft_{run_id}{suffix}.txt"
-    if x_post and x_post.strip():
-        # The brain wrote its own post (fund-manager memo style). Publish verbatim.
-        path.write_text(x_post.strip())
-        return
-    # Fallback terse draft. Plain tickers, no $cashtags (X rejects multi-cashtag posts).
-    lines = [f"East Equity Agent swing update ({datetime.now():%b %d})"]
-    if fills:
-        for f in fills:
-            lines.append(f"{'Opened' if f['action'] == 'BUY' else 'Closed'} "
-                         f"{f['ticker']} @ {f['fill_price']}")
-    else:
-        lines.append("No new trades today — no setup met the bar.")
-    eq = context["portfolio"].get("total_equity_usd")
-    if eq:
-        lines.append(f"Portfolio equity: ${eq:,.0f}")
-    lines.append("Full reasoning on the dashboard. Long-only swing trades. Not financial advice.")
-    path.write_text("\n".join(lines))
-
-
-# ---------------------------------------------------------------------------
-# Weekly self-review: audit the week's decisions against outcomes. No trading.
-# ---------------------------------------------------------------------------
-def self_review(run_id: str) -> int:
-    closed = compute_closed_trades()
-    portfolio = get_portfolio_state()
-    runs = []
-    for f in sorted((ROOT / "journal" / "runs").glob("*.jsonl"))[-5:]:
-        runs.extend(json.loads(line) for line in f.read_text().splitlines())
-    # THE LOOP: feed the review its own PRIOR reviews so it must grade last week's
-    # stated behavior change - lessons compound instead of evaporating weekly.
-    prior_reviews = [n for n in recent_improvements(60)
-                     if str(n.get("note", "")).startswith("Weekly self-review:")][:8]
-    bundle = {"closed_trades": closed, "portfolio": portfolio,
-              "breakdowns": build_performance_breakdown(closed),
-              "calibration": compute_calibration(closed),
-              "prior_self_reviews": prior_reviews,
-              "recent_run_summaries": runs[-40:]}
-    review_file = ROOT / "state" / f"review_{run_id}.json"
-    review_file.write_text(json.dumps(bundle, indent=2, default=str))
-
-    prompt = (
-        "Weekly self-review for East Equity Agent (no trading this run). Read CLAUDE.md, "
-        f"then the audit bundle at {review_file}. FIRST: grade your previous review's "
-        "stated behavior change (prior_self_reviews, newest first) - did you actually do "
-        "it this week, and did it help? Quote it. Then audit the week honestly: for each "
-        "open position, is the original thesis tracking or drifting? For each closed "
-        "trade, was the exit right in hindsight? Which predictions were wrong and WHY - "
-        "bad data, bad reasoning, or bad luck? Use the breakdowns and calibration numbers, "
-        "not vibes. End with a section titled 'Self-review:' containing 4-8 plain-English "
-        "sentences for the public dashboard: what you got right, what you got wrong, "
-        "whether last week's change stuck, and the ONE change you are making next week."
-    )
-    try:
-        out = _run_claude(prompt)  # pinned model + tool allowlist, with retry
-    except Exception as e:
-        print(f"self-review failed: {str(e)[:800]}")
-        return 1
-    m = re.search(r"Self-review:\s*(.+)", out, re.DOTALL)
-    summary = (m.group(1).strip() if m else out.strip())[:2000]
-    journal.log_improvement(f"Weekly self-review: {summary}", run_id)
-    _write_review_to_dashboard = ROOT / "dashboard" / "data" / "latest.json"
-    if _write_review_to_dashboard.exists():
-        d = json.loads(_write_review_to_dashboard.read_text())
-        d["improvements"] = ([{"date": _et_date(),
-                               "note": f"Weekly self-review: {summary}"}]
-                             + d.get("improvements", []))[:30]
-        _write_review_to_dashboard.write_text(json.dumps(d, indent=2, default=str))
-    redeploy_dashboard()
-    print("self-review complete and published")
-    return 0
-
-
-def run_freshness_audit(run_id: str) -> int:
-    """Audit fundamentals freshness for EVERY universe name and publish the artifact.
-    Runs weekly after the universe review and on demand via --freshness-audit. A
-    stale name here means our XBRL extraction lags that company's latest filed
-    report - the exact class of bug behind the DELL $23.4B incident."""
-    from tools.freshness_audit import audit_universe
-    audit = audit_universe(cross_check=True, progress=True)
-    stale, errors = audit.get("stale_tickers", []), audit.get("error_tickers", [])
-    mism = audit.get("value_mismatch_vs_yfinance", [])
-    print(f"  audited {audit.get('audited')} names: {audit.get('fresh')} fresh, "
-          f"{len(stale)} stale, {len(errors)} errors, {len(mism)} value mismatches")
-    if stale or errors or mism:
-        journal.log_improvement(
-            f"Universe freshness audit: {len(stale)} stale ({stale}), {len(errors)} "
-            f"errors ({errors}), {len(mism)} yfinance mismatches ({mism}) out of "
-            f"{audit.get('audited')} names - investigate before trusting these names' "
-            f"fundamentals.", run_id)
-    else:
-        journal.log_improvement(
-            f"Universe freshness audit: all {audit.get('audited')} names verified "
-            f"current against their latest SEC filings (+ yfinance cross-check).", run_id)
-    redeploy_dashboard()
-    return 0 if not stale else 1
-
-
-def _below_min_cap(tickers: list, floor_usd: float) -> set:
-    """Added universe names under the market-cap floor. Fail-open: if EVERY lookup
-    fails (feed down), return empty rather than wiping a good review."""
-    if not tickers or not floor_usd:
-        return set()
-    bad, got_any = set(), False
-    try:
-        import yfinance as yf
-        for t in tickers:
-            try:
-                mcap = yf.Ticker(t).fast_info.get("marketCap")
-                if isinstance(mcap, (int, float)) and mcap > 0:
-                    got_any = True
-                    if mcap < floor_usd:
-                        bad.add(t.upper())
-            except Exception:
-                continue
-    except Exception:
-        return set()
-    return bad if got_any else set()
-
-
-def _unpriceable(tickers: list) -> set:
-    """Names that return NO live price data (delisted / bad ticker). Fail-open: if the
-    whole download fails (feed down), return empty so a good review is never wiped."""
-    if not tickers:
-        return set()
-    try:
-        import yfinance as yf
-        data = yf.download(list(tickers), period="5d", interval="1d", group_by="ticker",
-                           auto_adjust=True, progress=False, threads=True)
-    except Exception:
-        return set()
-    bad, got_any = set(), False
-    for t in tickers:
-        try:
-            df = data[t].dropna() if len(tickers) > 1 else data.dropna()
-            if len(df) and float(df["Close"].iloc[-1]) > 0:
-                got_any = True
-            else:
-                bad.add(t.upper())
-        except Exception:
-            bad.add(t.upper())
-    return bad if got_any else set()  # nothing priced at all -> feed down, fail open
-
-
-# ---------------------------------------------------------------------------
-# Weekly universe review: the agent curates its own watchable universe.
-# ---------------------------------------------------------------------------
-def _universe_log_append(entry: dict) -> None:
-    """Append to the public universe changelog — INCLUDING failed/rejected
-    reviews, so the dashboard explains why the universe did not change instead
-    of rendering an eternally-empty section (the log used to be written only on
-    a fully successful review, which had never happened)."""
-    log_file = ROOT / "dashboard" / "data" / "universe_log.json"
-    try:
-        ulog = json.loads(log_file.read_text()) if log_file.exists() else []
-    except Exception:
-        ulog = []
-    ulog.append(entry)
-    try:
-        log_file.parent.mkdir(parents=True, exist_ok=True)
-        log_file.write_text(json.dumps(ulog[-100:], indent=2))
-    except Exception as e:
-        print(f"  (universe_log write failed: {e})")
-
-
-def universe_review(run_id: str) -> int:
-    """The agent researches the broad market (web search enabled) and proposes
-    edits to data/universe.json. Deterministic guardrails cap what can change:
-    held and watchlist names are untouchable, size stays 150-220, max 10 adds and
-    10 removals per review, tech/AI bias preserved."""
-    universe_file = ROOT / "data" / "universe.json"
-    current = json.loads(universe_file.read_text())
-    portfolio = get_portfolio_state()
-    protected = {p["ticker"].upper() for p in portfolio.get("positions", [])}
-    latest_file = ROOT / "dashboard" / "data" / "latest.json"
-    if latest_file.exists():
-        protected |= {w.get("ticker", "").upper()
-                      for w in json.loads(latest_file.read_text()).get("watchlist", [])}
-    protected.discard("")
-
-    print("  • fresh sector scan for the review...")
-    scan = scan_universe(top_n=10)
-    # Broad-market discovery sweep: candidates OUTSIDE the current universe so the
-    # review curates from the whole market, not just names the model already knows.
-    print("  • discovery sweep (broad market, ex-universe)...")
-    try:
-        from tools.discovery_screen import run_discovery
-        discovery = run_discovery()
-    except Exception as e:
-        discovery = {"status": "error", "reason": str(e)[:150]}
-
-    bundle = {
-        "as_of_et": _et_date(),
-        "current_universe": current,
-        "protected_tickers_never_remove": sorted(protected),
-        "sector_relative_strength": scan.get("sector_relative_strength"),
-        "top_setups_now": scan.get("top_setups"),
-        "discovery_candidates": discovery,
-        "track_record_breakdowns": build_performance_breakdown(compute_closed_trades()),
-    }
-    review_file = ROOT / "state" / f"universe_review_{run_id}.json"
-    review_file.write_text(json.dumps(bundle, indent=2, default=str))
-
-    prompt = (
-        f"Today's date in the US market timezone (ET) is {_et_date()} - use THIS date, not "
-        f"the UTC run_date, in any prose. "
-        "Weekly UNIVERSE REVIEW for East Equity Agent (no trading this run). Read CLAUDE.md, "
-        f"then the bundle at {review_file}. Your job: curate the watchable universe honestly. "
-        "Use WebSearch to research the broad market: which quality names are emerging as "
-        "leaders (new highs, accelerating estimates, institutional accumulation) that we do "
-        "NOT track, and which current universe names have lost leadership (persistent "
-        "downtrends, broken growth, fading relevance)? Keep a strong AI/technology bias "
-        "(at least ~70% of names) but market leaders from any sector earn a place. "
-        "Constraints (code-enforced): US-listed common equities only, MINIMUM $1B market "
-        "cap (sub-billion adds are dropped), no leveraged/inverse "
-        "products, never remove the protected tickers, max 10 adds and 10 removals, final "
-        "size 150-220 names. The bundle's discovery_candidates section (when present) is a "
-        "broad-market momentum/RS sweep of ~600 liquid names OUTSIDE the current universe - "
-        "treat it as your candidate shortlist so curation picks from the whole market, not "
-        "just names you already know. Removing a name is healthy - a universe that only grows is a "
-        "museum. ALSO maintain the AI-exposure map (data/ai_exposure.json in the bundle "
-        "context): classify every ADDED name and refresh any existing label your research "
-        "contradicts, using exactly one of ai_supplier / ai_beneficiary / ai_neutral / "
-        "ai_at_risk with a <=160-char reason written as the plain retail bear/bull case "
-        "(e.g. 'frontier LLMs teach languages free'). Output a ```json block: "
-        "{\"sectors\": {<full updated sectors map>}, "
-        "\"added\": [..], \"removed\": [..], "
-        "\"ai_exposure_updates\": {\"TICK\": {\"exposure\": \"...\", \"reason\": \"...\"}}, "
-        "\"rationale\": \"3-5 plain sentences for the public improvement log\"}."
-    )
-    universe_size = len({t.upper() for ts in current["sectors"].values() for t in ts})
-    _fail_entry = {"date": _et_date(), "added": [], "removed": [],
-                   "dropped_unpriceable": [], "size": universe_size}
-    try:
-        out = _run_claude(prompt)  # pinned model + tool allowlist, with retry
-    except Exception as e:
-        print(f"universe review failed: {str(e)[:600]}")
-        _universe_log_append({**_fail_entry, "status": "error",
-                              "rationale": f"Weekly review failed to run: {str(e)[:200]}"})
-        return 1
-    blocks = re.findall(r"```json\s*(.*?)```", out, re.DOTALL)
-    data = None
-    for block in reversed(blocks):
-        try:
-            cand = json.loads(block)
-            if isinstance(cand, dict) and "sectors" in cand:
-                data = cand
-                break
-        except json.JSONDecodeError:
-            continue
-    if data is None:
-        print("universe review: no parsable proposal, universe unchanged")
-        _universe_log_append({**_fail_entry, "status": "unparsable",
-                              "rationale": "Review produced no machine-readable proposal; "
-                                           "universe unchanged."})
-        return 1
-
-    # Deterministic guardrails - the agent proposes, code disposes.
-    new_tickers = {t.upper() for ts in data["sectors"].values() for t in ts}
-    old_tickers = {t.upper() for ts in current["sectors"].values() for t in ts}
-    added, removed = new_tickers - old_tickers, old_tickers - new_tickers
-    problems = []
-    if not 150 <= len(new_tickers) <= 220:
-        problems.append(f"size {len(new_tickers)} outside 150-220")
-    if len(added) > 10 or len(removed) > 10:
-        problems.append(f"too many changes (+{len(added)}/-{len(removed)}, max 10 each)")
-    if removed & protected:
-        problems.append(f"tried to remove protected: {sorted(removed & protected)}")
-    forbidden = set(validator.load_config()["hard_rules"]["forbidden_ticker_patterns"])
-    if new_tickers & forbidden:
-        problems.append(f"forbidden products: {sorted(new_tickers & forbidden)}")
-    if any(not re.fullmatch(r"[A-Z]{1,5}", t) for t in new_tickers):
-        problems.append("invalid ticker format present")
-    if problems:
-        print(f"universe review REJECTED by guardrails: {problems}")
-        journal.log_improvement(
-            f"Universe review rejected by guardrails ({'; '.join(problems)}) - no changes.",
-            run_id)
-        _universe_log_append({**_fail_entry, "status": "rejected",
-                              "rationale": f"Rejected by guardrails: {'; '.join(problems)}. "
-                                           f"Universe unchanged."})
-        return 1
-
-    # Price-validate ADDED names: the review has no web access in the cloud sandbox and
-    # can propose a delisted/unpriceable ticker (e.g. PSTG). Drop any added name that
-    # returns no live price data before it can poison the universe. Fail-open: if the
-    # whole check fails (yfinance down), keep the names rather than wipe a good review.
-    dropped = _unpriceable(sorted(added)) if added else set()
-    # $1B market-cap floor: sub-billion adds are dropped the same way (hard rule).
-    cap_floor = validator.load_config()["hard_rules"].get("min_market_cap_usd", 0)
-    small = _below_min_cap(sorted(added - dropped), cap_floor) if added else set()
-    if small:
-        print(f"  dropping sub-${cap_floor/1e9:.0f}B added names: {sorted(small)}")
-    dropped |= small
-    if dropped:
-        print(f"  dropping unpriceable/sub-cap added names: {sorted(dropped)}")
-        data["sectors"] = {s: [t for t in ts if t.upper() not in dropped]
-                           for s, ts in data["sectors"].items()}
-        added = added - dropped
-        new_tickers = new_tickers - dropped
-
-    # AI-exposure map maintenance (enum-guarded): the review classifies added names
-    # and refreshes labels its research contradicts; code validates and merges so a
-    # malformed label can never corrupt the business-reality layer the scanner reads.
-    try:
-        exp_file = ROOT / "data" / "ai_exposure.json"
-        exp = json.loads(exp_file.read_text()) if exp_file.exists() else {
-            "description": "per-name AI exposure", "valid_exposures":
-            ["ai_supplier", "ai_beneficiary", "ai_neutral", "ai_at_risk"], "labels": {}}
-        valid = set(exp.get("valid_exposures") or
-                    ["ai_supplier", "ai_beneficiary", "ai_neutral", "ai_at_risk"])
-        applied, rejected_lbl = 0, []
-        for tk, upd in (data.get("ai_exposure_updates") or {}).items():
-            tk = str(tk).upper()
-            e = (upd or {}).get("exposure")
-            reason = str((upd or {}).get("reason") or "")[:160]
-            if tk in new_tickers and e in valid and reason:
-                exp["labels"][tk] = {"exposure": e, "reason": reason}
-                applied += 1
-            else:
-                rejected_lbl.append(tk)
-        # prune labels for names no longer in the universe
-        exp["labels"] = {t: v for t, v in exp["labels"].items() if t in new_tickers}
-        exp["last_reviewed"] = _et_date()
-        exp_file.write_text(json.dumps(exp, indent=1))
-        if applied or rejected_lbl:
-            print(f"  ai_exposure: {applied} labels updated"
-                  + (f", rejected {rejected_lbl}" if rejected_lbl else ""))
-    except Exception as e:
-        print(f"  (ai_exposure maintenance failed: {e})")
-
-    current["sectors"] = data["sectors"]
-    current["last_reviewed"] = _et_date()
-    universe_file.write_text(json.dumps(current, indent=2))
-    drop_note = f" (dropped unpriceable: {sorted(dropped)})" if dropped else ""
-    note = (f"Weekly universe review: added {sorted(added) if added else 'none'}, "
-            f"removed {sorted(removed) if removed else 'none'} "
-            f"({len(new_tickers)} names){drop_note}. {data.get('rationale', '')}")
-    journal.log_improvement(note, run_id)
-    # Persistent public log of universe changes (for the dashboard changelog).
-    _universe_log_append({"date": _et_date(), "status": "applied",
-                          "added": sorted(added), "removed": sorted(removed),
-                          "dropped_unpriceable": sorted(dropped), "size": len(new_tickers),
-                          "rationale": data.get("rationale", "")})
-    if latest_file.exists():
-        d = json.loads(latest_file.read_text())
-        d["improvements"] = ([{"date": _et_date(), "note": note}]
-                             + d.get("improvements", []))[:30]
-        latest_file.write_text(json.dumps(d, indent=2, default=str))
-    # Weekly full-universe freshness sweep rides the same Sunday slot: audit the
-    # FINAL curated universe so every name - not just this week's focus set - is
-    # verified current against its latest SEC filing before Monday's pre-market.
-    try:
-        from tools.freshness_audit import audit_universe
-        audit = audit_universe(cross_check=True, progress=False)
-        a_stale = audit.get("stale_tickers", [])
-        print(f"  freshness sweep: {audit.get('fresh')}/{audit.get('audited')} fresh"
-              + (f", STALE: {a_stale}" if a_stale else ""))
-        if a_stale:
-            journal.log_improvement(
-                f"Freshness sweep found stale fundamentals for {a_stale} - "
-                f"do not trust these names' fundamentals until resolved.", run_id)
-    except Exception as e:
-        print(f"  (freshness sweep failed: {e})")
-    redeploy_dashboard()
-    print(f"universe updated: +{len(added)} -{len(removed)} = {len(new_tickers)} names")
-    return 0
-
-
-# ---------------------------------------------------------------------------
-# Main loop
-# ---------------------------------------------------------------------------
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--research-only", action="store_true",
@@ -2114,16 +121,43 @@ def main() -> int:
     ap.add_argument("--light", action="store_true",
                     help="light check (pre-market/overnight): position review + news; "
                          "exits allowed, new buys discarded; no full universe scan")
+    ap.add_argument("--depth", metavar="DEPTH",
+                    help="run depth: light | holdings_watchlist | full | weekly_market | "
+                         "evening_review (overrides --light when set)")
+    ap.add_argument("--weekly-market", action="store_true",
+                    help="weekly multi-sector market check-in (no trading; breadth map)")
     ap.add_argument("--gather-only", action="store_true",
                     help="cloud mode step 1: write context bundle to state/ and exit")
     ap.add_argument("--act-on", metavar="RESPONSE_FILE",
                     help="cloud mode step 2: validate/execute/publish from a saved brain response")
     ap.add_argument("--context", metavar="CONTEXT_FILE",
                     help="context bundle path (required with --act-on)")
+    ap.add_argument("--learning-mark", action="store_true",
+                    help="dedicated mark job: shadow book + post-exit runners + "
+                         "news cache on mark days + lesson prune; no trading")
     args = ap.parse_args()
 
     cfg = validator.load_config()
     run_id = f"{datetime.now():%Y%m%d}-{uuid.uuid4().hex[:6]}"
+    try:
+        run_depth = resolve_depth(
+            explicit=args.depth,
+            light_flag=args.light,
+            news_only=args.news_only,
+            weekly_market=args.weekly_market,
+            cfg=cfg,
+        )
+    except ValueError as e:
+        print(f"HALT: {e}")
+        return 2
+
+    if args.learning_mark:
+        print(f"=== East Equity Agent learning-mark {run_id} ===")
+        from tools.learning_mark import run_learning_mark
+        out = run_learning_mark(run_id=run_id)
+        print(json.dumps(out, indent=2, default=str))
+        return 0 if out.get("status") != "error" else 1
+
     if args.self_review:
         print(f"=== East Equity Agent self-review {run_id} ===")
         return self_review(run_id)
@@ -2133,7 +167,8 @@ def main() -> int:
     if args.freshness_audit:
         print(f"=== East Equity Agent universe freshness audit {run_id} ===")
         return run_freshness_audit(run_id)
-    print(f"=== East Equity Agent run {run_id} (mode: {cfg['mode']['trading_mode']}) ===")
+    print(f"=== East Equity Agent run {run_id} (mode: {cfg['mode']['trading_mode']}, "
+          f"depth: {run_depth}) ===")
 
     # Idempotent migration: positions opened before plan persistence get their
     # journal-derived stop/target/horizon written onto the position record.
@@ -2148,11 +183,6 @@ def main() -> int:
     if args.gather_only:
         # Pure data collection (used by the relay/Action): no preflight gates,
         # no lock, no budget - it must work on weekends and holidays too.
-        # Corporate actions are reconciled HERE because they need yfinance and
-        # the cloud trade path is network-blocked - once trading moved to the
-        # cloud, dividends could otherwise never credit on any node. Idempotent
-        # via each position's actions_processed_through marker; the relay
-        # commits the ledger only when the sentinel below says it changed.
         if cfg["mode"]["trading_mode"] != "dry_run":
             try:
                 ca = corporate_actions.apply_corporate_actions()
@@ -2165,23 +195,19 @@ def main() -> int:
                     print(f"  (corporate-actions errors on gather: {len(ca['errors'])})")
             except Exception as e:
                 print(f"  (gather corporate actions skipped: {e})")
-        context = gather_context(cfg, light=args.light)
-        # Never hand the brain empty/partial data WITHOUT a label. Distinguish three
-        # cases: full-degradation (scan/macro dead), partial (prices OK but research
-        # feeds failed), and healthy.
-        scan_empty = not args.light and not context["universe_scan"].get("top_setups")
+        context = gather_context(cfg, light=args.light, depth=run_depth)
+        expects_full_scan = run_depth in ("full", "weekly_market")
+        scan_empty = expects_full_scan and not context["universe_scan"].get("top_setups") \
+            and context["universe_scan"].get("status") not in ("light", "holdings_watchlist")
         macro_bad = context["macro_regime"].get("status") != "ok"
         degraded = macro_bad or scan_empty
 
         def _feed_ok(key: str) -> bool:
             v = context.get(key) or {}
             return isinstance(v, dict) and v.get("status") not in ("error", "unavailable")
-        # Scan-coverage check: the scanner skips failed names silently, so a
-        # rate-limited Yahoo can price 30/182 names while top_setups still looks
-        # populated. Under ~80% coverage the bundle is partial, not healthy.
         scan_ctx = context.get("universe_scan") or {}
         low_coverage = bool(
-            not args.light and not degraded
+            expects_full_scan and not degraded
             and isinstance(scan_ctx.get("requested"), int) and scan_ctx["requested"] > 0
             and scan_ctx.get("scanned", 0) < 0.8 * scan_ctx["requested"])
         partial = (not degraded) and (low_coverage or not all(
@@ -2195,7 +221,6 @@ def main() -> int:
                          - datetime.fromisoformat(cached["run_date"])).total_seconds() / 3600
             except Exception:
                 age_h = 999.0
-            # Even a several-hours-old bundle beats an empty context - but SAY how stale.
             cached["portfolio"] = context["portfolio"]
             cached["hard_limits"] = context["hard_limits"]
             severity = "still fresh" if age_h < 4 else "STALE"
@@ -2208,8 +233,6 @@ def main() -> int:
             context = cached
             print(f"  (live feeds blocked - using relay bundle, {age_h:.1f}h old)")
         elif degraded:
-            # No bundle to fall back to: proceed but LABEL the emptiness loudly so the
-            # brain doesn't mistake missing data for a quiet market.
             context["stale_data_notice"] = (
                 "Live feeds failed AND no relay bundle is available - this context is "
                 "largely EMPTY. Treat scan/macro data as missing; do not open new "
@@ -2227,20 +250,13 @@ def main() -> int:
             context["data_quality"] = {"source": "live_partial", "note": note}
             print(f"  (partial degradation - {note[:80]}; labeled)")
 
-        # Per-position charts need full-network price history. Build them HERE in
-        # the gather path (the GitHub Action and the local relay both have live
-        # feeds) and commit the file alongside data/charts, so the blocked cloud
-        # trade path only has to PRESERVE it. Without this, position_charts.json
-        # could only ever be populated on a full-network trade run - on cloud-only
-        # operation it stayed empty. Guarded exactly like refresh_dashboard: never
-        # overwrite a good file with {} when a fetch comes back empty.
         try:
             positions = (context.get("portfolio") or {}).get("positions", [])
             pcs = build_position_charts(positions)
             pc_file = ROOT / "dashboard" / "data" / "position_charts.json"
             pc_file.parent.mkdir(parents=True, exist_ok=True)
             if pcs or not positions:
-                pc_file.write_text(json.dumps(_json_safe(pcs), indent=2))
+                pc_file.write_text(json.dumps(json_safe(pcs), indent=2))
                 print(f"  (gather: position_charts for {list(pcs.keys()) or 'no positions'})")
             else:
                 print("  (gather: position_charts feed empty - keeping last-good file)")
@@ -2248,23 +264,47 @@ def main() -> int:
             print(f"  (gather position_charts skipped: {e})")
 
         out = ROOT / "state" / f"context_{run_id}.json"
-        out.write_text(json.dumps(_json_safe(context), indent=2, default=str))
-        print(f"CONTEXT_FILE={out}")
+        full_out = ROOT / "state" / f"context_full_{run_id}.json"
+        try:
+            write_tiered_context(context, out, full_out)
+            print(f"CONTEXT_FILE={out}")
+            print(f"CONTEXT_FULL_FILE={full_out}")
+        except Exception as e:
+            print(f"  (tiered gather write failed: {e}; writing full only)")
+            out.write_text(json.dumps(json_safe(context), indent=2, default=str))
+            print(f"CONTEXT_FILE={out}")
         return 0
 
-    halt = preflight(cfg, run_id, news_only=args.news_only, manual=args.manual)
+    # Preflight weekend/lease: treat non-trading depths like news-only so Sunday
+    # weekly check-ins are allowed. Brain proposals are suppressed separately.
+    no_brain_orders = (
+        args.news_only
+        or run_depth in ("evening_review", "weekly_market")
+        or not depth_allows_new_buys(run_depth)
+    )
+    # Safety layer (stops/horizons) still runs on weekly_market and focused depths.
+    run_safety = run_depth not in ("evening_review",) and not args.news_only
+    halt = preflight(
+        cfg, run_id,
+        news_only=args.news_only or run_depth in ("evening_review", "weekly_market"),
+        manual=args.manual,
+    )
     if halt:
         print(f"HALT: {halt}")
-        journal.log_run_summary({"halted": halt}, run_id)
+        journal.log_run_summary({"halted": halt, "run_depth": run_depth}, run_id)
         return 1
 
     forced_exit_fills = []
     if args.act_on:
-        # Cloud mode: the scheduled agent already did the thinking; act on its output.
         print("[1-2/5] Loading saved context + brain response (cloud mode)...")
-        context = json.loads(Path(args.context).read_text())
-        # Mark to the bundle's prices before re-reading: a <=1h-old (even labeled-stale)
-        # mark beats a book silently frozen at the last fill.
+        # Prefer full archive when act-on was given a slim path (same run_id).
+        ctx_path = Path(args.context)
+        full_sibling = ctx_path.with_name(ctx_path.name.replace("context_", "context_full_"))
+        load_path = full_sibling if full_sibling.exists() else ctx_path
+        if load_path != ctx_path:
+            print(f"  (using full archive {load_path.name} for act-on)")
+        context = json.loads(load_path.read_text())
+        run_depth = context.get("run_depth") or run_depth
         bundle_prices = (context.get("universe_scan") or {}).get("prices") or {}
         if bundle_prices:
             try:
@@ -2272,25 +312,94 @@ def main() -> int:
             except Exception as e:
                 print(f"  (mark-to-market from bundle failed: {e})")
         context["portfolio"] = get_portfolio_state()
-        if not args.news_only:
+        if run_safety:
             forced_exit_fills = apply_safety_layer(context, cfg, run_id)
         response = Path(args.act_on).read_text()
     else:
-        print("[1/5] Gathering context...")
-        context = gather_context(cfg, light=args.light)
-        if not args.news_only:
+        print(f"[1/5] Gathering context (depth={run_depth})...")
+        context = gather_context(cfg, light=args.light, depth=run_depth)
+        if run_safety:
             forced_exit_fills = apply_safety_layer(context, cfg, run_id)
         print("[2/5] Waking the brain (Claude)...")
-        response = ask_claude(context, run_id, news_only=args.news_only)
+        response = ask_claude(
+            context, run_id,
+            news_only=args.news_only or run_depth in ("evening_review", "weekly_market"),
+        )
 
     parsed = parse_proposals(response)
     proposals, no_trade_reason = parsed["proposals"], parsed["no_trade_reason"]
-    if args.news_only:
-        proposals = []  # belt and suspenders: a news review never trades
-    elif args.light:
+
+    # Process gates + learning marks (shadows, post-exit runners, news cache).
+    try:
+        from tools.process_gates import audit_brain_process
+        top_scan = [
+            r.get("ticker") for r in
+            ((context.get("universe_scan") or {}).get("top_setups") or [])[:8]
+            if r.get("ticker")
+        ]
+        audit = audit_brain_process(
+            parsed, depth=run_depth, proposals=proposals,
+            top_scan_tickers=top_scan, universe=validator.load_universe())
+        parsed["watchlist"] = audit.get("watchlist") or parsed.get("watchlist") or []
+        parsed["rejected_ideas"] = audit.get("rejected_ideas") or []
+        parsed["process_audit"] = {
+            "process_ok": audit.get("process_ok"),
+            "full_run_no_trade_ok": audit.get("full_run_no_trade_ok"),
+            "issues": audit.get("issues") or [],
+        }
+        if audit.get("issues"):
+            print(f"      process gates: {audit['issues'][:6]}")
+            journal.log_improvement(
+                "Process gate: " + "; ".join(audit["issues"][:12]), run_id)
+        if (run_depth == "full" and not proposals
+                and audit.get("full_run_no_trade_ok") is False):
+            tag = (" [process: full-run no-trade needs rejected_ideas "
+                   "with >=2 {ticker, reason}]")
+            if no_trade_reason and tag.strip() not in str(no_trade_reason):
+                no_trade_reason = str(no_trade_reason) + tag
+                parsed["no_trade_reason"] = no_trade_reason
+        try:
+            from tools.shadow_portfolio import (
+                mark_shadows, record_from_rejected_ideas, record_from_watchlist,
+            )
+            prices = (context.get("universe_scan") or {}).get("prices") or {}
+            n_rej = record_from_rejected_ideas(
+                parsed.get("rejected_ideas") or [], prices, run_id=run_id)
+            alerts = ((context.get("watchlist_trigger_alerts") or {}).get("alerts")
+                      or [])
+            n_wl = record_from_watchlist(
+                parsed.get("watchlist") or [], prices, alerts, run_id=run_id)
+            mark_shadows(prices)
+            if n_rej or n_wl:
+                print(f"      shadow book: +{n_rej} rejects, +{n_wl} watch entries")
+            try:
+                from tools.post_exit_runners import mark_post_exit_runners
+                pr = mark_post_exit_runners(prices, cache_news_on_marks=True)
+                if pr.get("completed_now"):
+                    print(f"      post-exit runners completed: {pr['completed_now']}")
+                if pr.get("news_cached"):
+                    print(f"      post-exit news cached on marks: {pr['news_cached']}")
+            except Exception as e:
+                print(f"      (post-exit runners skipped: {e})")
+            # Opportunistic lesson prune (cheap, fail-soft)
+            try:
+                from tools.learning_adopt import prune_adopted_lessons
+                pruned = prune_adopted_lessons()
+                if pruned.get("pruned"):
+                    print(f"      lessons pruned: {pruned['pruned']}")
+            except Exception as e:
+                print(f"      (lesson prune skipped: {e})")
+        except Exception as e:
+            print(f"      (shadow portfolio skipped: {e})")
+    except Exception as e:
+        print(f"      (process gates skipped: {e})")
+
+    if args.news_only or run_depth in ("evening_review", "weekly_market"):
+        proposals = []  # commentary-only depths never trade
+    elif no_brain_orders:
         dropped = [p for p in proposals if str(p.get("action", "")).upper() == "BUY"]
         for p in dropped:
-            journal.log_rejection(p, ["light_run_no_new_buys"], run_id)
+            journal.log_rejection(p, [f"{run_depth}_run_no_new_buys"], run_id)
         proposals = [p for p in proposals if str(p.get("action", "")).upper() != "BUY"]
     print(f"      {len(proposals)} proposal(s). {no_trade_reason or ''}")
 
@@ -2309,26 +418,25 @@ def main() -> int:
         print(json.dumps(proposals, indent=2))
         return 0
 
-    if proposals and not args.news_only:
+    if proposals and not (args.news_only or run_depth in ("evening_review", "weekly_market")):
         print("[2.5/5] Risk desk review...")
         ctx_path = args.context if args.act_on else str(ROOT / "state" / f"context_{run_id}.json")
+        # Risk desk benefits from full archive if present
+        full_p = Path(str(ctx_path).replace("context_", "context_full_"))
+        if full_p.exists():
+            ctx_path = str(full_p)
         proposals = adversarial_review(proposals, ctx_path, run_id)
 
     print("[3/5] Validating (pure Python)...")
-    # Validate against LIVE portfolio state, not the snapshot from step 1 - another
-    # run may have traded while the brain was thinking.
     live_portfolio = get_portfolio_state()
     context["portfolio"] = live_portfolio
 
-    # Auto-recovering risk halts (daily loss / max drawdown vs the published
-    # equity history): BUYs are blocked while breached, sells still proceed, and
-    # trading resumes on its own when equity recovers. Fail-open on any error.
     risk_halts = []
     try:
         hist_file = ROOT / "dashboard" / "data" / "equity_history.json"
         equity_hist = json.loads(hist_file.read_text()) if hist_file.exists() else []
         risk_halts = validator.risk_halt_reasons(
-            live_portfolio.get("total_equity_usd"), equity_hist, cfg, today_et=_et_date())
+            live_portfolio.get("total_equity_usd"), equity_hist, cfg, today_et=et_date())
     except Exception as e:
         print(f"  (risk-halt check failed open: {e})")
     context["risk_halts"] = risk_halts
@@ -2338,13 +446,8 @@ def main() -> int:
             if str(p.get("action", "")).upper() == "BUY":
                 journal.log_rejection(p, risk_halts, run_id)
         proposals = [p for p in proposals if str(p.get("action", "")).upper() != "BUY"]
-    # Rebuild the volatility map from the (possibly file-loaded) context so the
-    # stop floor the validator enforces matches the stop_engineering shown to the brain.
     market_context = build_volatility_context(
         context.get("universe_scan") or {}, context.get("options_signals") or {})
-    # Market caps for the $1B floor: bundle first (deep fundamentals / scanner lane
-    # rows - gathered where network exists), live yfinance as a last resort. Absent
-    # figures fail open in the validator; the universe review is the real gate.
     for p in proposals:
         if str(p.get("action", "")).upper() != "BUY":
             continue
@@ -2385,9 +488,6 @@ def main() -> int:
     fills = forced_exit_fills + execute(approved, context, cfg, run_id)
 
     print("[5/5] Journaling + dashboard + X draft...")
-    # ALWAYS re-mark and re-read before publishing (not just when a trade filled):
-    # the step-1 snapshot predates execution, and on hold days the marks would
-    # otherwise stay frozen at the last fill, flat-lining the published equity.
     publish_prices = (context.get("universe_scan") or {}).get("prices") or {}
     if publish_prices:
         try:
@@ -2400,10 +500,13 @@ def main() -> int:
     draft_x_summary(fills, results, context, run_id, parsed.get("x_post"))
     journal.log_run_summary({
         "manual": args.manual,
+        "run_depth": run_depth,
         "proposals": len(proposals), "approved": len(approved),
         "fills": len(fills), "no_trade_reason": no_trade_reason,
+        "process_audit": parsed.get("process_audit"),
+        "rejected_ideas": parsed.get("rejected_ideas") or [],
     }, run_id)
-    redeploy_dashboard()  # publish last so every artifact of this run is committed
+    redeploy_dashboard()
     print("Done.")
     return 0
 

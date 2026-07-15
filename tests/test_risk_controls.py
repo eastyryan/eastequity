@@ -44,7 +44,13 @@ def buy(ticker, size=900.0, entry=450.0, stop=400.0, target=520.0):
         "thesis": "Clean swing setup with a real catalyst and rising estimates.",
         "macro_context": "Regime supports adding measured long exposure.",
         "variant_perception": "Consensus sees a fair multiple; I see mispriced growth because estimates lag; resolves at the next print.",
+        "thesis_invalidators": {"invalidating_print": "EPS guide cut or estimate cuts >5%", "invalidating_structure": "Close below the 50-DMA on rising volume", "time_box": "If no progress toward thesis in 25 trading days, exit"},
+        "demand_driver": "hyperscaler_server_capex",
         "catalysts": ["Earnings in ~3 weeks"],
+        "risk_map": "Stop below recent structure; thesis invalid if sector leadership fails.",
+        "scenarios": {"base": "Thesis plays out over the hold window.",
+                      "bull": "Estimates re-accelerate and multiple expands.",
+                      "bear": "Macro tightens and the name mean-reverts to support."},
     }
 
 

@@ -244,6 +244,10 @@ def readback(order_id: str) -> dict | None:
                 existing["adds_count"] = int(existing.get("adds_count", 0)) + 1
                 if order.get("plan"):  # latest BUY's plan governs the merged position
                     existing["plan"] = order["plan"]
+                if order.get("demand_driver"):
+                    existing["demand_driver"] = str(order["demand_driver"]).strip().lower()
+                elif isinstance(order.get("plan"), dict) and order["plan"].get("demand_driver"):
+                    existing["demand_driver"] = str(order["plan"]["demand_driver"]).strip().lower()
             else:
                 new_pos = {
                     "ticker": order["ticker"].upper(), "quantity": qty,
@@ -254,6 +258,10 @@ def readback(order_id: str) -> dict | None:
                 }
                 if order.get("plan"):  # numeric stop/target/horizon persisted with the lot
                     new_pos["plan"] = order["plan"]
+                if order.get("demand_driver"):
+                    new_pos["demand_driver"] = str(order["demand_driver"]).strip().lower()
+                elif isinstance(order.get("plan"), dict) and order["plan"].get("demand_driver"):
+                    new_pos["demand_driver"] = str(order["plan"]["demand_driver"]).strip().lower()
                 state["positions"].append(new_pos)
             fill = {**order, "status": "filled", "fill_price": fill_price,
                     "quantity": qty, "notional_usd": notional,

@@ -110,16 +110,20 @@
       "position_size_usd",
       "variant_perception",
       "risk_map",
-      "scenarios"
+      "scenarios",
+      "thesis_invalidators",
+      "demand_driver"
     ],
     "_variant_perception_note": "Every BUY must state the market's misunderstanding explicitly: what consensus believes, what the agent believes differently, the specific mispriced mechanism, and the event/date when the market finds out. Enforced as a required BUY field; format documented in CLAUDE.md.",
     "_risk_map_scenarios_note": "risk_map and scenarios were always in the CLAUDE.md schema but not validator-enforced, so proposals omitted scenarios and the published scenario_ev stayed empty. Now required on every BUY.",
+    "_thesis_invalidators_note": "Binding falsifiers (not vibes): object with invalidating_print, invalidating_structure, time_box — each a non-empty string. Enforced on every BUY so re-underwrites have kill criteria.",
+    "_demand_driver_note": "Primary demand-driver theme for theme concentration (e.g. hyperscaler_server_capex, ai_compute_gpu). Distinct from GICS sector. See tools/demand_drivers.py and context bundle demand_driver_map.",
     "required_sell_fields": [
       "ticker",
       "action",
       "thesis"
     ],
-    "_required_sell_fields_note": "SELL_TO_CLOSE needs only these; the BUY-oriented required_proposal_fields list used to reject legitimate discretionary exits for missing stop_loss/target_price.",
+    "_required_sell_fields_note": "SELL_TO_CLOSE needs only these; the BUY-oriented required_proposal_fields list used to reject legitimate discretionary exits for missing stop_loss/target_price. Prefer also exit_reason when available (process, not hard-required).",
     "min_confidence": 0.6,
     "min_risk_reward_ratio": 1.0,
     "min_target_upside_pct": 0.1,
@@ -129,21 +133,41 @@
     "volatility_stop_enforced": true,
     "min_stop_atr_multiple": 1.0,
     "min_stop_expected_move_fraction": 0.5,
-    "_volatility_stop_note": "A stop tighter than the name's noise is not protection - it exits on ordinary volatility, not on a broken thesis. The stop must sit at least max(min_stop_atr_multiple x 14d-ATR%, min_stop_expected_move_fraction x options expected_move%) below entry. Enforced only when volatility data is present (fail-open). If that floor exceeds max_stop_loss_distance_pct, the name is too volatile for a valid swing stop and is rejected."
+    "_volatility_stop_note": "A stop tighter than the name's noise is not protection - it exits on ordinary volatility, not on a broken thesis. The stop must sit at least max(min_stop_atr_multiple x 14d-ATR%, min_stop_expected_move_fraction x options expected_move%) below entry. Enforced only when volatility data is present (fail-open). If that floor exceeds max_stop_loss_distance_pct, the name is too volatile for a valid swing stop and is rejected.",
+    "thesis_invalidator_keys": [
+      "invalidating_print",
+      "invalidating_structure",
+      "time_box"
+    ],
+    "min_invalidator_chars": 12
+  },
+  "theme_risk": {
+    "max_demand_driver_concentration_pct": 0.35,
+    "_note": "Market value of positions sharing the same demand_driver plus proposed size must stay under this fraction of equity. Catches DELL+HPE style single-factor books that sector caps miss when names sit in different GICS sleeves. Fail-open if demand_driver missing (field check already rejects)."
+  },
+  "learning_controls": {
+    "min_trades_for_binding": 15,
+    "min_trades_for_caution": 5,
+    "min_bucket_trades": 5,
+    "losing_win_rate_pct": 40.0,
+    "high_conf_min_win_rate_pct": 50.0,
+    "confidence_cap_when_inflated": 0.69,
+    "require_exception_paragraph_chars": 80,
+    "_note": "Code-enforced Learning Protocol. Under min_trades_for_binding: no hard rejections from calibration_gate. At/above: high-conf inflation caps confidence; losing sector/theme buckets require calibration_exception text. Shadow book binds caution at 8 closed shadows (separate)."
   },
   "llm": {
     "brain_model": "claude-opus-4-8",
     "risk_desk_model": "claude-opus-4-8",
     "allowed_tools": "Read Glob Grep WebSearch WebFetch",
-    "_note": "Every claude -p invocation pins --model (public track record stays reproducible across CLI-default changes) and --allowedTools (exactly what CLAUDE.md instructs: Read the chart PNGs, WebSearch/WebFetch to verify catalysts - and nothing that can write, so an injected headline can never touch the ledger). Missing block falls back to CLI defaults."
+    "_note": "Every claude -p invocation pins --model (public track record stays reproducible across CLI-default changes) and --allowedTools (exactly what CLAUDE.md instructs: Read the chart PNGs, WebSearch/WebFetch to verify catalysts - and nothing that can write, so an injected headline can never touch the ledger). Missing block falls back to CLI defaults. Risk desk uses a kill-checklist prompt (falsifiers, theme overlap, variant perception, entry geometry)."
   },
   "risk_controls": {
     "kill_switch_file": "state/KILL_SWITCH",
     "max_daily_loss_pct_halt": 0.03,
     "max_drawdown_pct_halt": 0.15,
     "require_broker_readback_confirmation": true,
-    "require_risk_desk_for_buys": false,
-    "_require_risk_desk_note": "When true, BUYs are rejected (risk_desk_unavailable) instead of passing unreviewed where the claude CLI is absent (cloud sandboxes). False preserves pass-through until a cloud review path exists.",
+    "require_risk_desk_for_buys": true,
+    "_require_risk_desk_note": "Paper track-record integrity: BUYs require adversarial risk desk when the claude CLI is available. If CLI is absent (some cloud sandboxes), BUYs are rejected (risk_desk_unavailable) rather than passing unreviewed. Set false only for emergency local dry debugging.",
     "max_orders_per_run": 3,
     "market_hours_only": true,
     "cross_node_lease_enabled": true,
@@ -184,6 +208,22 @@
       "Fri"
     ],
     "position_review_frequency": "daily",
-    "max_completed_runs_per_day": 12
+    "max_completed_runs_per_day": 12,
+    "slot_depths": {
+      "0600": "light",
+      "0900": "holdings_watchlist",
+      "1000": "holdings_watchlist",
+      "1200": "holdings_watchlist",
+      "1400": "holdings_watchlist",
+      "1600": "full",
+      "1730": "evening_review",
+      "_note": "Four intraday slots are holdings+watchlist only (fast). One full universe deep dive at 4pm ET. Light pre-market at 6am. Evening review is news-only. Weekly market breadth is a separate Sunday --weekly-market run."
+    },
+    "weekly_market_checkin": {
+      "enabled": true,
+      "day": "Sun",
+      "hhmm": "0000",
+      "_note": "Broad multi-sector scan + discovery leaders; no trading. Deep research only on holdings and a few standouts."
+    }
   }
 }

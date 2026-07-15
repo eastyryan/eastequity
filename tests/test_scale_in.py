@@ -88,7 +88,15 @@ def _prop(**kw):
          "position_size_usd": 400, "entry_price_max": 460.0, "stop_loss": 415.0,
          "target_price": 520.0, "holding_horizon_days": 30, "confidence": 0.7,
          "risk_reward_ratio": 1.3, "thesis": "t", "macro_context": "m", "catalysts": ["c"],
-         "variant_perception": "Consensus sees X; I see Y because Z; resolves at earnings."}
+         "variant_perception": "Consensus sees X; I see Y because Z; resolves at earnings.",
+         "risk_map": "Guide cut or break of 50-DMA kills the trade.",
+         "scenarios": {"bull": {"price": 520, "prob": 0.3}, "base": {"price": 500, "prob": 0.45},
+                       "bear": {"price": 400, "prob": 0.25}},
+         "thesis_invalidators": {
+             "invalidating_print": "EPS guide cut or estimate cuts over 5 percent",
+             "invalidating_structure": "Close below the 50-DMA on rising volume",
+             "time_box": "If no progress toward thesis in 25 trading days, exit"},
+         "demand_driver": "hyperscaler_server_capex"}
     p.update(kw)
     return p
 

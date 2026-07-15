@@ -67,10 +67,19 @@ def execute_forced_exits(exits: list, prices: dict, run_id: str,
     exit dict's own atr_pct (from check_forced_exits) is used when this is absent."""
     atr_by_ticker = atr_by_ticker or {}
     fills = []
+    # Snapshot positions before closes so exit autopsies keep plan / days_held.
+    try:
+        pre_positions = {
+            str(p.get("ticker", "")).upper(): dict(p)
+            for p in (simulated_broker.get_portfolio().get("positions") or [])
+        }
+    except Exception:
+        pre_positions = {}
     for ex in exits:
         ref = prices.get(ex["ticker"])
         if ref is None:
             continue  # price vanished between check and execute — skip, never guess
+        pos_before = pre_positions.get(str(ex["ticker"]).upper())
         order = simulated_broker.place_order({
             "ticker": ex["ticker"], "action": "SELL_TO_CLOSE",
             "reference_price": ref, "proposal_id": run_id,
@@ -87,6 +96,15 @@ def execute_forced_exits(exits: list, prices: dict, run_id: str,
             continue
         journal.log_trade(order, fill, run_id)
         fills.append(fill)
+        try:
+            from tools.exit_autopsy import (
+                build_exit_autopsy_from_fill, grade_and_persist_autopsy,
+            )
+            rec = build_exit_autopsy_from_fill(
+                fill, order, pos_before, forced=True, reason=ex.get("reason"))
+            grade_and_persist_autopsy(rec)
+        except Exception as e:
+            print(f"  (exit autopsy skipped: {e})")
         print(f"  FORCED EXIT {fill['ticker']} {fill['quantity']} "
               f"@ {fill['fill_price']} ({ex['reason']})")
     return fills

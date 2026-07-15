@@ -16,6 +16,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from tools.universe_scanner import (  # noqa: E402
     _return_over_sessions, _trailing_high, _rel_strength, _median_dollar_volume,
     _ma_tail, _screen_quality_ok, _deep_value_sort_key, _load_ai_exposure, _trend_read,
+    build_valuation_context, multiple_vs_growth_read,
     WEEKS_200, AT_OR_BELOW_TOLERANCE_PCT,
     SESS_1M, SESS_3M, SESS_6M, SESS_52W, MIN_BARS, SESS_ADV, MIN_ADV_USD,
 )
@@ -166,12 +167,52 @@ def test_trend_read():
     check("missing data -> unknown", _trend_read(None, None, None) == "unknown")
 
 
+
+def test_valuation_context():
+    print("valuation_context (forward pe vs growth, zero-cost screen fields):")
+    check("cheap_vs_growth when pe/g < 1", multiple_vs_growth_read(0.7) == "cheap_vs_growth")
+    check("fair when 1 <= pe/g < 2", multiple_vs_growth_read(1.5) == "fair")
+    check("rich when pe/g >= 2", multiple_vs_growth_read(2.0) == "rich_vs_growth")
+    check("n/a when missing", multiple_vs_growth_read(None) == "n/a")
+    check("no valuation -> None", build_valuation_context({"fwd_pe_est": 10}) is None)
+    row = {
+        "valuation": {"forward_pe": 18.0, "trailing_pe": 22.0},
+        "fwd_pe_est": 16.5,
+        "fwd_pe_to_growth": 0.8,
+        "analyst_estimates": {"fwd_revenue_growth_pct": 22.5,
+                              "eps_revision_direction": "up"},
+    }
+    screen = {"revision_direction": "up", "eps_revision_30d_pct": 1.2,
+              "eps_growth_next_yr_pct": 15.0, "eps_estimate_current_yr": 4.5}
+    ctx = build_valuation_context(row, screen)
+    check("fwd_pe from valuation.forward_pe", ctx and ctx["fwd_pe"] == 18.0)
+    check("fwd_pe_est carried", ctx and ctx["fwd_pe_est"] == 16.5)
+    check("fwd_pe_to_growth carried", ctx and ctx["fwd_pe_to_growth"] == 0.8)
+    check("growth from analyst_estimates",
+          ctx and ctx["fwd_revenue_growth_pct"] == 22.5)
+    check("multiple read cheap",
+          ctx and ctx["multiple_vs_growth_read"] == "cheap_vs_growth")
+    check("screen revision fields attached",
+          ctx and ctx.get("eps_revision_30d_pct") == 1.2
+          and ctx.get("eps_growth_next_yr_pct") == 15.0)
+    check("note present", ctx and "note" in ctx and "history" in ctx["note"])
+    # growth falls back to screen when analyst_estimates missing it
+    row2 = {"valuation": {"forward_pe": 30.0}, "fwd_pe_est": 28.0,
+            "fwd_pe_to_growth": 2.5, "analyst_estimates": None}
+    ctx2 = build_valuation_context(row2, {"fwd_revenue_growth_pct": 12.0})
+    check("growth fallback to screen",
+          ctx2 and ctx2["fwd_revenue_growth_pct"] == 12.0)
+    check("rich label on high pe/g",
+          ctx2 and ctx2["multiple_vs_growth_read"] == "rich_vs_growth")
+
+
+
 if __name__ == "__main__":
     for fn in (test_constants, test_return_over_sessions, test_trailing_high,
                test_rel_strength, test_median_dollar_volume,
                test_ma_tail_200w, test_screen_quality_gate,
                test_deep_value_ai_risk_ordering, test_ai_exposure_file_loads,
-               test_trend_read):
+               test_trend_read, test_valuation_context):
         fn()
     print()
     if FAILURES:

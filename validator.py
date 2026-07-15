@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -114,6 +114,79 @@ def stop_floor_pct(atr_pct, expected_move_pct, cfg: dict) -> float | None:
     if isinstance(expected_move_pct, (int, float)) and expected_move_pct > 0:
         floors.append(q["min_stop_expected_move_fraction"] * (expected_move_pct / 100.0))
     return max(floors) if floors else None
+
+
+
+# --- calendar-day helpers (US/Eastern market day) ----------------------------
+
+def _et_now() -> datetime:
+    """Current time in America/New_York. zoneinfo preferred; UTC-4 fallback."""
+    try:
+        from zoneinfo import ZoneInfo
+        return datetime.now(ZoneInfo("America/New_York"))
+    except Exception:
+        return datetime.now(timezone.utc) - timedelta(hours=4)
+
+
+def _et_today() -> date:
+    return _et_now().date()
+
+
+def _to_et_date(iso_ts: str | None) -> date | None:
+    """Parse an ISO timestamp to its US/Eastern calendar date.
+
+    Fail-open: unparseable timestamps return None (caller skips them).
+    Naive timestamps are treated as UTC.
+    """
+    if not isinstance(iso_ts, str) or not iso_ts.strip():
+        return None
+    try:
+        dt = datetime.fromisoformat(iso_ts.replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        try:
+            from zoneinfo import ZoneInfo
+            return dt.astimezone(ZoneInfo("America/New_York")).date()
+        except Exception:
+            return (dt.astimezone(timezone.utc) - timedelta(hours=4)).date()
+    except (ValueError, TypeError, OSError):
+        return None
+
+
+def _count_filled_buys_today(portfolio: dict, today_et: date | None = None) -> int:
+    """Count filled BUY records in portfolio history on today's ET calendar date."""
+    today = today_et or _et_today()
+    count = 0
+    for rec in portfolio.get("history") or []:
+        if not isinstance(rec, dict):
+            continue
+        if str(rec.get("action", "")).upper() != "BUY":
+            continue
+        if rec.get("status") != "filled":
+            continue
+        ts = rec.get("filled_at") or rec.get("submitted_at")
+        rec_day = _to_et_date(ts)
+        if rec_day is None:
+            continue  # unparseable -> fail open (do not count)
+        if rec_day == today:
+            count += 1
+    return count
+
+
+def _check_daily_buy_cap(p: dict, cfg: dict, already_today: int,
+                         buys_this_batch: int, reasons: list[str]) -> None:
+    """Enforce swing_rules.max_new_positions_per_day against prior filled BUYs
+    today (ET) plus the running count in this proposal batch."""
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    max_per_day = cfg["swing_rules"].get("max_new_positions_per_day")
+    if not isinstance(max_per_day, (int, float)) or max_per_day <= 0:
+        return
+    # buys_this_batch already includes this proposal (incremented by caller).
+    if already_today + buys_this_batch > max_per_day:
+        reasons.append(
+            f"max_new_positions_per_day_exceeded:already_{already_today}_today"
+            f"+batch_{buys_this_batch}>limit_{int(max_per_day)}")
 
 
 # --- individual rule checks -------------------------------------------------
@@ -284,6 +357,21 @@ def _check_confidence(p: dict, cfg: dict, reasons: list[str]) -> None:
         reasons.append(f"confidence_too_low:{conf} < {cfg['trade_quality_requirements']['min_confidence']}")
 
 
+def _check_calibration_gate(p: dict, cfg: dict, sector_map: dict, reasons: list[str]) -> None:
+    """After enough closed trades, enforce learning-protocol calibration (code)."""
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    try:
+        from tools.calibration_gate import check_buy_calibration
+        ticker = str(p.get("ticker", "")).upper()
+        sector = sector_map.get(ticker)
+        driver = p.get("demand_driver")
+        for r in check_buy_calibration(p, sector=sector, demand_driver=driver):
+            reasons.append(r)
+    except Exception:
+        pass  # fail-open: never block trading because learning module crashed
+
+
 def _conviction_unlocked(cfg: dict) -> tuple[bool, str]:
     """Conviction sizing is an EARNED privilege: enough closed trades AND proof
     that high-confidence calls actually win. Reads the published breakdown
@@ -408,6 +496,88 @@ def _check_sector_concentration(p: dict, cfg: dict, portfolio: dict,
                        f"{same_sector + size:.0f} > {cap:.0%} of {equity:.0f}")
 
 
+def _check_thesis_invalidators(p: dict, cfg: dict, reasons: list[str]) -> None:
+    """Binding falsifiers on every BUY: invalidating_print, invalidating_structure,
+    time_box — each a non-empty string. Missing/short/wrong shape -> reject."""
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    q = cfg.get("trade_quality_requirements") or {}
+    keys = q.get("thesis_invalidator_keys") or [
+        "invalidating_print", "invalidating_structure", "time_box"]
+    min_chars = int(q.get("min_invalidator_chars") or 12)
+    inv = p.get("thesis_invalidators")
+    if not isinstance(inv, dict):
+        reasons.append("thesis_invalidators_missing_or_not_object")
+        return
+    for k in keys:
+        v = inv.get(k)
+        if not isinstance(v, str) or len(v.strip()) < min_chars:
+            reasons.append(f"thesis_invalidator_weak_or_missing:{k}")
+
+
+def _check_demand_driver_field(p: dict, reasons: list[str]) -> None:
+    """demand_driver must be a non-empty snake_case-ish theme label on BUYs."""
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    d = p.get("demand_driver")
+    if not isinstance(d, str) or len(d.strip()) < 3:
+        reasons.append("demand_driver_missing_or_weak")
+        return
+    # Light format guard: no spaces-only garbage; allow letters/numbers/underscore.
+    if not re.fullmatch(r"[a-z][a-z0-9_]{2,63}", d.strip().lower()):
+        reasons.append(f"demand_driver_invalid_format:{d}")
+
+
+def _check_theme_concentration(p: dict, cfg: dict, portfolio: dict,
+                               reasons: list[str]) -> None:
+    """theme_risk.max_demand_driver_concentration_pct — same demand_driver MV +
+    proposed size vs equity. Uses proposal demand_driver + tools.demand_drivers
+    map for held names. Fail-open if helper unavailable."""
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    tr = cfg.get("theme_risk") or {}
+    cap = tr.get("max_demand_driver_concentration_pct")
+    if not isinstance(cap, (int, float)) or cap <= 0:
+        return
+    size = p.get("position_size_usd")
+    if not isinstance(size, (int, float)):
+        return
+    driver = str(p.get("demand_driver") or "").strip().lower()
+    if not driver:
+        return  # field check already reports
+    equity = portfolio.get("total_equity_usd",
+                           cfg["position_sizing"]["starting_capital_usd"])
+    try:
+        from tools.demand_drivers import build_driver_map, theme_concentration_breach
+        dmap = build_driver_map()
+        # Prefer the proposal's stated driver for the new name.
+        dmap = dict(dmap)
+        dmap[str(p.get("ticker", "")).upper()] = driver
+        breach = theme_concentration_breach(
+            portfolio.get("positions") or [],
+            str(p.get("ticker", "")).upper(),
+            size,
+            equity,
+            dmap,
+            cap,
+        )
+        if breach:
+            reasons.append(breach)
+    except Exception:
+        # Fall back: sum positions that already stamped demand_driver on the lot.
+        same = 0.0
+        for pos in portfolio.get("positions") or []:
+            pd = str(pos.get("demand_driver") or "").strip().lower()
+            if not pd:
+                continue
+            if pd == driver:
+                same += float(pos.get("market_value_usd") or 0)
+        if equity > 0 and same + size > equity * cap:
+            reasons.append(
+                f"theme_concentration_exceeded:{driver} "
+                f"{same + size:.0f} > {cap:.0%} of {equity:.0f}")
+
+
 def _check_entry_cooldown(p: dict, cfg: dict, portfolio: dict, reasons: list[str]) -> None:
     """swing_rules.min_days_between_entries_same_ticker: a fresh BUY within N days
     of the last FILLED buy on the same ticker is churn, not a new thesis. Applies
@@ -478,6 +648,10 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
     if kill_switch_active(cfg):
         return [ValidationResult(p, False, ["KILL_SWITCH_ACTIVE"]) for p in proposals]
 
+    # Calendar-day BUY cap: count already-filled BUYs today (US/Eastern), then
+    # combine with the running batch counter so multi-run days and multi-BUY
+    # batches both stay under swing_rules.max_new_positions_per_day.
+    already_today = _count_filled_buys_today(portfolio)
     buys_this_batch = 0
     for p in proposals:
         reasons: list[str] = []
@@ -491,12 +665,15 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
         _check_sell_fraction(p, reasons)
         _check_sell_position(p, portfolio, reasons)
         _check_confidence(p, cfg, reasons)
+        _check_calibration_gate(p, cfg, sector_map, reasons)
         _check_sizing(p, cfg, portfolio, reasons)
         _check_sector_concentration(p, cfg, portfolio, sector_map, reasons)
+        _check_thesis_invalidators(p, cfg, reasons)
+        _check_demand_driver_field(p, reasons)
+        _check_theme_concentration(p, cfg, portfolio, reasons)
         _check_entry_cooldown(p, cfg, portfolio, reasons)
         if str(p.get("action", "")).upper() == "BUY":
             buys_this_batch += 1
-            if buys_this_batch > cfg["swing_rules"]["max_new_positions_per_day"]:
-                reasons.append("max_new_positions_per_day_exceeded")
+            _check_daily_buy_cap(p, cfg, already_today, buys_this_batch, reasons)
         results.append(ValidationResult(p, approved=not reasons, reasons=reasons))
     return results

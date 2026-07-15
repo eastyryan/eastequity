@@ -73,6 +73,8 @@ def _proposal(ticker="DELL", size=1000):
             "target_price": 510.0, "holding_horizon_days": 30, "confidence": 0.7,
             "risk_reward_ratio": 1.6, "thesis": "clean setup", "macro_context": "ok",
             "variant_perception": "Consensus sees X; I see Y because Z; resolves at earnings.",
+        "thesis_invalidators": {"invalidating_print": "EPS guide cut or estimate cuts >5%", "invalidating_structure": "Close below the 50-DMA on rising volume", "time_box": "If no progress toward thesis in 25 trading days, exit"},
+        "demand_driver": "hyperscaler_server_capex",
             "catalysts": ["x"]}
 
 
