@@ -270,7 +270,7 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
             if "reviews" in data:
                 reviews = {r["ticker"].upper(): r for r in data["reviews"]}
                 break
-        except (json.JSONDecodeError, KeyError, TypeError):
+        except (json.JSONDecodeError, KeyError, TypeError, AttributeError):
             continue
     if not reviews:
         return _no_desk("risk desk output unparsable")
@@ -284,7 +284,10 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
             print(f"  RISK DESK VETO {p['ticker']}: {r.get('objection', '')[:120]}")
             journal.log_rejection(p, [f"risk_desk_veto: {r.get('objection', '')[:300]}"], run_id)
             continue
-        adj = min(float(r.get("confidence_adjustment", 0) or 0), 0)
+        try:
+            adj = min(float(r.get("confidence_adjustment", 0) or 0), 0)
+        except (TypeError, ValueError):
+            adj = 0  # non-numeric desk output: keep the proposal, no haircut
         if adj:
             p["confidence"] = round(max(p.get("confidence", 0) + adj, 0), 2)
             p["risk_desk_note"] = r.get("objection", "")[:300]
@@ -308,14 +311,20 @@ def parse_proposals(response: str) -> dict:
         try:
             data = json.loads(block)
             if isinstance(data, dict) and "proposals" in data:
+                # Shape-guard every list field: "proposals": null / a dict / a
+                # string must degrade to the no-trade path, not crash the run
+                # after the LLM spend.
+                def _dicts(v, cap=None):
+                    out = [x for x in v if isinstance(x, dict)] if isinstance(v, list) else []
+                    return out[:cap] if cap else out
                 return {
-                    "proposals": data["proposals"],
+                    "proposals": _dicts(data["proposals"]),
                     "no_trade_reason": data.get("no_trade_reason"),
                     "commentary": data.get("commentary"),
-                    "watchlist": (data.get("watchlist") or [])[:10],
-                    "rejected_ideas": data.get("rejected_ideas") or [],
+                    "watchlist": _dicts(data.get("watchlist"), 10),
+                    "rejected_ideas": _dicts(data.get("rejected_ideas")),
                     "x_post": data.get("x_post"),
-                    "guidance_entries": (data.get("guidance_entries") or [])[:20],
+                    "guidance_entries": _dicts(data.get("guidance_entries"), 20),
                 }
         except json.JSONDecodeError:
             continue

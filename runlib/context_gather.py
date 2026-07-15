@@ -283,8 +283,8 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None) -> 
     portfolio = get_portfolio_state()
 
     held = [p["ticker"] for p in portfolio.get("positions", [])]
-    prev_watchlist = prev_watchlist()
-    watch = [w.get("ticker") for w in prev_watchlist if w.get("ticker")]
+    prior_watchlist = prev_watchlist()
+    watch = [w.get("ticker") for w in prior_watchlist if w.get("ticker")]
     watch = [t for t in watch if t]
 
     # Market-wide events (oil/VIX + geopolitical headline flags) — cheap, every depth.
@@ -349,7 +349,7 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None) -> 
 
         # Prioritize watchlist trigger alerts into deep research.
         early_prices = scan.get("prices") or {}
-        alerts = check_watchlist_triggers(prev_watchlist, early_prices)
+        alerts = check_watchlist_triggers(prior_watchlist, early_prices)
         alert_tickers = [a["ticker"] for a in alerts if a.get("ticker")]
         focus = list(dict.fromkeys(held + watch + alert_tickers))
 
@@ -529,7 +529,7 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None) -> 
     histories = get_position_histories(held) if held else {"status": "skipped"}
 
     print("  • watchlist triggers...")
-    watchlist_alerts = check_watchlist_triggers(prev_watchlist, scan.get("prices", {}))
+    watchlist_alerts = check_watchlist_triggers(prior_watchlist, scan.get("prices", {}))
 
     # Market-wide tape + 8-K: often already fetched early for promotions.
     if market_news is None:

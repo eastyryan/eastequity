@@ -301,7 +301,7 @@ def universe_review(run_id: str) -> int:
     )
     universe_size = len({t.upper() for ts in current["sectors"].values() for t in ts})
     _fail_entry = {"date": et_date(), "added": [], "removed": [],
-                   "droppedunpriceable": [], "size": universe_size}
+                   "dropped_unpriceable": [], "size": universe_size}
     try:
         out = run_claude(prompt)  # pinned model + tool allowlist, with retry
     except Exception as e:
@@ -411,7 +411,7 @@ def universe_review(run_id: str) -> int:
     # Persistent public log of universe changes (for the dashboard changelog).
     universe_log_append({"date": et_date(), "status": "applied",
                           "added": sorted(added), "removed": sorted(removed),
-                          "droppedunpriceable": sorted(dropped), "size": len(new_tickers),
+                          "dropped_unpriceable": sorted(dropped), "size": len(new_tickers),
                           "rationale": data.get("rationale", "")})
     if latest_file.exists():
         d = json.loads(latest_file.read_text())
