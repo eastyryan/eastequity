@@ -138,6 +138,11 @@ def main() -> int:
                     help="cloud mode step 2: validate/execute/publish from a saved brain response")
     ap.add_argument("--context", metavar="CONTEXT_FILE",
                     help="context bundle path (required with --act-on)")
+    ap.add_argument("--trigger-run", metavar="TICKERS",
+                    help="event-driven run spawned by tools/trigger_watch when a "
+                         "watchlist would_buy_at level confirmed on live prices "
+                         "(comma-separated tickers; annotation only — all normal "
+                         "gates still apply)")
     ap.add_argument("--learning-mark", action="store_true",
                     help="dedicated mark job: shadow book + post-exit runners + "
                          "news cache on mark days + lesson prune; no trading")
@@ -372,6 +377,15 @@ def main() -> int:
         context = gather_context(cfg, light=args.light, depth=run_depth,
                                  earnings_trigger=earnings_trigger)
         apply_live_prices(context, cfg)
+        if args.trigger_run:
+            context["trigger_run_note"] = (
+                f"EVENT-DRIVEN RUN: watchlist would_buy_at level(s) CONFIRMED on "
+                f"live prices for {args.trigger_run} (two consecutive ~5-min ticks "
+                f"inside the band). This run exists because your own published "
+                f"trigger hit — deep-research those names FIRST and decide "
+                f"drop / hold / promote-to-BUY explicitly. The fat-pitch bar and "
+                f"all validator rules still apply; an unconvincing setup at the "
+                f"level is a legitimate pass (say why).")
         if run_safety:
             forced_exit_fills = apply_safety_layer(context, cfg, run_id)
         print("[2/5] Waking the brain (Claude)...")
@@ -554,6 +568,7 @@ def main() -> int:
     draft_x_summary(fills, results, context, run_id, parsed.get("x_post"))
     journal.log_run_summary({
         "manual": args.manual,
+        "trigger_run": args.trigger_run or None,
         "run_depth": run_depth,
         "proposals": len(proposals), "approved": len(approved),
         "fills": len(fills), "no_trade_reason": no_trade_reason,

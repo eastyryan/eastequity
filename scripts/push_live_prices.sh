@@ -34,5 +34,10 @@ print('refreshed', r.get('n'), 'quotes as of', r.get('as_of'))" || exit 0
   TREE=$(printf '040000 tree %s\tstate\n' "$SUBTREE" | git mktree)
   COMMIT=$(git commit-tree "$TREE" -m "Live holdings/watchlist prices [skip ci][vercel skip]")
   git push -f origin "$COMMIT:refs/heads/live-data" && echo "pushed $COMMIT"
+  # Event-driven trigger runs: if a watchlist would_buy_at level just CONFIRMED
+  # on these fresh quotes (two consecutive ticks), spawn one focused trading
+  # run instead of waiting for the next scheduled slot. All guards live in
+  # tools/trigger_watch.py; the spawned run passes every normal gate.
+  .venv/bin/python -W ignore -m tools.trigger_watch || true
 } >> logs/live_prices_local.log 2>&1
 exit 0
