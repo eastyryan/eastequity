@@ -252,13 +252,23 @@ def main() -> int:
                 age_h = 999.0
             cached["portfolio"] = context["portfolio"]
             cached["hard_limits"] = context["hard_limits"]
+            # THIS RUN's slot depth governs gating and the brain's job — never
+            # the depth the bundle happened to be gathered at. A bundle gathered
+            # off-slot (throttled crons fire late) came stamped e.g. "light" and
+            # was turning 9am/10am TRADING slots into no-BUY light runs; it also
+            # erased the earnings-escalation depth. Keep the bundle's own depth
+            # visible for the data_quality note only.
+            bundle_depth = cached.get("run_depth")
+            cached["run_depth"] = run_depth
+            cached["run_depth_note"] = depth_description(run_depth)
             severity = "still fresh" if age_h < 4 else "STALE"
             cached["stale_data_notice"] = (
                 f"Live data feeds unreachable here; using the relay bundle gathered "
                 f"{age_h:.1f}h ago ({severity}). Prices and news may be up to that old - "
                 f"lower confidence and avoid time-sensitive entries accordingly.")
             cached["data_quality"] = {"source": "relay_bundle", "age_hours": round(age_h, 1),
-                                      "stale": age_h >= 4}
+                                      "stale": age_h >= 4,
+                                      "bundle_gathered_at_depth": bundle_depth}
             context = cached
             print(f"  (live feeds blocked - using relay bundle, {age_h:.1f}h old)")
         elif degraded:
