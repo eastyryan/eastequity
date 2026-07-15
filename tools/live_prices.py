@@ -114,13 +114,66 @@ def freshness_report(blob: dict | None, applied: list[str], *,
 # --------------------------------------------------------------------------- #
 # I/O + network
 # --------------------------------------------------------------------------- #
-def load_live_prices() -> dict:
-    """Read state/live_prices.json (or {} if absent/corrupt). Pure I/O."""
+LIVE_BRANCH = "live-data"
+
+
+def pick_fresher(a: dict | None, b: dict | None) -> dict:
+    """Return whichever snapshot has the newer as_of. Pure.
+
+    A snapshot with an unparseable/absent as_of loses to one that has a real
+    timestamp; two empties return {}.
+    """
+    a, b = a or {}, b or {}
+    if not a.get("prices"):
+        return b if b.get("prices") else a or b
+    if not b.get("prices"):
+        return a
+    aa, ba = live_age_minutes(a), live_age_minutes(b)
+    if aa is None:
+        return b if ba is not None else a
+    if ba is None:
+        return a
+    return a if aa <= ba else b
+
+
+def _read_local() -> dict:
     try:
         blob = json.loads(LIVE_FILE.read_text())
         return blob if isinstance(blob, dict) else {}
     except Exception:
         return {}
+
+
+def _read_from_branch(branch: str = LIVE_BRANCH) -> dict:
+    """Read state/live_prices.json from origin/<branch> via git. Fail-soft.
+
+    The feed publishes to the dedicated live-data branch (not main), so the
+    cloud trader's main checkout has no local file — it reads the freshest
+    snapshot from the branch here. Any git/parse failure returns {} so the
+    overlay simply no-ops and stops fall back to the daily bar."""
+    import subprocess
+    try:
+        subprocess.run(["git", "fetch", "--depth=1", "origin", branch],
+                       cwd=str(ROOT), capture_output=True, timeout=30, check=False)
+        r = subprocess.run(["git", "show", f"origin/{branch}:state/live_prices.json"],
+                           cwd=str(ROOT), capture_output=True, timeout=15,
+                           text=True, check=False)
+        if r.returncode == 0 and r.stdout.strip():
+            blob = json.loads(r.stdout)
+            return blob if isinstance(blob, dict) else {}
+    except Exception:
+        pass
+    return {}
+
+
+def load_live_prices(*, use_branch: bool = True) -> dict:
+    """Freshest live snapshot: the local file (self-gather / dev) merged with the
+    live-data branch (the cloud trader's only source). Returns whichever is newer.
+    Pass use_branch=False to skip the git read (tests / offline)."""
+    local = _read_local()
+    if not use_branch:
+        return local
+    return pick_fresher(local, _read_from_branch())
 
 
 def fetch_live_prices(tickers: Iterable[str]) -> dict:

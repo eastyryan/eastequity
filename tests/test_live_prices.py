@@ -12,6 +12,7 @@ from tools.live_prices import (
     freshness_report,
     live_age_minutes,
     overlay_live_prices,
+    pick_fresher,
 )
 
 FAILURES: list[str] = []
@@ -90,12 +91,29 @@ def test_freshness_report():
     check("missing as_of -> stale", missing["stale"] is True)
 
 
+def test_pick_fresher():
+    print("pick_fresher (local vs live-data branch):")
+    local = _blob(40, {"AMD": 500.0})
+    branch = _blob(5, {"AMD": 527.0})
+    check("newer branch wins", pick_fresher(local, branch) is branch)
+    check("newer local wins", pick_fresher(branch, local) is branch)  # branch still newer
+    check("branch wins when local empty",
+          pick_fresher({"prices": {}}, branch) is branch)
+    check("local wins when branch empty",
+          pick_fresher(local, {"prices": {}}) is local)
+    check("both empty -> empty dict", pick_fresher(None, None) == {})
+    # a snapshot without as_of loses to one that has a real timestamp
+    no_ts = {"prices": {"AMD": 9}}
+    check("timestamped beats untimestamped", pick_fresher(no_ts, branch) is branch)
+
+
 if __name__ == "__main__":
     test_age()
     test_overlay_fresh()
     test_overlay_stale_not_applied()
     test_overlay_guards()
     test_freshness_report()
+    test_pick_fresher()
     if FAILURES:
         print(f"\n{len(FAILURES)} failure(s): {FAILURES}")
         sys.exit(1)

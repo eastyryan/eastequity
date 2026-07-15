@@ -37,19 +37,22 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Fetch intraday holdings + watchlist quotes
         run: python -c "import json; from tools.live_prices import refresh_from_book; print('live prices:', json.dumps(refresh_from_book().get('prices', {}))[:400])"
-      - name: Commit live_prices.json (retry against concurrent pushes)
+      - name: Publish to the live-data branch (NEVER main)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          # Stage ONLY the live-price file. Never state/portfolio.json / KILL_SWITCH:
-          # those belong to the trade path and this checkout's copy is stale.
-          git add state/live_prices.json
-          git diff --cached --quiet && { echo "no price change"; exit 0; }
-          git commit -m "Live holdings/watchlist prices [vercel skip]"
-          # Rebase-and-retry: this commit touches only state/live_prices.json, so
-          # it replays cleanly over concurrent data/ (gather) and ledger pushes.
+          test -s state/live_prices.json || { echo "no live_prices.json produced"; exit 0; }
+          # Publish ONLY to the dedicated 'live-data' branch as a single-file
+          # orphan commit, force-updated each run. This NEVER pushes to main, so a
+          # high-frequency price refresh can no longer land mid-trade-run and make
+          # the trader abandon on a non-fast-forward (git reset --hard). The
+          # orchestrator reads state/live_prices.json from origin/live-data.
+          git checkout --orphan live-data
+          git reset          # unstage the whole tree the orphan inherited
+          git add -f state/live_prices.json
+          git commit -m "Live holdings/watchlist prices [skip ci][vercel skip]"
           for i in 1 2 3; do
-            git push origin main && exit 0
-            git pull --rebase origin main || exit 1
+            git push -f origin live-data && exit 0
+            sleep $((2 ** i))
           done
           exit 1
