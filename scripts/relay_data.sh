@@ -37,7 +37,7 @@ mkdir -p logs
   sync_with_origin || exit 1
 
   # X posting first: trade drafts may exist even when market data is unchanged.
-  .venv/bin/python -W ignore tools/x_poster.py >> logs/xposter.log 2>&1 || true
+  .venv/bin/python -W ignore -m tools.x_poster >> logs/xposter.log 2>&1 || true
 
   GATHER_LOG=$(mktemp)
   .venv/bin/python -W ignore orchestrator.py --gather-only 2>&1 | tee "$GATHER_LOG"

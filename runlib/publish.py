@@ -186,6 +186,88 @@ def redeploy_dashboard() -> None:
         print(f"  PUBLISH FAILED (site going stale): {e}")
 
 
+def _fill_facts(fills: list, context: dict) -> list[dict]:
+    """Compact per-fill facts for the memo: entry/exit, P&L, hold time, plan,
+    and whether the safety layer (not the brain) forced the exit."""
+    forced_by = {str(fx.get("ticker", "")).upper(): fx.get("reason", "forced exit")
+                 for fx in (context.get("forced_exits") or [])}
+    facts = []
+    for f in fills:
+        t = str(f.get("ticker", "")).upper()
+        fact = {"ticker": t, "action": f.get("action"),
+                "fill_price": f.get("fill_price"), "quantity": f.get("quantity")}
+        if str(f.get("action", "")).upper() != "BUY":
+            entry = f.get("avg_cost")
+            if entry:
+                fact["entry_price"] = entry
+                try:
+                    fact["pnl_pct"] = round((float(f["fill_price"]) - float(entry))
+                                            / float(entry) * 100, 1)
+                except Exception:
+                    pass
+            fact["realized_pnl_usd"] = f.get("realized_pnl_usd")
+            if f.get("position_opened_at"):
+                try:
+                    opened = datetime.fromisoformat(str(f["position_opened_at"]))
+                    fact["held_days"] = (datetime.now(timezone.utc) - opened).days
+                except Exception:
+                    pass
+            if f.get("sell_fraction") and float(f["sell_fraction"]) < 1.0:
+                fact["partial"] = f["sell_fraction"]
+            if t in forced_by:
+                fact["forced_exit_reason"] = forced_by[t]
+        plan = f.get("entry_plan") or {}
+        for src, key in ((f, "stop_loss"), (f, "target_price"), (plan, "stop_loss"),
+                         (plan, "target_price"), (plan, "holding_horizon_days")):
+            v = src.get(key) if isinstance(src, dict) else None
+            if v and key not in fact:
+                fact[key] = v
+        facts.append(fact)
+    return facts
+
+
+def _brain_trade_memo(fills: list, context: dict) -> str | None:
+    """Have the brain write the trade-day X memo at act time. Needed because
+    forced exits execute AFTER the brain wrote its response (it cannot narrate
+    an exit it never saw), and cloud brains sometimes omit x_post. Fail-soft:
+    returns None and the deterministic fallback below publishes instead."""
+    try:
+        from runlib.brain_io import run_claude
+        facts = {
+            "date_et": et_date(),
+            "fills": _fill_facts(fills, context),
+            "portfolio_equity_usd": (context.get("portfolio") or {}).get("total_equity_usd"),
+            "run_commentary": (context.get("latest_reasoning") or {}).get("commentary")
+                              or context.get("commentary"),
+        }
+        prompt = (
+            "Write the trade-day journal post for East Equity Agent's public X account, "
+            "first person, in the voice of a sharp fund manager writing a trade memo — "
+            "not a bot alert. Use ONLY the numbers in the FACTS JSON below; never invent "
+            "prices, percentages, or dates.\n\n"
+            "Structure, 3-6 short paragraphs: what was done and at what price (entry vs "
+            "exit, P&L, holding period); WHY — a forced_exit_reason means the coded "
+            "safety layer enforced a pre-committed stop, own the discipline; what the "
+            "lesson or read is; what the book looks like now and what you are watching. "
+            "Plain English, no jargon, no hedging boilerplate, no hashtags, no title "
+            "line.\n\n"
+            "FORMATTING (exact): every company mention is a bolded name followed by a "
+            "plain cashtag - **Dell** $DELL - every time it appears; no other markdown. "
+            "End with: \"This is a paper-trading experiment running in public, not "
+            "advice.\"\n\n"
+            f"FACTS:\n{json.dumps(json_safe(facts), indent=1, default=str)}\n\n"
+            "Return ONLY the post text."
+        )
+        memo = (run_claude(prompt) or "").strip()
+        # Sanity: long enough to be a memo, short enough for one long-form post.
+        if 200 <= len(memo) <= 20000:
+            return memo
+        print(f"  (brain memo rejected: {len(memo)} chars)")
+    except Exception as e:
+        print(f"  (brain trade memo unavailable: {str(e)[:120]})")
+    return None
+
+
 def draft_x_summary(fills: list, results: list, context: dict, run_id: str,
                     x_post: str | None = None) -> None:
     # Trade drafts get a _trade filename suffix so the poster prioritizes them.
@@ -195,12 +277,35 @@ def draft_x_summary(fills: list, results: list, context: dict, run_id: str,
         # The brain wrote its own post (fund-manager memo style). Publish verbatim.
         path.write_text(x_post.strip())
         return
-    # Fallback terse draft. Plain tickers, no $cashtags (X rejects multi-cashtag posts).
+    if fills:
+        memo = _brain_trade_memo(fills, context)
+        if memo:
+            path.write_text(memo)
+            return
+    # Deterministic fallback. Plain tickers, no $cashtags (X rejects multi-cashtag
+    # posts); carries entry/exit/P&L so even the fallback reads like a journal.
     lines = [f"East Equity Agent swing update ({datetime.now():%b %d})"]
     if fills:
-        for f in fills:
-            lines.append(f"{'Opened' if f['action'] == 'BUY' else 'Closed'} "
-                         f"{f['ticker']} @ {f['fill_price']}")
+        for fact in _fill_facts(fills, context):
+            if str(fact.get("action", "")).upper() == "BUY":
+                bits = [f"Opened {fact['ticker']} @ {fact['fill_price']}"]
+                if fact.get("stop_loss") and fact.get("target_price"):
+                    bits.append(f"(stop {fact['stop_loss']}, target {fact['target_price']})")
+                lines.append(" ".join(bits))
+            else:
+                bits = [f"Closed {fact['ticker']} @ {fact['fill_price']}"]
+                detail = []
+                if fact.get("entry_price"):
+                    detail.append(f"entry {fact['entry_price']}")
+                if fact.get("pnl_pct") is not None:
+                    detail.append(f"{fact['pnl_pct']:+.1f}%")
+                if fact.get("held_days") is not None:
+                    detail.append(f"{fact['held_days']}d hold")
+                if detail:
+                    bits.append("(" + ", ".join(detail) + ")")
+                if fact.get("forced_exit_reason"):
+                    bits.append(f"- safety layer: {fact['forced_exit_reason']}")
+                lines.append(" ".join(bits))
     else:
         lines.append("No new trades today — no setup met the bar.")
     eq = context["portfolio"].get("total_equity_usd")

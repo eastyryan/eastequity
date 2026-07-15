@@ -25,6 +25,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+# Script-style invocation (`python tools/x_poster.py`) puts tools/ on sys.path
+# instead of the repo root, which silently broke `from tools.chart_card import
+# ...` — every trade post lost its equity-card image (with_media: false).
+# Bootstrap the root so both invocation styles work; `-m tools.x_poster` is
+# still the documented CLI.
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 POST_LOG = ROOT / "journal" / "x_posts.jsonl"
 MAX_LEN = 280
 
