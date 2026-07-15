@@ -40,6 +40,7 @@ from runlib.depths import (
     DEPTHS,
     depth_allows_new_buys,
     depth_description,
+    earnings_deep_dive_session,
     resolve_depth,
     slot_depth_from_hhmm,
 )
@@ -66,6 +67,7 @@ from runlib.analytics import (
 )
 from runlib.context_gather import gather_context
 from runlib.brain_io import (
+    apply_live_prices,
     apply_safety_layer,
     ask_claude,
     llm_settings,
@@ -156,6 +158,27 @@ def main() -> int:
         print(f"HALT: {e}")
         return 2
 
+    # Earnings-driven full deep dive: when a universe name reports, escalate the
+    # 9am (overnight/pre-market) and 5:30pm (afternoon after-hours) slots to a
+    # full cycle and force the reporter(s) into deep research. Scheduled
+    # (--auto-depth) runs only; explicit --depth full/weekly and act-on runs
+    # (which read run_depth from a pre-gathered bundle) are untouched here.
+    earnings_trigger: dict | None = None
+    if args.auto_depth and run_depth not in ("full", "weekly_market"):
+        try:
+            session = earnings_deep_dive_session(f"{et_now():%H%M}", cfg)
+            if session:
+                from tools.earnings_calendar import earnings_reporters_for_slot
+                trig = earnings_reporters_for_slot(session, cfg=cfg)
+                if trig.get("reporters"):
+                    print(f"  • EARNINGS deep-dive ({session}): "
+                          f"{trig['reporters']} reported — escalating "
+                          f"'{run_depth}' → 'full'")
+                    run_depth = "full"
+                    earnings_trigger = trig
+        except Exception as e:
+            print(f"  (earnings deep-dive check skipped: {e})")
+
     if args.learning_mark:
         print(f"=== East Equity Agent learning-mark {run_id} ===")
         from tools.learning_mark import run_learning_mark
@@ -200,7 +223,8 @@ def main() -> int:
                     print(f"  (corporate-actions errors on gather: {len(ca['errors'])})")
             except Exception as e:
                 print(f"  (gather corporate actions skipped: {e})")
-        context = gather_context(cfg, light=args.light, depth=run_depth)
+        context = gather_context(cfg, light=args.light, depth=run_depth,
+                                 earnings_trigger=earnings_trigger)
         expects_full_scan = run_depth in ("full", "weekly_market")
         scan_empty = expects_full_scan and not context["universe_scan"].get("top_setups") \
             and context["universe_scan"].get("status") not in ("light", "holdings_watchlist")
@@ -319,6 +343,10 @@ def main() -> int:
             or not depth_allows_new_buys(run_depth)
         )
         run_safety = run_depth not in ("evening_review",) and not args.news_only
+        # Overlay the frequent holdings/watchlist live feed onto the bundle's
+        # daily-bar prices so an intraday stop breach is caught this run, not at
+        # the next sparse full gather.
+        apply_live_prices(context, cfg)
         bundle_prices = (context.get("universe_scan") or {}).get("prices") or {}
         if bundle_prices:
             try:
@@ -331,7 +359,9 @@ def main() -> int:
         response = Path(args.act_on).read_text()
     else:
         print(f"[1/5] Gathering context (depth={run_depth})...")
-        context = gather_context(cfg, light=args.light, depth=run_depth)
+        context = gather_context(cfg, light=args.light, depth=run_depth,
+                                 earnings_trigger=earnings_trigger)
+        apply_live_prices(context, cfg)
         if run_safety:
             forced_exit_fills = apply_safety_layer(context, cfg, run_id)
         print("[2/5] Waking the brain (Claude)...")

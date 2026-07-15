@@ -30,6 +30,8 @@ ALWAYS_KEYS = (
     "market_news", "data_quality", "stale_data_notice", "benchmark_close",
     "risk_halts", "forced_exits", "corporate_actions", "lessons_learned",
     "track_record",  # compact closed trades already truncated in gather
+    "earnings_deep_dive",     # why a full run was forced (earnings reporter)
+    "price_freshness_live",   # holdings/watchlist live-price staleness guard
 )
 
 # Focus research maps (trimmed to focus keys already)

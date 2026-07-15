@@ -1,0 +1,55 @@
+name: Live prices for holdings + watchlist
+
+# The heavy full-bundle gather (gather-data.yml) uses DAILY BARS and runs
+# sparsely (GitHub throttles scheduled crons), so between gathers a holding's
+# price is frozen and an intraday stop breach goes unseen. This lightweight
+# feed fetches INTRADAY quotes for JUST the holdings + published watchlist and
+# commits state/live_prices.json, which the orchestrator overlays onto the
+# bundle's prices before stops are enforced. It writes ONE dedicated file and
+# never touches state/portfolio.json (owned by the trade path), so it cannot
+# clobber the ledger. Note: GitHub coalesces */5 schedules under load — real
+# cadence is typically ~10-20 min, not 5.
+
+on:
+  schedule:
+    - cron: "*/5 13-21 * * 1-5"   # ~every 5 min, ~9:00am-5:00pm ET (approx; throttled)
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: live-prices
+  cancel-in-progress: false
+
+jobs:
+  quotes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Fetch intraday holdings + watchlist quotes
+        run: python -c "import json; from tools.live_prices import refresh_from_book; print('live prices:', json.dumps(refresh_from_book().get('prices', {}))[:400])"
+      - name: Commit live_prices.json (retry against concurrent pushes)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Stage ONLY the live-price file. Never state/portfolio.json / KILL_SWITCH:
+          # those belong to the trade path and this checkout's copy is stale.
+          git add state/live_prices.json
+          git diff --cached --quiet && { echo "no price change"; exit 0; }
+          git commit -m "Live holdings/watchlist prices [vercel skip]"
+          # Rebase-and-retry: this commit touches only state/live_prices.json, so
+          # it replays cleanly over concurrent data/ (gather) and ledger pushes.
+          for i in 1 2 3; do
+            git push origin main && exit 0
+            git pull --rebase origin main || exit 1
+          done
+          exit 1

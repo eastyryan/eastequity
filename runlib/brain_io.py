@@ -14,6 +14,62 @@ from tools.portfolio_state import get_portfolio_state
 from runlib.core import ROOT, et_date, et_now, json_safe
 from runlib.depths import depth_allows_new_buys
 
+def apply_live_prices(context: dict, cfg: dict) -> dict:
+    """Overlay the high-frequency holdings/watchlist live feed onto the bundle's
+    daily-bar prices BEFORE stops are enforced, and record staleness.
+
+    The heavy gather commits daily bars sparsely; state/live_prices.json is
+    refreshed every few minutes during market hours by a dedicated Action. Using
+    it here means an intraday stop breach (e.g. DELL through 408) is caught on
+    the next run instead of waiting for the next full gather. A snapshot older
+    than the freshness window is NOT overlaid (a broken feed must not overwrite a
+    good daily bar) but IS flagged so the run fails safe. Returns the freshness
+    report (also stored on context['price_freshness_live'])."""
+    try:
+        from tools.live_prices import (
+            load_live_prices, overlay_live_prices, freshness_report,
+        )
+    except Exception as e:
+        report = {"status": f"unavailable:{str(e)[:80]}", "stale": True, "applied": []}
+        context["price_freshness_live"] = report
+        return report
+
+    max_age = float(((cfg.get("schedule") or {}).get("live_prices") or {})
+                    .get("max_age_min", 30))
+    scan = context.setdefault("universe_scan", {})
+    prices = scan.get("prices") or {}
+    held = [str(p.get("ticker", "")).upper()
+            for p in (context.get("portfolio", {}).get("positions") or [])
+            if p.get("ticker")]
+
+    blob = load_live_prices()
+    # The feed is already scoped to holdings + watchlist by the live-prices
+    # Action, so overlay every name it carries (tickers=None). The bundle has no
+    # brain 'watchlist' key yet at trade time, so filtering here would drop them.
+    merged, applied = overlay_live_prices(prices, blob, tickers=None,
+                                          max_age_min=max_age)
+    if applied:
+        scan["prices"] = merged
+        print(f"  • live-price overlay applied to {applied} "
+              f"(age {freshness_report(blob, applied, max_age_min=max_age).get('age_min')}m)")
+        # Re-mark so market values + the safety layer use the freshest price.
+        if cfg.get("mode", {}).get("trading_mode") != "dry_run":
+            try:
+                simulated_broker.mark_to_market(merged)
+                context["portfolio"] = get_portfolio_state()
+            except Exception as e:
+                print(f"  (live-price re-mark failed: {e})")
+
+    report = freshness_report(blob, applied, max_age_min=max_age)
+    # Stops can only reflect a holding we actually have a fresh price for.
+    report["stale_holdings"] = [t for t in held if t not in applied]
+    if report.get("stale") or report["stale_holdings"]:
+        print(f"  ⚠ live prices stale (age {report.get('age_min')}m); "
+              f"stop enforcement may lag for {report['stale_holdings'] or 'holdings'}")
+    context["price_freshness_live"] = report
+    return report
+
+
 def apply_safety_layer(context: dict, cfg: dict, run_id: str) -> list[dict]:
     """Dividends/splits applied, then stops/horizons enforced - the brain can
     never rationalize holding through its own written plan. Returns forced fills."""
