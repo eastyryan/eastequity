@@ -1,5 +1,5 @@
 {
-  "run_date": "2026-07-15T00:58:03.502068+00:00",
+  "run_date": "2026-07-15T01:58:01.578420+00:00",
   "as_of_et": "2026-07-14",
   "digest": {
     "note": "READ FIRST: per focus name, the key statement numbers (each with its quarter-end date - cite them WITH the date), leverage/cash-flow reads, next earnings (when fresh statements arrive), and today's fast-moving signals. Full detail lives in the sections below; dig there before proposing, but this card is the always-current financial identity.",
@@ -399,19 +399,19 @@
   "market_events": {
     "note": "commodities via yfinance (CL=F/USO, GC=F/GLD, ^VIX/VIXY, DX-Y.NYB/UUP); flags from keyword classification of market_news headlines \u2014 heuristic tags, not a risk model",
     "status": "ok",
-    "as_of": "2026-07-15T00:50:07.704121+00:00",
+    "as_of": "2026-07-15T01:50:08.218498+00:00",
     "commodities": {
       "oil": {
         "symbol": "CL=F",
-        "last": 80.54,
-        "pct_1d": 3.07,
-        "pct_5d": 14.34
+        "last": 80.0,
+        "pct_1d": 2.38,
+        "pct_5d": 13.57
       },
       "gold": {
         "symbol": "GC=F",
-        "last": 4060.5,
-        "pct_1d": 1.59,
-        "pct_5d": -2.05
+        "last": 4051.8999,
+        "pct_1d": 1.37,
+        "pct_5d": -2.25
       },
       "vix": {
         "symbol": "^VIX",
@@ -421,23 +421,22 @@
       },
       "dxy": {
         "symbol": "DX-Y.NYB",
-        "last": 100.873,
-        "pct_1d": -0.4,
-        "pct_5d": -0.26
+        "last": 100.801,
+        "pct_1d": -0.47,
+        "pct_5d": -0.34
       }
     },
     "flags": {
       "counts": {
         "geopolitical": 2,
-        "inflation_rates": 1,
+        "inflation_rates": 0,
         "financial_stress": 0,
         "sector_macro": 0
       },
       "active": [
-        "geopolitical",
-        "inflation_rates"
+        "geopolitical"
       ],
-      "n_flagged": 3
+      "n_flagged": 2
     },
     "flagged_headlines": [
       {
@@ -445,21 +444,14 @@
         "tags": [
           "geopolitical"
         ],
-        "age_hours": 0.4
+        "age_hours": 1.4
       },
       {
         "title": "Brace for $4 gas again: How U.S.-Iran tensions are threatening to end the price break at the pump",
         "tags": [
           "geopolitical"
         ],
-        "age_hours": 0.4
-      },
-      {
-        "title": "Here\u2019s the inflation breakdown for June 2026 \u2014 in one chart",
-        "tags": [
-          "inflation_rates"
-        ],
-        "age_hours": 3.8
+        "age_hours": 1.4
       }
     ],
     "headline_source": "market_news"
@@ -1182,9 +1174,11 @@
       }
     },
     "exit_lessons": {
-      "note": "Recent position closes (forced or discretionary). system_stub rows were written at fill time without brain grading \u2014 use them as raw evidence: days held, plan vs fill, forced reason, realized P&L. When you exit this run, the system will append a new stub; grade past ungraded closes in commentary when a pattern is clear.",
+      "note": "Recent position closes. Graded rows carry process_win/fail tags and lessons. BINDING lessons are process failures you must not repeat without an explicit exception. System grades deterministically at exit; deepen in weekly self-review when patterns emerge.",
       "recent": [],
-      "ungraded_count": 0
+      "ungraded_count": 0,
+      "binding_lessons": [],
+      "n_binding": 0
     },
     "demand_driver_map_note": "Primary economic bet per ticker (not GICS). Use these labels in proposal.demand_driver. Theme cap is separate from sector cap.",
     "demand_driver_map": {
@@ -1385,9 +1379,9 @@
     "theme_concentration_cap_pct": 0.35,
     "price_freshness": {
       "bundle_as_of_et": "2026-07-14",
-      "bundle_run_utc": "2026-07-15T00:58:03.772010+00:00",
+      "bundle_run_utc": "2026-07-15T01:58:01.823832+00:00",
       "note": "Prefer universe_scan.prices_meta[T].price_as_of (bar session date) over bundle age alone. On catalyst days, verify live before chasing a trigger on a lagging close.",
-      "scan_fetched_at_utc": "2026-07-15T00:50:50.274318+00:00",
+      "scan_fetched_at_utc": "2026-07-15T01:50:51.657235+00:00",
       "prices_meta_sample": {
         "PANW": {
           "last_close": 352.89,
@@ -1458,7 +1452,36 @@
       "hold",
       "buy"
     ],
-    "full_run_no_trade_rule": "On full depth with empty proposals, include rejected_ideas: [{ticker, reason}, ...] with at least 2 scan ideas you passed on."
+    "full_run_no_trade_rule": "On full depth with empty proposals, include rejected_ideas: [{ticker, reason}, ...] with at least 2 scan ideas you passed on.",
+    "shadow_learning": {
+      "note": "SHADOW BOOK: ideas you skipped or watched but did not buy, marked forward. regret_miss = would have hit +10% target before stop \u2014 learn from false negatives. good_skip = would have hit stop \u2014 process worked. Warming up (0/8 closed shadows) \u2014 anecdotal only.",
+      "binding": false,
+      "n_open": 0,
+      "n_closed": 0,
+      "regret_misses": [],
+      "good_skips": [],
+      "open_running_best": [],
+      "stats": {
+        "regret_rate_pct": null,
+        "good_skip_rate_pct": null
+      }
+    },
+    "adopted_lessons": {
+      "note": "ADOPTED LESSONS from the weekly pipeline (improvement notes \u2192 durable text). Treat as standing process commitments until a later review supersedes them. hard_pending items need owner/code \u2014 do not invent validator changes yourself.",
+      "lessons": [],
+      "hard_pending": [],
+      "n_adopted": 0
+    },
+    "calibration_status": {
+      "note": "Learning protocol phase from closed-trade sample size. binding = validator enforces confidence caps / losing-bucket exceptions. caution = shade confidence in CLAUDE only. anecdote = note only.",
+      "phase": "anecdote",
+      "total_closed_trades": 0,
+      "binding_at": 15,
+      "high_conf_inflated": false,
+      "high_conf_detail": "ok",
+      "losing_sectors": [],
+      "confidence_cap_when_inflated": 0.69
+    }
   },
   "stack_cards": {
     "note": "Supply-chain differential cards for THIS run's focus set. Answer differential_question in thesis when proposing a BUY.",
@@ -1480,7 +1503,7 @@
         ],
         "differential_question": "Is AI server growth incremental profit or low-margin GPU pass-through?",
         "customer_concentration": "medium-high",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "ticker_card"
       },
       "HPE": {
@@ -1500,7 +1523,7 @@
         ],
         "differential_question": "Juniper/networking mix vs pure AI server cyclicality?",
         "customer_concentration": "medium",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "ticker_card"
       },
       "PANW": {
@@ -1517,7 +1540,7 @@
           "point products"
         ],
         "differential_question": "Is growth new logo or expansion in existing estates?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "driver_template"
       },
       "RBRK": {
@@ -1534,7 +1557,7 @@
           "point products"
         ],
         "differential_question": "Is growth new logo or expansion in existing estates?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "driver_template"
       },
       "AMD": {
@@ -1554,7 +1577,7 @@
         ],
         "differential_question": "Is MI-series share real deployment or design-win headlines?",
         "customer_concentration": "high",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "ticker_card"
       },
       "CRWD": {
@@ -1571,7 +1594,7 @@
           "point products"
         ],
         "differential_question": "Is growth new logo or expansion in existing estates?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "driver_template"
       },
       "HOOD": {
@@ -1589,7 +1612,7 @@
           "other fintech rails"
         ],
         "differential_question": "Is the story rates, volumes, or take-rate expansion?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "driver_template"
       },
       "AXON": {
@@ -1604,7 +1627,7 @@
           "same-sector peers"
         ],
         "differential_question": "What is the mispriced mechanism vs consensus this cycle?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "driver_template"
       },
       "DASH": {
@@ -1619,7 +1642,7 @@
           "same-sector peers"
         ],
         "differential_question": "What is the mispriced mechanism vs consensus this cycle?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "driver_template"
       },
       "SMR": {
@@ -1638,7 +1661,7 @@
           "gas peaker vs nuclear narratives"
         ],
         "differential_question": "Is the bottleneck generation, interconnection, or equipment lead times?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "driver_template"
       },
       "BSX": {
@@ -1653,7 +1676,7 @@
           "same-sector peers"
         ],
         "differential_question": "What is the mispriced mechanism vs consensus this cycle?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "driver_template"
       },
       "NET": {
@@ -1670,7 +1693,7 @@
           "hyperscaler native tools"
         ],
         "differential_question": "Is AI a real attach or a multiple re-rate story?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "driver_template"
       },
       "OKTA": {
@@ -1687,7 +1710,7 @@
           "point products"
         ],
         "differential_question": "Is growth new logo or expansion in existing estates?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "driver_template"
       },
       "FANG": {
@@ -1702,7 +1725,7 @@
           "same-sector peers"
         ],
         "differential_question": "What is the mispriced mechanism vs consensus this cycle?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "driver_template"
       },
       "TDG": {
@@ -1717,7 +1740,7 @@
           "same-sector peers"
         ],
         "differential_question": "What is the mispriced mechanism vs consensus this cycle?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "driver_template"
       },
       "WMB": {
@@ -1732,7 +1755,7 @@
           "same-sector peers"
         ],
         "differential_question": "What is the mispriced mechanism vs consensus this cycle?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "driver_template"
       },
       "S": {
@@ -1749,7 +1772,7 @@
           "point products"
         ],
         "differential_question": "Is growth new logo or expansion in existing estates?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "driver_template"
       },
       "IBM": {
@@ -1766,8 +1789,1313 @@
           "hyperscaler native tools"
         ],
         "differential_question": "Is AI a real attach or a multiple re-rate story?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers.",
+        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "driver_template"
+      }
+    },
+    "n": 18
+  },
+  "financial_checklists": {
+    "note": "Per-focus-name financial-line checklists by business model. Use the weight line: different models, different scoreboards.",
+    "by_ticker": {
+      "DELL": {
+        "model_type": "capex_growth_scaleup",
+        "label": "Capex-growth / AI capacity scale-up (neocloud, infra buildout)",
+        "weight": "Revenue growth, estimate *direction*, liquidity, utilization narrative \u2014 NOT near-term FCF vs SaaS peers.",
+        "lines": [
+          {
+            "line": "revenue_growth_yoy_and_fwd",
+            "why": "Scale-ups are judged on whether demand is real and accelerating.",
+            "good_looks_like": "High / sustained revenue growth; fwd growth still elevated; revisions stable or up.",
+            "red_flag": "Growth decelerating hard while the multiple still prices perfection; large negative EPS revisions."
+          },
+          {
+            "line": "cash_and_liquidity",
+            "why": "Negative FCF is normal only if the balance sheet can fund the build.",
+            "good_looks_like": "Large cash, manageable net debt, access to capital, current ratio healthy.",
+            "red_flag": "Cash burn path that exhausts runway without clear funding; covenant / refinance stress."
+          },
+          {
+            "line": "capex_and_fcf_path",
+            "why": "FCF will look 'bad' during build \u2014 ask if capex is productive capacity.",
+            "good_looks_like": "Capex tied to capacity customers will rent; management frames path to utilization.",
+            "red_flag": "Capex without demand visibility; FCF worsening while growth also stalls."
+          },
+          {
+            "line": "competitive_position",
+            "why": "Hyperscalers and custom silicon can reprice the entire model.",
+            "good_looks_like": "Sticky customers, differentiated capacity, pricing not in free-fall.",
+            "red_flag": "Price wars, TPU/ASIC displacement narrative with no rebuttal."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Street estimates are the near-term scoreboard for a 3\u201390d swing.",
+            "good_looks_like": "EPS/revenue revisions flat to up over 30d.",
+            "red_flag": "Sharp downward revisions into a rich multiple."
+          }
+        ],
+        "ticker": "DELL",
+        "demand_driver": "hyperscaler_server_capex",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "HPE": {
+        "model_type": "capex_growth_scaleup",
+        "label": "Capex-growth / AI capacity scale-up (neocloud, infra buildout)",
+        "weight": "Revenue growth, estimate *direction*, liquidity, utilization narrative \u2014 NOT near-term FCF vs SaaS peers.",
+        "lines": [
+          {
+            "line": "revenue_growth_yoy_and_fwd",
+            "why": "Scale-ups are judged on whether demand is real and accelerating.",
+            "good_looks_like": "High / sustained revenue growth; fwd growth still elevated; revisions stable or up.",
+            "red_flag": "Growth decelerating hard while the multiple still prices perfection; large negative EPS revisions."
+          },
+          {
+            "line": "cash_and_liquidity",
+            "why": "Negative FCF is normal only if the balance sheet can fund the build.",
+            "good_looks_like": "Large cash, manageable net debt, access to capital, current ratio healthy.",
+            "red_flag": "Cash burn path that exhausts runway without clear funding; covenant / refinance stress."
+          },
+          {
+            "line": "capex_and_fcf_path",
+            "why": "FCF will look 'bad' during build \u2014 ask if capex is productive capacity.",
+            "good_looks_like": "Capex tied to capacity customers will rent; management frames path to utilization.",
+            "red_flag": "Capex without demand visibility; FCF worsening while growth also stalls."
+          },
+          {
+            "line": "competitive_position",
+            "why": "Hyperscalers and custom silicon can reprice the entire model.",
+            "good_looks_like": "Sticky customers, differentiated capacity, pricing not in free-fall.",
+            "red_flag": "Price wars, TPU/ASIC displacement narrative with no rebuttal."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Street estimates are the near-term scoreboard for a 3\u201390d swing.",
+            "good_looks_like": "EPS/revenue revisions flat to up over 30d.",
+            "red_flag": "Sharp downward revisions into a rich multiple."
+          }
+        ],
+        "ticker": "HPE",
+        "demand_driver": "hyperscaler_server_capex",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "PANW": {
+        "model_type": "software_saas",
+        "label": "Software / SaaS / platforms (subscription, high incremental margin)",
+        "weight": "Growth + retention + FCF conversion + rule-of-40 style quality.",
+        "lines": [
+          {
+            "line": "revenue_growth_and_nrr",
+            "why": "SaaS value is durable growth and expansion.",
+            "good_looks_like": "Solid growth; net retention >100% if disclosed; guide intact.",
+            "red_flag": "Growth cliff, guide cut, or AI-at-risk seat compression."
+          },
+          {
+            "line": "free_cash_flow_and_margins",
+            "why": "Mature software should convert earnings to cash.",
+            "good_looks_like": "Positive/rising FCF margins; gross margin stable/high.",
+            "red_flag": "FCF negative without hyper growth; gross margin collapse."
+          },
+          {
+            "line": "sbc_and_dilution",
+            "why": "SBC can fake profitability.",
+            "good_looks_like": "SBC as % revenue contained; buybacks offset dilution.",
+            "red_flag": "Huge SBC with no FCF; endless dilution."
+          },
+          {
+            "line": "rule_of_40_style",
+            "why": "Growth + FCF margin is the quality screen.",
+            "good_looks_like": "Growth% + FCF margin% competitive for the subsector.",
+            "red_flag": "Neither growth nor FCF working."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Multiple compression follows estimate cuts.",
+            "good_looks_like": "Revisions up or stable.",
+            "red_flag": "Persistent downward revisions at a rich multiple."
+          }
+        ],
+        "ticker": "PANW",
+        "demand_driver": "cybersecurity",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "RBRK": {
+        "model_type": "software_saas",
+        "label": "Software / SaaS / platforms (subscription, high incremental margin)",
+        "weight": "Growth + retention + FCF conversion + rule-of-40 style quality.",
+        "lines": [
+          {
+            "line": "revenue_growth_and_nrr",
+            "why": "SaaS value is durable growth and expansion.",
+            "good_looks_like": "Solid growth; net retention >100% if disclosed; guide intact.",
+            "red_flag": "Growth cliff, guide cut, or AI-at-risk seat compression."
+          },
+          {
+            "line": "free_cash_flow_and_margins",
+            "why": "Mature software should convert earnings to cash.",
+            "good_looks_like": "Positive/rising FCF margins; gross margin stable/high.",
+            "red_flag": "FCF negative without hyper growth; gross margin collapse."
+          },
+          {
+            "line": "sbc_and_dilution",
+            "why": "SBC can fake profitability.",
+            "good_looks_like": "SBC as % revenue contained; buybacks offset dilution.",
+            "red_flag": "Huge SBC with no FCF; endless dilution."
+          },
+          {
+            "line": "rule_of_40_style",
+            "why": "Growth + FCF margin is the quality screen.",
+            "good_looks_like": "Growth% + FCF margin% competitive for the subsector.",
+            "red_flag": "Neither growth nor FCF working."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Multiple compression follows estimate cuts.",
+            "good_looks_like": "Revisions up or stable.",
+            "red_flag": "Persistent downward revisions at a rich multiple."
+          }
+        ],
+        "ticker": "RBRK",
+        "demand_driver": "cybersecurity",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "AMD": {
+        "model_type": "semi_cyclical",
+        "label": "Semiconductor / hardware cyclical (memory, foundry-sensitive, equipment)",
+        "weight": "Cycle position and inventory > headline P/E. Low fwd multiples at peak earnings are often traps.",
+        "lines": [
+          {
+            "line": "cycle_position",
+            "why": "Earnings are mean-reverting; multiples look cheapest at the top.",
+            "good_looks_like": "Early/mid cycle: rising estimates, improving inventory, demand visibility (e.g. HBM).",
+            "red_flag": "Record margins/EPS with falling revisions \u2014 classic late cycle."
+          },
+          {
+            "line": "inventory_and_supply",
+            "why": "Inventory build is the tell for semis.",
+            "good_looks_like": "Inventory stable or declining vs sales; supply discipline.",
+            "red_flag": "Inventory_building flag / channel fill while prices weaken."
+          },
+          {
+            "line": "fwd_pe_vs_growth",
+            "why": "Cheap fwd P/E on peak EPS is not value.",
+            "good_looks_like": "Multiple reasonable vs mid-cycle earnings power, not peak.",
+            "red_flag": "Thesis is only 'cheapest in group' without cycle underwriting."
+          },
+          {
+            "line": "customer_concentration",
+            "why": "GPU/hyperscaler buyers dominate some nodes.",
+            "good_looks_like": "Diversified end demand or multi-year capacity contracts.",
+            "red_flag": "One customer can cancel the cycle."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Revisions lead the cycle more than price alone.",
+            "good_looks_like": "Revisions up or stabilizing after a washout.",
+            "red_flag": "Revisions still rolling over into a bounce."
+          }
+        ],
+        "ticker": "AMD",
+        "demand_driver": "ai_compute_gpu",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "CRWD": {
+        "model_type": "software_saas",
+        "label": "Software / SaaS / platforms (subscription, high incremental margin)",
+        "weight": "Growth + retention + FCF conversion + rule-of-40 style quality.",
+        "lines": [
+          {
+            "line": "revenue_growth_and_nrr",
+            "why": "SaaS value is durable growth and expansion.",
+            "good_looks_like": "Solid growth; net retention >100% if disclosed; guide intact.",
+            "red_flag": "Growth cliff, guide cut, or AI-at-risk seat compression."
+          },
+          {
+            "line": "free_cash_flow_and_margins",
+            "why": "Mature software should convert earnings to cash.",
+            "good_looks_like": "Positive/rising FCF margins; gross margin stable/high.",
+            "red_flag": "FCF negative without hyper growth; gross margin collapse."
+          },
+          {
+            "line": "sbc_and_dilution",
+            "why": "SBC can fake profitability.",
+            "good_looks_like": "SBC as % revenue contained; buybacks offset dilution.",
+            "red_flag": "Huge SBC with no FCF; endless dilution."
+          },
+          {
+            "line": "rule_of_40_style",
+            "why": "Growth + FCF margin is the quality screen.",
+            "good_looks_like": "Growth% + FCF margin% competitive for the subsector.",
+            "red_flag": "Neither growth nor FCF working."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Multiple compression follows estimate cuts.",
+            "good_looks_like": "Revisions up or stable.",
+            "red_flag": "Persistent downward revisions at a rich multiple."
+          }
+        ],
+        "ticker": "CRWD",
+        "demand_driver": "cybersecurity",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "HOOD": {
+        "model_type": "financials",
+        "label": "Banks / brokers / insurers / diversified financials",
+        "weight": "Rates, credit, capital, NII/NIM \u2014 not SaaS FCF heuristics.",
+        "lines": [
+          {
+            "line": "net_interest_income_or_spread",
+            "why": "Core earnings engine for banks.",
+            "good_looks_like": "NII/NIM stable or improving; deposit beta controlled.",
+            "red_flag": "NII collapsing with no fee offset."
+          },
+          {
+            "line": "credit_quality",
+            "why": "Credit kills banks in cycles.",
+            "good_looks_like": "Stable NCOs, reserves adequate, no surprise charge-offs.",
+            "red_flag": "Rapidly rising delinquencies / reserve builds."
+          },
+          {
+            "line": "capital_and_liquidity",
+            "why": "Regulatory capital constrains returns and survival.",
+            "good_looks_like": "CET1 / capital ratios comfortable vs requirements.",
+            "red_flag": "Capital shortfall risk, deposit flight narrative."
+          },
+          {
+            "line": "valuation_vs_book_or_earnings",
+            "why": "P/B and ROE matter more than P/S.",
+            "good_looks_like": "Discount to history with stable ROE.",
+            "red_flag": "Cheap for a reason (credit)."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Revisions embed rate and credit views.",
+            "good_looks_like": "Revisions stabilizing.",
+            "red_flag": "Street still cutting hard."
+          }
+        ],
+        "ticker": "HOOD",
+        "demand_driver": "fintech",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "AXON": {
+        "model_type": "mature_compounder",
+        "label": "Quality compounder / broad-market leader (default quality screen)",
+        "weight": "FCF, ROIC-style quality, growth durability, balance sheet, valuation vs history.",
+        "lines": [
+          {
+            "line": "free_cash_flow",
+            "why": "Compounders buy back stock and fund growth from ops.",
+            "good_looks_like": "Consistent positive FCF; FCF margin healthy.",
+            "red_flag": "FCF collapse or chronic miss."
+          },
+          {
+            "line": "revenue_and_earnings_growth",
+            "why": "Need growth to support the multiple.",
+            "good_looks_like": "Steady mid-to-high single digit or better with stability.",
+            "red_flag": "Stagnation at a growth multiple."
+          },
+          {
+            "line": "balance_sheet",
+            "why": "Net debt / leverage must be sane.",
+            "good_looks_like": "Net cash or modest net debt / EBITDA.",
+            "red_flag": "Leverage spike without earnings power."
+          },
+          {
+            "line": "margins",
+            "why": "Moat shows up in margins.",
+            "good_looks_like": "Stable/expanding.",
+            "red_flag": "Structural margin decay."
+          },
+          {
+            "line": "valuation_vs_history_and_growth",
+            "why": "Quality is not always cheap.",
+            "good_looks_like": "Multiple reasonable vs growth and history.",
+            "red_flag": "Top-decile multiple with slowing growth."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Revisions drive near-term swings.",
+            "good_looks_like": "Flat to up.",
+            "red_flag": "Cuts into elevated expectations."
+          }
+        ],
+        "ticker": "AXON",
+        "demand_driver": "broad_market",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "DASH": {
+        "model_type": "mega_platform",
+        "label": "Mega-cap platforms (ads/cloud/devices)",
+        "weight": "Cloud growth, ad cycle, capex ROI on AI spend, FCF still matters at scale.",
+        "lines": [
+          {
+            "line": "segment_growth",
+            "why": "Cloud vs ads vs devices drive the multiple.",
+            "good_looks_like": "Cloud accelerating or ads reaccelerating with spend discipline.",
+            "red_flag": "Cloud deceleration + AI capex spike with no ROI narrative."
+          },
+          {
+            "line": "free_cash_flow",
+            "why": "Scale platforms are cash machines if healthy.",
+            "good_looks_like": "Large, growing FCF; buybacks funded by ops.",
+            "red_flag": "FCF collapse from capex without growth offset."
+          },
+          {
+            "line": "ai_capex_roi",
+            "why": "Market questions whether AI spend earns returns.",
+            "good_looks_like": "AI revenue or cloud growth tracks spend.",
+            "red_flag": "Spend up, growth flat, multiple down."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Street sets the near-term bar.",
+            "good_looks_like": "Stable/up revisions.",
+            "red_flag": "Cuts into event risk."
+          }
+        ],
+        "ticker": "DASH",
+        "demand_driver": "consumer_platforms",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "SMR": {
+        "model_type": "energy_power",
+        "label": "Energy / power generation / equipment",
+        "weight": "Commodity or load outlook, spark spreads, backlog, balance sheet.",
+        "lines": [
+          {
+            "line": "commodity_or_load_outlook",
+            "why": "Cash flows track power prices / utilization / data-center load.",
+            "good_looks_like": "Supportive curves or contracted offtake.",
+            "red_flag": "Collapsing prices with high fixed costs."
+          },
+          {
+            "line": "backlog_and_orders",
+            "why": "Equipment names live on orders.",
+            "good_looks_like": "Backlog multi-year; book-to-bill >1.",
+            "red_flag": "Order cliff."
+          },
+          {
+            "line": "leverage_and_fcf",
+            "why": "Cyclical cash flows + debt is dangerous.",
+            "good_looks_like": "Deleveraging, positive FCF at mid-cycle.",
+            "red_flag": "Peak leverage at peak prices."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Street embeds commodity views.",
+            "good_looks_like": "Revisions stable/up.",
+            "red_flag": "Cuts with no cycle bottom signal."
+          }
+        ],
+        "ticker": "SMR",
+        "demand_driver": "datacenter_power",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "BSX": {
+        "model_type": "healthcare",
+        "label": "Healthcare (devices, services, large-cap biopharma)",
+        "weight": "Growth durability, reimbursement, pipeline/litigation, margins, FCF.",
+        "lines": [
+          {
+            "line": "organic_growth",
+            "why": "Volume/price/mix drives devices and services.",
+            "good_looks_like": "Steady organic growth; procedure volumes healthy.",
+            "red_flag": "Growth stall + multiple still rich."
+          },
+          {
+            "line": "margins_and_fcf",
+            "why": "Quality healthcare compounds cash.",
+            "good_looks_like": "Stable/expanding margins; solid FCF.",
+            "red_flag": "Margin compression without growth offset."
+          },
+          {
+            "line": "pipeline_or_reimbursement",
+            "why": "Binary risk differs by subsector.",
+            "good_looks_like": "Clear catalysts with manageable binary risk for swing horizon.",
+            "red_flag": "Major patent cliff or adverse CMS decision inside the hold."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Revisions matter.",
+            "good_looks_like": "Stable/up.",
+            "red_flag": "Persistent cuts."
+          }
+        ],
+        "ticker": "BSX",
+        "demand_driver": "healthcare",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "NET": {
+        "model_type": "software_saas",
+        "label": "Software / SaaS / platforms (subscription, high incremental margin)",
+        "weight": "Growth + retention + FCF conversion + rule-of-40 style quality.",
+        "lines": [
+          {
+            "line": "revenue_growth_and_nrr",
+            "why": "SaaS value is durable growth and expansion.",
+            "good_looks_like": "Solid growth; net retention >100% if disclosed; guide intact.",
+            "red_flag": "Growth cliff, guide cut, or AI-at-risk seat compression."
+          },
+          {
+            "line": "free_cash_flow_and_margins",
+            "why": "Mature software should convert earnings to cash.",
+            "good_looks_like": "Positive/rising FCF margins; gross margin stable/high.",
+            "red_flag": "FCF negative without hyper growth; gross margin collapse."
+          },
+          {
+            "line": "sbc_and_dilution",
+            "why": "SBC can fake profitability.",
+            "good_looks_like": "SBC as % revenue contained; buybacks offset dilution.",
+            "red_flag": "Huge SBC with no FCF; endless dilution."
+          },
+          {
+            "line": "rule_of_40_style",
+            "why": "Growth + FCF margin is the quality screen.",
+            "good_looks_like": "Growth% + FCF margin% competitive for the subsector.",
+            "red_flag": "Neither growth nor FCF working."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Multiple compression follows estimate cuts.",
+            "good_looks_like": "Revisions up or stable.",
+            "red_flag": "Persistent downward revisions at a rich multiple."
+          }
+        ],
+        "ticker": "NET",
+        "demand_driver": "software_platforms",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "OKTA": {
+        "model_type": "software_saas",
+        "label": "Software / SaaS / platforms (subscription, high incremental margin)",
+        "weight": "Growth + retention + FCF conversion + rule-of-40 style quality.",
+        "lines": [
+          {
+            "line": "revenue_growth_and_nrr",
+            "why": "SaaS value is durable growth and expansion.",
+            "good_looks_like": "Solid growth; net retention >100% if disclosed; guide intact.",
+            "red_flag": "Growth cliff, guide cut, or AI-at-risk seat compression."
+          },
+          {
+            "line": "free_cash_flow_and_margins",
+            "why": "Mature software should convert earnings to cash.",
+            "good_looks_like": "Positive/rising FCF margins; gross margin stable/high.",
+            "red_flag": "FCF negative without hyper growth; gross margin collapse."
+          },
+          {
+            "line": "sbc_and_dilution",
+            "why": "SBC can fake profitability.",
+            "good_looks_like": "SBC as % revenue contained; buybacks offset dilution.",
+            "red_flag": "Huge SBC with no FCF; endless dilution."
+          },
+          {
+            "line": "rule_of_40_style",
+            "why": "Growth + FCF margin is the quality screen.",
+            "good_looks_like": "Growth% + FCF margin% competitive for the subsector.",
+            "red_flag": "Neither growth nor FCF working."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Multiple compression follows estimate cuts.",
+            "good_looks_like": "Revisions up or stable.",
+            "red_flag": "Persistent downward revisions at a rich multiple."
+          }
+        ],
+        "ticker": "OKTA",
+        "demand_driver": "cybersecurity",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "FANG": {
+        "model_type": "energy_power",
+        "label": "Energy / power generation / equipment",
+        "weight": "Commodity or load outlook, spark spreads, backlog, balance sheet.",
+        "lines": [
+          {
+            "line": "commodity_or_load_outlook",
+            "why": "Cash flows track power prices / utilization / data-center load.",
+            "good_looks_like": "Supportive curves or contracted offtake.",
+            "red_flag": "Collapsing prices with high fixed costs."
+          },
+          {
+            "line": "backlog_and_orders",
+            "why": "Equipment names live on orders.",
+            "good_looks_like": "Backlog multi-year; book-to-bill >1.",
+            "red_flag": "Order cliff."
+          },
+          {
+            "line": "leverage_and_fcf",
+            "why": "Cyclical cash flows + debt is dangerous.",
+            "good_looks_like": "Deleveraging, positive FCF at mid-cycle.",
+            "red_flag": "Peak leverage at peak prices."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Street embeds commodity views.",
+            "good_looks_like": "Revisions stable/up.",
+            "red_flag": "Cuts with no cycle bottom signal."
+          }
+        ],
+        "ticker": "FANG",
+        "demand_driver": "energy",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "TDG": {
+        "model_type": "industrial_cyclical",
+        "label": "Industrials / consumer cyclical / materials",
+        "weight": "Orders, backlog, margins, inventory, cycle \u2014 plus FCF at mid-cycle.",
+        "lines": [
+          {
+            "line": "orders_and_backlog",
+            "why": "Leading indicators for industrials.",
+            "good_looks_like": "Book-to-bill healthy; backlog growing.",
+            "red_flag": "Order cancels; backlog burn without replacement."
+          },
+          {
+            "line": "margins",
+            "why": "Operating leverage cuts both ways.",
+            "good_looks_like": "Margins stable or expanding with volume.",
+            "red_flag": "Peak margins + slowing volumes."
+          },
+          {
+            "line": "free_cash_flow",
+            "why": "Quality cyclicals still throw cash mid-cycle.",
+            "good_looks_like": "Positive FCF, working capital controlled.",
+            "red_flag": "Cash tied in inventory at the top."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Revisions track the cycle.",
+            "good_looks_like": "Bottoming or rising.",
+            "red_flag": "Still rolling over into a bounce."
+          }
+        ],
+        "ticker": "TDG",
+        "demand_driver": "consumer_industrial",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "WMB": {
+        "model_type": "energy_power",
+        "label": "Energy / power generation / equipment",
+        "weight": "Commodity or load outlook, spark spreads, backlog, balance sheet.",
+        "lines": [
+          {
+            "line": "commodity_or_load_outlook",
+            "why": "Cash flows track power prices / utilization / data-center load.",
+            "good_looks_like": "Supportive curves or contracted offtake.",
+            "red_flag": "Collapsing prices with high fixed costs."
+          },
+          {
+            "line": "backlog_and_orders",
+            "why": "Equipment names live on orders.",
+            "good_looks_like": "Backlog multi-year; book-to-bill >1.",
+            "red_flag": "Order cliff."
+          },
+          {
+            "line": "leverage_and_fcf",
+            "why": "Cyclical cash flows + debt is dangerous.",
+            "good_looks_like": "Deleveraging, positive FCF at mid-cycle.",
+            "red_flag": "Peak leverage at peak prices."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Street embeds commodity views.",
+            "good_looks_like": "Revisions stable/up.",
+            "red_flag": "Cuts with no cycle bottom signal."
+          }
+        ],
+        "ticker": "WMB",
+        "demand_driver": "energy",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "S": {
+        "model_type": "software_saas",
+        "label": "Software / SaaS / platforms (subscription, high incremental margin)",
+        "weight": "Growth + retention + FCF conversion + rule-of-40 style quality.",
+        "lines": [
+          {
+            "line": "revenue_growth_and_nrr",
+            "why": "SaaS value is durable growth and expansion.",
+            "good_looks_like": "Solid growth; net retention >100% if disclosed; guide intact.",
+            "red_flag": "Growth cliff, guide cut, or AI-at-risk seat compression."
+          },
+          {
+            "line": "free_cash_flow_and_margins",
+            "why": "Mature software should convert earnings to cash.",
+            "good_looks_like": "Positive/rising FCF margins; gross margin stable/high.",
+            "red_flag": "FCF negative without hyper growth; gross margin collapse."
+          },
+          {
+            "line": "sbc_and_dilution",
+            "why": "SBC can fake profitability.",
+            "good_looks_like": "SBC as % revenue contained; buybacks offset dilution.",
+            "red_flag": "Huge SBC with no FCF; endless dilution."
+          },
+          {
+            "line": "rule_of_40_style",
+            "why": "Growth + FCF margin is the quality screen.",
+            "good_looks_like": "Growth% + FCF margin% competitive for the subsector.",
+            "red_flag": "Neither growth nor FCF working."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Multiple compression follows estimate cuts.",
+            "good_looks_like": "Revisions up or stable.",
+            "red_flag": "Persistent downward revisions at a rich multiple."
+          }
+        ],
+        "ticker": "S",
+        "demand_driver": "cybersecurity",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      },
+      "IBM": {
+        "model_type": "software_saas",
+        "label": "Software / SaaS / platforms (subscription, high incremental margin)",
+        "weight": "Growth + retention + FCF conversion + rule-of-40 style quality.",
+        "lines": [
+          {
+            "line": "revenue_growth_and_nrr",
+            "why": "SaaS value is durable growth and expansion.",
+            "good_looks_like": "Solid growth; net retention >100% if disclosed; guide intact.",
+            "red_flag": "Growth cliff, guide cut, or AI-at-risk seat compression."
+          },
+          {
+            "line": "free_cash_flow_and_margins",
+            "why": "Mature software should convert earnings to cash.",
+            "good_looks_like": "Positive/rising FCF margins; gross margin stable/high.",
+            "red_flag": "FCF negative without hyper growth; gross margin collapse."
+          },
+          {
+            "line": "sbc_and_dilution",
+            "why": "SBC can fake profitability.",
+            "good_looks_like": "SBC as % revenue contained; buybacks offset dilution.",
+            "red_flag": "Huge SBC with no FCF; endless dilution."
+          },
+          {
+            "line": "rule_of_40_style",
+            "why": "Growth + FCF margin is the quality screen.",
+            "good_looks_like": "Growth% + FCF margin% competitive for the subsector.",
+            "red_flag": "Neither growth nor FCF working."
+          },
+          {
+            "line": "estimate_direction",
+            "why": "Multiple compression follows estimate cuts.",
+            "good_looks_like": "Revisions up or stable.",
+            "red_flag": "Persistent downward revisions at a rich multiple."
+          }
+        ],
+        "ticker": "IBM",
+        "demand_driver": "software_platforms",
+        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
+      }
+    },
+    "models_present": [
+      "capex_growth_scaleup",
+      "energy_power",
+      "financials",
+      "healthcare",
+      "industrial_cyclical",
+      "mature_compounder",
+      "mega_platform",
+      "semi_cyclical",
+      "software_saas"
+    ],
+    "n": 18
+  },
+  "concept_memory": {
+    "note": "Durable concept memory for focus names \u2014 what they do, how to score them, and lessons appended from research/exits/shadows. Prefer this over reinventing the business each run; update via new lessons only.",
+    "by_ticker": {
+      "DELL": {
+        "what_they_do": "Operates in: AI servers / storage systems OEM",
+        "unit_economics": null,
+        "business_model_type": "capex_growth_scaleup",
+        "demand_driver": "hyperscaler_server_capex",
+        "financial_weight": "Revenue growth, estimate *direction*, liquidity, utilization narrative \u2014 NOT near-term FCF vs SaaS peers.",
+        "what_moves_stock": [
+          "Is AI server growth incremental profit or low-margin GPU pass-through?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "revenue_growth_yoy_and_fwd",
+            "red_flag": "Growth decelerating hard while the multiple still prices perfection; large negative EPS revisions."
+          },
+          {
+            "line": "cash_and_liquidity",
+            "red_flag": "Cash burn path that exhausts runway without clear funding; covenant / refinance stress."
+          },
+          {
+            "line": "capex_and_fcf_path",
+            "red_flag": "Capex without demand visibility; FCF worsening while growth also stalls."
+          },
+          {
+            "line": "competitive_position",
+            "red_flag": "Price wars, TPU/ASIC displacement narrative with no rebuttal."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Sharp downward revisions into a rich multiple."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.836617+00:00"
+      },
+      "HPE": {
+        "what_they_do": "Operates in: AI servers / hybrid cloud systems",
+        "unit_economics": null,
+        "business_model_type": "capex_growth_scaleup",
+        "demand_driver": "hyperscaler_server_capex",
+        "financial_weight": "Revenue growth, estimate *direction*, liquidity, utilization narrative \u2014 NOT near-term FCF vs SaaS peers.",
+        "what_moves_stock": [
+          "Juniper/networking mix vs pure AI server cyclicality?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "revenue_growth_yoy_and_fwd",
+            "red_flag": "Growth decelerating hard while the multiple still prices perfection; large negative EPS revisions."
+          },
+          {
+            "line": "cash_and_liquidity",
+            "red_flag": "Cash burn path that exhausts runway without clear funding; covenant / refinance stress."
+          },
+          {
+            "line": "capex_and_fcf_path",
+            "red_flag": "Capex without demand visibility; FCF worsening while growth also stalls."
+          },
+          {
+            "line": "competitive_position",
+            "red_flag": "Price wars, TPU/ASIC displacement narrative with no rebuttal."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Sharp downward revisions into a rich multiple."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.837166+00:00"
+      },
+      "PANW": {
+        "what_they_do": "Operates in: Cybersecurity software / platforms",
+        "unit_economics": null,
+        "business_model_type": "software_saas",
+        "demand_driver": "cybersecurity",
+        "financial_weight": "Growth + retention + FCF conversion + rule-of-40 style quality.",
+        "what_moves_stock": [
+          "Is growth new logo or expansion in existing estates?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "revenue_growth_and_nrr",
+            "red_flag": "Growth cliff, guide cut, or AI-at-risk seat compression."
+          },
+          {
+            "line": "free_cash_flow_and_margins",
+            "red_flag": "FCF negative without hyper growth; gross margin collapse."
+          },
+          {
+            "line": "sbc_and_dilution",
+            "red_flag": "Huge SBC with no FCF; endless dilution."
+          },
+          {
+            "line": "rule_of_40_style",
+            "red_flag": "Neither growth nor FCF working."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Persistent downward revisions at a rich multiple."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.837378+00:00"
+      },
+      "RBRK": {
+        "what_they_do": "Operates in: Cybersecurity software / platforms",
+        "unit_economics": null,
+        "business_model_type": "software_saas",
+        "demand_driver": "cybersecurity",
+        "financial_weight": "Growth + retention + FCF conversion + rule-of-40 style quality.",
+        "what_moves_stock": [
+          "Is growth new logo or expansion in existing estates?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "revenue_growth_and_nrr",
+            "red_flag": "Growth cliff, guide cut, or AI-at-risk seat compression."
+          },
+          {
+            "line": "free_cash_flow_and_margins",
+            "red_flag": "FCF negative without hyper growth; gross margin collapse."
+          },
+          {
+            "line": "sbc_and_dilution",
+            "red_flag": "Huge SBC with no FCF; endless dilution."
+          },
+          {
+            "line": "rule_of_40_style",
+            "red_flag": "Neither growth nor FCF working."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Persistent downward revisions at a rich multiple."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.837532+00:00"
+      },
+      "AMD": {
+        "what_they_do": "Operates in: AI GPUs + CPU/server silicon",
+        "unit_economics": null,
+        "business_model_type": "semi_cyclical",
+        "demand_driver": "ai_compute_gpu",
+        "financial_weight": "Cycle position and inventory > headline P/E. Low fwd multiples at peak earnings are often traps.",
+        "what_moves_stock": [
+          "Is MI-series share real deployment or design-win headlines?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "cycle_position",
+            "red_flag": "Record margins/EPS with falling revisions \u2014 classic late cycle."
+          },
+          {
+            "line": "inventory_and_supply",
+            "red_flag": "Inventory_building flag / channel fill while prices weaken."
+          },
+          {
+            "line": "fwd_pe_vs_growth",
+            "red_flag": "Thesis is only 'cheapest in group' without cycle underwriting."
+          },
+          {
+            "line": "customer_concentration",
+            "red_flag": "One customer can cancel the cycle."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Revisions still rolling over into a bounce."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.837746+00:00"
+      },
+      "CRWD": {
+        "what_they_do": "Operates in: Cybersecurity software / platforms",
+        "unit_economics": null,
+        "business_model_type": "software_saas",
+        "demand_driver": "cybersecurity",
+        "financial_weight": "Growth + retention + FCF conversion + rule-of-40 style quality.",
+        "what_moves_stock": [
+          "Is growth new logo or expansion in existing estates?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "revenue_growth_and_nrr",
+            "red_flag": "Growth cliff, guide cut, or AI-at-risk seat compression."
+          },
+          {
+            "line": "free_cash_flow_and_margins",
+            "red_flag": "FCF negative without hyper growth; gross margin collapse."
+          },
+          {
+            "line": "sbc_and_dilution",
+            "red_flag": "Huge SBC with no FCF; endless dilution."
+          },
+          {
+            "line": "rule_of_40_style",
+            "red_flag": "Neither growth nor FCF working."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Persistent downward revisions at a rich multiple."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.837959+00:00"
+      },
+      "HOOD": {
+        "what_they_do": "Operates in: Fintech / digital finance",
+        "unit_economics": null,
+        "business_model_type": "financials",
+        "demand_driver": "fintech",
+        "financial_weight": "Rates, credit, capital, NII/NIM \u2014 not SaaS FCF heuristics.",
+        "what_moves_stock": [
+          "Is the story rates, volumes, or take-rate expansion?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "net_interest_income_or_spread",
+            "red_flag": "NII collapsing with no fee offset."
+          },
+          {
+            "line": "credit_quality",
+            "red_flag": "Rapidly rising delinquencies / reserve builds."
+          },
+          {
+            "line": "capital_and_liquidity",
+            "red_flag": "Capital shortfall risk, deposit flight narrative."
+          },
+          {
+            "line": "valuation_vs_book_or_earnings",
+            "red_flag": "Cheap for a reason (credit)."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Street still cutting hard."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.838156+00:00"
+      },
+      "AXON": {
+        "what_they_do": "Operates in: unspecified (broad_market)",
+        "unit_economics": null,
+        "business_model_type": "mature_compounder",
+        "demand_driver": "broad_market",
+        "financial_weight": "FCF, ROIC-style quality, growth durability, balance sheet, valuation vs history.",
+        "what_moves_stock": [
+          "What is the mispriced mechanism vs consensus this cycle?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "free_cash_flow",
+            "red_flag": "FCF collapse or chronic miss."
+          },
+          {
+            "line": "revenue_and_earnings_growth",
+            "red_flag": "Stagnation at a growth multiple."
+          },
+          {
+            "line": "balance_sheet",
+            "red_flag": "Leverage spike without earnings power."
+          },
+          {
+            "line": "margins",
+            "red_flag": "Structural margin decay."
+          },
+          {
+            "line": "valuation_vs_history_and_growth",
+            "red_flag": "Top-decile multiple with slowing growth."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Cuts into elevated expectations."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.838362+00:00"
+      },
+      "DASH": {
+        "what_they_do": "Operates in: unspecified (consumer_platforms)",
+        "unit_economics": null,
+        "business_model_type": "mega_platform",
+        "demand_driver": "consumer_platforms",
+        "financial_weight": "Cloud growth, ad cycle, capex ROI on AI spend, FCF still matters at scale.",
+        "what_moves_stock": [
+          "What is the mispriced mechanism vs consensus this cycle?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "segment_growth",
+            "red_flag": "Cloud deceleration + AI capex spike with no ROI narrative."
+          },
+          {
+            "line": "free_cash_flow",
+            "red_flag": "FCF collapse from capex without growth offset."
+          },
+          {
+            "line": "ai_capex_roi",
+            "red_flag": "Spend up, growth flat, multiple down."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Cuts into event risk."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.838577+00:00"
+      },
+      "SMR": {
+        "what_they_do": "Operates in: Power generation / power equipment for data centers",
+        "unit_economics": null,
+        "business_model_type": "energy_power",
+        "demand_driver": "datacenter_power",
+        "financial_weight": "Commodity or load outlook, spark spreads, backlog, balance sheet.",
+        "what_moves_stock": [
+          "Is the bottleneck generation, interconnection, or equipment lead times?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "commodity_or_load_outlook",
+            "red_flag": "Collapsing prices with high fixed costs."
+          },
+          {
+            "line": "backlog_and_orders",
+            "red_flag": "Order cliff."
+          },
+          {
+            "line": "leverage_and_fcf",
+            "red_flag": "Peak leverage at peak prices."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Cuts with no cycle bottom signal."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.838757+00:00"
+      },
+      "BSX": {
+        "what_they_do": "Operates in: unspecified (healthcare)",
+        "unit_economics": null,
+        "business_model_type": "healthcare",
+        "demand_driver": "healthcare",
+        "financial_weight": "Growth durability, reimbursement, pipeline/litigation, margins, FCF.",
+        "what_moves_stock": [
+          "What is the mispriced mechanism vs consensus this cycle?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "organic_growth",
+            "red_flag": "Growth stall + multiple still rich."
+          },
+          {
+            "line": "margins_and_fcf",
+            "red_flag": "Margin compression without growth offset."
+          },
+          {
+            "line": "pipeline_or_reimbursement",
+            "red_flag": "Major patent cliff or adverse CMS decision inside the hold."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Persistent cuts."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.838987+00:00"
+      },
+      "NET": {
+        "what_they_do": "Operates in: Enterprise / AI software platforms",
+        "unit_economics": null,
+        "business_model_type": "software_saas",
+        "demand_driver": "software_platforms",
+        "financial_weight": "Growth + retention + FCF conversion + rule-of-40 style quality.",
+        "what_moves_stock": [
+          "Is AI a real attach or a multiple re-rate story?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "revenue_growth_and_nrr",
+            "red_flag": "Growth cliff, guide cut, or AI-at-risk seat compression."
+          },
+          {
+            "line": "free_cash_flow_and_margins",
+            "red_flag": "FCF negative without hyper growth; gross margin collapse."
+          },
+          {
+            "line": "sbc_and_dilution",
+            "red_flag": "Huge SBC with no FCF; endless dilution."
+          },
+          {
+            "line": "rule_of_40_style",
+            "red_flag": "Neither growth nor FCF working."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Persistent downward revisions at a rich multiple."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.839179+00:00"
+      },
+      "OKTA": {
+        "what_they_do": "Operates in: Cybersecurity software / platforms",
+        "unit_economics": null,
+        "business_model_type": "software_saas",
+        "demand_driver": "cybersecurity",
+        "financial_weight": "Growth + retention + FCF conversion + rule-of-40 style quality.",
+        "what_moves_stock": [
+          "Is growth new logo or expansion in existing estates?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "revenue_growth_and_nrr",
+            "red_flag": "Growth cliff, guide cut, or AI-at-risk seat compression."
+          },
+          {
+            "line": "free_cash_flow_and_margins",
+            "red_flag": "FCF negative without hyper growth; gross margin collapse."
+          },
+          {
+            "line": "sbc_and_dilution",
+            "red_flag": "Huge SBC with no FCF; endless dilution."
+          },
+          {
+            "line": "rule_of_40_style",
+            "red_flag": "Neither growth nor FCF working."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Persistent downward revisions at a rich multiple."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.839359+00:00"
+      },
+      "FANG": {
+        "what_they_do": "Operates in: unspecified (energy)",
+        "unit_economics": null,
+        "business_model_type": "energy_power",
+        "demand_driver": "energy",
+        "financial_weight": "Commodity or load outlook, spark spreads, backlog, balance sheet.",
+        "what_moves_stock": [
+          "What is the mispriced mechanism vs consensus this cycle?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "commodity_or_load_outlook",
+            "red_flag": "Collapsing prices with high fixed costs."
+          },
+          {
+            "line": "backlog_and_orders",
+            "red_flag": "Order cliff."
+          },
+          {
+            "line": "leverage_and_fcf",
+            "red_flag": "Peak leverage at peak prices."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Cuts with no cycle bottom signal."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.839544+00:00"
+      },
+      "TDG": {
+        "what_they_do": "Operates in: unspecified (consumer_industrial)",
+        "unit_economics": null,
+        "business_model_type": "industrial_cyclical",
+        "demand_driver": "consumer_industrial",
+        "financial_weight": "Orders, backlog, margins, inventory, cycle \u2014 plus FCF at mid-cycle.",
+        "what_moves_stock": [
+          "What is the mispriced mechanism vs consensus this cycle?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "orders_and_backlog",
+            "red_flag": "Order cancels; backlog burn without replacement."
+          },
+          {
+            "line": "margins",
+            "red_flag": "Peak margins + slowing volumes."
+          },
+          {
+            "line": "free_cash_flow",
+            "red_flag": "Cash tied in inventory at the top."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Still rolling over into a bounce."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.839664+00:00"
+      },
+      "WMB": {
+        "what_they_do": "Operates in: unspecified (energy)",
+        "unit_economics": null,
+        "business_model_type": "energy_power",
+        "demand_driver": "energy",
+        "financial_weight": "Commodity or load outlook, spark spreads, backlog, balance sheet.",
+        "what_moves_stock": [
+          "What is the mispriced mechanism vs consensus this cycle?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "commodity_or_load_outlook",
+            "red_flag": "Collapsing prices with high fixed costs."
+          },
+          {
+            "line": "backlog_and_orders",
+            "red_flag": "Order cliff."
+          },
+          {
+            "line": "leverage_and_fcf",
+            "red_flag": "Peak leverage at peak prices."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Cuts with no cycle bottom signal."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.839787+00:00"
+      },
+      "S": {
+        "what_they_do": "Operates in: Cybersecurity software / platforms",
+        "unit_economics": null,
+        "business_model_type": "software_saas",
+        "demand_driver": "cybersecurity",
+        "financial_weight": "Growth + retention + FCF conversion + rule-of-40 style quality.",
+        "what_moves_stock": [
+          "Is growth new logo or expansion in existing estates?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "revenue_growth_and_nrr",
+            "red_flag": "Growth cliff, guide cut, or AI-at-risk seat compression."
+          },
+          {
+            "line": "free_cash_flow_and_margins",
+            "red_flag": "FCF negative without hyper growth; gross margin collapse."
+          },
+          {
+            "line": "sbc_and_dilution",
+            "red_flag": "Huge SBC with no FCF; endless dilution."
+          },
+          {
+            "line": "rule_of_40_style",
+            "red_flag": "Neither growth nor FCF working."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Persistent downward revisions at a rich multiple."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.839913+00:00"
+      },
+      "IBM": {
+        "what_they_do": "Operates in: Enterprise / AI software platforms",
+        "unit_economics": null,
+        "business_model_type": "software_saas",
+        "demand_driver": "software_platforms",
+        "financial_weight": "Growth + retention + FCF conversion + rule-of-40 style quality.",
+        "what_moves_stock": [
+          "Is AI a real attach or a multiple re-rate story?"
+        ],
+        "key_financial_lines": [
+          {
+            "line": "revenue_growth_and_nrr",
+            "red_flag": "Growth cliff, guide cut, or AI-at-risk seat compression."
+          },
+          {
+            "line": "free_cash_flow_and_margins",
+            "red_flag": "FCF negative without hyper growth; gross margin collapse."
+          },
+          {
+            "line": "sbc_and_dilution",
+            "red_flag": "Huge SBC with no FCF; endless dilution."
+          },
+          {
+            "line": "rule_of_40_style",
+            "red_flag": "Neither growth nor FCF working."
+          },
+          {
+            "line": "estimate_direction",
+            "red_flag": "Persistent downward revisions at a rich multiple."
+          }
+        ],
+        "recent_lessons": [],
+        "updated_at": "2026-07-15T01:58:01.840038+00:00"
       }
     },
     "n": 18
@@ -2427,7 +3755,7 @@
         "lane": "deep_value_200w",
         "valuation": {
           "trailing_pe": null,
-          "forward_pe": -12.8337145,
+          "forward_pe": -11.988235,
           "price_to_sales_ttm": 159.43596,
           "ev_to_ebitda": -10.015
         },
@@ -2457,7 +3785,7 @@
         "post_earnings_drift_candidate": false,
         "fwd_pe_to_growth": null,
         "valuation_context": {
-          "fwd_pe": -12.8337145,
+          "fwd_pe": -11.988235,
           "fwd_pe_est": null,
           "fwd_pe_to_growth": null,
           "fwd_revenue_growth_pct": 79.3,
@@ -2545,7 +3873,7 @@
         "lane": "deep_value_200w",
         "valuation": {
           "trailing_pe": 18.697369,
-          "forward_pe": 11.48877,
+          "forward_pe": 11.506508,
           "price_to_sales_ttm": 3.0738003,
           "ev_to_ebitda": 13.305
         },
@@ -2575,7 +3903,7 @@
         "post_earnings_drift_candidate": false,
         "fwd_pe_to_growth": 1.53,
         "valuation_context": {
-          "fwd_pe": 11.48877,
+          "fwd_pe": 11.506508,
           "fwd_pe_est": null,
           "fwd_pe_to_growth": 1.53,
           "fwd_revenue_growth_pct": 7.5,
@@ -2778,7 +4106,7 @@
         "lane": "deep_value_200w",
         "valuation": {
           "trailing_pe": 62.410717,
-          "forward_pe": 20.864592,
+          "forward_pe": 20.871319,
           "price_to_sales_ttm": 7.745892,
           "ev_to_ebitda": 36.489
         },
@@ -2808,7 +4136,7 @@
         "post_earnings_drift_candidate": false,
         "fwd_pe_to_growth": 0.95,
         "valuation_context": {
-          "fwd_pe": 20.864592,
+          "fwd_pe": 20.871319,
           "fwd_pe_est": 25.45,
           "fwd_pe_to_growth": 0.95,
           "fwd_revenue_growth_pct": 22.0,
@@ -3012,7 +4340,7 @@
         "swing_setup_score": 3.8,
         "lane": "supplier_pullback",
         "valuation": {
-          "trailing_pe": 21.187931,
+          "trailing_pe": 22.227448,
           "forward_pe": 6.5338573,
           "price_to_sales_ttm": 12.299544,
           "ev_to_ebitda": 15.987
@@ -3695,7 +5023,7 @@
     "scanned": 182,
     "requested": 182,
     "scan_failures": 0,
-    "scan_fetched_at_utc": "2026-07-15T00:50:50.274318+00:00",
+    "scan_fetched_at_utc": "2026-07-15T01:50:51.657235+00:00",
     "note": "Ranked by deterministic swing_setup_score; agent must apply judgment and research before proposing.",
     "sector_comps_note": "sector_comps (on surfaced rows): fwd_pe_est = last close / cached pre-market current-FY EPS estimate (snapshot may be ~a day old); growth = current-FY revenue-growth estimate. Medians span ALL scanned names with data - coverage.pe_n/growth_n are the true denominators; medians under 4 same-sector data points report None.",
     "top_setups": [
@@ -3995,7 +5323,7 @@
           "trailing_pe": 178.54398,
           "forward_pe": 41.11821,
           "price_to_sales_ttm": 23.863434,
-          "ev_to_ebitda": 116.137
+          "ev_to_ebitda": 119.153
         },
         "market_cap_usd": 893781082112,
         "analyst_ratings": {
@@ -4348,7 +5676,7 @@
           "trailing_pe": null,
           "forward_pe": 178.47754,
           "price_to_sales_ttm": 42.94598,
-          "ev_to_ebitda": -2608.12
+          "ev_to_ebitda": -2727.166
         },
         "market_cap_usd": 100004216832,
         "analyst_ratings": {
@@ -4463,7 +5791,7 @@
         },
         "swing_setup_score": 6.4,
         "valuation": {
-          "trailing_pe": 112.04347,
+          "trailing_pe": 101.05882,
           "forward_pe": 36.131824,
           "price_to_sales_ttm": 8.969991,
           "ev_to_ebitda": 92.495
@@ -4586,7 +5914,7 @@
           "price_to_sales_ttm": 6.510259,
           "ev_to_ebitda": -23.785
         },
-        "market_cap_usd": 6802323456,
+        "market_cap_usd": 6828649984,
         "analyst_ratings": {
           "recommendation_key": "buy",
           "recommendation_mean": 1.82857,
@@ -4698,7 +6026,7 @@
         },
         "swing_setup_score": 6.24,
         "valuation": {
-          "trailing_pe": 62.523975,
+          "trailing_pe": 62.09864,
           "forward_pe": 40.986996,
           "price_to_sales_ttm": 23.675484,
           "ev_to_ebitda": 51.34
@@ -4818,7 +6146,7 @@
           "trailing_pe": 34.017845,
           "forward_pe": 21.284721,
           "price_to_sales_ttm": 2.2062058,
-          "ev_to_ebitda": 21.127
+          "ev_to_ebitda": 22.53
         },
         "market_cap_usd": 295636008960,
         "analyst_ratings": {
@@ -5158,7 +6486,7 @@
         },
         "swing_setup_score": 6.17,
         "valuation": {
-          "trailing_pe": 51.010017,
+          "trailing_pe": 52.230766,
           "forward_pe": 31.916725,
           "price_to_sales_ttm": 15.081833,
           "ev_to_ebitda": 33.125
@@ -25698,7 +27026,7 @@
   },
   "fundamental_screen": {
     "as_of": "2026-07-14T17:33:30.480858+00:00",
-    "age_hours": 7.3,
+    "age_hours": 8.3,
     "names_covered": 107,
     "note": "Full-universe estimate screen, refreshed pre-market (6am/9am ET, gated on true America/New_York time). top_upward_revisions = fundamental inflections regardless of price - candidates the momentum funnel may not surface. estimate_changes_since_previous = what moved THIS MORNING (earnings/guidance). Each row may carry revision_direction (up/down/flat), eps_growth_next_yr_pct (forward EPS growth), and eps_estimate_current_yr / eps_estimate_next_yr (current/next fiscal-year EPS estimates - the scanner's fwd_pe_est divides last close by the current-year figure) - judge a multiple against growth, not news tone.",
     "top_upward_revisions": [
@@ -25859,7 +27187,31 @@
   },
   "options_signals": {
     "status": "ok",
-    "note": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call selling). Trust expected_move_pct for stop/target engineering and iv skew/put_call_ratio as sentiment tilt; treat unusual_strikes as 'someone cares about this date/level', not as a directional signal.",
+    "note": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options.",
+    "learning": {
+      "purpose": "Teach the brain how free options data informs a 3\u201390 day LONG equity swing.",
+      "always_true": [
+        "No aggressor side \u2192 never claim 'smart money bought calls' from volume alone.",
+        "Expected move + ATR set stop/target geometry (hard via stop_engineering).",
+        "P/C ratio, skew, unusual strikes, IV rank, term structure, OI change are TILTS.",
+        "Elevated IV / steep backwardation into events \u2192 prefer post-event entries.",
+        "IV percentile needs a few runs of history (cache warms up automatically)."
+      ],
+      "bullish_compatible_patterns": [
+        "Call lean (P/C vol low) + call skew + price reclaiming structure",
+        "Put-heavy volume WHILE price holds/rises (possible hedge of long stock)",
+        "Low IV rank (calm) + constructive price structure",
+        "Unusual near-OTM calls only as secondary to a real catalyst + structure"
+      ],
+      "bearish_or_caution_patterns": [
+        "Steep put skew + falling estimates + weak price structure",
+        "High IV rank / very elevated IV + large expected move into earnings",
+        "Front-month backwardation (front IV >> back) = event tax",
+        "Deep OTM put heat + discretionary insider selling",
+        "Call lottery far OTM after a parabolic run (FOMO, late)",
+        "Sharp rise in put OI with price breakdown"
+      ]
+    },
     "tickers": {
       "DELL": {
         "status": "ok",
@@ -25869,6 +27221,11 @@
         "expected_move_pct": 11.1,
         "atm_iv_pct": 84.1,
         "put_call_volume_ratio": 1.22,
+        "put_call_oi_ratio": 0.67,
+        "call_volume": 4896,
+        "put_volume": 5950,
+        "call_open_interest": 8046,
+        "put_open_interest": 5404,
         "iv_skew_pct": 4.5,
         "skew_read": "puts_bid_over_calls (downside protection in demand)",
         "unusual_strikes": [
@@ -25886,7 +27243,80 @@
             "open_interest": 10,
             "pct_from_spot": -43.2
           }
-        ]
+        ],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 84.1,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 84.1,
+          "back_atm_iv_pct": 82.5,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": 1.6,
+          "shape": "flat",
+          "tilt": "neutral",
+          "note": "Term structure roughly flat (front\u2212back 2pp).",
+          "back_expiry": "2026-08-14"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "lean_bearish",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [],
+          "bearish_tilts": [
+            {
+              "source": "put_call_volume",
+              "regime": "put_lean",
+              "tilt": "cautious",
+              "note": "P/C vol 1.22: mild put lean \u2014 caution, not panic."
+            },
+            {
+              "source": "iv_skew",
+              "regime": "put_skew",
+              "tilt": "cautious",
+              "note": "Mild put skew (+4.5pp): modest demand for downside protection."
+            },
+            {
+              "source": "iv_level",
+              "tilt": "event_premium",
+              "note": "ATM IV ~84% is very elevated \u2014 event risk or crisis premium. Expected move may already price the next catalyst; buying equity into this is paying for volatility unless your edge is post-event drift. Nearest-expiry expected move \u00b111.1% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+            },
+            {
+              "source": "unusual_strikes",
+              "tilt": "tail_hedge",
+              "note": "Deep OTM put heat ~-45% below spot ($250.0) \u2014 tail hedge or crash narrative."
+            },
+            {
+              "source": "unusual_strikes",
+              "tilt": "tail_hedge",
+              "note": "Deep OTM put heat ~-43% below spot ($260.0) \u2014 tail hedge or crash narrative."
+            }
+          ],
+          "neutral_notes": [],
+          "for_stop_engineering": {
+            "expected_move_pct": 11.1,
+            "atm_iv_pct": 84.1,
+            "expiry": "2026-07-24",
+            "days_to_expiry": 10,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "HPE": {
         "status": "ok",
@@ -25896,9 +27326,84 @@
         "expected_move_pct": 10.28,
         "atm_iv_pct": 77.9,
         "put_call_volume_ratio": 0.57,
+        "put_call_oi_ratio": 0.52,
+        "call_volume": 1852,
+        "put_volume": 1061,
+        "call_open_interest": 7588,
+        "put_open_interest": 3976,
         "iv_skew_pct": 5.0,
         "skew_read": "puts_bid_over_calls (downside protection in demand)",
-        "unusual_strikes": []
+        "unusual_strikes": [],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 77.9,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 77.9,
+          "back_atm_iv_pct": 73.5,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": 4.4,
+          "shape": "mild_backwardation",
+          "tilt": "event_front",
+          "note": "Front richer than back by 4pp \u2014 some near-term event pricing.",
+          "back_expiry": "2026-08-14"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "lean_bearish",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [
+            {
+              "source": "put_call_volume",
+              "regime": "call_lean",
+              "tilt": "constructive",
+              "note": "P/C vol 0.57: call lean \u2014 mild constructive tilt if price confirms."
+            }
+          ],
+          "bearish_tilts": [
+            {
+              "source": "iv_skew",
+              "regime": "steep_put_skew",
+              "tilt": "bearish_hedging_demand",
+              "note": "Put IV 5.0pp over call IV: market pays up for downside protection. Common before earnings or after a run. For a swing long, size smaller or demand cleaner structure \u2014 fear is priced."
+            },
+            {
+              "source": "iv_level",
+              "tilt": "event_premium",
+              "note": "ATM IV ~78% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b110.3% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+            },
+            {
+              "source": "term_structure",
+              "tilt": "mild_backwardation",
+              "note": "Front richer than back by 4pp \u2014 some near-term event pricing."
+            }
+          ],
+          "neutral_notes": [],
+          "for_stop_engineering": {
+            "expected_move_pct": 10.28,
+            "atm_iv_pct": 77.9,
+            "expiry": "2026-07-24",
+            "days_to_expiry": 10,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself.",
+            "term_structure": "Front richer than back by 4pp \u2014 some near-term event pricing."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "PANW": {
         "status": "ok",
@@ -25908,6 +27413,11 @@
         "expected_move_pct": 7.71,
         "atm_iv_pct": 58.4,
         "put_call_volume_ratio": 1.2,
+        "put_call_oi_ratio": 1.44,
+        "call_volume": 2810,
+        "put_volume": 3373,
+        "call_open_interest": 7018,
+        "put_open_interest": 10133,
         "iv_skew_pct": 1.3,
         "skew_read": "balanced",
         "unusual_strikes": [
@@ -25925,7 +27435,77 @@
             "open_interest": 133,
             "pct_from_spot": -15.0
           }
-        ]
+        ],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 58.4,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 58.4,
+          "back_atm_iv_pct": 59.0,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": -0.6,
+          "shape": "flat",
+          "tilt": "neutral",
+          "note": "Term structure roughly flat (front\u2212back -1pp).",
+          "back_expiry": "2026-08-14"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "slight_bearish",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [
+            {
+              "source": "unusual_strikes",
+              "tilt": "call_heat",
+              "note": "Near ATM/slightly OTM call heat at $360.0 (+2%) \u2014 upside magnet zone IF flow is buying (unknown)."
+            }
+          ],
+          "bearish_tilts": [
+            {
+              "source": "put_call_volume",
+              "regime": "put_lean",
+              "tilt": "cautious",
+              "note": "P/C vol 1.20: mild put lean \u2014 caution, not panic."
+            },
+            {
+              "source": "iv_level",
+              "tilt": "event_premium",
+              "note": "ATM IV ~58% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b17.7% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+            }
+          ],
+          "neutral_notes": [
+            {
+              "source": "iv_skew",
+              "regime": "balanced_skew",
+              "tilt": "neutral",
+              "note": "Skew near flat (1.3pp)."
+            }
+          ],
+          "for_stop_engineering": {
+            "expected_move_pct": 7.71,
+            "atm_iv_pct": 58.4,
+            "expiry": "2026-07-24",
+            "days_to_expiry": 10,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "RBRK": {
         "status": "ok",
@@ -25935,9 +27515,78 @@
         "expected_move_pct": 10.51,
         "atm_iv_pct": 70.0,
         "put_call_volume_ratio": 0.31,
+        "put_call_oi_ratio": 0.79,
+        "call_volume": 432,
+        "put_volume": 135,
+        "call_open_interest": 1608,
+        "put_open_interest": 1265,
         "iv_skew_pct": 5.8,
         "skew_read": "puts_bid_over_calls (downside protection in demand)",
-        "unusual_strikes": []
+        "unusual_strikes": [],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 70.0,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 70.0,
+          "back_atm_iv_pct": 68.4,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": 1.6,
+          "shape": "flat",
+          "tilt": "neutral",
+          "note": "Term structure roughly flat (front\u2212back 2pp).",
+          "back_expiry": "2026-08-14"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "slight_bearish",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [
+            {
+              "source": "put_call_volume",
+              "regime": "call_heavy",
+              "tilt": "bullish_or_call_overwriting",
+              "note": "P/C vol 0.31: heavy call volume \u2014 speculative upside OR covered-call writing into strength. Confirm with price structure; do not buy only because calls are busy."
+            }
+          ],
+          "bearish_tilts": [
+            {
+              "source": "iv_skew",
+              "regime": "steep_put_skew",
+              "tilt": "bearish_hedging_demand",
+              "note": "Put IV 5.8pp over call IV: market pays up for downside protection. Common before earnings or after a run. For a swing long, size smaller or demand cleaner structure \u2014 fear is priced."
+            },
+            {
+              "source": "iv_level",
+              "tilt": "event_premium",
+              "note": "ATM IV ~70% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b110.5% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+            }
+          ],
+          "neutral_notes": [],
+          "for_stop_engineering": {
+            "expected_move_pct": 10.51,
+            "atm_iv_pct": 70.0,
+            "expiry": "2026-07-24",
+            "days_to_expiry": 10,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "AMD": {
         "status": "ok",
@@ -25947,9 +27596,79 @@
         "expected_move_pct": 8.99,
         "atm_iv_pct": 76.1,
         "put_call_volume_ratio": 0.46,
+        "put_call_oi_ratio": 2.36,
+        "call_volume": 2204,
+        "put_volume": 1003,
+        "call_open_interest": 1679,
+        "put_open_interest": 3961,
         "iv_skew_pct": 2.7,
         "skew_read": "balanced",
-        "unusual_strikes": []
+        "unusual_strikes": [],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 76.1,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 76.1,
+          "back_atm_iv_pct": 85.1,
+          "front_days": 8,
+          "back_days": 31,
+          "front_minus_back_pp": -9.0,
+          "shape": "contango",
+          "tilt": "longer_term_uncertainty",
+          "note": "Back IV higher than front (spread -9pp) \u2014 chronic/longer uncertainty or quiet front month.",
+          "back_expiry": "2026-08-14"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "mixed_or_neutral",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [
+            {
+              "source": "put_call_volume",
+              "regime": "call_heavy",
+              "tilt": "bullish_or_call_overwriting",
+              "note": "P/C vol 0.46: heavy call volume \u2014 speculative upside OR covered-call writing into strength. Confirm with price structure; do not buy only because calls are busy."
+            }
+          ],
+          "bearish_tilts": [
+            {
+              "source": "iv_level",
+              "tilt": "event_premium",
+              "note": "ATM IV ~76% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b19.0% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+            }
+          ],
+          "neutral_notes": [
+            {
+              "source": "iv_skew",
+              "regime": "balanced_skew",
+              "tilt": "neutral",
+              "note": "Skew near flat (2.7pp)."
+            }
+          ],
+          "for_stop_engineering": {
+            "expected_move_pct": 8.99,
+            "atm_iv_pct": 76.1,
+            "expiry": "2026-07-22",
+            "days_to_expiry": 8,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "CRWD": {
         "status": "ok",
@@ -25959,6 +27678,11 @@
         "expected_move_pct": 8.66,
         "atm_iv_pct": 65.7,
         "put_call_volume_ratio": 0.62,
+        "put_call_oi_ratio": 1.53,
+        "call_volume": 9818,
+        "put_volume": 6100,
+        "call_open_interest": 16060,
+        "put_open_interest": 24579,
         "iv_skew_pct": 1.5,
         "skew_read": "balanced",
         "unusual_strikes": [
@@ -25976,7 +27700,83 @@
             "open_interest": 160,
             "pct_from_spot": 2.0
           }
-        ]
+        ],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 65.7,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 65.7,
+          "back_atm_iv_pct": 61.2,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": 4.5,
+          "shape": "mild_backwardation",
+          "tilt": "event_front",
+          "note": "Front richer than back by 4pp \u2014 some near-term event pricing.",
+          "back_expiry": "2026-08-14"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "mixed_or_neutral",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [
+            {
+              "source": "put_call_volume",
+              "regime": "call_lean",
+              "tilt": "constructive",
+              "note": "P/C vol 0.62: call lean \u2014 mild constructive tilt if price confirms."
+            },
+            {
+              "source": "unusual_strikes",
+              "tilt": "call_heat",
+              "note": "Near ATM/slightly OTM call heat at $215.0 (+2%) \u2014 upside magnet zone IF flow is buying (unknown)."
+            }
+          ],
+          "bearish_tilts": [
+            {
+              "source": "iv_level",
+              "tilt": "event_premium",
+              "note": "ATM IV ~66% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b18.7% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+            },
+            {
+              "source": "term_structure",
+              "tilt": "mild_backwardation",
+              "note": "Front richer than back by 4pp \u2014 some near-term event pricing."
+            }
+          ],
+          "neutral_notes": [
+            {
+              "source": "iv_skew",
+              "regime": "balanced_skew",
+              "tilt": "neutral",
+              "note": "Skew near flat (1.5pp)."
+            }
+          ],
+          "for_stop_engineering": {
+            "expected_move_pct": 8.66,
+            "atm_iv_pct": 65.7,
+            "expiry": "2026-07-24",
+            "days_to_expiry": 10,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself.",
+            "term_structure": "Front richer than back by 4pp \u2014 some near-term event pricing."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "HOOD": {
         "status": "ok",
@@ -25986,6 +27786,11 @@
         "expected_move_pct": 9.21,
         "atm_iv_pct": 69.9,
         "put_call_volume_ratio": 0.26,
+        "put_call_oi_ratio": 1.06,
+        "call_volume": 21472,
+        "put_volume": 5625,
+        "call_open_interest": 39573,
+        "put_open_interest": 42070,
         "iv_skew_pct": 1.1,
         "skew_read": "balanced",
         "unusual_strikes": [
@@ -26024,7 +27829,87 @@
             "open_interest": 179,
             "pct_from_spot": -35.7
           }
-        ]
+        ],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 69.9,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 69.9,
+          "back_atm_iv_pct": 75.0,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": -5.1,
+          "shape": "contango",
+          "tilt": "longer_term_uncertainty",
+          "note": "Back IV higher than front (spread -5pp) \u2014 chronic/longer uncertainty or quiet front month.",
+          "back_expiry": "2026-08-14"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "slight_bearish",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [
+            {
+              "source": "put_call_volume",
+              "regime": "call_heavy",
+              "tilt": "bullish_or_call_overwriting",
+              "note": "P/C vol 0.26: heavy call volume \u2014 speculative upside OR covered-call writing into strength. Confirm with price structure; do not buy only because calls are busy."
+            },
+            {
+              "source": "unusual_strikes",
+              "tilt": "call_heat",
+              "note": "Near ATM/slightly OTM call heat at $117.0 (+3%) \u2014 upside magnet zone IF flow is buying (unknown)."
+            }
+          ],
+          "bearish_tilts": [
+            {
+              "source": "iv_level",
+              "tilt": "event_premium",
+              "note": "ATM IV ~70% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b19.2% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+            },
+            {
+              "source": "unusual_strikes",
+              "tilt": "near_support_hedge",
+              "note": "Near ATM put heat at $109.0 (-4% from spot) \u2014 support/hedge zone; longs often defend here with puts."
+            },
+            {
+              "source": "unusual_strikes",
+              "tilt": "tail_hedge",
+              "note": "Deep OTM put heat ~-36% below spot ($73.0) \u2014 tail hedge or crash narrative."
+            }
+          ],
+          "neutral_notes": [
+            {
+              "source": "iv_skew",
+              "regime": "balanced_skew",
+              "tilt": "neutral",
+              "note": "Skew near flat (1.1pp)."
+            }
+          ],
+          "for_stop_engineering": {
+            "expected_move_pct": 9.21,
+            "atm_iv_pct": 69.9,
+            "expiry": "2026-07-24",
+            "days_to_expiry": 10,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "AXON": {
         "status": "ok",
@@ -26034,9 +27919,78 @@
         "expected_move_pct": 9.25,
         "atm_iv_pct": 70.2,
         "put_call_volume_ratio": 1.49,
+        "put_call_oi_ratio": 1.6,
+        "call_volume": 215,
+        "put_volume": 321,
+        "call_open_interest": 342,
+        "put_open_interest": 548,
         "iv_skew_pct": 1.2,
         "skew_read": "balanced",
-        "unusual_strikes": []
+        "unusual_strikes": [],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 70.2,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 70.2,
+          "back_atm_iv_pct": 86.6,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": -16.4,
+          "shape": "contango",
+          "tilt": "longer_term_uncertainty",
+          "note": "Back IV higher than front (spread -16pp) \u2014 chronic/longer uncertainty or quiet front month.",
+          "back_expiry": "2026-08-14"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "lean_bearish",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [],
+          "bearish_tilts": [
+            {
+              "source": "put_call_volume",
+              "regime": "put_lean",
+              "tilt": "cautious",
+              "note": "P/C vol 1.49: mild put lean \u2014 caution, not panic."
+            },
+            {
+              "source": "iv_level",
+              "tilt": "event_premium",
+              "note": "ATM IV ~70% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b19.2% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+            }
+          ],
+          "neutral_notes": [
+            {
+              "source": "iv_skew",
+              "regime": "balanced_skew",
+              "tilt": "neutral",
+              "note": "Skew near flat (1.2pp)."
+            }
+          ],
+          "for_stop_engineering": {
+            "expected_move_pct": 9.25,
+            "atm_iv_pct": 70.2,
+            "expiry": "2026-07-24",
+            "days_to_expiry": 10,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "DASH": {
         "status": "ok",
@@ -26046,9 +28000,78 @@
         "expected_move_pct": 7.11,
         "atm_iv_pct": 53.9,
         "put_call_volume_ratio": 0.81,
+        "put_call_oi_ratio": 0.72,
+        "call_volume": 507,
+        "put_volume": 412,
+        "call_open_interest": 2227,
+        "put_open_interest": 1614,
         "iv_skew_pct": 2.8,
         "skew_read": "balanced",
-        "unusual_strikes": []
+        "unusual_strikes": [],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 53.9,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 53.9,
+          "back_atm_iv_pct": 62.9,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": -9.0,
+          "shape": "contango",
+          "tilt": "longer_term_uncertainty",
+          "note": "Back IV higher than front (spread -9pp) \u2014 chronic/longer uncertainty or quiet front month.",
+          "back_expiry": "2026-08-14"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "slight_bearish",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [],
+          "bearish_tilts": [
+            {
+              "source": "iv_level",
+              "tilt": "event_premium",
+              "note": "ATM IV ~54% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b17.1% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+            }
+          ],
+          "neutral_notes": [
+            {
+              "source": "put_call_volume",
+              "regime": "balanced",
+              "tilt": "neutral",
+              "note": "P/C vol 0.81: roughly balanced volume."
+            },
+            {
+              "source": "iv_skew",
+              "regime": "balanced_skew",
+              "tilt": "neutral",
+              "note": "Skew near flat (2.8pp)."
+            }
+          ],
+          "for_stop_engineering": {
+            "expected_move_pct": 7.11,
+            "atm_iv_pct": 53.9,
+            "expiry": "2026-07-24",
+            "days_to_expiry": 10,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "SMR": {
         "status": "ok",
@@ -26058,9 +28081,79 @@
         "expected_move_pct": 12.09,
         "atm_iv_pct": 91.9,
         "put_call_volume_ratio": 0.18,
+        "put_call_oi_ratio": 0.69,
+        "call_volume": 4910,
+        "put_volume": 868,
+        "call_open_interest": 11726,
+        "put_open_interest": 8102,
         "iv_skew_pct": 1.4,
         "skew_read": "balanced",
-        "unusual_strikes": []
+        "unusual_strikes": [],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 91.9,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 91.9,
+          "back_atm_iv_pct": 95.0,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": -3.1,
+          "shape": "flat",
+          "tilt": "neutral",
+          "note": "Term structure roughly flat (front\u2212back -3pp).",
+          "back_expiry": "2026-08-14"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "mixed_or_neutral",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [
+            {
+              "source": "put_call_volume",
+              "regime": "call_heavy",
+              "tilt": "bullish_or_call_overwriting",
+              "note": "P/C vol 0.18: heavy call volume \u2014 speculative upside OR covered-call writing into strength. Confirm with price structure; do not buy only because calls are busy."
+            }
+          ],
+          "bearish_tilts": [
+            {
+              "source": "iv_level",
+              "tilt": "event_premium",
+              "note": "ATM IV ~92% is very elevated \u2014 event risk or crisis premium. Expected move may already price the next catalyst; buying equity into this is paying for volatility unless your edge is post-event drift. Nearest-expiry expected move \u00b112.1% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+            }
+          ],
+          "neutral_notes": [
+            {
+              "source": "iv_skew",
+              "regime": "balanced_skew",
+              "tilt": "neutral",
+              "note": "Skew near flat (1.4pp)."
+            }
+          ],
+          "for_stop_engineering": {
+            "expected_move_pct": 12.09,
+            "atm_iv_pct": 91.9,
+            "expiry": "2026-07-24",
+            "days_to_expiry": 10,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "BSX": {
         "status": "ok",
@@ -26070,9 +28163,79 @@
         "expected_move_pct": 5.4,
         "atm_iv_pct": 47.8,
         "put_call_volume_ratio": 1.38,
+        "put_call_oi_ratio": 5.32,
+        "call_volume": 337,
+        "put_volume": 465,
+        "call_open_interest": 1918,
+        "put_open_interest": 10202,
         "iv_skew_pct": -3.1,
         "skew_read": "calls_bid_over_puts (speculative upside demand)",
-        "unusual_strikes": []
+        "unusual_strikes": [],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 47.8,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 47.8,
+          "back_atm_iv_pct": 56.5,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": -8.7,
+          "shape": "contango",
+          "tilt": "longer_term_uncertainty",
+          "note": "Back IV higher than front (spread -9pp) \u2014 chronic/longer uncertainty or quiet front month.",
+          "back_expiry": "2026-08-14"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "mixed_or_neutral",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [
+            {
+              "source": "iv_skew",
+              "regime": "call_skew",
+              "tilt": "bullish_speculation",
+              "note": "Call IV 3.1pp over put IV: speculative upside demand (or short-put supply). Can mark FOMO; chase risk is real."
+            }
+          ],
+          "bearish_tilts": [
+            {
+              "source": "put_call_volume",
+              "regime": "put_lean",
+              "tilt": "cautious",
+              "note": "P/C vol 1.38: mild put lean \u2014 caution, not panic."
+            }
+          ],
+          "neutral_notes": [
+            {
+              "source": "iv_level",
+              "tilt": "neutral",
+              "note": "ATM IV ~48% moderate. Nearest-expiry expected move \u00b15.4% \u2014 stops inside this band are noise for that window."
+            }
+          ],
+          "for_stop_engineering": {
+            "expected_move_pct": 5.4,
+            "atm_iv_pct": 47.8,
+            "expiry": "2026-07-24",
+            "days_to_expiry": 10,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "NET": {
         "status": "ok",
@@ -26082,6 +28245,11 @@
         "expected_move_pct": 7.98,
         "atm_iv_pct": 63.8,
         "put_call_volume_ratio": 0.73,
+        "put_call_oi_ratio": 1.11,
+        "call_volume": 2897,
+        "put_volume": 2122,
+        "call_open_interest": 5792,
+        "put_open_interest": 6457,
         "iv_skew_pct": 5.6,
         "skew_read": "puts_bid_over_calls (downside protection in demand)",
         "unusual_strikes": [
@@ -26092,7 +28260,76 @@
             "open_interest": 20,
             "pct_from_spot": -0.6
           }
-        ]
+        ],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 63.8,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 63.8,
+          "back_atm_iv_pct": 77.0,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": -13.2,
+          "shape": "contango",
+          "tilt": "longer_term_uncertainty",
+          "note": "Back IV higher than front (spread -13pp) \u2014 chronic/longer uncertainty or quiet front month.",
+          "back_expiry": "2026-08-14"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "lean_bearish",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [
+            {
+              "source": "put_call_volume",
+              "regime": "call_lean",
+              "tilt": "constructive",
+              "note": "P/C vol 0.73: call lean \u2014 mild constructive tilt if price confirms."
+            }
+          ],
+          "bearish_tilts": [
+            {
+              "source": "iv_skew",
+              "regime": "steep_put_skew",
+              "tilt": "bearish_hedging_demand",
+              "note": "Put IV 5.6pp over call IV: market pays up for downside protection. Common before earnings or after a run. For a swing long, size smaller or demand cleaner structure \u2014 fear is priced."
+            },
+            {
+              "source": "iv_level",
+              "tilt": "event_premium",
+              "note": "ATM IV ~64% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b18.0% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+            },
+            {
+              "source": "unusual_strikes",
+              "tilt": "near_support_hedge",
+              "note": "Near ATM put heat at $280.0 (-1% from spot) \u2014 support/hedge zone; longs often defend here with puts."
+            }
+          ],
+          "neutral_notes": [],
+          "for_stop_engineering": {
+            "expected_move_pct": 7.98,
+            "atm_iv_pct": 63.8,
+            "expiry": "2026-07-24",
+            "days_to_expiry": 10,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "OKTA": {
         "status": "ok",
@@ -26102,9 +28339,79 @@
         "expected_move_pct": 7.91,
         "atm_iv_pct": 65.9,
         "put_call_volume_ratio": 0.53,
+        "put_call_oi_ratio": 0.63,
+        "call_volume": 541,
+        "put_volume": 288,
+        "call_open_interest": 3468,
+        "put_open_interest": 2169,
         "iv_skew_pct": -1.2,
         "skew_read": "balanced",
-        "unusual_strikes": []
+        "unusual_strikes": [],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 65.9,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 65.9,
+          "back_atm_iv_pct": 64.7,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": 1.2,
+          "shape": "flat",
+          "tilt": "neutral",
+          "note": "Term structure roughly flat (front\u2212back 1pp).",
+          "back_expiry": "2026-08-14"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "mixed_or_neutral",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [
+            {
+              "source": "put_call_volume",
+              "regime": "call_lean",
+              "tilt": "constructive",
+              "note": "P/C vol 0.53: call lean \u2014 mild constructive tilt if price confirms."
+            }
+          ],
+          "bearish_tilts": [
+            {
+              "source": "iv_level",
+              "tilt": "event_premium",
+              "note": "ATM IV ~66% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b17.9% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+            }
+          ],
+          "neutral_notes": [
+            {
+              "source": "iv_skew",
+              "regime": "balanced_skew",
+              "tilt": "neutral",
+              "note": "Skew near flat (-1.2pp)."
+            }
+          ],
+          "for_stop_engineering": {
+            "expected_move_pct": 7.91,
+            "atm_iv_pct": 65.9,
+            "expiry": "2026-07-24",
+            "days_to_expiry": 10,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "FANG": {
         "status": "ok",
@@ -26114,9 +28421,79 @@
         "expected_move_pct": 9.6,
         "atm_iv_pct": 41.2,
         "put_call_volume_ratio": 0.25,
+        "put_call_oi_ratio": 0.24,
+        "call_volume": 281,
+        "put_volume": 70,
+        "call_open_interest": 2048,
+        "put_open_interest": 501,
         "iv_skew_pct": 5.6,
         "skew_read": "puts_bid_over_calls (downside protection in demand)",
-        "unusual_strikes": []
+        "unusual_strikes": [],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 41.2,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 41.2,
+          "back_atm_iv_pct": 40.8,
+          "front_days": 38,
+          "back_days": 66,
+          "front_minus_back_pp": 0.4,
+          "shape": "flat",
+          "tilt": "neutral",
+          "note": "Term structure roughly flat (front\u2212back 0pp).",
+          "back_expiry": "2026-09-18"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "mixed_or_neutral",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [
+            {
+              "source": "put_call_volume",
+              "regime": "call_heavy",
+              "tilt": "bullish_or_call_overwriting",
+              "note": "P/C vol 0.25: heavy call volume \u2014 speculative upside OR covered-call writing into strength. Confirm with price structure; do not buy only because calls are busy."
+            }
+          ],
+          "bearish_tilts": [
+            {
+              "source": "iv_skew",
+              "regime": "steep_put_skew",
+              "tilt": "bearish_hedging_demand",
+              "note": "Put IV 5.6pp over call IV: market pays up for downside protection. Common before earnings or after a run. For a swing long, size smaller or demand cleaner structure \u2014 fear is priced."
+            }
+          ],
+          "neutral_notes": [
+            {
+              "source": "iv_level",
+              "tilt": "neutral",
+              "note": "ATM IV ~41% moderate. Nearest-expiry expected move \u00b19.6% \u2014 stops inside this band are noise for that window."
+            }
+          ],
+          "for_stop_engineering": {
+            "expected_move_pct": 9.6,
+            "atm_iv_pct": 41.2,
+            "expiry": "2026-08-21",
+            "days_to_expiry": 38,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "TDG": {
         "status": "ok",
@@ -26126,9 +28503,84 @@
         "expected_move_pct": 9.43,
         "atm_iv_pct": 38.8,
         "put_call_volume_ratio": 6.02,
+        "put_call_oi_ratio": 3.74,
+        "call_volume": 130,
+        "put_volume": 782,
+        "call_open_interest": 419,
+        "put_open_interest": 1565,
         "iv_skew_pct": 4.4,
         "skew_read": "puts_bid_over_calls (downside protection in demand)",
-        "unusual_strikes": []
+        "unusual_strikes": [],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 38.8,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 38.8,
+          "back_atm_iv_pct": 35.7,
+          "front_days": 38,
+          "back_days": 66,
+          "front_minus_back_pp": 3.1,
+          "shape": "mild_backwardation",
+          "tilt": "event_front",
+          "note": "Front richer than back by 3pp \u2014 some near-term event pricing.",
+          "back_expiry": "2026-09-18"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "lean_bearish",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [],
+          "bearish_tilts": [
+            {
+              "source": "put_call_volume",
+              "regime": "put_heavy",
+              "tilt": "bearish_or_hedging",
+              "note": "P/C vol 6.02: elevated put volume \u2014 often protective hedging by longs OR downside speculation; with rising price can be bullish-compatible (collar/hedge). With falling price, risk of more deleveraging."
+            },
+            {
+              "source": "iv_skew",
+              "regime": "put_skew",
+              "tilt": "cautious",
+              "note": "Mild put skew (+4.4pp): modest demand for downside protection."
+            },
+            {
+              "source": "term_structure",
+              "tilt": "mild_backwardation",
+              "note": "Front richer than back by 3pp \u2014 some near-term event pricing."
+            }
+          ],
+          "neutral_notes": [
+            {
+              "source": "iv_level",
+              "tilt": "neutral",
+              "note": "ATM IV ~39% moderate. Nearest-expiry expected move \u00b19.4% \u2014 stops inside this band are noise for that window."
+            }
+          ],
+          "for_stop_engineering": {
+            "expected_move_pct": 9.43,
+            "atm_iv_pct": 38.8,
+            "expiry": "2026-08-21",
+            "days_to_expiry": 38,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself.",
+            "term_structure": "Front richer than back by 3pp \u2014 some near-term event pricing."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "WMB": {
         "status": "ok",
@@ -26138,9 +28590,77 @@
         "expected_move_pct": 3.95,
         "atm_iv_pct": 32.4,
         "put_call_volume_ratio": 0.96,
+        "put_call_oi_ratio": 0.21,
+        "call_volume": 96,
+        "put_volume": 92,
+        "call_open_interest": 5082,
+        "put_open_interest": 1050,
         "iv_skew_pct": -0.6,
         "skew_read": "balanced",
-        "unusual_strikes": []
+        "unusual_strikes": [],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 32.4,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 32.4,
+          "back_atm_iv_pct": 32.4,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": 0.0,
+          "shape": "flat",
+          "tilt": "neutral",
+          "note": "Term structure roughly flat (front\u2212back 0pp).",
+          "back_expiry": "2026-08-14"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "mixed_or_neutral",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [],
+          "bearish_tilts": [],
+          "neutral_notes": [
+            {
+              "source": "put_call_volume",
+              "regime": "balanced",
+              "tilt": "neutral",
+              "note": "P/C vol 0.96: roughly balanced volume."
+            },
+            {
+              "source": "iv_skew",
+              "regime": "balanced_skew",
+              "tilt": "neutral",
+              "note": "Skew near flat (-0.6pp)."
+            },
+            {
+              "source": "iv_level",
+              "tilt": "neutral",
+              "note": "ATM IV ~32% moderate. Nearest-expiry expected move \u00b14.0% \u2014 stops inside this band are noise for that window."
+            }
+          ],
+          "for_stop_engineering": {
+            "expected_move_pct": 3.95,
+            "atm_iv_pct": 32.4,
+            "expiry": "2026-07-24",
+            "days_to_expiry": 10,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "S": {
         "status": "ok",
@@ -26150,6 +28670,11 @@
         "expected_move_pct": 8.53,
         "atm_iv_pct": 64.5,
         "put_call_volume_ratio": 6.53,
+        "put_call_oi_ratio": 0.31,
+        "call_volume": 1156,
+        "put_volume": 7545,
+        "call_open_interest": 2083,
+        "put_open_interest": 654,
         "iv_skew_pct": 3.8,
         "skew_read": "puts_bid_over_calls (downside protection in demand)",
         "unusual_strikes": [
@@ -26174,7 +28699,86 @@
             "open_interest": 169,
             "pct_from_spot": -9.6
           }
-        ]
+        ],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 64.5,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 64.5,
+          "back_atm_iv_pct": 61.2,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": 3.3,
+          "shape": "mild_backwardation",
+          "tilt": "event_front",
+          "note": "Front richer than back by 3pp \u2014 some near-term event pricing.",
+          "back_expiry": "2026-08-14"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "lean_bearish",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [],
+          "bearish_tilts": [
+            {
+              "source": "put_call_volume",
+              "regime": "put_heavy",
+              "tilt": "bearish_or_hedging",
+              "note": "P/C vol 6.53: elevated put volume \u2014 often protective hedging by longs OR downside speculation; with rising price can be bullish-compatible (collar/hedge). With falling price, risk of more deleveraging."
+            },
+            {
+              "source": "iv_skew",
+              "regime": "put_skew",
+              "tilt": "cautious",
+              "note": "Mild put skew (+3.8pp): modest demand for downside protection."
+            },
+            {
+              "source": "iv_level",
+              "tilt": "event_premium",
+              "note": "ATM IV ~64% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b18.5% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+            },
+            {
+              "source": "unusual_strikes",
+              "tilt": "tail_hedge",
+              "note": "Deep OTM put heat ~-25% below spot ($15.0) \u2014 tail hedge or crash narrative."
+            },
+            {
+              "source": "unusual_strikes",
+              "tilt": "near_support_hedge",
+              "note": "Near ATM put heat at $18.0 (-10% from spot) \u2014 support/hedge zone; longs often defend here with puts."
+            },
+            {
+              "source": "term_structure",
+              "tilt": "mild_backwardation",
+              "note": "Front richer than back by 3pp \u2014 some near-term event pricing."
+            }
+          ],
+          "neutral_notes": [],
+          "for_stop_engineering": {
+            "expected_move_pct": 8.53,
+            "atm_iv_pct": 64.5,
+            "expiry": "2026-07-24",
+            "days_to_expiry": 10,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself.",
+            "term_structure": "Front richer than back by 3pp \u2014 some near-term event pricing."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       },
       "IBM": {
         "status": "ok",
@@ -26184,6 +28788,11 @@
         "expected_move_pct": 9.9,
         "atm_iv_pct": 75.2,
         "put_call_volume_ratio": 0.78,
+        "put_call_oi_ratio": 0.73,
+        "call_volume": 28070,
+        "put_volume": 22028,
+        "call_open_interest": 12810,
+        "put_open_interest": 9364,
         "iv_skew_pct": -5.8,
         "skew_read": "calls_bid_over_puts (speculative upside demand)",
         "unusual_strikes": [
@@ -26229,7 +28838,108 @@
             "open_interest": 583,
             "pct_from_spot": -1.0
           }
-        ]
+        ],
+        "iv_rank": {
+          "status": "warming_up",
+          "n_samples": 0,
+          "atm_iv_pct": 75.2,
+          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+        },
+        "term_structure": {
+          "status": "ok",
+          "front_atm_iv_pct": 75.2,
+          "back_atm_iv_pct": 59.4,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": 15.8,
+          "shape": "steep_backwardation",
+          "tilt": "event_front",
+          "note": "Front IV 75% >> back 59% (spread 16pp) \u2014 near-term event premium (earnings/binary). Prefer post-event entries for swings.",
+          "back_expiry": "2026-08-14"
+        },
+        "oi_change": {
+          "status": "no_prior",
+          "note": "No prior OI snapshot yet \u2014 next run will compare."
+        },
+        "swing_options_read": {
+          "status": "ok",
+          "net_tilt": "slight_bearish",
+          "direction_confidence": "low",
+          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
+          "bullish_tilts": [
+            {
+              "source": "put_call_volume",
+              "regime": "call_lean",
+              "tilt": "constructive",
+              "note": "P/C vol 0.78: call lean \u2014 mild constructive tilt if price confirms."
+            },
+            {
+              "source": "iv_skew",
+              "regime": "call_skew",
+              "tilt": "bullish_speculation",
+              "note": "Call IV 5.8pp over put IV: speculative upside demand (or short-put supply). Can mark FOMO; chase risk is real."
+            },
+            {
+              "source": "unusual_strikes",
+              "tilt": "call_heat",
+              "note": "Near ATM/slightly OTM call heat at $225.0 (+4%) \u2014 upside magnet zone IF flow is buying (unknown)."
+            },
+            {
+              "source": "unusual_strikes",
+              "tilt": "call_heat",
+              "note": "Near ATM/slightly OTM call heat at $220.0 (+1%) \u2014 upside magnet zone IF flow is buying (unknown)."
+            }
+          ],
+          "bearish_tilts": [
+            {
+              "source": "iv_level",
+              "tilt": "event_premium",
+              "note": "ATM IV ~75% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b19.9% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+            },
+            {
+              "source": "unusual_strikes",
+              "tilt": "near_support_hedge",
+              "note": "Near ATM put heat at $200.0 (-8% from spot) \u2014 support/hedge zone; longs often defend here with puts."
+            },
+            {
+              "source": "unusual_strikes",
+              "tilt": "tail_hedge",
+              "note": "Deep OTM put heat ~-17% below spot ($180.0) \u2014 tail hedge or crash narrative."
+            },
+            {
+              "source": "unusual_strikes",
+              "tilt": "near_support_hedge",
+              "note": "Near ATM put heat at $215.0 (-1% from spot) \u2014 support/hedge zone; longs often defend here with puts."
+            },
+            {
+              "source": "term_structure",
+              "tilt": "steep_backwardation",
+              "note": "Front IV 75% >> back 59% (spread 16pp) \u2014 near-term event premium (earnings/binary). Prefer post-event entries for swings."
+            }
+          ],
+          "neutral_notes": [
+            {
+              "source": "unusual_strikes",
+              "tilt": "lottery_calls",
+              "note": "Far OTM call interest ~66% above spot ($360.0) \u2014 lottery / squeeze narrative, not a base case."
+            }
+          ],
+          "for_stop_engineering": {
+            "expected_move_pct": 9.9,
+            "atm_iv_pct": 75.2,
+            "expiry": "2026-07-24",
+            "days_to_expiry": 10,
+            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
+          },
+          "swing_playbook": {
+            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
+            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
+            "if_mixed": "Default to price + fundamentals. Options are not voting.",
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself.",
+            "term_structure": "Front IV 75% >> back 59% (spread 16pp) \u2014 near-term event premium (earnings/binary). Prefer post-event entries for swings."
+          },
+          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
+        }
       }
     }
   },
@@ -26655,20 +29365,18 @@
       }
     },
     "holdings": [],
-    "cusips_learned": {
-      "TDG": "893641100"
-    }
+    "cusips_learned": {}
   },
   "news_and_catalysts": {
     "status": "ok",
-    "as_of": "2026-07-15T00:52:06.269107+00:00",
+    "as_of": "2026-07-15T01:52:13.399279+00:00",
     "news_max_age_days": 7,
     "tickers": {
       "DELL": {
         "headlines": [
           {
             "title": "Dow Jones Futures: Goldman, CrowdStrike Jump, But AI Stocks Need To Do This",
-            "published": "2026-07-15T00:39:30Z",
+            "published": "2026-07-15T01:41:54Z",
             "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-futures-goldman-crowdstrike-ai-stocks-asml-morgan-stanley/?src=A00220&yptr=yahoo",
             "age_days": 0.0
           },
@@ -26676,31 +29384,31 @@
             "title": "What You Actually Pay To Join The AAPL Run",
             "published": "2026-07-14T21:31:01Z",
             "url": "https://www.trefis.com/articles/607058/what-you-actually-pay-to-join-the-aapl-run/2026-07-14",
-            "age_days": 0.1
+            "age_days": 0.2
           },
           {
             "title": "Everpure and NetApp Stocks Trade Up, What You Need To Know",
             "published": "2026-07-14T19:43:11Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/everpure-netapp-stocks-trade-know-194311420.html",
-            "age_days": 0.2
+            "age_days": 0.3
           },
           {
             "title": "Dell and Hewlett Packard Enterprise Shares Skyrocket, What You Need To Know",
             "published": "2026-07-14T19:35:11Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/dell-hewlett-packard-enterprise-shares-193511620.html",
-            "age_days": 0.2
+            "age_days": 0.3
           },
           {
             "title": "June CPI Shakes Up 2026 Rate Hike Odds",
             "published": "2026-07-14T18:57:00Z",
             "url": "https://finance.yahoo.com/economy/policy/articles/june-cpi-shakes-2026-rate-185700608.html",
-            "age_days": 0.2
+            "age_days": 0.3
           },
           {
             "title": "Dell Technologies Inc. (DELL) Shares Soared",
             "published": "2026-07-14T18:55:15Z",
             "url": "https://finance.yahoo.com/technology/articles/dell-technologies-inc-dell-shares-185515566.html",
-            "age_days": 0.2
+            "age_days": 0.3
           }
         ],
         "next_earnings": "2026-09-03",
@@ -26747,37 +29455,37 @@
             "title": "Everpure and NetApp Stocks Trade Up, What You Need To Know",
             "published": "2026-07-14T19:43:11Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/everpure-netapp-stocks-trade-know-194311420.html",
-            "age_days": 0.2
+            "age_days": 0.3
           },
           {
             "title": "Dell and Hewlett Packard Enterprise Shares Skyrocket, What You Need To Know",
             "published": "2026-07-14T19:35:11Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/dell-hewlett-packard-enterprise-shares-193511620.html",
-            "age_days": 0.2
+            "age_days": 0.3
           },
           {
             "title": "Here\u2019s Why Wall Street Sees Juniper Integration As A Key Catalyst For Hewlett Packard Enterprise (HPE)",
             "published": "2026-07-14T19:27:40Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/why-wall-street-sees-juniper-192740904.html",
-            "age_days": 0.2
+            "age_days": 0.3
           },
           {
             "title": "Hewlett Packard Enterprise Company (HPE) CEO comments on Quantum Computing",
             "published": "2026-07-14T18:55:22Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/hewlett-packard-enterprise-company-hpe-185522434.html",
-            "age_days": 0.2
+            "age_days": 0.3
           },
           {
             "title": "Dell Gains as Tech Spending Shifts",
             "published": "2026-07-14T16:58:36Z",
             "url": "https://finance.yahoo.com/technology/articles/dell-gains-tech-spending-shifts-165836930.html",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "5 Low Price-to-Book Value Stocks to Buy in July for Solid Returns",
             "published": "2026-07-14T14:27:00Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/5-low-price-book-value-142700491.html",
-            "age_days": 0.4
+            "age_days": 0.5
           }
         ],
         "next_earnings": "2026-06-01",
@@ -26824,13 +29532,13 @@
             "title": "CrowdStrike, Fortinet and others surge on IBM warning of customer spending shift",
             "published": "2026-07-14T16:55:38Z",
             "url": "https://finance.yahoo.com/markets/stocks/article/crowdstrike-fortinet-and-others-surge-on-ibm-warning-of-customer-spending-shift-165538094.html",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "Why Palo Alto Networks Stock Zoomed Almost 7% Higher Today",
             "published": "2026-07-14T23:59:25Z",
             "url": "https://www.fool.com/investing/2026/07/14/why-palo-alto-networks-stock-zoomed-almost-7-highe/",
-            "age_days": 0.0
+            "age_days": 0.1
           },
           {
             "title": "CRWD, PANW, ZS, OKTA In Focus \u2014 Cybersecurity Stocks Get Boost As IBM CEO Flags Rising Concerns",
@@ -26854,7 +29562,7 @@
             "title": "Okta and Palo Alto Networks Stocks Trade Up, What You Need To Know",
             "published": "2026-07-14T19:51:11Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/okta-palo-alto-networks-stocks-195111062.html",
-            "age_days": 0.2
+            "age_days": 0.3
           }
         ],
         "next_earnings": "2026-08-18",
@@ -26907,7 +29615,7 @@
             "title": "Rubrik (RBRK) Joins Health AI Coalition To Help Set Healthcare AI Rules",
             "published": "2026-07-14T14:12:56Z",
             "url": "https://finance.yahoo.com/healthcare/articles/rubrik-rbrk-joins-health-ai-141256870.html",
-            "age_days": 0.4
+            "age_days": 0.5
           },
           {
             "title": "Does Rubrik\u2019s \u00a3375M UK Bet and EMEA Hub Reframe Its European Moat Narrative (RBRK)?",
@@ -26919,19 +29627,19 @@
             "title": "Rubrik (RBRK) Stock Could Be Pricey Despite $500 Million UK Expansion",
             "published": "2026-07-14T04:32:35Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/rubrik-rbrk-stock-could-pricey-043235991.html",
-            "age_days": 0.8
+            "age_days": 0.9
           },
           {
             "title": "EXCLUSIVE: Rackspace CFO Says AI Winners Will \u2018Own The Outcome,\u2019 Not the GPUs",
             "published": "2026-07-14T00:31:14Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/exclusive-rackspace-cfo-says-ai-003114459.html",
-            "age_days": 1.0
+            "age_days": 1.1
           },
           {
             "title": "Rubrik (RBRK) is One of the Best Up and Coming Stocks to Invest In Right Now, Here\u2019s Why",
             "published": "2026-07-12T16:33:43Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/rubrik-rbrk-one-best-coming-132543301.html",
-            "age_days": 2.3
+            "age_days": 2.4
           }
         ],
         "next_earnings": "2026-06-04",
@@ -26978,19 +29686,19 @@
             "title": "Why FormFactor (FORM) Stock Is Trading Up Today",
             "published": "2026-07-14T21:59:11Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/why-formfactor-form-stock-trading-215911328.html",
-            "age_days": 0.1
+            "age_days": 0.2
           },
           {
             "title": "Advanced Micro Devices, Inc. (AMD) Stock Surges as Goldman Sees Big Earnings Coming",
             "published": "2026-07-14T21:45:29Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/advanced-micro-devices-inc-amd-214529133.html",
-            "age_days": 0.1
+            "age_days": 0.2
           },
           {
             "title": "The Real Risk Inside Broadcom Stock",
             "published": "2026-07-14T21:22:46Z",
             "url": "https://www.trefis.com/articles/607057/the-real-risk-inside-broadcom-stock/2026-07-14",
-            "age_days": 0.1
+            "age_days": 0.2
           },
           {
             "title": "NVIDIA Stock Amplifies Your Market Ride",
@@ -27061,11 +29769,11 @@
             "title": "CrowdStrike, Fortinet and others surge on IBM warning of customer spending shift",
             "published": "2026-07-14T16:55:38Z",
             "url": "https://finance.yahoo.com/markets/stocks/article/crowdstrike-fortinet-and-others-surge-on-ibm-warning-of-customer-spending-shift-165538094.html",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "Dow Jones Futures: Goldman, CrowdStrike Jump, But AI Stocks Need To Do This",
-            "published": "2026-07-15T00:39:30Z",
+            "published": "2026-07-15T01:41:54Z",
             "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-futures-goldman-crowdstrike-ai-stocks-asml-morgan-stanley/?src=A00220&yptr=yahoo",
             "age_days": 0.0
           },
@@ -27079,13 +29787,13 @@
             "title": "CrowdStrike (CRWD) Stock Gets Fresh Attention After Russian Cyber Threat Warning",
             "published": "2026-07-14T22:14:55Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/crowdstrike-crwd-stock-gets-fresh-221455933.html",
-            "age_days": 0.1
+            "age_days": 0.2
           },
           {
             "title": "Missed CRWD\u2019s Rally? This ETF Paid 29% in the Same Six Months",
             "published": "2026-07-14T21:53:12Z",
             "url": "https://247wallst.com/investing/etf/2026/07/14/missed-crwds-rally-this-etf-paid-29-in-the-same-six-months/",
-            "age_days": 0.1
+            "age_days": 0.2
           }
         ],
         "next_earnings": "2026-09-01",
@@ -27132,13 +29840,13 @@
             "title": "Robinhood Just Launched a New Blockchain. Here's Why Investors Should Care.",
             "published": "2026-07-14T23:47:00Z",
             "url": "https://www.fool.com/investing/2026/07/14/robinhood-just-launched-a-new-blockchain/",
-            "age_days": 0.0
+            "age_days": 0.1
           },
           {
             "title": "Artemis Warns Robinhood Chain\u2019s Biggest Success May Also Be Its Greatest Risk",
             "published": "2026-07-14T21:19:55Z",
             "url": "https://beincrypto.com/robinhood-chain-memecoin-success-risk/",
-            "age_days": 0.1
+            "age_days": 0.2
           },
           {
             "title": "Top Stock Reports for Chevron, TotalEnergies & Robinhood",
@@ -27150,7 +29858,7 @@
             "title": "Down More Than 30% This Year, This Stock is a Buy In The Dip",
             "published": "2026-07-14T17:00:10Z",
             "url": "https://247wallst.com/investing/2026/07/14/down-more-than-30-this-year-this-stock-is-a-buy-in-the-dip/",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "Should You Buy Robinhood Stock Before July 29?",
@@ -27162,7 +29870,7 @@
             "title": "Paxos Labs Moves Nearly $30M Through Robinhood Chain",
             "published": "2026-07-14T14:16:00Z",
             "url": "https://www.cryptoprowl.com/releases/paxos-labs-moves-nearly-30m-through-robinhood-chain-6149",
-            "age_days": 0.4
+            "age_days": 0.5
           }
         ],
         "next_earnings": "2026-07-29",
@@ -27209,31 +29917,31 @@
             "title": "Axon's Connected Devices Unit Gains Momentum: More Upside to Come?",
             "published": "2026-07-14T14:14:00Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/axons-connected-devices-unit-gains-141400886.html",
-            "age_days": 0.4
+            "age_days": 0.5
           },
           {
             "title": "Axon Enterprise (AXON) Registers a Bigger Fall Than the Market: Important Facts to Note",
             "published": "2026-07-13T22:00:06Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/axon-enterprise-axon-registers-bigger-220006439.html",
-            "age_days": 1.1
+            "age_days": 1.2
           },
           {
             "title": "Axon Enterprise's Quarterly Earnings Preview: What You Need to Know",
             "published": "2026-07-13T15:03:21Z",
             "url": "https://www.barchart.com/story/news/3255526/axon-enterprise-s-quarterly-earnings-preview-what-you-need-to-know",
-            "age_days": 1.4
+            "age_days": 1.5
           },
           {
             "title": "How AppLovin (APP) Is Using AI to Expand Beyond Mobile Gaming Into E-Commerce Advertising",
             "published": "2026-07-12T17:25:26Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/applovin-nasdaq-app-using-ai-122026029.html",
-            "age_days": 2.3
+            "age_days": 2.4
           },
           {
             "title": "Coinbase, Lyft, and Axon prove there's more going on in markets than the 'Magnificent 7'",
             "published": "2026-07-12T12:30:00Z",
             "url": "https://finance.yahoo.com/markets/article/coinbase-lyft-and-axon-prove-theres-more-going-on-in-markets-than-the-magnificent-7-123000539.html",
-            "age_days": 2.5
+            "age_days": 2.6
           },
           {
             "title": "Axon (AXON) Upgraded to Strong Buy: Here's What You Should Know",
@@ -27369,7 +30077,7 @@
             "title": "Why Did SMR, RR, FAC Stocks Plummet To 52-Week Lows?",
             "published": "2026-07-14T04:36:46Z",
             "url": "https://stocktwits.com/news-articles/markets/equity/why-did-smr-rr-fac-stocks-plummet-to-52-week-lows/cZZblZPR7pb",
-            "age_days": 0.8
+            "age_days": 0.9
           },
           {
             "title": "SpaceX Just Did Something NuScale Power Investors Should Be Watching",
@@ -27381,13 +30089,13 @@
             "title": "Can X-Energy's Capital-Light Model Drive Long-Term Growth?",
             "published": "2026-07-13T16:32:00Z",
             "url": "https://finance.yahoo.com/energy/articles/x-energys-capital-light-model-163200663.html",
-            "age_days": 1.3
+            "age_days": 1.4
           },
           {
             "title": "After an 83% Correction, Where Will NuScale Power Stock Be in 3 Years?",
             "published": "2026-07-13T11:48:00Z",
             "url": "https://www.fool.com/investing/2026/07/13/after-a-x-run-where-will-hot-ticker-be-in-3-years/",
-            "age_days": 1.5
+            "age_days": 1.6
           },
           {
             "title": "What Does the Sale of NuScale Stock by the CFO Mean to Investors?",
@@ -27437,10 +30145,16 @@
       "BSX": {
         "headlines": [
           {
+            "title": "Are Boston Scientific\u2019s (BSX) Sterile-Packaging Recalls Reframing the Narrative on Quality and Regulatory Risk?",
+            "published": "2026-07-15T01:12:16Z",
+            "url": "https://finance.yahoo.com/healthcare/articles/boston-scientific-bsx-sterile-packaging-011216919.html",
+            "age_days": 0.0
+          },
+          {
             "title": "Boston Scientific (BSX) Stock Drops Despite Market Gains: Important Facts to Note",
             "published": "2026-07-14T22:00:02Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/boston-scientific-bsx-stock-drops-220002743.html",
-            "age_days": 0.1
+            "age_days": 0.2
           },
           {
             "title": "Intuitive Surgical Pre-Q2 Analysis: Buy, Hold or Sell the Stock Now?",
@@ -27458,19 +30172,13 @@
             "title": "1 Stock Under $50 to Keep an Eye On and 2 We Brush Off",
             "published": "2026-07-13T09:42:17Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/1-stock-under-50-keep-094217110.html",
-            "age_days": 1.6
+            "age_days": 1.7
           },
           {
             "title": "Boston Scientific Corporation (BSX) Is A Stock To Buy According To D. E. Shaw",
             "published": "2026-07-12T14:04:24Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/boston-scientific-corporation-bsx-stock-140424185.html",
-            "age_days": 2.4
-          },
-          {
-            "title": "Is It Worth Investing in Boston Scientific (BSX) Based on Wall Street's Bullish Views?",
-            "published": "2026-07-10T13:30:02Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/worth-investing-boston-scientific-bsx-133002510.html",
-            "age_days": 4.5
+            "age_days": 2.5
           }
         ],
         "next_earnings": "2026-07-29",
@@ -27523,7 +30231,7 @@
             "title": "Cloudflare (NET): 3 Reasons We Love This Stock",
             "published": "2026-07-14T14:07:11Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/cloudflare-net-3-reasons-love-140711267.html",
-            "age_days": 0.4
+            "age_days": 0.5
           },
           {
             "title": "Cloudflare, Inc. (NET) is Attracting Investor Attention: Here is What You Should Know",
@@ -27535,7 +30243,7 @@
             "title": "The New Cyber Front Line: Pax8\u202fCorporate VP Oguo\u202fAtuanya, CrowdStrike VP Daniel Danielli, Live from Pax8 Beyond 2026",
             "published": "2026-07-13T19:35:04Z",
             "url": "https://tech.yahoo.com/cybersecurity/articles/cyber-front-line-pax8-corporate-193504598.html",
-            "age_days": 1.2
+            "age_days": 1.3
           },
           {
             "title": "Oracle Is Now Down 28% in a Month. Will the 52-Week Low of $132 Hold or Fold?",
@@ -27547,7 +30255,7 @@
             "title": "Cloudflare Draws Fresh Price Target Hikes Ahead Of Earnings \u2014 Analysts See Another 30% Growth Quarter",
             "published": "2026-07-13T12:11:21Z",
             "url": "https://stocktwits.com/news-articles/markets/equity/net-stock-price-target-hikes-ahead-of-cloudflare-q2-earnings/cZmzoZ8R7YG",
-            "age_days": 1.5
+            "age_days": 1.6
           }
         ],
         "next_earnings": "2026-07-30",
@@ -27594,7 +30302,7 @@
             "title": "CrowdStrike, Fortinet and others surge on IBM warning of customer spending shift",
             "published": "2026-07-14T16:55:38Z",
             "url": "https://finance.yahoo.com/markets/stocks/article/crowdstrike-fortinet-and-others-surge-on-ibm-warning-of-customer-spending-shift-165538094.html",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "Why The Trade Desk (TTD) Shares Are Sliding Today",
@@ -27606,7 +30314,7 @@
             "title": "Atlassian, monday.com, and Agilysys Stocks Trade Down, What You Need To Know",
             "published": "2026-07-14T21:19:11Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/atlassian-monday-com-agilysys-stocks-211911212.html",
-            "age_days": 0.1
+            "age_days": 0.2
           },
           {
             "title": "Adobe, ServiceNow, and Appian Stocks Trade Down, What You Need To Know",
@@ -27701,7 +30409,7 @@
             "title": "Diamondback Energy (FANG) Stock Slides as Market Rises: Facts to Know Before You Trade",
             "published": "2026-07-09T22:15:04Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/diamondback-energy-fang-stock-slides-221504228.html",
-            "age_days": 5.1
+            "age_days": 5.2
           }
         ],
         "next_earnings": "2026-08-03",
@@ -27748,7 +30456,7 @@
             "title": "Honeywell Aerospace's Competitive Edge Lies in Its 'Develop Once, Deploy Everywhere' R&D Model, Morgan Stanley Says",
             "published": "2026-07-08T14:48:40Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/honeywell-aerospace-apos-competitive-edge-144840591.html",
-            "age_days": 6.4
+            "age_days": 6.5
           },
           {
             "title": "TransDigm Group (TDG) On Rising Earnings Expectations And What That Means For Valuation",
@@ -27801,7 +30509,7 @@
             "title": "Williams Lands $5.34 Billion AI Power Deal With Blackstone-Led Group",
             "published": "2026-07-14T21:51:33Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/williams-lands-5-34-billion-215133006.html",
-            "age_days": 0.1
+            "age_days": 0.2
           },
           {
             "title": "Chevron Entered The AI Power Business. The Oil Patch Won't Be The Same.",
@@ -27813,7 +30521,7 @@
             "title": "Williams Secures Blackstone-Led $5.34B Deal for AI Power Push",
             "published": "2026-07-14T12:15:00Z",
             "url": "https://finance.yahoo.com/energy/articles/williams-secures-blackstone-led-5-121500011.html",
-            "age_days": 0.5
+            "age_days": 0.6
           },
           {
             "title": "Top Midday Stories: Trump Says US to Be Guardian of Hormuz Strait; Meta to Invest Over $50 Billion in Louisiana Data Center Expansion",
@@ -27825,13 +30533,13 @@
             "title": "Williams Shares Gain After Securing $5.34 Billion Blackstone-Led Investment for Power Projects (WMB)",
             "published": "2026-07-13T14:10:09Z",
             "url": "https://investorshub.advfn.com/market-news/article/31753/williams-shares-gain-after-securing-5-34-billion-blackstone-led-investment-for-power-projects-wmb",
-            "age_days": 1.4
+            "age_days": 1.5
           },
           {
             "title": "Williams Gets $5.34 Billion Investment from Blackstone-led Group",
             "published": "2026-07-13T14:09:00Z",
             "url": "https://www.wsj.com/finance/investing/williams-gets-5-34-billion-investment-from-blackstone-led-group-ac672a23?siteid=yhoof2&yptr=yahoo",
-            "age_days": 1.4
+            "age_days": 1.5
           }
         ],
         "next_earnings": "2026-08-03",
@@ -27876,7 +30584,7 @@
         "headlines": [
           {
             "title": "Dow Jones Futures: Goldman, CrowdStrike Jump, But AI Stocks Need To Do This",
-            "published": "2026-07-15T00:39:30Z",
+            "published": "2026-07-15T01:41:54Z",
             "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-futures-goldman-crowdstrike-ai-stocks-asml-morgan-stanley/?src=A00220&yptr=yahoo",
             "age_days": 0.0
           },
@@ -27902,7 +30610,7 @@
             "title": "Is SentinelOne the Next CrowdStrike?",
             "published": "2026-07-14T12:38:00Z",
             "url": "https://www.fool.com/investing/2026/07/14/is-sentinelone-the-next-crowdstrike/",
-            "age_days": 0.5
+            "age_days": 0.6
           },
           {
             "title": "Cisco (CSCO) Eyes SentinelOne As Italy And Bahrain Data Center Push Expands",
@@ -27961,13 +30669,13 @@
             "title": "CrowdStrike, Fortinet and others surge on IBM warning of customer spending shift",
             "published": "2026-07-14T16:55:38Z",
             "url": "https://finance.yahoo.com/markets/stocks/article/crowdstrike-fortinet-and-others-surge-on-ibm-warning-of-customer-spending-shift-165538094.html",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "IBM stock crashes after major warning \u2014 here's what Wall Street is doing next",
             "published": "2026-07-14T11:42:35Z",
             "url": "https://finance.yahoo.com/markets/stocks/article/ibm-stock-crashes-after-major-warning--heres-what-wall-street-is-doing-next-114235587.html",
-            "age_days": 0.5
+            "age_days": 0.6
           },
           {
             "title": "IBM stock plunges over 20% on preliminary Q2 results: What to know",
@@ -27977,14 +30685,14 @@
           },
           {
             "title": "Dow Jones Futures: Goldman, CrowdStrike Jump, But AI Stocks Need To Do This",
-            "published": "2026-07-15T00:39:30Z",
+            "published": "2026-07-15T01:41:54Z",
             "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-futures-goldman-crowdstrike-ai-stocks-asml-morgan-stanley/?src=A00220&yptr=yahoo",
             "age_days": 0.0
           },
           {
-            "title": "Why Salesforce Stock Slumped on Tuesday",
-            "published": "2026-07-15T00:23:59Z",
-            "url": "https://www.fool.com/investing/2026/07/14/why-salesforce-stock-slumped-on-tuesday/",
+            "title": "Why IBM Stock Crashed Today",
+            "published": "2026-07-15T01:25:19Z",
+            "url": "https://www.fool.com/investing/2026/07/14/why-ibm-stock-crashed-today/",
             "age_days": 0.0
           }
         ],
@@ -28031,12 +30739,12 @@
   "market_news": {
     "note": "Market-wide headlines (last ~24h) for tape context - what is moving EVERYTHING today, not just your focus names. Weigh it in the macro/regime read; never build a single-name thesis on it alone.",
     "status": "ok",
-    "as_of": "2026-07-15T00:50:50.275163+00:00",
+    "as_of": "2026-07-15T01:50:51.657934+00:00",
     "sources": [
       {
         "name": "yahoo_finance",
         "ok": true,
-        "items": 42
+        "items": 41
       },
       {
         "name": "cnbc",
@@ -28051,116 +30759,116 @@
     ],
     "headlines": [
       {
+        "title": "SK Hynix South Korean shares jump 11% as Asia tech stocks rally",
+        "source": "cnbc",
+        "published": "2026-07-15T01:22:34+00:00",
+        "url": "https://www.cnbc.com/2026/07/15/sk-hynix-asia-tech-stocks-rally-.html",
+        "age_hours": 0.5
+      },
+      {
         "title": "U.S. strikes Iran before Hormuz Strait blockade restarts",
         "source": "cnbc",
         "published": "2026-07-15T00:24:59+00:00",
         "url": "https://www.cnbc.com/2026/07/14/iran-strikes-hormuz-strait-blockade-trump-tolls.html",
-        "age_hours": 0.4
+        "age_hours": 1.4
       },
       {
         "title": "Brace for $4 gas again: How U.S.-Iran tensions are threatening to end the price break at the pump",
         "source": "marketwatch",
         "published": "2026-07-15T00:28:00+00:00",
         "url": "https://www.marketwatch.com/story/brace-for-4-gas-again-how-u-s-iran-tensions-are-threatening-to-end-the-price-break-at-the-pump-343a76e1?mod=mw_rss_topstories",
-        "age_hours": 0.4
+        "age_hours": 1.4
       },
       {
         "title": "This overlooked index is a better investment than the S&P 500",
         "source": "marketwatch",
         "published": "2026-07-14T23:32:00+00:00",
         "url": "https://www.marketwatch.com/story/this-overlooked-index-is-a-better-investment-than-the-s-p-500-74c7e698?mod=mw_rss_topstories",
-        "age_hours": 1.3
+        "age_hours": 2.3
       },
       {
         "title": "Jim Cramer says concerns about AI market froth are overblown. Here's why",
         "source": "cnbc",
         "published": "2026-07-14T22:20:46+00:00",
         "url": "https://www.cnbc.com/2026/07/14/jim-cramer-concerns-ai-market-froth-overblown.html",
-        "age_hours": 2.5
+        "age_hours": 3.5
       },
       {
         "title": "\u2018It\u2019s heartbreaking\u2019: My brother claimed Social Security at 70. He died from cancer after one payment. Why wait to claim?",
         "source": "marketwatch",
         "published": "2026-07-14T22:15:00+00:00",
         "url": "https://www.marketwatch.com/story/its-heartbreaking-my-brother-claimed-social-security-at-70-he-died-from-cancer-after-one-payment-why-wait-to-claim-491669b6?mod=mw_rss_topstories",
-        "age_hours": 2.6
+        "age_hours": 3.6
       },
       {
         "title": "Your monthly Netflix bill is up 29% in just over a year. Critics say Washington needs to fix it.",
         "source": "marketwatch",
         "published": "2026-07-14T22:11:00+00:00",
         "url": "https://www.marketwatch.com/story/your-monthly-netflix-bill-is-up-29-in-just-over-a-year-critics-say-washington-needs-to-fix-it-bcab6e5b?mod=mw_rss_topstories",
-        "age_hours": 2.7
+        "age_hours": 3.7
       },
       {
         "title": "Three powerful forces are draining family wealth \u2014 and your estate plan is completely unprepared",
         "source": "marketwatch",
         "published": "2026-07-14T21:38:00+00:00",
         "url": "https://www.marketwatch.com/story/the-great-wealth-transfer-is-real-but-the-irs-or-a-nursing-home-might-get-your-money-first-d0c46676?mod=mw_rss_topstories",
-        "age_hours": 3.2
+        "age_hours": 4.2
       },
       {
         "title": "Current and former employees sue Meta, alleging discrimination in using AI to conduct layoffs",
         "source": "cnbc",
         "published": "2026-07-14T21:12:44+00:00",
         "url": "https://www.cnbc.com/2026/07/14/meta-lawsuit-layoffs-ai.html",
-        "age_hours": 3.6
+        "age_hours": 4.6
       },
       {
         "title": "Cybersecurity stocks rally on AI spending change comments from IBM's Krishna",
         "source": "cnbc",
         "published": "2026-07-14T21:13:39+00:00",
         "url": "https://www.cnbc.com/2026/07/14/cybersecurity-stocks-ai-spending-mythos.html",
-        "age_hours": 3.6
+        "age_hours": 4.6
       },
       {
         "title": "Zipline adds ex-Tesla, Uber, Waymo execs to make drone delivery mainstream across U.S.",
         "source": "cnbc",
         "published": "2026-07-14T21:08:03+00:00",
         "url": "https://www.cnbc.com/2026/07/14/zipline-drone-delivery-tesla-uber-waymo-executives.html",
-        "age_hours": 3.7
+        "age_hours": 4.7
       },
       {
         "title": "What IBM\u2019s profit warning means: Hardware is \u2018eating everyone\u2019s lunch\u2019",
         "source": "marketwatch",
         "published": "2026-07-14T21:10:00+00:00",
         "url": "https://www.marketwatch.com/story/what-ibms-profit-warning-means-hardware-is-eating-everyones-lunch-c6878824?mod=mw_rss_topstories",
-        "age_hours": 3.7
+        "age_hours": 4.7
       },
       {
         "title": "Taco Bell reportedly being investigated by health officials, as cyclosporiasis outbreak spreads",
         "source": "marketwatch",
         "published": "2026-07-14T21:09:00+00:00",
         "url": "https://www.marketwatch.com/story/officials-are-reportedly-looking-into-taco-bell-as-source-of-parasite-outbreak-remains-elusive-3ead0a1f?mod=mw_rss_topstories",
-        "age_hours": 3.7
+        "age_hours": 4.7
       },
       {
         "title": "IBM stock craters 25%, the worst day on record, after company issues second-quarter earnings warning",
         "source": "cnbc",
         "published": "2026-07-14T21:01:06+00:00",
         "url": "https://www.cnbc.com/2026/07/14/ibm-warns-second-quarter-earnings-fell-short-of-expectations.html",
-        "age_hours": 3.8
+        "age_hours": 4.8
       },
       {
         "title": "Here\u2019s the inflation breakdown for June 2026 \u2014 in one chart",
         "source": "cnbc",
         "published": "2026-07-14T21:02:45+00:00",
         "url": "https://www.cnbc.com/2026/07/14/inflation-cpi-june-2026-in-one-chart.html",
-        "age_hours": 3.8
-      },
-      {
-        "title": "Consumer prices rose 3.5% annually in June, less than expected as energy prices eased",
-        "source": "cnbc",
-        "published": "2026-07-14T21:05:13+00:00",
-        "url": "https://www.cnbc.com/2026/07/14/consumer-price-index-inflation-report-june-2026.html",
-        "age_hours": 3.8
+        "age_hours": 4.8
       }
     ]
   },
   "todays_8ks": {
     "note": "8-K filings TODAY across the ENTIRE universe (one EDGAR index sweep). An 8-K on a non-focus name may be the day's real opportunity - pull the filing with WebFetch if the form looks material before dismissing it.",
     "status": "ok",
-    "as_of": "2026-07-15T00:50:50.924882+00:00",
+    "as_of": "2026-07-15T01:50:52.400498+00:00",
     "index_date": "2026-07-13",
     "filers": [
       {
@@ -31730,7 +34438,8 @@
             "url": "https://www.sec.gov/Archives/edgar/data/1645590/000114036126010222/ef20068126_8k.htm"
           }
         ],
-        "partnership_headlines": []
+        "partnership_headlines": [],
+        "news_error": "'NoneType' object has no attribute 'get'"
       },
       "PANW": {
         "material_agreement_8ks": [
