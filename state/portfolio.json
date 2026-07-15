@@ -1,42 +1,7 @@
 {
-  "cash_usd": 8200.01,
-  "total_equity_usd": 10026.9,
-  "positions": [
-    {
-      "ticker": "DELL",
-      "quantity": 2.2189,
-      "avg_cost": 450.6702,
-      "market_value_usd": 1015.24,
-      "opened_at": "2026-07-09T21:41:38.155448+00:00",
-      "proposal_id": "20260709-5a9364",
-      "last_price": 457.54,
-      "actions_processed_through": "2026-07-15",
-      "plan": {
-        "stop_loss": 408.0,
-        "target_price": 525.0,
-        "holding_horizon_days": 45,
-        "entry_price_max": 458.0,
-        "confidence": 0.66
-      }
-    },
-    {
-      "ticker": "HPE",
-      "quantity": 16.3771,
-      "avg_cost": 48.8488,
-      "market_value_usd": 811.65,
-      "opened_at": "2026-07-10T19:14:48.307774+00:00",
-      "proposal_id": "20260710-ce5923",
-      "last_price": 49.56,
-      "actions_processed_through": "2026-07-15",
-      "plan": {
-        "stop_loss": 43.75,
-        "target_price": 58.0,
-        "holding_horizon_days": 40,
-        "entry_price_max": 49.75,
-        "confidence": 0.64
-      }
-    }
-  ],
+  "cash_usd": 9819.48,
+  "total_equity_usd": 9819.48,
+  "positions": [],
   "pending_orders": {},
   "history": [
     {
@@ -66,6 +31,83 @@
       "quantity": 16.3771,
       "notional_usd": 800.0,
       "filled_at": "2026-07-10T19:14:48.307779+00:00"
+    },
+    {
+      "ticker": "DELL",
+      "action": "SELL_TO_CLOSE",
+      "reference_price": 400.52,
+      "proposal_id": "20260715-e2c95f",
+      "forced_exit_reason": "stop_loss_breached",
+      "stop_loss": 408.0,
+      "atr_pct": 8.3,
+      "order_id": "SIM-afbba17462",
+      "status": "filled",
+      "submitted_at": "2026-07-15T16:32:49.841338+00:00",
+      "fill_price": 389.7542,
+      "quantity": 2.2189,
+      "notional_usd": 864.83,
+      "sell_fraction": 1.0,
+      "avg_cost": 450.6702,
+      "position_opened_at": "2026-07-09T21:41:38.155448+00:00",
+      "entry_plan": {
+        "stop_loss": 408.0,
+        "target_price": 525.0,
+        "holding_horizon_days": 45,
+        "entry_price_max": 458.0,
+        "confidence": 0.66
+      },
+      "entry_proposal_id": "20260709-5a9364",
+      "realized_pnl_usd": -135.19,
+      "total_realized_pnl_usd": -135.19,
+      "dividends_received_usd": 0.0,
+      "fees_usd": {
+        "commission": 0.0,
+        "sec_fee": 0.024,
+        "taf": 0.0004,
+        "slippage_bps": 10.0,
+        "effective_slippage_pct": 0.415
+      },
+      "gap_modeled": true,
+      "gap_usd": 18.2458,
+      "filled_at": "2026-07-15T16:32:49.841872+00:00"
+    },
+    {
+      "ticker": "HPE",
+      "action": "SELL_TO_CLOSE",
+      "position_size_usd": null,
+      "reference_price": 46.22,
+      "proposal_id": "20260715-e2c95f",
+      "sell_fraction": 1.0,
+      "atr_pct": 5.97,
+      "plan": null,
+      "demand_driver": null,
+      "order_id": "SIM-d02ec3368c",
+      "status": "filled",
+      "submitted_at": "2026-07-15T16:32:49.853175+00:00",
+      "fill_price": 46.082,
+      "quantity": 16.3771,
+      "notional_usd": 754.69,
+      "avg_cost": 48.8488,
+      "position_opened_at": "2026-07-10T19:14:48.307774+00:00",
+      "entry_plan": {
+        "stop_loss": 43.75,
+        "target_price": 58.0,
+        "holding_horizon_days": 40,
+        "entry_price_max": 49.75,
+        "confidence": 0.64
+      },
+      "entry_proposal_id": "20260710-ce5923",
+      "realized_pnl_usd": -45.33,
+      "total_realized_pnl_usd": -45.33,
+      "dividends_received_usd": 0.0,
+      "fees_usd": {
+        "commission": 0.0,
+        "sec_fee": 0.021,
+        "taf": 0.0027,
+        "slippage_bps": 10.0,
+        "effective_slippage_pct": 0.2985
+      },
+      "filled_at": "2026-07-15T16:32:49.853725+00:00"
     }
   ]
 }
