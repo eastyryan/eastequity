@@ -54,6 +54,15 @@ DEFAULT_SLOT_DEPTHS: dict[str, str] = {
     "1730": "evening_review",
 }
 
+# Slots that force a FULL deep dive when a universe name reports earnings.
+# morning (9am ET) catches overnight + pre-market (BMO) prints; evening
+# (5:30pm ET) catches that afternoon's after-hours (AMC) prints — 5:30 rather
+# than 4:00 because after-hours releases are often not out by the 4pm slot.
+DEFAULT_EARNINGS_SLOTS: dict[str, str] = {
+    "0900": "morning",
+    "1730": "evening",
+}
+
 _DESCRIPTIONS = {
     "light": (
         "Light check: holdings + watchlist prices and news; exits allowed; "
@@ -121,6 +130,45 @@ def slot_depth_from_hhmm(hhmm: str, cfg: dict | None = None,
     if best_depth is not None and best_dist <= tolerance_minutes:
         return str(best_depth)
     return "full"
+
+
+def earnings_deep_dive_session(hhmm: str | None, cfg: dict | None = None,
+                               tolerance_minutes: int = 75) -> str | None:
+    """Which earnings session a clock time 'HHMM' (ET) maps to, or None.
+
+    Feature toggle + slot map come from schedule.earnings_deep_dive; falls back
+    to the default 9am(morning)/5:30pm(evening) slots. Returns "morning" or
+    "evening" only when the feature is enabled AND hhmm is within tolerance of a
+    session slot (scheduled runs land minutes off the slot). Pure — no network.
+    """
+    edd = ((cfg or {}).get("schedule") or {}).get("earnings_deep_dive")
+    if edd is None:
+        slots = DEFAULT_EARNINGS_SLOTS
+    else:
+        if not edd.get("enabled", True):
+            return None
+        slots = edd.get("slots") or DEFAULT_EARNINGS_SLOTS
+
+    def _mins(s: str) -> int:
+        return int(s[:2]) * 60 + int(s[2:])
+
+    try:
+        now_m = _mins(str(hhmm).strip().zfill(4))
+    except (TypeError, ValueError, AttributeError):
+        return None
+    best, best_dist = None, None
+    for key, sess in slots.items():
+        if not (isinstance(key, str) and len(key) == 4 and key.isdigit()):
+            continue
+        if sess not in ("morning", "evening"):
+            continue
+        dist = abs(now_m - _mins(key))
+        dist = min(dist, 1440 - dist)  # wrap around midnight
+        if best_dist is None or dist < best_dist:
+            best, best_dist = str(sess), dist
+    if best is not None and best_dist <= tolerance_minutes:
+        return best
+    return None
 
 
 def resolve_depth(

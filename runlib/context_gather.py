@@ -265,17 +265,33 @@ def deep_research_bundle(focus: list[str]) -> tuple[dict, dict, dict]:
     return filings, deep_fundamentals, filing_texts
 
 
-def gather_context(cfg: dict, light: bool = False, depth: str | None = None) -> dict:
+def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
+                   earnings_trigger: dict | None = None) -> dict:
     """Build the brain's context bundle.
 
     depth (preferred) selects how much work to do:
       light | holdings_watchlist | full | weekly_market | evening_review
     `light=True` is kept for backward compatibility (== depth light).
+
+    earnings_trigger (optional): when a universe name reported earnings this
+    slot, the orchestrator escalates depth to full and passes the trigger here;
+    its reporters are force-promoted into deep-research focus and surfaced in the
+    bundle so the brain prioritizes them.
     """
     if depth is None:
         depth = "light" if light else "full"
     budget = focus_ticker_budget(depth)
     print(f"  • run depth: {depth} — {depth_description(depth)}")
+
+    # Reporters that forced this deep dive (filtered to the universe).
+    universe_set = validator.load_universe()
+    earnings_reporters = [
+        t for t in
+        dict.fromkeys(str(x).upper() for x in ((earnings_trigger or {}).get("reporters") or []) if x)
+        if t in universe_set
+    ]
+    if earnings_reporters:
+        print(f"  • earnings deep-dive reporters forced into focus: {earnings_reporters}")
 
     print("  • macro regime...")
     macro = get_macro_snapshot()
@@ -468,6 +484,16 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None) -> 
             print(f"  • tape/8-K promoted into deep focus: {add}")
             focus = list(dict.fromkeys(focus + add))
             for t, px in light_prices(add).items():
+                scan.setdefault("prices", {})[t] = px
+
+        # Earnings reporters that forced this full run always get deep research,
+        # even if they did not rank into the scan's top setups (foreign filers /
+        # off-momentum names would otherwise be scanned but not underwritten).
+        earn_new = [t for t in earnings_reporters if t not in focus]
+        if earn_new:
+            print(f"  • earnings reporters promoted into deep focus: {earn_new}")
+            focus = list(dict.fromkeys(focus + earn_new))
+            for t, px in light_prices(earn_new).items():
                 scan.setdefault("prices", {})[t] = px
 
         print("  • rendering candlestick charts...")
@@ -733,6 +759,20 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None) -> 
             "promotions": tape_promotions,
             "promoted_tickers": [p.get("ticker") for p in tape_promotions],
         },
+        "earnings_deep_dive": (
+            {
+                **{k: v for k, v in (earnings_trigger or {}).items() if k != "reporters"},
+                "reporters": earnings_reporters,
+                "note": (earnings_trigger or {}).get("note")
+                or ("Universe names that reported earnings and forced this full deep "
+                    "dive (9am ET = overnight/pre-market, 5:30pm ET = afternoon "
+                    "after-hours). Promoted into deep-research focus; BUY still needs "
+                    "the validator and fat-pitch bar."),
+            }
+            if earnings_reporters else
+            {"reporters": [], "note": "No universe earnings reporter forced a deep "
+                                      "dive this slot."}
+        ),
         "reasoning_process": brain_reasoning_bundle(portfolio, depth, scan=scan),
         "stack_cards": stack_cards_for_focus(focus),
         "financial_checklists": financial_checklists_for_focus(focus),
