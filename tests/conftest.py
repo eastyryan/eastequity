@@ -41,3 +41,19 @@ def tmp_ledger(tmp_path):
         yield G.LEDGER_FILE
     finally:
         G.LEDGER_FILE = orig
+
+
+def pytest_runtest_teardown(item):
+    """Make the legacy print-based check() pattern actually FAIL under pytest.
+
+    Most suites here use `check(name, cond)` helpers that print PASS/FAIL and
+    append to a module-level FAILURES list, exiting non-zero only in script
+    mode. CI runs pytest, where a failed check counted as a passing test -
+    safety-rule regressions sailed through green (2026-07-15 review finding).
+    Drain each module's FAILURES after every test and fail the test if
+    anything accumulated, so both invocation styles now agree."""
+    fails = getattr(getattr(item, "module", None), "FAILURES", None)
+    if fails:
+        pending = list(fails)
+        del fails[:]  # drain so later tests in the module report their own
+        raise AssertionError(f"{len(pending)} failed check(s): {pending}")

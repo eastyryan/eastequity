@@ -551,6 +551,23 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
         except Exception as e:
             print(f"  (mark-to-market failed: {e})")
 
+    # Momentum-factor health (cheap, every depth): are momentum LEADERS being
+    # sold while the index holds up (July-2026-style factor unwind)? Uses this
+    # run's scan rows when a real scan happened (light runs pass none) plus a
+    # cached MTUM/SPMO-vs-SPY read. Fail-soft: never breaks a gather.
+    print("  • momentum-factor health...")
+    try:
+        from tools.momentum_health import get_momentum_health
+        _mh_rows = ((scan.get("top_setups") or [])
+                    + (scan.get("contrarian_setups") or [])
+                    + (scan.get("deep_value_200w") or [])
+                    + (scan.get("supplier_pullbacks") or []))
+        momentum_health = get_momentum_health(_mh_rows or None)
+    except Exception as e:
+        momentum_health = {"status": "unknown", "momentum_unwind": False,
+                           "signals": {}, "as_of": None,
+                           "note": f"momentum_health unavailable ({str(e)[:120]})"}
+
     print("  • position histories...")
     histories = get_position_histories(held) if held else {"status": "skipped"}
 
@@ -717,6 +734,7 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
                     "macro headlines. Weigh in the regime read; never the sole thesis.",
             **(market_events if isinstance(market_events, dict) else {}),
         },
+        "momentum_health": momentum_health,
         "discovery_screen": discovery_block if depth == "weekly_market" else {"status": "skipped"},
         "market_checkin": market_checkin,
         # Hard limits the validator will enforce - size within them or be rejected.

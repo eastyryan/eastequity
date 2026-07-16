@@ -13,8 +13,44 @@ are left for the brain to review.
 
 from __future__ import annotations
 
+import json
+
 import journal
 from execution import simulated_broker
+
+# Chandelier trailing-stop ATR multiple used when autonomy_config's
+# trade_quality_requirements block does not carry trailing_stop_atr_multiple.
+TRAILING_STOP_ATR_MULTIPLE_DEFAULT = 3.0
+
+
+def _trailing_atr_multiple() -> float:
+    """Chandelier multiple from config (trade_quality_requirements ->
+    trailing_stop_atr_multiple) with a hard-coded 3.0 default. Fail-soft:
+    an unreadable config or missing key never breaks a run."""
+    try:
+        cfg = json.loads((simulated_broker.ROOT / "autonomy_config.json").read_text())
+        v = (cfg.get("trade_quality_requirements") or {}).get("trailing_stop_atr_multiple")
+        if v is not None:
+            return float(v)
+    except Exception:
+        pass
+    return TRAILING_STOP_ATR_MULTIPLE_DEFAULT
+
+
+def _chandelier_stop(high_water, atr_pct, last, multiple: float):
+    """Chandelier exit level: high-water mark since entry − multiple × ATR,
+    with ATR expressed in absolute dollars (atr_pct of the CURRENT price).
+    None when any input is missing/unparseable — the caller then behaves
+    exactly as today (plan stop only)."""
+    if high_water is None or atr_pct is None or last is None:
+        return None
+    try:
+        hw, atrp, px = float(high_water), float(atr_pct), float(last)
+    except (TypeError, ValueError):
+        return None
+    if hw <= 0 or atrp <= 0 or px <= 0:
+        return None
+    return hw - multiple * (atrp / 100.0) * px
 
 
 def check_forced_exits(portfolio: dict, prices: dict, atr_by_ticker: dict | None = None) -> list[dict]:
@@ -25,9 +61,20 @@ def check_forced_exits(portfolio: dict, prices: dict, atr_by_ticker: dict | None
     atr_by_ticker: optional {TICKER: atr_pct} so each stop-breach exit carries
         the name's ATR — used downstream to model overnight stop gap-through.
         Optional/defaulted: the current call site works unchanged.
+
+    Chandelier trailing stop (ratchet-up only): when a position carries a
+    high_water mark and fresh ATR, the trail = high_water − N×ATR$ (N from
+    config, default 3.0). It becomes active ONLY once it exceeds the plan
+    stop — until then the plan stop governs, and there is deliberately NO
+    breakeven jump at +1R. Once active it only ever RATCHETS UP (never
+    lowers, never widens): effective stop = max(plan stop_loss, trailing).
+    New trail levels are persisted back to the ledger via the broker
+    (update_trailing_stops) — exit_guard itself never writes state.
     """
     atr_by_ticker = atr_by_ticker or {}
+    multiple = _trailing_atr_multiple()
     exits = []
+    trail_updates: dict = {}  # {TICKER: new level} persisted via the broker
     for pos in portfolio.get("positions", []):
         plan = pos.get("original_plan")
         if not plan:
@@ -40,19 +87,54 @@ def check_forced_exits(portfolio: dict, prices: dict, atr_by_ticker: dict | None
         horizon = plan.get("holding_horizon_days")
         days_held = pos.get("days_held")
 
+        # --- Chandelier trail (only meaningful alongside a plan stop) ---
+        trailing = None
+        if stop:
+            try:
+                trailing = float(pos.get("trailing_stop") or 0.0) or None
+            except (TypeError, ValueError):
+                trailing = None
+            chandelier = _chandelier_stop(
+                pos.get("high_water"), atr_by_ticker.get(ticker), last, multiple)
+            # Activation gate: the trail exists only once the chandelier has
+            # climbed ABOVE the plan stop; ratchet: it can only ever rise.
+            if chandelier is not None and chandelier > float(stop) \
+                    and chandelier > (trailing or 0.0):
+                trailing = round(chandelier, 4)
+                trail_updates[ticker] = trailing
+                pos["trailing_stop"] = trailing  # callers see it this run too
+
+        # Effective stop for the breach check: the trail never lowers it.
+        effective_stop = None
+        trail_binding = False
+        if stop:
+            effective_stop = float(stop)
+            if trailing is not None and trailing > effective_stop:
+                effective_stop = trailing
+                trail_binding = True
+
         reason = None
-        if stop and float(last) <= float(stop):
-            reason = "stop_loss_breached"
+        if effective_stop is not None and float(last) <= effective_stop:
+            reason = "trailing_stop_breached" if trail_binding else "stop_loss_breached"
         elif horizon and days_held is not None and days_held >= float(horizon):
             reason = "horizon_expired"
         if reason:
             exits.append({
                 "ticker": ticker, "reason": reason,
                 "last_price": float(last),
-                "stop_loss": float(stop) if stop else None,
+                # stop_loss carries the BINDING level so the broker's gap-through
+                # fill models the level that actually fired (trail or plan stop).
+                "stop_loss": effective_stop,
+                "plan_stop_loss": float(stop) if stop else None,
+                "trailing_stop": trailing,
                 "atr_pct": atr_by_ticker.get(ticker),
                 "days_held": days_held, "horizon": horizon,
             })
+    if trail_updates:
+        try:  # broker owns all ledger writes; a failed persist never blocks exits
+            simulated_broker.update_trailing_stops(trail_updates)
+        except Exception as e:
+            print(f"  (trailing-stop persist failed: {e})")
     return exits
 
 

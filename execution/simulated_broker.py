@@ -169,7 +169,9 @@ def _sell_fill_price(order: dict, ref: float, slip: float, costs: dict) -> tuple
         penalty off ref.
     Otherwise it is an ordinary sell: ref*(1-slip)."""
     reason = str(order.get("forced_exit_reason") or "")
-    is_stop = reason.startswith("stop")
+    # Trailing-stop exits are stop exits: the chandelier trail gaps through
+    # overnight exactly like the plan stop does.
+    is_stop = reason.startswith("stop") or reason.startswith("trailing_stop")
     if costs.get("model_stop_gaps") and is_stop:
         stop_loss = order.get("stop_loss")
         atr_pct = order.get("atr_pct")
@@ -242,6 +244,14 @@ def readback(order_id: str) -> dict | None:
                 existing["buy_commission_usd"] = round(
                     existing.get("buy_commission_usd", 0.0) + commission, 4)
                 existing["adds_count"] = int(existing.get("adds_count", 0)) + 1
+                # Chandelier trail input: highest price seen since entry.
+                # A scale-in never LOWERS it — keep the max of the running
+                # high-water and this add's fill.
+                try:
+                    existing["high_water"] = max(
+                        float(existing.get("high_water") or 0.0), fill_price)
+                except (TypeError, ValueError):
+                    existing["high_water"] = fill_price
                 if order.get("plan"):  # latest BUY's plan governs the merged position
                     existing["plan"] = order["plan"]
                 if order.get("demand_driver"):
@@ -255,6 +265,10 @@ def readback(order_id: str) -> dict | None:
                     "opened_at": datetime.now(timezone.utc).isoformat(),
                     "proposal_id": order.get("proposal_id"),
                     "buy_commission_usd": commission,
+                    # Highest price seen since entry (starts at the entry fill);
+                    # ratcheted upward by mark_to_market, feeds the chandelier
+                    # trailing stop in exit_guard.
+                    "high_water": fill_price,
                 }
                 if order.get("plan"):  # numeric stop/target/horizon persisted with the lot
                     new_pos["plan"] = order["plan"]
@@ -359,7 +373,51 @@ def mark_to_market(prices: dict[str, float]) -> dict:
         if px:
             pos["market_value_usd"] = round(pos["quantity"] * px, 2)
             pos["last_price"] = px
+            # High-water mark since entry (chandelier trail input): ratchet-only,
+            # a lower mark never pulls it down. Legacy positions with no recorded
+            # high_water are seeded at the current mark (fail-soft: understates
+            # the true high, so the trail starts conservative, never too tight).
+            try:
+                hw = float(pos.get("high_water") or 0.0)
+            except (TypeError, ValueError):
+                hw = 0.0
+            pos["high_water"] = max(hw, float(px))
     state["total_equity_usd"] = round(
         state["cash_usd"] + sum(p["market_value_usd"] for p in state["positions"]), 2)
     _save(state)
     return state
+
+
+def update_trailing_stops(trailing: dict) -> int:
+    """Persist ratcheted chandelier trailing stops onto open positions.
+
+    The broker owns ALL ledger writes, so exit_guard hands its computed levels
+    here instead of touching state/portfolio.json itself. Ratchet-only by
+    construction: an incoming level can only RAISE a position's stored
+    trailing_stop, never lower or remove it (the trail never widens a stop).
+    Touches nothing else — cash, cost basis and P&L accounting are unchanged.
+
+    trailing: {TICKER: trailing_stop_level}. Returns positions updated."""
+    if not trailing or not STATE_FILE.exists():
+        return 0
+    levels = {str(t).upper(): v for t, v in trailing.items()}
+    state = _load()
+    changed = 0
+    for pos in state.get("positions", []):
+        t = str(pos.get("ticker", "")).upper()
+        if t not in levels:
+            continue
+        try:
+            new = float(levels[t])
+        except (TypeError, ValueError):
+            continue
+        try:
+            cur = float(pos.get("trailing_stop") or 0.0)
+        except (TypeError, ValueError):
+            cur = 0.0
+        if new > cur:
+            pos["trailing_stop"] = round(new, 4)
+            changed += 1
+    if changed:
+        _save(state)
+    return changed

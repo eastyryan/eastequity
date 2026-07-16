@@ -396,6 +396,173 @@ def _conviction_unlocked(cfg: dict) -> tuple[bool, str]:
         return False, f"breakdown unreadable: {e}"
 
 
+def _position_committed_risk(pos: dict) -> float:
+    """Entry-basis committed risk of an open position in dollars: what firing
+    the stop costs relative to what was PAID (not to current marks). A stop
+    trailed above cost means the position risks none of the account's own
+    capital - its heat is zero and the budget is free for pyramiding. Fail-open
+    (0.0) when the position carries no parseable plan stop."""
+    try:
+        plan = pos.get("plan") or {}
+        stop = float(plan.get("stop_loss") or pos.get("stop_loss") or 0)
+        # An exit-guard ratcheted trailing stop supersedes the entry stop.
+        trail = pos.get("trailing_stop")
+        if isinstance(trail, (int, float)) and trail > stop:
+            stop = float(trail)
+        cost = float(pos.get("avg_cost") or 0)
+        qty = float(pos.get("quantity") or 0)
+        if stop <= 0 or cost <= 0 or qty <= 0:
+            return 0.0
+        return max(0.0, (cost - stop) * qty)
+    except (TypeError, ValueError):
+        return 0.0
+
+
+def _position_demand_driver(pos: dict) -> str | None:
+    d = pos.get("demand_driver") or (pos.get("plan") or {}).get("demand_driver")
+    return str(d).strip().lower() if d else None
+
+
+def _risk_budget_pct(p: dict, cfg: dict) -> float:
+    """Per-trade risk budget as a fraction of equity. Conviction tier (when
+    earned AND the proposal qualifies) raises it; a flagged momentum unwind
+    halves it (applied by the caller via market_context)."""
+    rbs = cfg["position_sizing"].get("risk_based_sizing") or {}
+    base = float(rbs.get("risk_per_trade_pct", 0.01))
+    tier = cfg["position_sizing"].get("conviction_tier") or {}
+    tier_risk = tier.get("risk_per_trade_pct")
+    if isinstance(tier_risk, (int, float)) and tier_risk > base:
+        unlocked, _ = _conviction_unlocked(cfg)
+        conf_ok = isinstance(p.get("confidence"), (int, float)) and \
+            p["confidence"] >= tier.get("min_confidence", 1.0)
+        case_ok = (not tier.get("requires_conviction_case")
+                   or len(str(p.get("conviction_case", ""))) >= 50)
+        if unlocked and conf_ok and case_ok and "risk_desk_note" not in p:
+            return float(tier_risk)
+    return base
+
+
+def _apply_risk_based_sizing(p: dict, cfg: dict, portfolio: dict,
+                             market_context: dict, reasons: list[str]) -> float:
+    """Size every BUY from the stop: risk budget = equity x risk%, position is
+    CLAMPED down so (entry - stop) x shares never exceeds the budget. Returns
+    the proposal's committed risk in dollars (post-clamp) for the heat checks.
+
+    Clamping (not rejecting) keeps a good thesis tradeable when the brain
+    over-sizes; the adjustment is stamped on the proposal (sizing_note) so the
+    journal and dashboard show what changed and why."""
+    if str(p.get("action", "")).upper() != "BUY":
+        return 0.0
+    rbs = cfg["position_sizing"].get("risk_based_sizing") or {}
+    if not rbs.get("enabled"):
+        return 0.0
+    try:
+        entry = float(p["entry_price_max"])
+        stop = float(p["stop_loss"])
+        size = float(p["position_size_usd"])
+    except (KeyError, TypeError, ValueError):
+        return 0.0  # reported by _check_prices_and_rr / _check_sizing
+    if not (0 < stop < entry) or size <= 0:
+        return 0.0  # geometry/size errors reported elsewhere
+    equity = portfolio.get("total_equity_usd",
+                           cfg["position_sizing"]["starting_capital_usd"])
+    budget_pct = _risk_budget_pct(p, cfg)
+    regime = (market_context or {}).get("_regime") or {}
+    if regime.get("momentum_unwind"):
+        scale = float(rbs.get("momentum_unwind_risk_scale", 0.5))
+        budget_pct *= scale
+    budget_usd = equity * budget_pct
+    stop_dist_pct = (entry - stop) / entry
+    proposed_risk = size * stop_dist_pct
+    if proposed_risk <= budget_usd + 1e-9:
+        return proposed_risk
+    clamped = budget_usd / stop_dist_pct
+    floor_usd = float(rbs.get("min_clamped_position_usd", 200))
+    if clamped < floor_usd:
+        reasons.append(
+            f"risk_budget_size_too_small:budget ${budget_usd:.0f} at "
+            f"{stop_dist_pct:.1%} stop sizes to ${clamped:.0f} < ${floor_usd:.0f} floor")
+        return proposed_risk
+    p["position_size_usd"] = round(clamped, 2)
+    p["sizing_note"] = (
+        f"risk-clamped from ${size:.0f} to ${clamped:.0f}: "
+        f"{budget_pct:.2%} risk budget (${budget_usd:.0f}) / {stop_dist_pct:.1%} stop"
+        + (" [momentum-unwind half budget]" if regime.get("momentum_unwind") else ""))
+    return budget_usd
+
+
+def _check_portfolio_heat(p: dict, cfg: dict, portfolio: dict,
+                          proposed_risk: float, batch_risk: float,
+                          reasons: list[str]) -> None:
+    """Total committed risk across the book (entry-basis, to current stops)
+    plus this batch's accepted BUY risk plus this proposal must stay under
+    portfolio_heat_cap_pct of equity."""
+    if str(p.get("action", "")).upper() != "BUY" or proposed_risk <= 0:
+        return
+    rbs = cfg["position_sizing"].get("risk_based_sizing") or {}
+    cap = rbs.get("portfolio_heat_cap_pct")
+    if not rbs.get("enabled") or not isinstance(cap, (int, float)) or cap <= 0:
+        return
+    equity = portfolio.get("total_equity_usd",
+                           cfg["position_sizing"]["starting_capital_usd"])
+    open_heat = sum(_position_committed_risk(pos)
+                    for pos in portfolio.get("positions", []))
+    total = open_heat + batch_risk + proposed_risk
+    if total > equity * cap + 1e-9:
+        reasons.append(
+            f"portfolio_heat_cap_exceeded:open ${open_heat:.0f} + batch "
+            f"${batch_risk:.0f} + new ${proposed_risk:.0f} = ${total:.0f} > "
+            f"{cap:.0%} of ${equity:.0f}")
+
+
+def _check_theme_initial_risk(p: dict, cfg: dict, portfolio: dict,
+                              proposed_risk: float, batch_theme_risk: dict,
+                              reasons: list[str]) -> None:
+    """Committed risk sharing one demand_driver (open positions, entry-basis,
+    plus this batch) must stay under theme_initial_risk_cap_pct of equity.
+    This is the risk-based complement to the notional theme cap: two tickers
+    on the same economic bet fail together, so their combined pre-paid risk is
+    capped as one bet. Fail-open when the driver is missing (field check
+    rejects separately)."""
+    if str(p.get("action", "")).upper() != "BUY" or proposed_risk <= 0:
+        return
+    rbs = cfg["position_sizing"].get("risk_based_sizing") or {}
+    cap = rbs.get("theme_initial_risk_cap_pct")
+    if not rbs.get("enabled") or not isinstance(cap, (int, float)) or cap <= 0:
+        return
+    driver = p.get("demand_driver")
+    if not driver or not isinstance(driver, str):
+        return
+    driver = driver.strip().lower()
+    equity = portfolio.get("total_equity_usd",
+                           cfg["position_sizing"]["starting_capital_usd"])
+    theme_heat = sum(_position_committed_risk(pos)
+                     for pos in portfolio.get("positions", [])
+                     if _position_demand_driver(pos) == driver)
+    total = theme_heat + batch_theme_risk.get(driver, 0.0) + proposed_risk
+    if total > equity * cap + 1e-9:
+        reasons.append(
+            f"theme_risk_cap_exceeded:{driver} committed risk ${total:.0f} > "
+            f"{cap:.0%} of ${equity:.0f} (one economic bet, capped as one)")
+
+
+def _check_regime_gate(p: dict, cfg: dict, market_context: dict,
+                       reasons: list[str]) -> None:
+    """Coded regime filter: when SPY is below its 200DMA, new BUYs are
+    rejected. Exits/holds are never blocked. Fail-open when regime data is
+    absent (cloud bundles without the field keep working)."""
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    gate = cfg.get("regime_gate") or {}
+    if not gate.get("block_buys_below_200dma"):
+        return
+    regime = (market_context or {}).get("_regime") or {}
+    if regime.get("spy_below_200dma") is True:
+        reasons.append(
+            "regime_gate_spy_below_200dma:new entries blocked while the "
+            "benchmark trades below its 200-day average (exits unaffected)")
+
+
 def _check_sizing(p: dict, cfg: dict, portfolio: dict, reasons: list[str]) -> None:
     if str(p.get("action", "")).upper() != "BUY":
         return
@@ -653,6 +820,8 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
     # batches both stay under swing_rules.max_new_positions_per_day.
     already_today = _count_filled_buys_today(portfolio)
     buys_this_batch = 0
+    batch_risk = 0.0          # committed risk accepted earlier in this batch
+    batch_theme_risk: dict[str, float] = {}
     for p in proposals:
         reasons: list[str] = []
         _check_required_fields(p, cfg, reasons)
@@ -666,7 +835,15 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
         _check_sell_position(p, portfolio, reasons)
         _check_confidence(p, cfg, reasons)
         _check_calibration_gate(p, cfg, sector_map, reasons)
+        _check_regime_gate(p, cfg, market_context or {}, reasons)
+        # Risk-based sizing clamps position_size_usd BEFORE the notional checks
+        # so every downstream cap sees the final size.
+        proposed_risk = _apply_risk_based_sizing(
+            p, cfg, portfolio, market_context or {}, reasons)
         _check_sizing(p, cfg, portfolio, reasons)
+        _check_portfolio_heat(p, cfg, portfolio, proposed_risk, batch_risk, reasons)
+        _check_theme_initial_risk(p, cfg, portfolio, proposed_risk,
+                                  batch_theme_risk, reasons)
         _check_sector_concentration(p, cfg, portfolio, sector_map, reasons)
         _check_thesis_invalidators(p, cfg, reasons)
         _check_demand_driver_field(p, reasons)
@@ -675,5 +852,11 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
         if str(p.get("action", "")).upper() == "BUY":
             buys_this_batch += 1
             _check_daily_buy_cap(p, cfg, already_today, buys_this_batch, reasons)
-        results.append(ValidationResult(p, approved=not reasons, reasons=reasons))
+        approved = not reasons
+        if approved and str(p.get("action", "")).upper() == "BUY":
+            batch_risk += proposed_risk
+            d = str(p.get("demand_driver") or "").strip().lower()
+            if d:
+                batch_theme_risk[d] = batch_theme_risk.get(d, 0.0) + proposed_risk
+        results.append(ValidationResult(p, approved=approved, reasons=reasons))
     return results

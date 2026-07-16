@@ -73,8 +73,18 @@
   },
   "position_sizing": {
     "starting_capital_usd": 10000,
-    "max_position_pct_of_portfolio": 0.1,
-    "max_position_usd": 1000,
+    "max_position_pct_of_portfolio": 0.2,
+    "max_position_usd": 2000,
+    "_notional_cap_note": "Notional ceilings only. Risk-based sizing below is the binding constraint: a tight-stop setup may size up to these ceilings for the same 1% risk; a wide-stop setup sizes well under them. Raised from 10%/$1000 when risk-based sizing landed (2026-07-16).",
+    "risk_based_sizing": {
+      "enabled": true,
+      "risk_per_trade_pct": 0.01,
+      "portfolio_heat_cap_pct": 0.08,
+      "theme_initial_risk_cap_pct": 0.02,
+      "min_clamped_position_usd": 200,
+      "momentum_unwind_risk_scale": 0.5,
+      "_note": "Van Tharp / Elder / Turtle framework (research 2026-07-16, user-approved). Every BUY risks at most risk_per_trade_pct of equity measured entry-to-stop; the validator CLAMPS oversized proposals down to the risk budget rather than rejecting. Portfolio heat = sum over open positions of entry-basis committed risk max(0,(avg_cost-stop)*qty)/equity; new BUYs are rejected past portfolio_heat_cap_pct (user chose 8%; literature 6-10%). Theme cap: committed initial risk sharing one demand_driver <= theme_initial_risk_cap_pct. Entry-basis heat means trailed stops above cost free the budget (pyramiding into winners stays possible). momentum_unwind_risk_scale halves the risk budget when momentum_health flags an unwind."
+    },
     "max_open_positions": 8,
     "max_total_exposure_pct": 0.8,
     "min_cash_reserve_pct": 0.2,
@@ -88,10 +98,12 @@
     "conviction_tier": {
       "unlocked_after_closed_trades": 15,
       "required_high_conf_bucket_win_rate_pct": 55,
-      "max_position_pct_of_portfolio": 0.15,
-      "max_position_usd": 1500,
+      "max_position_pct_of_portfolio": 0.3,
+      "max_position_usd": 3000,
+      "risk_per_trade_pct": 0.015,
       "min_confidence": 0.75,
-      "requires_conviction_case": true
+      "requires_conviction_case": true,
+      "_note": "When earned, conviction raises the RISK budget to 1.5% (and the notional ceilings accordingly); base tier stays 1%."
     }
   },
   "trade_quality_requirements": {
@@ -125,7 +137,8 @@
     ],
     "_required_sell_fields_note": "SELL_TO_CLOSE needs only these; the BUY-oriented required_proposal_fields list used to reject legitimate discretionary exits for missing stop_loss/target_price. Prefer also exit_reason when available (process, not hard-required).",
     "min_confidence": 0.6,
-    "min_risk_reward_ratio": 1.0,
+    "min_risk_reward_ratio": 2.0,
+    "_min_rr_note": "Raised 1.0 -> 2.0 (2026-07-16, user-approved after expectancy research): breakeven win rate at 2:1 is 33%, keeping the book profitable across the realistic 40-55% band; a 1:1 floor loses money below ~52% wins after costs (Minervini/O'Neil both demand ~2:1 at entry).",
     "min_target_upside_pct": 0.1,
     "max_stop_loss_distance_pct": 0.15,
     "stop_loss_must_be_below_entry": true,
@@ -134,6 +147,8 @@
     "min_stop_atr_multiple": 1.0,
     "min_stop_expected_move_fraction": 0.5,
     "_volatility_stop_note": "A stop tighter than the name's noise is not protection - it exits on ordinary volatility, not on a broken thesis. The stop must sit at least max(min_stop_atr_multiple x 14d-ATR%, min_stop_expected_move_fraction x options expected_move%) below entry. Enforced only when volatility data is present (fail-open). If that floor exceeds max_stop_loss_distance_pct, the name is too volatile for a valid swing stop and is rejected.",
+    "trailing_stop_atr_multiple": 3.0,
+    "_trailing_stop_note": "Chandelier exit (LeBeau/Elder; user-approved 2026-07-16): once a position's high-water mark puts (high_water - 3xATR) ABOVE the plan stop, the effective stop ratchets up with it - never down, never widened, and deliberately NO breakeven jump at +1R (research shows early breakeven moves gut trend expectancy). Forced exits fire on the effective stop; reason trailing_stop_breached when the trail was binding.",
     "thesis_invalidator_keys": [
       "invalidating_print",
       "invalidating_structure",
@@ -143,7 +158,11 @@
   },
   "theme_risk": {
     "max_demand_driver_concentration_pct": 0.35,
-    "_note": "Market value of positions sharing the same demand_driver plus proposed size must stay under this fraction of equity. Catches DELL+HPE style single-factor books that sector caps miss when names sit in different GICS sleeves. Fail-open if demand_driver missing (field check already rejects)."
+    "_note": "Market value of positions sharing the same demand_driver plus proposed size must stay under this fraction of equity. Catches DELL+HPE style single-factor books that sector caps miss when names sit in different GICS sleeves. Fail-open if demand_driver missing (field check already rejects). The notional cap here complements the RISK-based theme cap in position_sizing.risk_based_sizing.theme_initial_risk_cap_pct."
+  },
+  "regime_gate": {
+    "block_buys_below_200dma": true,
+    "_note": "Coded regime filter (Faber 2007/2013: ~halved max drawdown over a century; user-approved 2026-07-16). When the benchmark trend is hostile (SPY below its 200DMA), new BUYs are REJECTED (regime_gate_spy_below_200dma) - exits and holds are never blocked, and existing stops keep working, consistent with the evidence that the filter's value is blocking NEW risk, not forced liquidation. Momentum-unwind detection (tools/momentum_health.py) separately halves the risk budget via position_sizing.risk_based_sizing.momentum_unwind_risk_scale rather than hard-blocking. Fail-open when regime data is absent from market_context."
   },
   "learning_controls": {
     "min_trades_for_binding": 15,

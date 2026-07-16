@@ -86,8 +86,8 @@ def test_broker_add_and_partial():
 def _prop(**kw):
     p = {"ticker": "DELL", "action": "BUY", "instrument": "EQUITY",
          "position_size_usd": 400, "entry_price_max": 460.0, "stop_loss": 415.0,
-         "target_price": 520.0, "holding_horizon_days": 30, "confidence": 0.7,
-         "risk_reward_ratio": 1.3, "thesis": "t", "macro_context": "m", "catalysts": ["c"],
+         "target_price": 555.0, "holding_horizon_days": 30, "confidence": 0.7,
+         "risk_reward_ratio": 2.1, "thesis": "t", "macro_context": "m", "catalysts": ["c"],
          "variant_perception": "Consensus sees X; I see Y because Z; resolves at earnings.",
          "risk_map": "Guide cut or break of 50-DMA kills the trade.",
          "scenarios": {"bull": {"price": 520, "prob": 0.3}, "base": {"price": 500, "prob": 0.45},
@@ -109,15 +109,16 @@ def test_validator_scale_in_rules():
     r = validator.validate_proposals([_prop()], pf)[0]
     check("add above cost within cap -> approved", r.approved, " | ".join(r.reasons))
     r2 = validator.validate_proposals([_prop(entry_price_max=440.0, stop_loss=400.0,
-                                              target_price=500.0)], pf)[0]
+                                              target_price=525.0)], pf)[0]
     check("add BELOW cost rejected (never average down)",
           any("add_below_cost" in x for x in r2.reasons), " | ".join(r2.reasons))
     pf2 = json.loads(json.dumps(pf))
     pf2["positions"][0]["adds_count"] = 2
     r3 = validator.validate_proposals([_prop()], pf2)[0]
     check("max adds enforced", any("max_adds_reached" in x for x in r3.reasons))
-    r4 = validator.validate_proposals([_prop(position_size_usd=900)], pf)[0]
-    check("combined cap enforced (550+900 > $1000 cap)",
+    r4 = validator.validate_proposals([_prop(position_size_usd=1550, stop_loss=431.0,
+                                          risk_reward_ratio=3.3)], pf)[0]
+    check("combined cap enforced (550+1550 > $2000 cap)",
           any("combined_position_exceeds_cap" in x for x in r4.reasons),
           " | ".join(r4.reasons))
     # sell_fraction sanity

@@ -36,6 +36,10 @@ def base_proposal(entry, stop, target, rr):
         "holding_horizon_days": 30,
         "confidence": 0.7,
         "risk_reward_ratio": rr,
+        "risk_map": "Guide cut or break of the 50-DMA kills the trade.",
+        "scenarios": {"bull": {"price": 560, "prob": 0.3},
+                      "base": {"price": 520, "prob": 0.45},
+                      "bear": {"price": 410, "prob": 0.25}},
         "thesis": "Clean swing setup with a real catalyst and rising estimates.",
         "macro_context": "Regime supports adding measured long exposure.",
         "variant_perception": "Consensus sees a fair multiple; I see mispriced growth because estimates lag; resolves at the next print.",
@@ -89,7 +93,7 @@ def test_too_tight_stop_rejected():
 def test_wide_enough_stop_approved():
     print("stop outside the noise band:")
     # entry 450, stop 412 = 8.4% > 7.36% floor. RR = 60/38 = 1.58.
-    p = base_proposal(450.0, 412.0, 510.0, 1.6)
+    p = base_proposal(450.0, 412.0, 530.0, 2.1)
     res = validate_one(p, {TICKER: {"atr_pct": 7.36}})
     check("approved", res.approved, reasons_of(res))
 
@@ -128,7 +132,7 @@ def test_untradeable_when_floor_exceeds_cap():
 def test_backward_compatible_default_arg():
     print("backward compatibility:")
     # Old two-arg call site must still work (market_context defaults to None).
-    p = base_proposal(450.0, 412.0, 510.0, 1.6)
+    p = base_proposal(450.0, 412.0, 530.0, 2.1)
     res = validator.validate_proposals([p], PORTFOLIO)[0]
     check("two-arg validate_proposals still approves a clean proposal",
           res.approved, reasons_of(res))

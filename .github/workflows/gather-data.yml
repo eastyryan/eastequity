@@ -65,6 +65,9 @@ jobs:
           # committing it here would overwrite the authoritative ledger. The
           # ledger is owned exclusively by the trade path.
           git add data/cloud_context.json data/charts dashboard/data/position_charts.json
+          # Momentum-ETF close cache: committed so blocked-network cloud runs can
+          # still compute the momentum_health external layer (5-day staleness cap).
+          git add -f data/cache/momentum_etfs.json 2>/dev/null || true
           git diff --cached --quiet && { echo "no data changes"; exit 0; }
           git commit -m "Refresh market data bundle for cloud runs [vercel skip]"
           # The gather also dirties tracked files we deliberately DON'T commit

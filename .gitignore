@@ -2,7 +2,10 @@
 .venv/
 __pycache__/
 *.pyc
-data/cache/
+data/cache/*
+# ...but the momentum-ETF closes cache IS committed: blocked-network cloud
+# runs read the last committed snapshot (momentum_health ignores it past ~5d).
+!data/cache/momentum_etfs.json
 data/filings/
 state/context_*.json
 state/RUN_LOCK

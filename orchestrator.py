@@ -516,6 +516,26 @@ def main() -> int:
         proposals = [p for p in proposals if str(p.get("action", "")).upper() != "BUY"]
     market_context = build_volatility_context(
         context.get("universe_scan") or {}, context.get("options_signals") or {})
+    # Regime signal for the validator's coded gate: SPY-vs-200DMA from the
+    # scanner's benchmark read, momentum-factor health from the gauge. Both
+    # fail open (missing keys -> gate inactive) so old bundles keep working.
+    try:
+        bt = (context.get("universe_scan") or {}).get("benchmark_trend") or {}
+        above = bt.get("spy_above_200dma")
+        mh = context.get("momentum_health") or {}
+        market_context["_regime"] = {
+            # None (fail-open) when the bundle lacks the read; the gate only
+            # fires on an explicit False.
+            "spy_below_200dma": (not above) if isinstance(above, bool) else None,
+            "momentum_unwind": bool(mh.get("momentum_unwind")),
+            "momentum_status": mh.get("status"),
+        }
+        if market_context["_regime"]["spy_below_200dma"] or mh.get("momentum_unwind"):
+            print(f"  REGIME: spy_below_200dma="
+                  f"{market_context['_regime']['spy_below_200dma']} "
+                  f"momentum={mh.get('status')} - gate/risk-scale active")
+    except Exception as e:
+        print(f"  (regime context skipped: {e})")
     for p in proposals:
         if str(p.get("action", "")).upper() != "BUY":
             continue

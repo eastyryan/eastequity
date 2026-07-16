@@ -16,8 +16,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from tools.universe_scanner import (  # noqa: E402
     _return_over_sessions, _trailing_high, _rel_strength, _median_dollar_volume,
     _ma_tail, _screen_quality_ok, _deep_value_sort_key, _load_ai_exposure, _trend_read,
-    build_valuation_context, multiple_vs_growth_read,
+    build_valuation_context, multiple_vs_growth_read, earnings_reaction_read,
     WEEKS_200, AT_OR_BELOW_TOLERANCE_PCT,
+    EAR_MAX_DAYS_SINCE_EARNINGS, EAR_LOW_COVERAGE_MAX_ANALYSTS,
     SESS_1M, SESS_3M, SESS_6M, SESS_52W, MIN_BARS, SESS_ADV, MIN_ADV_USD,
 )
 
@@ -207,12 +208,84 @@ def test_valuation_context():
 
 
 
+def _gap(sessions_ago, direction="up", filled=False, pct=4.0):
+    """gap_analysis dict shaped exactly like _gap_events output."""
+    return {"count_20d": 1, "last": {"sessions_ago": sessions_ago, "pct": pct,
+                                     "direction": direction, "filled": filled}}
+
+
+def test_earnings_reaction():
+    print("earnings reaction lane (announcement reaction + revisions, NOT SUE drift):")
+    check("window is 10 calendar days", EAR_MAX_DAYS_SINCE_EARNINGS == 10)
+    check("low-coverage threshold sane",
+          isinstance(EAR_LOW_COVERAGE_MAX_ANALYSTS, int)
+          and 0 < EAR_LOW_COVERAGE_MAX_ANALYSTS <= 25)
+
+    # FLAG SET: unfilled up-gap inside the earnings window + revisions up.
+    flag, read = earnings_reaction_read(3, _gap(2), rel_strength_1m_pct=-1.0,
+                                        revision_direction="up")
+    check("gap-held + revisions up -> flagged", flag is True, f"got {flag},{read}")
+    check("read says gap_held_revisions_up", read == "gap_held_revisions_up", str(read))
+
+    # FLAG SET: no qualifying gap, positive 1m relative strength + revisions up.
+    flag, read = earnings_reaction_read(5, None, rel_strength_1m_pct=4.2,
+                                        revision_direction="up")
+    check("rs-positive + revisions up -> flagged", flag is True, f"got {flag},{read}")
+    check("read says rs_positive_revisions_up", read == "rs_positive_revisions_up", str(read))
+
+    # NOT SET: revisions flat / down / missing (even with a perfect gap-hold).
+    for rev in ("flat", "down", None):
+        flag, read = earnings_reaction_read(3, _gap(2), 5.0, rev)
+        check(f"revisions {rev} -> NOT flagged", flag is False, f"got {flag},{read}")
+    _, read = earnings_reaction_read(3, _gap(2), 5.0, "flat")
+    check("flat read carries reason", read == "gap_held_revisions_flat", str(read))
+
+    # NOT SET: the up-gap FILLED (failed reaction), even with revisions up
+    # and positive RS - a filled earnings gap vetoes the RS fallback.
+    flag, read = earnings_reaction_read(4, _gap(3, filled=True), 6.0, "up")
+    check("filled gap -> NOT flagged", flag is False, f"got {flag},{read}")
+    check("filled read named", read == "gap_filled_revisions_up", str(read))
+
+    # NOT SET: reaction negative (down gap on the print / negative RS).
+    flag, read = earnings_reaction_read(4, _gap(3, direction="down"), 6.0, "up")
+    check("down gap -> NOT flagged", flag is False, f"got {flag},{read}")
+    check("down-gap read named", read == "down_gap_revisions_up", str(read))
+    flag, read = earnings_reaction_read(5, None, rel_strength_1m_pct=-3.0,
+                                        revision_direction="up")
+    check("negative RS -> NOT flagged", flag is False, f"got {flag},{read}")
+    check("negative-RS read named", read == "rs_negative_revisions_up", str(read))
+
+    # NOT SET: outside the earnings window (> 10 days, or no print date).
+    flag, read = earnings_reaction_read(11, _gap(2), 5.0, "up")
+    check("days_since_earnings 11 -> NOT flagged, no read",
+          flag is False and read is None, f"got {flag},{read}")
+    flag, read = earnings_reaction_read(None, _gap(2), 5.0, "up")
+    check("missing days_since_earnings -> NOT flagged",
+          flag is False and read is None, f"got {flag},{read}")
+    flag, _ = earnings_reaction_read(10, _gap(2), 5.0, "up")
+    check("day 10 still inside window", flag is True)
+    flag, _ = earnings_reaction_read(0, _gap(0), 5.0, "up")
+    check("announcement day (0) inside window", flag is True)
+
+    # Gap OLDER than the print (pre-earnings, sessions_ago > dse) is ignored;
+    # the RS fallback then decides.
+    flag, read = earnings_reaction_read(2, _gap(8), rel_strength_1m_pct=3.0,
+                                        revision_direction="up")
+    check("pre-earnings gap ignored, RS fallback used",
+          flag is True and read == "rs_positive_revisions_up", f"got {flag},{read}")
+
+    # In-window but no reaction data at all -> honest no-read, never flagged.
+    flag, read = earnings_reaction_read(3, None, None, "up")
+    check("no gap + no RS -> no_reaction_data, NOT flagged",
+          flag is False and read == "no_reaction_data", f"got {flag},{read}")
+
+
 if __name__ == "__main__":
     for fn in (test_constants, test_return_over_sessions, test_trailing_high,
                test_rel_strength, test_median_dollar_volume,
                test_ma_tail_200w, test_screen_quality_gate,
                test_deep_value_ai_risk_ordering, test_ai_exposure_file_loads,
-               test_trend_read, test_valuation_context):
+               test_trend_read, test_valuation_context, test_earnings_reaction):
         fn()
     print()
     if FAILURES:

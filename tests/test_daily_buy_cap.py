@@ -36,12 +36,12 @@ def check(name, cond, detail=""):
         FAILURES.append(name)
 
 
-def buy(ticker, size=900.0, entry=450.0, stop=400.0, target=520.0):
+def buy(ticker, size=900.0, entry=450.0, stop=400.0, target=560.0):
     return {
         "ticker": ticker, "action": "BUY", "instrument": "EQUITY",
         "position_size_usd": size, "entry_price_max": entry, "stop_loss": stop,
         "target_price": target, "holding_horizon_days": 30, "confidence": 0.7,
-        "risk_reward_ratio": 1.4,
+        "risk_reward_ratio": 2.2,
         "thesis": "Clean swing setup with a real catalyst and rising estimates.",
         "macro_context": "Regime supports adding measured long exposure.",
         "variant_perception": "Consensus sees a fair multiple; I see mispriced growth because estimates lag; resolves at the next print.",

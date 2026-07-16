@@ -152,10 +152,12 @@ def build_stop_engineering(focus: list, vol: dict, cfg: dict) -> dict:
 
 
 def build_position_stop_cushion(portfolio: dict, vol: dict, cfg: dict) -> dict:
-    """Per open position: how much room is left between today's price and the recorded
-    stop, measured in the name's own volatility. A cushion under ~1 ATR means an
-    ordinary session could trip the stop - the brain should decide deliberately
-    (hold through, or exit on its own terms) rather than be noise-stopped."""
+    """Per open position: how much room is left between today's price and the
+    EFFECTIVE stop — max(plan stop, chandelier trailing_stop) — measured in the
+    name's own volatility, so the brain sees the level the safety layer will
+    actually enforce. A cushion under ~1 ATR means an ordinary session could
+    trip the stop - the brain should decide deliberately (hold through, or exit
+    on its own terms) rather than be noise-stopped."""
     out = {}
     for pos in portfolio.get("positions", []):
         t = str(pos.get("ticker", "")).upper()
@@ -170,7 +172,15 @@ def build_position_stop_cushion(portfolio: dict, vol: dict, cfg: dict) -> dict:
             stop, last = float(stop), float(last)
         except (TypeError, ValueError):
             continue
-        cushion_pct = (last - stop) / last * 100 if last else None
+        # Effective stop: the ratcheted chandelier trail can only RAISE the
+        # enforced level, never lower it. Missing/garbage trail -> plan stop
+        # only (identical to the pre-trail behaviour).
+        try:
+            trail = float(pos.get("trailing_stop") or 0.0) or None
+        except (TypeError, ValueError):
+            trail = None
+        eff_stop = max(stop, trail) if trail is not None else stop
+        cushion_pct = (last - eff_stop) / last * 100 if last else None
         entry = plan.get("entry_price_max") or pos.get("avg_cost")
         info = {
             "last_price": round(last, 2),
@@ -179,12 +189,15 @@ def build_position_stop_cushion(portfolio: dict, vol: dict, cfg: dict) -> dict:
             "atr_pct": atr,
             "expected_move_pct": v.get("expected_move_pct"),
         }
+        if trail is not None and trail > stop:
+            info["trailing_stop"] = round(trail, 2)
+            info["effective_stop"] = round(eff_stop, 2)
         if atr and cushion_pct is not None and atr > 0:
             info["cushion_in_atr"] = round(cushion_pct / atr, 2)
             info["inside_noise_band"] = cushion_pct < atr  # < ~1 average day's range
         if entry:
             try:
-                info["stop_distance_from_entry_pct"] = round((float(entry) - stop) / float(entry) * 100, 2)
+                info["stop_distance_from_entry_pct"] = round((float(entry) - eff_stop) / float(entry) * 100, 2)
             except (TypeError, ValueError):
                 pass
         # Stall detection (soft time stop, forces a DECISION not an exit): two weeks

@@ -465,6 +465,82 @@ def _gap_events(opens, closes, sessions: int = 20, min_gap_pct: float = 2.0):
     return {"count_20d": len(events), "last": events[-1] if events else None}
 
 
+# --- Earnings Announcement Reaction (EAR) lane --------------------------------
+# EVIDENCE REFRAME (2026-07): classic post-earnings-announcement drift on the
+# earnings SURPRISE (SUE) is dead in liquid large caps — Chordia, Goyal, Sadka,
+# Shanken & Subrahmanyam (2009) show it does not survive trading costs in
+# liquid names, and Martineau (2021) shows prices now absorb the surprise
+# essentially on announcement day. What still carries signal for a 3-90 day
+# swing in this universe:
+#   (a) the announcement-window REACTION itself — gap-and-hold. Brandt,
+#       Kishore, Santa-Clara & Venkatachalam (2008): sorting on the
+#       announcement-day RETURN (not the SUE) still earns continuation; an
+#       up-gap on the print that does NOT fill is the tradeable footprint.
+#   (b) analyst-revision follow-through — Gleason & Lee (2003): prices drift
+#       in the direction of estimate revisions, strongest under THIN coverage.
+# The row field name post_earnings_drift_candidate is KEPT for downstream
+# compatibility (promote_focus_candidates, the context bundle, CLAUDE.md), but
+# the criteria implement (a)+(b), NOT 60-day SUE drift.
+
+EAR_MAX_DAYS_SINCE_EARNINGS = 10   # calendar days: the reaction window
+EAR_LOW_COVERAGE_MAX_ANALYSTS = 15  # <= this = thin coverage for a large-cap universe
+
+
+def earnings_reaction_read(days_since_earnings, gap_analysis,
+                           rel_strength_1m_pct, revision_direction):
+    """EAR lane read: (candidate_flag, earnings_reaction). Pure / offline-testable.
+
+    Inputs are the best announcement-reaction proxies that ACTUALLY exist on a
+    scanned row (chosen deliberately — see the evidence note above):
+      - gap_analysis["last"]: the most recent >=2% open gap in the trailing 20
+        sessions, with "filled" = a later CLOSE traded back through the
+        pre-gap close. An UP gap inside the earnings window that has NOT
+        filled is gap-and-hold; a filled up-gap is a failed reaction; a down
+        gap is a negative reaction. In-window test: sessions_ago <=
+        days_since_earnings — calendar days always >= trading sessions, so a
+        gap printed at/after the announcement always qualifies (at worst this
+        admits a gap 1-2 sessions pre-print, which is run-up into the number,
+        not an unrelated event).
+      - rel_strength_1m_pct (name return minus SPY, 21 sessions) as the
+        fallback reaction proxy when no qualifying gap exists: some positive
+        reactions are a drive without a >=2% open gap, and a later gap can
+        displace the earnings gap from gap_analysis["last"]. With
+        days_since_earnings <= 10 the RS window is announcement-dominated;
+        positive = the print is being rewarded vs the market and holding.
+      - revision_direction ("up"/"down"/"flat"): the follow-through leg.
+
+    Returns (flag, read). read is None outside the earnings window; otherwise
+    "<reaction>_revisions_<direction>" — e.g. "gap_held_revisions_up"
+    (flagged), "gap_filled_revisions_up", "down_gap_revisions_up",
+    "rs_positive_revisions_flat", "rs_negative_revisions_up" — or
+    "no_reaction_data" when in-window but no gap/RS read exists. flag is True
+    only when the reaction is positive AND held (gap_held or rs_positive) AND
+    revisions are "up"."""
+    dse = days_since_earnings
+    if (not isinstance(dse, (int, float)) or isinstance(dse, bool)
+            or not (0 <= dse <= EAR_MAX_DAYS_SINCE_EARNINGS)):
+        return False, None
+    rev = revision_direction if revision_direction in ("up", "down", "flat") else "unknown"
+    last_gap = gap_analysis.get("last") if isinstance(gap_analysis, dict) else None
+    reaction = None
+    if (isinstance(last_gap, dict)
+            and isinstance(last_gap.get("sessions_ago"), (int, float))
+            and not isinstance(last_gap.get("sessions_ago"), bool)
+            and last_gap["sessions_ago"] <= dse):
+        if last_gap.get("direction") == "up":
+            reaction = "gap_filled" if last_gap.get("filled") else "gap_held"
+        elif last_gap.get("direction") == "down":
+            reaction = "down_gap"
+    if reaction is None:
+        rs = rel_strength_1m_pct
+        if isinstance(rs, (int, float)) and not isinstance(rs, bool):
+            reaction = "rs_positive" if rs > 0 else "rs_negative"
+        else:
+            return False, "no_reaction_data"
+    flag = reaction in ("gap_held", "rs_positive") and rev == "up"
+    return bool(flag), "{}_revisions_{}".format(reaction, rev)
+
+
 def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
                  weekly: bool = False) -> dict:
     """Scan the trading universe (or a ticker subset) for swing setups.
@@ -821,13 +897,30 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
                 r["analyst_estimates"] = est or None
             except Exception:
                 r["analyst_estimates"] = None
-            # Post-earnings drift: recently reported, estimates going up, price not yet
-            # rewarded. Historically the cleanest swing setup for 10-15% compounding.
-            dse = r.get("days_since_earnings")
-            revision_up = (r.get("analyst_estimates") or {}).get("eps_revision_direction") == "up"
-            r["post_earnings_drift_candidate"] = bool(
-                dse is not None and 0 <= dse <= 15 and revision_up
-                and r.get("momentum_1m_pct", 99) < 15)
+            # Earnings Announcement Reaction (EAR) momentum — evidence note
+            # above earnings_reaction_read. Criteria: reported within
+            # EAR_MAX_DAYS_SINCE_EARNINGS calendar days AND the reaction was
+            # positive and HELD (unfilled up-gap in the window, else positive
+            # 1m relative strength) AND estimates being revised UP. The old
+            # "price not yet rewarded" test (momentum_1m < 15%) is
+            # deliberately GONE: under the reaction framing a rewarded print
+            # IS the signal, not a missed train. Field name kept for
+            # downstream compatibility.
+            rev_dir = (r.get("analyst_estimates") or {}).get("eps_revision_direction")
+            if rev_dir is None:  # live eps_trend missing -> cached pre-market screen
+                rev_dir = (screen_rows.get(r["ticker"]) or {}).get("revision_direction")
+            ear_flag, ear_read = earnings_reaction_read(
+                r.get("days_since_earnings"), r.get("gap_analysis"),
+                r.get("rel_strength_1m_pct"), rev_dir)
+            r["post_earnings_drift_candidate"] = ear_flag
+            r["earnings_reaction"] = ear_read  # WHY it is (or is not) flagged
+            # Coverage boost, never a filter: revision follow-through is
+            # strongest under thin coverage (Gleason & Lee 2003). Stamped only
+            # on flagged rows where coverage data exists.
+            n_an = (r.get("analyst_ratings") or {}).get("n_analysts")
+            if (ear_flag and isinstance(n_an, (int, float))
+                    and not isinstance(n_an, bool) and n_an > 0):
+                r["ear_low_coverage"] = bool(n_an <= EAR_LOW_COVERAGE_MAX_ANALYSTS)
             # Fwd-multiple vs growth: which extended AI suppliers are CHEAP relative to
             # their growth (memory names often print the lowest fwd multiples late-cycle -
             # the brain must judge cycle-peak vs value; this just makes it visible).
@@ -940,7 +1033,9 @@ def promote_focus_candidates(scan: dict, already: list[str],
 
     Pure helper over a scan result dict (no network). Candidates must match at
     least one of:
-      - post_earnings_drift_candidate is True
+      - post_earnings_drift_candidate is True (earnings-reaction momentum:
+        positive announcement reaction that held + revisions up; the field
+        name is legacy, see earnings_reaction_read)
       - high swing_setup_score among top_setups beyond the first 5
       - liquid and analyst_estimates.eps_revision_direction == "up"
 
@@ -983,7 +1078,7 @@ def promote_focus_candidates(scan: dict, already: list[str],
         lanes.extend(list(scan.get(key) or []))
 
     # --- top_setups first ---
-    # 1) post-earnings drift
+    # 1) earnings-reaction candidates (legacy field name)
     for r in top:
         if r.get("post_earnings_drift_candidate") and _take(r):
             return picked
