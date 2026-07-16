@@ -22,6 +22,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import subprocess
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -103,6 +104,45 @@ _sector_exposure = sector_exposure
 _proposal_ev = proposal_ev
 _benchmark_close = benchmark_close
 _trade_plans = trade_plans
+
+
+def _load_freshest_relay_bundle(relay: Path) -> dict:
+    """Return the freshest committed data bundle, preferring origin/main.
+
+    Cloud routine environments are long-lived: their checkout of
+    data/cloud_context.json can be days stale, while the gather Action commits a
+    fresh bundle to origin/main every hour. A degraded run (sandbox blocks live
+    feeds) that trusts the stale working-tree copy publishes ancient data - the
+    "STALE 137h" dashboard bug where a cloud slot overwrote fresh data with a
+    ~6-day-old bundle. Read origin/main's bundle via `git show` (leaves the
+    working tree and index untouched) and use it when it is newer than the local
+    copy by run_date; never regress to a staler bundle; fail open to the local
+    file if git or the network is unavailable.
+    """
+    local = json.loads(relay.read_text())
+
+    def _run_date(bundle: dict) -> datetime:
+        try:
+            return datetime.fromisoformat(bundle["run_date"])
+        except Exception:
+            return datetime.min.replace(tzinfo=timezone.utc)
+
+    try:
+        subprocess.run(["git", "fetch", "--quiet", "origin", "main"],
+                       cwd=ROOT, timeout=60, check=False,
+                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        out = subprocess.run(
+            ["git", "show", "origin/main:data/cloud_context.json"],
+            cwd=ROOT, capture_output=True, text=True, timeout=30)
+        if out.returncode == 0 and out.stdout.strip():
+            remote = json.loads(out.stdout)
+            if _run_date(remote) > _run_date(local):
+                print("  (relay bundle refreshed from origin/main - local "
+                      "checkout was staler)")
+                return remote
+    except Exception as e:
+        print(f"  (origin relay refresh failed, using local bundle: {e})")
+    return local
 
 
 def main() -> int:
@@ -249,7 +289,7 @@ def main() -> int:
 
         relay = ROOT / "data" / "cloud_context.json"
         if degraded and relay.exists():
-            cached = json.loads(relay.read_text())
+            cached = _load_freshest_relay_bundle(relay)
             try:
                 age_h = (datetime.now(timezone.utc)
                          - datetime.fromisoformat(cached["run_date"])).total_seconds() / 3600
