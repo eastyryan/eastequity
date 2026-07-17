@@ -79,6 +79,13 @@ if [ "$DOW" = "5" ] && [ "$HHMM" = "1730" ]; then
   .venv/bin/python -W ignore orchestrator.py --self-review >> logs/cron.log 2>&1
 fi
 
+# Every weekday 5:30pm slot chains the daily study session after the evening
+# review (and after Friday's self-review, so study can react to it): ONE
+# researched curriculum topic written into the knowledge base + learning journal.
+if [ "$DOW" -le 5 ] && [ "$HHMM" = "1730" ]; then
+  .venv/bin/python -W ignore orchestrator.py --study >> logs/cron.log 2>&1
+fi
+
 # Sunday evening also runs universe curation after the late news tick (when scheduled).
 if [ "$DOW" = "7" ] && [ "$HHMM" = "2359" ]; then
   .venv/bin/python -W ignore orchestrator.py --universe-review >> logs/cron.log 2>&1

@@ -142,6 +142,149 @@ def self_review(run_id: str) -> int:
     return 0
 
 
+def daily_study(run_id: str) -> int:
+    """Daily study session (no trading): the agent picks ONE topic — weighted
+    toward the least-covered discipline and its own current weaknesses from the
+    trade-feedback loops — researches it with web search, and writes a durable
+    structured lesson into the knowledge base (learning system 6). Published to
+    the dashboard learning journal."""
+    from tools.knowledge_base import (
+        DISCIPLINES, add_lesson, brain_facing_knowledge_base, next_discipline,
+        prune_knowledge_base,
+    )
+
+    # --- weakness signals from the reactive learning systems ---------------
+    closed = compute_closed_trades()
+    breakdowns = build_performance_breakdown(closed)
+    try:
+        from tools.calibration_gate import brain_facing_calibration_status
+        cal_status = brain_facing_calibration_status()
+    except Exception:
+        cal_status = {}
+    try:
+        from tools.exit_autopsy import brain_facing_exit_lessons
+        exits = brain_facing_exit_lessons(10)
+    except Exception:
+        exits = {}
+    try:
+        from tools.shadow_portfolio import brain_facing_shadow_learning
+        shadow = brain_facing_shadow_learning(10)
+    except Exception:
+        shadow = {}
+    try:
+        from tools.learning_adopt import brain_facing_adopted_lessons
+        adopted = brain_facing_adopted_lessons(10)
+    except Exception:
+        adopted = {}
+
+    hints = []
+    try:  # crude but honest mapping from feedback signals to curriculum hints
+        if (cal_status.get("high_conf_inflated")
+                or cal_status.get("losing_sectors")):
+            hints += ["trading_psychology", "risk_management"]
+        if exits.get("binding_lessons"):
+            hints += ["technical_analysis", "risk_management"]
+        if (shadow.get("regret_misses")):
+            hints += ["strategy_playbooks"]
+    except Exception:
+        pass
+    kb = brain_facing_knowledge_base(limit=12)
+    suggested = next_discipline(hints)
+
+    bundle = {
+        "as_of_et": et_date(),
+        "curriculum": DISCIPLINES,
+        "suggested_discipline": suggested,
+        "weakness_hints": hints,
+        "knowledge_base_so_far": kb,
+        "calibration_status": cal_status,
+        "performance_breakdowns": breakdowns,
+        "exit_lessons": exits,
+        "shadow_learning": shadow,
+        "adopted_lessons": adopted,
+    }
+    study_file = ROOT / "state" / f"study_{run_id}.json"
+    study_file.write_text(json.dumps(json_safe(bundle), indent=2, default=str))
+
+    prompt = (
+        f"Today's date (ET) is {et_date()}. DAILY STUDY SESSION for East Equity Agent — "
+        "no trading this run. You are the trading brain in study hall: like a person "
+        "learning the craft at school or on the job, you study ONE topic per day, "
+        f"properly. Read CLAUDE.md, then the study bundle at {study_file}.\n\n"
+        "1) PICK ONE SPECIFIC TOPIC. Default to suggested_discipline, but override it "
+        "when weakness_hints or your own recent mistakes (exit_lessons, shadow regrets, "
+        "calibration) point somewhere more urgent. Check knowledge_base_so_far first — "
+        "never re-study a covered topic; go deeper or adjacent instead. A good topic is "
+        "narrow enough to master in one session ('anchored VWAP for swing entries', "
+        "'how estimate-revision breadth leads price', 'Kelly-fraction intuition for 1% "
+        "risk budgets'), not a survey ('technical analysis').\n"
+        "2) RESEARCH IT with WebSearch. Read at least 3 quality sources (practitioner "
+        "writing, exchange/academic material, well-regarded books' summaries — not SEO "
+        "listicles). Reconcile disagreements between sources honestly.\n"
+        "3) WRITE THE LESSON for your future trading self. how_to_apply must be written "
+        "against THIS system's actual rules (swing horizons 3-90d, 1% risk budget, "
+        "2:1 RR floor, ATR-floored stops, chandelier trails, fat-pitch bar, the lanes "
+        "and signals in your context bundle) — concrete enough that a future run can "
+        "act on it, e.g. 'when volume_signal shows selling_climax, wait for the "
+        "light-volume retest instead of buying the climax bar'.\n\n"
+        "Output a fenced ```json block:\n"
+        '{"lesson": {"discipline": "<one of the curriculum keys>", '
+        '"topic": "...", "summary": "6-12 sentences of what you actually learned", '
+        '"key_points": ["3-8 crisp takeaways"], '
+        '"how_to_apply": "3-6 sentences mapping it onto this system\'s process", '
+        '"sources": ["url or citation", "..."]}}\n'
+        "Nothing in the lesson may be invented — if sources disagree or evidence is "
+        "weak, say so inside the summary."
+    )
+    try:
+        out = run_claude(prompt)
+    except Exception as e:
+        print(f"daily study failed: {str(e)[:600]}")
+        return 1
+
+    lesson = None
+    for block in reversed(re.findall(r"```json\s*(.*?)```", out, re.DOTALL)):
+        try:
+            cand = json.loads(block)
+            if isinstance(cand, dict) and isinstance(cand.get("lesson"), dict):
+                lesson = cand["lesson"]
+                break
+        except json.JSONDecodeError:
+            continue
+    if lesson is None:
+        print("daily study: no machine-readable lesson block; nothing stored")
+        journal.log_improvement(
+            "Daily study session produced no machine-readable lesson - "
+            "prompt/parse needs attention.", run_id)
+        return 1
+
+    res = add_lesson(lesson, run_id)
+    if res.get("status") != "ok":
+        print(f"daily study: lesson not stored ({res})")
+        journal.log_improvement(
+            f"Daily study lesson rejected by store ({res.get('status')}: "
+            f"{res.get('reason') or res.get('existing_id')}) - "
+            f"topic was '{str(lesson.get('topic'))[:120]}'.", run_id)
+        return 1
+    prune_knowledge_base()
+
+    note = (f"Daily study ({res['discipline']}): {res['topic']} - "
+            f"{str(lesson.get('summary'))[:200]}")
+    journal.log_improvement(note, run_id)
+    latest_file = ROOT / "dashboard" / "data" / "latest.json"
+    if latest_file.exists():
+        try:
+            d = json.loads(latest_file.read_text())
+            d["improvements"] = ([{"date": et_date(), "note": note}]
+                                 + d.get("improvements", []))[:30]
+            latest_file.write_text(json.dumps(d, indent=2, default=str))
+        except Exception as e:
+            print(f"  (latest.json improvements update failed: {e})")
+    redeploy_dashboard()
+    print(f"daily study complete: {res['id']} [{res['discipline']}] {res['topic']}")
+    return 0
+
+
 def run_freshness_audit(run_id: str) -> int:
     """Audit fundamentals freshness for EVERY universe name and publish the artifact.
     Runs weekly after the universe review and on demand via --freshness-audit. A

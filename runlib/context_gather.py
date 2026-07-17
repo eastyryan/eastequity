@@ -175,6 +175,11 @@ def brain_reasoning_bundle(portfolio: dict, depth: str,
         out["calibration_status"] = brain_facing_calibration_status()
     except Exception as e:
         out["calibration_status"] = {"status": "error", "reason": str(e)[:120]}
+    try:
+        from tools.knowledge_base import brain_facing_knowledge_base
+        out["knowledge_base"] = brain_facing_knowledge_base()
+    except Exception as e:
+        out["knowledge_base"] = {"status": "error", "reason": str(e)[:120]}
     return out
 
 

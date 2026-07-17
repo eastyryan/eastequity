@@ -150,6 +150,10 @@ def main() -> int:
     ap.add_argument("--learning-mark", action="store_true",
                     help="dedicated mark job: shadow book + post-exit runners + "
                          "news cache on mark days + lesson prune; no trading")
+    ap.add_argument("--study", action="store_true",
+                    help="daily study session: research ONE curriculum topic "
+                         "(web search) and write a durable lesson into the "
+                         "knowledge base + dashboard learning journal; no trading")
     args = ap.parse_args()
 
     cfg = validator.load_config()
@@ -195,6 +199,10 @@ def main() -> int:
         print(json.dumps(out, indent=2, default=str))
         return 0 if out.get("status") != "error" else 1
 
+    if args.study:
+        print(f"=== East Equity Agent daily study {run_id} ===")
+        from runlib.reviews import daily_study
+        return daily_study(run_id)
     if args.self_review:
         print(f"=== East Equity Agent self-review {run_id} ===")
         return self_review(run_id)

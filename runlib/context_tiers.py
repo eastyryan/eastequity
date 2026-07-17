@@ -114,6 +114,13 @@ def compact_learning_pack(full: dict, *, n: int = 5) -> dict:
             cal = brain_facing_calibration_status()
         except Exception:
             pass
+    knowledge = rp.get("knowledge_base") if isinstance(rp.get("knowledge_base"), dict) else {}
+    if not knowledge or knowledge.get("status") == "error":
+        try:
+            from tools.knowledge_base import brain_facing_knowledge_base
+            knowledge = brain_facing_knowledge_base(n)
+        except Exception:
+            pass
 
     left = _top(runner.get("left_on_table") or [], n)
     # Slim attribution on left_on_table
@@ -172,6 +179,12 @@ def compact_learning_pack(full: dict, *, n: int = 5) -> dict:
             "lessons": _top(adopted.get("lessons") or [], n),
             "hard_pending": _top(adopted.get("hard_pending") or [], min(n, 3)),
             "n_adopted": adopted.get("n_adopted"),
+        },
+        "knowledge_base": {
+            "note": knowledge.get("note"),
+            "recent": _top(knowledge.get("recent") or [], n),
+            "n_active": knowledge.get("n_active"),
+            "discipline_counts": knowledge.get("discipline_counts"),
         },
         "process_checklist": rp.get("process_checklist"),
         "watchlist_feedback": _compact_watchlist_feedback(
