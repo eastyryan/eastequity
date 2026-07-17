@@ -17,6 +17,7 @@ from tools.universe_scanner import (  # noqa: E402
     _return_over_sessions, _trailing_high, _rel_strength, _median_dollar_volume,
     _ma_tail, _screen_quality_ok, _deep_value_sort_key, _load_ai_exposure, _trend_read,
     build_valuation_context, multiple_vs_growth_read, earnings_reaction_read,
+    _gap_events,
     WEEKS_200, AT_OR_BELOW_TOLERANCE_PCT,
     EAR_MAX_DAYS_SINCE_EARNINGS, EAR_LOW_COVERAGE_MAX_ANALYSTS,
     SESS_1M, SESS_3M, SESS_6M, SESS_52W, MIN_BARS, SESS_ADV, MIN_ADV_USD,
@@ -250,6 +251,40 @@ def test_earnings_reaction():
     flag, read = earnings_reaction_read(4, _gap(3, direction="down"), 6.0, "up")
     check("down gap -> NOT flagged", flag is False, f"got {flag},{read}")
     check("down-gap read named", read == "down_gap_revisions_up", str(read))
+
+    # NOT SET: unfilled up-gap that FADED intraday (low retained_pct) is not a
+    # clean hold even with revisions up (the UNH 2026-07-17 case).
+    faded = {"count_20d": 1, "last": {"sessions_ago": 2, "pct": 7.4,
+                                      "direction": "up", "filled": False,
+                                      "retained_pct": 0.16}}
+    flag, read = earnings_reaction_read(3, faded, rel_strength_1m_pct=-1.0,
+                                        revision_direction="up")
+    check("faded up-gap -> NOT flagged", flag is False, f"got {flag},{read}")
+    check("faded read named", read == "gap_faded_revisions_up", str(read))
+
+    # STILL SET: unfilled up-gap that HELD most of its pop (high retained_pct).
+    held = {"count_20d": 1, "last": {"sessions_ago": 2, "pct": 7.4,
+                                     "direction": "up", "filled": False,
+                                     "retained_pct": 0.9}}
+    flag, read = earnings_reaction_read(3, held, rel_strength_1m_pct=-1.0,
+                                        revision_direction="up")
+    check("held up-gap -> flagged", flag is True, f"got {flag},{read}")
+    check("held read named", read == "gap_held_revisions_up", str(read))
+
+
+def test_gap_events_retained_pct():
+    print("gap events retained_pct (open-gap held vs sold intraday):")
+    # Bar 1 opens +10% over the prior close (100 -> 110) and CLOSES at 101,
+    # giving back nearly the whole pop: retained = (101-100)/(110-100) = 0.1.
+    ev = _gap_events(opens=[100, 110], closes=[100, 101])
+    last = ev["last"]
+    check("faded gap detected", last is not None and last["direction"] == "up", str(ev))
+    check("faded retained_pct ~0.1", last and last["retained_pct"] == 0.1, str(last))
+    check("faded still unfilled (close 101 > prev 100)", last and last["filled"] is False, str(last))
+    # Bar 1 opens +10% and CLOSES at 112 (above the open): fully held/extended,
+    # retained = (112-100)/(110-100) = 1.2.
+    ev2 = _gap_events(opens=[100, 110], closes=[100, 112])
+    check("held retained_pct >= 1.0", ev2["last"] and ev2["last"]["retained_pct"] >= 1.0, str(ev2["last"]))
     flag, read = earnings_reaction_read(5, None, rel_strength_1m_pct=-3.0,
                                         revision_direction="up")
     check("negative RS -> NOT flagged", flag is False, f"got {flag},{read}")

@@ -252,10 +252,18 @@ Beyond filings/13F/news, every run now includes:
   below_zero is the standing regime.
   adx_14 with di_plus / di_minus - trend STRENGTH, not direction (<20 = chop: distrust
   "breakouts" there; >25 = established trend; direction comes from DI+ vs DI-).
-  gap_analysis - >=2% open gaps in the last 20 sessions with direction and whether each
-  later CLOSED back through the pre-gap close ("filled"). An unfilled up-gap on volume
-  is institutional urgency; a quickly-filled gap is a failed move. Cite the relevant
-  indicator alongside entry geometry when timing matters to the thesis.
+  gap_analysis - >=2% open gaps in the last 20 sessions with direction, whether each
+  later CLOSED back through the pre-gap close ("filled"), and retained_pct = the
+  fraction of the OPEN gap still held at the gap DAY's own close ((close - prev_close)
+  / (open - prev_close)): ~1.0 = closed at/above the open (held or extended), ~0 = gave
+  the whole pop back that day, <0 = already closed through prev_close. READ filled AND
+  retained_pct TOGETHER: an unfilled up-gap on volume is institutional urgency ONLY if
+  it also HELD (retained_pct >= ~0.5); a big open that closed near the prior close
+  (low/negative retained_pct) is a faded reaction dressed up as a hold - "sold intraday"
+  that the filled flag alone misses (the UNH 2026-07-17 +7.4%-open / +1.2%-close case).
+  The earnings-reaction lane now downgrades such a gap to earnings_reaction "gap_faded"
+  (does NOT set the post_earnings_drift_candidate flag). A quickly-filled gap is a failed
+  move. Cite the relevant indicator alongside entry geometry when timing matters.
 - **analyst_ratings** (per focus name in news_and_catalysts, and on surfaced lane rows) -
   consensus snapshot: recommendation_mean (1=strong buy .. 5=sell), recommendation_key,
   n_analysts, target_mean_price and target_vs_price_pct. This is SENTIMENT CONTEXT, not

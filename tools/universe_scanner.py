@@ -442,10 +442,17 @@ def _adx14(highs, lows, closes, period: int = 14):
 def _gap_events(opens, closes, sessions: int = 20, min_gap_pct: float = 2.0):
     """Open gaps >= min_gap_pct vs the prior close over the trailing `sessions`.
 
-    Returns {"count_20d", "last": {sessions_ago, pct, direction, filled}|None},
-    or None with under 2 bars. "filled" = a LATER CLOSE traded back through the
-    pre-gap close (a conservative close-based proxy; intraday touches don't count).
-    An unfilled up-gap is urgency; a filled one is a failed move."""
+    Returns {"count_20d", "last": {sessions_ago, pct, direction, filled,
+    retained_pct}|None}, or None with under 2 bars. "filled" = a LATER CLOSE
+    traded back through the pre-gap close (a conservative close-based proxy;
+    intraday touches don't count). "retained_pct" = fraction of the OPEN gap
+    still held at the gap DAY's own close ((close - prev_close) / (open -
+    prev_close)): ~1.0 = closed at/above the open (gap held or extended), ~0 =
+    gave the whole pop back by the close, <0 = already closed through prev_close.
+    An unfilled up-gap that opened big but closed near prev_close (low
+    retained_pct) is a faded reaction, not a hold — the "sold intraday" tell the
+    filled flag alone misses. An unfilled up-gap that HELD is urgency; a filled
+    one is a failed move."""
     n = min(len(opens or []), len(closes or []))
     if n < 2:
         return None
@@ -459,9 +466,13 @@ def _gap_events(opens, closes, sessions: int = 20, min_gap_pct: float = 2.0):
             later = closes[i:]
             filled = (any(c is not None and c <= prev_close for c in later) if gap > 0
                       else any(c is not None and c >= prev_close for c in later))
+            denom = opens[i] - prev_close
+            gap_day_close = closes[i]
+            retained = (round((gap_day_close - prev_close) / denom, 2)
+                        if gap_day_close is not None and denom else None)
             events.append({"sessions_ago": n - 1 - i, "pct": round(gap, 1),
                            "direction": "up" if gap > 0 else "down",
-                           "filled": bool(filled)})
+                           "filled": bool(filled), "retained_pct": retained})
     return {"count_20d": len(events), "last": events[-1] if events else None}
 
 
@@ -528,7 +539,19 @@ def earnings_reaction_read(days_since_earnings, gap_analysis,
             and not isinstance(last_gap.get("sessions_ago"), bool)
             and last_gap["sessions_ago"] <= dse):
         if last_gap.get("direction") == "up":
-            reaction = "gap_filled" if last_gap.get("filled") else "gap_held"
+            if last_gap.get("filled"):
+                reaction = "gap_filled"
+            else:
+                # Unfilled by the close-vs-prev-close proxy, but if most of the
+                # opening pop was sold back by the gap day's own close it is a
+                # faded reaction, not a hold — do NOT treat it as a clean drift
+                # setup (the UNH 2026-07-17 hedge: +7.4% open, +1.2% close).
+                ret = last_gap.get("retained_pct")
+                if (isinstance(ret, (int, float)) and not isinstance(ret, bool)
+                        and ret < 0.5):
+                    reaction = "gap_faded"
+                else:
+                    reaction = "gap_held"
         elif last_gap.get("direction") == "down":
             reaction = "down_gap"
     if reaction is None:
