@@ -31,16 +31,311 @@
   --color-line-2: var(--border-default);
 }
 
+/* ============================================================
+   Arena tokens (--ee-*) — the public front page's palette.
+   Namespaced deliberately: the legacy system above also defines
+   --brand, and the two mean different colors. Everything the
+   Arena renders reads --ee-*; /runs and /detail keep reading the
+   legacy aliases, so the two systems coexist without a collision.
+
+   Dark mode is driven by TWO hooks set together on <html>:
+     .dark            -> these Arena tokens
+     [data-theme=dark] -> the legacy tokens in design-tokens.css
+   One toggle, one class pair, both systems flip coherently.
+   ============================================================ */
 html {
-  color-scheme: light only;
+  --ee-bg: #ffffff;
+  --ee-bg-glass: rgba(255, 255, 255, 0.78);
+  --ee-bg-solid: rgba(255, 255, 255, 0.9);
+  --ee-hero-shadow: 0 1px 24px rgba(255, 255, 255, 0.85);
+  --ee-ink: #1a1512;
+  --ee-hero: #241a12;
+  --ee-strong: #33291f;
+  --ee-brand: #33291f;
+  --ee-soft: #5c5248;
+  --ee-muted: #857a6c;
+  --ee-faint: #a1958a;
+  --ee-bodytx: #6b6259;
+  --ee-thought: #4f463c;
+  --ee-hair14: rgba(26, 21, 18, 0.16);
+  --ee-hair10: rgba(26, 21, 18, 0.12);
+  --ee-hair08: rgba(26, 21, 18, 0.1);
+  --ee-hair07: rgba(26, 21, 18, 0.09);
+  --ee-hair06: rgba(26, 21, 18, 0.08);
+  --ee-hover: rgba(26, 21, 18, 0.04);
+  --ee-up: #0e8f4f;
+  --ee-down: #c8371f;
+  --ee-amber: #b06f10;
+  --ee-up-fill: rgba(14, 143, 79, 0.1);
+  --ee-down-fill: rgba(200, 55, 31, 0.1);
+  --ee-pill-bg: #0e8f4f;
+  --ee-pill-ink: #ffffff;
+  --ee-sb-thumb: #d8cfc2;
+  --ee-accent: #3b82f6;
+  --ee-powered: #000000;
+  scroll-behavior: smooth;
 }
 
+html.dark {
+  --ee-bg: #0b0908;
+  --ee-bg-glass: rgba(11, 9, 8, 0.7);
+  --ee-bg-solid: rgba(11, 9, 8, 0.85);
+  --ee-hero-shadow: 0 1px 24px rgba(11, 9, 8, 0.85);
+  --ee-ink: #f2e9dd;
+  --ee-hero: #f6ead9;
+  --ee-strong: #e0d6c8;
+  --ee-brand: #e8ddce;
+  --ee-soft: #cfc4b6;
+  --ee-muted: #8d8378;
+  --ee-faint: #6b6259;
+  --ee-bodytx: #a89d90;
+  --ee-thought: #c9beb0;
+  --ee-hair14: rgba(242, 233, 221, 0.14);
+  --ee-hair10: rgba(242, 233, 221, 0.1);
+  --ee-hair08: rgba(242, 233, 221, 0.08);
+  --ee-hair07: rgba(242, 233, 221, 0.07);
+  --ee-hair06: rgba(242, 233, 221, 0.06);
+  --ee-hover: rgba(242, 233, 221, 0.03);
+  --ee-up: #3ddc84;
+  --ee-down: #ff5346;
+  --ee-amber: #e8a33a;
+  --ee-up-fill: rgba(61, 220, 132, 0.1);
+  --ee-down-fill: rgba(255, 83, 70, 0.1);
+  --ee-pill-bg: #3ddc84;
+  --ee-pill-ink: #0b0908;
+  --ee-sb-thumb: #2a2320;
+  --ee-accent: #8ab4ff;
+  --ee-powered: #ffffff;
+}
+
+/* Stays on the legacy app background: /runs and /ledger paint white cards onto
+   it and would lose all contrast against the Arena's pure-white --ee-bg. The
+   Arena covers the body with its own background instead (.ee-root). */
 body {
   background: var(--bg-app);
   color: var(--text-body);
   -webkit-font-smoothing: antialiased;
   /* Tabular figures everywhere so numeric columns always align. */
   font-feature-settings: "tnum" 1;
+  transition: background-color var(--ee-theme-dur) ease;
+}
+
+/* Light<->dark is a dissolve, not a cut. Every themed property animates on the
+   same clock as the hero crossfade, so the whole page settles together.
+   Transitions never run on first paint, so this costs nothing on load. */
+html {
+  --ee-theme-dur: 600ms;
+}
+   The :not(.ee-hero-layer) exclusion is load-bearing: this selector outranks
+   .ee-hero-layer, and `transition` is a shorthand, so without it this rule
+   replaces the hero's opacity transition with a color-only one and the
+   crossfade silently becomes a hard cut. */
+.ee-root,
+.ee-root *:not(.ee-marquee):not(.ee-hero-layer) {
+  transition:
+    background-color var(--ee-theme-dur) ease,
+    color var(--ee-theme-dur) ease,
+    border-color var(--ee-theme-dur) ease,
+    fill var(--ee-theme-dur) ease,
+    stroke var(--ee-theme-dur) ease;
+}
+
+::selection {
+  background: var(--ee-accent);
+  color: var(--ee-bg);
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--ee-sb-thumb);
+  border-radius: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--ee-bg);
+}
+
+/* ---------------- Arena surface ---------------- */
+.ee-root {
+  font-family: var(--font-jet), "JetBrains Mono", monospace;
+  color: var(--ee-ink);
+  background: var(--ee-bg);
+}
+.ee-root a {
+  color: var(--ee-ink);
+  text-decoration: none;
+}
+.ee-root a:hover {
+  color: var(--ee-accent);
+}
+.ee-serif {
+  font-family: var(--font-serif), "Instrument Serif", serif;
+  font-weight: 400;
+}
+
+/* Theme-conditional rendering. Both variants ship in the markup and CSS
+   picks one, so the server and client render identically — no hydration
+   mismatch and no theme flash on first paint. */
+.ee-when-dark {
+  display: none;
+}
+html.dark .ee-when-dark {
+  display: block;
+}
+html.dark .ee-when-light {
+  display: none;
+}
+
+/* Hero day/night crossfade. It's the same pixel scene at two times of day, so
+   the theme switch should read as dusk falling rather than a slide change —
+   both layers stay mounted and trade opacity.
+
+   The veils are stacked and crossfaded for the same reason the images are:
+   CSS cannot interpolate between two gradients, so animating a single veil's
+   background would hard-cut no matter what transition it carried. */
+.ee-hero-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  transition: opacity var(--ee-theme-dur) ease;
+}
+.ee-layer-day {
+  opacity: 1;
+}
+.ee-layer-night {
+  opacity: 0;
+}
+html.dark .ee-layer-day {
+  opacity: 0;
+}
+html.dark .ee-layer-night {
+  opacity: 1;
+}
+.ee-veil-day {
+  background: linear-gradient(180deg, #ffffff16, #ffffff46);
+}
+.ee-veil-night {
+  background: linear-gradient(180deg, #00000016, #00000046);
+}
+
+.ee-themebtn:hover {
+  color: var(--ee-ink);
+  border-color: var(--ee-ink);
+}
+.ee-wrow:hover {
+  background: var(--ee-hover);
+}
+
+@keyframes ee-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+.ee-marquee {
+  animation: ee-marquee 45s linear infinite;
+}
+
+/* The ticker and the theme dissolve are decorative; motion sensitivity
+   outranks both. The theme still switches — it just cuts instead of fading. */
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+    --ee-theme-dur: 0ms;
+  }
+  .ee-marquee {
+    animation: none;
+  }
+}
+
+/* ---------------- Arena layout ----------------
+   The design is drawn at desktop only — fixed two-column grids and 32px
+   gutters with no breakpoints. Desktop values below match it exactly; the
+   media queries are additions, since a page that collapses on a phone isn't
+   a working page. */
+.ee-section {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 96px 32px 40px;
+  /* The header is sticky, so an un-offset anchor jump parks the section's
+     eyebrow label underneath it. Clears the header plus a little air. */
+  scroll-margin-top: 88px;
+}
+.ee-hdr {
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 16px 32px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+}
+.ee-nav {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  gap: 34px;
+  font-size: 13.5px;
+  color: var(--ee-soft);
+  white-space: nowrap;
+}
+.ee-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  align-items: start;
+  border-top: 1px solid var(--ee-hair14);
+}
+.ee-split-floor {
+  grid-template-columns: 1fr 1.25fr;
+}
+.ee-col-l {
+  padding: 34px 46px 34px 0;
+  border-right: 1px solid var(--ee-hair14);
+  min-width: 0;
+}
+.ee-col-r {
+  padding: 34px 0 34px 46px;
+  min-width: 0;
+}
+
+@media (max-width: 900px) {
+  .ee-section {
+    padding: 56px 18px 28px;
+    scroll-margin-top: 70px;
+  }
+  .ee-hdr {
+    padding: 12px 18px;
+    gap: 14px;
+  }
+  .ee-nav {
+    gap: 16px;
+    font-size: 11.5px;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .ee-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .ee-split,
+  .ee-split-floor {
+    grid-template-columns: 1fr;
+  }
+  .ee-col-l {
+    padding: 26px 0;
+    border-right: none;
+  }
+  .ee-col-r {
+    padding: 26px 0;
+    border-top: 1px solid var(--ee-hair14);
+  }
 }
 
 /* Every number, ticker, and tabular data point is Plex Mono with full
