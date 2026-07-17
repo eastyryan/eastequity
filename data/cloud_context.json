@@ -1,7 +1,7 @@
 {
   "_context_tier": "brain_slim_v1",
   "_tier_note": "This is the SLIM brain pack. Full archive is at full_context_path if set. Learning signals are in reasoning_process.learning_pack (top-N). Deep maps are limited to focus/digest tickers.",
-  "run_date": "2026-07-17T21:15:39.747760+00:00",
+  "run_date": "2026-07-17T22:34:49.197531+00:00",
   "as_of_et": "2026-07-17",
   "trading_mode": "paper",
   "run_depth": "evening_review",
@@ -803,6 +803,14 @@
     "note": "Deterministic check of YOUR OWN previous run's watchlist 'would_buy_at' price levels against today's prices. Each alert means a name you said you wanted cheaper is now at or within 2% of your stated level - prioritize deep research on it this run and either propose or update the watchlist entry. Non-price triggers (earnings dates, conditions) are not checked here.",
     "alerts": [
       {
+        "ticker": "ABT",
+        "trigger_text": "A close and hold above ~$100-101 for 2-3 sessions on continued volume, not just today's single pop -- confirming the base, not chasing the first green day.",
+        "parsed_level": 100.0,
+        "last_price": 100.68,
+        "distance_from_level_pct": 0.68,
+        "note": "price within 2% of your stated buy level - prioritize deep research on this name this run"
+      },
+      {
         "ticker": "AMD",
         "trigger_text": "After the 7/22-23 Advancing AI event: a confirmed positive reaction that reclaims and HOLDS above the 50-DMA (~$500), basing $500-520 on real volume with IV crushed post-event -- ideally after the 8/4 earnings de-risks. Not a pre-event dip.",
         "parsed_level": 500.0,
@@ -858,7 +866,7 @@
   "market_events": {
     "note": "commodities via yfinance (CL=F/USO, GC=F/GLD, ^VIX/VIXY, DX-Y.NYB/UUP); flags from keyword classification of market_news headlines \u2014 heuristic tags, not a risk model",
     "status": "ok",
-    "as_of": "2026-07-17T21:10:20.439929+00:00",
+    "as_of": "2026-07-17T22:31:03.921356+00:00",
     "commodities": {
       "oil": {
         "symbol": "CL=F",
@@ -887,36 +895,26 @@
     },
     "flags": {
       "counts": {
-        "geopolitical": 1,
+        "geopolitical": 0,
         "inflation_rates": 0,
         "financial_stress": 0,
         "sector_macro": 0
       },
-      "active": [
-        "geopolitical"
-      ],
-      "n_flagged": 1
+      "active": [],
+      "n_flagged": 0
     },
-    "flagged_headlines": [
-      {
-        "title": "Trump rips Canada as wildfire smoke spreads, says U.S. will add pollution cost to tariffs",
-        "tags": [
-          "geopolitical"
-        ],
-        "age_hours": 0.2
-      }
-    ],
+    "flagged_headlines": [],
     "headline_source": "market_news"
   },
   "market_news": {
     "note": "Market-wide headlines (last ~24h) for tape context - what is moving EVERYTHING today, not just your focus names. Weigh it in the macro/regime read; never build a single-name thesis on it alone.",
     "status": "ok",
-    "as_of": "2026-07-17T21:11:50.129831+00:00",
+    "as_of": "2026-07-17T22:31:53.874617+00:00",
     "sources": [
       {
         "name": "yahoo_finance",
         "ok": true,
-        "items": 46
+        "items": 45
       },
       {
         "name": "cnbc",
@@ -936,189 +934,154 @@
     ],
     "headlines": [
       {
-        "title": "Look on the bright side: Energy companies are booming",
-        "source": "marketwatch",
-        "published": "2026-07-17T21:08:00+00:00",
-        "url": "https://www.marketwatch.com/story/look-on-the-bright-side-energy-companies-are-booming-546164fb?mod=mw_rss_topstories",
-        "age_hours": 0.1
-      },
-      {
-        "title": "12 Communication Services Stocks Moving In Friday's After-Market Session",
-        "source": "alpaca_benzinga",
-        "published": "2026-07-17T21:05:44Z",
-        "url": "https://www.benzinga.com/trading-ideas/movers/26/07/60539186/12-communication-services-stocks-moving-friday-s-after-market-session",
-        "age_hours": 0.1,
-        "symbols": [
-          "AEHL",
-          "CPOP",
-          "GCL",
-          "GETY",
-          "JFU",
-          "KWM",
-          "LION",
-          "NIPG",
-          "NOMA",
-          "OPTU",
-          "TRUG",
-          "VSME"
-        ]
-      },
-      {
-        "title": "12 Health Care Stocks Moving In Friday's After-Market Session",
-        "source": "alpaca_benzinga",
-        "published": "2026-07-17T21:05:44Z",
-        "url": "https://www.benzinga.com/trading-ideas/movers/26/07/60539185/12-health-care-stocks-moving-friday-s-after-market-session",
-        "age_hours": 0.1,
-        "symbols": [
-          "ADVB",
-          "ALPS",
-          "BJDX",
-          "BKD",
-          "BRKR",
-          "COSM",
-          "CPHI",
-          "GELS",
-          "ITOC",
-          "NXL",
-          "TELO",
-          "VBIO"
-        ]
-      },
-      {
-        "title": "12 Industrials Stocks Moving In Friday's After-Market Session",
-        "source": "alpaca_benzinga",
-        "published": "2026-07-17T21:05:44Z",
-        "url": "https://www.benzinga.com/trading-ideas/movers/26/07/60539183/12-industrials-stocks-moving-friday-s-after-market-session",
-        "age_hours": 0.1,
-        "symbols": [
-          "BIYA",
-          "GFAI",
-          "GLXG",
-          "KAZR",
-          "MVST",
-          "MWYN",
-          "RYDE",
-          "SCAG",
-          "SLGB",
-          "SLND",
-          "WETO",
-          "YSS"
-        ]
-      },
-      {
-        "title": "12 Information Technology Stocks Moving In Friday's After-Market Session",
-        "source": "alpaca_benzinga",
-        "published": "2026-07-17T21:05:43Z",
-        "url": "https://www.benzinga.com/trading-ideas/movers/26/07/60539182/12-information-technology-stocks-moving-friday-s-after-market-session",
-        "age_hours": 0.1,
-        "symbols": [
-          "AWRE",
-          "CHAI",
-          "DBX",
-          "HPAI",
-          "HQ",
-          "NTRP",
-          "PRSO",
-          "SVRE",
-          "TGHL",
-          "VHC",
-          "VTIX",
-          "YYAI"
-        ]
-      },
-      {
-        "title": "Exodus Movement Announces An Operating Realignment That Includes A Reduction Of ~25% Of The Global Workforce; Expects $2.5M-$3.5M Of Pre-Tax Charges From Workforce Reduction",
-        "source": "alpaca_benzinga",
-        "published": "2026-07-17T21:04:26Z",
-        "url": "https://www.benzinga.com/news/26/07/60539148/exodus-movement-announces-operating-realignment-includes-reduction-25-global-workforce-expects-2-5m-",
-        "age_hours": 0.1,
-        "symbols": [
-          "EXOD"
-        ]
-      },
-      {
-        "title": "Trump rips Canada as wildfire smoke spreads, says U.S. will add pollution cost to tariffs",
+        "title": "Taco Bell says it has removed lettuce linked to cyclosporiasis outbreak from its restaurants",
         "source": "cnbc",
-        "published": "2026-07-17T21:00:54+00:00",
-        "url": "https://www.cnbc.com/2026/07/17/trump-canada-wildfire-tariffs.html",
-        "age_hours": 0.2
-      },
-      {
-        "title": "Here\u2019s How Much You Would Have Made Owning ServiceNow Stock In The Last 10 Years",
-        "source": "alpaca_benzinga",
-        "published": "2026-07-17T21:00:31Z",
-        "url": "https://www.benzinga.com/news/26/07/60539070/here-s-how-much-you-would-have-made-owning-servicenow-stock-last-10-years",
-        "age_hours": 0.2,
-        "symbols": [
-          "NOW"
-        ]
-      },
-      {
-        "title": "The cyclosporiasis outbreak linked to Taco Bell is hitting some restaurant stocks, but don't expect a long-term impact",
-        "source": "cnbc",
-        "published": "2026-07-17T20:48:56+00:00",
+        "published": "2026-07-17T22:16:23+00:00",
         "url": "https://www.cnbc.com/2026/07/17/cyclosporiasis-outbreak-linked-to-taco-bell-may-not-have-major-impact.html",
-        "age_hours": 0.4
+        "age_hours": 0.3
       },
       {
-        "title": "Chinese AI has leveled up, and brought renewed focus on the open weight model shift",
-        "source": "cnbc",
-        "published": "2026-07-17T20:48:35+00:00",
-        "url": "https://www.cnbc.com/2026/07/17/moonshot-ai-kimi-k3-model-openai-anthropic-china.html",
-        "age_hours": 0.4
-      },
-      {
-        "title": "Chip stocks have entered a bear market. A BofA analyst says not to panic.",
-        "source": "marketwatch",
-        "published": "2026-07-17T20:49:00+00:00",
-        "url": "https://www.marketwatch.com/story/chip-stocks-enter-bear-market-territory-a-bofa-analyst-says-not-to-panic-4d34df17?mod=mw_rss_topstories",
-        "age_hours": 0.4
-      },
-      {
-        "title": "$1000 Invested In Energy Transfer 5 Years Ago Would Be Worth This Much Today",
+        "title": "If You Invested $100 In Fortinet Stock 15 Years Ago, You Would Have This Much Today",
         "source": "alpaca_benzinga",
-        "published": "2026-07-17T20:45:36Z",
-        "url": "https://www.benzinga.com/news/26/07/60538890/1000-invested-energy-transfer-5-years-ago-would-be-worth-much-today",
-        "age_hours": 0.4,
+        "published": "2026-07-17T22:15:50Z",
+        "url": "https://www.benzinga.com/news/26/07/60539844/if-you-invested-100-fortinet-stock-15-years-ago-you-would-have-much-today",
+        "age_hours": 0.3,
         "symbols": [
-          "ET"
+          "FTNT"
         ]
       },
       {
-        "title": "Bitcoin Breaks Tech Stocks Correlation: Will BTC Now Follow in Gold's Footsteps?",
+        "title": "$1000 Invested In Oracle 20 Years Ago Would Be Worth This Much Today",
         "source": "alpaca_benzinga",
-        "published": "2026-07-17T20:41:11Z",
-        "url": "https://www.benzinga.com/crypto/cryptocurrency/26/07/60538851/bitcoin-breaks-tech-stocks-correlation-will-btc-now-follow-in-golds-footsteps",
+        "published": "2026-07-17T22:00:31Z",
+        "url": "https://www.benzinga.com/news/26/07/60539786/1000-invested-oracle-20-years-ago-would-be-worth-much-today",
         "age_hours": 0.5,
         "symbols": [
-          "BLK",
-          "BTCUSD",
-          "ETHUSD",
-          "GLD",
-          "IBIT",
-          "IGV"
+          "ORCL"
         ]
       },
       {
-        "title": "Iraq and Syria sign agreement to restore oil pipeline that would provide alternative to Strait of Hormuz",
-        "source": "cnbc",
-        "published": "2026-07-17T20:33:01+00:00",
-        "url": "https://www.cnbc.com/2026/07/17/iran-war-iraq-syria-oil-pipeline-strait-hormuz.html",
+        "title": "The average stock is having a moment as semiconductors struggle. It\u2019s a sign of a healthy market.",
+        "source": "marketwatch",
+        "published": "2026-07-17T21:55:00+00:00",
+        "url": "https://www.marketwatch.com/story/the-average-stock-is-having-a-moment-as-semiconductors-struggle-its-a-sign-of-a-healthy-market-0dc01e9a?mod=mw_rss_topstories",
         "age_hours": 0.6
       },
       {
-        "title": "SpaceX stock has cratered nearly 23% since the company joined the Nasdaq-100",
-        "source": "cnbc",
-        "published": "2026-07-17T20:33:34+00:00",
-        "url": "https://www.cnbc.com/2026/07/17/spacex-stock-starship-test-flight-aborted.html",
-        "age_hours": 0.6
+        "title": "19 (mostly) tech stocks that have fallen at least 25% in July",
+        "source": "marketwatch",
+        "published": "2026-07-17T21:45:00+00:00",
+        "url": "https://www.marketwatch.com/story/18-tech-stocks-that-have-fallen-at-least-30-during-july-4c373d5e?mod=mw_rss_topstories",
+        "age_hours": 0.8
+      },
+      {
+        "title": "Here's How Much $100 Invested In Texas Instruments 15 Years Ago Would Be Worth Today",
+        "source": "alpaca_benzinga",
+        "published": "2026-07-17T21:45:39Z",
+        "url": "https://www.benzinga.com/news/26/07/60539698/here-s-how-much-100-invested-texas-instruments-15-years-ago-would-be-worth-today",
+        "age_hours": 0.8,
+        "symbols": [
+          "TXN"
+        ]
+      },
+      {
+        "title": "Coinbase CEO Brian Armstrong Says Bitcoin Is 'Digital Gold,' Stablecoins Will Power AI Commerce",
+        "source": "alpaca_benzinga",
+        "published": "2026-07-17T21:44:48Z",
+        "url": "https://www.benzinga.com/crypto/cryptocurrency/26/07/60539685/coinbase-ceo-brian-armstrong-says-bitcoin-is-digital-gold-stablecoins-will-power-ai-commerce",
+        "age_hours": 0.8,
+        "symbols": [
+          "BTCUSD",
+          "COIN",
+          "ETHUSD",
+          "SOLUSD"
+        ]
+      },
+      {
+        "title": "'US Considers Creating Finra-Like Watchdog to Vet Top AI Models'- Bloomberg",
+        "source": "alpaca_benzinga",
+        "published": "2026-07-17T21:44:05Z",
+        "url": "https://www.benzinga.com/news/26/07/60539664/us-considers-creating-finra-watchdog-vet-top-ai-models-bloomberg",
+        "age_hours": 0.8,
+        "symbols": [
+          "SPY"
+        ]
+      },
+      {
+        "title": "Almonty Industries To Voluntarily Delist From The Toronto Stock Exchange Effective On July 31, 2026; Co. Will Continue To Trade On The Nasdaq",
+        "source": "alpaca_benzinga",
+        "published": "2026-07-17T21:39:13Z",
+        "url": "https://www.benzinga.com/news/26/07/60539641/almonty-industries-voluntarily-delist-toronto-stock-exchange-effective-july-31-2026-co-will-continue",
+        "age_hours": 0.9,
+        "symbols": [
+          "ALM",
+          "TSX:AII"
+        ]
+      },
+      {
+        "title": "Digital Brands Group Announces 1-For-40 Reverse Stock Split Effective On July 24, 2026",
+        "source": "alpaca_benzinga",
+        "published": "2026-07-17T21:33:00Z",
+        "url": "https://www.benzinga.com/news/26/07/60539559/digital-brands-group-announces-1-40-reverse-stock-split-effective-july-24-2026",
+        "age_hours": 1.0,
+        "symbols": [
+          "DBGI"
+        ]
+      },
+      {
+        "title": "Here's How Much $1000 Invested In Deere 10 Years Ago Would Be Worth Today",
+        "source": "alpaca_benzinga",
+        "published": "2026-07-17T21:30:31Z",
+        "url": "https://www.benzinga.com/news/26/07/60539531/here-s-how-much-1000-invested-deere-10-years-ago-would-be-worth-today",
+        "age_hours": 1.0,
+        "symbols": [
+          "DE"
+        ]
+      },
+      {
+        "title": "How your winning stock-index fund can turn on a dime",
+        "source": "marketwatch",
+        "published": "2026-07-17T21:23:00+00:00",
+        "url": "https://www.marketwatch.com/story/how-your-winning-stock-index-fund-can-turn-on-a-dime-e2e4b44e?mod=mw_rss_topstories",
+        "age_hours": 1.1
+      },
+      {
+        "title": "SkyAI Says Formed Special Committee To Review All-Stock Proposal From Forward Industries; Board And Special Committee Reject Forward Industries Proposal",
+        "source": "alpaca_benzinga",
+        "published": "2026-07-17T21:25:08Z",
+        "url": "https://www.benzinga.com/content/60539484/skyai-says-formed-special-committee-review-all-stock-proposal-forward-industries-board-and-special-c",
+        "age_hours": 1.1,
+        "symbols": [
+          "FWDI",
+          "SKYA"
+        ]
+      },
+      {
+        "title": "Bone Biologics Files Prospectus To Offer Up To 6.46M Shares Of Common Stock By Selling Stockholders",
+        "source": "alpaca_benzinga",
+        "published": "2026-07-17T21:22:18Z",
+        "url": "https://www.benzinga.com/news/26/07/60539439/bone-biologics-files-prospectus-offer-6-46m-shares-common-stock-selling-stockholders",
+        "age_hours": 1.2,
+        "symbols": [
+          "BBLG"
+        ]
+      },
+      {
+        "title": "MKDWELL Tech  To Acquire The Entire Issued Share Capital Of Landvision; Deal Valued At $240M Via 30M New Shares At $8 Per Share",
+        "source": "alpaca_benzinga",
+        "published": "2026-07-17T21:18:53Z",
+        "url": "https://www.benzinga.com/news/26/07/60539405/mkdwell-tech-acquire-entire-issued-share-capital-landvision-deal-valued-240m-30m-new-shares-8-share",
+        "age_hours": 1.2,
+        "symbols": [
+          "MKDW"
+        ]
       }
     ]
   },
   "market_radar": {
     "note": "Market-WIDE radar (Alpaca screeners + news), not limited to the universe. off_universe_symbols are candidates for the universe_candidates output field IF a real swing setup exists \u2014 they are not tradeable until deterministically added ($1B cap, priceable, liquid) and are never a buy signal by themselves.",
     "status": "ok",
-    "as_of": "2026-07-17T21:11:50.801232+00:00",
+    "as_of": "2026-07-17T22:31:54.074395+00:00",
     "gainers": [
       {
         "ticker": "SHOT",
@@ -1183,96 +1146,91 @@
       {
         "ticker": "NVDA",
         "in_universe": true,
-        "news_mentions_24h": 2,
-        "volume": 144786708
+        "news_mentions_24h": 1,
+        "volume": 144949534
       },
       {
         "ticker": "MU",
         "in_universe": true,
-        "news_mentions_24h": 2,
-        "volume": 62978925
+        "news_mentions_24h": 1,
+        "volume": 63224846
       },
       {
         "ticker": "SPCX",
         "in_universe": false,
-        "news_mentions_24h": 1,
-        "volume": 83376062
+        "news_mentions_24h": 0,
+        "volume": 83603963
       },
       {
         "ticker": "SKHY",
         "in_universe": false,
-        "news_mentions_24h": 2,
-        "volume": 73539194
+        "news_mentions_24h": 1,
+        "volume": 73800978
       },
       {
         "ticker": "NFLX",
         "in_universe": true,
         "news_mentions_24h": 0,
-        "volume": 141850606
+        "volume": 141991361
       },
       {
         "ticker": "INTC",
         "in_universe": false,
         "news_mentions_24h": 0,
-        "volume": 124840018
+        "volume": 126483137
       },
       {
         "ticker": "AAPL",
         "in_universe": true,
-        "news_mentions_24h": 1,
-        "volume": 63855138
+        "news_mentions_24h": 0,
+        "volume": 63893402
       },
       {
         "ticker": "SNDK",
         "in_universe": true,
-        "news_mentions_24h": 1,
-        "volume": 19724836
+        "news_mentions_24h": 0,
+        "volume": 19824542
       },
       {
         "ticker": "TSLA",
         "in_universe": true,
-        "news_mentions_24h": 1,
-        "volume": 30964897
+        "news_mentions_24h": 0,
+        "volume": 31644975
       },
       {
         "ticker": "DRAM",
         "in_universe": false,
         "news_mentions_24h": 0,
-        "volume": 135639866
+        "volume": 135833089
       },
       {
         "ticker": "GOOGL",
         "in_universe": true,
         "news_mentions_24h": 0,
-        "volume": 30050062
+        "volume": 30127930
       },
       {
         "ticker": "AMD",
         "in_universe": true,
         "news_mentions_24h": 0,
-        "volume": 31488207
+        "volume": 32129731
       }
     ],
     "news_trending": [
       {
+        "ticker": "ADVB",
+        "in_universe": false,
+        "news_mentions_24h": 2
+      },
+      {
         "ticker": "HPAI",
-        "in_universe": false,
-        "news_mentions_24h": 2
-      },
-      {
-        "ticker": "AGCC",
-        "in_universe": false,
-        "news_mentions_24h": 2
-      },
-      {
-        "ticker": "USO",
         "in_universe": false,
         "news_mentions_24h": 2
       }
     ],
     "off_universe_symbols": [
+      "ADVB",
       "AFJKU",
-      "AGCC",
       "DRAM",
       "HPAI",
       "INTC",
@@ -1285,14 +1243,17 @@
       "SHOT",
       "SKHY",
       "SNXX",
-      "SPCX",
-      "USO"
+      "SPCX"
     ]
   },
   "benchmark_close": 743.29,
   "lessons_learned": {
     "note": "Your own most recent self-review conclusions and process notes. The CURRENT stated behavior change is binding until the next review grades it - honor it in this run's decisions.",
     "recent": [
+      {
+        "date": "2026-07-17",
+        "note": "Weekly self-review: Last Friday's stated change was to get the insider Form-4 feed pre-classified into sponsor/10b5-1 vs. discretionary officer transactions instead of handing me hundreds of noisy rows -- that fix landed and it worked: tonight's insider_activity block gave clean, directly actionable signals (BSX bullish_cluster_buying, 3 officers buying $554K with zero sells; ZS notable_discretionary_selling), a real improvement over last week's noise. The trading result this week was rougher: my only two closed trades, DELL and HPE, both lost (-$135 and -$45, 0% win rate, avg R -0.98), and with only 2 closed trades this is anecdote-level evidence per my own sample-size rules -- I am not inventing hard rules from it, but the pattern is worth naming honestly. Both losses shared the same demand_driver (hyperscaler_server_capex/servers_hardware) dressed up as two separate theses when the actual catalyst language ('SMCI collapse consolidates AI-server share') was nearly identical -- bad reasoning (thin diversification), not bad data, and it is exactly the clustering the system's theme-risk cap now exists to prevent. HPE's exit was graded process_fail: I closed it at $46.08 without its $43.75 stop being hit and without a clearly named invalidator firing -- conviction cracked, not thesis broken, which is the discretionary-exit mistake I need to stop making. What I got right: after those two losses on 7/15, the book stayed disciplined and all-cash through the rest of the week, including declining a real-looking AMD dip-buy today because my own stated trigger condition (post-event confirmation) was not actually met. A new engineering issue surfaced tonight -- a validator-clean UNH proposal was rejected at execution with 'insufficient cash' on a 100%-cash account, which needs an engineering look, not a reasoning fix. The one change for next week: before any discretionary SELL_TO_CLOSE that isn't a stop or horizon exit, I will name the specific thesis_invalidator that actually fired in the sell thesis itself -- if none of the three stated invalidators fired, the move is to hold or trim with sell_fraction, not a full discretionary close."
+      },
       {
         "date": "2026-07-10",
         "note": "Weekly self-review: This week was mostly build week, not trade week - the system went from a bare skeleton to a full pipeline (data relay, validator, position sizing, watchlist triggers, insider activity, sector relative strength, post-earnings drift detection) in a handful of commits, and only opened its first two live paper positions on 7/9 (DELL) and 7/10 (HPE). Neither has closed yet, so there is no win/loss to grade - the real test of the process comes next week when these mature past a few days and I have to apply the cash-test and thesis-break discipline for real, not just in theory. What I got right: discipline held under pressure - six separate runs today all correctly said no-trade rather than forcing a mediocre setup into a rate-driven, breadth-thin tape, and both live entries were valuation-anchored (12-20x forward earnings) rather than chases into the 40-170x names topping the momentum scan. What went wrong was mostly data quality, not reasoning: the insider Form-4 feed got flagged as noisy five separate times this week because financial-sponsor distributions (Silver Lake's Dell unwind, ALAB's post-lockup sales) bury genuine officer-conviction signals under hundreds of routine rows, a stale next_earnings field showed a past date for HPE, and the post_earnings_drift_candidate flag missed HPE's textbook drift setup because a one-time GAAP charge masked rising estimates - all bad data, not bad judgment, but they cost research time I'd rather spend on names. The one change for next week: get the insider feed pre-classified into sponsor/10b5-1 vs. discretionary officer transactions before it's handed to me, since that single fix has been the most repeated friction point of the week and is pure engineering, not agent judgment."
@@ -3402,7 +3363,7 @@
     "scanned": 182,
     "requested": 182,
     "scan_failures": 0,
-    "scan_fetched_at_utc": "2026-07-17T21:11:50.127579+00:00",
+    "scan_fetched_at_utc": "2026-07-17T22:31:53.872049+00:00",
     "note": "Ranked by deterministic swing_setup_score; agent must apply judgment and research before proposing.",
     "sector_comps_note": "sector_comps (on surfaced rows): fwd_pe_est = last close / cached pre-market current-FY EPS estimate (snapshot may be ~a day old); growth = current-FY revenue-growth estimate. Medians span ALL scanned names with data - coverage.pe_n/growth_n are the true denominators; medians under 4 same-sector data points report None.",
     "top_setups": [
@@ -3558,10 +3519,10 @@
           "count_20d": 3,
           "last": {
             "sessions_ago": 0,
-            "pct": -2.7,
+            "pct": -3.4,
             "direction": "down",
             "filled": true,
-            "retained_pct": -0.4
+            "retained_pct": -0.32
           }
         },
         "rel_strength_1m_pct": 29.1,
@@ -3674,13 +3635,13 @@
         "di_plus": 35.9,
         "di_minus": 13.5,
         "gap_analysis": {
-          "count_20d": 1,
+          "count_20d": 2,
           "last": {
-            "sessions_ago": 9,
-            "pct": -2.6,
+            "sessions_ago": 0,
+            "pct": -2.5,
             "direction": "down",
             "filled": true,
-            "retained_pct": -1.04
+            "retained_pct": -0.53
           }
         },
         "rel_strength_1m_pct": 28.8,
@@ -4681,7 +4642,7 @@
         "analyst_estimates": {
           "fwd_revenue_growth_pct": -0.7,
           "next_yr_revenue_growth_pct": 2.8,
-          "eps_revision_30d_pct": 1.69,
+          "eps_revision_30d_pct": 1.39,
           "eps_revision_direction": "up"
         },
         "post_earnings_drift_candidate": true,
@@ -22625,7 +22586,7 @@
   },
   "news_and_catalysts": {
     "status": "ok",
-    "as_of": "2026-07-17T21:13:09.971090+00:00",
+    "as_of": "2026-07-17T22:32:53.716068+00:00",
     "news_max_age_days": 7,
     "tickers": {
       "NET": {
@@ -22640,13 +22601,13 @@
             "title": "1 Unprofitable Stock with Exciting Potential and 2 Facing Challenges",
             "published": "2026-07-17T13:05:46Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/1-unprofitable-stock-exciting-potential-130546449.html",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "Cloudflare (NET) Stock Gets Fair Value Boost As Analysts Raise AI And Security Targets",
             "published": "2026-07-17T01:12:58Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/cloudflare-net-stock-gets-fair-011258252.html",
-            "age_days": 0.8
+            "age_days": 0.9
           },
           {
             "title": "Cloudflare (NET) Stock May Be Fully Priced As AI Search News Lifts Hopes",
@@ -22664,7 +22625,7 @@
             "title": "Are You Looking for a Top Momentum Pick? Why Cloudflare (NET) is a Great Choice",
             "published": "2026-07-16T16:00:04Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/looking-top-momentum-pick-why-160004292.html",
-            "age_days": 1.2
+            "age_days": 1.3
           }
         ],
         "next_earnings": "2026-08-06",
@@ -22717,7 +22678,7 @@
             "title": "SpaceX initiated, Lululemon downgraded: Wall Street's top analyst calls",
             "published": "2026-07-16T13:33:54Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/spacex-initiated-lululemon-downgraded-wall-133354953.html",
-            "age_days": 1.3
+            "age_days": 1.4
           },
           {
             "title": "Here Are Thursday\u2019s Top Wall Street Analyst Research Calls: Alphabet, BlackRock, Etsy, Flex, Lululemon Athletica, Meta Platforms, Okta, Palo Alto Networks, and More",
@@ -22729,7 +22690,7 @@
             "title": "1 Mid-Cap Stock for Long-Term Investors and 2 Facing Challenges",
             "published": "2026-07-16T11:13:22Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/1-mid-cap-stock-long-111322177.html",
-            "age_days": 1.4
+            "age_days": 1.5
           },
           {
             "title": "Okta (OKTA) Wins Partner Recognition For Identity Security Push In Cloud And AI",
@@ -22794,7 +22755,13 @@
             "title": "How to Find the Bargains in the Software Stock Wreckage",
             "published": "2026-07-17T15:43:00Z",
             "url": "https://www.barrons.com/articles/ai-software-stocks-dd7912fb?siteid=yhoof2&yptr=yahoo",
-            "age_days": 0.2
+            "age_days": 0.3
+          },
+          {
+            "title": "Capital One Just Upgraded Palo Alto Networks Stock. Here's Why.",
+            "published": "2026-07-17T15:31:39Z",
+            "url": "https://www.barchart.com/story/news/3337938/capital-one-just-upgraded-palo-alto-networks-stock-here-s-why",
+            "age_days": 0.3
           },
           {
             "title": "Fortinet Stock Is Pricing In A Much Bigger Future",
@@ -22812,13 +22779,7 @@
             "title": "Why Palo Alto Networks Inc (PANW) Wants AI Token Pricing to Come Down",
             "published": "2026-07-16T18:18:39Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/why-palo-alto-networks-inc-181839289.html",
-            "age_days": 1.1
-          },
-          {
-            "title": "SpaceX initiated, Lululemon downgraded: Wall Street's top analyst calls",
-            "published": "2026-07-16T13:33:54Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/spacex-initiated-lululemon-downgraded-wall-133354953.html",
-            "age_days": 1.3
+            "age_days": 1.2
           }
         ],
         "next_earnings": "2026-08-18",
@@ -22865,19 +22826,19 @@
             "title": "3 Cybersecurity Stocks to Buy Amid Rising Adoption of Agentic AI",
             "published": "2026-07-17T15:17:00Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/3-cybersecurity-stocks-buy-amid-151700734.html",
-            "age_days": 0.2
+            "age_days": 0.3
           },
           {
             "title": "Why Inflation Data Just Lit A Fire Under CRWD Stock",
             "published": "2026-07-15T16:16:32Z",
             "url": "https://www.trefis.com/articles/607324/why-inflation-data-just-lit-a-fire-under-crwd-stock/2026-07-15",
-            "age_days": 2.2
+            "age_days": 2.3
           },
           {
             "title": "Cybersecurity Space is Buzzing on Recent Catalysts: 3 Top Picks",
             "published": "2026-07-15T13:03:00Z",
             "url": "https://finance.yahoo.com/technology/articles/cybersecurity-space-buzzing-recent-catalysts-130300250.html",
-            "age_days": 2.3
+            "age_days": 2.4
           },
           {
             "title": "Dow Jones Futures: Techs Rise, Oil Hits $80 On Iran News, ASML, Morgan Stanley Lead Earnings Movers",
@@ -22889,13 +22850,13 @@
             "title": "Qualys and SentinelOne Shares Are Soaring, What You Need To Know",
             "published": "2026-07-14T20:39:11Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/qualys-sentinelone-shares-soaring-know-203911426.html",
-            "age_days": 3.0
+            "age_days": 3.1
           },
           {
             "title": "IBM, Goldman Sachs, SK Hynix, Micron, CrowdStrike, Biogen, and More Stocks That Explain Today\u2019s Market",
             "published": "2026-07-14T20:31:00Z",
             "url": "https://www.barrons.com/articles/stock-movers-70f9e550?siteid=yhoof2&yptr=yahoo",
-            "age_days": 3.0
+            "age_days": 3.1
           }
         ],
         "next_earnings": "2026-08-27",
@@ -22939,40 +22900,40 @@
       "CRWD": {
         "headlines": [
           {
+            "title": "CrowdStrike vs. NVIDIA: Which Growth Tech Stock Is a Better Buy in 2026, the Cybersecurity Giant or AI Leader?",
+            "published": "2026-07-17T21:59:01Z",
+            "url": "https://www.fool.com/coverage/better-buy/2026/07/17/crowdstrike-vs-nvidia-which-growth-tech-stock-is-a-better-buy-in-2026-the-cybersecurity-giant-or-ai-leader/",
+            "age_days": 0.0
+          },
+          {
             "title": "Stocks making big moves this week: HCA Healthcare, UnitedHealth, CrowdStrike, RXO, and Enovis",
             "published": "2026-07-17T20:57:46Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/stocks-making-big-moves-week-205746109.html",
-            "age_days": 0.0
+            "age_days": 0.1
           },
           {
             "title": "CrowdStrike vs. Dell Technologies: Which Technology Stock Is a Better Buy in 2026?",
             "published": "2026-07-17T20:51:01Z",
             "url": "https://www.fool.com/coverage/better-buy/2026/07/17/crowdstrike-vs-dell-technologies-which-technology-stock-is-a-better-buy-in-2026/",
-            "age_days": 0.0
+            "age_days": 0.1
           },
           {
             "title": "CrowdStrike Eyes Next Act As AI Security Business Takes Shape",
             "published": "2026-07-17T20:15:22Z",
             "url": "https://www.investors.com/research/the-new-america/crowdstrike-stock-kurtz-artificial-intelligence/?src=A00220&yptr=yahoo",
-            "age_days": 0.0
+            "age_days": 0.1
+          },
+          {
+            "title": "Goldman Sachs Will Continue to Beat Targets, Analyst Says. Plus, DraftKings and 4 More Stocks.",
+            "published": "2026-07-17T20:03:00Z",
+            "url": "https://www.barrons.com/articles/goldman-sachs-will-continue-to-beat-targets-analyst-says-plus-draftkings-and-4-more-stocks-792dc60b?siteid=yhoof2&yptr=yahoo",
+            "age_days": 0.1
           },
           {
             "title": "Jim Cramer Says There Will Always Be Another DeepSeek \u2014 Here Are the 5 Best Cybersecurity Stocks to Own Right Now",
             "published": "2026-07-17T16:49:06Z",
             "url": "https://247wallst.com/investing/2026/07/17/jim-cramer-says-there-will-always-be-another-deepseek-here-are-the-5-best-cybersecurity-stocks-to-own-right-now/",
             "age_days": 0.2
-          },
-          {
-            "title": "How to Find the Bargains in the Software Stock Wreckage",
-            "published": "2026-07-17T15:43:00Z",
-            "url": "https://www.barrons.com/articles/ai-software-stocks-dd7912fb?siteid=yhoof2&yptr=yahoo",
-            "age_days": 0.2
-          },
-          {
-            "title": "Fortinet Stock Is Pricing In A Much Bigger Future",
-            "published": "2026-07-17T12:02:15Z",
-            "url": "https://www.trefis.com/articles/607729/fortinet-stock-is-pricing-in-a-much-bigger-future/2026-07-17",
-            "age_days": 0.4
           }
         ],
         "next_earnings": "2026-09-01",
@@ -23037,13 +22998,13 @@
             "title": "Why Inflation Data Just Lit A Fire Under CRWD Stock",
             "published": "2026-07-15T16:16:32Z",
             "url": "https://www.trefis.com/articles/607324/why-inflation-data-just-lit-a-fire-under-crwd-stock/2026-07-15",
-            "age_days": 2.2
+            "age_days": 2.3
           },
           {
             "title": "Is PANW Stock A Smart Buy As AI Rewrites The Rules Of Cybersecurity?",
             "published": "2026-07-15T15:55:36Z",
             "url": "https://www.trefis.com/articles/607302/is-panw-stock-a-smart-buy-as-ai-rewrites-the-rules-of-cybersecurity/2026-07-15",
-            "age_days": 2.2
+            "age_days": 2.3
           },
           {
             "title": "Fortinet's AI Surge Is Impressive. Is Microsoft Stock The Smarter Way In?",
@@ -23096,7 +23057,7 @@
             "title": "Is Axon (AXON) a Buy as Wall Street Analysts Look Optimistic?",
             "published": "2026-07-16T13:30:03Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/axon-axon-buy-wall-street-133003297.html",
-            "age_days": 1.3
+            "age_days": 1.4
           },
           {
             "title": "Axon's Connected Devices Unit Gains Momentum: More Upside to Come?",
@@ -23173,13 +23134,13 @@
             "title": "Adobe vs. Autodesk: What Revenue Trends Reveal About These Software Stocks",
             "published": "2026-07-17T17:48:01Z",
             "url": "https://www.fool.com/coverage/charts/2026/07/17/adobe-vs-autodesk-what-revenue-trends-reveal-about-these-software-stocks/",
-            "age_days": 0.1
+            "age_days": 0.2
           },
           {
             "title": "How to Find the Bargains in the Software Stock Wreckage",
             "published": "2026-07-17T15:43:00Z",
             "url": "https://www.barrons.com/articles/ai-software-stocks-dd7912fb?siteid=yhoof2&yptr=yahoo",
-            "age_days": 0.2
+            "age_days": 0.3
           },
           {
             "title": "IBM 'did not adapt' and just lost $70B \u2014 is Big Tech (and your portfolio) in trouble? Protect your nest egg now",
@@ -23191,7 +23152,7 @@
             "title": "Price Prediction: Figma Will End The Year at This Price",
             "published": "2026-07-16T14:03:47Z",
             "url": "https://247wallst.com/investing/2026/07/16/price-prediction-figma-will-end-the-year-at-this-price/",
-            "age_days": 1.3
+            "age_days": 1.4
           },
           {
             "title": "For Autodesk Stock, Patience Is the Real Catalyst",
@@ -23250,7 +23211,7 @@
             "title": "NuScale Power (SMR) Faces More Cautious Sentiment, Is 92% Undervalued Enough?",
             "published": "2026-07-17T18:12:16Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/nuscale-power-smr-faces-more-181216415.html",
-            "age_days": 0.1
+            "age_days": 0.2
           },
           {
             "title": "Can BWXT's Manufacturing Investments Support Future Growth?",
@@ -23262,13 +23223,13 @@
             "title": "OKLO, XE, SMR, NNE, UEC Stocks Tumble On Thursday: AI Made Nuclear Stocks Market Darlings \u2013 Now Investors Want Proof",
             "published": "2026-07-17T05:40:27Z",
             "url": "https://stocktwits.com/news-articles/markets/equity/why-did-oklo-xe-smr-nne-uec-stocks-tumble-on-thursday/cZZ74pnR7ta",
-            "age_days": 0.6
+            "age_days": 0.7
           },
           {
             "title": "Why Did IBM, ORCL, SMR Stocks Drop To 52-Week Lows Today?",
             "published": "2026-07-17T01:43:42Z",
             "url": "https://stocktwits.com/news-articles/markets/equity/why-did-ibm-orcl-smr-stocks-drop-to-52-week-lows-today/cZZ7bWlR7t5",
-            "age_days": 0.8
+            "age_days": 0.9
           },
           {
             "title": "Oklo Just Dropped 28% in a Month. Is It Time to Abandon Nuclear Stocks Like OKLO, NuScale, and Uranium Energy Corp.?",
@@ -23339,7 +23300,7 @@
             "title": "Why Abbott Stock Is Reimagining Its Future",
             "published": "2026-07-16T13:59:05Z",
             "url": "https://www.trefis.com/articles/607660/why-abbott-stock-is-reimagining-its-future/2026-07-16",
-            "age_days": 1.3
+            "age_days": 1.4
           },
           {
             "title": "Why Did SPCX, IBM, BSX Drop To 52-Week Lows Today?",
@@ -23404,19 +23365,25 @@
             "title": "The Travelers Companies Inc (TRV) Q2 2026 Earnings Call Highlights: Robust Growth and Strategic ...",
             "published": "2026-07-17T21:00:28Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/travelers-companies-inc-trv-q2-210028978.html",
-            "age_days": 0.0
+            "age_days": 0.1
           },
           {
             "title": "Update: Equities Fall Amid Netflix Sell-Off; Oil Climbs as Middle East Tensions Rise",
             "published": "2026-07-17T20:46:56Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/equities-fall-amid-netflix-sell-204656661.html",
-            "age_days": 0.0
+            "age_days": 0.1
           },
           {
             "title": "US Equity Markets End Lower as Oil Prices Climb on US-Iran Escalation",
             "published": "2026-07-17T20:18:48Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/us-equity-markets-end-lower-201848949.html",
-            "age_days": 0.0
+            "age_days": 0.1
+          },
+          {
+            "title": "China AI Fears, Netflix Earnings Sink Stocks: Stock Market Today",
+            "published": "2026-07-17T20:08:00Z",
+            "url": "https://www.kiplinger.com/investing/stocks/china-ai-fears-netflix-earnings-sink-stocks-stock-market-today",
+            "age_days": 0.1
           },
           {
             "title": "Sector Update: Financial Stocks Softer Late Afternoon",
@@ -23428,12 +23395,6 @@
             "title": "Update: Equities Fall Intraday Amid Netflix Sell-Off; Oil Jumps on Middle East Tensions",
             "published": "2026-07-17T18:24:04Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/equities-fall-intraday-amid-netflix-182404792.html",
-            "age_days": 0.1
-          },
-          {
-            "title": "Sector Update: Financial Stocks Decline Friday Afternoon",
-            "published": "2026-07-17T17:31:17Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/sector-financial-stocks-decline-friday-173117432.html",
             "age_days": 0.2
           }
         ],
@@ -23447,6 +23408,12 @@
         },
         "earnings_surprises": {
           "quarters": [
+            {
+              "period": "2025-06-30",
+              "eps_actual": 6.51,
+              "eps_estimate": 3.61,
+              "surprise_pct": 80.1
+            },
             {
               "period": "2025-09-30",
               "eps_actual": 8.14,
@@ -23464,12 +23431,6 @@
               "eps_actual": 7.71,
               "eps_estimate": 7.08,
               "surprise_pct": 8.9
-            },
-            {
-              "period": "2026-06-30",
-              "eps_actual": 10.04,
-              "eps_estimate": 5.39,
-              "surprise_pct": 86.1
             }
           ],
           "beat_streak": 4
@@ -23481,7 +23442,7 @@
             "title": "How to Find the Bargains in the Software Stock Wreckage",
             "published": "2026-07-17T15:43:00Z",
             "url": "https://www.barrons.com/articles/ai-software-stocks-dd7912fb?siteid=yhoof2&yptr=yahoo",
-            "age_days": 0.2
+            "age_days": 0.3
           },
           {
             "title": "Snowflake CEO's Stock Award Another 'Positive' for AI Growth Strategy, RBC Says",
@@ -23493,7 +23454,7 @@
             "title": "This Once-Deflated Cloud Stock Deserves Another Look. Here's Why.",
             "published": "2026-07-17T13:56:37Z",
             "url": "https://www.investors.com/research/ibd-stock-analysis/snowflake-stock-snow-ai-data-cloud/?src=A00220&yptr=yahoo",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "The Real Engine Behind ServiceNow Stock Is Its Contract Backlog",
@@ -23511,7 +23472,7 @@
             "title": "Databricks secures funding round at $188 billion valuation",
             "published": "2026-07-17T01:24:34Z",
             "url": "https://finance.yahoo.com/technology/articles/databricks-valued-188-billion-coatue-012434060.html",
-            "age_days": 0.8
+            "age_days": 0.9
           }
         ],
         "next_earnings": "2026-08-26",
@@ -23564,7 +23525,7 @@
             "title": "ABT Q2 Earnings Call Flags Stronger Second-Half Setup",
             "published": "2026-07-17T14:00:00Z",
             "url": "https://finance.yahoo.com/healthcare/articles/abt-q2-earnings-call-flags-140000256.html",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "Can Abbott Stock Deliver on Its Second-Half Growth Promise?",
@@ -23576,19 +23537,19 @@
             "title": "Abbott discloses cyberattack on cancer diagnostics business",
             "published": "2026-07-17T11:27:00Z",
             "url": "https://www.medtechdive.com/news/abbott-discloses-cyberattack-on-cancer-diagnostics-business/825529/",
-            "age_days": 0.4
+            "age_days": 0.5
           },
           {
             "title": "Stock Market News for July 17, 2026",
             "published": "2026-07-17T10:52:00Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/stock-market-news-july-17-105200573.html",
-            "age_days": 0.4
+            "age_days": 0.5
           },
           {
             "title": "US Stock Market Today: S&P 500 Futures Dip On Tariff And Energy Cost Worries",
             "published": "2026-07-17T08:09:28Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/us-stock-market-today-p-080928466.html",
-            "age_days": 0.5
+            "age_days": 0.6
           }
         ],
         "next_earnings": "2026-10-14",
@@ -23632,10 +23593,16 @@
       "ALL": {
         "headlines": [
           {
+            "title": "Stock Market Today, July 17: Stocks Slide as Semiconductor Rout Deepens",
+            "published": "2026-07-17T21:33:59Z",
+            "url": "https://www.fool.com/coverage/stock-market-today/2026/07/17/stock-market-today-july-17-stocks-slide-as-semiconductor-rout-deepens/",
+            "age_days": 0.0
+          },
+          {
             "title": "Can Investment Income Cushion Premium Pressure for RNR's Q2 Earnings?",
             "published": "2026-07-17T18:19:00Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/investment-income-cushion-premium-pressure-181900078.html",
-            "age_days": 0.1
+            "age_days": 0.2
           },
           {
             "title": "Will Chubb Limited Deliver an Earnings Beat in the Second Quarter?",
@@ -23647,7 +23614,7 @@
             "title": "What's in the Cards for CME Group This Earnings Season?",
             "published": "2026-07-17T15:38:00Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/whats-cards-cme-group-earnings-153800354.html",
-            "age_days": 0.2
+            "age_days": 0.3
           },
           {
             "title": "Travelers Companies Q2 Earnings Call Highlights",
@@ -23659,12 +23626,6 @@
             "title": "Here is What to Know Beyond Why The Allstate Corporation (ALL) is a Trending Stock",
             "published": "2026-07-17T13:00:20Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/know-beyond-why-allstate-corporation-130020140.html",
-            "age_days": 0.3
-          },
-          {
-            "title": "Travelers (TRV) Q2 Earnings Top Estimates",
-            "published": "2026-07-17T12:21:49Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/travelers-trv-q2-earnings-top-122149956.html",
             "age_days": 0.4
           }
         ],
@@ -23718,7 +23679,7 @@
             "title": "Baker Hughes wraps up $13.6bn Chart Industries acquisition",
             "published": "2026-07-17T09:00:35Z",
             "url": "https://www.offshore-technology.com/news/baker-hughes-13-6bn-chart-industries-acquisition/",
-            "age_days": 0.5
+            "age_days": 0.6
           },
           {
             "title": "Baker Hughes (BKR) Could Be 20% Below Fair Value On Chart Industries Deal",
@@ -23736,7 +23697,7 @@
             "title": "Sector Update: Energy Stocks Edge Higher Premarket Thursday",
             "published": "2026-07-16T13:27:44Z",
             "url": "https://finance.yahoo.com/energy/articles/sector-energy-stocks-edge-higher-132744423.html",
-            "age_days": 1.3
+            "age_days": 1.4
           },
           {
             "title": "Baker Hughes (BKR) Stock Looks Undervalued As Its 219% Run Continues",
@@ -23786,10 +23747,16 @@
       "KO": {
         "headlines": [
           {
+            "title": "Jim Cramer Says Semiconductor Stocks Are \u201cGoing Down.\u201d Buy These 2 Dividend Stocks Instead",
+            "published": "2026-07-17T21:17:32Z",
+            "url": "https://247wallst.com/investing/2026/07/17/jim-cramer-says-semiconductor-stocks-are-going-down-buy-these-2-dividend-stocks-instead/",
+            "age_days": 0.1
+          },
+          {
             "title": "Coca-Cola Halts Fairlife U.S. Production After Ransomware Incident",
             "published": "2026-07-17T20:01:19Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/coca-cola-halts-fairlife-u-200119849.html",
-            "age_days": 0.0
+            "age_days": 0.1
           },
           {
             "title": "DGRO\u2019s December Rebalance Could Reshape Healthcare Exposure: Here\u2019s What to Watch",
@@ -23813,13 +23780,7 @@
             "title": "SPYI Investors: Watch These 2 Macro Factors Before the Next Distribution",
             "published": "2026-07-17T16:10:54Z",
             "url": "https://247wallst.com/investing/etf/2026/07/17/spyi-investors-watch-these-2-macro-factors-before-the-next-distribution/",
-            "age_days": 0.2
-          },
-          {
-            "title": "Fairlife pauses US production after cyberattack breached milk brand's systems",
-            "published": "2026-07-17T15:56:14Z",
-            "url": "https://finance.yahoo.com/technology/ai/articles/fairlife-pauses-us-production-cyberattack-155614073.html",
-            "age_days": 0.2
+            "age_days": 0.3
           }
         ],
         "next_earnings": "2026-07-28",
@@ -28643,8 +28604,8 @@
     "note": "Company guidance you previously extracted vs. delivered results, graded deterministically from EDGAR XBRL. Cite consecutive_beats/verdicts as receipts; pending_guidance are the numbers management is on the hook for next print."
   },
   "fundamental_screen": {
-    "as_of": "2026-07-17T21:12:43.458689+00:00",
-    "age_hours": 21.6,
+    "as_of": "2026-07-17T22:32:34.406936+00:00",
+    "age_hours": 22.9,
     "names_covered": 182,
     "note": "Full-universe estimate screen, refreshed pre-market (6am/9am ET, gated on true America/New_York time). top_upward_revisions = fundamental inflections regardless of price - candidates the momentum funnel may not surface. estimate_changes_since_previous = what moved THIS MORNING (earnings/guidance). Each row may carry revision_direction (up/down/flat), eps_growth_next_yr_pct (forward EPS growth), and eps_estimate_current_yr / eps_estimate_next_yr (current/next fiscal-year EPS estimates - the scanner's fwd_pe_est divides last close by the current-year figure) - judge a multiple against growth, not news tone.",
     "top_upward_revisions": [
@@ -28812,7 +28773,7 @@
   "todays_8ks": {
     "note": "8-K filings TODAY across the ENTIRE universe (one EDGAR index sweep). An 8-K on a non-focus name may be the day's real opportunity - pull the filing with WebFetch if the form looks material before dismissing it.",
     "status": "ok",
-    "as_of": "2026-07-17T21:11:51.259620+00:00",
+    "as_of": "2026-07-17T22:31:54.536719+00:00",
     "index_date": "2026-07-16",
     "filers": [
       {
@@ -29841,7 +29802,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-17T21:15:39.938205+00:00"
+        "updated_at": "2026-07-17T22:34:49.323413+00:00"
       },
       "OKTA": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -29875,7 +29836,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-17T21:15:39.938393+00:00"
+        "updated_at": "2026-07-17T22:34:49.323706+00:00"
       },
       "PANW": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -29909,7 +29870,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-17T21:15:39.938515+00:00"
+        "updated_at": "2026-07-17T22:34:49.324009+00:00"
       },
       "S": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -29943,7 +29904,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-17T21:15:39.938673+00:00"
+        "updated_at": "2026-07-17T22:34:49.324297+00:00"
       },
       "CRWD": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -29977,7 +29938,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-17T21:15:39.938800+00:00"
+        "updated_at": "2026-07-17T22:34:49.324555+00:00"
       },
       "ZS": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -30011,7 +29972,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-17T21:15:39.938919+00:00"
+        "updated_at": "2026-07-17T22:34:49.324860+00:00"
       },
       "AXON": {
         "what_they_do": "Operates in: unspecified (broad_market)",
@@ -30049,7 +30010,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-17T21:15:39.939048+00:00"
+        "updated_at": "2026-07-17T22:34:49.325106+00:00"
       },
       "ADBE": {
         "what_they_do": "Operates in: Enterprise / AI software platforms",
@@ -30083,7 +30044,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-17T21:15:39.939157+00:00"
+        "updated_at": "2026-07-17T22:34:49.325404+00:00"
       },
       "SMR": {
         "what_they_do": "Operates in: Power generation / power equipment for data centers",
@@ -30113,7 +30074,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-17T21:15:39.939253+00:00"
+        "updated_at": "2026-07-17T22:34:49.325653+00:00"
       },
       "BSX": {
         "what_they_do": "Operates in: unspecified (healthcare)",
@@ -30143,7 +30104,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-17T21:15:39.939343+00:00"
+        "updated_at": "2026-07-17T22:34:49.325922+00:00"
       },
       "TRV": {
         "what_they_do": "Operates in: unspecified (financials)",
@@ -30177,7 +30138,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-17T21:15:39.939539+00:00"
+        "updated_at": "2026-07-17T22:34:49.326217+00:00"
       },
       "SNOW": {
         "what_they_do": "Operates in: Enterprise / AI software platforms",
@@ -30211,7 +30172,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-17T21:15:39.939645+00:00"
+        "updated_at": "2026-07-17T22:34:49.326446+00:00"
       },
       "ABT": {
         "what_they_do": "Operates in: unspecified (healthcare)",
@@ -30241,7 +30202,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-17T21:15:39.939736+00:00"
+        "updated_at": "2026-07-17T22:34:49.326679+00:00"
       },
       "ALL": {
         "what_they_do": "Operates in: unspecified (financials)",
@@ -30275,7 +30236,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-17T21:15:39.939823+00:00"
+        "updated_at": "2026-07-17T22:34:49.326940+00:00"
       },
       "BKR": {
         "what_they_do": "Operates in: unspecified (energy)",
@@ -30305,7 +30266,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-17T21:15:39.939908+00:00"
+        "updated_at": "2026-07-17T22:34:49.327188+00:00"
       },
       "KO": {
         "what_they_do": "Operates in: unspecified (consumer_industrial)",
@@ -30335,7 +30296,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-17T21:15:39.939991+00:00"
+        "updated_at": "2026-07-17T22:34:49.327489+00:00"
       }
     },
     "n": 16
@@ -30425,9 +30386,9 @@
     "theme_concentration_cap_pct": 0.35,
     "price_freshness": {
       "bundle_as_of_et": "2026-07-17",
-      "bundle_run_utc": "2026-07-17T21:15:39.919219+00:00",
+      "bundle_run_utc": "2026-07-17T22:34:49.294908+00:00",
       "note": "Prefer universe_scan.prices_meta[T].price_as_of (bar session date) over bundle age alone. On catalyst days, verify live before chasing a trigger on a lagging close.",
-      "scan_fetched_at_utc": "2026-07-17T21:11:50.127579+00:00",
+      "scan_fetched_at_utc": "2026-07-17T22:31:53.872049+00:00",
       "prices_meta_sample": {
         "NET": {
           "last_close": 277.66,
@@ -30706,11 +30667,11 @@
         "note": "Watchlist foresight / opportunity-cost feedback. hits_not_bought = names still on the watchlist whose stated buy level was reached but you never bought. opportunity_cost = large moves (or hit-then-dropped) without action \u2014 grade whether the pass was discipline or a miss. Do NOT chase a name just because it moved; use this to sharpen when you write would_buy_at and when you act on triggers.",
         "stats": {
           "tracked": 33,
-          "currently_watched": 7,
-          "dropped": 26,
+          "currently_watched": 9,
+          "dropped": 24,
           "acted": 2,
           "hit_buy_level": 5,
-          "hit_buy_level_not_acted_still_watched": 1,
+          "hit_buy_level_not_acted_still_watched": 2,
           "large_move_threshold_pct": 5.0
         },
         "hits_not_bought": [
@@ -30720,27 +30681,43 @@
             "currently_watched": true,
             "hit_buy_level": true,
             "acted": false,
-            "move_pct_since_watched": -10.9,
+            "move_pct_since_watched": -11.1,
             "price_when_added": 557.89,
-            "latest_price": 497.06,
+            "latest_price": 495.76,
             "would_buy_at": "After the 7/22-23 Advancing AI event: a confirmed positive reaction that reclaims and HOLDS above the 50-DMA (~$500), basing $500-520 on real volume with IV crushed post-event -- ideally after the 8/4 earnings de-risks. Not a pre-event dip.",
             "one_line": "AI-GPU leader at its 50-DMA decision level with the nearest defined catalyst on the board -- the 7/22-23 Advancing AI event, followed by 8/4 earnings.",
             "first_watched": "2026-07-13",
             "hit_date": "2026-07-17",
             "dropped_date": "2026-07-15",
             "parsed_level": 500.0
+          },
+          {
+            "ticker": "ABT",
+            "why": "buy level hit while still on watchlist \u2014 not bought",
+            "currently_watched": true,
+            "hit_buy_level": true,
+            "acted": false,
+            "move_pct_since_watched": 1.9,
+            "price_when_added": 98.83,
+            "latest_price": 100.68,
+            "would_buy_at": "A close and hold above ~$100-101 for 2-3 sessions on continued volume, not just today's single pop -- confirming the base, not chasing the first green day.",
+            "one_line": "Healthcare compounder confirming today: Q2 earnings call flagged H2 acceleration and price closed through the top of my watch zone on a bullish MACD cross and pocket-pivot volume.",
+            "first_watched": "2026-07-16",
+            "hit_date": "2026-07-17",
+            "dropped_date": "2026-07-17",
+            "parsed_level": 100.0
           }
         ],
         "opportunity_cost": [
           {
             "ticker": "ALAB",
-            "why": "dropped from watchlist, moved -26.8% since first watched, never bought",
+            "why": "dropped from watchlist, moved -26.5% since first watched, never bought",
             "currently_watched": false,
             "hit_buy_level": false,
             "acted": false,
-            "move_pct_since_watched": -26.8,
+            "move_pct_since_watched": -26.5,
             "price_when_added": 412.97,
-            "latest_price": 302.21,
+            "latest_price": 303.62,
             "would_buy_at": "after insider-selling pressure clears (watch for a return to cluster buying, not more selling) and price stabilizes/reclaims prior highs on volume, ideally past its early-August print",
             "one_line": "Showing genuine relative resilience today even as memory/chip peers get crushed, but heavy discretionary insider selling and an early-August earnings binary keep this a watch, not a buy.",
             "first_watched": "2026-07-16",
@@ -30750,13 +30727,13 @@
           },
           {
             "ticker": "WDC",
-            "why": "dropped from watchlist, moved -17.5% since first watched, never bought",
+            "why": "dropped from watchlist, moved -18.1% since first watched, never bought",
             "currently_watched": false,
             "hit_buy_level": false,
             "acted": false,
-            "move_pct_since_watched": -17.5,
+            "move_pct_since_watched": -18.1,
             "price_when_added": 582.59,
-            "latest_price": 480.51,
+            "latest_price": 477.22,
             "would_buy_at": "~$520 on a calm tape, or a confirmed post-7/29-earnings drift",
             "one_line": "Cheapest way to play the tightening HDD/memory cycle, sitting well below its high right before a binary catalyst -- but today's memory-sector selloff is a direct test of that thesis.",
             "first_watched": "2026-07-13",
@@ -30766,13 +30743,13 @@
           },
           {
             "ticker": "CRDO",
-            "why": "dropped from watchlist, moved -12.9% since first watched, never bought",
+            "why": "dropped from watchlist, moved -14.2% since first watched, never bought",
             "currently_watched": false,
             "hit_buy_level": false,
             "acted": false,
-            "move_pct_since_watched": -12.9,
+            "move_pct_since_watched": -14.2,
             "price_when_added": 236.18,
-            "latest_price": 205.74,
+            "latest_price": 202.68,
             "would_buy_at": "n/a - removed",
             "one_line": "Dropping: waiting for its group to stabilize, and the group is deteriorating instead.",
             "first_watched": "2026-07-15",
@@ -30782,13 +30759,13 @@
           },
           {
             "ticker": "AMD",
-            "why": "still watched, moved -10.9% since added, never bought",
+            "why": "still watched, moved -11.1% since added, never bought",
             "currently_watched": true,
             "hit_buy_level": true,
             "acted": false,
-            "move_pct_since_watched": -10.9,
+            "move_pct_since_watched": -11.1,
             "price_when_added": 557.89,
-            "latest_price": 497.06,
+            "latest_price": 495.76,
             "would_buy_at": "After the 7/22-23 Advancing AI event: a confirmed positive reaction that reclaims and HOLDS above the 50-DMA (~$500), basing $500-520 on real volume with IV crushed post-event -- ideally after the 8/4 earnings de-risks. Not a pre-event dip.",
             "one_line": "AI-GPU leader at its 50-DMA decision level with the nearest defined catalyst on the board -- the 7/22-23 Advancing AI event, followed by 8/4 earnings.",
             "first_watched": "2026-07-13",
@@ -30798,13 +30775,13 @@
           },
           {
             "ticker": "HOOD",
-            "why": "dropped from watchlist, moved -9.6% since first watched, never bought",
+            "why": "dropped from watchlist, moved -10.7% since first watched, never bought",
             "currently_watched": false,
             "hit_buy_level": false,
             "acted": false,
-            "move_pct_since_watched": -9.6,
+            "move_pct_since_watched": -10.7,
             "price_when_added": 111.97,
-            "latest_price": 101.22,
+            "latest_price": 99.96,
             "would_buy_at": "Base breakout with the MACD bear cross reversing back above zero, ideally confirmed after the 7/29 print",
             "one_line": "Fintech leader with real momentum (+21% 1m relative strength) that does NOT share today's AI-server demand-driver risk - a genuine diversifier (corr_to_book 0.21).",
             "first_watched": "2026-07-13",
@@ -30818,9 +30795,9 @@
       "theme_concentration_cap_pct": 0.35,
       "price_freshness": {
         "bundle_as_of_et": "2026-07-17",
-        "bundle_run_utc": "2026-07-17T21:15:39.919219+00:00",
+        "bundle_run_utc": "2026-07-17T22:34:49.294908+00:00",
         "note": "Prefer universe_scan.prices_meta[T].price_as_of (bar session date) over bundle age alone. On catalyst days, verify live before chasing a trigger on a lagging close.",
-        "scan_fetched_at_utc": "2026-07-17T21:11:50.127579+00:00",
+        "scan_fetched_at_utc": "2026-07-17T22:31:53.872049+00:00",
         "prices_meta_sample": {
           "NET": {
             "last_close": 277.66,
@@ -30888,24 +30865,24 @@
       },
       "demand_driver_map_note": "Primary economic bet per ticker (not GICS). Use these labels in proposal.demand_driver. Theme cap is separate from sector cap.",
       "demand_driver_map_focus": {
-        "CRWD": "cybersecurity",
+        "ALL": "financials",
         "BSX": "healthcare",
-        "NET": "software_platforms",
         "TRV": "financials",
-        "SMR": "datacenter_power",
-        "ABT": "healthcare",
-        "BKR": "energy",
-        "OKTA": "cybersecurity",
-        "AXON": "broad_market",
         "ADBE": "software_platforms",
         "ZS": "cybersecurity",
-        "ALL": "financials",
-        "KO": "consumer_industrial",
+        "NET": "software_platforms",
+        "SNOW": "software_platforms",
         "PANW": "cybersecurity",
+        "OKTA": "cybersecurity",
+        "CRWD": "cybersecurity",
+        "AXON": "broad_market",
+        "KO": "consumer_industrial",
+        "SMR": "datacenter_power",
         "S": "cybersecurity",
-        "SNOW": "software_platforms"
+        "BKR": "energy",
+        "ABT": "healthcare"
       }
     }
   },
-  "full_context_path": "/home/runner/work/eastequity/eastequity/state/context_full_20260717-5ad4a0.json"
+  "full_context_path": "/home/runner/work/eastequity/eastequity/state/context_full_20260717-0d1d81.json"
 }
