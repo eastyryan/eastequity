@@ -256,11 +256,20 @@ def run_claude(prompt: str, model: str | None = None) -> str:
 # ---------------------------------------------------------------------------
 # Adversarial risk desk: an independent skeptic tries to kill every BUY.
 # ---------------------------------------------------------------------------
+# Risk-desk-vetoed proposals from the LAST adversarial_review call, as
+# ValidationResult-shaped records. The orchestrator folds these into the
+# published proposals list so the site can show WHY a trade the brain's
+# commentary announced never happened (ABT 7/17: commentary said "I am
+# buying Abbott" while the veto left the site with an empty proposals list).
+LAST_RISK_DESK_VETOES: list = []
+
+
 def adversarial_review(proposals: list[dict], context_file: str, run_id: str) -> list[dict]:
     """Second pass by a separate Claude session prompted to REFUTE each BUY.
     Veto drops the proposal (journaled); survivors may get a confidence haircut.
     Skipped where the claude CLI is unavailable (cloud sandboxes) - noted loudly."""
     import shutil
+    LAST_RISK_DESK_VETOES.clear()
     buys = [p for p in proposals if str(p.get("action", "")).upper() == "BUY"]
     if not buys:
         return proposals
@@ -338,7 +347,14 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
             continue
         if r.get("verdict") == "veto":
             print(f"  RISK DESK VETO {p['ticker']}: {r.get('objection', '')[:120]}")
-            journal.log_rejection(p, [f"risk_desk_veto: {r.get('objection', '')[:300]}"], run_id)
+            # Full objection text: the veto rationale is the audit trail for a
+            # killed trade (the 300-char slice lost the actual grounds — the
+            # ABT 7/17 veto's stated reason was cut mid-sentence).
+            veto_reason = f"risk_desk_veto: {r.get('objection', '')[:2000]}"
+            journal.log_rejection(p, [veto_reason], run_id)
+            LAST_RISK_DESK_VETOES.append(
+                validator.ValidationResult(proposal=p, approved=False,
+                                           reasons=[veto_reason]))
             continue
         try:
             adj = min(float(r.get("confidence_adjustment", 0) or 0), 0)

@@ -575,6 +575,12 @@ def main() -> int:
         if mcap:
             market_context.setdefault(t, {})["market_cap_usd"] = float(mcap)
     results = validator.validate_proposals(proposals, live_portfolio, market_context)
+    # Risk-desk vetoes never reached the validator, but they belong on the
+    # public site: the brain's commentary may reference the killed trade, so
+    # the proposals list must show it as rejected with the desk's grounds.
+    from runlib import brain_io as _bio
+    if _bio.LAST_RISK_DESK_VETOES:
+        results = list(_bio.LAST_RISK_DESK_VETOES) + list(results)
     approved = [r for r in results if r.approved]
     for r in results:
         journal.log_proposal(r.proposal, run_id)

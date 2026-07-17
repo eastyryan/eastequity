@@ -117,7 +117,56 @@
     "series_missing": null,
     "note": "Deterministic hint only \u2014 the agent must form its own regime view."
   },
-  "proposals": [],
+  "proposals": [
+    {
+      "proposal": {
+        "ticker": "ABT",
+        "action": "BUY",
+        "instrument": "EQUITY",
+        "position_size_usd": 1400,
+        "entry_price_max": 100.0,
+        "stop_loss": 93.0,
+        "target_price": 115.0,
+        "holding_horizon_days": 60,
+        "confidence": 0.68,
+        "risk_reward_ratio": 2.14,
+        "thesis": "Abbott fell 28% from ~$115 (Feb) to ~$83 (May) as the medtech complex was de-rated on an expected procedure-volume shock from the end-2025 expiration of enhanced ACA subsidies. The 7/16 Q2 print is the first hard refutation: Medical Devices $5.853B, +8.4% comparable (Q ended 2026-06-30) with CGM +11%, total sales $12.593B (+4.8% comparable), adjusted EPS $1.31 vs $1.28 consensus. Management RAISED full-year adjusted EPS guidance to $5.45-$5.60 from $5.38-$5.58 and reaffirmed 6.5-7.5% comparable sales growth, and booked a $385M reserve for an agreed-in-principle legal settlement that caps a long-running litigation overhang at 0.2% of market cap. The stock responded with a confirmed_breakout: +10% close at 98.83 on rvol 2.52 out of a two-month 85-95 base, clearing its 20-DMA (~91.8) and 50-DMA (~88.7), while still sitting 26.5% below its 52-week high and 8.2% below its 200-week MA. In a tape where the momentum factor is unwinding (MTUM -12.1% from its peak vs SPY -0.9%), this is a low-ATR (3.23%), ai_neutral, non-momentum setup whose catalyst already landed.",
+        "scenarios": {
+          "bull": {
+            "price": 122,
+            "prob": 0.25
+          },
+          "base": {
+            "price": 115,
+            "prob": 0.45
+          },
+          "bear": {
+            "price": 93,
+            "prob": 0.3
+          }
+        },
+        "catalysts": [
+          "Medtech peer earnings wave confirms or refutes the ACA procedure-volume scare sector-wide: BSX 2026-07-29, then SYK/MDT through August",
+          "Definitive terms of the $385M agreed-in-principle legal settlement being finalized, removing the litigation overhang (weeks, contingency-dependent)",
+          "Sell-side FY26 EPS estimates re-basing to the raised $5.45-$5.60 guidance over the next 2-4 weeks; mean target already $116.54 (+17.9%)"
+        ],
+        "macro_context": "SPY 750.72 sits above its 50-DMA (742.81) and 200-DMA (693.01) and the macro panel scores 4/5 (VIX 15.67, HY spreads 2.71% tightening, unemployment 4.2% falling), so the index regime is supportive and new BUYs are not regime-gated. But the leadership underneath is unwinding: MTUM is -12.1% off its peak and SPMO -10.1% while SPY is only -0.9% off its high, with gpu_accelerators -13.7%, semi_manufacturing -15.1% and servers_hardware -20.7% over one month, and tonight's tape (SoftBank -9%, Micron plunging, VIX +6.8%) extending it. NOTE: momentum_health is absent from this bundle, so the validator's automatic unwind size-halving will NOT fire; I computed the unwind myself from data/cache/momentum_etfs.json and am respecting it by choosing a name whose thesis does not depend on the momentum factor. ABT is healthcare/ai_neutral with 3-month relative strength of -9.5% - it is a diversifier away from the unwind, not a participant in it, and its catalyst has already printed.",
+        "risk_map": "The strongest objection, stated plainly: cmf_20 is -0.143 and obv_divergence is bearish, so there is NO accumulation signature under the base and the breakout is exactly one bar old - a one-day guidance pop can be fully retraced. The stop at $93.00 is the answer: it sits back inside the 85-95 base, so a failed breakout costs 1% of equity and tells me early. Second risk: leverage is real - net_debt_to_ebitda 3.16 (levered) from the $21B Exact Sciences acquisition in March 2026, though TTM FCF of $7.38B (through Q ended 2026-03-31) services it and this is deal leverage on a scale compounder, not distress. Third: comparable growth is only 4.8%, so this is a multiple-normalization trade, not a growth trade - if the multiple does not re-rate, there is no earnings acceleration to bail me out. Fourth: the ACA volume shock may simply be DELAYED rather than absent - 44% of hospital execs still expect a 2026 hit, and Q3/Q4 could show the deferral I am betting against; peer prints starting BSX on 7/29 are my early-warning system. Fifth: the $385M settlement is only agreed-in-principle and explicitly subject to contingencies - if it collapses, the overhang returns unbounded.",
+        "variant_perception": "CONSENSUS: the market de-rated Abbott 28% from ~$115 to ~$83 (Feb-May) pricing a procedure-volume shock from the end-2025 ACA enhanced-subsidy expiration that doubled premiums for ~22M enrollees, with 44% of hospital executives in BTIG's survey expecting negative 2026 census volumes; the sell-side mean target sits at $116.54 (+17.9%), i.e. the street has not yet marked the stock back up to its own numbers. MY VIEW: the feared volume shock is not appearing in Abbott's actuals, and the fear discount - not the earnings - is what re-rates. MECHANISM: consensus modeled an insurance-coverage variable (premiums up, enrollment down) as if it flowed straight through to device demand, but Abbott's device mix is dominated by continuous glucose monitoring - a chronic-condition, recurring-consumable business bought by already-diagnosed diabetics, not an elective procedure a newly-uninsured patient defers. That is why CGM grew 11% and Medical Devices grew 8.4% comparable ($5.853B, Q ended 2026-06-30) straight through the subsidy expiration, and why management could RAISE full-year EPS guidance to $5.45-$5.60 rather than trim it. The street applied an elective-procedure discount to a recurring-consumable revenue stream. RESOLUTION: the medtech peer earnings wave beginning with BSX on 2026-07-29 and running through SYK/MDT in August, which either confirms sector-wide that the volume shock did not land - marking Abbott's re-rating - or shows the deferral was real, in which case I am wrong and the breakout fails.",
+        "demand_driver": "healthcare",
+        "thesis_invalidators": {
+          "invalidating_print": "Medtech peers (BSX 7/29, then SYK/MDT in August) report procedure-volume weakness or guide down on ACA-driven census declines, confirming the shock was deferred not absent; or ABT's FY26 adjusted EPS guidance of $5.45-$5.60 is cut at the Q3 print; or 30-day EPS revisions turn negative (currently +0.49%); or the $385M agreed-in-principle settlement collapses on its contingencies.",
+          "invalidating_structure": "A close below $93.00 - back inside the 85-95 base and below both the breakout bar's low and the 20-DMA - which proves the 7/16 breakout was a one-day guidance pop that supply fully absorbed, consistent with the bearish cmf_20 (-0.143) and OBV divergence already present. A close back below the 50-DMA (~88.7) on rising volume ends it outright.",
+          "time_box": "If ABT has not held above $99 and made a higher high toward $107 (the 200-week MA) by 2026-08-21 - roughly three weeks after the BSX/peer prints have landed and the sector read is settled - the re-rating is not happening on my clock and I exit or cut, regardless of stop. Full horizon expires 2026-09-15, deliberately before the ~mid-October Q3 print so this swing trades AROUND the next binary."
+        }
+      },
+      "approved": false,
+      "reasons": [
+        "risk_desk_veto: GEOMETRY AND BOOK PASS CLEANLY \u2014 this is not a geometry veto. RR 2.14 (entry 100 / stop 93 / target 115) is honest and clears the 2.0 floor; 15% upside clears 10%; the 7% stop is ~2.17x the 3.23% ATR, genuinely outside the noise band and back inside the 85-95 base (stop_engineering.ABT is null, so n"
+      ],
+      "scenario_ev": null
+    }
+  ],
   "fills": [],
   "closed_trades": [
     {
