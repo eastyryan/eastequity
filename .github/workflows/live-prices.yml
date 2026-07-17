@@ -52,7 +52,12 @@ jobs:
           # orchestrator reads state/live_prices.json from origin/live-data.
           git checkout --orphan live-data
           git reset          # unstage the whole tree the orphan inherited
-          git add -f state/live_prices.json
+          # Repo-root vercel.json so Vercel never builds this app-less branch.
+          # Vercel reads git.deploymentEnabled from the repository root; without
+          # it, every push here triggers a preview build that fails on the
+          # missing "dashboard" Root Directory.
+          printf '{"$schema":"https://openapi.vercel.sh/vercel.json","git":{"deploymentEnabled":false}}\n' > vercel.json
+          git add -f state/live_prices.json vercel.json
           git commit -m "Live holdings/watchlist prices [skip ci][vercel skip]"
           for i in 1 2 3; do
             git push -f origin live-data && exit 0

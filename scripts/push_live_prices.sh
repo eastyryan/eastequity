@@ -31,7 +31,12 @@ print('refreshed', r.get('n'), 'quotes as of', r.get('as_of'))" || exit 0
   [ -s state/live_prices.json ] || { echo "no snapshot produced"; exit 0; }
   BLOB=$(git hash-object -w state/live_prices.json) || exit 0
   SUBTREE=$(printf '100644 blob %s\tlive_prices.json\n' "$BLOB" | git mktree)
-  TREE=$(printf '040000 tree %s\tstate\n' "$SUBTREE" | git mktree)
+  # Repo-root vercel.json in the orphan tree so Vercel never builds this
+  # app-less branch (it reads git.deploymentEnabled from the repo root; without
+  # it every push triggers a preview build that fails on the missing "dashboard"
+  # Root Directory). "state" sorts before "vercel.json", so tree order is valid.
+  VERCEL_BLOB=$(printf '{"$schema":"https://openapi.vercel.sh/vercel.json","git":{"deploymentEnabled":false}}\n' | git hash-object -w --stdin)
+  TREE=$(printf '040000 tree %s\tstate\n100644 blob %s\tvercel.json\n' "$SUBTREE" "$VERCEL_BLOB" | git mktree)
   COMMIT=$(git commit-tree "$TREE" -m "Live universe prices [skip ci][vercel skip]")
   git push -f origin "$COMMIT:refs/heads/live-data" && echo "pushed $COMMIT"
   # Event-driven trigger runs: if a watchlist would_buy_at level just CONFIRMED
