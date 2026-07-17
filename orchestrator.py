@@ -494,6 +494,17 @@ def main() -> int:
         except Exception as e:
             print(f"      (guidance ledger write failed: {e})")
 
+    if parsed.get("universe_candidates"):
+        try:
+            from runlib.reviews import apply_universe_candidates
+            usum = apply_universe_candidates(parsed["universe_candidates"], run_id)
+            print(f"      universe candidates: "
+                  f"{[a['ticker'] for a in usum.get('accepted', [])]} accepted, "
+                  f"{[(r['ticker'], r['why']) for r in usum.get('rejected', [])]} rejected"
+                  + (f" (error: {usum['error']})" if usum.get("error") else ""))
+        except Exception as e:
+            print(f"      (universe candidates failed: {e})")
+
     if args.research_only:
         print(json.dumps(proposals, indent=2))
         return 0

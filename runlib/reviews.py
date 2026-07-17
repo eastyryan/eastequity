@@ -214,6 +214,114 @@ def unpriceable(tickers: list) -> set:
 
 
 # ---------------------------------------------------------------------------
+# Dynamic universe additions: the brain proposes off-universe names it spotted
+# in the market radar / news during a trading run; deterministic gates decide.
+# Accepted names become tradeable on the NEXT run — the validator's universe
+# gate itself never loosens.
+# ---------------------------------------------------------------------------
+MAX_DYNAMIC_ADDS_PER_RUN = 3
+DYNAMIC_UNIVERSE_CEILING = 250          # hard size ceiling incl. dynamic adds
+DYNAMIC_ADD_PROTECT_DAYS = 21           # weekly review cannot strip fresh adds
+DYNAMIC_SECTOR_FALLBACK = "dynamic_additions"
+
+
+def recent_dynamic_adds(days: int = DYNAMIC_ADD_PROTECT_DAYS) -> set:
+    """Tickers added via dynamic candidates within the last `days`, from the
+    public universe log. Fail-open to empty — protection is best-effort."""
+    log_file = ROOT / "dashboard" / "data" / "universe_log.json"
+    try:
+        ulog = json.loads(log_file.read_text()) if log_file.exists() else []
+        floor = (et_now() - timedelta(days=days)).date().isoformat()
+        return {str(t).upper()
+                for e in ulog
+                if e.get("status") == "dynamic_add" and str(e.get("date", "")) >= floor
+                for t in (e.get("added") or [])}
+    except Exception:
+        return set()
+
+
+def apply_universe_candidates(candidates: list, run_id: str) -> dict:
+    """Deterministic gate for brain-proposed universe additions (the agent
+    proposes, code disposes — same philosophy as the weekly review):
+
+      * ticker format [A-Z]{1,5}, no leveraged/inverse products
+      * not already in the universe, max MAX_DYNAMIC_ADDS_PER_RUN per run
+      * universe stays under DYNAMIC_UNIVERSE_CEILING names
+      * priceable (unpriceable() drop) and >= $1B market cap (below_min_cap)
+
+    Accepted names are inserted into data/universe.json (candidate's sector if
+    it already exists, else the dynamic_additions sleeve), logged to the public
+    universe log with status "dynamic_add", and journaled. Never raises."""
+    out = {"accepted": [], "rejected": []}
+    rows = [c for c in (candidates or []) if isinstance(c, dict)]
+    if not rows:
+        return out
+    try:
+        universe_file = ROOT / "data" / "universe.json"
+        current = json.loads(universe_file.read_text())
+        existing = {t.upper() for ts in current["sectors"].values() for t in ts}
+        cfg = validator.load_config()
+        forbidden = set(cfg["hard_rules"].get("forbidden_ticker_patterns", []))
+        cap_floor = cfg["hard_rules"].get("min_market_cap_usd", 0)
+
+        screened = []
+        for c in rows:
+            t = str(c.get("ticker", "")).upper().strip()
+            reason = str(c.get("reason", ""))[:300]
+            if not re.fullmatch(r"[A-Z]{1,5}", t):
+                out["rejected"].append({"ticker": t or "?", "why": "invalid_format"})
+            elif t in existing or any(t == s["ticker"] for s in screened):
+                out["rejected"].append({"ticker": t, "why": "already_in_universe"})
+            elif t in forbidden:
+                out["rejected"].append({"ticker": t, "why": "forbidden_product"})
+            elif not reason.strip():
+                out["rejected"].append({"ticker": t, "why": "no_reason_given"})
+            elif len(screened) >= MAX_DYNAMIC_ADDS_PER_RUN:
+                out["rejected"].append({"ticker": t, "why": "per_run_cap"})
+            elif len(existing) + len(screened) >= DYNAMIC_UNIVERSE_CEILING:
+                out["rejected"].append({"ticker": t, "why": "universe_at_ceiling"})
+            else:
+                screened.append({"ticker": t, "sector": str(c.get("sector", "")),
+                                 "reason": reason})
+
+        if screened:  # market-data gates, batched (fail-open inside the helpers)
+            syms = [s["ticker"] for s in screened]
+            dead = unpriceable(syms)
+            small = below_min_cap([t for t in syms if t not in dead], cap_floor)
+            for s in screened:
+                t = s["ticker"]
+                if t in dead:
+                    out["rejected"].append({"ticker": t, "why": "unpriceable"})
+                elif t in small:
+                    out["rejected"].append({"ticker": t, "why": "below_min_market_cap"})
+                else:
+                    sector = s["sector"] if s["sector"] in current["sectors"] \
+                        else DYNAMIC_SECTOR_FALLBACK
+                    current["sectors"].setdefault(sector, [])
+                    current["sectors"][sector].append(t)
+                    out["accepted"].append({"ticker": t, "sector": sector,
+                                            "reason": s["reason"]})
+
+        if out["accepted"]:
+            universe_file.write_text(json.dumps(current, indent=2))
+            added = [a["ticker"] for a in out["accepted"]]
+            size = len(existing) + len(added)
+            universe_log_append({
+                "date": et_date(), "status": "dynamic_add", "added": sorted(added),
+                "removed": [], "dropped_unpriceable": [], "size": size,
+                "rationale": "Mid-run dynamic addition from the market radar: "
+                             + "; ".join(f"{a['ticker']}: {a['reason']}"
+                                         for a in out["accepted"]),
+            })
+            journal.log_improvement(
+                f"Dynamic universe add: {sorted(added)} ({size} names). Proposed from "
+                f"the market-wide radar; tradeable from the next run.", run_id)
+    except Exception as e:
+        out["error"] = str(e)[:200]
+    return out
+
+
+# ---------------------------------------------------------------------------
 # Weekly universe review: the agent curates its own watchable universe.
 # ---------------------------------------------------------------------------
 def universe_log_append(entry: dict) -> None:
@@ -237,8 +345,8 @@ def universe_log_append(entry: dict) -> None:
 def universe_review(run_id: str) -> int:
     """The agent researches the broad market (web search enabled) and proposes
     edits to data/universe.json. Deterministic guardrails cap what can change:
-    held and watchlist names are untouchable, size stays 150-220, max 10 adds and
-    10 removals per review, tech/AI bias preserved."""
+    held, watchlist, and recent dynamic-add names are untouchable, size stays
+    150-250, max 10 adds and 10 removals per review, tech/AI bias preserved."""
     universe_file = ROOT / "data" / "universe.json"
     current = json.loads(universe_file.read_text())
     portfolio = get_portfolio_state()
@@ -247,6 +355,9 @@ def universe_review(run_id: str) -> int:
     if latest_file.exists():
         protected |= {w.get("ticker", "").upper()
                       for w in json.loads(latest_file.read_text()).get("watchlist", [])}
+    # Names the brain added dynamically in the last ~3 weeks: give a fresh
+    # radar-sourced idea time to prove itself before curation can strip it.
+    protected |= recent_dynamic_adds()
     protected.discard("")
 
     print("  • fresh sector scan for the review...")
@@ -284,8 +395,13 @@ def universe_review(run_id: str) -> int:
         "(at least ~70% of names) but market leaders from any sector earn a place. "
         "Constraints (code-enforced): US-listed common equities only, MINIMUM $1B market "
         "cap (sub-billion adds are dropped), no leveraged/inverse "
-        "products, never remove the protected tickers, max 10 adds and 10 removals, final "
-        "size 150-220 names. The bundle's discovery_candidates section (when present) is a "
+        "products, never remove the protected tickers (this includes names dynamically "
+        "added from the market radar in the last ~3 weeks), max 10 adds and 10 removals, "
+        "final size 150-250 names. Names in the dynamic_additions sector were added "
+        "mid-run from the market-wide radar - when your research supports one, MOVE it "
+        "into its proper sector; when a name has clearly failed (and is no longer "
+        "protected), removing it is healthy. "
+        "The bundle's discovery_candidates section (when present) is a "
         "broad-market momentum/RS sweep of ~600 liquid names OUTSIDE the current universe - "
         "treat it as your candidate shortlist so curation picks from the whole market, not "
         "just names you already know. Removing a name is healthy - a universe that only grows is a "
@@ -331,8 +447,8 @@ def universe_review(run_id: str) -> int:
     old_tickers = {t.upper() for ts in current["sectors"].values() for t in ts}
     added, removed = new_tickers - old_tickers, old_tickers - new_tickers
     problems = []
-    if not 150 <= len(new_tickers) <= 220:
-        problems.append(f"size {len(new_tickers)} outside 150-220")
+    if not 150 <= len(new_tickers) <= DYNAMIC_UNIVERSE_CEILING:
+        problems.append(f"size {len(new_tickers)} outside 150-{DYNAMIC_UNIVERSE_CEILING}")
     if len(added) > 10 or len(removed) > 10:
         problems.append(f"too many changes (+{len(added)}/-{len(removed)}, max 10 each)")
     if removed & protected:
