@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { HistoryPoint, Latest } from "@/lib/types";
 import { formatEtStamp } from "@/lib/format";
 
@@ -203,6 +203,34 @@ function alertsFor(d: Latest): Alert[] {
 export default function Arena({ latest, history }: { latest: Latest; history: HistoryPoint[] }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
+  // Today's intraday VIX / 10Y yield (FRED lags 1-2 business days). Display-only
+  // overlay on the macro tape; refreshes every 60s while the tab is visible.
+  const [liveMacro, setLiveMacro] = useState<{
+    vix: number | null;
+    ten_year_yield: number | null;
+    as_of: string | null;
+  } | null>(null);
+  useEffect(() => {
+    let stopped = false;
+    const load = async () => {
+      try {
+        const r = await fetch("/api/macro-live", { cache: "no-store" });
+        const j = await r.json();
+        if (!stopped) setLiveMacro(j);
+      } catch {
+        /* best-effort; keep the FRED value */
+      }
+    };
+    load();
+    const id = setInterval(() => {
+      if (document.visibilityState === "visible") load();
+    }, 60_000);
+    return () => {
+      stopped = true;
+      clearInterval(id);
+    };
+  }, []);
+
   const d = latest;
   const hist = history;
 
@@ -220,12 +248,29 @@ export default function Arena({ latest, history }: { latest: Latest; history: Hi
     { label: "VIX", o: ms?.vix, unit: "" },
     { label: "10Y–2Y", o: ms?.yield_curve_10y2y, unit: "pp" },
     { label: "HY SPREAD", o: ms?.hy_credit_spread, unit: "%" },
-  ].map((m) => ({
-    label: m.label,
-    value: m.o ? m.o.latest + m.unit : "—",
-    direction: (m.o?.direction || "").toUpperCase(),
-    dirColor: dcol(m.o?.direction),
-  }));
+  ].map((m) => {
+    // Overlay today's intraday mark on VIX / 10Y (FRED lags ~1-2 days); the
+    // trend arrow and regime score still derive from FRED. Display-only.
+    const liveVal =
+      m.label === "VIX"
+        ? liveMacro?.vix ?? null
+        : m.label === "10Y YIELD"
+          ? liveMacro?.ten_year_yield ?? null
+          : null;
+    const value =
+      liveVal != null
+        ? liveVal.toFixed(2) + m.unit
+        : m.o
+          ? m.o.latest + m.unit
+          : "—";
+    return {
+      label: m.label,
+      value,
+      direction: (m.o?.direction || "").toUpperCase(),
+      dirColor: dcol(m.o?.direction),
+      live: liveVal != null,
+    };
+  });
 
   const outcomes: Record<string, { latest_price?: number | null; move_pct_since_watched?: number | null }> =
     {};
@@ -1032,7 +1077,32 @@ export default function Arena({ latest, history }: { latest: Latest; history: Hi
                     <div style={{ fontSize: 9.5, letterSpacing: "0.12em", color: "var(--ee-muted)" }}>
                       {m.label}
                     </div>
-                    <div style={{ fontSize: 20, fontWeight: 700, marginTop: 6 }}>{m.value}</div>
+                    <div
+                      style={{
+                        fontSize: 20,
+                        fontWeight: 700,
+                        marginTop: 6,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 6,
+                      }}
+                    >
+                      {m.live && (
+                        <span
+                          title="live intraday mark"
+                          style={{
+                            width: 7,
+                            height: 7,
+                            borderRadius: "50%",
+                            background: "#16a34a",
+                            display: "inline-block",
+                            flexShrink: 0,
+                          }}
+                          aria-hidden
+                        />
+                      )}
+                      {m.value}
+                    </div>
                     <div style={{ fontSize: 10.5, marginTop: 3, color: m.dirColor }}>{m.direction}</div>
                   </div>
                 ))}
