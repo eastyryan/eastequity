@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import type { HistoryPoint, Latest } from "@/lib/types";
+import { formatEtStamp } from "@/lib/format";
 
 // Data arrives as props, rendered from the JSON committed in dashboard/data.
 //
@@ -305,7 +306,9 @@ export default function Arena({ latest, history }: { latest: Latest; history: Hi
   });
 
   const thoughts = [
-    { tag: "EASTEQUITY · MARKET DIGEST", time: d.as_of_et || "", text: strip(d.commentary) },
+    { tag: "EASTEQUITY · MARKET DIGEST",
+      time: formatEtStamp(d.generated_at) || d.as_of_et || "",
+      text: strip(d.commentary) },
   ].concat(
     (d.closed_trades ?? []).map((t) => ({
       tag:
@@ -571,7 +574,10 @@ export default function Arena({ latest, history }: { latest: Latest; history: Hi
               color: "var(--ee-muted)",
             }}
           >
-            LAST UPDATE <b style={{ color: "var(--ee-ink)" }}>{d.as_of_et || "—"}</b>
+            LAST UPDATE{" "}
+            <b style={{ color: "var(--ee-ink)" }}>
+              {formatEtStamp(d.generated_at) || d.as_of_et || "—"}
+            </b>
           </div>
         </div>
 

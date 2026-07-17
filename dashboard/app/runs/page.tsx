@@ -50,12 +50,16 @@ function formatDate(s: string): string {
   }
   const d = new Date(s);
   if (isNaN(d.getTime())) return s;
-  return d.toLocaleDateString("en-US", {
+  return `${d.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric",
     timeZone: "America/New_York",
-  });
+  })}, ${d.toLocaleTimeString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "America/New_York",
+  })} ET`;
 }
 
 export default function RunsIndex() {
