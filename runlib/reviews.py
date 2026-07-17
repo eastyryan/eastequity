@@ -241,6 +241,10 @@ def daily_study(run_id: str) -> int:
     except Exception as e:
         print(f"daily study failed: {str(e)[:600]}")
         return 1
+    try:  # persist the raw response for audit/debugging (like trading runs)
+        (ROOT / "state" / f"study_response_{run_id}.txt").write_text(out or "")
+    except Exception:
+        pass
 
     lesson = None
     for block in reversed(re.findall(r"```json\s*(.*?)```", out, re.DOTALL)):
