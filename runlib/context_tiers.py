@@ -32,6 +32,8 @@ ALWAYS_KEYS = (
     "track_record",  # compact closed trades already truncated in gather
     "earnings_deep_dive",     # why a full run was forced (earnings reporter)
     "price_freshness_live",   # holdings/watchlist live-price staleness guard
+    "trigger_run_note",       # why an event-driven run was spawned
+    "operator_note",          # ad-hoc note passed in via --note
 )
 
 # Focus research maps (trimmed to focus keys already)
