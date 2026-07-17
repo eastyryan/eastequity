@@ -32,6 +32,18 @@ MAX_ACTIVE = 60           # active (non-superseded) lessons kept in rotation
 MAX_HISTORY = 200         # total records kept in the JSON store
 JOURNAL_LIMIT = 60        # entries published to the dashboard journal
 
+# --- evidence lifecycle (same sample-size philosophy as the Learning Protocol:
+# under MIN_GRADED_TRADES linked outcomes a lesson is an anecdote and gets NO
+# judgment; only real evidence promotes or demotes) ---------------------------
+CITATION_RE = re.compile(r"KB-\d{10}")
+MIN_GRADED_TRADES = 3     # linked closed trades before any evidence verdict
+VALIDATE_WIN_RATE = 0.60  # >= this over >= MIN trades -> "validated"
+UNDERPERFORM_WIN_RATE = 0.40  # < this over >= MIN trades -> "underperforming"
+MAX_LINKS_PER_LESSON = 20
+MAX_SUPERSEDES_PER_STUDY = 2      # contradiction budget per study session
+MAX_CONSOLIDATION_ACTIONS = 5     # merge/retire budget per Friday consolidation
+CONSOLIDATION_MIN_AGE_DAYS = 7    # too-fresh lessons are untouchable
+
 # The curriculum. Keys are what the study prompt and rotation use; values are
 # the scope hint shown to the studying brain.
 DISCIPLINES = {
@@ -72,7 +84,282 @@ def _fingerprint(text: str, n: int = 48) -> str:
 
 
 def _active(entries: list) -> list:
-    return [e for e in entries if isinstance(e, dict) and not e.get("superseded_by")]
+    return [e for e in entries
+            if isinstance(e, dict) and not e.get("superseded_by")
+            and not e.get("retired")]
+
+
+# ---------------------------------------------------------------------------
+# Evidence lifecycle: citations -> trade links -> graded outcomes -> status
+# ---------------------------------------------------------------------------
+def _evidence_status(outcome: dict | None) -> str | None:
+    """validated / underperforming / mixed once MIN_GRADED_TRADES outcomes
+    exist; None (anecdote — no judgment) below that. Pure."""
+    if not isinstance(outcome, dict):
+        return None
+    n = int(outcome.get("n") or 0)
+    if n < MIN_GRADED_TRADES:
+        return None
+    wr = float(outcome.get("wins") or 0) / n
+    if wr >= VALIDATE_WIN_RATE:
+        return "validated"
+    if wr < UNDERPERFORM_WIN_RATE:
+        return "underperforming"
+    return "mixed"
+
+
+def record_citations(text: str, run_id: str | None = None) -> int:
+    """Scan brain output for KB-id citations and bump times_cited/last_cited on
+    the cited active lessons. Returns how many lessons matched. Never raises."""
+    try:
+        ids = set(CITATION_RE.findall(str(text or "")))
+        if not ids:
+            return 0
+        doc = _load()
+        n = 0
+        for e in _active(doc["entries"]):
+            if e.get("id") in ids:
+                e["times_cited"] = int(e.get("times_cited") or 0) + 1
+                e["last_cited"] = _now()
+                n += 1
+        if n:
+            _save(doc)
+        return n
+    except Exception:
+        return 0
+
+
+def link_lessons_to_trade(ticker: str, lesson_ids: list, run_id: str | None = None,
+                          linked_on: str | None = None) -> int:
+    """A BUY was executed whose proposal cited these lessons: remember the link
+    so the eventual closed-trade outcome can grade them. Never raises."""
+    try:
+        t = str(ticker or "").upper()
+        ids = {i for i in (lesson_ids or []) if CITATION_RE.fullmatch(str(i))}
+        if not t or not ids:
+            return 0
+        doc = _load()
+        n = 0
+        for e in _active(doc["entries"]):
+            if e.get("id") not in ids:
+                continue
+            links = [L for L in (e.get("linked_trades") or []) if isinstance(L, dict)]
+            links.append({"ticker": t, "linked_on": linked_on or _now()[:10],
+                          "run_id": run_id})
+            e["linked_trades"] = links[-MAX_LINKS_PER_LESSON:]
+            n += 1
+        if n:
+            _save(doc)
+        return n
+    except Exception:
+        return 0
+
+
+def update_lesson_outcomes(closed_trades: list) -> dict:
+    """Grade lesson links against closed trades (match on ticker + entry date
+    within 5 days of the link) and refresh each lesson's outcome stats and
+    evidence_status. Called from the daily study session. Never raises."""
+    try:
+        trades = [t for t in (closed_trades or []) if isinstance(t, dict)]
+        if not trades:
+            return {"graded": 0}
+        doc = _load()
+        graded = 0
+        for e in _active(doc["entries"]):
+            links = [L for L in (e.get("linked_trades") or []) if isinstance(L, dict)]
+            changed = False
+            used: set[int] = set()  # a trade grades at most ONE link per lesson
+            for L in links:
+                if L.get("outcome") is not None:
+                    continue
+                best, best_gap = None, 999
+                for idx, tr in enumerate(trades):
+                    if idx in used or str(tr.get("ticker", "")).upper() != L.get("ticker"):
+                        continue
+                    opened, linked = str(tr.get("opened_at") or ""), str(L.get("linked_on") or "")
+                    gap = abs(_date_gap_days(opened, linked)) if opened and linked else 999
+                    if gap > 5 or gap >= best_gap:
+                        continue
+                    if tr.get("total_pnl_usd", tr.get("pnl_usd")) is None:
+                        continue
+                    best, best_gap = idx, gap
+                if best is None:
+                    continue
+                tr = trades[best]
+                used.add(best)
+                pnl = tr.get("total_pnl_usd", tr.get("pnl_usd"))
+                L["outcome"] = {"win": pnl > 0, "pnl_usd": round(float(pnl), 2),
+                                "closed_at": tr.get("closed_at"),
+                                "verdict": tr.get("verdict")}
+                changed = True
+                graded += 1
+            if changed or links:
+                done = [L for L in links if isinstance(L.get("outcome"), dict)]
+                if done:
+                    e["outcome"] = {"n": len(done),
+                                    "wins": sum(1 for L in done if L["outcome"].get("win")),
+                                    "graded_at": _now()}
+                    e["evidence_status"] = _evidence_status(e["outcome"])
+                if changed:
+                    e["linked_trades"] = links
+        if graded:
+            _save(doc)
+            publish_learning_journal(doc)
+        return {"graded": graded}
+    except Exception as e:
+        return {"status": "error", "reason": str(e)[:150], "graded": 0}
+
+
+def _date_gap_days(a: str, b: str) -> int:
+    try:
+        from datetime import date
+        da = date.fromisoformat(str(a)[:10])
+        db = date.fromisoformat(str(b)[:10])
+        return (da - db).days
+    except Exception:
+        return 999
+
+
+def apply_conflicts(conflicts: list, new_id: str, run_id: str | None = None) -> dict:
+    """A study session judged the new lesson against existing ones. Code applies
+    at most MAX_SUPERSEDES_PER_STUDY justified 'supersede' verdicts; 'coexist'
+    verdicts are recorded as tension notes on both lessons. Guardrails:
+    a supersede needs a real why (>=40 chars) and cannot touch a lesson the
+    evidence has VALIDATED — data beats a fresh opinion. Never raises."""
+    out = {"superseded": [], "coexist": [], "rejected": []}
+    try:
+        doc = _load()
+        by_id = {e.get("id"): e for e in _active(doc["entries"])}
+        new = by_id.get(new_id)
+        budget = MAX_SUPERSEDES_PER_STUDY
+        changed = False
+        for c in (conflicts or []):
+            if not isinstance(c, dict):
+                continue
+            cid = str(c.get("id") or "")
+            why = str(c.get("why") or "").strip()
+            res = str(c.get("resolution") or "")
+            tgt = by_id.get(cid)
+            if tgt is None or cid == new_id:
+                out["rejected"].append({"id": cid, "why": "unknown_or_self"})
+            elif res == "supersede":
+                if len(why) < 40:
+                    out["rejected"].append({"id": cid, "why": "justification_too_thin"})
+                elif tgt.get("evidence_status") == "validated":
+                    out["rejected"].append({"id": cid, "why": "target_validated_by_evidence"})
+                elif budget <= 0:
+                    out["rejected"].append({"id": cid, "why": "supersede_budget_exhausted"})
+                else:
+                    tgt["superseded_by"] = new_id
+                    tgt["superseded_at"] = _now()
+                    tgt["supersede_reason"] = "contradicted_by_study"
+                    tgt["supersede_why"] = why[:300]
+                    budget -= 1
+                    changed = True
+                    out["superseded"].append(cid)
+            elif res == "coexist":
+                note = {"with": cid, "why": why[:300], "noted_at": _now()[:10]}
+                if new is not None:
+                    new.setdefault("tensions", []).append(note)
+                    new["tensions"] = new["tensions"][-5:]
+                    changed = True
+                out["coexist"].append(cid)
+        if changed:
+            _save(doc)
+            publish_learning_journal(doc)
+    except Exception as e:
+        out["error"] = str(e)[:150]
+    return out
+
+
+def apply_consolidation(plan: dict, run_id: str | None = None) -> dict:
+    """Friday consolidation: the study session reviews the whole active base
+    (with citation/outcome stats) and proposes merges and retirements; code
+    applies them under hard caps so the agent can never churn its own memory:
+    max MAX_CONSOLIDATION_ACTIONS total, lessons younger than
+    CONSOLIDATION_MIN_AGE_DAYS untouchable, evidence-VALIDATED lessons cannot
+    be retired (only merged, which preserves their content), retire needs a
+    real why. Nothing is ever deleted — superseded/retired stay in history."""
+    out = {"merged": [], "retired": [], "rejected": []}
+    try:
+        doc = _load()
+        by_id = {e.get("id"): e for e in _active(doc["entries"])}
+        actions = 0
+
+        def _too_fresh(e) -> bool:
+            return _date_gap_days(_now()[:10], str(e.get("learned_at") or "")[:10]) \
+                < CONSOLIDATION_MIN_AGE_DAYS
+
+        for m in (plan.get("merges") or []):
+            if actions >= MAX_CONSOLIDATION_ACTIONS:
+                out["rejected"].append({"ids": m.get("ids"), "why": "action_budget_exhausted"})
+                continue
+            ids = [i for i in (m.get("ids") or []) if i in by_id]
+            lesson = m.get("lesson")
+            if len(ids) < 2 or not isinstance(lesson, dict):
+                out["rejected"].append({"ids": m.get("ids"), "why": "need_2plus_known_ids_and_lesson"})
+                continue
+            if any(_too_fresh(by_id[i]) for i in ids):
+                out["rejected"].append({"ids": ids, "why": "member_too_fresh"})
+                continue
+            res = add_lesson({**lesson, "topic": str(lesson.get("topic") or "")},
+                             run_id)
+            if res.get("status") != "ok":
+                out["rejected"].append({"ids": ids, "why": f"merged_lesson_{res.get('status')}"})
+                continue
+            doc = _load()  # re-read: add_lesson wrote the store
+            by_id = {e.get("id"): e for e in _active(doc["entries"])}
+            merged_entry = by_id.get(res["id"])
+            if merged_entry is not None:
+                merged_entry["merged_from"] = ids
+            for i in ids:
+                tgt = by_id.get(i)
+                if tgt is not None:
+                    tgt["superseded_by"] = res["id"]
+                    tgt["superseded_at"] = _now()
+                    tgt["supersede_reason"] = "merged"
+            actions += 1
+            out["merged"].append({"into": res["id"], "from": ids})
+            _save(doc)
+            by_id = {e.get("id"): e for e in _active(doc["entries"])}
+
+        for r in (plan.get("retires") or []):
+            if actions >= MAX_CONSOLIDATION_ACTIONS:
+                out["rejected"].append({"id": r.get("id"), "why": "action_budget_exhausted"})
+                continue
+            cid = str((r or {}).get("id") or "")
+            why = str((r or {}).get("why") or "").strip()
+            tgt = by_id.get(cid)
+            if tgt is None:
+                out["rejected"].append({"id": cid, "why": "unknown_id"})
+            elif len(why) < 40:
+                out["rejected"].append({"id": cid, "why": "justification_too_thin"})
+            elif tgt.get("evidence_status") == "validated":
+                out["rejected"].append({"id": cid, "why": "validated_by_evidence"})
+            elif _too_fresh(tgt):
+                out["rejected"].append({"id": cid, "why": "too_fresh"})
+            else:
+                tgt["retired"] = True
+                tgt["retired_at"] = _now()
+                tgt["retire_why"] = why[:300]
+                actions += 1
+                out["retired"].append(cid)
+        if out["merged"] or out["retired"]:
+            _save(doc)
+            publish_learning_journal(doc)
+    except Exception as e:
+        out["error"] = str(e)[:150]
+    return out
+
+
+def active_lessons() -> list:
+    """Full active (non-superseded, non-retired) lesson records, oldest first.
+    Used by the Friday consolidation session, which needs complete text plus
+    the citation/outcome evidence."""
+    try:
+        return [dict(e) for e in _active(_load()["entries"])]
+    except Exception:
+        return []
 
 
 def discipline_counts(entries: list | None = None) -> dict:
@@ -202,27 +489,68 @@ def prune_knowledge_base(max_active: int = MAX_ACTIVE) -> dict:
         return {"status": "error", "reason": str(e)[:150], "pruned": 0}
 
 
-def brain_facing_knowledge_base(limit: int = 8) -> dict:
-    """Inject into trading context: the most recent studied lessons plus
-    curriculum coverage. Compact by design (learning-pack discipline)."""
+def _selection_rank(e: dict) -> tuple:
+    """Evidence beats recency: validated first, then ungraded/mixed by recency,
+    underperforming last (still shown — with a warning — until consolidation
+    retires them). Pure."""
+    status = e.get("evidence_status")
+    tier = {"validated": 0, None: 1, "mixed": 1, "underperforming": 2}.get(status, 1)
+    return (tier, str(e.get("learned_at") or ""))
+
+
+def _lesson_row(e: dict) -> dict:
+    row = {"id": e.get("id"), "discipline": e.get("discipline"),
+           "topic": e.get("topic"), "summary": e.get("summary"),
+           "how_to_apply": e.get("how_to_apply"),
+           "learned_at": str(e.get("learned_at") or "")[:10]}
+    if e.get("evidence_status"):
+        row["evidence_status"] = e["evidence_status"]
+        row["evidence"] = e.get("outcome")
+    if e.get("evidence_status") == "underperforming":
+        row["warning"] = ("trades citing this lesson have mostly LOST - weigh it "
+                          "skeptically; it is a retirement candidate")
+    if e.get("times_cited"):
+        row["times_cited"] = e["times_cited"]
+    if e.get("tensions"):
+        row["tensions"] = e["tensions"][-2:]
+    return row
+
+
+def brain_facing_knowledge_base(limit: int = 8, include_index: bool = False) -> dict:
+    """Inject into trading context: evidence-ranked lessons plus curriculum
+    coverage. Compact by design (learning-pack discipline). include_index adds
+    a one-line id+topic index of the WHOLE active base (study sessions use it
+    to avoid re-learning and to name conflicts)."""
     try:
         doc = _load()
         active = _active(doc["entries"])
-        recent = list(reversed(active))[:limit]
-        return {
+        by_tier: dict = {}
+        for e in active:
+            by_tier.setdefault(_selection_rank(e)[0], []).append(e)
+        picked = []
+        for tier in sorted(by_tier):
+            picked.extend(sorted(by_tier[tier],
+                                 key=lambda e: str(e.get("learned_at") or ""),
+                                 reverse=True))
+        out = {
             "note": ("KNOWLEDGE BASE from the daily study sessions (system 6). "
-                     "Durable craft lessons — apply the how_to_apply lines when the "
-                     "situation matches; cite a lesson id when one drives a decision."),
-            "recent": [
-                {"id": e.get("id"), "discipline": e.get("discipline"),
-                 "topic": e.get("topic"), "summary": e.get("summary"),
-                 "how_to_apply": e.get("how_to_apply"),
-                 "learned_at": str(e.get("learned_at") or "")[:10]}
-                for e in recent
-            ],
+                     "Durable craft lessons, EVIDENCE-RANKED: validated first "
+                     "(citing trades won), underperforming last (citing trades "
+                     "lost - weigh skeptically). Apply the how_to_apply lines "
+                     "when the situation matches; CITE the lesson id when one "
+                     "drives a decision - citations are how lessons get graded."),
+            "recent": [_lesson_row(e) for e in picked[:limit]],
             "n_active": len(active),
             "discipline_counts": discipline_counts(doc["entries"]),
         }
+        if include_index:
+            out["topics_index"] = [
+                {"id": e.get("id"), "discipline": e.get("discipline"),
+                 "topic": e.get("topic"), "evidence_status": e.get("evidence_status"),
+                 "times_cited": e.get("times_cited") or 0}
+                for e in reversed(active)
+            ]
+        return out
     except Exception as e:
         return {"status": "error", "reason": str(e)[:150], "recent": []}
 

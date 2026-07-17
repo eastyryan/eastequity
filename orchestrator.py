@@ -494,6 +494,14 @@ def main() -> int:
     for m in re.findall(r"Improvement note:(.+)", response):
         journal.log_improvement(m.strip(), run_id)
 
+    try:  # knowledge-base lessons cited anywhere in the reasoning get credited
+        from tools.knowledge_base import record_citations
+        n_cited = record_citations(response, run_id)
+        if n_cited:
+            print(f"      knowledge base: {n_cited} lesson(s) cited this run")
+    except Exception as e:
+        print(f"      (kb citation scan failed: {e})")
+
     if parsed.get("guidance_entries"):
         try:
             gsum = record_guidance(parsed["guidance_entries"])
@@ -611,6 +619,26 @@ def main() -> int:
 
     print("[4/5] Executing...")
     fills = forced_exit_fills + execute(approved, context, cfg, run_id)
+
+    try:  # link KB lessons cited in an executed BUY's proposal to that trade,
+        # so the eventual closed-trade outcome grades the lesson (system 6).
+        from tools.knowledge_base import CITATION_RE, link_lessons_to_trade
+        by_ticker = {str(p.get("ticker", "")).upper(): p
+                     for r in results if r.approved
+                     for p in [r.proposal]
+                     if str(p.get("action", "")).upper() == "BUY"}
+        for f in fills:
+            t = str(f.get("ticker", "")).upper()
+            if f.get("status") != "filled" or str(f.get("action", "")).upper() != "BUY":
+                continue
+            prop = by_ticker.get(t)
+            if not prop:
+                continue
+            ids = sorted(set(CITATION_RE.findall(json.dumps(prop))))
+            if ids and link_lessons_to_trade(t, ids, run_id, linked_on=et_date()):
+                print(f"      kb: linked {ids} to {t} entry for outcome grading")
+    except Exception as e:
+        print(f"      (kb trade-link failed: {e})")
 
     print("[5/5] Journaling + dashboard + X draft...")
     publish_prices = (context.get("universe_scan") or {}).get("prices") or {}

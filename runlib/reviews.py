@@ -143,18 +143,24 @@ def self_review(run_id: str) -> int:
 
 
 def daily_study(run_id: str) -> int:
-    """Daily study session (no trading): the agent picks ONE topic — weighted
-    toward the least-covered discipline and its own current weaknesses from the
-    trade-feedback loops — researches it with web search, and writes a durable
-    structured lesson into the knowledge base (learning system 6). Published to
-    the dashboard learning journal."""
+    """Daily study session (no trading), learning system 6. Mon-Thu: pick ONE
+    topic — weighted toward the least-covered discipline and current weaknesses
+    from the trade-feedback loops — research it with web search, write a durable
+    structured lesson (checking it against the existing base for contradictions).
+    FRIDAY: consolidation day instead — review the whole active base with its
+    citation/outcome evidence, merge near-duplicates, retire what the evidence
+    or better learning says is wrong. Both publish to the learning journal.
+    Every session first grades lesson outcomes against newly closed trades."""
     from tools.knowledge_base import (
-        DISCIPLINES, add_lesson, brain_facing_knowledge_base, next_discipline,
-        prune_knowledge_base,
+        DISCIPLINES, add_lesson, apply_conflicts, brain_facing_knowledge_base,
+        next_discipline, prune_knowledge_base, update_lesson_outcomes,
     )
 
     # --- weakness signals from the reactive learning systems ---------------
     closed = compute_closed_trades()
+    graded = update_lesson_outcomes(closed)  # grade lesson links vs new closes
+    if graded.get("graded"):
+        print(f"  • graded {graded['graded']} lesson-trade outcome(s)")
     breakdowns = build_performance_breakdown(closed)
     try:
         from tools.calibration_gate import brain_facing_calibration_status
@@ -188,11 +194,19 @@ def daily_study(run_id: str) -> int:
             hints += ["strategy_playbooks"]
     except Exception:
         pass
-    kb = brain_facing_knowledge_base(limit=12)
+    kb = brain_facing_knowledge_base(limit=12, include_index=True)
     suggested = next_discipline(hints)
+
+    # Friday = consolidation day (an exam, not a new chapter) — but only once
+    # the base is big enough to need curating.
+    from tools.knowledge_base import active_lessons
+    mode = ("consolidate"
+            if et_now().weekday() == 4 and len(active_lessons()) >= 8
+            else "learn")
 
     bundle = {
         "as_of_et": et_date(),
+        "study_mode": mode,
         "curriculum": DISCIPLINES,
         "suggested_discipline": suggested,
         "weakness_hints": hints,
@@ -203,8 +217,13 @@ def daily_study(run_id: str) -> int:
         "shadow_learning": shadow,
         "adopted_lessons": adopted,
     }
+    if mode == "consolidate":
+        bundle["active_lessons_full"] = active_lessons()
     study_file = ROOT / "state" / f"study_{run_id}.json"
     study_file.write_text(json.dumps(json_safe(bundle), indent=2, default=str))
+
+    if mode == "consolidate":
+        return _run_consolidation(run_id, study_file)
 
     prompt = (
         f"Today's date (ET) is {et_date()}. DAILY STUDY SESSION for East Equity Agent — "
@@ -213,8 +232,9 @@ def daily_study(run_id: str) -> int:
         f"properly. Read CLAUDE.md, then the study bundle at {study_file}.\n\n"
         "1) PICK ONE SPECIFIC TOPIC. Default to suggested_discipline, but override it "
         "when weakness_hints or your own recent mistakes (exit_lessons, shadow regrets, "
-        "calibration) point somewhere more urgent. Check knowledge_base_so_far first — "
-        "never re-study a covered topic; go deeper or adjacent instead. A good topic is "
+        "calibration) point somewhere more urgent. Check knowledge_base_so_far "
+        "(topics_index lists EVERY active lesson) first — never re-study a covered "
+        "topic; go deeper or adjacent instead. A good topic is "
         "narrow enough to master in one session ('anchored VWAP for swing entries', "
         "'how estimate-revision breadth leads price', 'Kelly-fraction intuition for 1% "
         "risk budgets'), not a survey ('technical analysis').\n"
@@ -227,14 +247,26 @@ def daily_study(run_id: str) -> int:
         "and signals in your context bundle) — concrete enough that a future run can "
         "act on it, e.g. 'when volume_signal shows selling_climax, wait for the "
         "light-volume retest instead of buying the climax bar'.\n\n"
+        "4) CHECK FOR CONTRADICTIONS: compare your new lesson against "
+        "knowledge_base_so_far (recent full lessons + topics_index). New learning may "
+        "be better OR worse than what you already hold — judge on evidence, not "
+        "novelty. If an existing lesson is genuinely contradicted and your sources are "
+        "stronger, name it under conflicts with resolution 'supersede' and a real why. "
+        "If both are true in different regimes, use 'coexist' and say when each "
+        "applies. Code enforces: max 2 supersedes per session, and lessons already "
+        "VALIDATED by trade outcomes cannot be superseded by reading alone — data "
+        "beats a fresh opinion.\n\n"
         "Output a fenced ```json block:\n"
         '{"lesson": {"discipline": "<one of the curriculum keys>", '
         '"topic": "...", "summary": "6-12 sentences of what you actually learned", '
         '"key_points": ["3-8 crisp takeaways"], '
         '"how_to_apply": "3-6 sentences mapping it onto this system\'s process", '
-        '"sources": ["url or citation", "..."]}}\n'
-        "Nothing in the lesson may be invented — if sources disagree or evidence is "
-        "weak, say so inside the summary."
+        '"sources": ["url or citation", "..."], '
+        '"conflicts": [{"id": "KB-...", "resolution": "supersede|coexist", '
+        '"why": ">=40 chars of evidence-based reasoning"}]}}\n'
+        "conflicts is optional — omit it when the lesson stands alone. Nothing in the "
+        "lesson may be invented — if sources disagree or evidence is weak, say so "
+        "inside the summary."
     )
     try:
         out = run_claude(prompt)
@@ -270,10 +302,17 @@ def daily_study(run_id: str) -> int:
             f"{res.get('reason') or res.get('existing_id')}) - "
             f"topic was '{str(lesson.get('topic'))[:120]}'.", run_id)
         return 1
+    conflict_note = ""
+    if lesson.get("conflicts"):
+        cres = apply_conflicts(lesson["conflicts"], res["id"], run_id)
+        print(f"  • conflicts: superseded={cres.get('superseded')} "
+              f"coexist={cres.get('coexist')} rejected={cres.get('rejected')}")
+        if cres.get("superseded"):
+            conflict_note = f" Supersedes {', '.join(cres['superseded'])}."
     prune_knowledge_base()
 
     note = (f"Daily study ({res['discipline']}): {res['topic']} - "
-            f"{str(lesson.get('summary'))[:200]}")
+            f"{str(lesson.get('summary'))[:200]}{conflict_note}")
     journal.log_improvement(note, run_id)
     latest_file = ROOT / "dashboard" / "data" / "latest.json"
     if latest_file.exists():
@@ -286,6 +325,88 @@ def daily_study(run_id: str) -> int:
             print(f"  (latest.json improvements update failed: {e})")
     redeploy_dashboard()
     print(f"daily study complete: {res['id']} [{res['discipline']}] {res['topic']}")
+    return 0
+
+
+def _run_consolidation(run_id: str, study_file) -> int:
+    """Friday consolidation session: review the whole active knowledge base with
+    its citation/outcome evidence; merge near-duplicates into principles and
+    retire what the evidence or better learning says is wrong. Code enforces
+    the budget (max 5 actions, fresh lessons untouchable, validated lessons
+    unretirable) — 'no changes needed' is a perfectly good outcome."""
+    from tools.knowledge_base import apply_consolidation
+
+    prompt = (
+        f"Today's date (ET) is {et_date()}. WEEKLY KNOWLEDGE CONSOLIDATION for East "
+        "Equity Agent — no trading, no new topic today. You are reviewing your own "
+        f"accumulated study notes like an exam week. Read CLAUDE.md, then the bundle "
+        f"at {study_file} — active_lessons_full is every active lesson with its "
+        "evidence: times_cited, linked trade outcomes, evidence_status "
+        "(validated / mixed / underperforming / null=ungraded), and tensions.\n\n"
+        "Your job is to keep the playbook SMALL and TRUE, not to grow it:\n"
+        "1) MERGE lessons that are really one principle (2+ ids -> one rewritten "
+        "lesson that keeps the best of each; the originals are archived under it).\n"
+        "2) RETIRE lessons that deserve it: evidence_status underperforming, "
+        "contradicted by stronger later learning, too vague to ever act on, or "
+        "redundant with the validator's own hard rules. Say WHY (>=40 chars), from "
+        "evidence — not taste. You CANNOT retire evidence-validated lessons, and "
+        "lessons under 7 days old are untouchable (code enforces both).\n"
+        "3) DO NOTHING when nothing is wrong - an empty plan is a good outcome; "
+        "never invent changes to look busy. Max 5 total actions per week.\n\n"
+        "Output a fenced ```json block:\n"
+        '{"consolidation": {"merges": [{"ids": ["KB-...", "KB-..."], '
+        '"lesson": {"discipline": "...", "topic": "...", "summary": "...", '
+        '"key_points": [...], "how_to_apply": "...", "sources": [...]}}], '
+        '"retires": [{"id": "KB-...", "why": ">=40 chars"}], '
+        '"review_note": "2-4 plain sentences for the public journal: what you '
+        'kept, cut, and why"}}'
+    )
+    try:
+        out = run_claude(prompt)
+    except Exception as e:
+        print(f"consolidation failed: {str(e)[:600]}")
+        return 1
+    try:
+        (ROOT / "state" / f"study_response_{run_id}.txt").write_text(out or "")
+    except Exception:
+        pass
+
+    plan = None
+    for block in reversed(re.findall(r"```json\s*(.*?)```", out, re.DOTALL)):
+        try:
+            cand = json.loads(block)
+            if isinstance(cand, dict) and isinstance(cand.get("consolidation"), dict):
+                plan = cand["consolidation"]
+                break
+        except json.JSONDecodeError:
+            continue
+    if plan is None:
+        print("consolidation: no machine-readable plan; knowledge base unchanged")
+        journal.log_improvement(
+            "Weekly knowledge consolidation produced no machine-readable plan - "
+            "knowledge base unchanged.", run_id)
+        return 1
+
+    res = apply_consolidation(plan, run_id)
+    review_note = str(plan.get("review_note") or "").strip()[:600]
+    note = (f"Weekly knowledge consolidation: {len(res.get('merged', []))} merged, "
+            f"{len(res.get('retired', []))} retired"
+            + (f", rejected {len(res.get('rejected', []))} action(s) at the "
+               f"guardrails" if res.get("rejected") else "")
+            + (f". {review_note}" if review_note else "."))
+    print(f"  • {note}")
+    journal.log_improvement(note, run_id)
+    latest_file = ROOT / "dashboard" / "data" / "latest.json"
+    if latest_file.exists():
+        try:
+            d = json.loads(latest_file.read_text())
+            d["improvements"] = ([{"date": et_date(), "note": note}]
+                                 + d.get("improvements", []))[:30]
+            latest_file.write_text(json.dumps(d, indent=2, default=str))
+        except Exception as e:
+            print(f"  (latest.json improvements update failed: {e})")
+    redeploy_dashboard()
+    print("consolidation complete")
     return 0
 
 

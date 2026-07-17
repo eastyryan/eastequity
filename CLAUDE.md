@@ -679,6 +679,19 @@ decision ("per KB-0123456789, waiting for the light-volume retest"). Lessons com
 treat the knowledge base as your own accumulated craft, senior to generic intuition but
 junior to the validator and the Learning Protocol's sample-size rules.
 
+**Lessons are graded, not gospel.** Citations are the grading mechanism: when a BUY you
+cite a lesson in gets executed, code links that lesson to the trade, and the closed
+trade's outcome scores it. Over >=3 linked trades a lesson becomes `validated` (>=60%
+wins — weight it MORE), `mixed`, or `underperforming` (<40% wins — the pack shows a
+warning; weigh it skeptically, it is a retirement candidate). Under 3 trades it is an
+anecdote — no status, normal weight. So cite honestly: citing a lesson that did not
+actually drive the decision corrupts your own grading loop. New study can contradict
+old lessons — the study session judges supersede-vs-coexist on evidence (max 2/session,
+and reading alone can never supersede a trade-validated lesson). FRIDAYS the study slot
+is consolidation instead of a new topic: merge duplicate lessons into principles,
+retire what the evidence killed, keep the playbook small and true (max 5 actions/week,
+code-enforced; retired/superseded lessons stay archived, never deleted).
+
 **Always in weekly self-review:** quote breakdown + calibration phase, grade last week’s
 behavior change, name worst pattern, state ONE change for next week, and address shadow
 regrets + binding exit lessons.

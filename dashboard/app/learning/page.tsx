@@ -12,6 +12,9 @@ type LearningEntry = {
   how_to_apply?: string;
   sources?: string[];
   learned_at: string;
+  evidence_status?: "validated" | "mixed" | "underperforming" | null;
+  outcome?: { n?: number; wins?: number } | null;
+  times_cited?: number;
 };
 
 type LearningJournal = {
@@ -148,6 +151,30 @@ export default function LearningJournalPage() {
                 <span className="text-[11px] text-ink-3 font-[family-name:var(--font-mono)]">
                   {e.id}
                 </span>
+                {e.evidence_status && (
+                  <span
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide font-[family-name:var(--font-mono)] ${
+                      e.evidence_status === "validated"
+                        ? "border-pos/40 bg-pos-soft text-pos"
+                        : e.evidence_status === "underperforming"
+                          ? "border-attn/40 bg-attn-soft text-attn"
+                          : "border-line bg-card text-ink-3"
+                    }`}
+                    title={
+                      e.outcome?.n
+                        ? `${e.outcome.wins ?? 0}/${e.outcome.n} trades citing this lesson won`
+                        : undefined
+                    }
+                  >
+                    {e.evidence_status}
+                    {e.outcome?.n ? ` ${e.outcome.wins ?? 0}/${e.outcome.n}` : ""}
+                  </span>
+                )}
+                {(e.times_cited ?? 0) > 0 && (
+                  <span className="text-[11px] text-ink-3 font-[family-name:var(--font-mono)]">
+                    cited {e.times_cited}×
+                  </span>
+                )}
               </div>
               <h2 className="mt-3 text-xl font-semibold tracking-tight leading-snug">
                 {clean(e.topic ?? "")}

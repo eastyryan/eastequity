@@ -88,5 +88,154 @@ def test_prune_caps_active():
     assert len(journal["entries"]) == 2
 
 
+# ---------------------------------------------------------------------------
+# Evidence lifecycle: citations -> trade links -> outcomes -> status; plus the
+# contradiction (apply_conflicts) and Friday consolidation guardrails.
+# ---------------------------------------------------------------------------
+
+def _add(topic, discipline="technical_analysis"):
+    return kb.add_lesson(_lesson(topic=topic, discipline=discipline), "run-x")["id"]
+
+
+def _closed(ticker, opened_at, pnl, closed_at="2026-07-30"):
+    return {"ticker": ticker, "opened_at": opened_at, "closed_at": closed_at,
+            "pnl_usd": pnl, "verdict": "Thesis exit"}
+
+
+def test_record_citations_counts_only_active_ids():
+    lid = _add("topic one plus padding padding")
+    n = kb.record_citations(f"per {lid} I waited for the retest; also KB-0000000000")
+    assert n == 1
+    e = kb.active_lessons()[0]
+    assert e["times_cited"] == 1 and e["last_cited"]
+    assert kb.record_citations("no ids here") == 0
+
+
+def test_link_and_outcome_grading_thresholds():
+    lid = _add("stops and noise band lesson topic")
+    for i, (pnl, day) in enumerate([(50, "2026-07-01"), (30, "2026-07-05"),
+                                    (-20, "2026-07-10")]):
+        assert kb.link_lessons_to_trade("NVDA", [lid], f"r{i}", linked_on=day) == 1
+    closes = [_closed("NVDA", "2026-07-01", 50), _closed("NVDA", "2026-07-05", 30),
+              _closed("NVDA", "2026-07-10", -20)]
+    out = kb.update_lesson_outcomes(closes)
+    assert out["graded"] == 3
+    e = kb.active_lessons()[0]
+    assert e["outcome"] == {"n": 3, "wins": 2, "graded_at": e["outcome"]["graded_at"]}
+    assert e["evidence_status"] == "validated"  # 2/3 >= 60%
+
+
+def test_outcomes_below_min_trades_stay_anecdote():
+    lid = _add("small sample stays anecdote topic")
+    kb.link_lessons_to_trade("MU", [lid], "r1", linked_on="2026-07-01")
+    kb.update_lesson_outcomes([_closed("MU", "2026-07-02", -10)])
+    e = kb.active_lessons()[0]
+    assert e["outcome"]["n"] == 1
+    assert e.get("evidence_status") is None  # anecdote: no judgment
+
+
+def test_underperforming_status_and_selection_order():
+    bad = _add("bad lesson that keeps losing topic")
+    for i, day in enumerate(["2026-07-01", "2026-07-03", "2026-07-05"]):
+        kb.link_lessons_to_trade("DELL", [bad], f"r{i}", linked_on=day)
+    kb.update_lesson_outcomes([_closed("DELL", d, -10) for d in
+                               ("2026-07-01", "2026-07-03", "2026-07-05")])
+    _add("newer neutral lesson topic here", discipline="macro_regimes")
+    bf = kb.brain_facing_knowledge_base()
+    rows = bf["recent"]
+    # underperforming ranks LAST despite any recency, and carries a warning
+    assert rows[-1]["id"] == bad and rows[-1]["evidence_status"] == "underperforming"
+    assert "warning" in rows[-1]
+    assert rows[0]["id"] != bad
+
+
+def test_apply_conflicts_guardrails():
+    old = _add("old contradicted lesson topic here")
+    val = _add("validated lesson cannot be superseded")
+    # validate `val` with 3 winning linked trades
+    for i, d in enumerate(["2026-07-01", "2026-07-02", "2026-07-03"]):
+        kb.link_lessons_to_trade("AMD", [val], f"r{i}", linked_on=d)
+    kb.update_lesson_outcomes([_closed("AMD", d, 25) for d in
+                               ("2026-07-01", "2026-07-02", "2026-07-03")])
+    new = _add("new stronger evidence lesson topic")
+    res = kb.apply_conflicts(
+        [{"id": old, "resolution": "supersede", "why": "w" * 50},
+         {"id": val, "resolution": "supersede", "why": "w" * 50},
+         {"id": old, "resolution": "supersede", "why": "thin"}],
+        new, "run-c")
+    assert res["superseded"] == [old]
+    why = {r["id"]: r["why"] for r in res["rejected"]}
+    assert why[val] == "target_validated_by_evidence"
+    active_ids = {e["id"] for e in kb.active_lessons()}
+    assert old not in active_ids and val in active_ids
+
+
+def test_apply_conflicts_supersede_budget():
+    olds = [_add(f"budget lesson number {i} padding") for i in range(3)]
+    new = _add("the lesson that supersedes many")
+    res = kb.apply_conflicts(
+        [{"id": o, "resolution": "supersede", "why": "w" * 50} for o in olds],
+        new, "run-c")
+    assert len(res["superseded"]) == kb.MAX_SUPERSEDES_PER_STUDY
+    assert any(r["why"] == "supersede_budget_exhausted" for r in res["rejected"])
+
+
+def test_apply_conflicts_coexist_records_tension():
+    a = _add("regime A lesson topic padding here")
+    b = _add("regime B lesson topic padding here")
+    res = kb.apply_conflicts([{"id": a, "resolution": "coexist",
+                               "why": "A in trends, B in chop"}], b, "run-c")
+    assert res["coexist"] == [a]
+    newer = [e for e in kb.active_lessons() if e["id"] == b][0]
+    assert newer["tensions"][0]["with"] == a
+
+
+def _age(lesson_id, iso_date):
+    """Backdate a lesson so consolidation age-guards can be exercised."""
+    import json as _json
+    doc = _json.loads(kb.KB_JSON.read_text())
+    for e in doc["entries"]:
+        if e["id"] == lesson_id:
+            e["learned_at"] = iso_date + "T00:00:00+00:00"
+    kb.KB_JSON.write_text(_json.dumps(doc))
+
+
+def test_consolidation_merge_and_retire_with_guardrails():
+    a = _add("merge member one topic padding")
+    b = _add("merge member two topic padding")
+    fresh = _add("fresh lesson cannot be retired yet")
+    stale = _add("stale weak lesson retire me please")
+    for lid in (a, b, stale):
+        _age(lid, "2026-01-01")
+    plan = {
+        "merges": [{"ids": [a, b],
+                    "lesson": _lesson(topic="merged principle of one and two")}],
+        "retires": [{"id": stale, "why": "w" * 50},
+                    {"id": fresh, "why": "w" * 50},
+                    {"id": "KB-0000000000", "why": "w" * 50}],
+    }
+    res = kb.apply_consolidation(plan, "run-f")
+    assert len(res["merged"]) == 1 and res["merged"][0]["from"] == [a, b]
+    assert res["retired"] == [stale]
+    why = {str(r.get("id")): r["why"] for r in res["rejected"]}
+    assert why[fresh] == "too_fresh"
+    assert why["KB-0000000000"] == "unknown_id"
+    active_ids = {e["id"] for e in kb.active_lessons()}
+    assert a not in active_ids and b not in active_ids and stale not in active_ids
+    merged = [e for e in kb.active_lessons()
+              if e["topic"] == "merged principle of one and two"][0]
+    assert merged["merged_from"] == [a, b]
+
+
+def test_consolidation_action_budget():
+    ids = [_add(f"budgeted retire lesson {i} padding") for i in range(7)]
+    for lid in ids:
+        _age(lid, "2026-01-01")
+    plan = {"retires": [{"id": i, "why": "w" * 50} for i in ids]}
+    res = kb.apply_consolidation(plan, "run-f")
+    assert len(res["retired"]) == kb.MAX_CONSOLIDATION_ACTIONS
+    assert any(r["why"] == "action_budget_exhausted" for r in res["rejected"])
+
+
 if __name__ == "__main__":
     print("run under pytest: python3 -m pytest tests/test_knowledge_base.py -q")
