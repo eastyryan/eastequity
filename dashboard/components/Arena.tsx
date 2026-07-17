@@ -364,6 +364,7 @@ export default function Arena({ latest, history }: { latest: Latest; history: Hi
             <a href="#machine">The Machine</a>
             <a href="#log">The Log</a>
             <Link href="/ledger">The Ledger</Link>
+            <Link href="/learning">Study Hall</Link>
           </nav>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button
@@ -1219,6 +1220,9 @@ export default function Arena({ latest, history }: { latest: Latest; history: Hi
             </Link>
             <Link href="/runs" style={{ color: "var(--ee-accent)" }}>
               Run archive
+            </Link>
+            <Link href="/learning" style={{ color: "var(--ee-accent)" }}>
+              Study Hall
             </Link>
             <a href="https://x.com/EastEquity" target="_blank" rel="noreferrer" style={{ color: "var(--ee-accent)" }}>
               @EastEquity ↗
