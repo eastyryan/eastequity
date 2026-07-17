@@ -159,6 +159,28 @@ def test_buy_insufficient_cash_rejected(monkeypatch):
     assert fake.submits == []  # never reached the broker
 
 
+def test_sync_mirror_ignores_zero_equity_read(monkeypatch):
+    """A reachable account that reports $0 equity over a known-good ledger is a
+    corrupt relay read, not a wipeout: sync_mirror must return None and leave the
+    mirror's real cash/equity intact (the 2026-07-17 zeroed-dashboard incident)."""
+    fake = FakeAPI(is_open=True, cash=0.0, positions=[])  # empty/mis-authed read
+    _wire(monkeypatch, fake)
+    assert ab.sync_mirror() is None
+    state = json.loads(sb.STATE_FILE.read_text())
+    assert state["cash_usd"] == 10000.0
+    assert state["total_equity_usd"] == 10000.0
+
+
+def test_sync_mirror_accepts_real_nonzero_read(monkeypatch):
+    """Guard is scoped to zero reads only: a legitimate lower balance still syncs."""
+    fake = FakeAPI(is_open=True, cash=5000.0, positions=[])
+    _wire(monkeypatch, fake)
+    synced = ab.sync_mirror()
+    assert synced is not None
+    assert synced["cash_usd"] == 5000.0
+    assert synced["total_equity_usd"] == 5000.0
+
+
 def test_buy_rejected_when_market_closed(monkeypatch):
     fake = FakeAPI(is_open=False)
     _wire(monkeypatch, fake)

@@ -108,11 +108,19 @@ def patch_dashboard(executed_fills_summary: dict) -> bool:
     try:
         from tools.portfolio_state import get_portfolio_state
         state = get_portfolio_state()
-        latest["portfolio"] = {
-            "cash_usd": state.get("cash_usd"),
-            "positions": state.get("positions", []),
-            "total_equity_usd": state.get("total_equity_usd"),
-        }
+        # Never clobber a known-good portfolio with a zeroed read. A reachable
+        # broker that reports $0 equity while the dashboard last showed real
+        # money is a bad account read, not a wipeout — keep the prior block.
+        new_equity = float(state.get("total_equity_usd") or 0.0)
+        prior_equity = float((latest.get("portfolio") or {}).get("total_equity_usd") or 0.0)
+        if new_equity <= 0 and prior_equity > 0:
+            print("  (skipped portfolio patch: broker read returned $0 equity)")
+        else:
+            latest["portfolio"] = {
+                "cash_usd": state.get("cash_usd"),
+                "positions": state.get("positions", []),
+                "total_equity_usd": state.get("total_equity_usd"),
+            }
         note = {
             "executor_updated_at": datetime.now(timezone.utc).isoformat(),
             **{k: v for k, v in executed_fills_summary.items() if v},

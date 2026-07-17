@@ -211,13 +211,23 @@ def sync_mirror() -> dict | None:
             p["not_at_broker"] = True
             new_positions.append(p)
     state["positions"] = new_positions
-    state["cash_usd"] = round(float(acct.get("cash") or 0.0), 2)
+    new_cash = round(float(acct.get("cash") or 0.0), 2)
     try:  # broker equity is authoritative (cash + marked positions)
-        state["total_equity_usd"] = round(float(acct.get("equity")), 2)
+        new_equity = round(float(acct.get("equity")), 2)
     except (TypeError, ValueError):
-        state["total_equity_usd"] = round(
-            state["cash_usd"] + sum(p.get("market_value_usd", 0.0)
-                                    for p in new_positions), 2)
+        new_equity = round(
+            new_cash + sum(p.get("market_value_usd", 0.0)
+                           for p in new_positions), 2)
+    # Corrupt-read guard: a reachable /v2/account that reports zero equity while
+    # the mirror last held real money is a bad read (empty or mis-authed relay
+    # response), not a real wipeout — a paper account cannot drop to $0 cash and
+    # $0 equity with no positions. Never persist it over a known-good ledger;
+    # leave the mirror untouched so downstream keeps the last committed balance.
+    prior_equity = round(float(state.get("total_equity_usd") or 0.0), 2)
+    if new_equity <= 0 and prior_equity > 0:
+        return None
+    state["cash_usd"] = new_cash
+    state["total_equity_usd"] = new_equity
     state["broker_synced_at"] = datetime.now(timezone.utc).isoformat()
     state["broker_backend"] = "alpaca_paper"
     simulated_broker._save(state)
