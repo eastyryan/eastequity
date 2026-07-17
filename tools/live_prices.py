@@ -1,4 +1,4 @@
-"""High-frequency live-price feed for holdings + watchlist.
+"""High-frequency live-price feed — full universe via Alpaca, book via fallback.
 
 The trading sandbox blocks Yahoo, so the cloud trader can only mark positions
 and enforce stops from prices committed to the repo. The heavy full-bundle
@@ -7,13 +7,16 @@ scheduled crons hard), so between gathers a holding's price is frozen and an
 intraday stop breach goes unseen — exactly how DELL could sit below its stop
 without the safety layer reacting.
 
-This is a lightweight feed for JUST the names that need a fresh mark — current
-holdings + the published watchlist. A dedicated Action (live-prices.yml) fetches
-INTRADAY quotes every few minutes during market hours and commits
-state/live_prices.json. The orchestrator overlays these onto the bundle's
-daily-bar prices before the safety layer enforces stops, and flags when the
-freshest mark is too old to trust (fail-safe rather than silently trusting a
-stale price).
+With Alpaca keys (ALPACA_API_KEY/SECRET), each tick refreshes the ENTIRE
+universe from batched IEX snapshots (~2 requests for ~183 names, vs the free
+tier's 200/min) — stops, watchlist triggers, and scan overlays all see a
+≤5-min-old mark during market hours. Without keys it degrades to the original
+serial-yfinance feed over just holdings + watchlist. A dedicated Action
+(live-prices.yml) plus the local launchd feeder fetch every ~5 minutes during
+market hours and commit state/live_prices.json to the live-data branch. The
+orchestrator overlays these onto the bundle's daily-bar prices before the
+safety layer enforces stops, and flags when the freshest mark is too old to
+trust (fail-safe rather than silently trusting a stale price).
 
 Network is wrapped and degrades to the last file; the read / overlay / staleness
 helpers are pure and offline-tested. GitHub's scheduler throttles */5 crons, so
@@ -176,9 +179,46 @@ def load_live_prices(*, use_branch: bool = True) -> dict:
     return pick_fresher(local, _read_from_branch())
 
 
-def fetch_live_prices(tickers: Iterable[str]) -> dict:
-    """Intraday last price per ticker via yfinance (fast_info, then a 1m bar as
-    fallback). Network wrapped; returns whatever it could get. Never raises."""
+def fetch_live_prices(tickers: Iterable[str],
+                      fallback_tickers: Iterable[str] | None = None) -> tuple[dict, str]:
+    """Intraday last price per ticker. Returns ({TICKER: price}, source_label).
+
+    Primary: Alpaca batched snapshots (IEX real-time; ~100 symbols/request, so
+    the FULL universe costs 2 requests against a 200/min free-tier limit).
+    Fallback: yfinance per-name — but yfinance is SERIAL and slow, so when
+    Alpaca answered, only `fallback_tickers` (the stop-critical book) are
+    retried through it; with no Alpaca at all, every name goes through
+    yfinance exactly as before. Network wrapped; never raises."""
+    want = list(dict.fromkeys(str(x).upper() for x in tickers if x))
+    out: dict = {}
+    source = "yfinance_intraday"
+    try:
+        from tools import alpaca_data
+        if alpaca_data.has_keys():
+            for t, rec in alpaca_data.get_prices(want).items():
+                # latest trade / minute bar are intraday marks; a daily-bar
+                # fallback is yesterday's close — keep it, it matches the old
+                # behaviour of "freshest price yfinance would give us".
+                out[t] = round(float(rec["price"]), 2)
+            if out:
+                source = "alpaca_iex"
+    except Exception:
+        pass
+
+    missing = [t for t in want if t not in out]
+    if out and fallback_tickers is not None:
+        critical = {str(x).upper() for x in fallback_tickers}
+        missing = [t for t in missing if t in critical]
+    if missing:
+        yf_prices = _fetch_yfinance(missing)
+        if yf_prices:
+            out.update(yf_prices)
+            source = "alpaca_iex+yfinance" if source == "alpaca_iex" else source
+    return out, source
+
+
+def _fetch_yfinance(tickers: Iterable[str]) -> dict:
+    """Original serial yfinance path (fast_info, then a 1m bar). Never raises."""
     out: dict = {}
     try:
         import yfinance as yf
@@ -204,14 +244,15 @@ def fetch_live_prices(tickers: Iterable[str]) -> dict:
     return out
 
 
-def write_live_prices(tickers: Iterable[str], *, now: datetime | None = None) -> dict:
+def write_live_prices(tickers: Iterable[str], *, now: datetime | None = None,
+                      fallback_tickers: Iterable[str] | None = None) -> dict:
     """Fetch live quotes for `tickers` and persist state/live_prices.json."""
     now = now or _now_utc()
     tickers = list(dict.fromkeys(str(t).upper() for t in tickers if t))
-    prices = fetch_live_prices(tickers)
+    prices, source = fetch_live_prices(tickers, fallback_tickers=fallback_tickers)
     payload = {
         "as_of": now.isoformat(),
-        "source": "yfinance_intraday",
+        "source": source,
         "prices": prices,
         "requested": tickers,
         "n": len(prices),
@@ -225,7 +266,7 @@ def write_live_prices(tickers: Iterable[str], *, now: datetime | None = None) ->
 
 
 def book_tickers() -> list[str]:
-    """Current holdings + published watchlist — the names the feed refreshes."""
+    """Current holdings + published watchlist — the stop-critical names."""
     tickers: list[str] = []
     try:
         pf = json.loads((ROOT / "state" / "portfolio.json").read_text())
@@ -241,10 +282,33 @@ def book_tickers() -> list[str]:
     return list(dict.fromkeys(str(t).upper() for t in tickers if t))
 
 
+def universe_tickers() -> list[str]:
+    """Every name in data/universe.json (flattened sectors). Fail-soft []."""
+    try:
+        sectors = json.loads((ROOT / "data" / "universe.json").read_text())["sectors"]
+        return sorted({str(t).upper() for names in sectors.values() for t in names})
+    except Exception:
+        return []
+
+
 def refresh_from_book(*, now: datetime | None = None) -> dict:
-    """Entry point for the live-prices Action: refresh holdings + watchlist."""
-    tickers = book_tickers()
+    """Entry point for the feeders (Action + launchd tick).
+
+    With Alpaca keys, one tick refreshes the ENTIRE universe (batched
+    snapshots, ~2 requests) plus SPY — every stop, watchlist trigger, and
+    scan overlay sees a ≤5-min-old mark all day. Without keys it degrades to
+    the original behaviour: serial yfinance over just holdings + watchlist
+    (the full universe would be far too slow serially)."""
+    book = book_tickers()
+    tickers = list(dict.fromkeys(book + ["SPY"] + universe_tickers()))
+    try:
+        from tools.alpaca_data import has_keys
+        broad = has_keys()
+    except Exception:
+        broad = False
+    if not broad:
+        tickers = book
     if not tickers:
-        return {"as_of": (now or _now_utc()).isoformat(), "source": "yfinance_intraday",
+        return {"as_of": (now or _now_utc()).isoformat(), "source": "none",
                 "prices": {}, "requested": [], "n": 0, "note": "no holdings/watchlist"}
-    return write_live_prices(tickers, now=now)
+    return write_live_prices(tickers, now=now, fallback_tickers=book)

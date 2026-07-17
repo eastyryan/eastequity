@@ -41,6 +41,12 @@ jobs:
           cache: pip
       - run: pip install -r requirements.txt
       - name: Gather context bundle
+        env:
+          # Alpaca market data: the gather's live-price overlay + the broker
+          # mirror sync use real-time IEX quotes when keys are present
+          # (fail-soft to yfinance/committed snapshots when absent).
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
         run: |
           # Depth follows the ET slot map (schedule.slot_depths) so the bundle
           # matches the trading slot it feeds: light pre-market, four fast

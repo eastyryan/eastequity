@@ -8,9 +8,10 @@
       "paper",
       "live"
     ],
-    "broker": "simulation",
+    "broker": "alpaca_paper",
     "_broker_options": [
       "simulation",
+      "alpaca_paper",
       "moomoo",
       "ibkr_paper"
     ]
@@ -128,7 +129,7 @@
     ],
     "_variant_perception_note": "Every BUY must state the market's misunderstanding explicitly: what consensus believes, what the agent believes differently, the specific mispriced mechanism, and the event/date when the market finds out. Enforced as a required BUY field; format documented in CLAUDE.md.",
     "_risk_map_scenarios_note": "risk_map and scenarios were always in the CLAUDE.md schema but not validator-enforced, so proposals omitted scenarios and the published scenario_ev stayed empty. Now required on every BUY.",
-    "_thesis_invalidators_note": "Binding falsifiers (not vibes): object with invalidating_print, invalidating_structure, time_box — each a non-empty string. Enforced on every BUY so re-underwrites have kill criteria.",
+    "_thesis_invalidators_note": "Binding falsifiers (not vibes): object with invalidating_print, invalidating_structure, time_box \u2014 each a non-empty string. Enforced on every BUY so re-underwrites have kill criteria.",
     "_demand_driver_note": "Primary demand-driver theme for theme concentration (e.g. hyperscaler_server_capex, ai_compute_gpu). Distinct from GICS sector. See tools/demand_drivers.py and context bundle demand_driver_map.",
     "required_sell_fields": [
       "ticker",
@@ -199,12 +200,22 @@
     "entry_gap_atr_fraction": 0.1,
     "commission_per_share_usd": 0.0,
     "commission_min_usd": 0.0,
-    "sec_sell_fee_rate": 0.0000278,
+    "sec_sell_fee_rate": 2.78e-05,
     "finra_taf_per_share_usd": 0.000166,
-    "finra_taf_max_usd": 8.30,
+    "finra_taf_max_usd": 8.3,
     "model_stop_gaps": true,
     "stop_gap_atr_fraction": 0.5,
     "_note": "Applied to simulated fills so the paper track record is not flattered by zero trading costs. Effective slippage each way = max(slippage_bps/10000, slippage_atr_fraction x ATR%) so volatile names cost more than a flat 10bps. entry_gap_atr_fraction: an adverse open-gap on ENTRIES (buys fill higher, sells lower) approximating a next-session fill instead of the same-close the decision used. Moomoo US equities are commission-free (per-share defaults 0) but pass SEC + FINRA TAF regulatory fees on SELLS - modeled here. model_stop_gaps: a forced stop exit can fill BELOW the stop by up to stop_gap_atr_fraction x ATR to approximate overnight gap-through risk."
+  },
+  "alpaca": {
+    "_note": "Alpaca PAPER account adapter (execution/alpaca_broker.py). Cash-only: the 4x margin buying power is ignored; BUY notional must fit in cash. Cloud runs cannot reach the API - they queue state/order_intents.json for the execute-orders.yml Actions executor.",
+    "poll_interval_seconds": 2,
+    "buy_poll_timeout_seconds": 90,
+    "sell_poll_timeout_seconds": 90,
+    "price_guard": true,
+    "_price_guard_note": "re-check live last trade vs entry_price_max before submitting a BUY (fail-open without a quote)",
+    "options_enabled": false,
+    "_options_note": "FUTURE flag only. hard_rules still forbid options and the validator rejects non-EQUITY instruments; enabling requires an options order path in the adapter + validator rules + account options level. Kept here so the capability is visible and buildable-on."
   },
   "universe": {
     "focus": "AI supply chain, semiconductors, data center infrastructure, plus large-cap market leaders with an AI/tech bias",
@@ -244,7 +255,7 @@
         "0900": "morning",
         "1730": "evening"
       },
-      "_note": "When ANY universe company reports earnings, force a FULL deep dive and promote the reporter(s) into deep-research focus. The 9am slot (morning) catches overnight + pre-market reporters; the 5:30pm slot (evening) catches that afternoon's after-hours reporters — 5:30 rather than 4:00 because after-hours prints are often not out by 4pm. Applies to scheduled (--auto-depth) runs; escalates that slot's depth to full only when a reporter is detected, otherwise the slot keeps its normal light/holdings_watchlist/evening_review depth."
+      "_note": "When ANY universe company reports earnings, force a FULL deep dive and promote the reporter(s) into deep-research focus. The 9am slot (morning) catches overnight + pre-market reporters; the 5:30pm slot (evening) catches that afternoon's after-hours reporters \u2014 5:30 rather than 4:00 because after-hours prints are often not out by 4pm. Applies to scheduled (--auto-depth) runs; escalates that slot's depth to full only when a reporter is detected, otherwise the slot keeps its normal light/holdings_watchlist/evening_review depth."
     },
     "live_prices": {
       "enabled": true,

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import journal
 import validator
-from execution import corporate_actions, exit_guard, simulated_broker
+from execution import broker, corporate_actions, exit_guard
 from tools.macro_regime import get_macro_snapshot
 from tools.news_catalysts import get_news_and_catalysts
 from tools.portfolio_state import get_portfolio_state
@@ -546,7 +546,7 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
     # brain reasons on stale stop cushions and the published equity flat-lines.
     if held and scan_prices:
         try:
-            simulated_broker.mark_to_market(scan_prices)
+            broker.mark_to_market(scan_prices)
             portfolio = get_portfolio_state()
         except Exception as e:
             print(f"  (mark-to-market failed: {e})")

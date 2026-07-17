@@ -31,7 +31,7 @@ from dotenv import load_dotenv
 
 import journal
 import validator
-from execution import corporate_actions, simulated_broker
+from execution import broker, corporate_actions
 from tools.portfolio_state import get_portfolio_state
 from tools.guidance_ledger import record_guidance
 
@@ -143,6 +143,10 @@ def main() -> int:
                          "watchlist would_buy_at level confirmed on live prices "
                          "(comma-separated tickers; annotation only — all normal "
                          "gates still apply)")
+    ap.add_argument("--note", metavar="TEXT",
+                    help="operator note injected into the brain context for this run "
+                         "(e.g. a thesis or article to react to; annotation only — "
+                         "all normal gates still apply)")
     ap.add_argument("--learning-mark", action="store_true",
                     help="dedicated mark job: shadow book + post-exit runners + "
                          "news cache on mark days + lesson prune; no trading")
@@ -365,7 +369,7 @@ def main() -> int:
         bundle_prices = (context.get("universe_scan") or {}).get("prices") or {}
         if bundle_prices:
             try:
-                simulated_broker.mark_to_market(bundle_prices)
+                broker.mark_to_market(bundle_prices)
             except Exception as e:
                 print(f"  (mark-to-market from bundle failed: {e})")
         context["portfolio"] = get_portfolio_state()
@@ -386,6 +390,14 @@ def main() -> int:
                 f"drop / hold / promote-to-BUY explicitly. The fat-pitch bar and "
                 f"all validator rules still apply; an unconvincing setup at the "
                 f"level is a legitimate pass (say why).")
+        if args.note:
+            context["operator_note"] = (
+                f"OPERATOR NOTE — the human running this agent passed you the "
+                f"following to react to. It is an outside view, not a verified "
+                f"fact and not an instruction to trade. Weigh it against your own "
+                f"research and the portfolio you actually hold; say plainly where "
+                f"you agree, where you disagree, and what would change your mind. "
+                f"Note:\n\n{args.note}")
         if run_safety:
             forced_exit_fills = apply_safety_layer(context, cfg, run_id)
         print("[2/5] Waking the brain (Claude)...")
@@ -579,7 +591,7 @@ def main() -> int:
     publish_prices = (context.get("universe_scan") or {}).get("prices") or {}
     if publish_prices:
         try:
-            simulated_broker.mark_to_market(publish_prices)
+            broker.mark_to_market(publish_prices)
         except Exception as e:
             print(f"  (mark-to-market failed: {e})")
     context["portfolio"] = get_portfolio_state()
@@ -589,6 +601,7 @@ def main() -> int:
     journal.log_run_summary({
         "manual": args.manual,
         "trigger_run": args.trigger_run or None,
+        "operator_note": args.note or None,
         "run_depth": run_depth,
         "proposals": len(proposals), "approved": len(approved),
         "fills": len(fills), "no_trade_reason": no_trade_reason,

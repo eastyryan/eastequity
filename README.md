@@ -18,7 +18,7 @@ orchestrator.py        thin entrypoint (re-exports + main)
   ├─ tools/            research + learning (shadow, exit, adopt, learning_mark)
   ├─ Claude (via `claude -p`, rules in CLAUDE.md) → JSON trade proposals
   ├─ validator.py      pure-Python hard-rule enforcement (long-only, swing, sizing)
-  ├─ execution/        simulated broker now; Moomoo/IBKR adapters later
+  ├─ execution/        broker router: Alpaca paper (live) + simulation fallback
   ├─ journal/          append-only JSONL audit trail
   └─ dashboard/        public data → Next.js on Vercel
 ```
@@ -60,7 +60,7 @@ python orchestrator.py --depth holdings_watchlist
 ## Safety model
 
 - `autonomy_config.json` — every hard rule lives here; the validator reads it fresh each run
-- `trading_mode: dry_run | paper | live` — currently **paper** (simulated broker)
+- `trading_mode: dry_run | paper | live` — currently **paper** on a real Alpaca paper account (`mode.broker: alpaca_paper`; `simulation` is the offline fallback)
 - Kill switch: `touch state/KILL_SWITCH` halts all new orders instantly
 - Broker readback confirmation required before any trade is journaled as filled
 - Calendar-day BUY cap + batch cap on `max_new_positions_per_day`
@@ -100,6 +100,6 @@ Weekly self-review runs the adopt pipeline and re-marks shadows. See CLAUDE.md L
 - [x] Phase 2 — orchestrator + validator + journal
 - [x] Tiered run depths + weekly market check-in
 - [x] Dashboard (Next.js) — live
-- [ ] Phase 3 — Moomoo/IBKR execution adapter
+- [x] Phase 3 — real-broker execution (Alpaca paper; IBKR later for live — Moomoo Canada has no OpenAPI)
 - [ ] Phase 5 — X posting (draft path exists)
 - [ ] Phase 6 — further scheduling/watchdog hardening

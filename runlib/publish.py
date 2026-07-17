@@ -150,7 +150,10 @@ def redeploy_dashboard() -> None:
     relay + gather Action push concurrently) instead of wedging the node permanently."""
     import glob as _glob
     try:
-        paths = ["dashboard/data", "journal", "state/portfolio.json"]
+        paths = ["dashboard/data", "journal", "state/portfolio.json",
+                 # queued broker orders from cloud runs — the push of this file
+                 # is what TRIGGERS the Actions executor (execute-orders.yml)
+                 "state/order_intents.json"]
         paths += _glob.glob(str(ROOT / "state" / "x_draft_*.txt"))
         if (ROOT / "state" / "KILL_SWITCH").exists():
             paths.append("state/KILL_SWITCH")

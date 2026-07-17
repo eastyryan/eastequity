@@ -42,6 +42,16 @@ def apply_corporate_actions() -> dict:
     if not state.get("positions"):
         return summary
 
+    # Backend split of responsibilities: the SIMULATION owns cash and share
+    # counts, so dividends credit cash and splits rescale the position here.
+    # On a REAL broker backend (alpaca_paper), the broker owns cash/qty — a
+    # sync would overwrite anything we credited (and Alpaca paper pays no
+    # dividends at all), so we only ATTRIBUTE dividend income as metadata
+    # (per-trade reporting) and rescale the persisted PLAN levels on splits
+    # (the broker rescales the position, never our stops).
+    from execution import broker as broker_router
+    sim_owns_ledger = broker_router.backend_name() == "simulation"
+
     try:
         import yfinance as yf
     except Exception as e:  # yfinance missing/broken — report, don't block the run
@@ -67,7 +77,8 @@ def apply_corporate_actions() -> dict:
                 if event_dt <= cutoff or event_dt > now:
                     continue
                 amount = round(pos["quantity"] * float(per_share), 2)
-                state["cash_usd"] = round(state["cash_usd"] + amount, 2)
+                if sim_owns_ledger:
+                    state["cash_usd"] = round(state["cash_usd"] + amount, 2)
                 # Attribute the dividend to the position for per-trade P&L
                 # reporting on close. Additive + idempotent: guarded by the same
                 # cutoff as the cash credit, so it accrues exactly once per event.
@@ -76,6 +87,7 @@ def apply_corporate_actions() -> dict:
                 record = {"type": "dividend", "ticker": ticker,
                           "per_share": float(per_share),
                           "quantity": pos["quantity"], "amount_usd": amount,
+                          "cash_credited": sim_owns_ledger,
                           "date": event_dt.date().isoformat(),
                           "processed_at": now.isoformat()}
                 state["history"].append(record)
@@ -93,10 +105,11 @@ def apply_corporate_actions() -> dict:
                 if event_dt <= cutoff or event_dt > now or not float(ratio):
                     continue
                 ratio = float(ratio)
-                pos["quantity"] = round(pos["quantity"] * ratio, 4)
-                pos["avg_cost"] = round(pos["avg_cost"] / ratio, 4)
-                if pos.get("last_price"):
-                    pos["last_price"] = round(pos["last_price"] / ratio, 4)
+                if sim_owns_ledger:  # a real broker rescales its own position
+                    pos["quantity"] = round(pos["quantity"] * ratio, 4)
+                    pos["avg_cost"] = round(pos["avg_cost"] / ratio, 4)
+                    if pos.get("last_price"):
+                        pos["last_price"] = round(pos["last_price"] / ratio, 4)
                 # The persisted plan's PRICE levels must scale too, or the exit
                 # guard compares post-split prices against pre-split stops and
                 # force-closes a healthy position as "stop_loss_breached".

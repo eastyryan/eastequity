@@ -89,12 +89,9 @@ def _merge_plan(persisted: dict | None, journal_plan: dict | None) -> dict | Non
 
 def get_portfolio_state() -> dict:
     cfg = json.loads((ROOT / "autonomy_config.json").read_text())
-    broker = cfg["mode"]["broker"]
-    if broker == "simulation":
-        from execution import simulated_broker
-        state = simulated_broker.get_portfolio()
-    else:
-        raise NotImplementedError(f"broker backend '{broker}' not wired yet")
+    from execution import broker as broker_router
+    broker = broker_router.backend_name()
+    state = broker_router.get_portfolio()
 
     plans = _journal_plans()
     for pos in state.get("positions", []):
@@ -139,9 +136,8 @@ def backfill_position_plans() -> int:
     proposal's plan wins. This repairs plans the old unfiltered join populated
     from REJECTED proposals (HPE 2026-07-10: stop 44.75 from a rejected
     proposal instead of the filled 43.75). Returns positions changed."""
-    cfg = json.loads((ROOT / "autonomy_config.json").read_text())
-    if cfg["mode"]["broker"] != "simulation":
-        return 0
+    # Plans live in the mirror ledger for BOTH backends (the Alpaca adapter
+    # writes the same file/shape), so the backfill is backend-agnostic.
     from execution import simulated_broker
     state = simulated_broker._load()
     plans = _journal_plans()

@@ -1,0 +1,49 @@
+name: Execute order intents (Alpaca)
+
+# The claude.ai routine sandbox can reach ONLY GitHub, so cloud trading runs
+# cannot call the Alpaca paper API. Instead they commit validated orders to
+# state/order_intents.json; that push triggers this workflow, whose runner has
+# normal egress and executes the intents through execution/alpaca_broker.py
+# (idempotent via client_order_id — a retried run can never double-trade).
+# The scheduled ticks reconcile RESTING orders (e.g. an after-hours protective
+# sell that queues to the next open) and keep the mirror ledger fresh.
+#
+# Results (ledger, journal, dashboard patch) are committed WITHOUT
+# [vercel skip], so the site rebuilds and shows the trade within minutes.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "state/order_intents.json"
+  schedule:
+    # Reconcile during market hours ~every 15 min (GitHub throttles; the local
+    # 5-min feeder tick also reconciles, so this is the cloud backstop).
+    - cron: "*/15 13-21 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: execute-orders
+  cancel-in-progress: false
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Execute intents + reconcile resting orders
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+        run: python scripts/execute_order_intents.py

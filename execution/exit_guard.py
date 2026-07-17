@@ -16,7 +16,7 @@ from __future__ import annotations
 import json
 
 import journal
-from execution import simulated_broker
+from execution import broker
 
 # Chandelier trailing-stop ATR multiple used when autonomy_config's
 # trade_quality_requirements block does not carry trailing_stop_atr_multiple.
@@ -28,7 +28,7 @@ def _trailing_atr_multiple() -> float:
     trailing_stop_atr_multiple) with a hard-coded 3.0 default. Fail-soft:
     an unreadable config or missing key never breaks a run."""
     try:
-        cfg = json.loads((simulated_broker.ROOT / "autonomy_config.json").read_text())
+        cfg = json.loads((broker.ROOT / "autonomy_config.json").read_text())
         v = (cfg.get("trade_quality_requirements") or {}).get("trailing_stop_atr_multiple")
         if v is not None:
             return float(v)
@@ -132,7 +132,7 @@ def check_forced_exits(portfolio: dict, prices: dict, atr_by_ticker: dict | None
             })
     if trail_updates:
         try:  # broker owns all ledger writes; a failed persist never blocks exits
-            simulated_broker.update_trailing_stops(trail_updates)
+            broker.update_trailing_stops(trail_updates)
         except Exception as e:
             print(f"  (trailing-stop persist failed: {e})")
     return exits
@@ -153,7 +153,7 @@ def execute_forced_exits(exits: list, prices: dict, run_id: str,
     try:
         pre_positions = {
             str(p.get("ticker", "")).upper(): dict(p)
-            for p in (simulated_broker.get_portfolio().get("positions") or [])
+            for p in (broker.get_portfolio().get("positions") or [])
         }
     except Exception:
         pre_positions = {}
@@ -162,7 +162,7 @@ def execute_forced_exits(exits: list, prices: dict, run_id: str,
         if ref is None:
             continue  # price vanished between check and execute — skip, never guess
         pos_before = pre_positions.get(str(ex["ticker"]).upper())
-        order = simulated_broker.place_order({
+        order = broker.place_order({
             "ticker": ex["ticker"], "action": "SELL_TO_CLOSE",
             "reference_price": ref, "proposal_id": run_id,
             "forced_exit_reason": ex["reason"],
@@ -171,10 +171,17 @@ def execute_forced_exits(exits: list, prices: dict, run_id: str,
             "atr_pct": ex.get("atr_pct") if ex.get("atr_pct") is not None
                        else atr_by_ticker.get(ex["ticker"]),
         })
-        fill = simulated_broker.readback(order["order_id"])  # mandatory readback
-        if fill is None or fill.get("status") != "filled":
-            print(f"  FORCED EXIT FAILED {ex['ticker']}: "
-                  f"{(fill or {}).get('status')}")
+        fill = broker.readback(order["order_id"])  # mandatory readback
+        status = (fill or {}).get("status")
+        if fill is not None and status in broker.QUEUED_STATUSES + broker.RESTING_STATUSES:
+            # Queued for the Actions executor, or resting at the broker until
+            # the next session (protective sells are never canceled). The
+            # executor/reconcile journals the fill + autopsy when it completes.
+            journal.log_intent(order, status, run_id)
+            print(f"  FORCED EXIT QUEUED {ex['ticker']} ({status})")
+            continue
+        if fill is None or status != "filled":
+            print(f"  FORCED EXIT FAILED {ex['ticker']}: {status}")
             continue
         journal.log_trade(order, fill, run_id)
         fills.append(fill)

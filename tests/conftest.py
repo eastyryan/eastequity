@@ -21,6 +21,15 @@ from execution import simulated_broker as _sb  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
+def _pin_simulation_backend(monkeypatch):
+    """Tests must NEVER dispatch to a real broker API, regardless of what
+    autonomy_config.json's mode.broker says (post-Alpaca-cutover it says
+    alpaca_paper). EE_BROKER overrides the router; test_alpaca_broker.py
+    exercises the adapter explicitly with a faked transport."""
+    monkeypatch.setenv("EE_BROKER", "simulation")
+
+
+@pytest.fixture(autouse=True)
 def _restore_simulated_broker():
     """Snapshot broker module attributes before each test, restore after -
     a test that patches them can never leak into the next test."""

@@ -9,7 +9,7 @@ from pathlib import Path
 
 import journal
 import validator
-from execution import corporate_actions, exit_guard, simulated_broker
+from execution import broker, corporate_actions, exit_guard
 from tools.portfolio_state import get_portfolio_state
 from runlib.core import ROOT, et_date, et_now, json_safe
 from runlib.depths import depth_allows_new_buys
@@ -55,7 +55,7 @@ def apply_live_prices(context: dict, cfg: dict) -> dict:
         # Re-mark so market values + the safety layer use the freshest price.
         if cfg.get("mode", {}).get("trading_mode") != "dry_run":
             try:
-                simulated_broker.mark_to_market(merged)
+                broker.mark_to_market(merged)
                 context["portfolio"] = get_portfolio_state()
             except Exception as e:
                 print(f"  (live-price re-mark failed: {e})")
@@ -414,6 +414,18 @@ def execute(approved: list[validator.ValidationResult], context: dict,
         for line in trades_file.read_text().splitlines():
             if json.loads(line).get("fill", {}).get("action") == "BUY":
                 buys_today += 1
+    # BUY intents queued for the Actions executor count against the daily cap
+    # too — they are commitments, just not filled yet (cloud->executor latency).
+    intents_file = ROOT / "journal" / "intents" / f"{today}.jsonl"
+    if intents_file.exists():
+        for line in intents_file.read_text().splitlines():
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if rec.get("order", {}).get("action") == "BUY" \
+                    and rec.get("status") in broker.QUEUED_STATUSES:
+                buys_today += 1
     max_buys_per_day = cfg["swing_rules"]["max_new_positions_per_day"]
 
     # risk_controls.market_hours_only: BUYs place only during the regular session
@@ -453,7 +465,7 @@ def execute(approved: list[validator.ValidationResult], context: dict,
                 "stop_loss", "target_price", "holding_horizon_days",
                 "entry_price_max", "confidence", "demand_driver",
                 "thesis_invalidators")}
-        order = simulated_broker.place_order({
+        order = broker.place_order({
             "ticker": p["ticker"], "action": p["action"],
             "position_size_usd": p.get("position_size_usd"),
             "reference_price": ref, "proposal_id": run_id,
@@ -468,9 +480,21 @@ def execute(approved: list[validator.ValidationResult], context: dict,
         # risk_controls.require_broker_readback_confirmation: readback is ALWAYS
         # performed and a non-filled readback is a rejection - the flag documents
         # the contract and can only ever tighten it, never loosen it.
-        fill = simulated_broker.readback(order["order_id"])  # mandatory readback
-        if fill is None or fill.get("status") != "filled":
-            journal.log_rejection(p, [f"fill_failed:{(fill or {}).get('status')}"], run_id)
+        fill = broker.readback(order["order_id"])  # mandatory readback
+        status = (fill or {}).get("status")
+        if fill is not None and status in broker.QUEUED_STATUSES + broker.RESTING_STATUSES:
+            # Cloud node queued the order for the Actions executor (or the order
+            # is resting at the broker until the next session). This is neither
+            # a fill nor a rejection: journal the intent; the executor/reconcile
+            # journals the real trade when it completes.
+            journal.log_intent(order, status, run_id)
+            if p["action"] == "BUY" and status in broker.QUEUED_STATUSES:
+                buys_today += 1
+            print(f"  QUEUED {p['action']} {p['ticker']} ({status}) — "
+                  f"executor completes the fill")
+            continue
+        if fill is None or status != "filled":
+            journal.log_rejection(p, [f"fill_failed:{status}"], run_id)
             continue
         journal.log_trade(order, fill, run_id)
         fills.append(fill)

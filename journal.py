@@ -37,6 +37,12 @@ def log_trade(order: dict, fill: dict, run_id: str) -> None:
     _write("trades", {"run_id": run_id, "order": order, "fill": fill})
 
 
+def log_intent(order: dict, status: str, run_id: str) -> None:
+    """An order handed to the async executor (cloud->Actions) or resting at the
+    broker — committed but not yet filled. The executor logs the real trade."""
+    _write("intents", {"run_id": run_id, "status": status, "order": order})
+
+
 def log_run_summary(summary: dict, run_id: str) -> None:
     _write("runs", {"run_id": run_id, **summary})
 
