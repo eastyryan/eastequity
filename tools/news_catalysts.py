@@ -16,6 +16,11 @@ https://finnhub.io) each ticker also pulls Finnhub company-news for the last
 week, mapped to the same headline shape, deduped by title, and merged ahead
 of the recency filter. No key -> byte-identical yfinance-only behavior.
 
+Optional upgrade: when ALPACA_API_KEY/SECRET are set, ONE batched Alpaca News
+call (Benzinga-sourced, free Basic plan) covers every requested ticker and is
+distributed per symbol, merged the same way. Real timestamps, so headlines
+survive the recency filter with honest age_days.
+
 CLI: python -m tools.news_catalysts NVDA VRT
 """
 
@@ -120,6 +125,27 @@ def _fetch_finnhub_company_news(ticker: str, api_key: str, now: datetime) -> lis
         return []
 
 
+def _fetch_alpaca_news_by_symbol(tickers: list[str], max_age_days: float) -> dict:
+    """One batched Alpaca News call for all tickers, distributed per symbol in
+    headline shape [{title, published, url}]. Fail-soft: {} on any error."""
+    try:
+        from tools import alpaca_data
+        if not alpaca_data.has_keys():
+            return {}
+        rows = alpaca_data.get_news(symbols=tickers, hours=max_age_days * 24.0, limit=50)
+    except Exception:
+        return {}
+    out: dict = {}
+    wanted = {str(t).upper() for t in tickers}
+    for row in rows:
+        h = {"title": row.get("title"), "published": row.get("published"),
+             "url": row.get("url")}
+        for sym in row.get("symbols") or []:
+            if sym in wanted:
+                out.setdefault(sym, []).append(h)
+    return out
+
+
 def _beat_streak(surprise_pcts: list) -> int:
     """Consecutive positive EPS surprises counting back from the most recent
     quarter. None/zero/negative breaks the streak. Pure function."""
@@ -169,6 +195,7 @@ def get_news_and_catalysts(tickers: list[str], max_headlines: int = 6,
 
     now = datetime.now(timezone.utc)
     finnhub_key = os.environ.get("FINNHUB_API_KEY")
+    alpaca_by_symbol = _fetch_alpaca_news_by_symbol(list(tickers), max_age_days)
     out = {"status": "ok", "as_of": now.isoformat(),
            "news_max_age_days": max_age_days, "tickers": {}}
     for t in tickers:
@@ -183,6 +210,8 @@ def get_news_and_catalysts(tickers: list[str], max_headlines: int = 6,
                     "published": content.get("pubDate") or content.get("providerPublishTime"),
                     "url": (content.get("canonicalUrl") or {}).get("url") or content.get("link"),
                 })
+            if alpaca_by_symbol.get(t.upper()):  # optional merge; no keys -> unchanged
+                raw = _merge_headlines(raw, alpaca_by_symbol[t.upper()])
             if finnhub_key:  # optional merge; no key -> byte-identical behavior
                 raw = _merge_headlines(raw, _fetch_finnhub_company_news(t, finnhub_key, now))
             entry["headlines"] = _filter_recent(raw, now, max_age_days)[:max_headlines]

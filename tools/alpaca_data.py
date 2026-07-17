@@ -131,6 +131,114 @@ def get_prices(tickers) -> dict:
     return out
 
 
+def _age_hours(published_iso: str | None, now: datetime | None = None) -> float | None:
+    dt = _iso_to_dt(published_iso)
+    if dt is None:
+        return None
+    now = now or datetime.now(timezone.utc)
+    return round((now - dt).total_seconds() / 3600.0, 1)
+
+
+def get_news(symbols=None, hours: float = 24.0, limit: int = 50) -> list[dict]:
+    """Alpaca News API (Benzinga-sourced, included in the free Basic plan).
+
+    symbols=None -> market-wide feed; a list scopes to those tickers. Rows are
+    normalized to the repo headline shape {title, source, published, url,
+    age_hours, symbols[]} and filtered to the last `hours`. [] on any failure
+    (missing keys, network, egress block) — callers already treat news as a
+    fail-soft merge.
+    """
+    hdrs = _headers()
+    if not hdrs:
+        return []
+    params: dict = {"limit": max(1, min(int(limit), 50)), "sort": "desc",
+                    "include_content": "false"}
+    if symbols:
+        syms = sorted({str(s).upper() for s in symbols if s})
+        if not syms:
+            return []
+        params["symbols"] = ",".join(syms[:_CHUNK])
+    try:
+        r = requests.get(f"{DATA_BASE}/v1beta1/news", params=params,
+                         headers=hdrs, timeout=_TIMEOUT)
+        if r.status_code != 200:
+            return []
+        rows = (r.json() or {}).get("news") or []
+    except Exception:
+        return []
+    now = datetime.now(timezone.utc)
+    out = []
+    for row in rows:
+        if not isinstance(row, dict) or not row.get("headline"):
+            continue
+        published = row.get("created_at") or row.get("updated_at")
+        age = _age_hours(published, now)
+        if age is not None and age > hours:
+            continue
+        out.append({"title": str(row["headline"]).strip(),
+                    "source": f"alpaca_{str(row.get('source') or 'news').lower()}",
+                    "published": published, "url": row.get("url"),
+                    "age_hours": age,
+                    "symbols": [str(s).upper() for s in (row.get("symbols") or [])]})
+    return out
+
+
+def get_movers(top: int = 10) -> dict:
+    """Market-wide top gainers/losers by percent change (Alpaca screener,
+    free plan). {"gainers": [...], "losers": [...]} with rows
+    {symbol, percent_change, change, price}; {} on any failure."""
+    hdrs = _headers()
+    if not hdrs:
+        return {}
+    try:
+        r = requests.get(f"{DATA_BASE}/v1beta1/screener/stocks/movers",
+                         params={"top": max(1, min(int(top), 50))},
+                         headers=hdrs, timeout=_TIMEOUT)
+        if r.status_code != 200:
+            return {}
+        body = r.json() or {}
+    except Exception:
+        return {}
+    out = {}
+    for side in ("gainers", "losers"):
+        rows = []
+        for row in body.get(side) or []:
+            if not isinstance(row, dict) or not row.get("symbol"):
+                continue
+            rows.append({"symbol": str(row["symbol"]).upper(),
+                         "percent_change": row.get("percent_change"),
+                         "change": row.get("change"), "price": row.get("price")})
+        out[side] = rows
+    if body.get("last_updated"):
+        out["last_updated"] = body["last_updated"]
+    return out if (out.get("gainers") or out.get("losers")) else {}
+
+
+def get_most_actives(top: int = 20, by: str = "volume") -> list[dict]:
+    """Market-wide most-active stocks (Alpaca screener, free plan).
+    by: "volume" | "trades". [{symbol, volume, trade_count}]; [] on failure."""
+    hdrs = _headers()
+    if not hdrs:
+        return []
+    try:
+        r = requests.get(f"{DATA_BASE}/v1beta1/screener/stocks/most-actives",
+                         params={"top": max(1, min(int(top), 100)),
+                                 "by": by if by in ("volume", "trades") else "volume"},
+                         headers=hdrs, timeout=_TIMEOUT)
+        if r.status_code != 200:
+            return []
+        rows = (r.json() or {}).get("most_actives") or []
+    except Exception:
+        return []
+    out = []
+    for row in rows:
+        if not isinstance(row, dict) or not row.get("symbol"):
+            continue
+        out.append({"symbol": str(row["symbol"]).upper(),
+                    "volume": row.get("volume"), "trade_count": row.get("trade_count")})
+    return out
+
+
 def freshest_trade_age_minutes(prices: dict, now: datetime | None = None) -> float | None:
     """Age of the NEWEST latest-trade timestamp across a get_prices() result —
     used to label a snapshot taken while the market is closed. Pure."""

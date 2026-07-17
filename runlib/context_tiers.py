@@ -27,7 +27,8 @@ ALWAYS_KEYS = (
     "allows_new_buys", "hard_limits", "digest", "macro_regime", "portfolio",
     "position_histories", "position_stop_cushion", "stop_engineering",
     "watchlist_trigger_alerts", "tape_focus_promotions", "market_events",
-    "market_news", "data_quality", "stale_data_notice", "benchmark_close",
+    "market_news", "market_radar", "data_quality", "stale_data_notice",
+    "benchmark_close",
     "risk_halts", "forced_exits", "corporate_actions", "lessons_learned",
     "track_record",  # compact closed trades already truncated in gather
     "earnings_deep_dive",     # why a full run was forced (earnings reporter)

@@ -313,6 +313,7 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
                          "note": "market_events module unavailable"}
 
     discovery_block: dict = {"status": "skipped", "note": f"not run at depth={depth}"}
+    market_radar_block: dict = {"status": "skipped", "note": f"not run at depth={depth}"}
     # Fetched early on trading depths so tape/8-K names can join the deep set
     # before expensive research. Reused later when building the context bundle.
     market_news: dict | None = None
@@ -473,6 +474,12 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
         # (cheap radar → expensive underwrite only for hits).
         print("  • market-wide news (early, for tape promote)...")
         market_news = fetch_market_news()
+        print("  • market radar (Alpaca movers/actives/news, market-wide)...")
+        try:
+            from tools.market_radar import get_market_radar
+            market_radar_block = get_market_radar()
+        except Exception as e:
+            market_radar_block = {"status": "error", "reason": str(e)[:150]}
         if budget.get("filings_sweep"):
             print("  • universe 8-K sweep (early, for promote)...")
             todays_8ks = fetch_universe_8ks()
@@ -735,6 +742,14 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
             **(market_events if isinstance(market_events, dict) else {}),
         },
         "momentum_health": momentum_health,
+        "market_radar": {
+            "note": "Market-WIDE movers/most-actives/news-trending (Alpaca screeners), "
+                    "NOT limited to the universe. Off-universe names with a genuine "
+                    "swing setup can be proposed via the universe_candidates output "
+                    "field (they become tradeable next run after deterministic gates); "
+                    "a big percent move alone is never a thesis.",
+            **(market_radar_block if isinstance(market_radar_block, dict) else {}),
+        },
         "discovery_screen": discovery_block if depth == "weekly_market" else {"status": "skipped"},
         "market_checkin": market_checkin,
         # Hard limits the validator will enforce - size within them or be rejected.

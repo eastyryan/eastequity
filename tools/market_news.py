@@ -10,6 +10,9 @@ Sources (all keyless RSS, each fetched with a short timeout and fail-soft):
   * MarketWatch top stories
 Plus an OPTIONAL Finnhub general-news merge when FINNHUB_API_KEY is set
 (free tier, 60 calls/min — https://finnhub.io). No key -> RSS only.
+Plus an OPTIONAL Alpaca News merge (Benzinga-sourced, included in the free
+Basic Market Data plan) when ALPACA_API_KEY/SECRET are set — real timestamps
+and per-headline symbol tags the RSS feeds lack.
 
 Headlines are deduped on near-identical titles, stamped with age_hours,
 filtered to the last 24h (undated items are kept, honestly labeled with
@@ -152,6 +155,15 @@ def get_market_news(max_items: int = 15) -> dict:
             sources.append({"name": name, "ok": True, "items": len(parsed)})
         except Exception as e:
             sources.append({"name": name, "ok": False, "error": str(e)[:200]})
+
+    try:
+        from tools import alpaca_data
+        if alpaca_data.has_keys():
+            rows = alpaca_data.get_news(hours=MAX_AGE_HOURS, limit=30)
+            items.extend(rows)
+            sources.append({"name": "alpaca_news", "ok": True, "items": len(rows)})
+    except Exception as e:
+        sources.append({"name": "alpaca_news", "ok": False, "error": str(e)[:200]})
 
     api_key = os.environ.get("FINNHUB_API_KEY")
     if api_key:
