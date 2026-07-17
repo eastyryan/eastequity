@@ -18,11 +18,18 @@ export default function LiveQuotes({
 }) {
   const [feed, setFeed] = useState<Feed | null>(null);
 
+  // Send the page's tickers so the API can price them from Alpaca directly,
+  // independent of whether any feeder has recently refreshed the live-data branch.
+  const symbolsParam = tickers.join(",");
+
   useEffect(() => {
     let stopped = false;
+    const url = symbolsParam
+      ? `/api/live-prices?symbols=${encodeURIComponent(symbolsParam)}`
+      : "/api/live-prices";
     const load = async () => {
       try {
-        const r = await fetch("/api/live-prices", { cache: "no-store" });
+        const r = await fetch(url, { cache: "no-store" });
         const j = (await r.json()) as Feed;
         if (!stopped) setFeed(j);
       } catch {
@@ -37,7 +44,7 @@ export default function LiveQuotes({
       stopped = true;
       clearInterval(id);
     };
-  }, []);
+  }, [symbolsParam]);
 
   if (!feed?.as_of) return null;
   const rows = tickers.filter((t) => typeof feed.prices[t] === "number");

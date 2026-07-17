@@ -94,9 +94,27 @@ async function alpacaOverlay(symbols: string[]): Promise<Feed | null> {
   };
 }
 
-export async function GET() {
+// Symbols the client asks us to price (the page's held + watched tickers).
+// Sanitized hard: this endpoint proxies Alpaca, so never forward arbitrary text.
+function requestedSymbols(request: Request): string[] {
+  const raw = new URL(request.url).searchParams.get("symbols") ?? "";
+  const out: string[] = [];
+  for (const part of raw.split(",")) {
+    const s = part.trim().toUpperCase();
+    if (/^[A-Z][A-Z.\-]{0,9}$/.test(s) && !out.includes(s)) out.push(s);
+    if (out.length >= 200) break;
+  }
+  return out;
+}
+
+export async function GET(request: Request) {
   const gh = await fromGitHub();
-  const live = await alpacaOverlay(Object.keys(gh.prices));
+  // Price the page's own tickers plus anything the feed carried, so the live
+  // strip works from Alpaca alone even when every feeder branch is stale.
+  const symbols = Array.from(
+    new Set([...requestedSymbols(request), ...Object.keys(gh.prices)]),
+  );
+  const live = await alpacaOverlay(symbols);
   if (live) {
     // Alpaca is the fresher mark; keep any GitHub-only symbols underneath.
     return NextResponse.json(
