@@ -42,6 +42,7 @@ from __future__ import annotations
 
 import json
 import os
+import tempfile
 import time
 import uuid
 from datetime import datetime, timezone
@@ -266,8 +267,20 @@ def _load_intents() -> dict:
 
 
 def _save_intents(blob: dict) -> None:
+    """Atomic write of the cloud order queue — same reasoning as
+    simulated_broker._save. clear_intents is a read-modify-write over this file, so
+    a partial write here strands or duplicates real orders."""
     INTENTS_FILE.parent.mkdir(parents=True, exist_ok=True)
-    INTENTS_FILE.write_text(json.dumps(blob, indent=2, default=str))
+    fd, tmp = tempfile.mkstemp(dir=str(INTENTS_FILE.parent), suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write(json.dumps(blob, indent=2, default=str))
+            f.flush()
+            os.fsync(f.fileno())
+        os.replace(tmp, INTENTS_FILE)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
 
 
 def queued_intents() -> list[dict]:

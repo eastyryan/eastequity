@@ -45,6 +45,8 @@ swap the backend.
 from __future__ import annotations
 
 import json
+import os
+import tempfile
 import uuid
 from datetime import datetime, timezone
 from pathlib import Path
@@ -135,8 +137,31 @@ def _load() -> dict:
 
 
 def _save(state: dict) -> None:
+    """Atomic write of THE BOOK — cash, every position, every plan, full history.
+
+    This was a bare write_text: a truncate-and-rewrite of the authoritative ledger,
+    performed on every fill, every mark-to-market, and every trailing-stop update
+    (many times per run). A crash or SIGKILL mid-write left it truncated, and _load
+    does a bare json.loads with no schema check and no fallback — so the next run
+    would die on a corrupt book with no recovery path and no backup.
+
+    Pattern lifted verbatim from tools/guidance_ledger.py:_save_ledger and
+    tools/smart_money_13f.py:_save_cusip_map, which already did this correctly for a
+    CUSIP cache while the portfolio itself went unprotected. os.replace is atomic
+    within a filesystem, so a reader sees either the whole old file or the whole new
+    one, never a partial write.
+    """
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
-    STATE_FILE.write_text(json.dumps(state, indent=2, default=str))
+    fd, tmp = tempfile.mkstemp(dir=str(STATE_FILE.parent), suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write(json.dumps(state, indent=2, default=str))
+            f.flush()
+            os.fsync(f.fileno())  # the ledger is worth the extra syscall
+        os.replace(tmp, STATE_FILE)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
 
 
 def get_portfolio() -> dict:
