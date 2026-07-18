@@ -573,6 +573,19 @@ def apply_universe_candidates(candidates: list, run_id: str) -> dict:
         if out["accepted"]:
             universe_file.write_text(json.dumps(current, indent=2))
             added = [a["ticker"] for a in out["accepted"]]
+            # Point-in-time membership log. BOTH universe writers record here, so no
+            # change can bypass it; without that, tools/universe_history.drift_report
+            # goes stale and every backward-looking study silently inherits today's
+            # survivors. See tools/universe_history.py.
+            try:
+                from tools.universe_history import record_changes
+                record_changes(added=added, run_id=run_id, source="dynamic_add",
+                               sector_map={a["ticker"]: a["sector"]
+                                           for a in out["accepted"]},
+                               reason="; ".join(f"{a['ticker']}: {a['reason']}"
+                                                for a in out["accepted"]))
+            except Exception as e:
+                print(f"  (universe history append failed: {e})")
             size = len(existing) + len(added)
             universe_log_append({
                 "date": et_date(), "status": "dynamic_add", "added": sorted(added),
@@ -797,6 +810,19 @@ def universe_review(run_id: str) -> int:
                           "added": sorted(added), "removed": sorted(removed),
                           "dropped_unpriceable": sorted(dropped), "size": len(new_tickers),
                           "rationale": data.get("rationale", "")})
+    # Point-in-time membership log. Removals here are an implicit set difference from
+    # a model-supplied replacement map, so without this record a dropped name leaves
+    # NO trace — and the measured removals (INTC, PYPL, MDB, ON, NXPI, MCHP, IREN...)
+    # are the laggard cohort, i.e. survivorship bias being manufactured weekly.
+    try:
+        from tools.universe_history import record_changes
+        sector_map = {str(t).upper(): sec
+                      for sec, ts in (data.get("sectors") or {}).items() for t in ts}
+        record_changes(added=added, removed=set(removed) | set(dropped),
+                       sector_map=sector_map, run_id=run_id, source="weekly_review",
+                       reason=data.get("rationale", "")[:300])
+    except Exception as e:
+        print(f"  (universe history append failed: {e})")
     if latest_file.exists():
         d = json.loads(latest_file.read_text())
         d["improvements"] = ([{"date": et_date(), "note": note}]

@@ -28,6 +28,13 @@ def sandbox(tmp_path, monkeypatch):
     (tmp_path / "data" / "universe.json").write_text(json.dumps(universe))
 
     monkeypatch.setattr(reviews, "ROOT", tmp_path)
+    # The universe writers now append to the point-in-time membership log, which
+    # resolves its own path from tools.universe_history.ROOT. Without redirecting it
+    # too, these tests write fixture tickers (LLY/CAT/ABBV) into the REAL
+    # data/universe_history.jsonl and corrupt point-in-time reconstruction.
+    from tools import universe_history as _uh
+    monkeypatch.setattr(_uh, "HISTORY_FILE", tmp_path / "universe_history.jsonl")
+    monkeypatch.setattr(_uh, "UNIVERSE_FILE", tmp_path / "data" / "universe.json")
     monkeypatch.setattr(reviews, "unpriceable", lambda ts: set())
     monkeypatch.setattr(reviews, "below_min_cap", lambda ts, floor: set())
     logged = []
