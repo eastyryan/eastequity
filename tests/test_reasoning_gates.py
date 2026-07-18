@@ -75,8 +75,14 @@ def test_theme_concentration():
     pf = {
         "total_equity_usd": 10000, "cash_usd": 6000,
         "positions": [
-            {"ticker": "DELL", "market_value_usd": 1500, "demand_driver": "hyperscaler_server_capex"},
-            {"ticker": "HPE", "market_value_usd": 1500, "demand_driver": "hyperscaler_server_capex"},
+            # quantity/avg_cost/plan present because a real position always carries
+            # them; a stopless position now fails the heat cap CLOSED.
+            {"ticker": "DELL", "market_value_usd": 1500, "quantity": 3.0,
+             "avg_cost": 500.0, "plan": {"stop_loss": 490.0},
+             "demand_driver": "hyperscaler_server_capex"},
+            {"ticker": "HPE", "market_value_usd": 1500, "quantity": 75.0,
+             "avg_cost": 20.0, "plan": {"stop_loss": 19.8},
+             "demand_driver": "hyperscaler_server_capex"},
         ],
         "history": [],
     }

@@ -105,7 +105,10 @@ def test_validator_scale_in_rules():
     print("validator: scale-in rules:")
     pf = {"total_equity_usd": 10000,
           "positions": [{"ticker": "DELL", "quantity": 1.2, "avg_cost": 450.0,
-                         "market_value_usd": 550.0, "adds_count": 0}]}
+                         "market_value_usd": 550.0, "adds_count": 0,
+                         # Real fills always persist a plan stop; without one the
+                         # heat cap cannot be computed and now fails CLOSED.
+                         "plan": {"stop_loss": 440.0}}]}
     r = validator.validate_proposals([_prop()], pf)[0]
     check("add above cost within cap -> approved", r.approved, " | ".join(r.reasons))
     r2 = validator.validate_proposals([_prop(entry_price_max=440.0, stop_loss=400.0,

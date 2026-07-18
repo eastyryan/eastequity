@@ -20,6 +20,15 @@ ROOT = Path(__file__).resolve().parent.parent
 PLAN_NUMERIC_FIELDS = ("stop_loss", "target_price", "holding_horizon_days",
                        "entry_price_max", "confidence")
 
+# Non-numeric plan fields that carry RISK AUTHORITY and must survive the backfill.
+# The plan written at fill time (runlib/brain_io.py) has 7 keys; this module's
+# "authoritative" plan had 5. backfill_position_plans compared the two, found them
+# unequal BY CONSTRUCTION on every run, and wholesale-replaced — silently dropping:
+#   demand_driver       -> the position vanished from the 2% theme-risk bucket
+#   thesis_invalidators -> exit_autopsy tagged "missing_invalidators_on_plan"
+# Both are load-bearing, so the backfill now merges rather than replaces.
+PLAN_PRESERVE_FIELDS = ("demand_driver", "thesis_invalidators")
+
 
 def filled_buy_proposal_ids() -> dict:
     """{TICKER: {proposal_id, ...}} of FILLED BUYs from the broker ledger.
@@ -122,6 +131,12 @@ def _proposal_numeric_plan(ticker: str, proposal_id: str | None) -> dict | None:
                 numeric = {k: p.get(k) for k in PLAN_NUMERIC_FIELDS
                            if p.get(k) is not None}
                 if numeric:
+                    # The proposal carries the risk fields too (the validator
+                    # requires both on every BUY), so a plan rebuilt from it should
+                    # not come back poorer than the one written at fill time.
+                    for k in PLAN_PRESERVE_FIELDS:
+                        if p.get(k) is not None:
+                            numeric[k] = p.get(k)
                     best = numeric
     return best
 
@@ -146,10 +161,22 @@ def backfill_position_plans() -> int:
         tk = str(pos.get("ticker", "")).upper()
         authoritative = _proposal_numeric_plan(tk, pos.get("proposal_id"))
         if pos.get("plan"):
-            if authoritative and int(pos.get("adds_count", 0) or 0) == 0 \
-                    and pos["plan"] != authoritative:
-                pos["plan"] = authoritative
-                changed += 1
+            if authoritative and int(pos.get("adds_count", 0) or 0) == 0:
+                # Compare on the NUMERIC fields only. The old check compared whole
+                # dicts, so a 7-key fill-time plan never equalled a 5-key rebuilt
+                # one and this branch fired every single run.
+                current_numeric = {k: pos["plan"].get(k) for k in PLAN_NUMERIC_FIELDS
+                                   if pos["plan"].get(k) is not None}
+                authoritative_numeric = {k: v for k, v in authoritative.items()
+                                         if k in PLAN_NUMERIC_FIELDS}
+                if current_numeric != authoritative_numeric:
+                    # MERGE, never replace: repair the numerics the journal is
+                    # authoritative for while keeping demand_driver and
+                    # thesis_invalidators, which the rebuilt plan may not carry.
+                    merged = dict(pos["plan"])
+                    merged.update(authoritative)
+                    pos["plan"] = merged
+                    changed += 1
             continue
         jp = authoritative or plans.get(tk)
         if not jp:

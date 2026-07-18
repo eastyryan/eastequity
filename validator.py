@@ -396,12 +396,24 @@ def _conviction_unlocked(cfg: dict) -> tuple[bool, str]:
         return False, f"breakdown unreadable: {e}"
 
 
-def _position_committed_risk(pos: dict) -> float:
+def _position_committed_risk(pos: dict):
     """Entry-basis committed risk of an open position in dollars: what firing
     the stop costs relative to what was PAID (not to current marks). A stop
     trailed above cost means the position risks none of the account's own
-    capital - its heat is zero and the budget is free for pyramiding. Fail-open
-    (0.0) when the position carries no parseable plan stop."""
+    capital - its heat is zero and the budget is free for pyramiding.
+
+    Returns None — NOT 0.0 — when the position carries no parseable stop.
+
+    This used to fail OPEN, inside a risk control. A position with a malformed or
+    missing stop contributed zero heat, so the 8% cap under-counted true committed
+    risk and admitted BUYs that breached it. Worse, exit_guard reads a DIFFERENT
+    source for the same position (`original_plan`, journal-merged), so it would
+    stop that position out on a plan the heat calculation pretended did not exist —
+    the two safety layers disagreed about what a position's stop was.
+
+    Callers must treat None as "unverifiable" and refuse the trade rather than
+    silently under-count; see _sum_committed_risk.
+    """
     try:
         plan = pos.get("plan") or {}
         stop = float(plan.get("stop_loss") or pos.get("stop_loss") or 0)
@@ -412,10 +424,29 @@ def _position_committed_risk(pos: dict) -> float:
         cost = float(pos.get("avg_cost") or 0)
         qty = float(pos.get("quantity") or 0)
         if stop <= 0 or cost <= 0 or qty <= 0:
-            return 0.0
+            return None
         return max(0.0, (cost - stop) * qty)
     except (TypeError, ValueError):
-        return 0.0
+        return None
+
+
+def _sum_committed_risk(positions, driver: str | None = None,
+                        driver_map: dict | None = None):
+    """(total_committed_risk, [tickers whose risk could not be computed]).
+
+    Separating the unverifiable set is what lets the caps fail CLOSED with a reason
+    naming the offending position, instead of quietly summing it as zero. Pure.
+    """
+    total, unverifiable = 0.0, []
+    for pos in (positions or []):
+        if driver is not None and _position_demand_driver(pos, driver_map) != driver:
+            continue
+        risk = _position_committed_risk(pos)
+        if risk is None:
+            unverifiable.append(str(pos.get("ticker") or "?").upper())
+        else:
+            total += risk
+    return total, unverifiable
 
 
 def _position_demand_driver(pos: dict, driver_map: dict | None = None) -> str | None:
@@ -514,8 +545,16 @@ def _check_portfolio_heat(p: dict, cfg: dict, portfolio: dict,
         return
     equity = portfolio.get("total_equity_usd",
                            cfg["position_sizing"]["starting_capital_usd"])
-    open_heat = sum(_position_committed_risk(pos)
-                    for pos in portfolio.get("positions", []))
+    open_heat, unverifiable = _sum_committed_risk(portfolio.get("positions", []))
+    if unverifiable:
+        # Fail CLOSED. True heat is unknown, so approving would be a guess in the
+        # risk-increasing direction — and exit_guard may still stop these positions
+        # out on a plan this calculation cannot see.
+        reasons.append(
+            f"portfolio_heat_unverifiable:{','.join(sorted(unverifiable))} carry no "
+            f"parseable stop — committed risk cannot be computed, so the "
+            f"{cap:.0%} heat cap cannot be enforced")
+        return
     total = open_heat + batch_risk + proposed_risk
     if total > equity * cap + 1e-9:
         reasons.append(
@@ -552,9 +591,13 @@ def _check_theme_initial_risk(p: dict, cfg: dict, portfolio: dict,
         driver_map = build_driver_map()
     except Exception:
         driver_map = {}
-    theme_heat = sum(_position_committed_risk(pos)
-                     for pos in portfolio.get("positions", [])
-                     if _position_demand_driver(pos, driver_map) == driver)
+    theme_heat, unverifiable = _sum_committed_risk(
+        portfolio.get("positions", []), driver=driver, driver_map=driver_map)
+    if unverifiable:
+        reasons.append(
+            f"theme_risk_unverifiable:{driver} — {','.join(sorted(unverifiable))} "
+            f"carry no parseable stop, so the {cap:.0%} theme budget cannot be enforced")
+        return
     total = theme_heat + batch_theme_risk.get(driver, 0.0) + proposed_risk
     if total > equity * cap + 1e-9:
         reasons.append(

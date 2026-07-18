@@ -453,6 +453,15 @@ def execute(approved: list[validator.ValidationResult], context: dict,
 
     for vr in approved[:max_orders]:
         p = vr.proposal
+        # Normalize ONCE and write it back. validator.py upper()s every comparison,
+        # so a lowercase "buy" validated cleanly and then bypassed every gate below
+        # (daily cap, market hours, entry-price ceiling) AND plan construction —
+        # leaving a filled position with plan=None, which exit_guard skips outright
+        # ("if not plan: continue"). One case variation produced a permanently
+        # unstopped position that contributed zero portfolio heat. The action is
+        # written back onto the proposal so place_order and the broker's own
+        # branches see the same canonical value.
+        p["action"] = str(p.get("action", "")).strip().upper()
         if p["action"] == "BUY" and buys_today >= max_buys_per_day:
             journal.log_rejection(p, [f"max_new_positions_per_day_reached:{buys_today}"], run_id)
             continue

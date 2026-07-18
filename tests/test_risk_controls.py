@@ -62,7 +62,9 @@ def test_cash_reserve_floor():
     print("min_cash_reserve_pct (bites when marks drift and exposure cap won't):")
     # equity 10000 but stale marks: mv sums 6000 while cash is only 2500.
     portfolio = {"total_equity_usd": 10000, "cash_usd": 2500,
-                 "positions": [{"ticker": "ZZZQ", "market_value_usd": 6000}]}
+                 "positions": [{"ticker": "ZZZQ", "market_value_usd": 6000,
+                                "quantity": 60.0, "avg_cost": 100.0,
+                                "plan": {"stop_loss": 98.0}}]}
     res = validator.validate_proposals([buy("DELL")], portfolio, {})[0]
     check("rejected", not res.approved, reasons_of(res))
     check("reason is cash_reserve_floor_breached",
@@ -75,7 +77,9 @@ def test_cash_reserve_floor():
 def test_sector_concentration():
     print(f"max_sector_concentration_pct (pair {HELD_A}/{BUY_B} in '{SECTOR}'):")
     portfolio = {"total_equity_usd": 10000, "cash_usd": 6500,
-                 "positions": [{"ticker": HELD_A, "market_value_usd": 3500}]}
+                 "positions": [{"ticker": HELD_A, "market_value_usd": 3500,
+                                "quantity": 35.0, "avg_cost": 100.0,
+                                "plan": {"stop_loss": 98.0}}]}
     res = validator.validate_proposals([buy(BUY_B)], portfolio, {})[0]
     check("rejected (3500 held + 900 > 40% of 10000)", not res.approved, reasons_of(res))
     check("reason names the sector",
@@ -107,7 +111,8 @@ def test_cooldown_applies_to_adds():
     recent = (datetime.now(timezone.utc) - timedelta(days=2)).isoformat()
     portfolio = {"total_equity_usd": 10000, "cash_usd": 9000,
                  "positions": [{"ticker": "DELL", "quantity": 1.0, "avg_cost": 400.0,
-                                "market_value_usd": 400.0, "adds_count": 0}],
+                                "market_value_usd": 400.0, "adds_count": 0,
+                                "plan": {"stop_loss": 390.0}}],
                  "history": [{"ticker": "DELL", "action": "BUY",
                               "status": "filled", "filled_at": recent}]}
     res = validator.validate_proposals([buy("DELL", size=300.0)], portfolio, {})[0]
