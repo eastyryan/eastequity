@@ -327,7 +327,7 @@ def compute_performance_stats(closed: list[dict], equity_hist: list[dict]) -> di
         peak = max(peak, h["equity"])
         if peak:
             max_dd = max(max_dd, (peak - h["equity"]) / peak)
-    return {
+    stats = {
         "closed_trades": len(closed),
         "win_rate_pct": round(len(wins) / len(closed) * 100, 1),
         "realized_pnl_usd": round(sum(pnls), 2),               # price-only
@@ -337,6 +337,22 @@ def compute_performance_stats(closed: list[dict], equity_hist: list[dict]) -> di
         "avg_days_held": round(sum(t["days_held"] for t in closed) / len(closed), 1),
         "max_drawdown_pct": round(max_dd * 100, 2),
     }
+
+    # BENCHMARK ATTRIBUTION. Everything above is ABSOLUTE P&L, which for a long-only
+    # AI/semis book in a bull tape is dominated by beta — and win_rate_pct is not
+    # cosmetic: calibration_gate flags "losing" buckets on it and then demands an
+    # exception paragraph to trade them. Without the excess column that gate is a
+    # beta detector wearing a skill detector's clothes. Fail-soft: attribution is
+    # reporting, and a yfinance outage must never break the run summary.
+    try:
+        from tools.benchmark import (attach_benchmark_to_closed, book_risk_metrics,
+                                     summarize_excess)
+        attach_benchmark_to_closed(closed)
+        stats["vs_benchmark"] = summarize_excess(closed)
+        stats["risk_adjusted"] = book_risk_metrics(equity_hist)
+    except Exception as e:
+        stats["vs_benchmark"] = {"status": "unavailable", "error": str(e)}
+    return stats
 
 
 def compute_calibration(closed: list[dict]) -> dict | None:
