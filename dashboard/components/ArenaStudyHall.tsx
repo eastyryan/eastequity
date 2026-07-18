@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 /**
  * Study hall, rendered in the Arena's visual language.
  *
@@ -10,9 +12,11 @@
  * content is rebuilt on the Arena's own primitives so the section reads as part of
  * the page instead of an embedded sub-site.
  *
- * Content is one researched lesson per weekday. Lessons are graded by the trades
- * that cite them, so the evidence status shown here is earned, not asserted — and
- * under three linked trades it deliberately shows nothing rather than a verdict.
+ * Lessons are COLLAPSED to their title by default. A study entry runs several
+ * hundred words of dense research prose; stacked open they bury the rest of the
+ * page and make the list impossible to scan. The title is the index — open the one
+ * you want. Expansion reuses the same disclosure pattern as the watchlist rows
+ * above (button + chevron, .ee-wrow hover) so the interaction is already familiar.
  */
 
 export type LearningEntry = {
@@ -71,6 +75,7 @@ const statusColor = (s?: string | null) =>
 export default function ArenaStudyHall({ journal }: { journal: LearningJournal }) {
   const entries = journal?.entries ?? [];
   const counts = Object.entries(journal?.discipline_counts ?? {}).filter(([, n]) => n > 0);
+  const [open, setOpen] = useState<Record<string, boolean>>({});
 
   return (
     <div>
@@ -79,7 +84,6 @@ export default function ArenaStudyHall({ journal }: { journal: LearningJournal }
           fontSize: 12.5,
           color: "var(--ee-bodytx)",
           lineHeight: 1.7,
-          maxWidth: "62ch",
           margin: "0 0 26px",
           textWrap: "pretty",
         }}
@@ -114,131 +118,174 @@ export default function ArenaStudyHall({ journal }: { journal: LearningJournal }
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column" }}>
-          {entries.map((e) => (
-            <article
-              key={e.id}
-              style={{ borderTop: "1px solid var(--ee-hair08)", padding: "24px 0 28px" }}
-            >
-              <div
-                style={{
-                  display: "flex",
-                  gap: 16,
-                  flexWrap: "wrap",
-                  alignItems: "baseline",
-                  marginBottom: 10,
-                }}
-              >
-                <span style={{ fontSize: 12, color: "var(--ee-accent)", flexShrink: 0 }}>
-                  {formatDate(e.learned_at)}
-                </span>
-                <span style={{ fontSize: 11, letterSpacing: "0.16em", color: "var(--ee-muted)" }}>
-                  {label(e.discipline).toUpperCase()}
-                </span>
-                {e.evidence_status && (
-                  <span
-                    style={{ fontSize: 11, letterSpacing: "0.14em", color: statusColor(e.evidence_status) }}
-                    title={
-                      e.outcome?.n
-                        ? `${e.outcome.wins ?? 0} of ${e.outcome.n} trades citing this lesson won`
-                        : undefined
-                    }
-                  >
-                    {e.evidence_status.toUpperCase()}
-                    {e.outcome?.n ? ` ${e.outcome.wins ?? 0}/${e.outcome.n}` : ""}
-                  </span>
-                )}
-                {(e.times_cited ?? 0) > 0 && (
-                  <span style={{ fontSize: 11, color: "var(--ee-faint)" }}>
-                    cited {e.times_cited}×
-                  </span>
-                )}
-                <span style={{ fontSize: 11, color: "var(--ee-faint)" }}>{e.id}</span>
-              </div>
-
-              <h4 className="ee-serif" style={{ fontSize: 22, lineHeight: 1.25, margin: "0 0 10px" }}>
-                {clean(e.topic)}
-              </h4>
-
-              <p
-                style={{
-                  fontSize: 12.5,
-                  color: "var(--ee-bodytx)",
-                  lineHeight: 1.7,
-                  margin: 0,
-                  maxWidth: "68ch",
-                  textWrap: "pretty",
-                }}
-              >
-                {clean(e.summary)}
-              </p>
-
-              {(e.key_points?.length ?? 0) > 0 && (
-                <ul style={{ listStyle: "none", padding: 0, margin: "14px 0 0" }}>
-                  {e.key_points!.map((k, i) => (
-                    <li
-                      key={i}
+          {entries.map((e) => {
+            const isOpen = !!open[e.id];
+            return (
+              <div key={e.id} style={{ borderTop: "1px solid var(--ee-hair08)" }}>
+                <button
+                  className="ee-wrow"
+                  onClick={() => setOpen((s) => ({ ...s, [e.id]: !s[e.id] }))}
+                  aria-expanded={isOpen}
+                  style={{
+                    display: "flex",
+                    alignItems: "flex-start",
+                    gap: 18,
+                    padding: "18px 2px",
+                    cursor: "pointer",
+                    width: "100%",
+                    background: "none",
+                    border: "none",
+                    color: "inherit",
+                    font: "inherit",
+                    textAlign: "left",
+                  }}
+                >
+                  <span style={{ flex: 1, minWidth: 0 }}>
+                    <span
                       style={{
                         display: "flex",
-                        gap: 10,
-                        fontSize: 12.5,
-                        color: "var(--ee-bodytx)",
-                        lineHeight: 1.65,
-                        padding: "3px 0",
-                        maxWidth: "68ch",
+                        gap: 16,
+                        flexWrap: "wrap",
+                        alignItems: "baseline",
+                        marginBottom: 8,
                       }}
                     >
-                      <span style={{ color: "var(--ee-accent)", flexShrink: 0 }} aria-hidden>
-                        —
+                      <span style={{ fontSize: 12, color: "var(--ee-accent)" }}>
+                        {formatDate(e.learned_at)}
                       </span>
-                      <span>{clean(k)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-
-              {e.how_to_apply && (
-                <div style={{ marginTop: 16, paddingLeft: 16, borderLeft: "2px solid var(--ee-hair14)" }}>
-                  <div
-                    style={{
-                      fontSize: 10.5,
-                      letterSpacing: "0.18em",
-                      color: "var(--ee-muted)",
-                      marginBottom: 6,
-                    }}
-                  >
-                    HOW THE AGENT APPLIES THIS
-                  </div>
-                  <p
-                    style={{
-                      fontSize: 12.5,
-                      color: "var(--ee-thought)",
-                      lineHeight: 1.7,
-                      margin: 0,
-                      maxWidth: "64ch",
-                    }}
-                  >
-                    {clean(e.how_to_apply)}
-                  </p>
-                </div>
-              )}
-
-              {(e.sources?.length ?? 0) > 0 && (
-                <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 14 }}>
-                  {e.sources!.slice(0, 6).map((s, i) => (
-                    <a
-                      key={i}
-                      href={s}
-                      target="_blank"
-                      rel="noreferrer"
-                      style={{ fontSize: 11.5, color: "var(--ee-accent)" }}
+                      <span
+                        style={{ fontSize: 11, letterSpacing: "0.16em", color: "var(--ee-muted)" }}
+                      >
+                        {label(e.discipline).toUpperCase()}
+                      </span>
+                      {e.evidence_status && (
+                        <span
+                          style={{
+                            fontSize: 11,
+                            letterSpacing: "0.14em",
+                            color: statusColor(e.evidence_status),
+                          }}
+                          title={
+                            e.outcome?.n
+                              ? `${e.outcome.wins ?? 0} of ${e.outcome.n} trades citing this lesson won`
+                              : undefined
+                          }
+                        >
+                          {e.evidence_status.toUpperCase()}
+                          {e.outcome?.n ? ` ${e.outcome.wins ?? 0}/${e.outcome.n}` : ""}
+                        </span>
+                      )}
+                      {(e.times_cited ?? 0) > 0 && (
+                        <span style={{ fontSize: 11, color: "var(--ee-faint)" }}>
+                          cited {e.times_cited}×
+                        </span>
+                      )}
+                      <span style={{ fontSize: 11, color: "var(--ee-faint)" }}>{e.id}</span>
+                    </span>
+                    <span
+                      className="ee-serif"
+                      style={{ display: "block", fontSize: 22, lineHeight: 1.3, textWrap: "pretty" }}
                     >
-                      {hostnameOf(s)} ↗
-                    </a>
-                  ))}
-                </div>
-              )}
-            </article>
-          ))}
+                      {clean(e.topic)}
+                    </span>
+                  </span>
+                  <span
+                    style={{ color: "var(--ee-muted)", fontSize: 12, flexShrink: 0, marginTop: 4 }}
+                    aria-hidden
+                  >
+                    {isOpen ? "▲" : "▼"}
+                  </span>
+                </button>
+
+                {isOpen && (
+                  <div style={{ padding: "2px 2px 28px" }}>
+                    <p
+                      style={{
+                        fontSize: 12.5,
+                        color: "var(--ee-bodytx)",
+                        lineHeight: 1.7,
+                        margin: 0,
+                        textWrap: "pretty",
+                      }}
+                    >
+                      {clean(e.summary)}
+                    </p>
+
+                    {(e.key_points?.length ?? 0) > 0 && (
+                      <ul style={{ listStyle: "none", padding: 0, margin: "16px 0 0" }}>
+                        {e.key_points!.map((k, i) => (
+                          <li
+                            key={i}
+                            style={{
+                              display: "flex",
+                              gap: 10,
+                              fontSize: 12.5,
+                              color: "var(--ee-bodytx)",
+                              lineHeight: 1.7,
+                              padding: "4px 0",
+                            }}
+                          >
+                            <span style={{ color: "var(--ee-accent)", flexShrink: 0 }} aria-hidden>
+                              —
+                            </span>
+                            <span style={{ textWrap: "pretty" }}>{clean(k)}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    {e.how_to_apply && (
+                      <div
+                        style={{
+                          marginTop: 18,
+                          paddingLeft: 16,
+                          borderLeft: "2px solid var(--ee-hair14)",
+                        }}
+                      >
+                        <div
+                          style={{
+                            fontSize: 10.5,
+                            letterSpacing: "0.18em",
+                            color: "var(--ee-muted)",
+                            marginBottom: 6,
+                          }}
+                        >
+                          HOW THE AGENT APPLIES THIS
+                        </div>
+                        <p
+                          style={{
+                            fontSize: 12.5,
+                            color: "var(--ee-thought)",
+                            lineHeight: 1.7,
+                            margin: 0,
+                            textWrap: "pretty",
+                          }}
+                        >
+                          {clean(e.how_to_apply)}
+                        </p>
+                      </div>
+                    )}
+
+                    {(e.sources?.length ?? 0) > 0 && (
+                      <div style={{ display: "flex", gap: 14, flexWrap: "wrap", marginTop: 16 }}>
+                        {e.sources!.slice(0, 6).map((s, i) => (
+                          <a
+                            key={i}
+                            href={s}
+                            target="_blank"
+                            rel="noreferrer"
+                            style={{ fontSize: 11.5, color: "var(--ee-accent)" }}
+                          >
+                            {hostnameOf(s)} ↗
+                          </a>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       )}
     </div>

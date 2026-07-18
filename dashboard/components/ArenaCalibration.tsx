@@ -207,7 +207,6 @@ export default function ArenaCalibration({ calibration }: { calibration: Calibra
             color: "var(--ee-bodytx)",
             lineHeight: 1.65,
             margin: "0 0 22px",
-            maxWidth: "48ch",
             textWrap: "pretty",
           }}
         >
@@ -262,7 +261,6 @@ export default function ArenaCalibration({ calibration }: { calibration: Calibra
             color: "var(--ee-faint)",
             lineHeight: 1.7,
             margin: "18px 0 0",
-            maxWidth: "52ch",
           }}
         >
           {totalTrades < 15
