@@ -1,7 +1,7 @@
 {
   "_context_tier": "brain_slim_v1",
   "_tier_note": "This is the SLIM brain pack. Full archive is at full_context_path if set. Learning signals are in reasoning_process.learning_pack (top-N). Deep maps are limited to focus/digest tickers.",
-  "run_date": "2026-07-18T22:56:27.361445+00:00",
+  "run_date": "2026-07-18T23:55:34.631766+00:00",
   "as_of_et": "2026-07-18",
   "trading_mode": "paper",
   "run_depth": "full",
@@ -440,25 +440,6 @@
         "ownership_alignment": "institutions_selling_price_weak",
         "ownership_read": "Distribution pressure with weak price \u2014 raise the bar hard for new longs; prefer defense on holdings unless thesis is explicitly contrarian.",
         "deal_8ks_recent": 4
-      },
-      "GE": {
-        "latest_quarter_end": "2026-06-30",
-        "revenue_usd": 13349000000,
-        "revenue_yoy_pct": 34.4,
-        "net_income_usd": 2370000000,
-        "ttm_ebitda_usd": 23455000000.0,
-        "net_debt_to_ebitda": 0.56,
-        "fcf_ttm_usd": 8396000000.0,
-        "sbc_pct_of_revenue": 0.61,
-        "market_cap_usd": 361979321502.68555,
-        "fundamentals_stale": false,
-        "next_earnings": "2026-07-16",
-        "insider_signal": "no_open_market_activity",
-        "insider_distinct_buyers": 0,
-        "13f_net_activity": "no_tracked_activity",
-        "ownership_alignment": "retail_hot_institutions_quiet",
-        "ownership_read": "Speculative/options heat without clear institutional sponsorship \u2014 FOMO risk is elevated; need a stronger fundamental or structure case.",
-        "deal_8ks_recent": 0
       }
     }
   },
@@ -689,7 +670,7 @@
         "filled_at": "2026-07-17T18:20:41.642195+00:00"
       }
     ],
-    "broker_synced_at": "2026-07-18T22:50:09.516308+00:00",
+    "broker_synced_at": "2026-07-18T23:50:08.394732+00:00",
     "broker_backend": "alpaca_paper"
   },
   "position_histories": {
@@ -786,12 +767,6 @@
         "expected_move_pct": 9.02,
         "min_stop_distance_pct": 4.51,
         "tradeable": true
-      },
-      "GE": {
-        "atr_pct": 2.8,
-        "expected_move_pct": 5.31,
-        "min_stop_distance_pct": 2.8,
-        "tradeable": true
       }
     }
   },
@@ -834,26 +809,17 @@
         ],
         "n_headlines": 1,
         "source_kind": "universe_8k"
-      },
-      {
-        "ticker": "GE",
-        "titles": [
-          "Top S&P 500 Stocks to Watch Next Week: Tesla, Google, Intel, GE Vernova"
-        ],
-        "n_headlines": 1,
-        "source_kind": "tape_headline"
       }
     ],
     "promoted_tickers": [
       "DUK",
-      "SCCO",
-      "GE"
+      "SCCO"
     ]
   },
   "market_events": {
     "note": "commodities via yfinance (CL=F/USO, GC=F/GLD, ^VIX/VIXY, DX-Y.NYB/UUP); flags from keyword classification of market_news headlines \u2014 heuristic tags, not a risk model",
     "status": "ok",
-    "as_of": "2026-07-18T22:50:09.521577+00:00",
+    "as_of": "2026-07-18T23:50:08.399618+00:00",
     "commodities": {
       "oil": {
         "symbol": "CL=F",
@@ -898,7 +864,7 @@
         "tags": [
           "geopolitical"
         ],
-        "age_hours": 0.1
+        "age_hours": 0.8
       }
     ],
     "headline_source": "market_news"
@@ -906,7 +872,7 @@
   "market_news": {
     "note": "Market-wide headlines (last ~24h) for tape context - what is moving EVERYTHING today, not just your focus names. Weigh it in the macro/regime read; never build a single-name thesis on it alone.",
     "status": "ok",
-    "as_of": "2026-07-18T22:50:50.821857+00:00",
+    "as_of": "2026-07-18T23:50:49.248237+00:00",
     "sources": [
       {
         "name": "yahoo_finance",
@@ -931,39 +897,95 @@
     ],
     "headlines": [
       {
+        "title": "What It Takes to Retire on Lake Como at 60 on $1 Million Without Touching Your Principal",
+        "source": "yahoo_finance",
+        "published": "2026-07-18T23:21:27+00:00",
+        "url": "https://finance.yahoo.com/markets/currencies/articles/takes-retire-lake-como-60-232127430.html",
+        "age_hours": 0.5
+      },
+      {
+        "title": "A PayPal Vice President Sold Nearly 4,000 Company Shares. Here's What That Means for Investors.",
+        "source": "yahoo_finance",
+        "published": "2026-07-18T23:15:01+00:00",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/paypal-vice-president-sold-nearly-231501786.html",
+        "age_hours": 0.6
+      },
+      {
+        "title": "Massive TSMC deal is huge stride for US in high-tech race",
+        "source": "yahoo_finance",
+        "published": "2026-07-18T23:03:00+00:00",
+        "url": "https://finance.yahoo.com/technology/articles/massive-tsmc-deal-huge-stride-230300784.html",
+        "age_hours": 0.8
+      },
+      {
         "title": "Two U.S. service members killed in Jordan, one missing; Iran threatens 'unforgettable lessons' after calling off interim peace agreement",
         "source": "cnbc",
-        "published": "2026-07-18T22:46:36+00:00",
+        "published": "2026-07-18T23:04:22+00:00",
         "url": "https://www.cnbc.com/2026/07/18/us-military-says-it-completed-latest-round-of-strikes-against-iran.html",
-        "age_hours": 0.1
+        "age_hours": 0.8
+      },
+      {
+        "title": "American sneaker brand closes more stores",
+        "source": "yahoo_finance",
+        "published": "2026-07-18T22:50:38+00:00",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/giant-athletic-shoe-company-retail-194700040.html",
+        "age_hours": 1.0
+      },
+      {
+        "title": "How Buying SpaceX Today Could More Than 10X Your Net Worth",
+        "source": "yahoo_finance",
+        "published": "2026-07-18T22:50:00+00:00",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/buying-spacex-today-could-more-225000293.html",
+        "age_hours": 1.0
+      },
+      {
+        "title": "The $26.75 Million Bet Against Your Gains: Inside RYLD\u2019s Hidden Cost Structure",
+        "source": "yahoo_finance",
+        "published": "2026-07-18T22:49:44+00:00",
+        "url": "https://finance.yahoo.com/markets/options/articles/26-75-million-bet-against-224944546.html",
+        "age_hours": 1.0
       },
       {
         "title": "Billionaire Investor Jeremy Grantham Calls Bitcoin a Useless, Speculative Asset. Here's Why He's Wrong.",
         "source": "yahoo_finance",
         "published": "2026-07-18T22:20:00+00:00",
         "url": "https://finance.yahoo.com/markets/crypto/articles/billionaire-investor-jeremy-grantham-calls-222000004.html",
-        "age_hours": 0.5
+        "age_hours": 1.5
+      },
+      {
+        "title": "JD Vance Says AI Could Create Massive Wealth but Calls for Workers to Have 'Some Power'",
+        "source": "yahoo_finance",
+        "published": "2026-07-18T22:00:24+00:00",
+        "url": "https://finance.yahoo.com/technology/ai/articles/jd-vance-says-ai-could-220024851.html",
+        "age_hours": 1.8
       },
       {
         "title": "Taylor Farms recalls iceberg lettuce in 27 states due to cyclosporiasis outbreak",
         "source": "cnbc",
         "published": "2026-07-18T22:04:02+00:00",
         "url": "https://www.cnbc.com/2026/07/18/taylor-farms-recalls-iceberg-lettuce-in-27-states-due-to-cyclosporiasis-outbreak.html",
-        "age_hours": 0.8
+        "age_hours": 1.8
+      },
+      {
+        "title": "Samsung Electronics America to reduce workforce by 739 in New Jersey, WARN notice says",
+        "source": "yahoo_finance",
+        "published": "2026-07-18T21:58:14+00:00",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/samsung-electronics-america-reduce-workforce-215814306.html",
+        "age_hours": 1.9
       },
       {
         "title": "3 AI Stocks That Can Outperform Nvidia Next Year",
         "source": "yahoo_finance",
         "published": "2026-07-18T21:56:00+00:00",
         "url": "https://finance.yahoo.com/markets/stocks/articles/3-ai-stocks-outperform-nvidia-215600814.html",
-        "age_hours": 0.9
+        "age_hours": 1.9
       },
       {
         "title": "DRAM ETF Inflows Jump Despite Micron, Sandisk, Seagate Slump",
         "source": "alpaca_benzinga",
         "published": "2026-07-18T21:56:23Z",
         "url": "https://www.benzinga.com/etfs/sector-etfs/26/07/60542168/dram-etf-inflows-jump-despite-micron-sandisk-seagate-slump",
-        "age_hours": 0.9,
+        "age_hours": 1.9,
         "symbols": [
           "DRAM",
           "MU",
@@ -977,7 +999,7 @@
         "source": "alpaca_benzinga",
         "published": "2026-07-18T21:56:20Z",
         "url": "https://www.benzinga.com/markets/equities/26/07/60542167/elon-musks-net-worth-slumps-amid-tesla-spacex-crash",
-        "age_hours": 0.9,
+        "age_hours": 1.9,
         "symbols": [
           "SPCX",
           "TSLA"
@@ -988,88 +1010,14 @@
         "source": "yahoo_finance",
         "published": "2026-07-18T21:45:00+00:00",
         "url": "https://finance.yahoo.com/markets/stocks/articles/pok-mon-cards-beat-p-214500876.html",
-        "age_hours": 1.1
-      },
-      {
-        "title": "Netflix Stock's Last Decade Was Spectacular. But What Will the Next Decade Look Like?",
-        "source": "yahoo_finance",
-        "published": "2026-07-18T21:43:00+00:00",
-        "url": "https://finance.yahoo.com/markets/stocks/articles/netflix-stocks-last-decade-spectacular-214300078.html",
-        "age_hours": 1.1
-      },
-      {
-        "title": "Why Intuitive Surgical Stock Dropped This Week",
-        "source": "yahoo_finance",
-        "published": "2026-07-18T21:41:17+00:00",
-        "url": "https://finance.yahoo.com/markets/stocks/articles/why-intuitive-surgical-stock-dropped-214117069.html",
-        "age_hours": 1.2
-      },
-      {
-        "title": "Oracle Has a Massive Revenue Backlog: Why is the Stock Plunging?",
-        "source": "alpaca_benzinga",
-        "published": "2026-07-18T21:15:14Z",
-        "url": "https://www.benzinga.com/markets/equities/26/07/60542145/oracle-has-a-massive-revenue-backlog-why-is-the-stock-plunging",
-        "age_hours": 1.6,
-        "symbols": [
-          "ORCL"
-        ]
-      },
-      {
-        "title": "Everyone\u2019s Chasing Portugal. Smart American Retirees Are Quietly Moving Here Instead",
-        "source": "yahoo_finance",
-        "published": "2026-07-18T21:07:57+00:00",
-        "url": "https://finance.yahoo.com/real-estate/articles/everyone-chasing-portugal-smart-american-210757304.html",
-        "age_hours": 1.7
-      },
-      {
-        "title": "Bank of America revamps Tesla forecast before earnings",
-        "source": "yahoo_finance",
-        "published": "2026-07-18T21:06:00+00:00",
-        "url": "https://finance.yahoo.com/markets/stocks/articles/bank-america-revamps-tesla-forecast-210600094.html",
-        "age_hours": 1.7
-      },
-      {
-        "title": "Best States for Retirees Who Want to Avoid Paying State Taxes on Retirement Income",
-        "source": "yahoo_finance",
-        "published": "2026-07-18T21:05:00+00:00",
-        "url": "https://finance.yahoo.com/real-estate/articles/best-states-retirees-want-avoid-210500458.html",
-        "age_hours": 1.8
-      },
-      {
-        "title": "Top S&P 500 Stocks to Watch Next Week: Tesla, Google, Intel, GE Vernova",
-        "source": "alpaca_benzinga",
-        "published": "2026-07-18T21:05:22Z",
-        "url": "https://www.benzinga.com/markets/equities/26/07/60542123/top-sp-500-stocks-to-watch-next-week-tesla-google-intel-ge-vernova",
-        "age_hours": 1.8,
-        "symbols": [
-          "GEV",
-          "GOOG",
-          "INTC",
-          "SPCX",
-          "TSLA"
-        ]
-      },
-      {
-        "title": "Bill Ackman Losing Winning Streak as Pershing Square's Core Holdings Falter",
-        "source": "alpaca_benzinga",
-        "published": "2026-07-18T20:55:35Z",
-        "url": "https://www.benzinga.com/markets/hedge-funds/26/07/60542110/bill-ackman-losing-winning-streak-as-pershing-squares-core-holdings-falter",
-        "age_hours": 1.9,
-        "symbols": [
-          "AMZN",
-          "BN",
-          "CMG",
-          "MSFT",
-          "PS",
-          "PSUS"
-        ]
+        "age_hours": 2.1
       }
     ]
   },
   "market_radar": {
     "note": "Market-WIDE radar (Alpaca screeners + news), not limited to the universe. off_universe_symbols are candidates for the universe_candidates output field IF a real swing setup exists \u2014 they are not tradeable until deterministically added ($1B cap, priceable, liquid) and are never a buy signal by themselves.",
     "status": "ok",
-    "as_of": "2026-07-18T22:50:51.867216+00:00",
+    "as_of": "2026-07-18T23:50:50.062826+00:00",
     "gainers": [
       {
         "ticker": "SHOT",
@@ -1260,6 +1208,77 @@
     ]
   },
   "benchmark_close": 743.29,
+  "portfolio_competition": {
+    "note": "PROFIT DISCIPLINE: capital only stays where it still beats the next best idea. For every open seat, read competition_hint + challengers. Respond in seat_reviews (JSON) with keep|trim|swap|reduce|sell and a reason that names the challenger you considered (or why none clear the bar). A seat under pressure is not an automatic sell \u2014 but 'thesis still holds' alone is not enough when a higher-scoring alternative is available.",
+    "status": "empty_book",
+    "seats": [],
+    "n_seats": 0,
+    "under_pressure": [],
+    "how_to_respond": "No open seats \u2014 competition block is idle."
+  },
+  "factor_map": {
+    "note": "PROFIT DISCIPLINE: geometric return dies when one factor erases a multi-month run. Read concentration_level + what_kills_the_book + unwind_playbook BEFORE adding risk. When concentration is high/extreme, output factor_response in JSON acknowledging the map and the plan (cash / no new same-theme / trim heat / rotate layer). Staying AI-focused is fine \u2014 but size and new BUYs must respect the playbook.",
+    "status": "empty_book",
+    "concentration_level": "empty",
+    "theme_buckets": [],
+    "unwind_playbook": {
+      "concentration_level": "empty",
+      "triggers": [
+        "AI/semiconductor factor unwind: leaders gap down together while SPY is flat/up",
+        "Momentum-health / factor-unwind flag if present in momentum_health",
+        "Thesis invalidators firing on 2+ names in dominant_theme",
+        "Macro regime flips hostile with rising real yields / risk-off in growth"
+      ],
+      "actions": [
+        "Normal fat-pitch bar; theme cap still binds.",
+        "Prefer adding a *different* demand_driver when RR is comparable."
+      ],
+      "new_buy_rules": "New BUYs allowed within theme and risk caps. Prefer diversifying drivers when two ideas have similar RR.",
+      "orthogonal_seats_to_protect": [],
+      "ai_stack_pct_of_equity": 0,
+      "top_driver_pct_of_equity": 0
+    },
+    "what_kills_the_book": "No open positions.",
+    "how_to_respond": "Factor map idle until the book has positions."
+  },
+  "portfolio_risk": {
+    "note": "No holdings with usable price history to assess correlation.",
+    "status": "ok",
+    "window_days": 90,
+    "benchmark": "SPY",
+    "portfolio_beta": null,
+    "avg_pairwise_holding_corr": null,
+    "shared_left_tail": false,
+    "pairwise": {},
+    "holdings": {},
+    "candidates": {
+      "NET": {
+        "corr_to_book": null,
+        "beta": 0.96,
+        "diversifier": false
+      },
+      "OKTA": {
+        "corr_to_book": null,
+        "beta": 1.09,
+        "diversifier": false
+      },
+      "PANW": {
+        "corr_to_book": null,
+        "beta": 1.2,
+        "diversifier": false
+      },
+      "S": {
+        "corr_to_book": null,
+        "beta": 0.96,
+        "diversifier": false
+      },
+      "CRWD": {
+        "corr_to_book": null,
+        "beta": 1.1,
+        "diversifier": false
+      }
+    }
+  },
   "lessons_learned": {
     "note": "Your own most recent self-review conclusions and process notes. The CURRENT stated behavior change is binding until the next review grades it - honor it in this run's decisions.",
     "recent": [
@@ -3404,7 +3423,7 @@
     "scanned": 182,
     "requested": 182,
     "scan_failures": 0,
-    "scan_fetched_at_utc": "2026-07-18T22:50:50.821066+00:00",
+    "scan_fetched_at_utc": "2026-07-18T23:50:49.247589+00:00",
     "note": "Ranked by deterministic swing_setup_score; agent must apply judgment and research before proposing.",
     "sector_comps_note": "sector_comps (on surfaced rows): fwd_pe_est = last close / cached pre-market current-FY EPS estimate (snapshot may be ~a day old); growth = current-FY revenue-growth estimate. Medians span ALL scanned names with data - coverage.pe_n/growth_n are the true denominators; medians under 4 same-sector data points report None.",
     "top_setups": [
@@ -4660,7 +4679,7 @@
         "swing_setup_score": 6.1,
         "valuation": {
           "trailing_pe": 9.921485,
-          "forward_pe": 12.737741,
+          "forward_pe": 12.692623,
           "price_to_sales_ttm": 1.6019444,
           "ev_to_ebitda": 7.041
         },
@@ -4692,7 +4711,7 @@
         "ear_low_coverage": false,
         "fwd_pe_to_growth": null,
         "valuation_context": {
-          "fwd_pe": 12.737741,
+          "fwd_pe": 12.692623,
           "fwd_pe_est": 12.05,
           "fwd_pe_to_growth": null,
           "fwd_revenue_growth_pct": -0.9,
@@ -11474,337 +11493,6 @@
         ]
       },
       "fundamentals_current_through": "2026-03-31"
-    },
-    "GE": {
-      "status": "ok",
-      "ticker": "GE",
-      "cik": "0000040545",
-      "company": "GENERAL ELECTRIC CO",
-      "recent_filings": [
-        {
-          "form": "10-Q",
-          "filed": "2026-07-16",
-          "url": "https://www.sec.gov/Archives/edgar/data/40545/000004054526000049/ge-20260630.htm"
-        },
-        {
-          "form": "8-K",
-          "filed": "2026-07-16",
-          "url": "https://www.sec.gov/Archives/edgar/data/40545/000004054526000047/ge-20260716.htm"
-        },
-        {
-          "form": "8-K",
-          "filed": "2026-06-25",
-          "url": "https://www.sec.gov/Archives/edgar/data/40545/000004054526000042/ge-20260625.htm"
-        },
-        {
-          "form": "8-K",
-          "filed": "2026-06-11",
-          "url": "https://www.sec.gov/Archives/edgar/data/40545/000004054526000039/ge-20260608.htm"
-        },
-        {
-          "form": "8-K",
-          "filed": "2026-05-07",
-          "url": "https://www.sec.gov/Archives/edgar/data/40545/000004054526000032/ge-20260505.htm"
-        },
-        {
-          "form": "10-Q",
-          "filed": "2026-04-21",
-          "url": "https://www.sec.gov/Archives/edgar/data/40545/000004054526000027/ge-20260331.htm"
-        },
-        {
-          "form": "8-K",
-          "filed": "2026-04-21",
-          "url": "https://www.sec.gov/Archives/edgar/data/40545/000004054526000026/ge-20260421.htm"
-        },
-        {
-          "form": "10-K",
-          "filed": "2026-01-29",
-          "url": "https://www.sec.gov/Archives/edgar/data/40545/000004054526000008/ge-20251231.htm"
-        }
-      ],
-      "latest_periodic_filing": {
-        "form": "10-Q",
-        "filed": "2026-07-16",
-        "period_end": "2026-06-30"
-      },
-      "quarterly_fundamentals": {
-        "revenue": [
-          {
-            "period_end": "2024-12-31",
-            "value_usd": 10812000000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2025-03-31",
-            "value_usd": 9935000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-06-30",
-            "value_usd": 11023000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-09-30",
-            "value_usd": 12181000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-03-31",
-            "value_usd": 12392000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value_usd": 13349000000,
-            "form": "10-Q"
-          }
-        ],
-        "annual_revenue": [
-          {
-            "period_end": "2022-12-31",
-            "value_usd": 29139000000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2023-12-31",
-            "value_usd": 35348000000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2024-12-31",
-            "value_usd": 38702000000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2025-12-31",
-            "value_usd": 45855000000,
-            "form": "10-K"
-          }
-        ],
-        "net_income": [
-          {
-            "period_end": "2024-12-31",
-            "value_usd": 1899000000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2025-03-31",
-            "value_usd": 1978000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-06-30",
-            "value_usd": 2028000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-09-30",
-            "value_usd": 2157000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-03-31",
-            "value_usd": 1904000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value_usd": 2370000000,
-            "form": "10-Q"
-          }
-        ],
-        "gross_profit": [
-          {
-            "period_end": "2015-09-30",
-            "value_usd": 6275000000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2015-12-31",
-            "value_usd": 7556000000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2016-03-31",
-            "value_usd": 5516000000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2016-06-30",
-            "value_usd": 6192000000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2016-09-30",
-            "value_usd": 6388000000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2016-12-31",
-            "value_usd": 7027000000,
-            "form": "10-K"
-          }
-        ],
-        "capex": [
-          {
-            "period_end": "2018-03-31",
-            "value_usd": 1790000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2019-03-31",
-            "value_usd": 1395000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2020-03-31",
-            "value_usd": 504000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2021-03-31",
-            "value_usd": 332000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2022-03-31",
-            "value_usd": 239000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2023-03-31",
-            "value_usd": 279000000,
-            "form": "10-Q"
-          }
-        ],
-        "cash_and_equivalents": [
-          {
-            "period_end": "2011-12-31",
-            "value": 84501000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2012-03-31",
-            "value": 83650000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2012-06-30",
-            "value": 74295000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2015-12-31",
-            "value": 70483000000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2016-12-31",
-            "value": 48129000000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2017-12-31",
-            "value": 43299000000,
-            "form": "10-K"
-          }
-        ],
-        "long_term_debt": [
-          {
-            "period_end": "2023-12-31",
-            "value": 20862000000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2024-12-31",
-            "value": 19273000000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2025-12-31",
-            "value": 20469000000,
-            "form": "10-K"
-          }
-        ],
-        "operating_cash_flow": [
-          {
-            "period_end": "2025-03-31",
-            "value": 1509000000,
-            "form": "10-Q",
-            "period_days": 89
-          },
-          {
-            "period_end": "2025-06-30",
-            "value": 3755000000,
-            "form": "10-Q",
-            "period_days": 180
-          },
-          {
-            "period_end": "2025-09-30",
-            "value": 6256000000,
-            "form": "10-Q",
-            "period_days": 272
-          },
-          {
-            "period_end": "2025-12-31",
-            "value": 8537000000,
-            "form": "10-K",
-            "period_days": 364
-          },
-          {
-            "period_end": "2026-03-31",
-            "value": 1823000000,
-            "form": "10-Q",
-            "period_days": 89
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 5018000000,
-            "form": "10-Q",
-            "period_days": 180
-          }
-        ],
-        "diluted_shares": [
-          {
-            "period_end": "2025-09-30",
-            "value": 1071000000,
-            "form": "10-Q",
-            "period_days": 272
-          },
-          {
-            "period_end": "2025-09-30",
-            "value": 1065000000,
-            "form": "10-Q",
-            "period_days": 91
-          },
-          {
-            "period_end": "2025-12-31",
-            "value": 1068000000,
-            "form": "10-K",
-            "period_days": 364
-          },
-          {
-            "period_end": "2026-03-31",
-            "value": 1054000000,
-            "form": "10-Q",
-            "period_days": 89
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 1050000000,
-            "form": "10-Q",
-            "period_days": 180
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 1047000000,
-            "form": "10-Q",
-            "period_days": 90
-          }
-        ]
-      },
-      "fundamentals_current_through": "2026-06-30"
     }
   },
   "deep_fundamentals": {
@@ -20890,737 +20578,6 @@
           "interest_coverage": "no TTM interest expense reported (may be debt-free)"
         }
       }
-    },
-    "GE": {
-      "status": "ok",
-      "ticker": "GE",
-      "cik": "0000040545",
-      "company": "GENERAL ELECTRIC CO",
-      "currency_note": null,
-      "note": "quarterly_facts: instant rows are balance-sheet snapshots; duration rows include period_days - rows spanning >100 days are YTD-cumulative, not single quarters. quality_ratios are pre-computed - do not recompute them.",
-      "quarterly_facts": {
-        "operating_income": [
-          {
-            "period_end": "2013-06-30",
-            "value": 5628000000,
-            "form": "10-Q",
-            "period_days": 90,
-            "period_start": "2013-04-01"
-          },
-          {
-            "period_end": "2013-09-30",
-            "value": 16484000000,
-            "form": "10-Q",
-            "period_days": 272,
-            "period_start": "2013-01-01"
-          },
-          {
-            "period_end": "2013-09-30",
-            "value": 5860000000,
-            "form": "10-Q",
-            "period_days": 91,
-            "period_start": "2013-07-01"
-          },
-          {
-            "period_end": "2014-03-31",
-            "value": 5212000000,
-            "form": "10-Q",
-            "period_days": 89,
-            "period_start": "2014-01-01"
-          },
-          {
-            "period_end": "2014-06-30",
-            "value": 11081000000,
-            "form": "10-Q",
-            "period_days": 180,
-            "period_start": "2014-01-01"
-          },
-          {
-            "period_end": "2014-06-30",
-            "value": 5869000000,
-            "form": "10-Q",
-            "period_days": 90,
-            "period_start": "2014-04-01"
-          }
-        ],
-        "rd_expense": [
-          {
-            "period_end": "2025-09-30",
-            "value": 1132000000,
-            "form": "10-Q",
-            "period_days": 272,
-            "period_start": "2025-01-01"
-          },
-          {
-            "period_end": "2025-09-30",
-            "value": 415000000,
-            "form": "10-Q",
-            "period_days": 91,
-            "period_start": "2025-07-01"
-          },
-          {
-            "period_end": "2025-12-31",
-            "value": 1580000000,
-            "form": "10-K",
-            "period_days": 364,
-            "period_start": "2025-01-01"
-          },
-          {
-            "period_end": "2026-03-31",
-            "value": 440000000,
-            "form": "10-Q",
-            "period_days": 89,
-            "period_start": "2026-01-01"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 900000000,
-            "form": "10-Q",
-            "period_days": 180,
-            "period_start": "2026-01-01"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 460000000,
-            "form": "10-Q",
-            "period_days": 90,
-            "period_start": "2026-04-01"
-          }
-        ],
-        "sga_expense": [
-          {
-            "period_end": "2025-09-30",
-            "value": 3091000000,
-            "form": "10-Q",
-            "period_days": 272,
-            "period_start": "2025-01-01"
-          },
-          {
-            "period_end": "2025-09-30",
-            "value": 1195000000,
-            "form": "10-Q",
-            "period_days": 91,
-            "period_start": "2025-07-01"
-          },
-          {
-            "period_end": "2025-12-31",
-            "value": 4088000000,
-            "form": "10-K",
-            "period_days": 364,
-            "period_start": "2025-01-01"
-          },
-          {
-            "period_end": "2026-03-31",
-            "value": 1084000000,
-            "form": "10-Q",
-            "period_days": 89,
-            "period_start": "2026-01-01"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 2215000000,
-            "form": "10-Q",
-            "period_days": 180,
-            "period_start": "2026-01-01"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 1131000000,
-            "form": "10-Q",
-            "period_days": 90,
-            "period_start": "2026-04-01"
-          }
-        ],
-        "interest_expense": [
-          {
-            "period_end": "2009-12-31",
-            "value": 18309000000,
-            "form": "10-K",
-            "period_days": 364,
-            "period_start": "2009-01-01"
-          },
-          {
-            "period_end": "2010-12-31",
-            "value": 15983000000,
-            "form": "10-K",
-            "period_days": 364,
-            "period_start": "2010-01-01"
-          },
-          {
-            "period_end": "2020-09-30",
-            "value": 1853000000,
-            "form": "10-Q",
-            "period_days": 273,
-            "period_start": "2020-01-01"
-          },
-          {
-            "period_end": "2020-09-30",
-            "value": 526000000,
-            "form": "10-Q",
-            "period_days": 91,
-            "period_start": "2020-07-01"
-          },
-          {
-            "period_end": "2021-09-30",
-            "value": 2866000000,
-            "form": "10-Q",
-            "period_days": 272,
-            "period_start": "2021-01-01"
-          },
-          {
-            "period_end": "2021-09-30",
-            "value": 463000000,
-            "form": "10-Q",
-            "period_days": 91,
-            "period_start": "2021-07-01"
-          }
-        ],
-        "eps_diluted": [
-          {
-            "period_end": "2025-09-30",
-            "value": 5.75,
-            "form": "10-Q",
-            "period_days": 272,
-            "period_start": "2025-01-01"
-          },
-          {
-            "period_end": "2025-09-30",
-            "value": 2.02,
-            "form": "10-Q",
-            "period_days": 91,
-            "period_start": "2025-07-01"
-          },
-          {
-            "period_end": "2025-12-31",
-            "value": 8.14,
-            "form": "10-K",
-            "period_days": 364,
-            "period_start": "2025-01-01"
-          },
-          {
-            "period_end": "2026-03-31",
-            "value": 1.81,
-            "form": "10-Q",
-            "period_days": 89,
-            "period_start": "2026-01-01"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 4.07,
-            "form": "10-Q",
-            "period_days": 180,
-            "period_start": "2026-01-01"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 2.26,
-            "form": "10-Q",
-            "period_days": 90,
-            "period_start": "2026-04-01"
-          }
-        ],
-        "inventory": [
-          {
-            "period_end": "2025-03-31",
-            "value": 10504000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-06-30",
-            "value": 11297000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-09-30",
-            "value": 11667000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-12-31",
-            "value": 11868000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-03-31",
-            "value": 12367000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 12440000000,
-            "form": "10-Q"
-          }
-        ],
-        "accounts_receivable": [
-          {
-            "period_end": "2025-03-31",
-            "value": 9653000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-06-30",
-            "value": 10512000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-09-30",
-            "value": 10671000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-12-31",
-            "value": 11773000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-03-31",
-            "value": 12466000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 12360000000,
-            "form": "10-Q"
-          }
-        ],
-        "total_current_assets": [
-          {
-            "period_end": "2025-03-31",
-            "value": 37575000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-06-30",
-            "value": 37801000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-09-30",
-            "value": 40074000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-12-31",
-            "value": 40596000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-03-31",
-            "value": 40361000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 39697000000,
-            "form": "10-Q"
-          }
-        ],
-        "total_current_liabilities": [
-          {
-            "period_end": "2025-03-31",
-            "value": 34941000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-06-30",
-            "value": 36466000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-09-30",
-            "value": 37203000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-12-31",
-            "value": 38980000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-03-31",
-            "value": 40027000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 40430000000,
-            "form": "10-Q"
-          }
-        ],
-        "stockholders_equity": [
-          {
-            "period_end": "2025-03-31",
-            "value": 19251000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-06-30",
-            "value": 19135000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-09-30",
-            "value": 18812000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-12-31",
-            "value": 18677000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-03-31",
-            "value": 18057000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 17640000000,
-            "form": "10-Q"
-          }
-        ],
-        "deferred_revenue": [
-          {
-            "period_end": "2025-03-31",
-            "value": 9624000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-06-30",
-            "value": 9738000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-09-30",
-            "value": 9852000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-12-31",
-            "value": 10333000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-03-31",
-            "value": 10204000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 10159000000,
-            "form": "10-Q"
-          }
-        ],
-        "remaining_performance_obligation": [
-          {
-            "period_end": "2025-03-31",
-            "value": 172599000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-06-30",
-            "value": 174397000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-09-30",
-            "value": 176285000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-12-31",
-            "value": 190564000000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2026-03-31",
-            "value": 211299000000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 210790000000,
-            "form": "10-Q"
-          }
-        ],
-        "share_buybacks": [
-          {
-            "period_end": "2025-03-31",
-            "value": 1965000000,
-            "form": "10-Q",
-            "period_days": 89,
-            "period_start": "2025-01-01"
-          },
-          {
-            "period_end": "2025-06-30",
-            "value": 3710000000,
-            "form": "10-Q",
-            "period_days": 180,
-            "period_start": "2025-01-01"
-          },
-          {
-            "period_end": "2025-09-30",
-            "value": 5554000000,
-            "form": "10-Q",
-            "period_days": 272,
-            "period_start": "2025-01-01"
-          },
-          {
-            "period_end": "2025-12-31",
-            "value": 7551000000,
-            "form": "10-K",
-            "period_days": 364,
-            "period_start": "2025-01-01"
-          },
-          {
-            "period_end": "2026-03-31",
-            "value": 2399000000,
-            "form": "10-Q",
-            "period_days": 89,
-            "period_start": "2026-01-01"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 4527000000,
-            "form": "10-Q",
-            "period_days": 180,
-            "period_start": "2026-01-01"
-          }
-        ],
-        "acquisitions": [
-          {
-            "period_end": "2025-03-31",
-            "value": 100000000,
-            "form": "10-Q",
-            "period_days": 89,
-            "period_start": "2025-01-01"
-          },
-          {
-            "period_end": "2025-06-30",
-            "value": 354000000,
-            "form": "10-Q",
-            "period_days": 180,
-            "period_start": "2025-01-01"
-          },
-          {
-            "period_end": "2025-09-30",
-            "value": 360000000,
-            "form": "10-Q",
-            "period_days": 272,
-            "period_start": "2025-01-01"
-          },
-          {
-            "period_end": "2025-12-31",
-            "value": 360000000,
-            "form": "10-K",
-            "period_days": 364,
-            "period_start": "2025-01-01"
-          },
-          {
-            "period_end": "2026-03-31",
-            "value": 0,
-            "form": "10-Q",
-            "period_days": 89,
-            "period_start": "2026-01-01"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 1000000,
-            "form": "10-Q",
-            "period_days": 180,
-            "period_start": "2026-01-01"
-          }
-        ],
-        "depreciation_amortization": [
-          {
-            "period_end": "2025-09-30",
-            "value": 643000000,
-            "form": "10-Q",
-            "period_days": 272,
-            "period_start": "2025-01-01"
-          },
-          {
-            "period_end": "2025-09-30",
-            "value": 214000000,
-            "form": "10-Q",
-            "period_days": 91,
-            "period_start": "2025-07-01"
-          },
-          {
-            "period_end": "2025-12-31",
-            "value": 863000000,
-            "form": "10-K",
-            "period_days": 364,
-            "period_start": "2025-01-01"
-          },
-          {
-            "period_end": "2026-03-31",
-            "value": 227000000,
-            "form": "10-Q",
-            "period_days": 89,
-            "period_start": "2026-01-01"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 452000000,
-            "form": "10-Q",
-            "period_days": 180,
-            "period_start": "2026-01-01"
-          },
-          {
-            "period_end": "2026-06-30",
-            "value": 224000000,
-            "form": "10-Q",
-            "period_days": 90,
-            "period_start": "2026-04-01"
-          }
-        ]
-      },
-      "quality_ratios": {
-        "ratios": {
-          "sbc_pct_of_revenue": {
-            "value": 0.61,
-            "trend": "flat",
-            "xbrl_tag": "AllocatedShareBasedCompensationExpense",
-            "period_days": 364,
-            "note": "SBC ~0.61% of revenue, DERIVED from a 364-day YTD figure (tag AllocatedShareBasedCompensationExpense) divided to a per-quarter estimate - approximate"
-          },
-          "diluted_shares_yoy_change_pct": {
-            "value": -2.24,
-            "trend": "improving",
-            "note": "share count shrinking - net buybacks (2026-06-30 vs 2025-06-30)"
-          },
-          "net_debt_usd": {
-            "value": 13124000000.0,
-            "trend": "flat",
-            "note": "net debt = total debt (long-term + current, incl. finance leases) minus cash, as of 2026-06-30",
-            "components": {
-              "long_term_debt": 20469000000.0,
-              "current_debt": 2000000000.0,
-              "total_debt": 22469000000.0,
-              "cash_and_equivalents": 9345000000,
-              "as_of": "2026-06-30",
-              "cash_as_of": "2026-06-30",
-              "long_term_tags": [
-                "LongTermDebt"
-              ],
-              "current_tags": [
-                "DebtCurrent"
-              ]
-            }
-          },
-          "total_debt_usd": {
-            "value": 22469000000.0,
-            "trend": "flat",
-            "note": "long-term 20469000000.0 + current 2000000000.0 (finance leases in, operating leases out); LT tags ['LongTermDebt'], current tags ['DebtCurrent']"
-          },
-          "operating_lease_liability_usd": {
-            "value": 1073000000,
-            "trend": "flat",
-            "xbrl_tag": "OperatingLeaseLiabilityCurrent + Noncurrent",
-            "note": "operating lease liabilities, NOT in total_debt (a debt-like commitment for asset-light/retail names) as of 2026-06-30"
-          },
-          "current_ratio": {
-            "value": 0.98,
-            "trend": "flat",
-            "xbrl_tag": "AssetsCurrent / LiabilitiesCurrent",
-            "note": "current assets / current liabilities = 0.98x as of 2026-06-30 - under 1.0, liquidity watch"
-          },
-          "inventory_to_revenue_pct": {
-            "value": 93.19,
-            "trend": "improving",
-            "inventory_building": false,
-            "note": "inventory 93.19% of Q revenue vs 102.49% a year ago"
-          },
-          "free_cash_flow_usd": {
-            "value": 4352000000,
-            "trend": "flat",
-            "note": "OCF minus capex, period ending 2026-06-30 spanning 180 days (YTD-cumulative, NOT a single quarter)"
-          },
-          "free_cash_flow_ttm_usd": {
-            "value": 8396000000.0,
-            "trend": "flat",
-            "note": "trailing-twelve-month FCF = OCF - capex over 4 de-YTD'd quarters ending 2026-06-30"
-          },
-          "rule_of_40": {
-            "value": 40.5,
-            "rule_of_40_value": 40.5,
-            "rule_of_40_pass": true,
-            "note": "TTM revenue growth 23.3% + TTM FCF margin 17.2% (software heuristic; pass = >=40; TTM ending 2026-06-30)"
-          },
-          "gross_margin_ttm_pct": {
-            "value": 51.33,
-            "trend": "deteriorating",
-            "xbrl_tag": "GrossProfit / revenue",
-            "period_days": 365,
-            "note": "TTM gross margin 51.33% vs 63.95% prior TTM"
-          },
-          "operating_margin_ttm_pct": {
-            "value": 46.11,
-            "trend": "flat",
-            "xbrl_tag": "OperatingIncomeLoss / revenue",
-            "period_days": 365,
-            "note": "TTM operating margin, ending 2026-06-30"
-          },
-          "buyback_ttm_usd": {
-            "value": 8368000000.0,
-            "trend": "flat",
-            "xbrl_tag": "PaymentsForRepurchaseOfCommonStock",
-            "period_days": 365,
-            "note": "TTM common-stock repurchases ending 2026-06-30; buyback yield = this / market cap (divide by the market cap in your bundle)"
-          },
-          "ebitda_ttm_usd": {
-            "value": 23455000000.0,
-            "trend": "flat",
-            "xbrl_tags": "OperatingIncomeLoss + DepreciationAmortizationAndAccretionNet",
-            "period_days": 365,
-            "components": {
-              "ttm_operating_income_usd": 22569000000,
-              "ttm_d_and_a_usd": 886000000.0,
-              "d_and_a_tag": "DepreciationAmortizationAndAccretionNet"
-            },
-            "note": "TTM EBITDA (USD) = TTM operating income 22569000000 + TTM D&A 886000000.0 [DepreciationAmortizationAndAccretionNet], ending 2026-06-30"
-          },
-          "net_debt_to_ebitda": {
-            "value": 0.56,
-            "trend": "flat",
-            "leverage_read": "conservative",
-            "xbrl_tags": "(total_debt - cash) / (OperatingIncomeLoss + D&A) TTM",
-            "period_days": 365,
-            "note": "net debt (total debt 22469000000.0 - cash 9345000000 = 13124000000.0) / TTM EBITDA 23455000000.0 = 0.56x [read=conservative; scale: net_cash / conservative <2x / moderate 2-3x / levered >3x]"
-          },
-          "market_cap_usd": {
-            "value": 361979321502.68555,
-            "trend": "flat",
-            "xbrl_tags": "yfinance close x WeightedAverageNumberOfDilutedSharesOutstanding",
-            "note": "market cap (USD) = GE close 345.73 (2026-07-16) x 1047000000 weighted-avg diluted shares \u2014 approximate vs point-in-time shares outstanding"
-          },
-          "enterprise_value_usd": {
-            "value": 375103321502.68555,
-            "trend": "flat",
-            "xbrl_tags": "market_cap + total_debt - cash",
-            "note": "EV (USD) = market cap 361979321502.69 + total debt 22469000000.0 - cash 9345000000"
-          },
-          "ev_to_ebitda": {
-            "value": 15.99,
-            "trend": "flat",
-            "xbrl_tags": "enterprise_value / (OperatingIncomeLoss + D&A) TTM",
-            "period_days": 365,
-            "note": "EV/EBITDA = 15.99x (EV 375103321502.69 / TTM EBITDA 23455000000.0)"
-          },
-          "buyback_yield_pct": {
-            "value": 2.31,
-            "trend": "flat",
-            "xbrl_tags": "PaymentsForRepurchaseOfCommonStock TTM / market_cap x 100",
-            "note": "buyback yield = TTM repurchases 8368000000.0 / market cap 361979321502.69 = 2.31% (cash returned via buybacks; add dividend yield for total shareholder yield)"
-          }
-        },
-        "omitted": {
-          "gross_margin_pct": "GrossProfit not reported for the latest revenue quarter",
-          "operating_margin_pct": "no single-quarter operating income matching latest revenue quarter",
-          "interest_coverage": "no TTM interest expense reported (may be debt-free)"
-        }
-      }
     }
   },
   "filing_texts": {
@@ -21839,11 +20796,6 @@
         "current_through": "2026-03-31",
         "latest_filing_period": "2026-03-31",
         "stale": false
-      },
-      "GE": {
-        "current_through": "2026-06-30",
-        "latest_filing_period": "2026-06-30",
-        "stale": false
       }
     },
     "stale_tickers": [],
@@ -21866,7 +20818,7 @@
   },
   "news_and_catalysts": {
     "status": "ok",
-    "as_of": "2026-07-18T22:52:02.955286+00:00",
+    "as_of": "2026-07-18T23:51:48.325395+00:00",
     "news_max_age_days": 7,
     "tickers": {
       "NET": {
@@ -21875,7 +20827,7 @@
             "title": "Cloudflare (NET) Gains As Market Dips: What You Should Know",
             "published": "2026-07-17T21:50:06Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/cloudflare-net-gains-market-dips-215006128.html",
-            "age_days": 1.0
+            "age_days": 1.1
           },
           {
             "title": "Jim Cramer Says There Will Always Be Another DeepSeek \u2014 Here Are the 5 Best Cybersecurity Stocks to Own Right Now",
@@ -21899,13 +20851,13 @@
             "title": "Cloudflare (NET) Stock May Be Fully Priced As AI Search News Lifts Hopes",
             "published": "2026-07-16T22:10:02Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/cloudflare-net-stock-may-fully-221002404.html",
-            "age_days": 2.0
+            "age_days": 2.1
           },
           {
             "title": "Oracle Just Cratered 33% in a Month. Is It Time to Switch to Cloudflare or CoreWeave?",
             "published": "2026-07-16T17:04:06Z",
             "url": "https://247wallst.com/investing/2026/07/16/oracle-just-cratered-33-in-a-month-is-it-time-to-switch-to-cloudflare-or-coreweave/",
-            "age_days": 2.2
+            "age_days": 2.3
           }
         ],
         "next_earnings": "2026-08-06",
@@ -21976,13 +20928,13 @@
             "title": "Okta (OKTA) Wins Partner Recognition For Identity Security Push In Cloud And AI",
             "published": "2026-07-16T05:17:02Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/okta-okta-wins-partner-recognition-051702212.html",
-            "age_days": 2.7
+            "age_days": 2.8
           },
           {
             "title": "Okta (OKTA) Stock May Be Fully Priced Following Its 114% Run",
             "published": "2026-07-15T22:10:19Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/okta-okta-stock-may-fully-221019242.html",
-            "age_days": 3.0
+            "age_days": 3.1
           }
         ],
         "next_earnings": "2026-08-25",
@@ -22029,13 +20981,13 @@
             "title": "Stock Market Week Ahead: Navigating Uncertainty",
             "published": "2026-07-18T15:15:50Z",
             "url": "https://www.investors.com/research/investing-action-plan/stock-market-week-ahead-navigating-uncertainty/?src=A00220&yptr=yahoo",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "Palo Alto Networks Stock Has Doubled in 3 Months. Here\u2019s Why the Rally May Be Far From Over.",
             "published": "2026-07-18T14:30:02Z",
             "url": "https://www.barchart.com/story/news/3348947/palo-alto-networks-stock-has-doubled-in-3-months-heres-why-the-rally-may-be-far-from-over",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "What You Actually Pay To Join The CSCO Run",
@@ -22047,7 +20999,7 @@
             "title": "Trump says China obtained 220 million US voter files ahead of 2020 election",
             "published": "2026-07-18T05:51:32Z",
             "url": "https://www.yahoo.com/news/politics/articles/trump-says-china-obtained-220-055132428.html",
-            "age_days": 0.7
+            "age_days": 0.8
           },
           {
             "title": "Jim Cramer Says There Will Always Be Another DeepSeek \u2014 Here Are the 5 Best Cybersecurity Stocks to Own Right Now",
@@ -22106,7 +21058,7 @@
             "title": "3 Cybersecurity Stocks to Buy Amid Rising Adoption of Agentic AI",
             "published": "2026-07-17T15:17:00Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/3-cybersecurity-stocks-buy-amid-151700734.html",
-            "age_days": 1.3
+            "age_days": 1.4
           },
           {
             "title": "Why Inflation Data Just Lit A Fire Under CRWD Stock",
@@ -22118,13 +21070,13 @@
             "title": "Cybersecurity Space is Buzzing on Recent Catalysts: 3 Top Picks",
             "published": "2026-07-15T13:03:00Z",
             "url": "https://finance.yahoo.com/technology/articles/cybersecurity-space-buzzing-recent-catalysts-130300250.html",
-            "age_days": 3.4
+            "age_days": 3.5
           },
           {
             "title": "Dow Jones Futures: Techs Rise, Oil Hits $80 On Iran News, ASML, Morgan Stanley Lead Earnings Movers",
             "published": "2026-07-15T12:05:08Z",
             "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-futures-nasdaq-oil-prices-80-iran-news-asml-morgan-stanley/?src=A00220&yptr=yahoo",
-            "age_days": 3.4
+            "age_days": 3.5
           },
           {
             "title": "Qualys and SentinelOne Shares Are Soaring, What You Need To Know",
@@ -22183,19 +21135,19 @@
             "title": "Salesforce vs. CrowdStrike: Which Technology Growth Stock Is a Better Buy in 2026?",
             "published": "2026-07-18T12:21:01Z",
             "url": "https://www.fool.com/coverage/better-buy/2026/07/18/salesforce-vs-crowdstrike-which-technology-growth-stock-is-a-better-buy-in-2026/",
-            "age_days": 0.4
+            "age_days": 0.5
           },
           {
             "title": "Trump says China obtained 220 million US voter files ahead of 2020 election",
             "published": "2026-07-18T05:51:32Z",
             "url": "https://www.yahoo.com/news/politics/articles/trump-says-china-obtained-220-055132428.html",
-            "age_days": 0.7
+            "age_days": 0.8
           },
           {
             "title": "CrowdStrike vs. NVIDIA: Which Growth Tech Stock Is a Better Buy in 2026, the Cybersecurity Giant or AI Leader?",
             "published": "2026-07-17T21:59:01Z",
             "url": "https://www.fool.com/coverage/better-buy/2026/07/17/crowdstrike-vs-nvidia-which-growth-tech-stock-is-a-better-buy-in-2026-the-cybersecurity-giant-or-ai-leader/",
-            "age_days": 1.0
+            "age_days": 1.1
           },
           {
             "title": "Stocks making big moves this week: HCA Healthcare, UnitedHealth, CrowdStrike, RXO, and Enovis",
@@ -22213,7 +21165,7 @@
             "title": "CrowdStrike Eyes Next Act As AI Security Business Takes Shape",
             "published": "2026-07-17T20:15:22Z",
             "url": "https://www.investors.com/research/the-new-america/crowdstrike-stock-kurtz-artificial-intelligence/?src=A00220&yptr=yahoo",
-            "age_days": 1.1
+            "age_days": 1.2
           }
         ],
         "next_earnings": "2026-09-01",
@@ -22272,7 +21224,7 @@
             "title": "Zscaler (ZS) Stock Slides as Market Rises: Facts to Know Before You Trade",
             "published": "2026-07-15T21:45:04Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/zscaler-zs-stock-slides-market-214504340.html",
-            "age_days": 3.0
+            "age_days": 3.1
           },
           {
             "title": "Why Inflation Data Just Lit A Fire Under CRWD Stock",
@@ -22290,7 +21242,7 @@
             "title": "Fortinet's AI Surge Is Impressive. Is Microsoft Stock The Smarter Way In?",
             "published": "2026-07-15T12:30:40Z",
             "url": "https://www.trefis.com/articles/607312/fortinets-ai-surge-is-impressive-is-microsoft-stock-the-smarter-way-in/2026-07-15",
-            "age_days": 3.4
+            "age_days": 3.5
           }
         ],
         "next_earnings": "2026-05-26",
@@ -22349,25 +21301,25 @@
             "title": "Axon Enterprise (AXON) Registers a Bigger Fall Than the Market: Important Facts to Note",
             "published": "2026-07-13T22:00:06Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/axon-enterprise-axon-registers-bigger-220006439.html",
-            "age_days": 5.0
+            "age_days": 5.1
           },
           {
             "title": "Axon Enterprise's Quarterly Earnings Preview: What You Need to Know",
             "published": "2026-07-13T15:03:21Z",
             "url": "https://www.barchart.com/story/news/3255526/axon-enterprise-s-quarterly-earnings-preview-what-you-need-to-know",
-            "age_days": 5.3
+            "age_days": 5.4
           },
           {
             "title": "How AppLovin (APP) Is Using AI to Expand Beyond Mobile Gaming Into E-Commerce Advertising",
             "published": "2026-07-12T17:25:26Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/applovin-nasdaq-app-using-ai-122026029.html",
-            "age_days": 6.2
+            "age_days": 6.3
           },
           {
             "title": "Coinbase, Lyft, and Axon prove there's more going on in markets than the 'Magnificent 7'",
             "published": "2026-07-12T12:30:00Z",
             "url": "https://finance.yahoo.com/markets/article/coinbase-lyft-and-axon-prove-theres-more-going-on-in-markets-than-the-magnificent-7-123000539.html",
-            "age_days": 6.4
+            "age_days": 6.5
           }
         ],
         "next_earnings": "2026-08-03",
@@ -22414,7 +21366,7 @@
             "title": "Adobe vs. Autodesk: What Revenue Trends Reveal About These Software Stocks",
             "published": "2026-07-17T17:48:01Z",
             "url": "https://www.fool.com/coverage/charts/2026/07/17/adobe-vs-autodesk-what-revenue-trends-reveal-about-these-software-stocks/",
-            "age_days": 1.2
+            "age_days": 1.3
           },
           {
             "title": "How to Find the Bargains in the Software Stock Wreckage",
@@ -22426,7 +21378,7 @@
             "title": "IBM 'did not adapt' and just lost $70B \u2014 is Big Tech (and your portfolio) in trouble? Protect your nest egg now",
             "published": "2026-07-17T12:05:00Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/ibm-did-not-adapt-just-120500686.html",
-            "age_days": 1.4
+            "age_days": 1.5
           },
           {
             "title": "Price Prediction: Figma Will End The Year at This Price",
@@ -22438,13 +21390,13 @@
             "title": "For Autodesk Stock, Patience Is the Real Catalyst",
             "published": "2026-07-16T12:48:50Z",
             "url": "https://www.trefis.com/articles/607502/for-autodesk-stock-patience-is-the-real-catalyst/2026-07-16",
-            "age_days": 2.4
+            "age_days": 2.5
           },
           {
             "title": "E-Commerce Update - AI Transforming Digital Retail Through Innovation and Connectivity",
             "published": "2026-07-16T12:38:04Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/e-commerce-ai-transforming-digital-123804182.html",
-            "age_days": 2.4
+            "age_days": 2.5
           }
         ],
         "next_earnings": "2026-09-10",
@@ -22491,7 +21443,7 @@
             "title": "Top Reason NuScale Power Is Worth Buying Right Now",
             "published": "2026-07-18T14:35:00Z",
             "url": "https://www.fool.com/investing/2026/07/18/top-reason-nuscale-power-is-worth-buying-right-now/",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "NuScale Power (SMR) Faces More Cautious Sentiment, Is 92% Undervalued Enough?",
@@ -22509,7 +21461,7 @@
             "title": "OKLO, XE, SMR, NNE, UEC Stocks Tumble On Thursday: AI Made Nuclear Stocks Market Darlings \u2013 Now Investors Want Proof",
             "published": "2026-07-17T05:40:27Z",
             "url": "https://stocktwits.com/news-articles/markets/equity/why-did-oklo-xe-smr-nne-uec-stocks-tumble-on-thursday/cZZ74pnR7ta",
-            "age_days": 1.7
+            "age_days": 1.8
           },
           {
             "title": "Why Did IBM, ORCL, SMR Stocks Drop To 52-Week Lows Today?",
@@ -22521,7 +21473,7 @@
             "title": "Oklo Just Dropped 28% in a Month. Is It Time to Abandon Nuclear Stocks Like OKLO, NuScale, and Uranium Energy Corp.?",
             "published": "2026-07-16T19:38:23Z",
             "url": "https://247wallst.com/investing/2026/07/16/oklo-just-dropped-28-in-a-month-is-it-time-to-abandon-nuclear-stocks-like-oklo-nuscale-and-uranium-energy-corp/",
-            "age_days": 2.1
+            "age_days": 2.2
           }
         ],
         "next_earnings": "2026-08-05",
@@ -22574,13 +21526,13 @@
             "title": "J&J Stock Falls Despite Strong Q2 Beat & Higher 2026 View: Here's Why",
             "published": "2026-07-17T14:31:00Z",
             "url": "https://finance.yahoo.com/healthcare/articles/j-j-stock-falls-despite-143100713.html",
-            "age_days": 1.3
+            "age_days": 1.4
           },
           {
             "title": "Can Abbott Stock Deliver on Its Second-Half Growth Promise?",
             "published": "2026-07-17T12:17:34Z",
             "url": "https://www.trefis.com/articles/607713/can-abbott-stock-deliver-on-its-second-half-growth-promise/2026-07-17",
-            "age_days": 1.4
+            "age_days": 1.5
           },
           {
             "title": "Why Abbott Stock Is Reimagining Its Future",
@@ -22592,13 +21544,13 @@
             "title": "Why Did SPCX, IBM, BSX Drop To 52-Week Lows Today?",
             "published": "2026-07-16T03:06:57Z",
             "url": "https://stocktwits.com/news-articles/markets/equity/why-did-spcx-ibm-bsx-drop-to-52-week-lows-today/cZZ3D18R7rn",
-            "age_days": 2.8
+            "age_days": 2.9
           },
           {
             "title": "Boston Scientific (BSX): Buy, Sell, or Hold Post Q1 Earnings?",
             "published": "2026-07-15T15:01:17Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/boston-scientific-bsx-buy-sell-150117867.html",
-            "age_days": 3.3
+            "age_days": 3.4
           }
         ],
         "next_earnings": "2026-07-29",
@@ -22675,7 +21627,7 @@
             "title": "China AI Fears, Netflix Earnings Sink Stocks: Stock Market Today",
             "published": "2026-07-17T20:08:00Z",
             "url": "https://www.kiplinger.com/investing/stocks/china-ai-fears-netflix-earnings-sink-stocks-stock-market-today",
-            "age_days": 1.1
+            "age_days": 1.2
           }
         ],
         "next_earnings": "2026-10-15",
@@ -22799,13 +21751,13 @@
             "title": "The Portfolio That Lets You Cruise Through the News, Unbothered",
             "published": "2026-07-18T13:00:47Z",
             "url": "https://247wallst.com/personal-finance/2026/07/18/the-portfolio-that-lets-you-cruise-through-the-news-unbothered/",
-            "age_days": 0.4
+            "age_days": 0.5
           },
           {
             "title": "Can NRG's Expanding Generation Fleet Drive Long-Term Growth?",
             "published": "2026-07-17T17:16:00Z",
             "url": "https://finance.yahoo.com/energy/articles/nrgs-expanding-generation-fleet-drive-171600036.html",
-            "age_days": 1.2
+            "age_days": 1.3
           },
           {
             "title": "Can a Conservative Portfolio Really Generate $4,000 a Month in Retirement Income?",
@@ -22823,13 +21775,13 @@
             "title": "4 Utility Electric Power Stocks to Buy Amid Industry Headwinds",
             "published": "2026-07-17T15:08:00Z",
             "url": "https://finance.yahoo.com/energy/articles/4-utility-electric-power-stocks-150800385.html",
-            "age_days": 1.3
+            "age_days": 1.4
           },
           {
             "title": "Can Increased Capital Investments Boost VST Stock's Performance?",
             "published": "2026-07-16T14:39:00Z",
             "url": "https://finance.yahoo.com/energy/articles/increased-capital-investments-boost-vst-143900572.html",
-            "age_days": 2.3
+            "age_days": 2.4
           }
         ],
         "next_earnings": "2026-08-04",
@@ -22882,19 +21834,19 @@
             "title": "Southern Copper (SCCO) Suffers a Larger Drop Than the General Market: Key Insights",
             "published": "2026-07-16T21:50:03Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/southern-copper-scco-suffers-larger-215003663.html",
-            "age_days": 2.0
+            "age_days": 2.1
           },
           {
             "title": "Investors Heavily Search Southern Copper Corporation (SCCO): Here is What You Need to Know",
             "published": "2026-07-16T13:00:03Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/investors-heavily-search-southern-copper-130003941.html",
-            "age_days": 2.4
+            "age_days": 2.5
           },
           {
             "title": "Here's Why You Should Retain Reliance Stock in Your Portfolio",
             "published": "2026-07-14T12:27:00Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/heres-why-retain-reliance-stock-122700746.html",
-            "age_days": 4.4
+            "age_days": 4.5
           },
           {
             "title": "CF Industries Boosts Shareholder Returns With 20% Dividend Hike",
@@ -22942,83 +21894,6 @@
               "eps_actual": 1.92,
               "eps_estimate": 1.81,
               "surprise_pct": 6.2
-            }
-          ],
-          "beat_streak": 4
-        }
-      },
-      "GE": {
-        "headlines": [
-          {
-            "title": "Dow Jones Futures: Iran Attack Kills Two U.S. Troops; Google, Tesla, AMD Ahead",
-            "published": "2026-07-18T19:41:18Z",
-            "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-futures-iran-attack-kills-us-troops-google-tesla-amd/?src=A00220&yptr=yahoo",
-            "age_days": 0.1
-          },
-          {
-            "title": "If Volatility Stays Low, Here\u2019s What Happens to DIVO\u2019s Monthly Income",
-            "published": "2026-07-18T00:10:56Z",
-            "url": "https://247wallst.com/investing/etf/2026/07/17/if-volatility-stays-low-heres-what-happens-to-divos-monthly-income/",
-            "age_days": 0.9
-          },
-          {
-            "title": "S&P 500, Nasdaq Slide Sharply As Netflix Guidance Disappoints And Chip Stocks Extend Losses \u2014 NFLX, GE, META, AAPL, SPCX In Focus",
-            "published": "2026-07-17T21:53:42Z",
-            "url": "https://stocktwits.com/news-articles/markets/equity/s-and-p-500-nasdaq-slide-sharply-as-netflix-guidance-disappoints-and-chip-stocks-extend-losses-nflx-ge-meta-aapl-spcx-in-focus/cZZ7vo1R7MX",
-            "age_days": 1.0
-          },
-          {
-            "title": "Jim Cramer Says the Market Is \u201cDead Wrong\u201d About These 5 Oversold Stocks",
-            "published": "2026-07-17T21:14:24Z",
-            "url": "https://247wallst.com/investing/2026/07/17/jim-cramer-says-the-market-is-dead-wrong-about-these-5-oversold-stocks/",
-            "age_days": 1.1
-          },
-          {
-            "title": "HONA Growth Trends Ride Aerospace Demand and Aftermarket Shift",
-            "published": "2026-07-17T18:23:00Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/hona-growth-trends-ride-aerospace-182300189.html",
-            "age_days": 1.2
-          },
-          {
-            "title": "Is Honeywell Aerospace Stock Fairly Valued After Spinoff?",
-            "published": "2026-07-17T18:22:00Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/honeywell-aerospace-stock-fairly-valued-182200090.html",
-            "age_days": 1.2
-          }
-        ],
-        "next_earnings": "2026-07-16",
-        "analyst_ratings": {
-          "recommendation_key": "strong_buy",
-          "recommendation_mean": 1.45455,
-          "n_analysts": 21,
-          "target_mean_price": 397.85715,
-          "target_vs_price_pct": 14.1
-        },
-        "earnings_surprises": {
-          "quarters": [
-            {
-              "period": "2025-09-30",
-              "eps_actual": 1.66,
-              "eps_estimate": 1.47,
-              "surprise_pct": 13.0
-            },
-            {
-              "period": "2025-12-31",
-              "eps_actual": 1.57,
-              "eps_estimate": 1.43,
-              "surprise_pct": 9.8
-            },
-            {
-              "period": "2026-03-31",
-              "eps_actual": 1.86,
-              "eps_estimate": 1.6,
-              "surprise_pct": 16.3
-            },
-            {
-              "period": "2026-06-30",
-              "eps_actual": 2.02,
-              "eps_estimate": 1.86,
-              "surprise_pct": 8.6
             }
           ],
           "beat_streak": 4
@@ -25125,24 +24000,6 @@
           "plan_10b5_1_trades": 0,
           "institutional_entity_trades": 0
         }
-      },
-      "GE": {
-        "transactions": [],
-        "summary": {
-          "signal": "no_open_market_activity",
-          "window_days": 120,
-          "filings_unfetched": 0,
-          "open_market_buys": 0,
-          "open_market_sells": 0,
-          "buy_notional_usd": 0,
-          "sell_notional_usd": 0,
-          "discretionary_officer_dir_buys": 0,
-          "discretionary_officer_dir_sells": 0,
-          "distinct_discretionary_buyers": 0,
-          "plan_10b5_1_trades": 0,
-          "institutional_entity_trades": 0
-        },
-        "new_insider_form3_filings": 1
       }
     },
     "by_ticker": {
@@ -25425,26 +24282,6 @@
           "institutional_entity_trades": 0
         },
         "error": null
-      },
-      "GE": {
-        "signal": "no_open_market_activity",
-        "distinct_discretionary_buyers": 0,
-        "new_insider_form3_filings": 1,
-        "summary": {
-          "signal": "no_open_market_activity",
-          "window_days": 120,
-          "filings_unfetched": 0,
-          "open_market_buys": 0,
-          "open_market_sells": 0,
-          "buy_notional_usd": 0,
-          "sell_notional_usd": 0,
-          "discretionary_officer_dir_buys": 0,
-          "discretionary_officer_dir_sells": 0,
-          "distinct_discretionary_buyers": 0,
-          "plan_10b5_1_trades": 0,
-          "institutional_entity_trades": 0
-        },
-        "error": null
       }
     }
   },
@@ -25464,8 +24301,7 @@
       "TRV",
       "SNOW",
       "DUK",
-      "SCCO",
-      "GE"
+      "SCCO"
     ],
     "note": "13F data is ~45 days stale - conviction/positioning ONLY, never timing. Signal is QUARTER-OVER-QUARTER activity: by_ticker[T].net_activity says whether the 9 tracked elite funds were net BUYING or SELLING the name last quarter; notable_increases/decreases name the biggest dollar moves; holdings lists each manager's move. Matched by CUSIP when a map is supplied, else strict issuer-name match. no_tracked_activity just means none of these 9 hold the name - NOT bearish.",
     "managers_fetched": 9,
@@ -25666,20 +24502,6 @@
         "net_activity": "no_tracked_activity",
         "notable_increases": [],
         "notable_decreases": []
-      },
-      "GE": {
-        "ticker": "GE",
-        "managers_new": 0,
-        "managers_added": 0,
-        "managers_held": 0,
-        "managers_trimmed": 0,
-        "managers_exited": 0,
-        "net_share_delta": 0,
-        "net_value_delta_usd": 0,
-        "matched_by": null,
-        "net_activity": "no_tracked_activity",
-        "notable_increases": [],
-        "notable_decreases": []
       }
     },
     "holdings": [],
@@ -25702,8 +24524,7 @@
       "TRV",
       "SNOW",
       "DUK",
-      "SCCO",
-      "GE"
+      "SCCO"
     ],
     "by_ticker": {
       "NET": {
@@ -26961,96 +25782,6 @@
             "institutional_stance": "distributing",
             "retail_proxy_label": "mild_activity",
             "price_lean": "falling",
-            "thirteen_f_net": "no_tracked_activity",
-            "tape_lean": "neutral_or_unknown"
-          }
-        }
-      },
-      "GE": {
-        "ticker": "GE",
-        "institutional": {
-          "stance": "sparse",
-          "score_hint": 0,
-          "thirteen_f": {
-            "net_activity": "no_tracked_activity",
-            "managers_new": 0,
-            "managers_added": 0,
-            "managers_trimmed": 0,
-            "managers_exited": 0,
-            "net_share_delta": 0,
-            "net_value_delta_usd": 0,
-            "notable_funds": [],
-            "lag_note": "13F ~45 days stale \u2014 conviction only, never timing"
-          },
-          "ownership": {
-            "held_pct_institutions": 81.38,
-            "held_pct_insiders": 0.3,
-            "short_interest": {
-              "shares_short": 12927498,
-              "short_pct_float": 1.24,
-              "days_to_cover": 2.49,
-              "shares_short_prior_month": 13826768,
-              "month_over_month": "falling"
-            },
-            "source": "yfinance_info"
-          },
-          "tape_sponsorship": {
-            "volume_read": "neutral",
-            "lean": "neutral_or_unknown",
-            "pocket_pivot": false,
-            "breakout_volume_confirmed": null,
-            "cmf_20": -0.033,
-            "updown_vol_ratio_25d": 2.95,
-            "obv_divergence": "none",
-            "rvol": 1.12,
-            "cmf_positive": false,
-            "up_day_volume_dominates": true
-          }
-        },
-        "retail_proxy": {
-          "label": "elevated_hedging_or_fear",
-          "heat_score": 2,
-          "caveat": "Proxy only \u2014 free options have no buy/sell side; elevated call volume can be covered-call writing. Not a retail flow feed.",
-          "options": {
-            "status": "ok",
-            "put_call_volume_ratio": 1.29,
-            "put_call_oi_ratio": 3.73,
-            "net_tilt": "lean_bearish",
-            "has_unusual_strikes": true,
-            "n_unusual_strikes": 1,
-            "atm_iv_pct": 37.6,
-            "expected_move_pct": 5.31
-          },
-          "unsponsored_volume_heat": false,
-          "rvol": 1.12
-        },
-        "price_action": {
-          "last_close": 348.8299865722656,
-          "return_1d_pct": null,
-          "return_5d_pct": -2.91,
-          "return_1m_pct": -0.7,
-          "return_3m_pct": 17.09,
-          "rel_strength_1m_pct": null,
-          "rel_strength_3m_pct": null,
-          "above_50dma": null,
-          "above_200dma": null,
-          "pullback_from_20d_high_pct": null,
-          "pct_from_52w_high": -8.8,
-          "structure": "base",
-          "lean": "flat",
-          "rsi_14": null,
-          "macd_state": null
-        },
-        "alignment": "retail_hot_institutions_quiet",
-        "read_for_swing": "Speculative/options heat without clear institutional sponsorship \u2014 FOMO risk is elevated; need a stronger fundamental or structure case.",
-        "synthesis": {
-          "alignment": "retail_hot_institutions_quiet",
-          "read_for_swing": "Speculative/options heat without clear institutional sponsorship \u2014 FOMO risk is elevated; need a stronger fundamental or structure case.",
-          "structure": "base",
-          "components": {
-            "institutional_stance": "sparse",
-            "retail_proxy_label": "elevated_hedging_or_fear",
-            "price_lean": "flat",
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "neutral_or_unknown"
           }
@@ -28535,121 +27266,6 @@
           },
           "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
         }
-      },
-      "GE": {
-        "status": "ok",
-        "expiry": "2026-07-31",
-        "days_to_expiry": 13,
-        "spot": 348.83,
-        "expected_move_pct": 5.31,
-        "atm_iv_pct": 37.6,
-        "put_call_volume_ratio": 1.29,
-        "put_call_oi_ratio": 3.73,
-        "call_volume": 1804,
-        "put_volume": 2334,
-        "call_open_interest": 2691,
-        "put_open_interest": 10046,
-        "iv_skew_pct": 3.5,
-        "skew_read": "puts_bid_over_calls (downside protection in demand)",
-        "unusual_strikes": [
-          {
-            "type": "call",
-            "strike": 365.0,
-            "volume": 1123,
-            "open_interest": 139,
-            "pct_from_spot": 4.6
-          }
-        ],
-        "iv_rank": {
-          "status": "warming_up",
-          "n_samples": 1,
-          "atm_iv_pct": 37.6,
-          "note": "Need \u22655 daily IV samples for percentile (have 1). Builds automatically as runs accumulate."
-        },
-        "term_structure": {
-          "status": "ok",
-          "front_atm_iv_pct": 37.6,
-          "back_atm_iv_pct": 34.6,
-          "front_days": 13,
-          "back_days": 34,
-          "front_minus_back_pp": 3.0,
-          "shape": "mild_backwardation",
-          "tilt": "event_front",
-          "note": "Front richer than back by 3pp \u2014 some near-term event pricing.",
-          "back_expiry": "2026-08-21"
-        },
-        "oi_change": {
-          "status": "ok",
-          "prior_date": "2026-07-16",
-          "call_oi": 2691,
-          "put_oi": 10046,
-          "call_oi_change": -358,
-          "put_oi_change": -414,
-          "total_oi_change": -772,
-          "notes": [
-            "OI roughly stable vs prior sample."
-          ],
-          "note": "OI change is positioning change, not aggressor side. Rising put OI can be new hedges by longs; rising call OI can be new longs or covered writes."
-        },
-        "swing_options_read": {
-          "status": "ok",
-          "net_tilt": "lean_bearish",
-          "direction_confidence": "low",
-          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
-          "bullish_tilts": [
-            {
-              "source": "unusual_strikes",
-              "tilt": "call_heat",
-              "note": "Near ATM/slightly OTM call heat at $365.0 (+5%) \u2014 upside magnet zone IF flow is buying (unknown)."
-            }
-          ],
-          "bearish_tilts": [
-            {
-              "source": "put_call_volume",
-              "regime": "put_lean",
-              "tilt": "cautious",
-              "note": "P/C vol 1.29: mild put lean \u2014 caution, not panic."
-            },
-            {
-              "source": "iv_skew",
-              "regime": "put_skew",
-              "tilt": "cautious",
-              "note": "Mild put skew (+3.5pp): modest demand for downside protection."
-            },
-            {
-              "source": "term_structure",
-              "tilt": "mild_backwardation",
-              "note": "Front richer than back by 3pp \u2014 some near-term event pricing."
-            }
-          ],
-          "neutral_notes": [
-            {
-              "source": "iv_level",
-              "tilt": "neutral",
-              "note": "ATM IV ~38% moderate. Nearest-expiry expected move \u00b15.3% \u2014 stops inside this band are noise for that window."
-            },
-            {
-              "source": "oi_change",
-              "tilt": "positioning",
-              "note": "OI roughly stable vs prior sample."
-            }
-          ],
-          "for_stop_engineering": {
-            "expected_move_pct": 5.31,
-            "atm_iv_pct": 37.6,
-            "expiry": "2026-07-31",
-            "days_to_expiry": 13,
-            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
-          },
-          "swing_playbook": {
-            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
-            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
-            "if_mixed": "Default to price + fundamentals. Options are not voting.",
-            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself.",
-            "term_structure": "Front richer than back by 3pp \u2014 some near-term event pricing."
-          },
-          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
-        }
       }
     }
   },
@@ -28879,17 +27495,13 @@
           }
         ],
         "partnership_headlines": []
-      },
-      "GE": {
-        "material_agreement_8ks": [],
-        "partnership_headlines": []
       }
     }
   },
   "guidance_ledger": {},
   "fundamental_screen": {
     "as_of": "2026-07-18T12:57:10.629386+00:00",
-    "age_hours": 9.9,
+    "age_hours": 10.9,
     "names_covered": 182,
     "note": "Full-universe estimate screen, refreshed pre-market (6am/9am ET, gated on true America/New_York time). top_upward_revisions = fundamental inflections regardless of price - candidates the momentum funnel may not surface. estimate_changes_since_previous = what moved THIS MORNING (earnings/guidance). Each row may carry revision_direction (up/down/flat), eps_growth_next_yr_pct (forward EPS growth), and eps_estimate_current_yr / eps_estimate_next_yr (current/next fiscal-year EPS estimates - the scanner's fwd_pe_est divides last close by the current-year figure) - judge a multiple against growth, not news tone.",
     "top_upward_revisions": [
@@ -29102,7 +27714,7 @@
   "todays_8ks": {
     "note": "8-K filings TODAY across the ENTIRE universe (one EDGAR index sweep). An 8-K on a non-focus name may be the day's real opportunity - pull the filing with WebFetch if the form looks material before dismissing it.",
     "status": "ok",
-    "as_of": "2026-07-18T22:50:52.512708+00:00",
+    "as_of": "2026-07-18T23:50:50.658552+00:00",
     "index_date": "2026-07-17",
     "filers": [
       {
@@ -29126,44 +27738,6 @@
         "url": "https://www.sec.gov/Archives/edgar/data/86312/0000086312-26-000143.txt"
       }
     ]
-  },
-  "portfolio_risk": {
-    "note": "No holdings with usable price history to assess correlation.",
-    "status": "ok",
-    "window_days": 90,
-    "benchmark": "SPY",
-    "portfolio_beta": null,
-    "avg_pairwise_holding_corr": null,
-    "shared_left_tail": false,
-    "pairwise": {},
-    "holdings": {},
-    "candidates": {
-      "NET": {
-        "corr_to_book": null,
-        "beta": 0.96,
-        "diversifier": false
-      },
-      "OKTA": {
-        "corr_to_book": null,
-        "beta": 1.09,
-        "diversifier": false
-      },
-      "PANW": {
-        "corr_to_book": null,
-        "beta": 1.2,
-        "diversifier": false
-      },
-      "S": {
-        "corr_to_book": null,
-        "beta": 0.96,
-        "diversifier": false
-      },
-      "CRWD": {
-        "corr_to_book": null,
-        "beta": 1.1,
-        "diversifier": false
-      }
-    }
   },
   "stack_cards": {
     "note": "Supply-chain differential cards for THIS run's focus set. Answer differential_question in thesis when proposing a BUY.",
@@ -29397,24 +27971,9 @@
         "differential_question": "What is the mispriced mechanism vs consensus this cycle?",
         "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "driver_template"
-      },
-      "GE": {
-        "ticker": "GE",
-        "sector": "broad_market_leaders",
-        "demand_driver": "broad_market",
-        "layer": "unspecified (broad_market)",
-        "typical_customers": [
-          "see filings / 10-K customer discussion"
-        ],
-        "peer_substitutes": [
-          "same-sector peers"
-        ],
-        "differential_question": "What is the mispriced mechanism vs consensus this cycle?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
-        "source": "driver_template"
       }
     },
-    "n": 15
+    "n": 14
   },
   "financial_checklists": {
     "note": "Per-focus-name financial-line checklists by business model. Use the weight line: different models, different scoreboards.",
@@ -29960,52 +28519,6 @@
         "ticker": "SCCO",
         "demand_driver": "materials",
         "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
-      },
-      "GE": {
-        "model_type": "mature_compounder",
-        "label": "Quality compounder / broad-market leader (default quality screen)",
-        "weight": "FCF, ROIC-style quality, growth durability, balance sheet, valuation vs history.",
-        "lines": [
-          {
-            "line": "free_cash_flow",
-            "why": "Compounders buy back stock and fund growth from ops.",
-            "good_looks_like": "Consistent positive FCF; FCF margin healthy.",
-            "red_flag": "FCF collapse or chronic miss."
-          },
-          {
-            "line": "revenue_and_earnings_growth",
-            "why": "Need growth to support the multiple.",
-            "good_looks_like": "Steady mid-to-high single digit or better with stability.",
-            "red_flag": "Stagnation at a growth multiple."
-          },
-          {
-            "line": "balance_sheet",
-            "why": "Net debt / leverage must be sane.",
-            "good_looks_like": "Net cash or modest net debt / EBITDA.",
-            "red_flag": "Leverage spike without earnings power."
-          },
-          {
-            "line": "margins",
-            "why": "Moat shows up in margins.",
-            "good_looks_like": "Stable/expanding.",
-            "red_flag": "Structural margin decay."
-          },
-          {
-            "line": "valuation_vs_history_and_growth",
-            "why": "Quality is not always cheap.",
-            "good_looks_like": "Multiple reasonable vs growth and history.",
-            "red_flag": "Top-decile multiple with slowing growth."
-          },
-          {
-            "line": "estimate_direction",
-            "why": "Revisions drive near-term swings.",
-            "good_looks_like": "Flat to up.",
-            "red_flag": "Cuts into elevated expectations."
-          }
-        ],
-        "ticker": "GE",
-        "demand_driver": "broad_market",
-        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
       }
     },
     "models_present": [
@@ -30016,7 +28529,7 @@
       "mature_compounder",
       "software_saas"
     ],
-    "n": 15
+    "n": 14
   },
   "concept_memory": {
     "note": "Durable concept memory for focus names \u2014 what they do, how to score them, and lessons appended from research/exits/shadows. Prefer this over reinventing the business each run; update via new lessons only.",
@@ -30053,7 +28566,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T22:56:27.616725+00:00"
+        "updated_at": "2026-07-18T23:55:34.806302+00:00"
       },
       "OKTA": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -30087,7 +28600,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T22:56:27.617537+00:00"
+        "updated_at": "2026-07-18T23:55:34.806724+00:00"
       },
       "PANW": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -30121,7 +28634,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T22:56:27.617964+00:00"
+        "updated_at": "2026-07-18T23:55:34.806994+00:00"
       },
       "S": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -30155,7 +28668,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T22:56:27.618334+00:00"
+        "updated_at": "2026-07-18T23:55:34.807241+00:00"
       },
       "CRWD": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -30189,7 +28702,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T22:56:27.618684+00:00"
+        "updated_at": "2026-07-18T23:55:34.807498+00:00"
       },
       "ZS": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -30223,7 +28736,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T22:56:27.619080+00:00"
+        "updated_at": "2026-07-18T23:55:34.807752+00:00"
       },
       "AXON": {
         "what_they_do": "Operates in: unspecified (broad_market)",
@@ -30261,7 +28774,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T22:56:27.619401+00:00"
+        "updated_at": "2026-07-18T23:55:34.807996+00:00"
       },
       "ADBE": {
         "what_they_do": "Operates in: Enterprise / AI software platforms",
@@ -30295,7 +28808,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T22:56:27.619838+00:00"
+        "updated_at": "2026-07-18T23:55:34.808334+00:00"
       },
       "SMR": {
         "what_they_do": "Operates in: Power generation / power equipment for data centers",
@@ -30325,7 +28838,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T22:56:27.620163+00:00"
+        "updated_at": "2026-07-18T23:55:34.808575+00:00"
       },
       "BSX": {
         "what_they_do": "Operates in: unspecified (healthcare)",
@@ -30355,7 +28868,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T22:56:27.620832+00:00"
+        "updated_at": "2026-07-18T23:55:34.808818+00:00"
       },
       "TRV": {
         "what_they_do": "Operates in: unspecified (financials)",
@@ -30389,7 +28902,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T22:56:27.621577+00:00"
+        "updated_at": "2026-07-18T23:55:34.809059+00:00"
       },
       "SNOW": {
         "what_they_do": "Operates in: Enterprise / AI software platforms",
@@ -30423,7 +28936,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T22:56:27.622083+00:00"
+        "updated_at": "2026-07-18T23:55:34.809319+00:00"
       },
       "DUK": {
         "what_they_do": "Operates in: unspecified (energy)",
@@ -30453,7 +28966,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T22:56:27.622416+00:00"
+        "updated_at": "2026-07-18T23:55:34.809560+00:00"
       },
       "SCCO": {
         "what_they_do": "Operates in: unspecified (materials)",
@@ -30483,48 +28996,10 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T22:56:27.622812+00:00"
-      },
-      "GE": {
-        "what_they_do": "Operates in: unspecified (broad_market)",
-        "unit_economics": null,
-        "business_model_type": "mature_compounder",
-        "demand_driver": "broad_market",
-        "financial_weight": "FCF, ROIC-style quality, growth durability, balance sheet, valuation vs history.",
-        "what_moves_stock": [
-          "What is the mispriced mechanism vs consensus this cycle?"
-        ],
-        "key_financial_lines": [
-          {
-            "line": "free_cash_flow",
-            "red_flag": "FCF collapse or chronic miss."
-          },
-          {
-            "line": "revenue_and_earnings_growth",
-            "red_flag": "Stagnation at a growth multiple."
-          },
-          {
-            "line": "balance_sheet",
-            "red_flag": "Leverage spike without earnings power."
-          },
-          {
-            "line": "margins",
-            "red_flag": "Structural margin decay."
-          },
-          {
-            "line": "valuation_vs_history_and_growth",
-            "red_flag": "Top-decile multiple with slowing growth."
-          },
-          {
-            "line": "estimate_direction",
-            "red_flag": "Cuts into elevated expectations."
-          }
-        ],
-        "recent_lessons": [],
-        "updated_at": "2026-07-18T22:56:27.623112+00:00"
+        "updated_at": "2026-07-18T23:55:34.809800+00:00"
       }
     },
-    "n": 15
+    "n": 14
   },
   "discovery_screen": {
     "status": "skipped"
@@ -30555,9 +29030,12 @@
         {
           "id": "book",
           "title": "Portfolio / book review",
-          "must": "Re-underwrite every open position with fresh research: HOLD or SELL_TO_CLOSE. Thesis broken = exit. Cash test: if remaining expected return no longer clearly beats cash yield, rotate. Honor stops, stall flags, and forced-exit aftermath.",
+          "must": "Re-underwrite every open position: thesis broken = exit. Then PORTFOLIO COMPETITION \u2014 each seat must beat the next best idea (portfolio_competition.seats challengers + competition_hint); emit seat_reviews keep|trim|swap|reduce|sell. Then FACTOR MAP \u2014 read concentration_level, what_kills_the_book, unwind_playbook; when requires_factor_response, emit factor_response. Cash test + theme_exposure + portfolio_risk. Honor stops and exit lessons.",
           "context_keys": [
             "portfolio",
+            "portfolio_competition",
+            "factor_map",
+            "portfolio_risk",
             "position_stop_cushion",
             "forced_exits",
             "exit_lessons"
@@ -30611,9 +29089,9 @@
     "theme_concentration_cap_pct": 0.35,
     "price_freshness": {
       "bundle_as_of_et": "2026-07-18",
-      "bundle_run_utc": "2026-07-18T22:56:27.599385+00:00",
+      "bundle_run_utc": "2026-07-18T23:55:34.789428+00:00",
       "note": "Prefer universe_scan.prices_meta[T].price_as_of (bar session date) over bundle age alone. On catalyst days, verify live before chasing a trigger on a lagging close.",
-      "scan_fetched_at_utc": "2026-07-18T22:50:50.821066+00:00",
+      "scan_fetched_at_utc": "2026-07-18T23:50:49.247589+00:00",
       "prices_meta_sample": {
         "NET": {
           "last_close": 277.66,
@@ -30842,9 +29320,12 @@
           {
             "id": "book",
             "title": "Portfolio / book review",
-            "must": "Re-underwrite every open position with fresh research: HOLD or SELL_TO_CLOSE. Thesis broken = exit. Cash test: if remaining expected return no longer clearly beats cash yield, rotate. Honor stops, stall flags, and forced-exit aftermath.",
+            "must": "Re-underwrite every open position: thesis broken = exit. Then PORTFOLIO COMPETITION \u2014 each seat must beat the next best idea (portfolio_competition.seats challengers + competition_hint); emit seat_reviews keep|trim|swap|reduce|sell. Then FACTOR MAP \u2014 read concentration_level, what_kills_the_book, unwind_playbook; when requires_factor_response, emit factor_response. Cash test + theme_exposure + portfolio_risk. Honor stops and exit lessons.",
             "context_keys": [
               "portfolio",
+              "portfolio_competition",
+              "factor_map",
+              "portfolio_risk",
               "position_stop_cushion",
               "forced_exits",
               "exit_lessons"
@@ -31020,9 +29501,9 @@
       "theme_concentration_cap_pct": 0.35,
       "price_freshness": {
         "bundle_as_of_et": "2026-07-18",
-        "bundle_run_utc": "2026-07-18T22:56:27.599385+00:00",
+        "bundle_run_utc": "2026-07-18T23:55:34.789428+00:00",
         "note": "Prefer universe_scan.prices_meta[T].price_as_of (bar session date) over bundle age alone. On catalyst days, verify live before chasing a trigger on a lagging close.",
-        "scan_fetched_at_utc": "2026-07-18T22:50:50.821066+00:00",
+        "scan_fetched_at_utc": "2026-07-18T23:50:49.247589+00:00",
         "prices_meta_sample": {
           "NET": {
             "last_close": 277.66,
@@ -31090,23 +29571,22 @@
       },
       "demand_driver_map_note": "Primary economic bet per ticker (not GICS). Use these labels in proposal.demand_driver. Theme cap is separate from sector cap.",
       "demand_driver_map_focus": {
+        "DUK": "energy",
+        "SNOW": "software_platforms",
+        "PANW": "cybersecurity",
+        "SMR": "datacenter_power",
+        "SCCO": "materials",
+        "CRWD": "cybersecurity",
         "ZS": "cybersecurity",
         "ADBE": "software_platforms",
-        "DUK": "energy",
-        "AXON": "broad_market",
-        "NET": "software_platforms",
-        "CRWD": "cybersecurity",
-        "GE": "broad_market",
-        "OKTA": "cybersecurity",
-        "SCCO": "materials",
-        "TRV": "financials",
-        "PANW": "cybersecurity",
-        "SNOW": "software_platforms",
-        "BSX": "healthcare",
         "S": "cybersecurity",
-        "SMR": "datacenter_power"
+        "NET": "software_platforms",
+        "AXON": "broad_market",
+        "TRV": "financials",
+        "OKTA": "cybersecurity",
+        "BSX": "healthcare"
       }
     }
   },
-  "full_context_path": "/Users/eastonryan/east-equity-agent/state/context_full_20260718-83c87e.json"
+  "full_context_path": "/Users/eastonryan/east-equity-agent/state/context_full_20260718-46486b.json"
 }
