@@ -1,7 +1,7 @@
 {
   "_context_tier": "brain_slim_v1",
   "_tier_note": "This is the SLIM brain pack. Full archive is at full_context_path if set. Learning signals are in reasoning_process.learning_pack (top-N). Deep maps are limited to focus/digest tickers.",
-  "run_date": "2026-07-18T18:55:17.992575+00:00",
+  "run_date": "2026-07-18T19:55:48.732032+00:00",
   "as_of_et": "2026-07-18",
   "trading_mode": "paper",
   "run_depth": "full",
@@ -642,7 +642,7 @@
         "filled_at": "2026-07-17T18:20:41.642195+00:00"
       }
     ],
-    "broker_synced_at": "2026-07-18T18:50:09.489358+00:00",
+    "broker_synced_at": "2026-07-18T19:50:09.824837+00:00",
     "broker_backend": "alpaca_paper"
   },
   "position_histories": {
@@ -791,7 +791,7 @@
   "market_events": {
     "note": "commodities via yfinance (CL=F/USO, GC=F/GLD, ^VIX/VIXY, DX-Y.NYB/UUP); flags from keyword classification of market_news headlines \u2014 heuristic tags, not a risk model",
     "status": "ok",
-    "as_of": "2026-07-18T18:50:09.493876+00:00",
+    "as_of": "2026-07-18T19:50:09.828687+00:00",
     "commodities": {
       "oil": {
         "symbol": "CL=F",
@@ -821,15 +821,14 @@
     "flags": {
       "counts": {
         "geopolitical": 1,
-        "inflation_rates": 1,
+        "inflation_rates": 0,
         "financial_stress": 0,
         "sector_macro": 0
       },
       "active": [
-        "geopolitical",
-        "inflation_rates"
+        "geopolitical"
       ],
-      "n_flagged": 2
+      "n_flagged": 1
     },
     "flagged_headlines": [
       {
@@ -837,14 +836,7 @@
         "tags": [
           "geopolitical"
         ],
-        "age_hours": 0.2
-      },
-      {
-        "title": "'WarshGPT': How Wall Street is adapting to the Fed's new era of communication",
-        "tags": [
-          "inflation_rates"
-        ],
-        "age_hours": 0.6
+        "age_hours": 0.9
       }
     ],
     "headline_source": "market_news"
@@ -852,7 +844,7 @@
   "market_news": {
     "note": "Market-wide headlines (last ~24h) for tape context - what is moving EVERYTHING today, not just your focus names. Weigh it in the macro/regime read; never build a single-name thesis on it alone.",
     "status": "ok",
-    "as_of": "2026-07-18T18:50:46.599319+00:00",
+    "as_of": "2026-07-18T19:50:45.673967+00:00",
     "sources": [
       {
         "name": "yahoo_finance",
@@ -877,116 +869,116 @@
     ],
     "headlines": [
       {
+        "title": "Taylor Farms recalls iceberg lettuce in 27 states due to cyclosporiasis outbreak",
+        "source": "cnbc",
+        "published": "2026-07-18T19:35:00+00:00",
+        "url": "https://www.cnbc.com/2026/07/18/taylor-farms-recalls-iceberg-lettuce-in-27-states-due-to-cyclosporiasis-outbreak.html",
+        "age_hours": 0.3
+      },
+      {
+        "title": "JPMorgan Chase CEO Jamie Dimon Thinks AI Spending Is Going to Reach $1 Trillion Next Year",
+        "source": "yahoo_finance",
+        "published": "2026-07-18T19:23:00+00:00",
+        "url": "https://finance.yahoo.com/technology/ai/articles/jpmorgan-chase-ceo-jamie-dimon-192300766.html",
+        "age_hours": 0.5
+      },
+      {
+        "title": "SpaceX Is in Talks on a Multibillion Dollar Defense Contract. Here Is What It Means for Investors",
+        "source": "yahoo_finance",
+        "published": "2026-07-18T19:20:01+00:00",
+        "url": "https://finance.yahoo.com/technology/ai/articles/spacex-talks-multibillion-dollar-defense-192001719.html",
+        "age_hours": 0.5
+      },
+      {
+        "title": "The $1.4 Million Gap: What a Median 55-Year-Old Can Still Do in the Last 10 Working Years",
+        "source": "yahoo_finance",
+        "published": "2026-07-18T19:19:59+00:00",
+        "url": "https://finance.yahoo.com/markets/articles/1-4-million-gap-median-191959703.html",
+        "age_hours": 0.5
+      },
+      {
+        "title": "Energizer Insider Aqua Capital Purchases 100,000 Shares for $2 Million -- Should Investors Buy Too?",
+        "source": "yahoo_finance",
+        "published": "2026-07-18T19:13:41+00:00",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/energizer-insider-aqua-capital-purchases-191341726.html",
+        "age_hours": 0.6
+      },
+      {
+        "title": "Bank of America sends strong verdict on Microsoft stock",
+        "source": "yahoo_finance",
+        "published": "2026-07-18T19:13:00+00:00",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/bank-america-sends-strong-verdict-191300518.html",
+        "age_hours": 0.6
+      },
+      {
+        "title": "\u2018Respect is important\u2019: If my financial adviser said, \u2018Hey,\u2019 my wife and I would walk out. Where do you draw the line?",
+        "source": "marketwatch",
+        "published": "2026-07-18T19:16:00+00:00",
+        "url": "https://www.marketwatch.com/story/respect-is-important-if-my-financial-adviser-said-hey-my-wife-and-i-would-walk-out-where-do-you-draw-the-line-5fbf5879?mod=mw_rss_topstories",
+        "age_hours": 0.6
+      },
+      {
+        "title": "Korean beauty products are becoming mainstream in the U.S. Why there may be even more growth ahead",
+        "source": "cnbc",
+        "published": "2026-07-18T19:11:33+00:00",
+        "url": "https://www.cnbc.com/2026/07/18/korean-beauty-products-are-becoming-mainstream-in-the-us.html",
+        "age_hours": 0.7
+      },
+      {
+        "title": "This Nuclear Stock Is Down 46%, and It's a Screaming Buy",
+        "source": "yahoo_finance",
+        "published": "2026-07-18T19:05:00+00:00",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/nuclear-stock-down-46-screaming-190500883.html",
+        "age_hours": 0.8
+      },
+      {
+        "title": "\u2018They are relentless\u2019: A scammer is trying to change the email on my empty Robinhood account. What do they have to gain?",
+        "source": "marketwatch",
+        "published": "2026-07-18T19:00:00+00:00",
+        "url": "https://www.marketwatch.com/story/they-are-relentless-a-scammer-is-trying-to-change-the-email-on-my-empty-robinhood-account-what-do-they-have-to-gain-26103dac?mod=mw_rss_topstories",
+        "age_hours": 0.8
+      },
+      {
+        "title": "Iran supreme leader vows 'unforgettable lessons in store' for U.S. after calling off interim peace agreement",
+        "source": "cnbc",
+        "published": "2026-07-18T18:53:56+00:00",
+        "url": "https://www.cnbc.com/2026/07/18/us-military-says-it-completed-latest-round-of-strikes-against-iran.html",
+        "age_hours": 0.9
+      },
+      {
+        "title": "Netflix is spending big money on sports. Is the company making the right bets?",
+        "source": "marketwatch",
+        "published": "2026-07-18T18:54:00+00:00",
+        "url": "https://www.marketwatch.com/story/netflix-is-paying-up-for-costly-sports-rights-is-the-company-making-the-right-bets-9ce54df7?mod=mw_rss_topstories",
+        "age_hours": 0.9
+      },
+      {
+        "title": "2 Vanguard ETFs Using Momentum to Outpace the S&P 500",
+        "source": "yahoo_finance",
+        "published": "2026-07-18T18:50:00+00:00",
+        "url": "https://finance.yahoo.com/markets/stocks/articles/2-vanguard-etfs-using-momentum-185000443.html",
+        "age_hours": 1.0
+      },
+      {
         "title": "Your Netflix bill is up 29% in just over a year. It\u2019s time for Washington to step in.",
         "source": "marketwatch",
         "published": "2026-07-18T18:49:00+00:00",
         "url": "https://www.marketwatch.com/story/your-monthly-netflix-bill-is-up-29-in-just-over-a-year-critics-say-washington-needs-to-fix-it-bcab6e5b?mod=mw_rss_topstories",
-        "age_hours": 0.0
+        "age_hours": 1.0
       },
       {
         "title": "These are the obstacles still keeping women from retirement security",
         "source": "marketwatch",
         "published": "2026-07-18T18:48:00+00:00",
         "url": "https://www.marketwatch.com/story/these-are-the-obstacles-still-keeping-women-from-retirement-security-eea48a95?mod=mw_rss_topstories",
-        "age_hours": 0.0
-      },
-      {
-        "title": "Iran supreme leader vows 'unforgettable lessons in store' for U.S. after calling off interim peace agreement",
-        "source": "cnbc",
-        "published": "2026-07-18T18:37:28+00:00",
-        "url": "https://www.cnbc.com/2026/07/18/us-military-says-it-completed-latest-round-of-strikes-against-iran.html",
-        "age_hours": 0.2
-      },
-      {
-        "title": "Korean beauty products are becoming mainstream in the U.S. Why there may be even more growth ahead",
-        "source": "cnbc",
-        "published": "2026-07-18T18:36:12+00:00",
-        "url": "https://www.cnbc.com/2026/07/18/korean-beauty-products-are-becoming-mainstream-in-the-us.html",
-        "age_hours": 0.2
-      },
-      {
-        "title": "Bill Ackman's New Closed-End Fund Trades 20% Below Its IPO Price. Is the Berkshire-Style Bet Broken?",
-        "source": "yahoo_finance",
-        "published": "2026-07-18T18:35:00+00:00",
-        "url": "https://finance.yahoo.com/markets/stocks/articles/bill-ackmans-closed-end-fund-183500065.html",
-        "age_hours": 0.3
-      },
-      {
-        "title": "The World Cup\u2013winning side will make $50 million \u2014 and the IRS gets a cut",
-        "source": "marketwatch",
-        "published": "2026-07-18T18:32:00+00:00",
-        "url": "https://www.marketwatch.com/story/the-world-cupwinning-side-will-make-50-million-and-the-irs-gets-a-cut-10f0780b?mod=mw_rss_topstories",
-        "age_hours": 0.3
-      },
-      {
-        "title": "I\u2019m 67, own two homes outright worth $2.8 million, but I have $19,000 in credit-card debt. Should I get a HELOC?",
-        "source": "marketwatch",
-        "published": "2026-07-18T18:30:00+00:00",
-        "url": "https://www.marketwatch.com/story/im-67-own-two-mortgage-free-homes-worth-2-8-million-but-i-have-19-000-in-credit-card-debt-should-i-get-a-heloc-7b6c5192?mod=mw_rss_topstories",
-        "age_hours": 0.3
-      },
-      {
-        "title": "Investing Legend John Templeton Has a Warning for Micron and SK Hynix Investors",
-        "source": "yahoo_finance",
-        "published": "2026-07-18T18:20:00+00:00",
-        "url": "https://finance.yahoo.com/markets/stocks/articles/investing-legend-john-templeton-warning-182000356.html",
-        "age_hours": 0.5
-      },
-      {
-        "title": "GRID\u2019s 0.56% Fee Pays for AI Power Exposure That Broad ETFs Miss",
-        "source": "yahoo_finance",
-        "published": "2026-07-18T18:15:00+00:00",
-        "url": "https://finance.yahoo.com/markets/stocks/articles/grid-0-56-fee-pays-181500052.html",
-        "age_hours": 0.6
-      },
-      {
-        "title": "'WarshGPT': How Wall Street is adapting to the Fed's new era of communication",
-        "source": "cnbc",
-        "published": "2026-07-18T18:16:42+00:00",
-        "url": "https://www.cnbc.com/2026/07/18/warshgpt-federal-reserve-communications-task-force-warsh.html",
-        "age_hours": 0.6
-      },
-      {
-        "title": "Americans say they need $1.2 million to retire. Most are too deep in debt to get there.",
-        "source": "marketwatch",
-        "published": "2026-07-18T18:15:00+00:00",
-        "url": "https://www.marketwatch.com/story/americans-say-they-need-1-2-million-to-retire-most-are-too-deep-in-debt-to-get-there-689c683b?mod=mw_rss_topstories",
-        "age_hours": 0.6
-      },
-      {
-        "title": "My relative inherited money in her 80s. Will it affect her Social Security taxes or Medicare premiums?",
-        "source": "marketwatch",
-        "published": "2026-07-18T18:14:00+00:00",
-        "url": "https://www.marketwatch.com/story/my-relative-inherited-money-in-her-80s-will-it-affect-her-social-security-taxes-or-medicare-premiums-0f09a210?mod=mw_rss_topstories",
-        "age_hours": 0.6
-      },
-      {
-        "title": "Copart Director Daniel Englander Sells 80,000 Shares for $2.2 Million. Should Investors Sell Too, With the Stock Down 40%?",
-        "source": "yahoo_finance",
-        "published": "2026-07-18T18:10:24+00:00",
-        "url": "https://finance.yahoo.com/markets/stocks/articles/copart-director-daniel-englander-sells-181024757.html",
-        "age_hours": 0.7
-      },
-      {
-        "title": "iShares' IGLB or Vanguard's VGLT: Which Long-Term Bond ETF Should Investors Choose?",
-        "source": "yahoo_finance",
-        "published": "2026-07-18T18:10:19+00:00",
-        "url": "https://finance.yahoo.com/markets/options/articles/ishares-iglb-vanguards-vglt-long-181019328.html",
-        "age_hours": 0.7
-      },
-      {
-        "title": "Why Did Joby Aviation Stock Fall Below $10?",
-        "source": "yahoo_finance",
-        "published": "2026-07-18T18:07:00+00:00",
-        "url": "https://finance.yahoo.com/markets/stocks/articles/why-did-joby-aviation-stock-180700592.html",
-        "age_hours": 0.7
+        "age_hours": 1.0
       }
     ]
   },
   "market_radar": {
     "note": "Market-WIDE radar (Alpaca screeners + news), not limited to the universe. off_universe_symbols are candidates for the universe_candidates output field IF a real swing setup exists \u2014 they are not tradeable until deterministically added ($1B cap, priceable, liquid) and are never a buy signal by themselves.",
     "status": "ok",
-    "as_of": "2026-07-18T18:50:47.468377+00:00",
+    "as_of": "2026-07-18T19:50:46.651226+00:00",
     "gainers": [
       {
         "ticker": "SHOT",
@@ -3284,7 +3276,7 @@
     "scanned": 182,
     "requested": 182,
     "scan_failures": 0,
-    "scan_fetched_at_utc": "2026-07-18T18:50:46.598252+00:00",
+    "scan_fetched_at_utc": "2026-07-18T19:50:45.673005+00:00",
     "note": "Ranked by deterministic swing_setup_score; agent must apply judgment and research before proposing.",
     "sector_comps_note": "sector_comps (on surfaced rows): fwd_pe_est = last close / cached pre-market current-FY EPS estimate (snapshot may be ~a day old); growth = current-FY revenue-growth estimate. Medians span ALL scanned names with data - coverage.pe_n/growth_n are the true denominators; medians under 4 same-sector data points report None.",
     "top_setups": [
@@ -20679,7 +20671,7 @@
   },
   "news_and_catalysts": {
     "status": "ok",
-    "as_of": "2026-07-18T18:51:45.265319+00:00",
+    "as_of": "2026-07-18T19:51:46.776614+00:00",
     "news_max_age_days": 7,
     "tickers": {
       "NET": {
@@ -20700,13 +20692,13 @@
             "title": "1 Unprofitable Stock with Exciting Potential and 2 Facing Challenges",
             "published": "2026-07-17T13:05:46Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/1-unprofitable-stock-exciting-potential-130546449.html",
-            "age_days": 1.2
+            "age_days": 1.3
           },
           {
             "title": "Cloudflare (NET) Stock Gets Fair Value Boost As Analysts Raise AI And Security Targets",
             "published": "2026-07-17T01:12:58Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/cloudflare-net-stock-gets-fair-011258252.html",
-            "age_days": 1.7
+            "age_days": 1.8
           },
           {
             "title": "Cloudflare (NET) Stock May Be Fully Priced As AI Search News Lifts Hopes",
@@ -20771,7 +20763,7 @@
             "title": "SpaceX initiated, Lululemon downgraded: Wall Street's top analyst calls",
             "published": "2026-07-16T13:33:54Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/spacex-initiated-lululemon-downgraded-wall-133354953.html",
-            "age_days": 2.2
+            "age_days": 2.3
           },
           {
             "title": "Here Are Thursday\u2019s Top Wall Street Analyst Research Calls: Alphabet, BlackRock, Etsy, Flex, Lululemon Athletica, Meta Platforms, Okta, Palo Alto Networks, and More",
@@ -20783,7 +20775,7 @@
             "title": "1 Mid-Cap Stock for Long-Term Investors and 2 Facing Challenges",
             "published": "2026-07-16T11:13:22Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/1-mid-cap-stock-long-111322177.html",
-            "age_days": 2.3
+            "age_days": 2.4
           },
           {
             "title": "Okta (OKTA) Wins Partner Recognition For Identity Security Push In Cloud And AI",
@@ -20842,7 +20834,7 @@
             "title": "Stock Market Week Ahead: Navigating Uncertainty",
             "published": "2026-07-18T15:15:50Z",
             "url": "https://www.investors.com/research/investing-action-plan/stock-market-week-ahead-navigating-uncertainty/?src=A00220&yptr=yahoo",
-            "age_days": 0.1
+            "age_days": 0.2
           },
           {
             "title": "What You Actually Pay To Join The CSCO Run",
@@ -20854,7 +20846,7 @@
             "title": "Trump says China obtained 220 million US voter files ahead of 2020 election",
             "published": "2026-07-18T05:51:32Z",
             "url": "https://www.yahoo.com/news/politics/articles/trump-says-china-obtained-220-055132428.html",
-            "age_days": 0.5
+            "age_days": 0.6
           },
           {
             "title": "Jim Cramer Says There Will Always Be Another DeepSeek \u2014 Here Are the 5 Best Cybersecurity Stocks to Own Right Now",
@@ -20866,13 +20858,13 @@
             "title": "How to Find the Bargains in the Software Stock Wreckage",
             "published": "2026-07-17T15:43:00Z",
             "url": "https://www.barrons.com/articles/ai-software-stocks-dd7912fb?siteid=yhoof2&yptr=yahoo",
-            "age_days": 1.1
+            "age_days": 1.2
           },
           {
             "title": "Capital One Just Upgraded Palo Alto Networks Stock. Here's Why.",
             "published": "2026-07-17T15:31:39Z",
             "url": "https://www.barchart.com/story/news/3337938/capital-one-just-upgraded-palo-alto-networks-stock-here-s-why",
-            "age_days": 1.1
+            "age_days": 1.2
           }
         ],
         "next_earnings": "2026-08-18",
@@ -20919,7 +20911,7 @@
             "title": "3 Cybersecurity Stocks to Buy Amid Rising Adoption of Agentic AI",
             "published": "2026-07-17T15:17:00Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/3-cybersecurity-stocks-buy-amid-151700734.html",
-            "age_days": 1.1
+            "age_days": 1.2
           },
           {
             "title": "Why Inflation Data Just Lit A Fire Under CRWD Stock",
@@ -20931,7 +20923,7 @@
             "title": "Cybersecurity Space is Buzzing on Recent Catalysts: 3 Top Picks",
             "published": "2026-07-15T13:03:00Z",
             "url": "https://finance.yahoo.com/technology/articles/cybersecurity-space-buzzing-recent-catalysts-130300250.html",
-            "age_days": 3.2
+            "age_days": 3.3
           },
           {
             "title": "Dow Jones Futures: Techs Rise, Oil Hits $80 On Iran News, ASML, Morgan Stanley Lead Earnings Movers",
@@ -20943,13 +20935,13 @@
             "title": "Qualys and SentinelOne Shares Are Soaring, What You Need To Know",
             "published": "2026-07-14T20:39:11Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/qualys-sentinelone-shares-soaring-know-203911426.html",
-            "age_days": 3.9
+            "age_days": 4.0
           },
           {
             "title": "IBM, Goldman Sachs, SK Hynix, Micron, CrowdStrike, Biogen, and More Stocks That Explain Today\u2019s Market",
             "published": "2026-07-14T20:31:00Z",
             "url": "https://www.barrons.com/articles/stock-movers-70f9e550?siteid=yhoof2&yptr=yahoo",
-            "age_days": 3.9
+            "age_days": 4.0
           }
         ],
         "next_earnings": "2026-08-27",
@@ -21002,7 +20994,7 @@
             "title": "Trump says China obtained 220 million US voter files ahead of 2020 election",
             "published": "2026-07-18T05:51:32Z",
             "url": "https://www.yahoo.com/news/politics/articles/trump-says-china-obtained-220-055132428.html",
-            "age_days": 0.5
+            "age_days": 0.6
           },
           {
             "title": "CrowdStrike vs. NVIDIA: Which Growth Tech Stock Is a Better Buy in 2026, the Cybersecurity Giant or AI Leader?",
@@ -21014,19 +21006,19 @@
             "title": "Stocks making big moves this week: HCA Healthcare, UnitedHealth, CrowdStrike, RXO, and Enovis",
             "published": "2026-07-17T20:57:46Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/stocks-making-big-moves-week-205746109.html",
-            "age_days": 0.9
+            "age_days": 1.0
           },
           {
             "title": "CrowdStrike vs. Dell Technologies: Which Technology Stock Is a Better Buy in 2026?",
             "published": "2026-07-17T20:51:01Z",
             "url": "https://www.fool.com/coverage/better-buy/2026/07/17/crowdstrike-vs-dell-technologies-which-technology-stock-is-a-better-buy-in-2026/",
-            "age_days": 0.9
+            "age_days": 1.0
           },
           {
             "title": "CrowdStrike Eyes Next Act As AI Security Business Takes Shape",
             "published": "2026-07-17T20:15:22Z",
             "url": "https://www.investors.com/research/the-new-america/crowdstrike-stock-kurtz-artificial-intelligence/?src=A00220&yptr=yahoo",
-            "age_days": 0.9
+            "age_days": 1.0
           }
         ],
         "next_earnings": "2026-09-01",
@@ -21097,7 +21089,7 @@
             "title": "Is PANW Stock A Smart Buy As AI Rewrites The Rules Of Cybersecurity?",
             "published": "2026-07-15T15:55:36Z",
             "url": "https://www.trefis.com/articles/607302/is-panw-stock-a-smart-buy-as-ai-rewrites-the-rules-of-cybersecurity/2026-07-15",
-            "age_days": 3.1
+            "age_days": 3.2
           },
           {
             "title": "Fortinet's AI Surge Is Impressive. Is Microsoft Stock The Smarter Way In?",
@@ -21150,7 +21142,7 @@
             "title": "Is Axon (AXON) a Buy as Wall Street Analysts Look Optimistic?",
             "published": "2026-07-16T13:30:03Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/axon-axon-buy-wall-street-133003297.html",
-            "age_days": 2.2
+            "age_days": 2.3
           },
           {
             "title": "Axon's Connected Devices Unit Gains Momentum: More Upside to Come?",
@@ -21227,13 +21219,13 @@
             "title": "Adobe vs. Autodesk: What Revenue Trends Reveal About These Software Stocks",
             "published": "2026-07-17T17:48:01Z",
             "url": "https://www.fool.com/coverage/charts/2026/07/17/adobe-vs-autodesk-what-revenue-trends-reveal-about-these-software-stocks/",
-            "age_days": 1.0
+            "age_days": 1.1
           },
           {
             "title": "How to Find the Bargains in the Software Stock Wreckage",
             "published": "2026-07-17T15:43:00Z",
             "url": "https://www.barrons.com/articles/ai-software-stocks-dd7912fb?siteid=yhoof2&yptr=yahoo",
-            "age_days": 1.1
+            "age_days": 1.2
           },
           {
             "title": "IBM 'did not adapt' and just lost $70B \u2014 is Big Tech (and your portfolio) in trouble? Protect your nest egg now",
@@ -21310,7 +21302,7 @@
             "title": "NuScale Power (SMR) Faces More Cautious Sentiment, Is 92% Undervalued Enough?",
             "published": "2026-07-17T18:12:16Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/nuscale-power-smr-faces-more-181216415.html",
-            "age_days": 1.0
+            "age_days": 1.1
           },
           {
             "title": "Can BWXT's Manufacturing Investments Support Future Growth?",
@@ -21322,13 +21314,13 @@
             "title": "OKLO, XE, SMR, NNE, UEC Stocks Tumble On Thursday: AI Made Nuclear Stocks Market Darlings \u2013 Now Investors Want Proof",
             "published": "2026-07-17T05:40:27Z",
             "url": "https://stocktwits.com/news-articles/markets/equity/why-did-oklo-xe-smr-nne-uec-stocks-tumble-on-thursday/cZZ74pnR7ta",
-            "age_days": 1.5
+            "age_days": 1.6
           },
           {
             "title": "Why Did IBM, ORCL, SMR Stocks Drop To 52-Week Lows Today?",
             "published": "2026-07-17T01:43:42Z",
             "url": "https://stocktwits.com/news-articles/markets/equity/why-did-ibm-orcl-smr-stocks-drop-to-52-week-lows-today/cZZ7bWlR7t5",
-            "age_days": 1.7
+            "age_days": 1.8
           },
           {
             "title": "Oklo Just Dropped 28% in a Month. Is It Time to Abandon Nuclear Stocks Like OKLO, NuScale, and Uranium Energy Corp.?",
@@ -21381,7 +21373,7 @@
             "title": "Abbott Just Showed Its Growth Engine Has More Than One Cylinder",
             "published": "2026-07-17T22:56:04Z",
             "url": "https://www.trefis.com/articles/607750/abbott-just-showed-its-growth-engine-has-more-than-one-cylinder/2026-07-17",
-            "age_days": 0.8
+            "age_days": 0.9
           },
           {
             "title": "J&J Stock Falls Despite Strong Q2 Beat & Higher 2026 View: Here's Why",
@@ -21470,25 +21462,25 @@
             "title": "The Travelers Companies Inc (TRV) Q2 2026 Earnings Call Highlights: Robust Growth and Strategic ...",
             "published": "2026-07-17T21:00:28Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/travelers-companies-inc-trv-q2-210028978.html",
-            "age_days": 0.9
+            "age_days": 1.0
           },
           {
             "title": "Update: Equities Fall Amid Netflix Sell-Off; Oil Climbs as Middle East Tensions Rise",
             "published": "2026-07-17T20:46:56Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/equities-fall-amid-netflix-sell-204656661.html",
-            "age_days": 0.9
+            "age_days": 1.0
           },
           {
             "title": "US Equity Markets End Lower as Oil Prices Climb on US-Iran Escalation",
             "published": "2026-07-17T20:18:48Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/us-equity-markets-end-lower-201848949.html",
-            "age_days": 0.9
+            "age_days": 1.0
           },
           {
             "title": "China AI Fears, Netflix Earnings Sink Stocks: Stock Market Today",
             "published": "2026-07-17T20:08:00Z",
             "url": "https://www.kiplinger.com/investing/stocks/china-ai-fears-netflix-earnings-sink-stocks-stock-market-today",
-            "age_days": 0.9
+            "age_days": 1.0
           }
         ],
         "next_earnings": "2026-10-15",
@@ -21541,7 +21533,7 @@
             "title": "How to Find the Bargains in the Software Stock Wreckage",
             "published": "2026-07-17T15:43:00Z",
             "url": "https://www.barrons.com/articles/ai-software-stocks-dd7912fb?siteid=yhoof2&yptr=yahoo",
-            "age_days": 1.1
+            "age_days": 1.2
           },
           {
             "title": "Snowflake CEO's Stock Award Another 'Positive' for AI Growth Strategy, RBC Says",
@@ -21612,7 +21604,7 @@
             "title": "The Portfolio That Lets You Cruise Through the News, Unbothered",
             "published": "2026-07-18T13:00:47Z",
             "url": "https://247wallst.com/personal-finance/2026/07/18/the-portfolio-that-lets-you-cruise-through-the-news-unbothered/",
-            "age_days": 0.2
+            "age_days": 0.3
           },
           {
             "title": "Can NRG's Expanding Generation Fleet Drive Long-Term Growth?",
@@ -21624,13 +21616,13 @@
             "title": "Can a Conservative Portfolio Really Generate $4,000 a Month in Retirement Income?",
             "published": "2026-07-17T15:37:50Z",
             "url": "https://247wallst.com/personal-finance/2026/07/17/can-a-conservative-portfolio-really-generate-4000-a-month-in-retirement-income/",
-            "age_days": 1.1
+            "age_days": 1.2
           },
           {
             "title": "Top Wind Energy Stocks to Add to Your Portfolio for Solid Long-Term Returns",
             "published": "2026-07-17T15:32:00Z",
             "url": "https://finance.yahoo.com/energy/articles/top-wind-energy-stocks-add-153200428.html",
-            "age_days": 1.1
+            "age_days": 1.2
           },
           {
             "title": "4 Utility Electric Power Stocks to Buy Amid Industry Headwinds",
@@ -21701,7 +21693,7 @@
             "title": "Investors Heavily Search Southern Copper Corporation (SCCO): Here is What You Need to Know",
             "published": "2026-07-16T13:00:03Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/investors-heavily-search-southern-copper-130003941.html",
-            "age_days": 2.2
+            "age_days": 2.3
           },
           {
             "title": "Here's Why You Should Retain Reliance Stock in Your Portfolio",
@@ -21719,7 +21711,7 @@
             "title": "Best Growth Stocks to Buy for July 14th",
             "published": "2026-07-14T11:08:00Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/best-growth-stocks-buy-july-110800854.html",
-            "age_days": 4.3
+            "age_days": 4.4
           }
         ],
         "next_earnings": "2026-07-27",
@@ -26069,7 +26061,7 @@
   "guidance_ledger": {},
   "fundamental_screen": {
     "as_of": "2026-07-18T12:57:10.629386+00:00",
-    "age_hours": 5.9,
+    "age_hours": 6.9,
     "names_covered": 182,
     "note": "Full-universe estimate screen, refreshed pre-market (6am/9am ET, gated on true America/New_York time). top_upward_revisions = fundamental inflections regardless of price - candidates the momentum funnel may not surface. estimate_changes_since_previous = what moved THIS MORNING (earnings/guidance). Each row may carry revision_direction (up/down/flat), eps_growth_next_yr_pct (forward EPS growth), and eps_estimate_current_yr / eps_estimate_next_yr (current/next fiscal-year EPS estimates - the scanner's fwd_pe_est divides last close by the current-year figure) - judge a multiple against growth, not news tone.",
     "top_upward_revisions": [
@@ -26282,7 +26274,7 @@
   "todays_8ks": {
     "note": "8-K filings TODAY across the ENTIRE universe (one EDGAR index sweep). An 8-K on a non-focus name may be the day's real opportunity - pull the filing with WebFetch if the form looks material before dismissing it.",
     "status": "ok",
-    "as_of": "2026-07-18T18:50:48.157021+00:00",
+    "as_of": "2026-07-18T19:50:47.466274+00:00",
     "index_date": "2026-07-17",
     "filers": [
       {
@@ -27172,7 +27164,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T18:55:18.247283+00:00"
+        "updated_at": "2026-07-18T19:55:48.979168+00:00"
       },
       "OKTA": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -27206,7 +27198,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T18:55:18.247741+00:00"
+        "updated_at": "2026-07-18T19:55:48.979644+00:00"
       },
       "PANW": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -27240,7 +27232,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T18:55:18.248131+00:00"
+        "updated_at": "2026-07-18T19:55:48.979934+00:00"
       },
       "S": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -27274,7 +27266,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T18:55:18.248569+00:00"
+        "updated_at": "2026-07-18T19:55:48.980197+00:00"
       },
       "CRWD": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -27308,7 +27300,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T18:55:18.248951+00:00"
+        "updated_at": "2026-07-18T19:55:48.980441+00:00"
       },
       "ZS": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -27342,7 +27334,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T18:55:18.249250+00:00"
+        "updated_at": "2026-07-18T19:55:48.980691+00:00"
       },
       "AXON": {
         "what_they_do": "Operates in: unspecified (broad_market)",
@@ -27380,7 +27372,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T18:55:18.249538+00:00"
+        "updated_at": "2026-07-18T19:55:48.980928+00:00"
       },
       "ADBE": {
         "what_they_do": "Operates in: Enterprise / AI software platforms",
@@ -27414,7 +27406,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T18:55:18.249973+00:00"
+        "updated_at": "2026-07-18T19:55:48.981159+00:00"
       },
       "SMR": {
         "what_they_do": "Operates in: Power generation / power equipment for data centers",
@@ -27444,7 +27436,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T18:55:18.250297+00:00"
+        "updated_at": "2026-07-18T19:55:48.981398+00:00"
       },
       "BSX": {
         "what_they_do": "Operates in: unspecified (healthcare)",
@@ -27474,7 +27466,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T18:55:18.250609+00:00"
+        "updated_at": "2026-07-18T19:55:48.981659+00:00"
       },
       "TRV": {
         "what_they_do": "Operates in: unspecified (financials)",
@@ -27508,7 +27500,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T18:55:18.251096+00:00"
+        "updated_at": "2026-07-18T19:55:48.982004+00:00"
       },
       "SNOW": {
         "what_they_do": "Operates in: Enterprise / AI software platforms",
@@ -27542,7 +27534,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T18:55:18.251391+00:00"
+        "updated_at": "2026-07-18T19:55:48.982244+00:00"
       },
       "DUK": {
         "what_they_do": "Operates in: unspecified (energy)",
@@ -27572,7 +27564,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T18:55:18.251718+00:00"
+        "updated_at": "2026-07-18T19:55:48.982443+00:00"
       },
       "SCCO": {
         "what_they_do": "Operates in: unspecified (materials)",
@@ -27602,7 +27594,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-18T18:55:18.252163+00:00"
+        "updated_at": "2026-07-18T19:55:48.982645+00:00"
       }
     },
     "n": 14
@@ -27692,9 +27684,9 @@
     "theme_concentration_cap_pct": 0.35,
     "price_freshness": {
       "bundle_as_of_et": "2026-07-18",
-      "bundle_run_utc": "2026-07-18T18:55:18.232482+00:00",
+      "bundle_run_utc": "2026-07-18T19:55:48.961824+00:00",
       "note": "Prefer universe_scan.prices_meta[T].price_as_of (bar session date) over bundle age alone. On catalyst days, verify live before chasing a trigger on a lagging close.",
-      "scan_fetched_at_utc": "2026-07-18T18:50:46.598252+00:00",
+      "scan_fetched_at_utc": "2026-07-18T19:50:45.673005+00:00",
       "prices_meta_sample": {
         "NET": {
           "last_close": 277.66,
@@ -28101,9 +28093,9 @@
       "theme_concentration_cap_pct": 0.35,
       "price_freshness": {
         "bundle_as_of_et": "2026-07-18",
-        "bundle_run_utc": "2026-07-18T18:55:18.232482+00:00",
+        "bundle_run_utc": "2026-07-18T19:55:48.961824+00:00",
         "note": "Prefer universe_scan.prices_meta[T].price_as_of (bar session date) over bundle age alone. On catalyst days, verify live before chasing a trigger on a lagging close.",
-        "scan_fetched_at_utc": "2026-07-18T18:50:46.598252+00:00",
+        "scan_fetched_at_utc": "2026-07-18T19:50:45.673005+00:00",
         "prices_meta_sample": {
           "NET": {
             "last_close": 277.66,
@@ -28171,22 +28163,22 @@
       },
       "demand_driver_map_note": "Primary economic bet per ticker (not GICS). Use these labels in proposal.demand_driver. Theme cap is separate from sector cap.",
       "demand_driver_map_focus": {
-        "DUK": "energy",
-        "ADBE": "software_platforms",
+        "OKTA": "cybersecurity",
         "PANW": "cybersecurity",
         "SNOW": "software_platforms",
-        "TRV": "financials",
         "SMR": "datacenter_power",
+        "ADBE": "software_platforms",
+        "CRWD": "cybersecurity",
+        "ZS": "cybersecurity",
+        "TRV": "financials",
         "AXON": "broad_market",
         "BSX": "healthcare",
-        "NET": "software_platforms",
         "SCCO": "materials",
-        "OKTA": "cybersecurity",
-        "S": "cybersecurity",
-        "ZS": "cybersecurity",
-        "CRWD": "cybersecurity"
+        "NET": "software_platforms",
+        "DUK": "energy",
+        "S": "cybersecurity"
       }
     }
   },
-  "full_context_path": "/Users/eastonryan/east-equity-agent/state/context_full_20260718-269d03.json"
+  "full_context_path": "/Users/eastonryan/east-equity-agent/state/context_full_20260718-096378.json"
 }
