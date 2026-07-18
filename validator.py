@@ -418,8 +418,17 @@ def _position_committed_risk(pos: dict) -> float:
         return 0.0
 
 
-def _position_demand_driver(pos: dict) -> str | None:
+def _position_demand_driver(pos: dict, driver_map: dict | None = None) -> str | None:
+    """The economic bet an open position represents.
+
+    `driver_map` is the universe-derived {TICKER: driver} fallback. Without it this
+    reads only the position's own stamped field, so every lot predating the stamping
+    — or one whose plan was rewritten by backfill — silently drops out of the theme
+    bucket and the 2% cap under-counts. The notional cap already fell back this way;
+    the risk cap did not, which is the asymmetry this parameter closes."""
     d = pos.get("demand_driver") or (pos.get("plan") or {}).get("demand_driver")
+    if not d and driver_map:
+        d = driver_map.get(str(pos.get("ticker", "")).upper())
     return str(d).strip().lower() if d else None
 
 
@@ -536,9 +545,16 @@ def _check_theme_initial_risk(p: dict, cfg: dict, portfolio: dict,
     driver = driver.strip().lower()
     equity = portfolio.get("total_equity_usd",
                            cfg["position_sizing"]["starting_capital_usd"])
+    # Same universe-derived fallback the notional cap uses, so a position whose
+    # stamped driver is missing still counts toward its own theme's risk budget.
+    try:
+        from tools.demand_drivers import build_driver_map
+        driver_map = build_driver_map()
+    except Exception:
+        driver_map = {}
     theme_heat = sum(_position_committed_risk(pos)
                      for pos in portfolio.get("positions", [])
-                     if _position_demand_driver(pos) == driver)
+                     if _position_demand_driver(pos, driver_map) == driver)
     total = theme_heat + batch_theme_risk.get(driver, 0.0) + proposed_risk
     if total > equity * cap + 1e-9:
         reasons.append(
@@ -683,16 +699,41 @@ def _check_thesis_invalidators(p: dict, cfg: dict, reasons: list[str]) -> None:
 
 
 def _check_demand_driver_field(p: dict, reasons: list[str]) -> None:
-    """demand_driver must be a non-empty snake_case-ish theme label on BUYs."""
+    """demand_driver must be a KNOWN theme label on BUYs — not merely well-formed.
+
+    This was a format-only check, and the brain writes the field itself. Both theme
+    caps match on the raw string (the 2% risk cap groups by it; the 35% notional cap
+    OVERWRITES the canonical map with it), so one novel snake_case label zeroed out
+    both. Reproduced: a book at the cap rejected a same-theme BUY under
+    `hyperscaler_server_capex` and approved the identical BUY under
+    `hyperscaler_capex_supercycle`. That defeats exactly the DELL+HPE clustering the
+    caps exist to prevent — and DELL+HPE is this book's entire realized loss history.
+
+    Membership is enforced against tools.demand_drivers.KNOWN_DRIVERS.
+    """
     if str(p.get("action", "")).upper() != "BUY":
         return
     d = p.get("demand_driver")
     if not isinstance(d, str) or len(d.strip()) < 3:
         reasons.append("demand_driver_missing_or_weak")
         return
+    driver = d.strip().lower()
     # Light format guard: no spaces-only garbage; allow letters/numbers/underscore.
-    if not re.fullmatch(r"[a-z][a-z0-9_]{2,63}", d.strip().lower()):
+    if not re.fullmatch(r"[a-z][a-z0-9_]{2,63}", driver):
         reasons.append(f"demand_driver_invalid_format:{d}")
+        return
+    # Membership guard: the label must be one the theme maps actually know about.
+    # Fail-soft on import (pure module, no network — a failure here means something
+    # is badly wrong), because halting all trading on it would be worse than
+    # falling back to the format check the system ran for its whole life until now.
+    try:
+        from tools.demand_drivers import KNOWN_DRIVERS
+    except Exception:
+        return
+    if driver not in KNOWN_DRIVERS:
+        reasons.append(
+            f"demand_driver_unknown:{driver} (not in KNOWN_DRIVERS — a novel label "
+            f"would escape both theme caps; use the closest canonical driver)")
 
 
 def _check_theme_concentration(p: dict, cfg: dict, portfolio: dict,
