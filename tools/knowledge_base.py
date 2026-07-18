@@ -19,7 +19,9 @@ Fail-soft; never raises from public APIs.
 from __future__ import annotations
 
 import json
+import os
 import re
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -74,9 +76,60 @@ def _load() -> dict:
 
 
 def _save(doc: dict) -> None:
+    """Atomic write — the store is the only record of what the system has learned."""
     doc["updated_at"] = _now()
     KB_JSON.parent.mkdir(parents=True, exist_ok=True)
-    KB_JSON.write_text(json.dumps(doc, indent=2, default=str))
+    fd, tmp = tempfile.mkstemp(dir=str(KB_JSON.parent), suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w") as f:
+            f.write(json.dumps(doc, indent=2, default=str))
+        os.replace(tmp, KB_JSON)
+    finally:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+
+
+def store_health() -> dict:
+    """Is the knowledge base actually persisting? Deliberately NOT fail-soft.
+
+    Every public API here is fail-soft and returns 0 or [] on a missing store, so a
+    DEAD loop is indistinguishable from a QUIET one. That is exactly how this failed:
+    data/knowledge_base.json was never committed (untracked, and not gitignored)
+    while its derived public view dashboard/data/learning_journal.json was — so a
+    study session ran, published a lesson, and the source of truth vanished. Every
+    subsequent citation graded against an empty list and returned 0, silently.
+
+    Returns {"ok", "status", "n_entries", "n_published", "detail"} so a caller can
+    surface the mismatch instead of inferring health from silence.
+    """
+    n_entries = len((_load().get("entries") or []))
+    n_published = 0
+    try:
+        if JOURNAL_JSON.exists():
+            pub = json.loads(JOURNAL_JSON.read_text())
+            if isinstance(pub, list):
+                n_published = len(pub)
+            else:
+                # The journal writes {"updated_at", "note", "discipline_counts",
+                # "entries"}. Guessing a key name here would make this check report a
+                # cheerful zero — the exact silent-zero failure it exists to catch.
+                n_published = len(pub.get("entries") or pub.get("lessons") or [])
+    except Exception:
+        pass
+
+    if not KB_JSON.exists() and n_published:
+        return {"ok": False, "status": "store_missing_but_lessons_published",
+                "n_entries": 0, "n_published": n_published,
+                "detail": (f"{n_published} lesson(s) are published but "
+                           f"{KB_JSON.name} does not exist — citations grade against "
+                           f"nothing. Check that runlib/publish.py commits it.")}
+    if n_published > n_entries:
+        return {"ok": False, "status": "store_behind_published",
+                "n_entries": n_entries, "n_published": n_published,
+                "detail": (f"published journal has {n_published} lesson(s) but the "
+                           f"store has {n_entries} — the store is not persisting.")}
+    return {"ok": True, "status": "ok", "n_entries": n_entries,
+            "n_published": n_published, "detail": None}
 
 
 def _fingerprint(text: str, n: int = 48) -> str:

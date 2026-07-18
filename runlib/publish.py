@@ -161,6 +161,21 @@ def redeploy_dashboard() -> None:
             paths.append("data/cusip_map.json")  # learned ticker->CUSIP, must persist in cloud
         if (ROOT / "data" / "ai_exposure.json").exists():
             paths.append("data/ai_exposure.json")  # business-reality labels, review-maintained
+        # LEARNING STORES. These were never committed, so on an ephemeral cloud
+        # runner every one of them was reconstructed empty each run. The knowledge
+        # base is the clearest casualty: data/knowledge_base.json has never existed
+        # in this repo (untracked, and NOT gitignored) while its derived public view
+        # dashboard/data/learning_journal.json IS tracked and carries a lesson. So a
+        # study session ran, published the journal, and the source of truth was lost
+        # — after which record_citations / link_lessons_to_trade / update_lesson_outcomes
+        # all iterate an empty list and return 0, silently, forever.
+        for learning_file in ("knowledge_base.json", "adopted_lessons.json",
+                              "learning_proposals.json", "shadow_portfolio.json",
+                              "post_exit_runners.json", "binding_exit_lessons.json"):
+            if (ROOT / "data" / learning_file).exists():
+                paths.append(f"data/{learning_file}")
+        if (ROOT / "data" / "concept_memory").is_dir():
+            paths.append("data/concept_memory")
         # add -A so a REMOVED kill switch (all-clear) also propagates; ignore missing paths.
         for p in paths:
             subprocess.run(["git", "add", "-A", p], cwd=ROOT, capture_output=True, text=True)

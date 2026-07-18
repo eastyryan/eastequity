@@ -26,6 +26,18 @@ SHADOW_FILE = ROOT / "data" / "shadow_portfolio.json"
 DEFAULT_TARGET_PCT = 0.10
 DEFAULT_STOP_PCT = 0.12
 HORIZON_DAYS = 90
+
+# One shadow per ticker per window (was per ticker+source, which triple-counted).
+DEDUPE_DAYS = 5
+
+# OPEN-BOOK CAP. The old cap was 80 with `positions[-80:]` — a tail slice that keeps
+# the NEWEST and silently discards the OLDEST, i.e. exactly the shadows closest to
+# the 30-day resolution threshold. At the observed ~9.6 new shadows/day nothing
+# survived past ~8 days, while closing requires 30. The book therefore could never
+# produce a single closed shadow: 48 open / 0 closed, `binding` (n_closed >= 8)
+# unreachable, regret_rate_pct permanently None. The cap must exceed the open rate
+# times the full horizon, and eviction must drop the LEAST informative rows.
+MAX_OPEN_SHADOWS = 1200
 MARK_WINDOWS = (30, 60, 90)
 
 
@@ -57,6 +69,22 @@ def _save(state: dict) -> None:
     SHADOW_FILE.write_text(json.dumps(state, indent=2, default=str))
 
 
+def _evict(positions: list) -> list:
+    """Trim the open book to MAX_OPEN_SHADOWS, dropping the LEAST informative first.
+
+    The old `positions[-80:]` kept the newest and discarded the oldest — deleting
+    precisely the observations about to resolve. Here the ordering is inverted:
+    the oldest shadows are the most valuable (closest to their 30/90-day marks), so
+    when the cap does bind we drop the YOUNGEST, which lose nothing but a few days
+    of tracking. Pure.
+    """
+    if len(positions) <= MAX_OPEN_SHADOWS:
+        return positions
+    # Oldest first; keep that prefix.
+    ordered = sorted(positions, key=lambda p: str(p.get("opened_at") or ""))
+    return ordered[:MAX_OPEN_SHADOWS]
+
+
 def _parse_day(s: str | None) -> datetime | None:
     if not s:
         return None
@@ -86,12 +114,16 @@ def open_shadow(
         if not t or not isinstance(entry_price, (int, float)) or entry_price <= 0:
             return None
         state = _load()
-        # Dedupe: one open shadow per ticker from same source within 5 days
+        # Dedupe on TICKER ALONE, not (ticker, source). Keying on both meant one
+        # skipped idea opened up to three shadows — 48 open shadows covered only 28
+        # tickers, with AMD/ANET/HPE/UNH each holding three. regret_rate_pct divides
+        # by shadow count, so the names the brain watches most got up to 3x weight in
+        # its own regret statistics.
         for p in state["positions"]:
-            if p.get("ticker") != t or p.get("source") != source:
+            if p.get("ticker") != t:
                 continue
             opened = _parse_day(p.get("opened_at"))
-            if opened and (_now() - opened.replace(tzinfo=timezone.utc)).days < 5:
+            if opened and (_now() - opened.replace(tzinfo=timezone.utc)).days < DEDUPE_DAYS:
                 return None  # already tracking
         pos = {
             "id": f"SH-{uuid.uuid4().hex[:10]}",
@@ -114,9 +146,7 @@ def open_shadow(
             **(extra or {}),
         }
         state["positions"].append(pos)
-        # Cap open book
-        if len(state["positions"]) > 80:
-            state["positions"] = state["positions"][-80:]
+        state["positions"] = _evict(state["positions"])
         _save(state)
         return pos
     except Exception:
