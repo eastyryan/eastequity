@@ -347,7 +347,28 @@ def main() -> int:
     )
     if halt:
         print(f"HALT: {halt}")
-        journal.log_run_summary({"halted": halt, "run_depth": run_depth}, run_id)
+        # A halt must stop the system OPENING risk, never stop it CLOSING risk.
+        # This returned before apply_safety_layer ran, so flipping the kill switch —
+        # or merely exhausting the daily run budget — silently disabled stop
+        # enforcement on an open book. scripts/execute_order_intents.py already had
+        # this right ("protective exits must never be blocked by a halt"); the main
+        # path contradicted it. Protective exits are SELL_TO_CLOSE only and cannot
+        # increase exposure, so running them under a halt is strictly risk-reducing.
+        try:
+            from scripts.stop_watch import run as stop_watch_run
+            sw = stop_watch_run()
+            if sw.get("fills"):
+                print(f"  protective exits honored despite halt: "
+                      f"{[f.get('ticker') for f in sw['fills']]}")
+            journal.log_run_summary(
+                {"halted": halt, "run_depth": run_depth,
+                 "protective_exits_under_halt": sw.get("fills") or [],
+                 "stop_watch_status": sw.get("status")}, run_id)
+        except Exception as e:
+            print(f"  (protective-exit sweep failed under halt: {e})")
+            journal.log_run_summary(
+                {"halted": halt, "run_depth": run_depth,
+                 "protective_exit_sweep_error": str(e)}, run_id)
         return 1
 
     forced_exit_fills = []

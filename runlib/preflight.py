@@ -21,14 +21,33 @@ LOCK_STALE_SECONDS = 45 * 60
 
 
 def acquire_run_lock(run_id: str) -> bool:
-    """One run at a time: concurrent cycles trade on stale portfolio snapshots."""
-    if LOCK_FILE.exists():
-        age = datetime.now().timestamp() - LOCK_FILE.stat().st_mtime
+    """One run at a time: concurrent cycles trade on stale portfolio snapshots.
+
+    Uses O_EXCL, which is atomic at the filesystem level. The previous version was
+    check-then-write — exists() at one line, write_text() four lines later — a
+    textbook TOCTOU window in which two processes microseconds apart both saw no
+    lock and both proceeded. That matters more now that the 5-minute stop watcher
+    can run concurrently with a scheduled trading cycle.
+    """
+    LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        fd = os.open(str(LOCK_FILE), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError:
+        # Someone holds it. Only steal a demonstrably stale lock.
+        try:
+            age = datetime.now().timestamp() - LOCK_FILE.stat().st_mtime
+        except OSError:
+            return False
         if age < LOCK_STALE_SECONDS:
             return False
         print(f"  (clearing stale run lock, {age/60:.0f} min old)")
-    LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
-    LOCK_FILE.write_text(run_id)
+        LOCK_FILE.unlink(missing_ok=True)
+        try:
+            fd = os.open(str(LOCK_FILE), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+        except FileExistsError:
+            return False  # lost the race to another reaper — stand down
+    with os.fdopen(fd, "w") as fh:
+        fh.write(run_id)
     import atexit
     atexit.register(release_run_lock)  # releases on every exit path, crashes included
     return True

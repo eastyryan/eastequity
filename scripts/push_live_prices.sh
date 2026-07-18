@@ -29,6 +29,20 @@ from tools.live_prices import refresh_from_book
 r = refresh_from_book()
 print('refreshed', r.get('n'), 'quotes as of', r.get('as_of'))" || exit 0
   [ -s state/live_prices.json ] || { echo "no snapshot produced"; exit 0; }
+  # BETWEEN-CYCLE STOP ENFORCEMENT. Stops are numbers in state/portfolio.json, not
+  # resting broker orders, so they were only honored when a full cycle ran — leaving
+  # ~2h intraday windows (10:00->12:00, 12:00->14:00, 14:00->16:00). This tick
+  # already had the fresh quotes; it just never looked at the stops (trigger_watch
+  # is a WATCHLIST tool and explicitly skips held tickers). Runs BEFORE the push:
+  # honoring a stop is more urgent than publishing a snapshot.
+  #
+  # LOCAL ONLY, deliberately. The cloud live-prices workflow is an ephemeral runner
+  # that publishes a single-file orphan commit and never commits state/portfolio.json,
+  # so a fill executed there would reach Alpaca while the ledger record died with the
+  # sandbox — the orphan-position failure mode. Here the ledger is on disk and the
+  # next local run reads it. Cloud stop-watching needs the same out-of-band fill
+  # ingestion path that broker-resting stops need.
+  .venv/bin/python -W ignore -m scripts.stop_watch || true
   BLOB=$(git hash-object -w state/live_prices.json) || exit 0
   SUBTREE=$(printf '100644 blob %s\tlive_prices.json\n' "$BLOB" | git mktree)
   # Repo-root vercel.json in the orphan tree so Vercel never builds this
