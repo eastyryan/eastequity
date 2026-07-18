@@ -267,8 +267,8 @@ def get_market_events(headlines=None, max_flags: int = MAX_FLAGGED,
 if __name__ == "__main__":
     try:
         from pathlib import Path
-        from dotenv import load_dotenv
-        load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+        from tools.envload import load_env
+        load_env()
     except Exception:
         pass
     print(json.dumps(get_market_events(), indent=2, default=str))

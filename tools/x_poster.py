@@ -164,6 +164,6 @@ def process_drafts(dry_run: bool = False) -> list[dict]:
 
 
 if __name__ == "__main__":
-    from dotenv import load_dotenv
-    load_dotenv(ROOT / ".env")
+    from tools.envload import load_env
+    load_env()
     process_drafts(dry_run="--dry-run" in sys.argv)

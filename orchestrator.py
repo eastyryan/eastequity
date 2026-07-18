@@ -27,7 +27,7 @@ import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
-from dotenv import load_dotenv
+from tools.envload import load_env
 
 import journal
 import validator
@@ -85,7 +85,7 @@ from runlib.context_tiers import (
     write_tiered_context,
 )
 
-load_dotenv(ROOT / ".env")
+load_env()
 
 # ---------------------------------------------------------------------------
 # Backward-compatible private aliases (tests + older tools)

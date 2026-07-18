@@ -179,7 +179,8 @@
     "brain_model": "claude-opus-4-8",
     "risk_desk_model": "claude-opus-4-8",
     "allowed_tools": "Read Glob Grep WebSearch WebFetch",
-    "_note": "Every claude -p invocation pins --model (public track record stays reproducible across CLI-default changes) and --allowedTools (exactly what CLAUDE.md instructs: Read the chart PNGs, WebSearch/WebFetch to verify catalysts - and nothing that can write, so an injected headline can never touch the ledger). Missing block falls back to CLI defaults. Risk desk uses a kill-checklist prompt (falsifiers, theme overlap, variant perception, entry geometry)."
+    "_note": "Every claude -p invocation pins --model (public track record stays reproducible across CLI-default changes) and --allowedTools (exactly what CLAUDE.md instructs: Read the chart PNGs, WebSearch/WebFetch to verify catalysts). Missing block falls back to CLI defaults. Risk desk uses a kill-checklist prompt (falsifiers, theme overlap, variant perception, entry geometry).",
+    "_security_note": "CORRECTION 2026-07-18 (audit). This block previously claimed the allowlist grants 'nothing that can write, so an injected headline can never touch the ledger'. That reasoned about the wrong threat: ledger writes were never the exposure - SECRET READS plus egress were. The bundle carries unsanitized headlines and filing prose to a model holding Read/Glob/Grep and WebFetch, and .env sat at the repo root with live broker and write-capable X tokens. Note a Read deny rule alone would NOT have closed it, because Grep prints matching lines. Fixed by moving secrets outside the working directory (tools/envload.py; Glob/Grep are cwd-scoped), plus deny rules in .claude/settings.json. Do not reintroduce a secrets file under the repo root - tests/test_secrets_hygiene.py fails the build if one appears."
   },
   "risk_controls": {
     "kill_switch_file": "state/KILL_SWITCH",

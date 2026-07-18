@@ -1,0 +1,42 @@
+{
+  "_comment": [
+    "Project permissions for the `claude -p` brain invoked by runlib/brain_io.py.",
+    "",
+    "THREAT MODEL: the brain reads a context bundle containing UNSANITIZED external",
+    "text - news headlines, SEC filing prose (up to 10k chars of MD&A), 8-K bodies.",
+    "It is granted Read/Glob/Grep plus WebSearch/WebFetch. An adversarial string in",
+    "any of that text is instruction-shaped input sitting inside a file the brain is",
+    "told to open. The validator cannot see this: it only inspects parsed proposals,",
+    "never tool calls.",
+    "",
+    "PRIMARY CONTROL is not these rules - it is that secrets now live OUTSIDE the",
+    "working directory (see tools/envload.py). Glob and Grep are cwd-scoped, and Grep",
+    "PRINTS MATCHING LINES, so a Read-only deny rule would never have stopped",
+    "`grep ALPACA`. Relocation closes that; these rules are defense in depth for any",
+    "secret file that reappears in-tree.",
+    "",
+    "NO WEBFETCH DOMAIN ALLOWLIST, deliberately. CLAUDE.md makes WebSearch mandatory",
+    "before every BUY and the brain WebFetches filings and news to verify catalysts;",
+    "pinning it to a host list would break the research the strategy depends on. With",
+    "credentials out of the working directory the residual egress risk is bundle",
+    "content, not secrets - a much lower severity. Revisit if secrets ever need to sit",
+    "in-tree again."
+  ],
+  "permissions": {
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/.env.local)",
+      "Read(./dashboard/.env.local)",
+      "Read(~/.config/east-equity-agent/**)",
+      "Grep(./.env)",
+      "Grep(./.env.*)",
+      "Grep(**/.env)",
+      "Grep(**/.env.*)",
+      "Grep(**/.env.local)",
+      "Glob(**/.env*)"
+    ]
+  }
+}

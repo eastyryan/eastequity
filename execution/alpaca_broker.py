@@ -85,8 +85,8 @@ def _keys() -> tuple[str, str] | None:
     s = os.environ.get("ALPACA_SECRET_KEY", "")
     if not (k and s):
         try:
-            from dotenv import load_dotenv
-            load_dotenv(ROOT / ".env")
+            from tools.envload import load_env
+            load_env()
             k = os.environ.get("ALPACA_API_KEY", "")
             s = os.environ.get("ALPACA_SECRET_KEY", "")
         except Exception:

@@ -228,6 +228,6 @@ def get_macro_snapshot() -> dict:
 
 
 if __name__ == "__main__":
-    from dotenv import load_dotenv
-    load_dotenv()
+    from tools.envload import load_env
+    load_env()
     print(json.dumps(get_macro_snapshot(), indent=2))
