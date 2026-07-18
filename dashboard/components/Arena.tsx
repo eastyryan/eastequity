@@ -4,6 +4,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import type { HistoryPoint, Latest } from "@/lib/types";
 import { formatEtStamp } from "@/lib/format";
+import ArenaCalibration from "./ArenaCalibration";
+import ArenaStudyHall, { type LearningJournal } from "./ArenaStudyHall";
 
 // Data arrives as props, rendered from the JSON committed in dashboard/data.
 //
@@ -200,7 +202,15 @@ function alertsFor(d: Latest): Alert[] {
   return out;
 }
 
-export default function Arena({ latest, history }: { latest: Latest; history: HistoryPoint[] }) {
+export default function Arena({
+  latest,
+  history,
+  journal = null,
+}: {
+  latest: Latest;
+  history: HistoryPoint[];
+  journal?: LearningJournal;
+}) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   // Today's intraday VIX / 10Y yield (FRED lags 1-2 business days). Display-only
@@ -408,8 +418,8 @@ export default function Arena({ latest, history }: { latest: Latest; history: Hi
             <a href="#floor">The Floor</a>
             <a href="#machine">The Machine</a>
             <a href="#log">The Log</a>
-            <Link href="/ledger">The Ledger</Link>
-            <Link href="/learning">Study Hall</Link>
+            <a href="#calibration">Calibration</a>
+            <a href="#study">Study Hall</a>
           </nav>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button
@@ -1256,6 +1266,34 @@ export default function Arena({ latest, history }: { latest: Latest; history: Hi
         </div>
       </section>
 
+      {/* ---------------- Calibration ---------------- */}
+      {/* Sits directly under the engineering log: both are the agent auditing
+          itself, and the calibration curve is the quantitative half of that. */}
+      <section id="calibration" className="ee-section" style={{ padding: "70px 32px 10px" }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 20, flexWrap: "wrap", marginBottom: 26 }}>
+          <h3 className="ee-serif" style={{ fontSize: 34 }}>
+            Confidence <i>calibration</i>
+          </h3>
+          <span style={{ fontSize: 11, letterSpacing: "0.2em", color: "var(--ee-muted)" }}>
+            WHAT IT SAID vs. WHAT HAPPENED
+          </span>
+        </div>
+        <ArenaCalibration calibration={latest.calibration ?? null} />
+      </section>
+
+      {/* ---------------- Study Hall ---------------- */}
+      <section id="study" className="ee-section" style={{ padding: "70px 32px 10px" }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 20, flexWrap: "wrap", marginBottom: 26 }}>
+          <h3 className="ee-serif" style={{ fontSize: 34 }}>
+            Study <i>hall</i>
+          </h3>
+          <span style={{ fontSize: 11, letterSpacing: "0.2em", color: "var(--ee-muted)" }}>
+            ONE RESEARCHED LESSON PER WEEKDAY
+          </span>
+        </div>
+        <ArenaStudyHall journal={journal} />
+      </section>
+
       {/* ---------------- Footer ---------------- */}
       <footer
         style={{
@@ -1285,15 +1323,15 @@ export default function Arena({ latest, history }: { latest: Latest; history: Hi
             </p>
           </div>
           <div style={{ display: "flex", gap: 18, fontSize: 13, flexWrap: "wrap" }}>
-            <Link href="/ledger" style={{ color: "var(--ee-accent)" }}>
-              The Ledger
-            </Link>
             <Link href="/runs" style={{ color: "var(--ee-accent)" }}>
               Run archive
             </Link>
-            <Link href="/learning" style={{ color: "var(--ee-accent)" }}>
+            <a href="#calibration" style={{ color: "var(--ee-accent)" }}>
+              Calibration
+            </a>
+            <a href="#study" style={{ color: "var(--ee-accent)" }}>
               Study Hall
-            </Link>
+            </a>
             <a href="https://x.com/EastEquity" target="_blank" rel="noreferrer" style={{ color: "var(--ee-accent)" }}>
               @EastEquity ↗
             </a>

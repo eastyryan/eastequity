@@ -305,7 +305,20 @@ html.dark .ee-layer-night {
   min-width: 0;
 }
 
+/* Calibration: square plot beside its readout. Collapses to a single column on
+   narrow screens — without this the fixed two-column grid overflows the viewport. */
+.ee-calib-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 380px) minmax(240px, 1fr);
+  gap: 40px;
+  align-items: start;
+}
+
 @media (max-width: 900px) {
+  .ee-calib-grid {
+    grid-template-columns: 1fr;
+    gap: 26px;
+  }
   .ee-section {
     padding: 56px 18px 28px;
     scroll-margin-top: 70px;
