@@ -297,8 +297,19 @@ def _check_volatility_stop(p: dict, cfg: dict, market_context: dict, reasons: li
     if str(p.get("action", "")).upper() != "BUY":
         return
     vol = (market_context or {}).get(str(p.get("ticker", "")).upper())
+    _require = (cfg.get("book_risk") or {}).get("require_volatility_data", False)
     if not isinstance(vol, dict):
-        return  # no volatility data -> fail open
+        # FAIL CLOSED when the data layer is expected to have this. Skipping the
+        # noise-band floor entirely means a 1% stop on an 8%-ATR name passes — the
+        # exact guess this floor exists to prevent. Written as fail-open when the
+        # scanner could not report its own coverage; it can now, so a missing figure
+        # on a name the brain CHOSE to propose is an anomaly, not the norm.
+        if _require:
+            reasons.append(
+                f"volatility_data_missing:{str(p.get('ticker','')).upper()} is absent "
+                f"from market_context — the stop noise-band floor cannot be computed, "
+                f"so this stop cannot be shown to sit outside ordinary daily movement")
+        return
     try:
         entry = float(p["entry_price_max"])
         stop = float(p["stop_loss"])
@@ -342,6 +353,18 @@ def _check_market_cap(p: dict, cfg: dict, market_context: dict, reasons: list[st
     mcap = (market_context or {}).get(str(p.get("ticker", "")).upper(), {}).get("market_cap_usd")
     if isinstance(mcap, (int, float)) and 0 < mcap < floor:
         reasons.append(f"below_min_market_cap:${mcap/1e9:.2f}B < ${floor/1e9:.0f}B")
+        return
+    if not isinstance(mcap, (int, float)) or mcap <= 0:
+        # FAIL CLOSED on an unverifiable cap. A "hard floor" that waves through every
+        # name whose size it cannot read is not a floor. The universe review is a
+        # second line of defence, not a substitute: universe_candidates admits new
+        # names between reviews, and those are precisely the ones most likely to be
+        # missing a figure here.
+        if (cfg.get("book_risk") or {}).get("require_market_cap_data", False):
+            reasons.append(
+                f"market_cap_unverifiable:{str(p.get('ticker','')).upper()} has no "
+                f"market cap in market_context — the ${floor/1e9:.0f}B floor cannot "
+                f"be enforced")
 
 
 def _check_confidence(p: dict, cfg: dict, reasons: list[str]) -> None:

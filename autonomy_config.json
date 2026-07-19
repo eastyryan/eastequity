@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "system_name": "East Equity Agent",
   "mode": {
-    "trading_mode": "paper",
+    "trading_mode": "dry_run",
     "_trading_mode_options": [
       "dry_run",
       "paper",
@@ -204,6 +204,9 @@
         }
       }
     ],
+    "require_volatility_data": false,
+    "require_market_cap_data": false,
+    "_tradeability_note": "Added 2026-07-19, both DEFAULT OFF pending evidence. Both floors currently fail OPEN on missing data: a proposal on a ticker absent from market_context skips the stop noise-band check entirely (a 1% stop on an 8%-ATR name passes), and a name with no market-cap figure clears the $1B floor by default. The enforcement is built and tested; enabling is a one-line flip once the evidence is in. require_volatility_data: a live gather covers 182/187 tickers with ZERO universe names absent, so the coverage case is already strong - held off only because 26 existing tests pass market_context={} and rewriting that many safety fixtures hours before going live is how a real assertion gets weakened by accident. Enable after a week of runs, then fix the fixtures deliberately. require_market_cap_data: weaker case and it stays off longer. market_cap_usd is NOT a bundle field (0% coverage there); orchestrator.py resolves it PER PROPOSAL from deep_fundamentals, then scan rows, then a LIVE lookup - so a yfinance hiccup would block every BUY in the run. Blocking the whole book on a network blip is a worse failure than the fail-open it replaces, and the weekly universe review already bars sub-$1B names from entering. Enable only once per-proposal resolution is observed at ~100%.",
     "_note": "Book-level risk (added 2026-07-19 after an audit found every binding constraint was arithmetic on ONE proposal while portfolio_beta / shared_left_tail / corr_to_book were computed by tools/correlation.py and consumed only as prose). Four controls, all in tools/book_risk.py, all pure. (1) max_factor_stack_pct: aggregate notional across factor_map.AI_STACK_DRIVERS. The 2% per-driver risk cap permits ~2 positions per driver, so 8 positions across 4 AI-stack drivers was 100% AI exposure passing every existing limit - a per-driver cap is not a factor cap. (2) gap_adjusted_heat: the 8% heat cap sums (cost-stop)*qty, which assumes stops FILL AT THE STOP - contradicted by execution_costs.stop_gap_atr_fraction (0.5) in this same file, and by the only closed stop in the ledger (DELL plan stop 408.00, fill 389.75, 4.5% through, realized -13.5% on a position sized for 1%). Heat now adds the modelled gap-through, using correlation only to decide how much of the book gaps on the same morning - NEVER to hand budget back, since the plain sum is already the fully-correlated case. Unknown correlation assumes the worst. (3) max_portfolio_beta: MV-weighted against EQUITY not invested capital, so a half-cash book reads as half-exposed. (4) stress_scenarios: named shocks priced against the book the proposal WOULD create; losses deliberately NOT floored at stops, because a shock worth naming is one where stops gap. driver_shocks key __ai_stack__ shocks the whole factor group. All four fail CLOSED on unverifiable inputs, matching the portfolio_heat_unverifiable precedent."
   },
   "regime_gate": {
