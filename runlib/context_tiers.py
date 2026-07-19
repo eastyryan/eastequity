@@ -3,6 +3,35 @@
 Full context is written to state/ for audit and cloud act-on.
 The brain receives a SLIM pack so CLAUDE non-negotiables are not drowned.
 
+THE INCIDENT THIS FILE EXISTS TO PREVENT
+----------------------------------------
+Measured 2026-07-19: the slim pack was 53,623 lines. The brain reads it with the
+Read tool, which returns ~2,000 lines. Every BLOCKING input sat past that window:
+
+    hard_limits            line     10   read
+    digest                 line    170   read
+    stack_cards            line 45,296   NEVER READ
+    factor_map             line 50,322   NEVER READ  <- requires_factor_response
+    portfolio_competition  line 50,347   NEVER READ  <- drives seat_reviews
+    reasoning_process      line 52,928   NEVER READ  <- the entire learning_pack
+
+Both gates reject every BUY in a run when unanswered. The brain was being blocked
+for failing to answer questions it could not see, and all six learning loops wrote
+to an address it never read. The old tiering saved 1.25% (1,904,722 vs 1,928,796
+bytes) because _trim_map_to_digest is a no-op on maps context_gather already scoped
+to focus tickers — it was measuring the wrong thing (bytes) against the wrong budget.
+
+THE BUDGET IS LINES, NOT BYTES. Bytes were never what truncated the brain.
+
+Two invariants, both pinned by tests/test_context_budget.py:
+  1. Every key in DECISION_CRITICAL starts before READ_WINDOW_LINES.
+  2. The whole pack stays under MAX_PACK_LINES so it cannot silently regrow.
+
+TRIMMING MUST NEVER BE SILENT. Every cap below records what it dropped and where
+the full copy lives, in-place under a `_trimmed` key and aggregated into
+`_pack_budget`. A silent omission is the exact failure class this system spent
+three days eliminating; a pack that quietly loses a block is worse than a big one.
+
 Tiers
 -----
 always   — portfolio, regime, limits, digest, data quality, process checklist
@@ -12,13 +41,91 @@ full     — everything (archive only)
 
 Public API:
   slim_context_for_brain(full) -> dict
-  learning_pack(full, limits) -> dict
+  compact_learning_pack(full, n) -> dict
+  pack_line_count(pack) -> int
+  key_start_lines(pack) -> dict[str, int]
 """
 
 from __future__ import annotations
 
+import json
 from copy import deepcopy
 from typing import Any
+
+
+# The Read tool returns this many lines by default. Everything the brain is
+# BLOCKED on must start before it, or the gate is unanswerable by construction.
+READ_WINDOW_LINES = 2000
+
+# Ceiling on the whole pack. NOT a truncation point and NOT an aspiration — a
+# regression alarm sized above the largest observed focus set, so a new block
+# wired in without a cap trips the test instead of silently landing in the pack.
+#
+# READ THIS BEFORE LOWERING IT. The bug this module fixes was ORDER, not size.
+# Blocks past the read window cost disk and paging, not tokens — the brain only
+# pays for what it actually reads, and it reads the first ~2,000 lines. A first
+# pass at these caps chased the byte count down to 31,737 lines and in doing so
+# deleted quarterly_facts entirely, which removed deferred_revenue and
+# remaining_performance_obligation — lines financial_checklists explicitly tells
+# the brain to walk on every SaaS name. That traded real signal for a saving the
+# system does not collect. Inside the window every line competes; outside it,
+# only genuine redundancy should go.
+#
+# Measured 2026-07-19: 53,623 lines before, ~41,600 after on a 28-name focus set
+# (~26,200 on a 16-name set — the pack scales with focus-set size, which is why
+# this ceiling is set against the larger one). The win to look at is not this
+# number; it is that the last BLOCKING key moved from line 52,928 to line 1,673.
+MAX_PACK_LINES = 48000
+
+# Emitted in insertion order, before any research map. dict preserves order and
+# the pack is serialized with json.dumps(..., indent=2), so insertion order IS
+# line order.
+#
+# TIER 1 — BLOCKING. Deterministic code REJECTS a proposal when one of these is
+# unanswered or breached. If any of these falls outside the read window the gate
+# becomes unanswerable by construction, which is precisely the bug measured on
+# 2026-07-19. tests/test_context_budget.py pins every one of them under
+# READ_WINDOW_LINES; that assertion is the whole point of this module.
+BLOCKING_KEYS = (
+    "_context_tier", "_tier_note", "_pack_budget",
+    "run_date", "as_of_et", "trading_mode", "run_depth", "run_depth_note",
+    "allows_new_buys", "full_context_path",
+    "hard_limits",              # live validator floors
+    "digest",                   # "READ FIRST" per its own note
+    "factor_map",               # BLOCKING: requires_factor_response
+    "portfolio_competition",    # BLOCKING: drives seat_reviews
+    "reasoning_process",        # process_checklist + the whole learning_pack
+    "portfolio",
+    "stop_engineering",         # min stop distance — rejects stop_inside_noise_band
+    "position_stop_cushion",
+    "risk_halts", "forced_exits", "corporate_actions",
+    "data_quality", "stale_data_notice", "price_freshness_live",
+    "fundamentals_freshness",   # HARD RULE; drives fundamentals_stale:<TICKER>
+)
+
+# TIER 2 — the regime read and book context. Step 1 of the Required Process
+# ("Regime") lives here, so it is emitted immediately after the blocking set and
+# normally lands inside the window too. It is NOT pinned by the hard assertion:
+# these do not gate a proposal, and pinning them would force the digest to be
+# gutted to make room on a large focus set. Whatever falls past the window is
+# named with its exact offset in _pack_budget.keys_beyond_read_window.
+# Ordered by value-per-line, not by importance in the abstract. The regime read
+# is step 1 of the Required Process and costs ~150 lines; track_record is 187
+# lines of history that is 2 trades deep today and whose actionable summary
+# (phase, inflated-bucket flag, losing sectors) is already inside
+# reasoning_process.learning_pack.calibration_status. So regime, live trigger
+# alerts and book risk get the remaining window space, and the history follows.
+DECISION_CONTEXT = (
+    "macro_regime", "benchmark_close", "market_events",
+    "watchlist_trigger_alerts", "tape_focus_promotions",
+    "portfolio_risk",
+    "track_record",
+    "ownership_flow",
+    "earnings_deep_dive", "trigger_run_note", "operator_note",
+    "lessons_learned",
+)
+
+DECISION_CRITICAL = BLOCKING_KEYS + DECISION_CONTEXT
 
 
 # Keys always kept at top level for the brain
@@ -161,6 +268,16 @@ def compact_learning_pack(full: dict, *, n: int = 5) -> dict:
         },
         "shadow": {
             "binding": shadow.get("binding"),
+            # These four are DISCLOSURES, and this block is a cherry-picking
+            # allowlist: anything not named here is dropped before the brain ever
+            # sees it. Adding a caveat to shadow_portfolio.py and forgetting this
+            # list is the same bug as factor_map being present in the archive and
+            # stripped from the slim pack — the warning exists and never arrives.
+            "enforcement": shadow.get("enforcement"),
+            "enforcement_note": shadow.get("enforcement_note"),
+            "verdict_distribution": shadow.get("verdict_distribution"),
+            "verdict_skew_warning": shadow.get("verdict_skew_warning"),
+            "measurement_quality": shadow.get("measurement_quality"),
             "stats": shadow.get("stats"),
             "regret_misses": _top(shadow.get("regret_misses") or [], n),
             "good_skips": _top(shadow.get("good_skips") or [], n),
@@ -274,59 +391,355 @@ def re_looks_like_ticker(k: str) -> bool:
     return k.isalpha() and 1 <= len(k) <= 5 and k.upper() == k
 
 
+# ---------------------------------------------------------------------------
+# Per-block caps.
+#
+# Every one of these is STRUCTURAL — it keeps named fields and drops named
+# fields. None of them truncates by length or by line count, because a blind
+# truncator cannot know whether the bytes it dropped were load-bearing.
+# Each records what it removed under `_trimmed` so the omission is visible to
+# the brain, and each names the archive path where the full copy lives.
+# ---------------------------------------------------------------------------
+
+def _mark(block: dict, dropped: str, where: str = "full_context_path") -> dict:
+    """Stamp a visible record of what this cap removed."""
+    t = block.setdefault("_trimmed", {})
+    t[dropped] = f"omitted from the slim pack — full copy in {where}"
+    return block
+
+
+def _cap_deep_fundamentals(m: dict, log: list, *, keep_periods: int = 2) -> dict:
+    """Keep quality_ratios whole; cap quarterly_facts HISTORY, never its series.
+
+    An earlier version of this cap deleted quarterly_facts outright, reading
+    CLAUDE.md's "TRUST THE RATIOS - do not recompute them" as licence to drop the
+    inputs. That was wrong, and the same paragraph says why: deep_fundamentals is
+    "opex, balance sheet, DEFERRED REVENUE/RPO, buybacks, PLUS pre-computed
+    quality_ratios". deferred_revenue and remaining_performance_obligation are NOT
+    in quality_ratios — they live here, and RPO is the forward-demand line
+    financial_checklists tells the brain to walk on every SaaS name. Dropping the
+    series removed data the prompt instructs the brain to read.
+
+    So: every series survives, only older periods go. Note this block sits BEYOND
+    the read window regardless, so trimming it buys disk, not tokens — which is
+    why the cap is now deliberately light. quality_ratios.ratios.market_cap_usd is
+    load-bearing (orchestrator.py:777, the $1B floor) and is never touched.
+    """
+    if not isinstance(m, dict):
+        return m
+    out, n, dropped_total = {}, 0, 0
+    for t, e in m.items():
+        if not isinstance(e, dict):
+            out[t] = e
+            continue
+        e = deepcopy(e)
+        qf = e.get("quarterly_facts")
+        if isinstance(qf, dict):
+            capped, dropped = {}, 0
+            for series, rows in qf.items():
+                if isinstance(rows, list) and len(rows) > keep_periods:
+                    dropped += len(rows) - keep_periods
+                    capped[series] = rows[:keep_periods]
+                else:
+                    capped[series] = rows
+            e["quarterly_facts"] = capped
+            if dropped:
+                dropped_total += dropped
+                _mark(e, f"quarterly_facts history ({dropped} older periods; every "
+                         f"series kept, newest {keep_periods} periods each)")
+                n += 1
+        out[t] = e
+    if n:
+        log.append(f"deep_fundamentals: capped quarterly_facts to the newest "
+                   f"{keep_periods} periods for {n} tickers ({dropped_total} rows); "
+                   f"all series incl. deferred_revenue/RPO retained")
+    return out
+
+
+def _cap_sec_filings(m: dict, log: list, *, keep_periods: int = 5,
+                     keep_filings: int = 8) -> dict:
+    """Keep filing identity + freshness; cap the statement history and filing list.
+
+    keep_periods is 5, not 2, on purpose: a year-over-year read needs the current
+    quarter AND the year-ago quarter, so anything under 5 makes YoY uncomputable
+    from this block. CLAUDE.md has the brain checking period_days and reasoning
+    about YTD flow rows, which needs the sequence, not a snapshot.
+
+    fundamentals_current_through and stale_fundamentals_warning are HARD RULE
+    inputs (validator rejects `fundamentals_stale:<TICKER>`) and are never touched.
+    """
+    if not isinstance(m, dict):
+        return m
+    out, n = {}, 0
+    for t, e in m.items():
+        if not isinstance(e, dict):
+            out[t] = e
+            continue
+        e = deepcopy(e)
+        qf = e.get("quarterly_fundamentals")
+        if isinstance(qf, dict):
+            capped, dropped = {}, 0
+            for series, rows in qf.items():
+                if isinstance(rows, list) and len(rows) > keep_periods:
+                    dropped += len(rows) - keep_periods
+                    capped[series] = rows[:keep_periods]
+                else:
+                    capped[series] = rows
+            e["quarterly_fundamentals"] = capped
+            if dropped:
+                _mark(e, f"quarterly_fundamentals history ({dropped} older periods; "
+                         f"newest {keep_periods} kept per series)")
+                n += 1
+        rf = e.get("recent_filings")
+        if isinstance(rf, list) and len(rf) > keep_filings:
+            _mark(e, f"recent_filings ({len(rf) - keep_filings} older filings; "
+                     f"newest {keep_filings} kept)")
+            e["recent_filings"] = rf[:keep_filings]
+        out[t] = e
+    if n:
+        log.append(f"sec_filings: capped statement history to the newest "
+                   f"{keep_periods} periods for {n} tickers")
+    return out
+
+
+def _cap_filing_texts(m: dict, log: list, *, plain: int = 3000,
+                      guidance: int = 6000) -> dict:
+    """Cap MD&A / earnings-release prose, keeping more when guidance is present.
+
+    CLAUDE.md tells the brain to QUOTE the exact guidance sentence when
+    contains_guidance_language is true, so those excerpts get a much larger
+    budget. Truncation is stamped inline in the excerpt itself, not only in
+    metadata, so a half-sentence can never read as the end of the disclosure.
+
+    The budgets are generous because the MD&A excerpt is already targeted at the
+    Results-of-Operations + Liquidity discussion — the section CLAUDE.md says to
+    "mine for segment trends and guidance" — and because this block sits past the
+    read window, where a shorter excerpt costs real signal and saves no tokens.
+    An earlier 1,100-char cap was roughly 180 words, which is not a discussion.
+    """
+    if not isinstance(m, dict):
+        return m
+    out, n = {}, 0
+    for t, e in m.items():
+        if not isinstance(e, dict):
+            out[t] = e
+            continue
+        e = deepcopy(e)
+        for sec in ("mdna", "earnings_release"):
+            blk = e.get(sec)
+            if not isinstance(blk, dict):
+                continue
+            ex = blk.get("excerpt")
+            if not isinstance(ex, str):
+                continue
+            cap = guidance if blk.get("contains_guidance_language") else plain
+            if len(ex) > cap:
+                blk["excerpt"] = (
+                    ex[:cap]
+                    + f"\n\n[TRUNCATED for the brain pack: {len(ex) - cap} more "
+                      f"characters of this {sec} section are in full_context_path. "
+                      f"Read them before quoting this section as complete.]")
+                blk["excerpt_truncated_for_pack"] = True
+                blk["excerpt_full_chars"] = len(ex)
+                n += 1
+        out[t] = e
+    if n:
+        log.append(f"filing_texts: truncated {n} prose excerpts "
+                   f"({plain} chars, {guidance} when guidance language is present)")
+    return out
+
+
+def _cap_ownership_flow(block: dict, log: list) -> dict:
+    """Keep the two fields CLAUDE.md says to read first, plus the synthesis.
+
+    CLAUDE.md: "Read by_ticker[T].alignment and read_for_swing first." The
+    institutional / retail_proxy / price_action sub-blocks are the evidence those
+    two fields were computed from — ~1.7KB per ticker, 2,575 lines in total, which
+    made this the single largest block in the decision-critical set.
+    """
+    if not isinstance(block, dict):
+        return block
+    bt = block.get("by_ticker")
+    if not isinstance(bt, dict):
+        return block
+    block = deepcopy(block)
+    keep = ("ticker", "alignment", "read_for_swing", "synthesis")
+    out, n = {}, 0
+    for t, e in bt.items():
+        if not isinstance(e, dict):
+            out[t] = e
+            continue
+        slim_e = {k: e[k] for k in keep if k in e}
+        dropped = [k for k in e if k not in keep and not k.startswith("_")]
+        if dropped:
+            _mark(slim_e, f"supporting evidence ({', '.join(dropped)})")
+            n += 1
+        out[t] = slim_e
+    block["by_ticker"] = out
+    if n:
+        log.append(f"ownership_flow: kept alignment + read_for_swing + synthesis for "
+                   f"{n} tickers, dropped the supporting evidence blocks "
+                   f"(institutional / retail_proxy / price_action detail)")
+    return block
+
+
+def _cap_fundamentals_freshness(block: dict, log: list) -> dict:
+    """Keep the STALE names in full; drop the fresh ones' per-ticker rows.
+
+    stale_tickers drives the validator's `fundamentals_stale:<TICKER>` rejection,
+    so the actionable subset is kept whole. The fresh names' rows duplicate
+    digest.by_ticker[T].latest_quarter_end / .fundamentals_stale, which the brain
+    already reads at line ~341 — and CLAUDE.md's rule ("state the quarter-end date
+    next to every fundamental figure") is satisfied from the digest.
+    """
+    if not isinstance(block, dict):
+        return block
+    bt = block.get("by_ticker")
+    if not isinstance(bt, dict):
+        return block
+    block = deepcopy(block)
+    stale = {str(t).upper() for t in (block.get("stale_tickers") or [])}
+    kept, dropped = {}, []
+    for t, e in bt.items():
+        # Drop ONLY on positive confirmation of freshness. A row whose shape we
+        # do not recognise, or whose `stale` flag is absent/None, is KEPT — the
+        # cost of keeping a fresh row is a few lines; the cost of dropping a
+        # stale one is the brain citing last quarter's numbers as current.
+        provably_fresh = (
+            isinstance(e, dict)
+            and e.get("stale") is False
+            and not e.get("stale_fundamentals_warning")
+            and str(t).upper() not in stale
+        )
+        if provably_fresh:
+            dropped.append(t)
+        else:
+            kept[t] = e
+    if dropped:
+        block["by_ticker"] = kept
+        block["_trimmed"] = {
+            "fresh_ticker_rows": (
+                f"{len(dropped)} names with non-stale fundamentals omitted "
+                f"({', '.join(sorted(dropped)[:8])}"
+                f"{'...' if len(dropped) > 8 else ''}). Their quarter-end is in "
+                f"digest.by_ticker[T].latest_quarter_end. Every STALE name is kept "
+                f"here in full — this cap can only ever drop fresh names.")
+        }
+        log.append(f"fundamentals_freshness: dropped {len(dropped)} fresh-ticker rows, "
+                   f"kept all {len(kept)} stale/warned names")
+    return block
+
+
+def _cap_price_freshness(block: Any, log: list, *, keep: int = 5) -> Any:
+    """Cap prices_meta_sample — it is a SAMPLE, and the real thing is elsewhere.
+
+    The aggregate fields (n_priced, bars_older_than_et_today, scan_fetched_at_utc)
+    are the staleness signal and are untouched. The per-ticker sample is a
+    illustrative subset of universe_scan.prices_meta, which CLAUDE.md already
+    points the brain at for per-name freshness ("use
+    universe_scan.prices_meta[T].price_as_of"). 62 lines of illustration inside
+    the read window is a poor trade against the real map further down.
+    """
+    if not isinstance(block, dict):
+        return block
+    sample = block.get("prices_meta_sample")
+    if not isinstance(sample, dict) or len(sample) <= keep:
+        return block
+    block = deepcopy(block)
+    names = list(sample)
+    block["prices_meta_sample"] = {t: sample[t] for t in names[:keep]}
+    block["_trimmed"] = (
+        f"prices_meta_sample cut to {keep} of {len(names)} illustrative rows. "
+        f"This is a sample, not the source: per-ticker freshness is in "
+        f"universe_scan.prices_meta[TICKER].price_as_of. Aggregates above "
+        f"(n_priced, bars_older_than_et_today) cover the whole set.")
+    log.append(f"reasoning_process.price_freshness: sample cut to {keep} of {len(names)} rows")
+    return block
+
+
+def pack_line_count(pack: dict) -> int:
+    """Lines the brain's Read tool will see. The budget unit for this module."""
+    return len(json.dumps(pack, indent=2, default=str).split("\n"))
+
+
+def key_start_lines(pack: dict) -> dict:
+    """1-indexed line where each top-level key starts in the serialized pack.
+
+    This is the measurement the whole module is budgeted against — the brain
+    reads lines, so a key's LINE offset is what decides whether it is read.
+    """
+    lines = json.dumps(pack, indent=2, default=str).split("\n")
+    starts: dict[str, int] = {}
+    for i, line in enumerate(lines):
+        if line.startswith('  "') and line[3:].find('"') > 0:
+            k = line[3:3 + line[3:].find('"')]
+            starts.setdefault(k, i + 1)
+    return starts
+
+
 def slim_context_for_brain(full: dict, *, learning_n: int = 5) -> dict:
-    """Build brain-facing context from full gather bundle."""
+    """Build brain-facing context from full gather bundle.
+
+    Emission order IS read order (dict preserves insertion, json.dumps indents),
+    so DECISION_CRITICAL keys are written first and every blocking input lands
+    inside the brain's ~2,000-line Read window. Research maps follow, capped
+    structurally, each stamping what it dropped.
+    """
     if not isinstance(full, dict):
         return {}
-    slim: dict[str, Any] = {
-        "_context_tier": "brain_slim_v1",
-        "_tier_note": (
-            "This is the SLIM brain pack. Full archive is at full_context_path if set. "
-            "Learning signals are in reasoning_process.learning_pack (top-N). "
-            "Deep maps are limited to focus/digest tickers."
-        ),
-    }
+
+    trim_log: list[str] = []
+
+    # Build every value first, then emit in DECISION_CRITICAL order.
+    built: dict[str, Any] = {}
+
     for k in ALWAYS_KEYS:
         if k in full:
-            slim[k] = full[k]
-
-    # Focus research (trim large maps)
-    for k in FOCUS_KEYS:
-        if k not in full:
-            continue
-        v = full[k]
-        if k == "universe_scan":
-            slim[k] = _trim_universe_scan(v)
-        elif k in ("sec_filings", "deep_fundamentals", "filing_texts", "news_and_catalysts",
-                   "insider_activity", "options_signals", "partnerships"):
-            # These are often {ticker: ...} or nested tickers
-            if isinstance(v, dict) and any(re_looks_like_ticker(x) for x in list(v)[:5]):
-                slim[k] = _trim_map_to_digest(full, v)
-            else:
-                slim[k] = v
-        else:
-            slim[k] = v
-
-    # Reasoning process: replace bulk with learning pack + essentials
+            built[k] = full[k]
+    # Reasoning process: replace bulk with learning pack + essentials.
+    #
+    # compact_learning_pack() re-emits several keys the parent already carries
+    # (process_checklist, price_freshness, theme_exposure, ...). Two copies cost
+    # ~140 lines inside the read window and can drift apart. Keep them at the
+    # PARENT level, which is where CLAUDE.md points the brain, and strip the
+    # duplicates from the nested copy.
+    #
+    # watchlist_feedback is hoisted for the same reason and it is a real bug fix:
+    # CLAUDE.md says "read reasoning_process.watchlist_feedback (hits_not_bought,
+    # large moves not acted)" but it only ever existed at
+    # reasoning_process.learning_pack.watchlist_feedback — one level deeper than
+    # the documented path. The brain following its own instructions found nothing.
     rp = full.get("reasoning_process") if isinstance(full.get("reasoning_process"), dict) else {}
-    slim_rp = {
+    lp = compact_learning_pack(full, n=learning_n)
+    _PARENT_OWNED = (
+        "process_checklist", "theme_exposure", "theme_concentration_cap_pct",
+        "price_freshness", "demand_driver_map_note", "watchlist_feedback",
+    )
+    watchlist_feedback = lp.get("watchlist_feedback")
+    lp = {k: v for k, v in lp.items() if k not in _PARENT_OWNED}
+    lp["_deduped"] = (
+        "process_checklist, theme_exposure, theme_concentration_cap_pct, "
+        "price_freshness, demand_driver_map_note and watchlist_feedback live one "
+        "level up on reasoning_process — not repeated here.")
+    built["reasoning_process"] = {
         "run_depth": rp.get("run_depth"),
         "process_checklist": rp.get("process_checklist"),
         "watchlist_status_required": rp.get("watchlist_status_required"),
         "full_run_no_trade_rule": rp.get("full_run_no_trade_rule"),
         "theme_exposure": rp.get("theme_exposure"),
         "theme_concentration_cap_pct": rp.get("theme_concentration_cap_pct"),
-        "price_freshness": rp.get("price_freshness"),
+        "price_freshness": _cap_price_freshness(rp.get("price_freshness"), trim_log),
         "demand_driver_map_note": rp.get("demand_driver_map_note"),
-        "learning_pack": compact_learning_pack(full, n=learning_n),
+        "watchlist_feedback": watchlist_feedback,
+        "learning_pack": lp,
     }
-    # Keep demand_driver_map_focus inside learning_pack already
-    slim["reasoning_process"] = slim_rp
 
-    # Track record: keep performance + last 10 closed only
+    # Track record: keep performance + last 10 closed only. breakdowns is left
+    # whole — gather already emits only buckets with trades in them, so there is
+    # nothing here to prune that would not be real evidence.
     tr = full.get("track_record")
     if isinstance(tr, dict):
-        slim["track_record"] = {
+        built["track_record"] = {
             "note": tr.get("note"),
             "closed_trades": _top(tr.get("closed_trades") or [], 10),
             "performance": tr.get("performance"),
@@ -334,9 +747,86 @@ def slim_context_for_brain(full: dict, *, learning_n: int = 5) -> dict:
             "calibration": tr.get("calibration"),
         }
 
-    if full.get("full_context_path"):
-        slim["full_context_path"] = full["full_context_path"]
+    # Focus research (trim large maps).
+    for k in FOCUS_KEYS:
+        if k not in full:
+            continue
+        v = full[k]
+        if k == "universe_scan":
+            built[k] = _trim_universe_scan(v)
+        elif k == "deep_fundamentals":
+            built[k] = _cap_deep_fundamentals(_trim_map_to_digest(full, v), trim_log)
+        elif k == "sec_filings":
+            built[k] = _cap_sec_filings(_trim_map_to_digest(full, v), trim_log)
+        elif k == "filing_texts":
+            built[k] = _cap_filing_texts(_trim_map_to_digest(full, v), trim_log)
+        elif k == "ownership_flow":
+            built[k] = _cap_ownership_flow(v, trim_log)
+        elif k == "fundamentals_freshness":
+            built[k] = _cap_fundamentals_freshness(v, trim_log)
+        elif k in ("news_and_catalysts", "insider_activity", "options_signals",
+                   "partnerships"):
+            if isinstance(v, dict) and any(re_looks_like_ticker(x) for x in list(v)[:5]):
+                built[k] = _trim_map_to_digest(full, v)
+            else:
+                built[k] = v
+        else:
+            built[k] = v
 
+    if full.get("full_context_path"):
+        built["full_context_path"] = full["full_context_path"]
+
+    # ---- Emit in read order -------------------------------------------------
+    slim: dict[str, Any] = {
+        "_context_tier": "brain_slim_v2",
+        "_tier_note": (
+            "SLIM brain pack, ordered so everything BINDING is inside the first "
+            f"~{READ_WINDOW_LINES} lines — the default Read window. Keys appear in "
+            "decision order: limits, digest, factor_map, portfolio_competition, "
+            "reasoning_process (learning_pack), book, then research detail. "
+            "Research maps below are structurally capped; every cap stamps a "
+            "`_trimmed` note naming what it dropped. Full archive: full_context_path."
+        ),
+        "_pack_budget": {},  # placeholder, filled once the pack is measurable
+    }
+    for k in DECISION_CRITICAL:
+        if k in built:
+            slim[k] = built[k]
+    for k, v in built.items():
+        if k not in slim:
+            slim[k] = v
+
+    # ---- Measure and disclose ----------------------------------------------
+    # The budget block is itself part of the pack, so writing it shifts every
+    # offset below it. Iterate to a fixed point (converges in 2 passes; the cap
+    # is a safety net, not an expected path) so the disclosed line numbers are
+    # the ones the brain will actually see — a budget that misreports its own
+    # offsets is the same silent-omission failure wearing a measurement costume.
+    for _ in range(5):
+        starts = key_start_lines(slim)
+        beyond = sorted(
+            ((v, k) for k, v in starts.items() if v > READ_WINDOW_LINES),
+            key=lambda p: p[0])
+        budget = {
+            "note": (
+                "Measured line budget for this pack. Your Read tool returns "
+                f"~{READ_WINDOW_LINES} lines by default; anything starting past that "
+                "is NOT read unless you page to it with Read(offset=N). Every input "
+                "that can BLOCK a proposal is above that line by construction, so a "
+                "default Read is sufficient to answer every gate. The entries below "
+                "are what you did NOT get — page to them when a name matters."
+            ),
+            "total_lines": pack_line_count(slim),
+            "read_window_lines": READ_WINDOW_LINES,
+            # Compact "key@line" strings: an object per key cost ~90 lines of the
+            # very window this block exists to protect.
+            "keys_beyond_read_window": [f"{k}@{ln}" for ln, k in beyond],
+            "trimmed": trim_log,
+            "full_archive": full.get("full_context_path"),
+        }
+        if slim["_pack_budget"] == budget:
+            break
+        slim["_pack_budget"] = budget
     return slim
 
 

@@ -28,6 +28,30 @@ _CHUNK = 100          # symbols per snapshots request (URL stays well under limi
 _TIMEOUT = 8          # seconds; the feeder tick must never hang
 
 
+class FeedFailure(Exception):
+    """A feed call that did not complete. NOT the same as 'the feed said nothing'.
+
+    THE INCIDENT (audited 2026-07-19): get_news / get_movers / get_most_actives
+    all return []/{} on network error, non-200 AND on a genuinely quiet market.
+    Their callers wrapped them in try/except to detect outages — but since these
+    functions never raise, that detection was dead code. Proven under a simulated
+    total outage, tools/market_radar.py reported:
+
+        status  : degraded_all_feeds_empty
+        coverage: {"requested": 3, "succeeded": 3, "failed": 0,
+                   "sources": {"movers":"ok","actives":"ok","news":"ok"}}
+
+    Three dead feeds counted as three successes, and the `if ok_sources == 0`
+    guard could never fire. The same pattern made market_news record a dead
+    Alpaca feed as {"ok": True, "items": 0}.
+
+    The *_result() helpers below return (data, error) so a caller can tell "the
+    market was quiet" from "we never got an answer". The bare helpers are kept as
+    back-compat wrappers and still fail soft — callers that must distinguish the
+    two cases use the _result variants.
+    """
+
+
 def _keys() -> tuple[str, str] | None:
     """API keys from the environment (.env is loaded by runlib.core/orchestrator;
     also loaded here fail-soft so standalone `python -m tools.live_prices` works)."""
@@ -140,32 +164,43 @@ def _age_hours(published_iso: str | None, now: datetime | None = None) -> float 
 
 
 def get_news(symbols=None, hours: float = 24.0, limit: int = 50) -> list[dict]:
+    """Back-compat wrapper: rows only, [] on failure OR on a quiet feed.
+
+    Use get_news_result() when you need to tell those two apart — see FeedFailure.
+    """
+    return get_news_result(symbols, hours, limit)[0]
+
+
+def get_news_result(symbols=None, hours: float = 24.0,
+                    limit: int = 50) -> tuple[list[dict], str | None]:
     """Alpaca News API (Benzinga-sourced, included in the free Basic plan).
 
     symbols=None -> market-wide feed; a list scopes to those tickers. Rows are
     normalized to the repo headline shape {title, source, published, url,
-    age_hours, symbols[]} and filtered to the last `hours`. [] on any failure
-    (missing keys, network, egress block) — callers already treat news as a
-    fail-soft merge.
+    age_hours, symbols[]} and filtered to the last `hours`.
+
+    Returns (rows, error). error is None when the call COMPLETED — including when
+    it completed and the market was quiet, which is why an empty list alone can
+    never mean failure. A non-None error means we did not get an answer.
     """
     hdrs = _headers()
     if not hdrs:
-        return []
+        return [], "no_api_keys"
     params: dict = {"limit": max(1, min(int(limit), 50)), "sort": "desc",
                     "include_content": "false"}
     if symbols:
         syms = sorted({str(s).upper() for s in symbols if s})
         if not syms:
-            return []
+            return [], None          # nothing asked for is not a failure
         params["symbols"] = ",".join(syms[:_CHUNK])
     try:
         r = requests.get(f"{DATA_BASE}/v1beta1/news", params=params,
                          headers=hdrs, timeout=_TIMEOUT)
         if r.status_code != 200:
-            return []
+            return [], f"http_{r.status_code}"
         rows = (r.json() or {}).get("news") or []
-    except Exception:
-        return []
+    except Exception as e:
+        return [], f"{type(e).__name__}: {str(e)[:120]}"
     now = datetime.now(timezone.utc)
     out = []
     for row in rows:
@@ -180,25 +215,33 @@ def get_news(symbols=None, hours: float = 24.0, limit: int = 50) -> list[dict]:
                     "published": published, "url": row.get("url"),
                     "age_hours": age,
                     "symbols": [str(s).upper() for s in (row.get("symbols") or [])]})
-    return out
+    return out, None
 
 
 def get_movers(top: int = 10) -> dict:
+    """Back-compat wrapper: {} on failure OR on an empty screener.
+    Use get_movers_result() to tell those apart — see FeedFailure."""
+    return get_movers_result(top)[0]
+
+
+def get_movers_result(top: int = 10) -> tuple[dict, str | None]:
     """Market-wide top gainers/losers by percent change (Alpaca screener,
     free plan). {"gainers": [...], "losers": [...]} with rows
-    {symbol, percent_change, change, price}; {} on any failure."""
+    {symbol, percent_change, change, price}.
+
+    Returns (data, error); error is None when the call completed."""
     hdrs = _headers()
     if not hdrs:
-        return {}
+        return {}, "no_api_keys"
     try:
         r = requests.get(f"{DATA_BASE}/v1beta1/screener/stocks/movers",
                          params={"top": max(1, min(int(top), 50))},
                          headers=hdrs, timeout=_TIMEOUT)
         if r.status_code != 200:
-            return {}
+            return {}, f"http_{r.status_code}"
         body = r.json() or {}
-    except Exception:
-        return {}
+    except Exception as e:
+        return {}, f"{type(e).__name__}: {str(e)[:120]}"
     out = {}
     for side in ("gainers", "losers"):
         rows = []
@@ -211,32 +254,42 @@ def get_movers(top: int = 10) -> dict:
         out[side] = rows
     if body.get("last_updated"):
         out["last_updated"] = body["last_updated"]
-    return out if (out.get("gainers") or out.get("losers")) else {}
+    if not (out.get("gainers") or out.get("losers")):
+        return {}, None          # screener answered with nothing — not a failure
+    return out, None
 
 
 def get_most_actives(top: int = 20, by: str = "volume") -> list[dict]:
+    """Back-compat wrapper: [] on failure OR on an empty screener.
+    Use get_most_actives_result() to tell those apart — see FeedFailure."""
+    return get_most_actives_result(top, by)[0]
+
+
+def get_most_actives_result(top: int = 20,
+                            by: str = "volume") -> tuple[list[dict], str | None]:
     """Market-wide most-active stocks (Alpaca screener, free plan).
-    by: "volume" | "trades". [{symbol, volume, trade_count}]; [] on failure."""
+    by: "volume" | "trades". Returns ([{symbol, volume, trade_count}], error);
+    error is None when the call completed."""
     hdrs = _headers()
     if not hdrs:
-        return []
+        return [], "no_api_keys"
     try:
         r = requests.get(f"{DATA_BASE}/v1beta1/screener/stocks/most-actives",
                          params={"top": max(1, min(int(top), 100)),
                                  "by": by if by in ("volume", "trades") else "volume"},
                          headers=hdrs, timeout=_TIMEOUT)
         if r.status_code != 200:
-            return []
+            return [], f"http_{r.status_code}"
         rows = (r.json() or {}).get("most_actives") or []
-    except Exception:
-        return []
+    except Exception as e:
+        return [], f"{type(e).__name__}: {str(e)[:120]}"
     out = []
     for row in rows:
         if not isinstance(row, dict) or not row.get("symbol"):
             continue
         out.append({"symbol": str(row["symbol"]).upper(),
                     "volume": row.get("volume"), "trade_count": row.get("trade_count")})
-    return out
+    return out, None
 
 
 def freshest_trade_age_minutes(prices: dict, now: datetime | None = None) -> float | None:

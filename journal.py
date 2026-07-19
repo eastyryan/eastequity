@@ -49,3 +49,15 @@ def log_run_summary(summary: dict, run_id: str) -> None:
 
 def log_improvement(note: str, run_id: str) -> None:
     _write("improvements", {"run_id": run_id, "note": note})
+
+
+def log_brain_call(record: dict, run_id: str) -> None:
+    """One LLM invocation: model, outcome, latency, tokens, cost.
+
+    Added 2026-07-19. Before this, nothing anywhere recorded what a brain call
+    cost or how long it took — the system ran 15-30 Opus sessions a day with no
+    spend signal, and a run that hung for 30 minutes was indistinguishable from
+    one that answered instantly. The 12-runs/day cap was the only cost control
+    and it cannot see the difference between a 4k-token run and a 400k one.
+    """
+    _write("brain_calls", {"run_id": run_id, **record})

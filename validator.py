@@ -982,6 +982,223 @@ def _check_thesis_invalidators(p: dict, cfg: dict, reasons: list[str]) -> None:
         v = inv.get(k)
         if not isinstance(v, str) or len(v.strip()) < min_chars:
             reasons.append(f"thesis_invalidator_weak_or_missing:{k}")
+            continue
+        # Shape checks on the two keys whose whole purpose is being MEASURABLE.
+        # At min_invalidator_chars=12 the old rule accepted "drops below 50dma"
+        # (17 chars) as a binding falsifier, and CLAUDE.md's own example is
+        # "estimate cuts >5%" — a metric AND a threshold. A falsifier you cannot
+        # evaluate against a data print is not a falsifier, it is a sentiment.
+        if not q.get("enforce_invalidator_shape", True):
+            continue
+        if k == "invalidating_print" and not _NUMBERISH.search(v):
+            reasons.append("thesis_invalidator_print_has_no_threshold:"
+                           "needs a number (e.g. 'estimate cuts >5%')")
+        if k == "time_box" and not _DATEISH.search(v):
+            reasons.append("thesis_invalidator_time_box_has_no_date:"
+                           "needs a date or a day/week count")
+
+
+def _num(x):
+    """Coerce to float; None on failure or NaN. Never raises."""
+    try:
+        v = float(x)
+    except (TypeError, ValueError):
+        return None
+    return v if v == v else None
+
+
+_DATEISH = re.compile(
+    r"\b(20\d{2}[-/]\d{1,2}|\d{1,2}[-/]\d{1,2}[-/]\d{2,4}"
+    r"|jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec"
+    r"|q[1-4]\b|fy\s?20\d{2}"
+    # "25 trading days" / "6 to 8 weeks" — allow up to two words between the
+    # count and the unit. A day-count IS a time box; requiring the number to
+    # abut the unit would reject the plainest way of writing one.
+    r"|\d+\s*(?:\w+\s+){0,2}(day|week|month|session|quarter)s?)\b", re.I)
+_NUMBERISH = re.compile(r"\d")
+
+
+def _check_variant_perception(p: dict, cfg: dict, reasons: list[str]) -> None:
+    """variant_perception must actually contain a variant perception.
+
+    CLAUDE.md specifies four parts — CONSENSUS cited from the bundle, MY VIEW,
+    MECHANISM, and a RESOLUTION with a date — and calls the field
+    "validator-enforced" in two places. It was enforced by exactly one thing:
+    _check_required_fields' `p[f] in (None, "")`. A single non-space character
+    satisfied it. Grep confirmed the name appeared nowhere else in this file.
+
+    This does not try to grade the ARGUMENT — no regex can. It checks the three
+    things that are mechanically checkable and that a boilerplate answer fails:
+    enough text to contain four sentences, at least one figure (consensus is
+    supposed to be cited from the bundle: a target, a multiple, a rating), and a
+    dated resolution event. A model that can clear these can still write a weak
+    thesis; the risk desk and the reader remain the judges of that. But
+    "differentiated view" with no number and no date can no longer pass a field
+    the prompt twice tells the brain is enforced.
+    """
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    q = cfg.get("trade_quality_requirements") or {}
+    if not q.get("enforce_variant_perception_structure", True):
+        return
+    min_chars = int(q.get("min_variant_perception_chars") or 180)
+    v = p.get("variant_perception")
+    if not isinstance(v, str) or len(v.strip()) < min_chars:
+        n = len(v.strip()) if isinstance(v, str) else 0
+        reasons.append(f"variant_perception_too_thin:{n}<{min_chars}_chars")
+        return
+    if not _NUMBERISH.search(v):
+        reasons.append("variant_perception_cites_no_figure")
+    if not _DATEISH.search(v):
+        reasons.append("variant_perception_has_no_dated_resolution")
+
+
+def _check_scenarios(p: dict, cfg: dict, reasons: list[str]) -> None:
+    """Scenario arithmetic must hold together.
+
+    `scenarios` was required PRESENT and its contents never validated:
+    probabilities need not sum to 1, and bull/bear need not straddle the entry.
+    tools/scenario_ev.py has computed honest EV over these numbers since it was
+    written and its only callers are runlib/analytics.py and runlib/publish.py —
+    BOTH RENDERING PATHS. The arithmetic that would catch narrative-fitting was
+    computed and thrown at a dashboard.
+
+    Checked here: probabilities sum to ~1, the bull case is above entry and the
+    bear below it, and the probability-weighted expected return is not negative.
+    That last one is the sharpest: a proposal whose own stated numbers say it
+    loses money fails by its own arithmetic, and no amount of thesis prose
+    rescues it.
+    """
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    q = cfg.get("trade_quality_requirements") or {}
+    if not q.get("enforce_scenario_math", True):
+        return
+    sc = p.get("scenarios")
+    if not isinstance(sc, dict) or not sc:
+        reasons.append("scenarios_missing_or_not_object")
+        return
+    entry = _num(p.get("entry_price_max"))
+    try:
+        from tools.scenario_ev import expected_value
+        ev = expected_value(sc, entry, p.get("holding_horizon_days"))
+    except Exception:
+        return  # EV helper unavailable — do not invent a rejection
+    if ev.get("warning") and ev.get("ev_pct") is None:
+        reasons.append(f"scenarios_unusable:{ev['warning']}")
+        return
+
+    tol = float(q.get("scenario_prob_sum_tolerance") or 0.05)
+    ps = ev.get("prob_sum")
+    if ps is not None and abs(float(ps) - 1.0) > tol:
+        reasons.append(f"scenario_probabilities_do_not_sum_to_1:{float(ps):.2f}")
+
+    if entry:
+        bull = _num((sc.get("bull") or {}).get("price")) if isinstance(
+            sc.get("bull"), dict) else None
+        bear = _num((sc.get("bear") or {}).get("price")) if isinstance(
+            sc.get("bear"), dict) else None
+        if bull is not None and bull <= entry:
+            reasons.append("scenario_bull_not_above_entry")
+        if bear is not None and bear >= entry:
+            reasons.append("scenario_bear_not_below_entry")
+
+    evp = ev.get("ev_pct")
+    if evp is not None and float(evp) <= 0:
+        reasons.append(
+            f"scenario_expected_value_not_positive:{float(evp):.1f}pct - the "
+            f"proposal's own probability-weighted return is not positive")
+
+
+def intent_to_proposal(intent: dict) -> dict:
+    """Reconstruct the BOOK-RELEVANT shape of a proposal from a queued order.
+
+    An intent is an order, not a proposal — it carries no thesis, scenarios or
+    variant_perception, and those were judged once at commit time and do not
+    change while the order sits in the queue. What DOES change is the book, so
+    this reconstructs exactly the fields the book-shape caps read.
+    """
+    plan = intent.get("plan") if isinstance(intent.get("plan"), dict) else {}
+    return {
+        "ticker": str(intent.get("ticker") or "").upper(),
+        "action": str(intent.get("action") or "").upper(),
+        "position_size_usd": intent.get("position_size_usd"),
+        "entry_price_max": (intent.get("entry_price_max")
+                            or plan.get("entry_price_max")
+                            or intent.get("reference_price")),
+        "stop_loss": plan.get("stop_loss") or intent.get("stop_loss"),
+        "demand_driver": intent.get("demand_driver") or plan.get("demand_driver"),
+    }
+
+
+def revalidate_intent_against_book(intent: dict, portfolio: dict,
+                                   market_context: dict | None = None,
+                                   cfg: dict | None = None) -> list[str]:
+    """Re-run the BOOK-SHAPE caps against the book as it stands RIGHT NOW.
+
+    THE HOLE THIS CLOSES (audited 2026-07-19). scripts/execute_order_intents.py
+    re-places whatever sits in state/order_intents.json after only
+    alpaca_broker.validate_order_static — cash, notional, market hours, live
+    price ceiling. The FULL validator never ran again: no portfolio heat, no
+    theme risk, no theme notional, no factor stack, no beta, no stress, no
+    sector concentration.
+
+    That made state/order_intents.json the real security boundary rather than
+    the validator. The file is git-committed and a push to it TRIGGERS execution,
+    so repo write access was broker access, and a bad merge or a hand-edit became
+    a live BUY.
+
+    It also drifts honestly with no malice at all: the queueing node validated
+    against a book that is minutes to hours stale by the time the Actions runner
+    fires (execute-orders runs */15, and intents survive a market close). A BUY
+    validated at 7.9% portfolio heat can execute into a book well past the 8%
+    cap. The script's own docstring acknowledged the staleness — but the fix only
+    ever covered FUNDING.
+
+    Deliberately NOT re-run here: the prose gates (variant_perception, scenarios,
+    thesis_invalidators, RR geometry). Those are judgements about the IDEA, they
+    were made at commit time, and re-litigating them at execution would let a
+    transient data gap silently cancel an approved trade. What is re-checked is
+    only what the passage of time can actually invalidate — the shape of the book.
+
+    BUY-only. A SELL_TO_CLOSE reduces risk and is never blocked, matching every
+    other gate in this file.
+    """
+    reasons: list[str] = []
+    if str(intent.get("action") or "").upper() != "BUY":
+        return reasons
+    cfg = cfg or load_config()
+    market_context = market_context or {}
+    p = intent_to_proposal(intent)
+
+    # The ledger's key is total_equity_usd; "equity" is accepted as a fallback so
+    # a caller passing a trimmed dict still works.
+    equity = float((portfolio or {}).get("total_equity_usd")
+                   or (portfolio or {}).get("equity") or 0)
+    size = _num(p.get("position_size_usd")) or 0.0
+    entry = _num(p.get("entry_price_max"))
+    stop = _num(p.get("stop_loss"))
+    if not equity or size <= 0:
+        # Cannot judge the book without an equity figure. Fail CLOSED: an
+        # unverifiable book is exactly when a stale intent is most dangerous.
+        return ["intent_revalidation_unverifiable:missing equity or size"]
+    proposed_risk = 0.0
+    if entry and stop and entry > 0 and stop < entry:
+        proposed_risk = size * ((entry - stop) / entry)
+
+    _check_sizing(p, cfg, portfolio, reasons)
+    _check_portfolio_heat(p, cfg, portfolio, proposed_risk, 0.0, reasons,
+                          market_context)
+    _check_theme_initial_risk(p, cfg, portfolio, proposed_risk, {}, reasons)
+    _check_theme_concentration(p, cfg, portfolio, reasons)
+    _check_factor_stack(p, cfg, portfolio, proposed_risk, reasons)
+    _check_portfolio_beta(p, cfg, portfolio, market_context, reasons)
+    _check_stress_scenarios(p, cfg, portfolio, market_context, reasons)
+    try:
+        _check_sector_concentration(p, cfg, portfolio, load_sector_map(), reasons)
+    except Exception:
+        pass  # sector map unavailable — other caps still applied
+    return reasons
 
 
 def _check_demand_driver_field(p: dict, reasons: list[str]) -> None:
@@ -1193,6 +1410,10 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
                                   batch_theme_risk, reasons)
         _check_sector_concentration(p, cfg, portfolio, sector_map, reasons)
         _check_thesis_invalidators(p, cfg, reasons)
+        # Falsifiability, structurally. Both fields were presence-checked only
+        # while CLAUDE.md twice called variant_perception "validator-enforced".
+        _check_variant_perception(p, cfg, reasons)
+        _check_scenarios(p, cfg, reasons)
         _check_demand_driver_field(p, reasons)
         _check_theme_concentration(p, cfg, portfolio, reasons)
         # Book-level risk runs AFTER the driver checks so a mislabelled proposal is

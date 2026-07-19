@@ -78,7 +78,12 @@ def validate_rejected_ideas(
     rejected: Any,
     *,
     min_n: int = 2,
-    min_reason_chars: int = 12,
+    # 20, not 12: CLAUDE.md has told the brain ">=20 chars" for a seat-review
+    # reason since the gate was written, so the prompt was STRICTER than the
+    # code. A prompt that overstates its enforcement teaches the model to lean
+    # on a rail that is not there; aligning the code is the safe direction to
+    # resolve it, since the brain is already writing to this bar.
+    min_reason_chars: int = 20,
     universe: set[str] | None = None,
 ) -> tuple[list[dict], list[str]]:
     """Normalize rejected_ideas for full-run no-trade discipline.

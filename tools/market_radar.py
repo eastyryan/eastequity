@@ -137,22 +137,28 @@ def get_market_radar(top_movers: int = 10, top_actives: int = 20,
     movers: dict = {}
     actives: list = []
     news_rows: list = []
+    # The *_result helpers return (data, error). The try/except around the bare
+    # helpers used to be dead code: they return []/{} on network error and non-200
+    # rather than raising, so `except` never fired and a total outage reported
+    # succeeded=3, failed=0 with status "degraded_all_feeds_empty" — a claim about
+    # a quiet market rather than a fact about a dead fetch. The try/except is kept
+    # for genuinely unexpected faults; the error channel is what now does the work.
     try:
         # top is generous because the price floor strips the warrant/penny rows.
-        movers = alpaca_data.get_movers(top=max(top_movers * 3, 30))
-        sources["movers"] = "ok"
+        movers, err = alpaca_data.get_movers_result(top=max(top_movers * 3, 30))
+        sources["movers"] = "ok" if err is None else f"error: {err[:100]}"
     except Exception as e:
         sources["movers"] = f"error: {str(e)[:100]}"
     try:
         # by="trades": share-volume actives are dominated by penny names; trade
         # count surfaces the liquid large caps actually being fought over today.
-        actives = alpaca_data.get_most_actives(top=top_actives, by="trades")
-        sources["actives"] = "ok"
+        actives, err = alpaca_data.get_most_actives_result(top=top_actives, by="trades")
+        sources["actives"] = "ok" if err is None else f"error: {err[:100]}"
     except Exception as e:
         sources["actives"] = f"error: {str(e)[:100]}"
     try:
-        news_rows = alpaca_data.get_news(hours=news_hours, limit=50)
-        sources["news"] = "ok"
+        news_rows, err = alpaca_data.get_news_result(hours=news_hours, limit=50)
+        sources["news"] = "ok" if err is None else f"error: {err[:100]}"
     except Exception as e:
         sources["news"] = f"error: {str(e)[:100]}"
 

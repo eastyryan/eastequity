@@ -96,7 +96,7 @@ def get_partnerships(tickers: list, lookback_days: int = 120, max_news: int = 5)
     orchestrator's feed_is_alive sees it.
     """
     from tools.freshness_audit import stamp_feed
-    from tools.sec_filings import _get, ticker_to_cik
+    from tools.sec_filings import _get, ticker_to_cik_result
 
     out = {"note": NOTE, "tickers": {}}
     tickers = list(tickers or [])
@@ -105,11 +105,21 @@ def get_partnerships(tickers: list, lookback_days: int = 120, max_news: int = 5)
     for t in tickers:
         entry: dict = {"material_agreement_8ks": [], "partnership_headlines": []}
         try:
-            cik = ticker_to_cik(t)
+            # ticker_to_cik returns None for BOTH "not an SEC filer" and "the
+            # lookup failed". The bare form raised nothing on a network failure,
+            # so sec_error stayed unset, sec_ok incremented, and an empty deal
+            # list was published as "this company signed nothing" when the truth
+            # was "we never asked" — the exact failure this module's docstring
+            # claims to have fixed. Only "not_listed" is a real answer.
+            cik, why = ticker_to_cik_result(t)
             if cik:
                 sub = _get(f"https://data.sec.gov/submissions/CIK{cik}.json")
                 entry["material_agreement_8ks"] = _agreement_8ks(
                     sub.get("filings", {}).get("recent", {}), cik, lookback_days)
+            elif why == "lookup_failed":
+                entry["sec_error"] = "cik_lookup_failed (SEC ticker map unreachable)"
+            else:
+                entry["sec_note"] = "not an SEC filer (no CIK); 8-K feed N/A"
         except Exception as e:
             entry["sec_error"] = str(e)[:120]
         try:

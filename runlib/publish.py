@@ -331,7 +331,7 @@ def _brain_trade_memo(fills: list, context: dict) -> str | None:
             f"FACTS:\n{json.dumps(json_safe(facts), indent=1, default=str)}\n\n"
             "Return ONLY the post text."
         )
-        memo = (run_claude(prompt) or "").strip()
+        memo = (run_claude(prompt, call="trade_memo") or "").strip()
         # Sanity: long enough to be a memo, short enough for one long-form post.
         if 200 <= len(memo) <= 20000:
             return memo

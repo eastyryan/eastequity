@@ -44,6 +44,32 @@ def _get(url: str) -> dict:
 
 
 def ticker_to_cik(ticker: str) -> str | None:
+    """CIK for a ticker, or None. Back-compat shape — None is AMBIGUOUS.
+
+    Use ticker_to_cik_result() when the difference matters; see its docstring.
+    """
+    return ticker_to_cik_result(ticker)[0]
+
+
+def ticker_to_cik_result(ticker: str) -> tuple[str | None, str]:
+    """(cik, reason) where reason is "ok" | "not_listed" | "lookup_failed".
+
+    THE INCIDENT (audited 2026-07-19): the bare lookup returns None both when the
+    SEC ticker map could not be fetched AND when the ticker simply is not in it.
+    Callers could not tell those apart, so a network failure read as "this company
+    is not an SEC filer" and their own error accounting never fired:
+
+      * tools/partnerships.py counted a failed EDGAR lookup as a VERIFIED success
+        (sec_error never set, sec_ok incremented), so "this company signed no
+        material agreements" was published when the truth was "we never asked" —
+        verbatim the failure that module's own docstring claims to have fixed.
+      * tools/filings_sweep.py silently dropped the ticker with no requested-vs-
+        mapped count.
+
+    "We could not look it up" and "it is not there" are different facts. A feed
+    that cannot tell them apart will always eventually report the second when it
+    means the first.
+    """
     cache_file = CACHE / "company_tickers.json"
     try:
         if cache_file.exists() and time.time() - cache_file.stat().st_mtime < 7 * 86400:
@@ -53,11 +79,11 @@ def ticker_to_cik(ticker: str) -> str | None:
             cache_file.parent.mkdir(parents=True, exist_ok=True)
             cache_file.write_text(json.dumps(data))
     except Exception:
-        return None
+        return None, "lookup_failed"
     for row in data.values():
         if row["ticker"].upper() == ticker.upper():
-            return str(row["cik_str"]).zfill(10)
-    return None
+            return str(row["cik_str"]).zfill(10), "ok"
+    return None, "not_listed"
 
 
 def get_company_facts(cik_or_ticker) -> dict:

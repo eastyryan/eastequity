@@ -614,19 +614,72 @@ def brain_facing_shadow_learning(limit: int = 12) -> dict:
             key=lambda p: float(p.get("unrealized_pct") or 0),
             reverse=True,
         )[:8]
-        n_closed = len(state.get("closed") or [])
+        all_closed = state.get("closed") or []
+        n_closed = len(all_closed)
         binding = n_closed >= 8  # enough shadows to treat as directional caution
+
+        # Verdict mix and measurement quality, both disclosed (audited 2026-07-19).
+        #
+        # WHY THIS IS ADVISORY AND NOT A CODE GATE. The shadow book has the largest
+        # sample of any learning loop here (15 closed vs 2 real trades) and no
+        # validator rule reads it — "binding" resolved only to a different note
+        # string. That gap is real, but the fix is NOT to bolt on a gate: the
+        # verdict mix is ~14 good_skip to 1 regret_miss, so a rule derived from it
+        # would almost only ever argue for MORE skipping. It is a FOMO suppressant
+        # with no counterweight, and the asymmetry is partly structural — a skip
+        # that would have hit its stop is easy to score, while a skip that would
+        # have compounded for weeks needs a full window to resolve. Enforcing on a
+        # sample biased that way would encode the bias as a rule.
+        #
+        # So: say plainly that it is advisory, and hand the brain the numbers it
+        # needs to discount it correctly, rather than dressing a lopsided sample
+        # in the language of enforcement.
+        verdicts: dict = {}
+        for c in all_closed:
+            v = str(c.get("verdict") or "unknown")
+            verdicts[v] = verdicts.get(v, 0) + 1
+        n_sampled_only = sum(1 for c in all_closed
+                             if c.get("touch_source") == "sampled_only")
+        n_market_wide = sum(1 for c in all_closed
+                            if c.get("verdict_attribution") == "market_wide")
+        skew = None
+        if n_closed >= 8:
+            g, r = verdicts.get("good_skip", 0), verdicts.get("regret_miss", 0)
+            if g and r * 4 <= g:
+                skew = (
+                    f"VERDICT SKEW: {g} good_skips vs {r} regret_miss. This loop is "
+                    f"currently a FOMO suppressant with almost no counterweight, and "
+                    f"the asymmetry is partly structural (a skip that would have hit "
+                    f"its stop resolves fast; one that would have compounded needs "
+                    f"the full window). Do not read it as evidence that your bar is "
+                    f"correctly set — only that your recent skips avoided drawdowns.")
         return {
             "note": (
                 "SHADOW BOOK: ideas you skipped or watched but did not buy, marked "
                 "forward. regret_miss = would have hit +10% target before stop — "
                 "learn from false negatives. good_skip = would have hit stop — "
                 "process worked. "
-                + ("Binding caution: cite regrets when skipping similar setups."
+                + ("ADVISORY caution (not code-enforced): cite regrets when skipping "
+                   "similar setups; no validator rule reads this book."
                    if binding else
                    f"Warming up ({n_closed}/8 closed shadows) — anecdotal only.")
             ),
             "binding": binding,
+            # Explicit so nothing downstream mistakes `binding` for a gate.
+            "enforcement": "advisory_only",
+            "enforcement_note": (
+                "No validator rule reads the shadow book. `binding` means the sample "
+                "is large enough to reason from, NOT that code will reject anything."),
+            "verdict_distribution": verdicts,
+            "verdict_skew_warning": skew,
+            "measurement_quality": {
+                "sampled_only": n_sampled_only,
+                "market_wide_attribution": n_market_wide,
+                "note": ("sampled_only verdicts were resolved on sampled marks, not "
+                         "bar-verified; market_wide ones were explained by the tape "
+                         "rather than the entry bar. Both are weaker evidence than "
+                         "the verdict label reads as."),
+            },
             "n_open": len(open_pos),
             "n_closed": n_closed,
             "regret_misses": [

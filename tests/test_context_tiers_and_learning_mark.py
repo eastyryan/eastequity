@@ -75,7 +75,7 @@ def test_slim_context_for_brain():
         "stack_cards": {"by_ticker": {"DELL": {"layer": "OEM"}}},
     }
     slim = slim_context_for_brain(full, learning_n=5)
-    check("tier marker", slim.get("_context_tier") == "brain_slim_v1")
+    check("tier marker", slim.get("_context_tier") == "brain_slim_v2")
     check("always keys kept", slim.get("portfolio") is not None)
     check("learning pack present",
           isinstance((slim.get("reasoning_process") or {}).get("learning_pack"), dict))

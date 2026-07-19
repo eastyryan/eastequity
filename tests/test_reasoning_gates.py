@@ -29,8 +29,11 @@ def base_buy(ticker="ANET", driver="networking", size=800.0):
         "macro_context": "Regime supports measured long exposure.",
         "catalysts": ["Next product cycle print in 3 weeks"],
         "variant_perception": (
-            "Consensus sees a fair multiple; I see mispriced growth because estimates lag; "
-            "the mechanism is backlog conversion; resolves at the next earnings print."),
+            "Consensus models a flat multiple into FY2027 and the sell-side mean target "
+            "sits 4% below spot; I think estimates lag the order book by a full quarter. "
+            "The mechanism is that backlog conversion is booked on shipment, so the "
+            "revenue already contracted does not appear until the next print. Resolves "
+            "at the Q3 earnings report on 2026-08-27."),
         "risk_map": "Guide cut or failed reclaim of the 50-DMA kills it.",
         "scenarios": {"bull": {"price": 130, "prob": 0.3}, "base": {"price": 120, "prob": 0.45},
                       "bear": {"price": 85, "prob": 0.25}},

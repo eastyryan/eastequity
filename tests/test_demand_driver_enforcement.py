@@ -45,7 +45,7 @@ def buy(driver, ticker="HPE"):
         "position_size_usd": 200, "entry_price_max": 25.0, "stop_loss": 22.0,
         "target_price": 31.0, "holding_horizon_days": 30, "confidence": 0.72,
         "risk_reward_ratio": 2.0, "thesis": "x" * 80, "demand_driver": driver,
-        "variant_perception": "y" * 120, "risk_map": "z" * 60,
+        "variant_perception": "Consensus models a flat multiple into FY2027 and the sell-side mean target sits 4% below spot; I think estimates lag the order book by a full quarter. The mechanism is that backlog conversion is booked on shipment, so the revenue already contracted does not appear until the next print. Resolves at the Q3 earnings report on 2026-08-27." * 120, "risk_map": "z" * 60,
         "macro_context": "m" * 40, "catalysts": ["a dated catalyst"],
         "scenarios": {"bull": {"price": 31, "prob": 0.3},
                       "base": {"price": 28, "prob": 0.5},

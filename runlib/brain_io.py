@@ -141,7 +141,7 @@ def ask_claude(context: dict, run_id: str, news_only: bool = False) -> str:
             "no_trade_reason = 'weekly market check-in - no trading'. "
             "End with an 'Improvement note:' line."
         )
-        return run_claude(prompt)
+        return run_claude(prompt, call=f"brain:{depth}", run_id=run_id)
 
     if not news_only and depth == "light":
         prompt = (
@@ -153,7 +153,7 @@ def ask_claude(context: dict, run_id: str, news_only: bool = False) -> str:
             "and carry the watchlist forward (update thoughts only where news changed them). "
             "Output the exact JSON block per CLAUDE.md. End with an 'Improvement note:' line."
         )
-        return run_claude(prompt)
+        return run_claude(prompt, call=f"brain:{depth}", run_id=run_id)
 
     if news_only:
         prompt = (
@@ -167,7 +167,7 @@ def ask_claude(context: dict, run_id: str, news_only: bool = False) -> str:
             "changes Monday's plan), and an updated watchlist. End with an "
             "'Improvement note:' line."
         )
-        return run_claude(prompt)
+        return run_claude(prompt, call=f"brain:{depth}", run_id=run_id)
 
     if depth == "holdings_watchlist":
         prompt = (
@@ -184,7 +184,7 @@ def ask_claude(context: dict, run_id: str, news_only: bool = False) -> str:
             "Every BUY: thesis_invalidators + demand_driver + stack differential. "
             "Output exact JSON per CLAUDE.md. End with 'Improvement note:'."
         )
-        return run_claude(prompt)
+        return run_claude(prompt, call=f"brain:{depth}", run_id=run_id)
 
     prompt = (
         f"Today's date in the US market timezone (ET) is {et_date()} - use THIS date in "
@@ -200,7 +200,7 @@ def ask_claude(context: dict, run_id: str, news_only: bool = False) -> str:
         "Every BUY: variant_perception, scenarios, thesis_invalidators, demand_driver. "
         "Output exact JSON per CLAUDE.md. End with 'Improvement note:'."
     )
-    return run_claude(prompt)
+    return run_claude(prompt, call=f"brain:{depth}", run_id=run_id)
 
 
 def llm_settings() -> dict:
@@ -211,46 +211,165 @@ def llm_settings() -> dict:
         return {}
 
 
-def claude_cmd(prompt: str, model: str | None, allowed_tools: str | None) -> list[str]:
+def claude_cmd(prompt: str, model: str | None, allowed_tools: str | None,
+               output_format: str | None = None) -> list[str]:
     """Build the headless claude invocation (pure - offline-testable).
 
     Pinning --model keeps the public track record reproducible across CLI-default
     changes. --allowedTools grants exactly what CLAUDE.md instructs the brain to
     do (Read the chart PNGs, WebSearch/WebFetch to verify catalysts) and nothing
     that can write - an injected headline must never be able to touch the ledger.
-    The installed CLI accepts a space/comma-separated tool list as one argument."""
+    The installed CLI accepts a space/comma-separated tool list as one argument.
+
+    output_format is OPTIONAL and defaults off so the bare invocation is byte-for-byte
+    what it always was. run_claude passes "json" to get a usage envelope: until
+    2026-07-19 nothing recorded what any brain call cost, how long it took, or
+    whether it succeeded on the first attempt."""
     cmd = ["claude", "-p", prompt]
     if model:
         cmd += ["--model", model]
     if allowed_tools:
         cmd += ["--allowedTools", allowed_tools]
+    if output_format:
+        cmd += ["--output-format", output_format]
     return cmd
 
 
-def run_claude(prompt: str, model: str | None = None) -> str:
+def unwrap_cli_json(stdout: str) -> tuple[str, dict]:
+    """Split a --output-format json envelope into (response_text, telemetry).
+
+    FAIL-SAFE BY CONTRACT: anything that is not a recognisable envelope is returned
+    unchanged as the response text with empty telemetry, which is exactly the
+    behaviour before telemetry existed. A CLI upgrade that changes this shape must
+    cost us the metrics, never the run - the parse path downstream (parse_proposals)
+    is load-bearing and this is not.
+    """
+    if not isinstance(stdout, str) or not stdout.lstrip().startswith("{"):
+        return stdout, {}
+    try:
+        env = json.loads(stdout)
+    except Exception:
+        return stdout, {}
+    if not isinstance(env, dict) or not isinstance(env.get("result"), str):
+        return stdout, {}
+    usage = env.get("usage") if isinstance(env.get("usage"), dict) else {}
+    # modelUsage is keyed by the model that ACTUALLY served the request, so it
+    # verifies the --model pin took effect rather than trusting that it did. The
+    # public track record's reproducibility claim rests on that pin.
+    model_usage = env.get("modelUsage") if isinstance(env.get("modelUsage"), dict) else {}
+    # permission_denials records tools the allowlist blocked. CLAUDE.md declares
+    # "WebSearch MANDATORY before any BUY"; a non-empty list here means the brain
+    # tried to reach for something and could not — previously invisible.
+    denials = env.get("permission_denials") if isinstance(
+        env.get("permission_denials"), list) else []
+    meta = {
+        "duration_ms": env.get("duration_ms"),
+        "duration_api_ms": env.get("duration_api_ms"),
+        "num_turns": env.get("num_turns"),
+        "total_cost_usd": env.get("total_cost_usd"),
+        "session_id": env.get("session_id"),
+        "is_error": env.get("is_error"),
+        "subtype": env.get("subtype"),
+        "stop_reason": env.get("stop_reason"),
+        "models_served_by": sorted(model_usage) or None,
+        "permission_denials": len(denials) or None,
+        # 0 is a MEANINGFUL value here, not a missing one: it says the brain ran
+        # no web search this call. CLAUDE.md makes WebSearch mandatory before any
+        # BUY and nothing had ever verified it. Kept even when zero (see the
+        # is-not-None filter below) precisely so a zero is auditable.
+        "web_search_requests": (usage.get("server_tool_use") or {}).get(
+            "web_search_requests"),
+        "web_fetch_requests": (usage.get("server_tool_use") or {}).get(
+            "web_fetch_requests"),
+        "input_tokens": usage.get("input_tokens"),
+        "output_tokens": usage.get("output_tokens"),
+        "cache_read_input_tokens": usage.get("cache_read_input_tokens"),
+        "cache_creation_input_tokens": usage.get("cache_creation_input_tokens"),
+    }
+    return env["result"], {k: v for k, v in meta.items() if v is not None}
+
+
+def run_claude(prompt: str, model: str | None = None, *,
+               call: str = "brain", run_id: str = "") -> str:
+    """Invoke the brain and RECORD the call.
+
+    Until 2026-07-19 nothing anywhere logged what a brain call cost, how long it
+    took, which model actually ran, or whether it succeeded first try. The system
+    made 15-30 Opus calls a day with no cost signal and no way to tell a run that
+    thought hard from one that returned in four seconds.
+
+    Two behaviours worth knowing:
+      * Telemetry is best-effort. A CLI whose envelope we cannot parse costs us the
+        metrics and nothing else - see unwrap_cli_json.
+      * A TIMEOUT IS NOW A HANDLED FAILURE. subprocess.TimeoutExpired is not a
+        CalledProcessError and was not caught by the returncode branch, so a hung
+        CLI propagated all the way out of main(): no run summary, no journal line,
+        no dashboard update, just a traceback in cron.log. A 30-minute hang burned
+        the slot and left no record of itself.
+    """
     import time
     last_err = ""
     llm = llm_settings()
     model = model or llm.get("brain_model")
     allowed_tools = llm.get("allowed_tools")
+    timeout_s = int(llm.get("timeout_seconds") or 1800)
     # NOTE: no --permission-mode plan. Newer Claude Code (2.x) diverts a plan-mode
     # answer to a plan file and returns only a prose summary on stdout, so our JSON
     # block never appears and parsing falls back to a no-trade. The default headless
     # mode prints the full response (incl. the fenced ```json) to stdout, which is what
     # we parse - matching universe_review(), which already runs claude -p without plan mode.
     for attempt in (1, 2):  # one retry: overnight runs can hit transient/usage errors
-        result = subprocess.run(
-            claude_cmd(prompt, model, allowed_tools),
-            cwd=ROOT, capture_output=True, text=True, timeout=1800,
-        )
+        started = time.time()
+        try:
+            result = subprocess.run(
+                claude_cmd(prompt, model, allowed_tools, output_format="json"),
+                cwd=ROOT, capture_output=True, text=True, timeout=timeout_s,
+            )
+        except subprocess.TimeoutExpired:
+            last_err = f"timeout after {timeout_s}s"
+            _log_brain_call(call, run_id, model, allowed_tools, attempt,
+                            elapsed_s=round(time.time() - started, 1),
+                            ok=False, error=last_err)
+            print(f"  claude attempt {attempt} timed out after {timeout_s}s")
+            if attempt == 1:
+                time.sleep(90)
+            continue
+        elapsed = round(time.time() - started, 1)
         if result.returncode == 0:
-            return result.stdout
+            text, meta = unwrap_cli_json(result.stdout)
+            _log_brain_call(call, run_id, model, allowed_tools, attempt,
+                            elapsed_s=elapsed, ok=True, meta=meta,
+                            response_chars=len(text or ""))
+            return text
         last_err = (f"exit={result.returncode} stderr={result.stderr[:1000]} "
                     f"stdout={result.stdout[:1000]}")
+        _log_brain_call(call, run_id, model, allowed_tools, attempt,
+                        elapsed_s=elapsed, ok=False, error=last_err[:500])
         print(f"  claude attempt {attempt} failed: {last_err[:300]}")
         if attempt == 1:
             time.sleep(90)
     raise RuntimeError(f"claude CLI failed after retry: {last_err}")
+
+
+def _log_brain_call(call: str, run_id: str, model, allowed_tools, attempt: int,
+                    *, elapsed_s: float, ok: bool, meta: dict | None = None,
+                    error: str = "", response_chars: int = 0) -> None:
+    """Journal one LLM invocation. Never raises - telemetry must not break a run."""
+    try:
+        import journal
+        journal.log_brain_call({
+            "call": call,
+            "model": model,
+            "allowed_tools": allowed_tools,
+            "attempt": attempt,
+            "ok": ok,
+            "elapsed_s": elapsed_s,
+            "response_chars": response_chars,
+            "error": error,
+            **(meta or {}),
+        }, run_id or "unknown")
+    except Exception as e:  # pragma: no cover - telemetry is never load-bearing
+        print(f"  (brain-call telemetry skipped: {e})")
 
 
 # ---------------------------------------------------------------------------
@@ -262,6 +381,11 @@ def run_claude(prompt: str, model: str | None = None) -> str:
 # commentary announced never happened (ABT 7/17: commentary said "I am
 # buying Abbott" while the veto left the site with an empty proposals list).
 LAST_RISK_DESK_VETOES: list = []
+
+# The largest confidence haircut the desk may apply, matching the figure stated
+# in its own prompt. A desk that could cut arbitrarily deep would be a veto by
+# another name, routed around the veto's journaling and dashboard surfacing.
+MAX_RISK_DESK_HAIRCUT = -0.10
 
 
 def adversarial_review(proposals: list[dict], context_file: str, run_id: str) -> list[dict]:
@@ -321,14 +445,26 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
         "5) FRESHNESS: if data_quality/stale_data_notice or price_freshness says stale "
         "on a catalyst day, haircut or veto chasing.\n"
         "6) CHARTS: if charts missing for the ticker, haircut confidence.\n"
-        "Be a skeptic, not a contrarian for sport - approve genuinely sound trades.\n"
+        # REMOVED 2026-07-19: "Be a skeptic, not a contrarian for sport - approve
+        # genuinely sound trades." That is an approval-bias instruction inside the
+        # one component whose entire job is refusal, and it was the only sentence
+        # in this prompt telling the desk to lean toward yes. The desk already
+        # cannot over-approve anything — its power is veto or a haircut, and every
+        # validator floor still runs afterwards — so the downside of a strict desk
+        # is a missed trade, while the downside of a lenient one is an unexamined
+        # position. Those are not symmetric.
+        "You are not the proposer's colleague. Your job is to find the reason this "
+        "trade fails, state it plainly, and veto when you find one. A trade that "
+        "survives a genuine attempt to kill it is worth more than one that was "
+        "never attacked. If the case is merely adequate, that is a veto.\n"
         "Output ONLY a ```json block: {\"reviews\": [{\"ticker\": \"X\", "
         "\"verdict\": \"approve\"|\"veto\", \"objection\": \"one paragraph covering the "
         "checklist\", \"confidence_adjustment\": 0.0}]} where confidence_adjustment is "
         "0 or negative (max -0.10) for approved-with-reservations."
     )
     try:
-        out = run_claude(prompt, model=llm_settings().get("risk_desk_model"))
+        out = run_claude(prompt, model=llm_settings().get("risk_desk_model"),
+                         call="risk_desk", run_id=run_id)
     except Exception as e:
         return _no_desk(f"risk desk failed ({str(e)[:120]})")
     reviews = {}
@@ -382,7 +518,12 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
                                            reasons=[veto_reason]))
             continue
         try:
-            adj = min(float(r.get("confidence_adjustment", 0) or 0), 0)
+            # The prompt states "max -0.10", but this only ever clamped the UPPER
+            # bound at 0 — the floor was never enforced, so a desk returning -0.5
+            # had it applied in full and could silently drive a proposal under the
+            # 0.60 confidence floor. Clamp both ends to the documented range.
+            adj = max(min(float(r.get("confidence_adjustment", 0) or 0), 0.0),
+                      MAX_RISK_DESK_HAIRCUT)
         except (TypeError, ValueError):
             adj = 0  # non-numeric desk output: keep the proposal, no haircut
         if adj:

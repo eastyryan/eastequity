@@ -301,7 +301,9 @@ def test_partnerships_reports_error_when_both_sources_die(monkeypatch):
     def _boom(*_a, **_k):
         raise RuntimeError("blocked")
 
-    monkeypatch.setattr(sf, "ticker_to_cik", _boom)
+    # partnerships.py now calls ticker_to_cik_result, which distinguishes
+    # "lookup failed" from "not an SEC filer". Patch what it actually calls.
+    monkeypatch.setattr(sf, "ticker_to_cik_result", _boom)
     mod = types.ModuleType("yfinance")
     mod.Ticker = _RaisingTicker
     monkeypatch.setitem(sys.modules, "yfinance", mod)
@@ -322,7 +324,9 @@ def test_partnerships_one_live_source_is_degraded_not_dead(monkeypatch):
     def _boom(*_a, **_k):
         raise RuntimeError("blocked")
 
-    monkeypatch.setattr(sf, "ticker_to_cik", _boom)
+    # partnerships.py now calls ticker_to_cik_result, which distinguishes
+    # "lookup failed" from "not an SEC filer". Patch what it actually calls.
+    monkeypatch.setattr(sf, "ticker_to_cik_result", _boom)
 
     class _NoNews:
         def __init__(self, *_a, **_k):
