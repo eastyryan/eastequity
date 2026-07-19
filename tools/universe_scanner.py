@@ -638,6 +638,33 @@ def _gap_events(opens, closes, sessions: int = 20, min_gap_pct: float = 2.0):
 # compatibility (promote_focus_candidates, the context bundle, CLAUDE.md), but
 # the criteria implement (a)+(b), NOT 60-day SUE drift.
 
+# MEASURED 2026-07-19 (SIGNAL_VALIDATION.md, 86,047 obs / 12y / 182 names).
+# The price leg of claim (a) above has NO measured discriminating power, and its
+# ordering is the reverse of what this lane assumes. Excess return vs same-day,
+# same-ATR-quintile peers, 21 sessions, under the book's real 2xATR stop + 3xATR
+# chandelier:
+#     gap_held   -0.07   <- the ONE read this lane flags as tradeable
+#     gap_faded  -0.27
+#     gap_filled +0.29   <- the lane calls this "a failed move"
+#     down_gap   +0.18   <- the lane calls this "a negative reaction"
+# Every difference sits inside the control's noise, so the honest claim is not
+# "the lane is backwards" but "the reaction classification discriminates nothing,
+# in either direction". Claim (b), analyst-revision follow-through, is
+# point-in-time and CANNOT be backtested from any free source - it remains the
+# theoretically best-supported half and is simply untested.
+#
+# Consequence, following the precedent set when tools/sepa_trend.py withheld its
+# negative-EV VCP layer: the gap read alone must no longer SET the candidate flag.
+# A research-cited claim this confident invites the brain to act on it, and the
+# price evidence does not support it. The flag now requires the revision leg.
+EAR_VALIDATION_NOTE = (
+    "MEASURED, NO EDGE on the price leg: gap_held scored -0.07pp ATR-matched over "
+    "12 years while gap_filled (+0.29) and down_gap (+0.18) - the two reads this "
+    "lane calls failures - scored better. All inside noise. Treat earnings_reaction "
+    "as DESCRIPTIVE only; it is not evidence for or against an entry. The revision "
+    "leg is untested, not validated."
+)
+
 EAR_MAX_DAYS_SINCE_EARNINGS = 10   # calendar days: the reaction window
 EAR_LOW_COVERAGE_MAX_ANALYSTS = 15  # <= this = thin coverage for a large-cap universe
 
@@ -1060,6 +1087,26 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
         is not None else -999, reverse=True)[:5]
     for r in supplier_pullbacks:
         r["lane"] = "supplier_pullback"
+        # MEASURED 2026-07-19: this lane posts the study's biggest naive number
+        # (+5.31pp at 63d) and is its clearest false positive. An ablation removing
+        # ONLY the ai_exposure test - same liquidity, same 52w window, same 200-DMA,
+        # same -30/-8 band - drops ATR-matched excess from +0.47 to +0.07. The setup
+        # contributes nothing; the entire effect is the label. And the label is
+        # data/ai_exposure.json, a 2026 classification applied to 2015 bars, which
+        # encodes with perfect hindsight which companies the AI buildout enriched.
+        # That is lookahead: flat-to-negative through 2024, then +2.89 (2025) and
+        # +10.68 (2026) exactly when the AI supply chain ran.
+        # KEEP as an attention router - pointing at AI suppliers on pullbacks is a
+        # defensible thing to want given the mandate - but the 3-month-RS ordering
+        # has NO measured basis and must not be presented as a quality ranking.
+        r["lane_validation"] = (
+            "ATTENTION ROUTER, NOT A RANKED SETUP. Measured over 12 years the setup "
+            "contributes ~zero once the ai_supplier label is removed (+0.07pp "
+            "ATR-matched), and the label itself is a 2026 classification applied to "
+            "historical bars - lookahead. The ordering here carries no information. "
+            "Entries still need the reclaim/base confirmation the momentum lanes "
+            "demand; that requirement is now the ONLY thing carrying this lane."
+        )
 
     # Valuation + analyst-estimate context for top setups, contrarian, deep-value
     # AND supplier-pullback picks (per-ticker calls are slow, so not the whole universe).
@@ -1223,8 +1270,13 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
             ear_flag, ear_read = earnings_reaction_read(
                 r.get("days_since_earnings"), r.get("gap_analysis"),
                 r.get("rel_strength_1m_pct"), rev_dir)
-            r["post_earnings_drift_candidate"] = ear_flag
-            r["earnings_reaction"] = ear_read  # WHY it is (or is not) flagged
+            # WITHHELD (2026-07-19): the flag now requires the REVISION leg, which
+            # is the untested-but-theoretically-supported half. The gap read alone
+            # measured at -0.07pp ATR-matched over 12 years and must not promote a
+            # name by itself. See EAR_VALIDATION_NOTE.
+            r["post_earnings_drift_candidate"] = bool(ear_flag) and rev_dir == "up"
+            r["earnings_reaction"] = ear_read  # DESCRIPTIVE ONLY - see the note
+            r["earnings_reaction_validation"] = EAR_VALIDATION_NOTE
             # Coverage boost, never a filter: revision follow-through is
             # strongest under thin coverage (Gleason & Lee 2003). Stamped only
             # on flagged rows where coverage data exists.

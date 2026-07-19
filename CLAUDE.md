@@ -186,8 +186,13 @@ Beyond filings/13F/news, every run now includes:
   away in liquid large caps; announcement reaction plus revision follow-through is what
   still pays. Read `earnings_reaction` on the row for WHY it fired (gap_held_revisions_up
   vs rs_positive_revisions_up), and weight `ear_low_coverage: true` names higher -
-  revision drift is strongest where fewer analysts compete it away. A filled gap or
-  negative reaction is a failed print, not a dip to buy.
+  revision drift is strongest where fewer analysts compete it away. MEASURED 2026-07-19 over 12 years: this reaction
+  classification has NO discriminating power. gap_held - the read the lane flags -
+  scored -0.07pp ATR-matched, while gap_filled (+0.29) and down_gap (+0.18), the two
+  reads previously called failures, scored BETTER. All inside noise. Treat
+  earnings_reaction as DESCRIPTIVE colour, never as evidence for or against an entry,
+  and do not cite a filled gap as disqualifying. The flag now additionally requires
+  the analyst-revision leg, which is untested rather than validated.
 - **analyst_estimates** - forward revenue growth and 30-day EPS revisions: use these to
   judge whether a multiple is deserved instead of news tone.
 - **position_histories** - 10 daily bars per holding with 5-day change and distance from
@@ -230,8 +235,13 @@ Beyond filings/13F/news, every run now includes:
   says ai_at_risk, the market is usually pricing the threat, not making a mistake -
   your job is to figure out which, and say so in plain words.
 - **supplier_pullbacks** - AI SUPPLIERS (memory, photonics, interconnect, power) that
-  ran hard, now sit 8-30% off their 52-week high, and still hold their 200-DMA - the
-  "extended leader coming back in" setup, ranked by 3-month relative strength. Check
+  ran hard, now sit 8-30% off their 52-week high, and still hold their 200-DMA.
+  MEASURED 2026-07-19: this is an ATTENTION ROUTER, NOT a ranked setup. Removing only
+  the ai_supplier label from the predicate drops ATR-matched excess from +0.47 to
+  +0.07 - the setup contributes nothing, and the label is a 2026 classification
+  applied to historical bars (lookahead). The "extended leader coming back in"
+  pattern measured as nothing, and the 3-month-RS ordering carries NO information -
+  do not treat a higher rank here as a better idea. Check
   fwd_pe_to_growth on these rows; memory names often show the lowest multiples here.
   Entries still need the reclaim/base confirmation the momentum lanes demand.
 - **Cyclical-value discipline (memory/storage and other AI-supplier cyclicals)** -
