@@ -14,9 +14,36 @@ are left for the brain to review.
 from __future__ import annotations
 
 import json
+import re
 
 import journal
 from execution import broker
+
+
+def forced_exit_client_order_id(ticker: str, reason: str, et_day: str) -> str:
+    """Stable id for one forced exit of one name on one trading day.
+
+    THE HOLE THIS CLOSES (audited 2026-07-19). Every other order path is
+    idempotent — queued intents are re-placed with their ORIGINAL client id, and
+    Alpaca enforces client_order_id uniqueness, so a crashed or retried executor
+    resolves to the existing broker order via the 409 path. Forced exits built
+    their order dict with NO client_order_id, so place_order minted a fresh
+    EE-{uuid4} on every call and the dedupe that protects every other path did
+    not cover them.
+
+    That matters because nothing serialises a cloud stop-watch against a local
+    run: stop_watch takes acquire_run_lock but never the cross-node lease, and
+    the two nodes hold separate locks on separate filesystems. Both read the same
+    breach, both fire, and with random ids they become two genuinely different
+    market sells. On a fractional or partially-filled position that over-sells.
+
+    Keyed on the trading DAY rather than the timestamp so two nodes reacting to
+    the same breach minutes apart still collide — which is the point. A genuine
+    second exit of the same name on the same day cannot occur: the first one
+    closes the position.
+    """
+    slug = re.sub(r"[^a-z0-9]+", "-", str(reason or "exit").lower()).strip("-")[:20]
+    return f"EEXIT-{str(ticker).upper()}-{et_day}-{slug or 'exit'}"
 
 # Chandelier trailing-stop ATR multiple used when autonomy_config's
 # trade_quality_requirements block does not carry trailing_stop_atr_multiple.
@@ -172,10 +199,15 @@ def execute_forced_exits(exits: list, prices: dict, run_id: str,
         if ref is None:
             continue  # price vanished between check and execute — skip, never guess
         pos_before = pre_positions.get(str(ex["ticker"]).upper())
+        from runlib.core import et_date
         order = broker.place_order({
             "ticker": ex["ticker"], "action": "SELL_TO_CLOSE",
             "reference_price": ref, "proposal_id": run_id,
             "forced_exit_reason": ex["reason"],
+            # Deterministic id so a cloud stop-watch and a local run reacting to
+            # the SAME breach collide at the broker instead of both selling.
+            "client_order_id": forced_exit_client_order_id(
+                ex["ticker"], ex["reason"], et_date()),
             # stop + ATR let the broker model overnight gap-through on stop exits
             "stop_loss": ex.get("stop_loss"),
             "atr_pct": ex.get("atr_pct") if ex.get("atr_pct") is not None
