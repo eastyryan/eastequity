@@ -41,6 +41,15 @@ def store(tmp_path, monkeypatch):
     f = tmp_path / "post_exit_runners.json"
     monkeypatch.setattr(PR, "RUNNERS_FILE", f)
     monkeypatch.setattr(PR, "ROOT", tmp_path)
+    # concept_memory MUST be isolated too. mark_post_exit_runners chains
+    # append_lesson() on every completed track, and an earlier version of this
+    # fixture patched only the runner file — so a synthetic DELL track (100 ->
+    # 130) wrote "price recovered +30.0% above exit" into the REAL
+    # data/concept_memory/DELL.json. That is the 2026-07-16 fabricated-artifact
+    # incident recurring inside the test written to prevent it.
+    import tools.concept_memory as CM
+    monkeypatch.setattr(CM, "MEM_DIR", tmp_path / "concept_memory")
+    monkeypatch.setattr(CM, "ROOT", tmp_path)
     return f
 
 
