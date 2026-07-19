@@ -123,14 +123,43 @@ def get_market_radar(top_movers: int = 10, top_actives: int = 20,
         from tools import alpaca_data
         if not alpaca_data.has_keys():
             return {**out, "status": "skipped", "reason": "no_alpaca_keys"}
+    except Exception as e:
+        return {**out, "status": "error", "error": str(e)[:200]}
+
+    # THREE INDEPENDENT SUB-FEEDS, fetched independently. They used to share one
+    # try-block, which had two failure modes the caller could not see: a raise in
+    # get_movers() killed actives + news that would have succeeded, and a partial
+    # outage (movers dead, actives fine) was indistinguishable from a genuinely
+    # narrow tape because only the ALL-empty case was ever labeled. The radar is
+    # the system's only look OUTSIDE the universe cage, so an undisclosed
+    # half-outage silently narrows the opportunity set back to the cage.
+    sources: dict = {}
+    movers: dict = {}
+    actives: list = []
+    news_rows: list = []
+    try:
         # top is generous because the price floor strips the warrant/penny rows.
         movers = alpaca_data.get_movers(top=max(top_movers * 3, 30))
+        sources["movers"] = "ok"
+    except Exception as e:
+        sources["movers"] = f"error: {str(e)[:100]}"
+    try:
         # by="trades": share-volume actives are dominated by penny names; trade
         # count surfaces the liquid large caps actually being fought over today.
         actives = alpaca_data.get_most_actives(top=top_actives, by="trades")
-        news_rows = alpaca_data.get_news(hours=news_hours, limit=50)
+        sources["actives"] = "ok"
     except Exception as e:
-        return {**out, "status": "error", "error": str(e)[:200]}
+        sources["actives"] = f"error: {str(e)[:100]}"
+    try:
+        news_rows = alpaca_data.get_news(hours=news_hours, limit=50)
+        sources["news"] = "ok"
+    except Exception as e:
+        sources["news"] = f"error: {str(e)[:100]}"
+
+    ok_sources = sum(1 for v in sources.values() if v == "ok")
+    out["coverage"] = {"requested": len(sources), "succeeded": ok_sources,
+                       "failed": len(sources) - ok_sources, "sources": sources,
+                       "unit": "alpaca_screener_feed"}
 
     universe, forbidden = set(), set()
     try:
@@ -141,10 +170,20 @@ def get_market_radar(top_movers: int = 10, top_actives: int = 20,
     except Exception:
         out["status"] = "degraded_universe_unreadable"
 
+    if ok_sources == 0:
+        # Every screener call raised: this is a dead feed, and "no movers today"
+        # would be a lie about the market rather than a fact about the fetch.
+        return {**out, "status": "error",
+                "error": "all Alpaca radar sub-feeds failed: " + "; ".join(
+                    f"{k}={v}" for k, v in sources.items())}
     if not (movers or actives or news_rows):
         return {**out, "status": "degraded_all_feeds_empty"}
 
     out.update(build_radar(movers, actives, news_rows, universe, forbidden))
+    # A partial outage stays USABLE but must say so: the missing sub-feed's
+    # symbols are unscanned, not unattractive.
+    if ok_sources < len(sources) and out.get("status") == "ok":
+        out["status"] = "degraded"
     return out
 
 

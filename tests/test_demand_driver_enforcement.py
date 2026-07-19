@@ -135,18 +135,30 @@ def test_unstamped_position_still_counts_toward_theme_risk(cfg):
         "is missing")
 
 
-def test_position_demand_driver_prefers_the_stamp_over_the_map():
-    """The map is a fallback, never an override — a deliberately stamped driver wins."""
+def test_canonical_mapping_outranks_the_lot_stamp():
+    """CONTRACT CHANGE (2026-07-19). The stamp used to win unconditionally.
+
+    The stamp is written at fill time from the PROPOSAL, so trusting it first meant
+    one mislabelled entry kept the 2% theme risk cap mis-bucketed for the entire life
+    of the position — the persistence half of the relabelling exploit."""
     pos = {"ticker": "DELL", "demand_driver": "semi_memory"}
     assert validator._position_demand_driver(
-        pos, {"DELL": "hyperscaler_server_capex"}) == "semi_memory"
+        pos, {"DELL": "hyperscaler_server_capex"}) == "hyperscaler_server_capex"
+
+    plan_stamped = {"ticker": "DELL", "plan": {"demand_driver": "networking"}}
+    assert validator._position_demand_driver(
+        plan_stamped, {"DELL": "x"}) == "hyperscaler_server_capex"
 
 
-def test_position_demand_driver_reads_plan_then_map():
-    pos = {"ticker": "DELL", "plan": {"demand_driver": "networking"}}
-    assert validator._position_demand_driver(pos, {"DELL": "x"}) == "networking"
+def test_stamp_still_wins_for_names_the_map_cannot_classify():
+    """The mirror — without it, 'always return canonical' passes the test above."""
+    unmapped = {"ticker": "ZZZZ", "demand_driver": "fintech"}
+    assert validator._position_demand_driver(unmapped, {}) == "fintech"
 
-    bare = {"ticker": "DELL"}
-    assert validator._position_demand_driver(bare, {"DELL": "networking"}) == "networking"
+    plan_only = {"ticker": "ZZZZ", "plan": {"demand_driver": "networking"}}
+    assert validator._position_demand_driver(plan_only, {}) == "networking"
+
+    bare = {"ticker": "ZZZZ"}
+    assert validator._position_demand_driver(bare, {"ZZZZ": "networking"}) == "networking"
     assert validator._position_demand_driver(bare, None) is None
     assert validator._position_demand_driver(bare, {}) is None

@@ -759,6 +759,13 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
         "market_checkin": market_checkin,
         # Hard limits the validator will enforce - size within them or be rejected.
         "hard_limits": {
+            "note": "SINGLE SOURCE OF TRUTH for every threshold the validator "
+                    "enforces, read live from autonomy_config.json this run. Any "
+                    "number quoted in CLAUDE.md prose is DESCRIPTIVE — when the two "
+                    "disagree, these values win, because these are the ones the code "
+                    "actually checks. (CLAUDE.md stated RR >= 1.0 for two days after "
+                    "the floor was raised to 2.0 on 2026-07-16, so every proposal "
+                    "built against the prose was rejected on arrival.)",
             "effective_max_position_usd": round(min(
                 cfg["position_sizing"]["max_position_usd"],
                 portfolio.get("total_equity_usd", 0)
@@ -768,6 +775,10 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
             "swing": {k: cfg["swing_rules"][k] for k in
                       ("min_holding_horizon_days", "max_holding_horizon_days",
                        "max_new_positions_per_day")},
+            "theme_risk": cfg.get("theme_risk") or {},
+            "regime_gate": cfg.get("regime_gate") or {},
+            "book_risk": cfg.get("book_risk") or {},
+            "learning_controls": cfg.get("learning_controls") or {},
         },
         "benchmark_close": benchmark_close(),
         "macro_regime": macro,

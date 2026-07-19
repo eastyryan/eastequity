@@ -35,8 +35,9 @@ published on a public dashboard and audited later.
   PITCH standard: most of the P&L will come from a handful of positions, so being flat for
   days or weeks is the strategy working, not failing. When a genuinely asymmetric setup
   appears (3:1+ with a real catalyst), it deserves full size and priority over any number
-  of marginal 1.2:1 ideas - but the validator floors (10% upside, RR >= 1.0) are the
-  MINIMUM bar, never the target. A thesis should stand on 2-3 pillars you can state
+  of marginal ideas that merely clear the floor - but the validator floors (see
+  `hard_limits` in your bundle, which carries the LIVE values from
+  autonomy_config.json) are the MINIMUM bar, never the target. A thesis should stand on 2-3 pillars you can state
   plainly; if it needs ten indicators to justify, it is not a fat pitch.
 - **Respect the market environment.** Only press hard in a supportive tape. The scan's
   benchmark_trend gives the read: "supportive" (SPY in a healthy uptrend) = normal
@@ -390,7 +391,9 @@ Beyond filings/13F/news, every run now includes:
 
 1. **Regime** — macro_regime + benchmark_trend + market_events. Hostile → raise bar, prefer cash.
 2. **Book** — every open position: HOLD or SELL_TO_CLOSE vs original_plan **and**
-   thesis_invalidators (if stamped). Thesis broken = exit. Also cash test (~4% hurdle),
+   thesis_invalidators (if stamped). Thesis broken = exit. Also cash test — your JUDGMENT, not a coded gate (no config key
+   backs this, do not cite it as an enforced rule): does this beat T-bills over
+   its horizon after the gap-adjusted risk it adds?
    theme_exposure, portfolio_risk. Prefer not stacking the same demand_driver.
 3. **Watchlist promote loop** — for each watchlist name + hits_not_bought: drop, hold
    (update thoughts/would_buy_at), or promote to BUY. Explicit one-liner why not BUY if hold.
@@ -523,6 +526,40 @@ Rules the validator enforces (know them so you don't waste runs):
   and **demand_driver** - missing/weak fields are automatic rejections
 - theme concentration: same demand_driver MV + new size ≤ ~35% of equity
 - stop_loss < entry_price_max < target_price; stop within 15% of entry
+- **BOOK RISK (code-enforced, added 2026-07-19)** - four caps on the shape of the
+  whole book, not on any single trade. Live values in `hard_limits.book_risk`.
+  - **FACTOR STACK**: aggregate market value across ALL AI-stack demand_drivers is
+    capped. A different demand_driver is no longer automatically a different bet:
+    15 of the 27 canonical drivers co-move on an AI/semis/datacenter shock, so eight
+    positions across four AI-stack drivers used to be a 100% AI book that passed
+    every limit. Rejection reads `factor_stack_concentration_exceeded`. To add AI
+    exposure at the cap you must FREE some first - trim or rotate, not relabel.
+  - **DEMAND_DRIVER IS CROSS-CHECKED**: your stated driver is compared against the
+    ticker's canonical mapping. Declaring DELL as anything other than
+    `hyperscaler_server_capex` is rejected as `demand_driver_mismatch`. There is no
+    longer any label that moves a name into a cheaper theme bucket. For genuinely
+    unmapped names (new universe_candidates) your label is accepted as-is.
+  - **HEAT IS GAP-ADJUSTED**: the 8% cap now adds modelled stop gap-through, because
+    stops do NOT fill at the stop - the one closed stop in this book's history filled
+    4.5% through and turned a 1%-risk position into a -13.5% loss. Effective heat is
+    tighter than the nominal 8%, and tighter still on a correlated book.
+  - **PORTFOLIO BETA + STRESS**: the projected book (including your proposal) is
+    checked against a beta ceiling and named shock scenarios. Losses there are NOT
+    floored at your stops, because a shock that big is one where stops gap. Rejections
+    read `portfolio_beta_cap_exceeded` / `stress_scenario_loss_exceeded`. Both fail
+    CLOSED when the correlation feed is missing a name, so cite `portfolio_risk`
+    numbers rather than assuming they are present.
+- **PROCESS GATES NOW BLOCK**: `factor_response` (when factor_map sets
+  requires_factor_response) and `seat_reviews` (when the book is non-empty on a
+  trading depth) are no longer journaled-and-forgotten. Missing or weak ones REJECT
+  every BUY in the run as `process_gate_blocked`. Exits, holds and trims are never
+  blocked. No new risk until the risk you already carry has been reviewed.
+- **AN UNREVIEWED BUY IS A VETOED BUY**: if the risk desk returns reviews but none
+  for your ticker, that BUY is rejected as `risk_desk_no_review`. Silence is not
+  approval.
+- **STALE DATA BLOCKS NEW BUYS**: `data_quality_stale` / `data_quality_empty` /
+  `fundamentals_stale:<TICKER>` are now real rejections, not prose. Exits are never
+  blocked - acting on stale data to REDUCE risk is always allowed.
 - **stop outside the volatility noise band**: your stop must sit at least
   `stop_engineering.floors[TICKER].min_stop_distance_pct` below entry - the larger of
   ~1×ATR and ½ the options expected move. A tighter stop is rejected as

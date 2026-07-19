@@ -37,6 +37,107 @@ ARTIFACT = ROOT / "dashboard" / "data" / "freshness_audit.json"
 VALUE_TOLERANCE = 0.20  # |ours - yfinance| / yfinance beyond this is flagged
 
 
+# --------------------------------------------------------------------------- #
+# UNIFORM FEED-STATUS CONTRACT (shared by every research feed under tools/)
+# --------------------------------------------------------------------------- #
+# Lives HERE, in the data-integrity watchdog, for two reasons: this module is
+# already where the repo puts "is the data actually real?" logic, and it is a
+# true leaf (only json + pathlib at module scope, every heavier import lazy), so
+# every feed can import the contract without dragging in EDGAR, pandas or
+# yfinance - and without breaking when a test swaps a stub into sys.modules.
+#
+# THE INCIDENT THIS PREVENTS
+# --------------------------
+# orchestrator.py's `feed_is_alive` (orchestrator.py:112) is the system's ONLY
+# automated check that the research feeds actually delivered, and for two of the
+# three feeds it guarded it was DEAD CODE:
+#   * news_catalysts.py:199 hardcoded {"status": "ok"} and never downgraded it,
+#     so a run in which every yfinance call raised still reported a healthy feed;
+#   * the sec_filings bundle is a bare {TICKER: brief} map with NO top-level
+#     status, so .get("status") returned None, None is not in the dead-status
+#     tuple, and a TOTAL EDGAR OUTAGE read as healthy.
+# Four incompatible status shapes existed across tools/. These helpers make the
+# repo's own standard - absence of data must never render as a substantive market
+# finding - mechanical instead of per-file folklore.
+#
+# THE CONTRACT
+# ------------
+#   status      meaning                                        feed_is_alive
+#   ---------   --------------------------------------------   -------------
+#   "ok"        every attempted name succeeded                  alive
+#   "degraded"  some succeeded, some FAILED (counts disclosed)  alive
+#   "empty"     every name succeeded, nothing qualified         alive
+#   "error"     every attempted name FAILED - the fetch died    DEAD
+#   "skipped"   nothing was asked for (no focus names)          alive
+#
+#   coverage = {"requested": n, "succeeded": n, "failed": n, ...}
+#
+# "empty" vs "error" is the load-bearing distinction, and it is the same one
+# insider_form4's `data_unavailable` signal exists to make: "no insider bought
+# anything" and "we could not read the filings" mean OPPOSITE things to a thesis.
+# A tool whose per-name calls ALL failed must report "error" - never "ok", never
+# "empty".
+FEED_OK = "ok"
+FEED_DEGRADED = "degraded"
+FEED_EMPTY = "empty"
+FEED_ERROR = "error"
+FEED_SKIPPED = "skipped"
+
+
+def feed_status(requested: int, succeeded: int, failed: int,
+                *, found: int | None = None) -> str:
+    """Resolve the uniform top-level status from coverage counters. Pure.
+
+    `found` (optional) is the number of names that produced a SUBSTANTIVE result
+    - headlines, transactions, deals. When every name was reachable but none
+    produced anything, the status is "empty" (a real, honest market state) rather
+    than "ok". When every name FAILED the status is "error" regardless of
+    `found`, because a dead fetch must never wear the same label as a quiet tape.
+    """
+    requested = int(requested or 0)
+    succeeded = int(succeeded or 0)
+    failed = int(failed or 0)
+    if requested <= 0:
+        return FEED_SKIPPED
+    if succeeded <= 0:
+        return FEED_ERROR
+    if failed > 0:
+        return FEED_DEGRADED
+    if found is not None and int(found) <= 0:
+        return FEED_EMPTY
+    return FEED_OK
+
+
+def coverage_block(requested: int, succeeded: int, failed: int, **extra) -> dict:
+    """The uniform `coverage` counter block. Pure.
+
+    Every feed exposes this so a caller can tell "nothing qualified" from "the
+    fetch died" WITHOUT reverse-engineering per-ticker sub-keys.
+    universe_scanner already proved the value of this on its bulk pass
+    (`requested` / `scan_failures`); this generalizes it to every feed.
+    """
+    out = {"requested": int(requested or 0),
+           "succeeded": int(succeeded or 0),
+           "failed": int(failed or 0)}
+    out.update({k: v for k, v in extra.items() if v is not None})
+    return out
+
+
+def stamp_feed(out: dict, requested: int, succeeded: int, failed: int,
+               *, found: int | None = None, failures: dict | None = None,
+               **extra) -> dict:
+    """Stamp `status` + `coverage` onto a feed result in place; return it.
+
+    `failures` is an optional {TICKER: reason} map (truncate at the call site) so
+    a degraded run says WHICH names died and why, not merely how many.
+    """
+    out["status"] = feed_status(requested, succeeded, failed, found=found)
+    out["coverage"] = coverage_block(requested, succeeded, failed, **extra)
+    if failures:
+        out["coverage"]["failures"] = failures
+    return out
+
+
 def _yf_latest_quarterly_revenue(ticker: str):
     """(revenue_usd, period_end_iso) from yfinance's quarterly income statement, or
     (None, None). Independent of EDGAR, so it cross-checks our extraction."""
@@ -145,8 +246,15 @@ def audit_freshness(tickers: list, cross_check: bool = False, evict: bool = Fals
                   and r.get("filer_type") != "foreign_annual"]
     fresh = [r["ticker"] for r in results
              if r.get("status") == "ok" and not r.get("stale")]
-    return {
-        "status": "ok",
+    # STATUS CONTRACT (feed_status above). audit_universe already refuses to
+    # PERSIST an all-error audit (the guard below - it would destroy the
+    # last-good artifact and feed the bundle a "whole universe errored"
+    # summary). But the RETURNED dict still said "status": "ok"
+    # unconditionally, so an in-memory caller that never touches the artifact -
+    # the bundle's fundamentals_freshness block - read a blocked EDGAR as a clean
+    # audit in which zero names were stale. "No name is stale" and "we could not
+    # check any name" are opposite findings.
+    out = {
         "note": "Fundamentals are FRESH only when the extracted series reaches the "
                 "latest filed periodic report (submissions reportDate). stale=true "
                 "means the numbers are NOT the latest reported quarter. foreign_annual "
@@ -160,6 +268,10 @@ def audit_freshness(tickers: list, cross_check: bool = False, evict: bool = Fals
         "value_mismatch_vs_yfinance": mismatched,
         "results": results,
     }
+    return stamp_feed(out, len(results), len(results) - len(errors), len(errors),
+                      failures={t: "audit_ticker returned status=error"
+                                for t in errors[:10]},
+                      stale=len(stale), mismatched=len(mismatched))
 
 
 def audit_universe(cross_check: bool = False, progress: bool = True,

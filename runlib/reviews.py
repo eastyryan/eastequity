@@ -19,6 +19,61 @@ from runlib.analytics import (
 from runlib.brain_io import run_claude
 from runlib.publish import redeploy_dashboard
 
+def run_learning_maintenance(run_id: str) -> None:
+    """Deterministic learning bookkeeping. No LLM, no decision — pure maintenance.
+
+    Extracted 2026-07-19 from the middle of self_review, where it ran only if an
+    unrelated LLM call had already succeeded (run_claude `return 1`s on failure).
+    Shadow resolution and lesson adoption are bookkeeping over data already on
+    disk; making them depend on a network call is why the shadow book showed
+    49 open / 0 closed — never reaching the 8 closes it needs to bind — and the
+    adopt pipeline had never emitted a lesson in its life.
+    """
+    # Weekly adopt pipeline: harvest improvement notes → soft lessons auto-adopted
+    try:
+        from tools.learning_adopt import run_weekly_adopt_pipeline
+        adopt = run_weekly_adopt_pipeline()
+        print(f"  learning adopt: {adopt.get('auto_adopted', 0)} soft lessons, "
+              f"{adopt.get('hard_pending', 0)} hard proposals pending")
+        journal.log_improvement(
+            f"[learning-adopt] auto_adopted={adopt.get('auto_adopted')} "
+            f"hard_pending={adopt.get('hard_pending')} "
+            f"ids={adopt.get('new_ids')}", run_id)
+    except Exception as e:
+        print(f"  (learning adopt pipeline skipped: {e})")
+    # Mark shadows + post-exit runners with latest prices if available
+    try:
+        from tools.shadow_portfolio import mark_shadows, brain_facing_shadow_learning
+        from tools.post_exit_runners import mark_post_exit_runners
+        from tools.prices import get_closes
+        import json as _json
+        from pathlib import Path as _P
+        # Best-effort marks on held shadow tickers + post-exit tracks
+        sh = brain_facing_shadow_learning(50)
+        tickers = list({
+            *(r.get("ticker") for r in (sh.get("regret_misses") or [])),
+            *(r.get("ticker") for r in (sh.get("good_skips") or [])),
+            *(r.get("ticker") for r in (sh.get("open_running_best") or [])),
+        })
+        sp = _P(ROOT / "data" / "shadow_portfolio.json")
+        if sp.exists():
+            for p in (_json.loads(sp.read_text()).get("positions") or []):
+                if p.get("ticker"):
+                    tickers.append(p["ticker"])
+        pxf = _P(ROOT / "data" / "post_exit_runners.json")
+        if pxf.exists():
+            for p in (_json.loads(pxf.read_text()).get("tracking") or []):
+                if p.get("ticker"):
+                    tickers.append(p["ticker"])
+        tickers = [t for t in dict.fromkeys(tickers) if t]
+        if tickers:
+            px = get_closes(tickers) or {}
+            mark_shadows(px)
+            mark_post_exit_runners(px)
+    except Exception as e:
+        print(f"  (shadow/post-exit mark skipped: {e})")
+
+
 def self_review(run_id: str) -> int:
     closed = compute_closed_trades()
     portfolio = get_portfolio_state()
@@ -79,6 +134,8 @@ def self_review(run_id: str) -> int:
         "dashboard: what you got right, what you got wrong, whether last week's change "
         "stuck, and the ONE change you are making next week."
     )
+    # DETERMINISTIC MAINTENANCE FIRST — never a hostage of an unrelated LLM call.
+    run_learning_maintenance(run_id)
     try:
         out = run_claude(prompt)  # pinned model + tool allowlist, with retry
     except Exception as e:
@@ -87,49 +144,6 @@ def self_review(run_id: str) -> int:
     m = re.search(r"Self-review:\s*(.+)", out, re.DOTALL)
     summary = (m.group(1).strip() if m else out.strip())[:2000]
     journal.log_improvement(f"Weekly self-review: {summary}", run_id)
-    # Weekly adopt pipeline: harvest improvement notes → soft lessons auto-adopted
-    try:
-        from tools.learning_adopt import run_weekly_adopt_pipeline
-        adopt = run_weekly_adopt_pipeline()
-        print(f"  learning adopt: {adopt.get('auto_adopted', 0)} soft lessons, "
-              f"{adopt.get('hard_pending', 0)} hard proposals pending")
-        journal.log_improvement(
-            f"[learning-adopt] auto_adopted={adopt.get('auto_adopted')} "
-            f"hard_pending={adopt.get('hard_pending')} "
-            f"ids={adopt.get('new_ids')}", run_id)
-    except Exception as e:
-        print(f"  (learning adopt pipeline skipped: {e})")
-    # Mark shadows + post-exit runners with latest prices if available
-    try:
-        from tools.shadow_portfolio import mark_shadows, brain_facing_shadow_learning
-        from tools.post_exit_runners import mark_post_exit_runners
-        from tools.prices import get_closes
-        import json as _json
-        from pathlib import Path as _P
-        # Best-effort marks on held shadow tickers + post-exit tracks
-        sh = brain_facing_shadow_learning(50)
-        tickers = list({
-            *(r.get("ticker") for r in (sh.get("regret_misses") or [])),
-            *(r.get("ticker") for r in (sh.get("good_skips") or [])),
-            *(r.get("ticker") for r in (sh.get("open_running_best") or [])),
-        })
-        sp = _P(ROOT / "data" / "shadow_portfolio.json")
-        if sp.exists():
-            for p in (_json.loads(sp.read_text()).get("positions") or []):
-                if p.get("ticker"):
-                    tickers.append(p["ticker"])
-        pxf = _P(ROOT / "data" / "post_exit_runners.json")
-        if pxf.exists():
-            for p in (_json.loads(pxf.read_text()).get("tracking") or []):
-                if p.get("ticker"):
-                    tickers.append(p["ticker"])
-        tickers = [t for t in dict.fromkeys(tickers) if t]
-        if tickers:
-            px = get_closes(tickers) or {}
-            mark_shadows(px)
-            mark_post_exit_runners(px)
-    except Exception as e:
-        print(f"  (shadow/post-exit mark skipped: {e})")
     _write_review_to_dashboard = ROOT / "dashboard" / "data" / "latest.json"
     if _write_review_to_dashboard.exists():
         d = json.loads(_write_review_to_dashboard.read_text())

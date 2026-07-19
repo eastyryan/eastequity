@@ -13,15 +13,70 @@ Window sizing is deliberate: ~14 months (~294 sessions) guarantees enough bars f
 real 200-day SMA and a true trailing-252-session 52-week high AFTER rolling (a 9- or
 12-month pull would come up short once you roll a full year back).
 
+API / rate-limit policy (2026-07-18 - ported from tools/discovery_screen.py)
+---------------------------------------------------------------------------
+The rate-limit discipline was on the WRONG JOB. discovery_screen - the WEEKLY
+sweep - chunks its downloads and sleeps between chunks (CHUNK_SIZE=100,
+CHUNK_SLEEP_SEC=1.25). This scanner runs 4x PER DAY and had no sleep, no retry
+and no chunking anywhere: two unbounded full-universe yf.download calls followed
+by a sequential loop over ~30 names making four scraped calls each (.info /
+.earnings_dates / .revenue_estimate / .eps_trend) - roughly 120 back-to-back
+requests with no pause, from a GitHub-hosted (Azure) runner that Yahoo already
+rate-limits aggressively. That is the same self-inflicted throttle that left
+data/earnings_calendar.json empty for its entire committed history. Everything
+network-touching here now chunks, sleeps and DISCLOSES its coverage.
+
+Point-in-time integrity
+-----------------------
+1. STILL-FORMING BARS. discovery_screen drops the partial bar
+   (`_completed_series` / `_last_bar_is_partial`, advertised in its docstring).
+   This scanner had no equivalent, so an intraday run divided HALF a session's
+   volume by full-day history - systematically understating vol_surge and
+   mislabeling real breakouts as `unconfirmed_breakout_suspect`, which CLAUDE.md
+   tells the brain "fails far more often" and to reject in favour of
+   `confirmed_breakout`. A midday breakout was argued against by its own volume
+   read. The helpers are now CANONICAL here and imported by discovery_screen.
+2. RETROACTIVE RESTATEMENT. Every download uses auto_adjust=True, which restates
+   ALL historical bars on each dividend/split. That is right for return math and
+   WRONG for a level the crowd watches: the 200-WEEK MA the deep_value_200w lane
+   computes is not the number on a retail chart of unadjusted prices. It was
+   disclosed nowhere. Rows carrying a price LEVEL now say so - see
+   PRICE_BASIS_NOTE and the `price_basis` field.
+
 CLI: python -m tools.universe_scanner [--top N]
 """
 
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
+
+# --- rate-limit discipline (mirrors tools/discovery_screen.py) ---------------
+# Universe is ~180 names; 60/chunk keeps each yf.download request modest while
+# holding the round-trip count low. The sleep is per CHUNK, not per name.
+CHUNK_SIZE = 60
+CHUNK_SLEEP_SEC = 1.25
+# The enrich pass is the expensive one: 4 scraped endpoints per name. Pause
+# between NAMES there (~30 names => ~7s added, cheap against a 15-minute budget).
+ENRICH_SLEEP_SEC = 0.25
+# Stop hammering a feed that is refusing us. After this many CONSECUTIVE enrich
+# failures we abort the pass and DISCLOSE it, rather than burning the gather
+# node's budget on calls that will all fail.
+ENRICH_ABORT_AFTER_CONSECUTIVE_FAILURES = 12
+
+# Disclosure attached to rows whose numbers rest on split/dividend-ADJUSTED bars.
+PRICE_BASIS_NOTE = (
+    "All bars are split/dividend ADJUSTED (yfinance auto_adjust=True). Adjusted "
+    "history is restated retroactively on every corporate action, so long-horizon "
+    "MOVING-AVERAGE LEVELS computed from it (notably wma_200w) are NOT the levels "
+    "printed on an unadjusted retail chart - the crowd watching 'the 200-week' may "
+    "be watching a different number. Returns, momentum and relative strength are "
+    "unaffected (adjustment is exactly what makes those correct). Treat "
+    "pct_vs_200w_ma as a total-return reversion measure, and confirm the actual "
+    "support level on a chart before placing a stop against it.")
 
 
 def load_universe() -> dict[str, list[str]]:
@@ -45,6 +100,96 @@ MIN_BARS = SESS_3M + 1  # 64
 # discipline surfaces names that would be hard to enter/exit at real size. Names are
 # FLAGGED, never dropped (a held name must always survive the scan).
 SESS_ADV, MIN_ADV_USD = 20, 20_000_000
+
+
+def _chunks(seq: list, size: int) -> list:
+    """Split a list into consecutive chunks of at most `size`. Pure."""
+    return [seq[i:i + size] for i in range(0, len(seq), size)]
+
+
+def _last_bar_is_partial(last_bar_date: str, now_et_date: str,
+                         now_et_minutes: int) -> bool:
+    """No-lookahead guard: True when the newest bar is TODAY's (ET) and the
+    regular session has not closed (before 16:00 ET) - i.e. the bar is still
+    forming and must be dropped. Date args are ISO YYYY-MM-DD strings; pure so it
+    is unit-tested offline.
+
+    THE INCIDENT THIS PREVENTS: this scanner runs on intraday slots (9am / 10am /
+    noon / 3pm ET). Computing on a half-formed bar divides a PARTIAL session's
+    volume by full-session history, so vol_surge is understated by roughly the
+    fraction of the day still untraded and volume_analysis's breakout test
+    (rvol >= BREAKOUT_RVOL) fails on breakouts that will confirm by the close -
+    stamping `unconfirmed_breakout_suspect`, which CLAUDE.md tells the brain
+    "fails far more often" and to reject. A midday breakout was therefore
+    systematically argued AGAINST by its own volume read. Canonical here;
+    tools/discovery_screen.py imports these two helpers so the daily scanner and
+    the weekly screen can never drift apart on session semantics.
+    """
+    return bool(last_bar_date) and last_bar_date == now_et_date and now_et_minutes < 16 * 60
+
+
+def _completed_series(df, now_et) -> "object":
+    """Drop the still-forming bar (if any) from a per-ticker OHLCV frame.
+    Fail-soft: on any surprise, return the frame unchanged rather than lose the
+    name (a missing row is worse than a partial one)."""
+    try:
+        if len(df) and _last_bar_is_partial(
+                str(df.index[-1].date()), str(now_et.date()),
+                now_et.hour * 60 + now_et.minute):
+            return df.iloc[:-1]
+    except Exception:
+        pass
+    return df
+
+
+def _download_frames(tickers: list, period: str, interval: str,
+                     now_et=None, drop_partial: bool = True) -> tuple:
+    """CHUNKED, THROTTLED batch download -> ({ticker: DataFrame}, failed_chunks).
+
+    Replaces the two unbounded full-universe `yf.download(tickers + ["SPY"], ...)`
+    calls this scanner used to make 4x/day with no pause. Chunking bounds each
+    request, the inter-chunk sleep is the politeness discipline the weekly
+    discovery screen has always had, and a chunk that raises no longer takes the
+    ENTIRE scan down with it - the surviving chunks are returned and the failure
+    is counted so the caller can disclose partial coverage.
+
+    Frames are returned as an explicit {ticker: frame} dict rather than a
+    MultiIndex frame so a one-name chunk (which yfinance returns un-nested)
+    cannot silently produce a differently-shaped result.
+    """
+    import yfinance as yf
+
+    frames: dict = {}
+    failed_chunks = 0
+    chunk_list = _chunks(list(tickers), CHUNK_SIZE)
+    for i, chunk in enumerate(chunk_list):
+        try:
+            data = yf.download(chunk, period=period, interval=interval,
+                               group_by="ticker", auto_adjust=True,
+                               progress=False, threads=True)
+        except Exception:
+            failed_chunks += 1
+            if i + 1 < len(chunk_list):
+                time.sleep(CHUNK_SLEEP_SEC)
+            continue
+        for t in chunk:
+            try:
+                try:
+                    df = data[t].dropna()
+                except Exception:
+                    # Single-ticker chunk: yfinance returns a flat frame.
+                    df = data.dropna() if len(chunk) == 1 else None
+                if df is None or getattr(df, "empty", True):
+                    continue
+                if drop_partial and now_et is not None:
+                    df = _completed_series(df, now_et)
+                if len(df):
+                    frames[t] = df
+            except Exception:
+                continue
+        if i + 1 < len(chunk_list):
+            time.sleep(CHUNK_SLEEP_SEC)
+    return frames, failed_chunks
 
 
 def _median_dollar_volume(closes, volumes, sessions: int = SESS_ADV):
@@ -601,15 +746,26 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
     # 14mo (~294 sessions) so a true 200-DMA and a trailing-252-session 52-week high
     # survive after rolling. SPY rides along in the same batched download to power
     # relative strength without an extra network round-trip.
-    data = yf.download(tickers + ["SPY"], period="14mo", interval="1d",
-                       group_by="ticker", auto_adjust=True, progress=False, threads=True)
+    # ET clock for the partial-bar guard. Fail-soft: if the helper is
+    # unavailable, now_et stays None and _download_frames keeps every bar
+    # (a partial bar is better than no scan at all).
+    try:
+        from tools.fundamental_screen import _eastern_now
+        now_et = _eastern_now()
+    except Exception:
+        now_et = None
+
+    # CHUNKED + THROTTLED (see CHUNK_SIZE / CHUNK_SLEEP_SEC); the still-forming
+    # session bar is dropped so volume math compares completed sessions only.
+    frames, daily_chunk_failures = _download_frames(
+        tickers + ["SPY"], "14mo", "1d", now_et=now_et)
 
     # Benchmark returns over the SAME session windows used per-name, computed once.
     # Also the market-ENVIRONMENT read: only press hard in a supportive tape.
     spy_1m = spy_3m = None
     benchmark_trend = {"read": "unknown"}
     try:
-        spy_close = [float(x) for x in data["SPY"]["Close"].dropna().tolist()]
+        spy_close = [float(x) for x in frames["SPY"]["Close"].dropna().tolist()]
         spy_1m = _return_over_sessions(spy_close, SESS_1M)
         spy_3m = _return_over_sessions(spy_close, SESS_3M)
         if len(spy_close) >= 200:
@@ -631,12 +787,20 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
     # daily pull). Fail-soft: if the weekly fetch dies, the scan proceeds without the
     # deep-value lane rather than failing the whole cycle.
     w200: dict[str, tuple] = {}  # ticker -> (ma, is_full, pct_vs_ma)
+    weekly_chunk_failures = 0
     try:
-        wdata = yf.download(tickers, period="5y", interval="1wk",
-                            group_by="ticker", auto_adjust=True, progress=False, threads=True)
+        # drop_partial=False: the still-forming bar on a WEEKLY series is the
+        # current week, and dropping it would push every 200-week MA a full week
+        # stale. The daily guard exists for intraday volume/breakout math, which
+        # weekly bars do not feed.
+        wframes, weekly_chunk_failures = _download_frames(
+            tickers, "5y", "1wk", now_et=now_et, drop_partial=False)
         for t in tickers:
             try:
-                wcloses = [float(x) for x in wdata[t]["Close"].dropna().tolist()]
+                wf = wframes.get(t)
+                if wf is None:
+                    continue
+                wcloses = [float(x) for x in wf["Close"].dropna().tolist()]
                 if not wcloses:
                     continue
                 ma, full = _ma_tail(wcloses, WEEKS_200)
@@ -659,11 +823,17 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
     ai_exposure = _load_ai_exposure()
 
     rows = []
+    no_data = short_history = 0
     for t in tickers:
         try:
-            df = data[t].dropna()
+            df = frames.get(t)
+            if df is None:
+                no_data += 1
+                continue
+            df = df.dropna()
             n = len(df)
             if n < MIN_BARS:
+                short_history += 1
                 continue
             close, high, low, vol = df["Close"], df["High"], df["Low"], df["Volume"]
             close_list = [float(x) for x in close.tolist()]
@@ -693,7 +863,26 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
             # True trailing-252-session high; is_full flags whether it is really 52 weeks.
             hi_52w, full_52w = _trailing_high(high_list, SESS_52W)
             pullback_20d = last / float(high.rolling(20).max().iloc[-1]) - 1
-            vol_surge = float(vol.iloc[-5:].mean()) / max(float(vol.iloc[-65:-5].mean()), 1)
+            # VOLUME SURGE - the divide-by-one bug this replaces.
+            #
+            # The old expression was:
+            #     float(vol.iloc[-5:].mean()) / max(float(vol.iloc[-65:-5].mean()), 1)
+            # The max(..., 1) floor was there to avoid ZeroDivisionError, but it
+            # turned ABSENT volume history into a denominator of ONE SHARE. A name
+            # with a missing/zero baseline (halted, freshly listed, or a feed that
+            # returned zeros) therefore produced a surge in the MILLIONS - and
+            # vol_surge > 1.3 SCORES +0.5 on swing_setup_score, so a data hole
+            # promoted a name up the ranking on the strength of its own absence.
+            # It also fed volume_analysis's conviction read and the "buyers showing
+            # up" entry-quality test in CLAUDE.md. Absence of data must never render
+            # as a substantive market finding: no usable baseline -> None, no score.
+            base_vol = float(vol.iloc[-65:-5].mean()) if n >= 65 else None
+            recent_vol = float(vol.iloc[-5:].mean())
+            if (base_vol is None or base_vol <= 0 or base_vol != base_vol
+                    or recent_vol != recent_vol):
+                vol_surge = None
+            else:
+                vol_surge = recent_vol / base_vol
             tr = pd.concat([high - low, (high - close.shift()).abs(),
                             (low - close.shift()).abs()], axis=1).max(axis=1)
             atr_pct = float(tr.rolling(14).mean().iloc[-1]) / last
@@ -758,7 +947,7 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
             score += max(min(mom_3m * 5, 2.0), -1.0)
             score += max(min(mom_1m * 5, 1.0), -1.0)
             score += 1.0 if -0.10 <= pullback_20d <= -0.02 else 0.0
-            score += 0.5 if vol_surge > 1.3 else 0.0
+            score += 0.5 if (vol_surge is not None and vol_surge > 1.3) else 0.0
             if rel_1m is not None:  # bounded [-0.2, +0.4]: refine, don't reorder
                 score += max(min(rel_1m * 4, 0.4), -0.2)
 
@@ -779,7 +968,8 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
                 "is_full_52w_window": bool(full_52w),
                 "high_window_sessions": min(n, SESS_52W),
                 "pullback_from_20d_high_pct": round(pullback_20d * 100, 1),
-                "volume_surge_5d_vs_3m": round(vol_surge, 2),
+                "volume_surge_5d_vs_3m": (round(vol_surge, 2)
+                                          if vol_surge is not None else None),
                 "atr_pct": round(atr_pct * 100, 2),
                 "rsi_14": round(rsi, 1) if rsi is not None else None,
                 "macd": macd,
@@ -795,6 +985,11 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
                 "wma_200w": round(w200[t][0], 2) if t in w200 else None,
                 "pct_vs_200w_ma": round(w200[t][2], 1) if t in w200 else None,
                 "is_full_200w_window": bool(w200[t][1]) if t in w200 else False,
+                # DISCLOSURE (was missing at all 15 download call sites): every
+                # bar above is split/dividend ADJUSTED, so wma_200w is an
+                # adjusted-basis level, not the number on an unadjusted retail
+                # chart. See PRICE_BASIS_NOTE and the scan's price_basis_note.
+                "price_basis": "split_dividend_adjusted",
                 # Business-reality: what this company sells relative to the AI wave.
                 "ai_exposure": (ai_exposure.get(t) or {}).get("exposure"),
                 "ai_exposure_reason": (ai_exposure.get(t) or {}).get("reason"),
@@ -805,6 +1000,7 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
                 "swing_setup_score": round(score, 2),
             })
         except Exception:
+            no_data += 1
             continue
 
     rows.sort(key=lambda r: r["swing_setup_score"], reverse=True)
@@ -869,10 +1065,56 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
     # AND supplier-pullback picks (per-ticker calls are slow, so not the whole universe).
     # enrich=False skips this entire block for shallow/fast scans; price metrics and
     # lane selection still run from the batched download + screen cache.
+    #
+    # ENRICH COVERAGE - the largest undisclosed degradation surface in the system.
+    # The bulk pass has always disclosed `requested` / `scan_failures`, but this
+    # pass had NO counters at all: four scraped endpoints per name, each wrapped
+    # in a bare `except` that wrote None and moved on. A fully rate-limited enrich
+    # therefore produced rows with no market_cap_usd (the $1B floor's input), no
+    # days_to_earnings (CLAUDE.md's binary-print discipline), no analyst_estimates
+    # and no earnings-reaction flag - and the scan still reported "status": "ok",
+    # "scanned": N. Missing enrichment looked exactly like "this name has no
+    # catalyst". Every sub-pass is now counted under out["enrich_coverage"].
+    enrich_cov = {
+        "attempted": 0, "info_ok": 0, "info_failed": 0,
+        "earnings_ok": 0, "earnings_failed": 0,
+        "estimates_ok": 0, "estimates_failed": 0,
+        "days_to_earnings_present": 0,
+        "recovered_from_calendar_cache": 0,
+        "aborted_after_consecutive_failures": False,
+        "skipped_after_abort": 0,
+    }
     if enrich:
-        for r in rows[:top_n] + contrarian + deep_value + supplier_pullbacks:
-            tk = yf.Ticker(r["ticker"])
+        # Fallback source for the earnings clock when the live per-name call is
+        # blocked: the calendar artifact built by tools/earnings_calendar.py.
+        # days_to_earnings being ABSENT reads as "no print imminent" - the exact
+        # inverse of the truth - so a cached date beats no date, clearly labeled.
+        cal_by_ticker: dict = {}
+        try:
+            cal_blob = json.loads((ROOT / "data" / "earnings_calendar.json").read_text())
+            if isinstance(cal_blob, dict) and cal_blob.get("status") != "error":
+                cal_by_ticker = cal_blob.get("by_ticker") or {}
+        except Exception:
+            cal_by_ticker = {}
+
+        enrich_rows = rows[:top_n] + contrarian + deep_value + supplier_pullbacks
+        consecutive_failures = 0
+        aborted = False
+        for idx, r in enumerate(enrich_rows):
+            if aborted:
+                enrich_cov["skipped_after_abort"] += 1
+                continue
+            if idx:
+                time.sleep(ENRICH_SLEEP_SEC)  # throttle: 4 scraped calls per name
+            enrich_cov["attempted"] += 1
+            # The CONSTRUCTOR is inside the guard too. It used to sit bare above
+            # the try, so a yf.Ticker() that raised (which it does under a hard
+            # rate limit) escaped scan_universe entirely and took down the WHOLE
+            # scan - price rows, lanes, benchmark and all - over one enrich call
+            # on one name. An enrichment failure must never cost the price data.
+            tk = None
             try:
+                tk = yf.Ticker(r["ticker"])
                 info = tk.info
                 r["valuation"] = {
                     "trailing_pe": info.get("trailingPE"),
@@ -886,13 +1128,23 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
                 from tools.news_catalysts import _ratings_from_info
                 r["analyst_ratings"] = _ratings_from_info(info)
                 r["short_interest"] = _short_interest_from_info(info)
+                enrich_cov["info_ok"] += 1
+                consecutive_failures = 0
             except Exception:
                 r["valuation"] = None
+                # An unfetched .info means market_cap_usd is ABSENT, and the $1B
+                # floor's input silently vanishing must be VISIBLE, not inferred.
+                r["enrich_error"] = "info_unavailable"
+                enrich_cov["info_failed"] += 1
+                consecutive_failures += 1
+                if consecutive_failures >= ENRICH_ABORT_AFTER_CONSECUTIVE_FAILURES:
+                    aborted = True
+                    enrich_cov["aborted_after_consecutive_failures"] = True
             # Earnings clock: swing entries and binary prints interact constantly.
             try:
                 from datetime import datetime, timezone
                 now = pd.Timestamp.now(tz="America/New_York")
-                ed = tk.earnings_dates
+                ed = tk.earnings_dates if tk is not None else None
                 if ed is not None and len(ed.index):
                     past = [d for d in ed.index if d <= now]
                     future = [d for d in ed.index if d > now]
@@ -900,11 +1152,45 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
                         r["days_to_earnings"] = (min(future) - now).days
                     if past:
                         r["days_since_earnings"] = (now - max(past)).days
+                enrich_cov["earnings_ok"] += 1
             except Exception:
-                pass
+                enrich_cov["earnings_failed"] += 1
+            # FALLBACK: an ABSENT days_to_earnings reads as "no print imminent",
+            # the exact inverse of the truth, and CLAUDE.md's earnings-path rule
+            # ("through binary vs around it") depends on it. When the live call
+            # gave us nothing, use the calendar artifact and LABEL the source so
+            # a cached date is never mistaken for a live one.
+            if "days_to_earnings" not in r or "days_since_earnings" not in r:
+                cal_rec = cal_by_ticker.get(r["ticker"]) or {}
+                try:
+                    now_cal = pd.Timestamp.now(tz="America/New_York")
+                    used = False
+                    if "days_to_earnings" not in r and cal_rec.get("next"):
+                        nxt = pd.Timestamp(cal_rec["next"])
+                        if nxt.tzinfo is None:
+                            nxt = nxt.tz_localize("America/New_York")
+                        if nxt > now_cal:
+                            r["days_to_earnings"] = (nxt - now_cal).days
+                            used = True
+                    if "days_since_earnings" not in r and cal_rec.get("last"):
+                        lst = pd.Timestamp(cal_rec["last"])
+                        if lst.tzinfo is None:
+                            lst = lst.tz_localize("America/New_York")
+                        if lst <= now_cal:
+                            r["days_since_earnings"] = (now_cal - lst).days
+                            used = True
+                    if used:
+                        r["earnings_clock_source"] = "earnings_calendar_cache"
+                        enrich_cov["recovered_from_calendar_cache"] += 1
+                except Exception:
+                    pass
+            if r.get("days_to_earnings") is not None:
+                enrich_cov["days_to_earnings_present"] += 1
             # Is the multiple deserved? Forward growth + which way analysts are revising.
             try:
                 est: dict = {}
+                if tk is None:
+                    raise RuntimeError("ticker handle unavailable")
                 rev = tk.revenue_estimate
                 if rev is not None and "growth" in rev and "0y" in rev.index:
                     est["fwd_revenue_growth_pct"] = round(float(rev.loc["0y", "growth"]) * 100, 1)
@@ -918,8 +1204,10 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
                         est["eps_revision_direction"] = ("up" if cur > m30 else
                                                          "down" if cur < m30 else "flat")
                 r["analyst_estimates"] = est or None
+                enrich_cov["estimates_ok"] += 1
             except Exception:
                 r["analyst_estimates"] = None
+                enrich_cov["estimates_failed"] += 1
             # Earnings Announcement Reaction (EAR) momentum — evidence note
             # above earnings_reaction_read. Criteria: reported within
             # EAR_MAX_DAYS_SINCE_EARNINGS calendar days AND the reaction was
@@ -1003,7 +1291,10 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
         "supplier_pullbacks": supplier_pullbacks,
         "benchmark_trend": benchmark_trend,
         "sector_relative_strength": sector_rs,
-        "status": "ok",
+        # `scanned` is what the orchestrator's low-coverage check reads via
+        # scan_ctx.get("scanned", 0) - it is compared against `requested`, so if
+        # it were ever missing the check would silently compare a default of 0
+        # and mark EVERY run partial. Both keys are emitted unconditionally.
         "scanned": len(rows),
         # Coverage honesty: per-name failures are skipped silently above, so a
         # rate-limited feed can scan a fraction of the universe while looking
@@ -1011,6 +1302,30 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
         # partial when coverage drops below ~80%.
         "requested": len(tickers),
         "scan_failures": len(tickers) - len(rows),
+        # Bulk-pass detail: WHY names dropped out. `chunk_failures` counts whole
+        # yf.download batches that raised (a rate-limit signature); no_data /
+        # short_history are per-name and benign-ish. Before chunking, one bad
+        # request took the entire scan down and there was nothing to count.
+        "scan_coverage": {
+            "requested": len(tickers),
+            "scanned": len(rows),
+            "failed": len(tickers) - len(rows),
+            "no_data": no_data,
+            "short_history": short_history,
+            "daily_chunk_failures": daily_chunk_failures,
+            "weekly_chunk_failures": weekly_chunk_failures,
+            "weekly_200w_covered": len(w200),
+        },
+        # ENRICH coverage - previously invisible; see the enrich block's note.
+        "enrich_coverage": (enrich_cov if enrich else
+                            {"skipped": True, "reason": "enrich=False"}),
+        "price_basis": "split_dividend_adjusted",
+        "price_basis_note": PRICE_BASIS_NOTE,
+        "bar_completeness_note": (
+            "The still-forming session bar is DROPPED from the daily series, so "
+            "vol_surge, volume_signal and the breakout tests compare completed "
+            "sessions to completed sessions. An intraday run therefore reports "
+            "yesterday's close as last_close - check price_as_of."),
         "scan_fetched_at_utc": scan_fetched_at,
         "note": "Ranked by deterministic swing_setup_score; agent must apply judgment and research before proposing.",
         "sector_comps_note": ("sector_comps (on surfaced rows): fwd_pe_est = last close / "
@@ -1030,6 +1345,27 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
         # cloud runs, which read this straight from the relayed data bundle.
         "atr_by_ticker": {r["ticker"]: r["atr_pct"] for r in rows},
     }
+
+    # STATUS (uniform contract - tools/freshness_audit.feed_status). This used to
+    # be a hardcoded "status": "ok" that no failure could ever change: a scan in
+    # which every yf.download chunk was rate-limited returned zero rows AND
+    # "ok". The bulk pass is this tool's unit of coverage.
+    from tools.freshness_audit import feed_status
+    out["status"] = feed_status(len(tickers), len(rows), len(tickers) - len(rows))
+    if out["status"] == "error":
+        out["error"] = ("universe scan produced ZERO rows for "
+                        f"{len(tickers)} requested names "
+                        f"({daily_chunk_failures} download chunk(s) failed) - "
+                        "prices and setups are UNSCANNED, not absent")
+    # An enrich pass that died wholesale must not leave rows looking like names
+    # with no catalyst and no market cap. Downgrade a nominally-clean scan.
+    elif enrich and enrich_cov["attempted"] and \
+            enrich_cov["info_failed"] == enrich_cov["attempted"]:
+        out["status"] = "degraded"
+        out["enrich_error"] = (
+            "every enrich .info call failed: market_cap_usd, analyst_ratings and "
+            "short_interest are ABSENT on all surfaced rows. Missing market cap "
+            "is missing data, NOT a sub-$1B name.")
 
     # Weekly depth: per-sector leaders (top 3 by swing_setup_score) with a slim
     # field set so the weekly pack can show rotation without shipping full rows.

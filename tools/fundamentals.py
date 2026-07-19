@@ -995,6 +995,47 @@ def get_deep_fundamentals(ticker: str) -> dict:
     }
 
 
+def get_deep_fundamentals_bundle(tickers) -> dict:
+    """Deep fundamentals for several names UNDER the uniform feed-status envelope.
+
+    THE INCIDENT THIS PREVENTS: the bundle's `deep_fundamentals` key is built as
+    a bare per-ticker dict (runlib/context_gather.py:255) with no top-level
+    status, exactly like `sec_filings` was. get_deep_fundamentals() itself is
+    honest - it returns {"status": "error", ...} when companyfacts is
+    unreachable - but nothing ever aggregated those, so a total XBRL outage
+    presented as a map of error stubs that no automated check inspected. The
+    brain then saw every quality_ratio missing and had no way to tell
+    "companyfacts is down" from "this company has no ratios".
+
+    Backward compatible: the per-ticker entries stay at the top level under
+    their ticker keys, so `deep_fundamentals["NVDA"]` keeps resolving.
+    """
+    from tools.freshness_audit import stamp_feed
+
+    ts = [str(t).upper() for t in (tickers or []) if t]
+    entries: dict = {}
+    failures: dict = {}
+    ok = 0
+    for t in ts:
+        try:
+            e = get_deep_fundamentals(t)
+        except Exception as exc:  # fail-soft by contract; never trust that
+            e = {"status": "error", "reason": f"{type(exc).__name__}: {exc}"}
+        entries[t] = e
+        if e.get("status") == "ok":
+            ok += 1
+        else:
+            failures[t] = str(e.get("reason") or e.get("status"))[:120]
+    out: dict = dict(entries)
+    out["entries"] = entries
+    out["note"] = ("XBRL deep fundamentals. status/coverage describe the FETCH: "
+                   "'error' means companyfacts was unreachable for every name, so "
+                   "missing ratios are UNREAD, not absent. Never reason from a "
+                   "blank balance sheet without checking this status.")
+    return stamp_feed(out, len(ts), ok, len(ts) - ok,
+                      failures=dict(list(failures.items())[:10]))
+
+
 if __name__ == "__main__":
     import sys
     print(json.dumps(get_deep_fundamentals(sys.argv[1] if len(sys.argv) > 1 else "NOW"),

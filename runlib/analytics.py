@@ -10,6 +10,12 @@ import validator
 from tools.watchlist_triggers import TRIGGER_TOLERANCE_PCT, parse_price_level
 from runlib.core import ROOT, et_date, et_now, to_et_date, json_safe, light_prices
 
+# Minimum closed trades in a bucket before a RATE is published rather than a count.
+# Kept equal to tools/performance_breakdown.MIN_BUCKET_TRADES and
+# calibration_gate.DEFAULTS["min_bucket_trades"] — three places computed statistics
+# on the same trades and only one of them had a floor.
+MIN_BUCKET_TRADES = 5
+
 def expected_slots(weekday: bool) -> list[float]:
     """Scheduled run slots (ET hours) for a weekday vs a weekend day.
     KEEP IN SYNC with the slot gate in scripts/run_cycle.sh and the cloud
@@ -370,20 +376,35 @@ def compute_calibration(closed: list[dict]) -> dict | None:
         if not rows:
             continue
         wins = sum(1 for t in rows if (t.get("pnl_usd") or 0) > 0)
-        win_rate = round(wins / len(rows) * 100, 1)
         avg_conf = round(sum(t["confidence"] for t in rows) / len(rows) * 100, 1)
-        out[label] = {"trades": len(rows), "win_rate_pct": win_rate,
+        # Sample floor. A rate computed on one or two trades is noise wearing a
+        # decimal point, and this one shipped to a PUBLIC dashboard: at n=2 it
+        # published calibration_gap_pct -65.0. Counts remain facts and are always
+        # shown; RATES are withheld until they mean something. tools/benchmark.py
+        # (MIN_OBS = 60, returns None below it) is the pattern being copied.
+        enough = len(rows) >= MIN_BUCKET_TRADES
+        win_rate = round(wins / len(rows) * 100, 1) if enough else None
+        out[label] = {"trades": len(rows), "wins": wins,
+                      "win_rate_pct": win_rate,
                       "avg_stated_confidence_pct": avg_conf,
-                      "calibration_gap_pct": round(win_rate - avg_conf, 1)}
+                      "calibration_gap_pct": (round(win_rate - avg_conf, 1)
+                                              if enough else None),
+                      "sufficient_sample": enough,
+                      "min_trades_for_rate": MIN_BUCKET_TRADES}
     high = [t for t in graded if t["confidence"] >= 0.70]
-    high_wr = round(sum(1 for t in high if (t.get("pnl_usd") or 0) > 0) / len(high) * 100, 1) if high else None
+    high_enough = len(high) >= MIN_BUCKET_TRADES
+    high_wr = (round(sum(1 for t in high if (t.get("pnl_usd") or 0) > 0)
+                     / len(high) * 100, 1) if high and high_enough else None)
     return {
         "note": "Realized win rate vs the confidence you STATED at entry, by bucket. A "
                 "large negative calibration_gap_pct means your confidence is inflated; "
                 "cap stated confidence until the gap closes (per the Learning Protocol).",
         "by_confidence": out,
+        "total_graded_trades": len(graded),
+        "sufficient_sample": len(graded) >= MIN_BUCKET_TRADES,
         "high_conf_0_70_plus": {"trades": len(high), "win_rate_pct": high_wr,
-                                "inflated": bool(high_wr is not None and len(high) >= 5 and high_wr < 50)},
+                                "sufficient_sample": high_enough,
+                                "inflated": bool(high_wr is not None and high_wr < 50)},
     }
 
 

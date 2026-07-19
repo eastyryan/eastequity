@@ -161,6 +161,51 @@
     "max_demand_driver_concentration_pct": 0.35,
     "_note": "Market value of positions sharing the same demand_driver plus proposed size must stay under this fraction of equity. Catches DELL+HPE style single-factor books that sector caps miss when names sit in different GICS sleeves. Fail-open if demand_driver missing (field check already rejects). The notional cap here complements the RISK-based theme cap in position_sizing.risk_based_sizing.theme_initial_risk_cap_pct."
   },
+  "book_risk": {
+    "enabled": true,
+    "max_factor_stack_pct": 0.5,
+    "max_factor_stack_risk_pct": 0.04,
+    "gap_adjusted_heat": true,
+    "gap_correlation_threshold": 0.7,
+    "max_portfolio_beta": 1.6,
+    "max_stress_loss_pct": 0.12,
+    "stress_scenarios": [
+      {
+        "name": "ai_stack_breaks_spy_flat",
+        "market_pct": 0.0,
+        "driver_shocks": {
+          "__ai_stack__": -0.15
+        }
+      },
+      {
+        "name": "chips_crack_20",
+        "market_pct": -0.02,
+        "driver_shocks": {
+          "ai_compute_gpu": -0.2,
+          "semi_memory": -0.2,
+          "semi_equipment": -0.18,
+          "semi_foundry_analog": -0.15,
+          "hyperscaler_server_capex": -0.15
+        }
+      },
+      {
+        "name": "broad_market_selloff_10",
+        "market_pct": -0.1,
+        "driver_shocks": {}
+      },
+      {
+        "name": "rates_shock_growth_derate",
+        "market_pct": -0.05,
+        "driver_shocks": {
+          "software_platforms": -0.1,
+          "datacenter_reit": -0.1,
+          "fintech": -0.08,
+          "mega_tech_platforms": -0.05
+        }
+      }
+    ],
+    "_note": "Book-level risk (added 2026-07-19 after an audit found every binding constraint was arithmetic on ONE proposal while portfolio_beta / shared_left_tail / corr_to_book were computed by tools/correlation.py and consumed only as prose). Four controls, all in tools/book_risk.py, all pure. (1) max_factor_stack_pct: aggregate notional across factor_map.AI_STACK_DRIVERS. The 2% per-driver risk cap permits ~2 positions per driver, so 8 positions across 4 AI-stack drivers was 100% AI exposure passing every existing limit - a per-driver cap is not a factor cap. (2) gap_adjusted_heat: the 8% heat cap sums (cost-stop)*qty, which assumes stops FILL AT THE STOP - contradicted by execution_costs.stop_gap_atr_fraction (0.5) in this same file, and by the only closed stop in the ledger (DELL plan stop 408.00, fill 389.75, 4.5% through, realized -13.5% on a position sized for 1%). Heat now adds the modelled gap-through, using correlation only to decide how much of the book gaps on the same morning - NEVER to hand budget back, since the plain sum is already the fully-correlated case. Unknown correlation assumes the worst. (3) max_portfolio_beta: MV-weighted against EQUITY not invested capital, so a half-cash book reads as half-exposed. (4) stress_scenarios: named shocks priced against the book the proposal WOULD create; losses deliberately NOT floored at stops, because a shock worth naming is one where stops gap. driver_shocks key __ai_stack__ shocks the whole factor group. All four fail CLOSED on unverifiable inputs, matching the portfolio_heat_unverifiable precedent."
+  },
   "regime_gate": {
     "block_buys_below_200dma": true,
     "_note": "Coded regime filter (Faber 2007/2013: ~halved max drawdown over a century; user-approved 2026-07-16). When the benchmark trend is hostile (SPY below its 200DMA), new BUYs are REJECTED (regime_gate_spy_below_200dma) - exits and holds are never blocked, and existing stops keep working, consistent with the evidence that the filter's value is blocking NEW risk, not forced liquidation. Momentum-unwind detection (tools/momentum_health.py) separately halves the risk budget via position_sizing.risk_based_sizing.momentum_unwind_risk_scale rather than hard-blocking. Fail-open when regime data is absent from market_context."
@@ -173,7 +218,10 @@
     "high_conf_min_win_rate_pct": 50.0,
     "confidence_cap_when_inflated": 0.69,
     "require_exception_paragraph_chars": 80,
-    "_note": "Code-enforced Learning Protocol. Under min_trades_for_binding: no hard rejections from calibration_gate. At/above: high-conf inflation caps confidence; losing sector/theme buckets require calibration_exception text. Shadow book binds caution at 8 closed shadows (separate)."
+    "_note": "Code-enforced Learning Protocol. Under min_trades_for_binding: no hard rejections from calibration_gate. At/above: high-conf inflation caps confidence; losing sector/theme buckets require calibration_exception text. Shadow book binds caution at 8 closed shadows (separate).",
+    "target_rr_inflation_limit": 1.0,
+    "confidence_cap_when_targets_inflated": 0.69,
+    "_target_calibration_note": "Added 2026-07-19. min_risk_reward_ratio (2.0) is the system's most rigorously justified rule - the config carries the expectancy math - and it is computed from the LLM's own target_price, which appears ZERO times in execution/exit_guard.py. Exits are stop, trail or horizon only; CLAUDE.md calls the target 'a milestone, not a tripwire'. So the gate filtered on a number nothing enforced or graded, and the model could always clear it by writing a bigger one. Targets stay NON-BINDING for exits (letting winners run is correct and literature-supported) - instead every close is graded on claimed RR vs REALIZED RR and target attainment. Binds only at min_trades_for_binding closed trades; at n=2 it reports phase 'anecdote' and withholds the binding-grade number entirely."
   },
   "llm": {
     "brain_model": "claude-opus-4-8",
@@ -216,7 +264,11 @@
     "price_guard": true,
     "_price_guard_note": "re-check live last trade vs entry_price_max before submitting a BUY (fail-open without a quote)",
     "options_enabled": false,
-    "_options_note": "FUTURE flag only. hard_rules still forbid options and the validator rejects non-EQUITY instruments; enabling requires an options order path in the adapter + validator rules + account options level. Kept here so the capability is visible and buildable-on."
+    "_options_note": "FUTURE flag only. hard_rules still forbid options and the validator rejects non-EQUITY instruments; enabling requires an options order path in the adapter + validator rules + account options level. Kept here so the capability is visible and buildable-on.",
+    "resting_stops": true,
+    "out_of_band_lookback_hours": 96,
+    "sync_suspect_tolerance": 0.35,
+    "_resting_stops_note": "Added 2026-07-19. Until this, EVERY order body in the repo was type:market and stops were floats in state/portfolio.json evaluated only when a cycle ran - scripts/stop_watch.py documented the blind windows as ~2h intraday, ~17.5h overnight and ~65.5h over a weekend, and the one closed stop in the ledger filled 4.5% through its level (DELL 408.00 -> 389.75, a 1%-risk position realizing -13.5%). NOT a bracket/OTO: Alpaca rejects order_class alongside notional, and notional orders cannot be PATCHed at all, so a bracket's stop leg could never ratchet. IMPORTANT PARTIAL: Alpaca allows fractional quantities only with time_in_force=day, and notional entries leave fractional positions - so the WHOLE-SHARE portion gets a GTC stop that genuinely survives overnight, while the sub-share remainder is disclosed as uncovered rather than assumed safe."
   },
   "universe": {
     "focus": "AI supply chain, semiconductors, data center infrastructure, plus large-cap market leaders with an AI/tech bias",

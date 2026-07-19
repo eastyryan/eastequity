@@ -29,6 +29,7 @@ def tmp_learning(tmp_path, monkeypatch):
     import tools.exit_autopsy as EA
     import tools.learning_adopt as LA
     import tools.calibration_gate as CG
+    import tools.post_exit_runners as PR
 
     monkeypatch.setattr(SP, "SHADOW_FILE", tmp_path / "shadow.json")
     monkeypatch.setattr(SP, "ROOT", tmp_path)
@@ -41,6 +42,16 @@ def tmp_learning(tmp_path, monkeypatch):
     monkeypatch.setattr(LA, "ADOPTED_FILE", tmp_path / "adopted_lessons.md")
     monkeypatch.setattr(LA, "ADOPTED_JSON", tmp_path / "adopted_lessons.json")
     monkeypatch.setattr(LA, "ROOT", tmp_path)
+    # post_exit_runners was MISSING here, and that omission wrote fabricated trades
+    # into production. test_exit_grade persists a synthetic HPE stub (fill 40.00,
+    # pnl -50.00, days_held 20, stop 41.00) and grade_and_persist_autopsy chains
+    # into exit_autopsy -> register_from_exit, which wrote to the REAL
+    # data/post_exit_runners.json. That record was committed on 2026-07-16, re-marked
+    # on every run for three days, and the runner-learning loop computed
+    # current_leftover_pct against it — studying upside left on the table by a trade
+    # that never happened (real HPE close: 46.08 / -45.33 / 4 days / stop 43.75).
+    monkeypatch.setattr(PR, "RUNNERS_FILE", tmp_path / "post_exit_runners.json")
+    monkeypatch.setattr(PR, "ROOT", tmp_path)
     # calibration reads real latest.json — leave as is for soft test; unit pure funcs below
     return tmp_path
 

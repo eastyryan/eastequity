@@ -140,6 +140,45 @@ def _universe_sector_map() -> dict[str, str]:
         return {}
 
 
+# Resolution sources strong enough to CONTRADICT a proposal's self-declared driver.
+# The ai_exposure fallback and the "other" default are deliberately excluded: they
+# are guesses about a name we do not really classify, and a guess must never
+# override a human/LLM judgement — only a real mapping may.
+AUTHORITATIVE_SOURCES = ("file_override", "ticker_override", "sector_map")
+
+
+def resolve_driver(
+    ticker: str,
+    sector: str | None = None,
+    ai_exposure: str | None = None,
+) -> tuple[str, str]:
+    """(demand_driver, source) for one ticker.
+
+    Source is one of: file_override, ticker_override, sector_map, ai_exposure,
+    unresolved. Callers that need to ENFORCE the canonical answer must check the
+    source against AUTHORITATIVE_SOURCES first — see driver_mismatch().
+    """
+    t = str(ticker or "").upper()
+    if not t:
+        return "other", "unresolved"
+    overrides = load_driver_overrides()
+    if t in overrides:
+        return overrides[t], "file_override"
+    if t in _TICKER_OVERRIDE:
+        return _TICKER_OVERRIDE[t], "ticker_override"
+    sec = sector or _universe_sector_map().get(t)
+    if sec and sec in _SECTOR_TO_DRIVER:
+        return _SECTOR_TO_DRIVER[sec], "sector_map"
+    exp = ai_exposure or _ai_exposure_map().get(t)
+    if exp == "ai_supplier":
+        return "ai_supplier_other", "ai_exposure"
+    if exp == "ai_beneficiary":
+        return "ai_beneficiary", "ai_exposure"
+    if exp == "ai_at_risk":
+        return "ai_at_risk", "ai_exposure"
+    return "other", "unresolved"
+
+
 def driver_for_ticker(
     ticker: str,
     sector: str | None = None,
@@ -149,29 +188,48 @@ def driver_for_ticker(
 
     Priority: file overrides > code ticker overrides > sector alias map >
     weak AI-exposure fallback > other.
-    Pure when sector/ai_exposure are supplied and no override file exists;
-    otherwise may read data/*.json (still offline, no network).
     """
-    t = str(ticker or "").upper()
-    if not t:
-        return "other"
-    overrides = load_driver_overrides()
-    if t in overrides:
-        return overrides[t]
-    if t in _TICKER_OVERRIDE:
-        return _TICKER_OVERRIDE[t]
-    sec = sector or _universe_sector_map().get(t)
-    if sec and sec in _SECTOR_TO_DRIVER:
-        return _SECTOR_TO_DRIVER[sec]
-    # Weak AI exposure hint only when sector unknown / unmapped
-    exp = ai_exposure or _ai_exposure_map().get(t)
-    if exp == "ai_supplier":
-        return "ai_supplier_other"
-    if exp == "ai_beneficiary":
-        return "ai_beneficiary"
-    if exp == "ai_at_risk":
-        return "ai_at_risk"
-    return "other"
+    return resolve_driver(ticker, sector=sector, ai_exposure=ai_exposure)[0]
+
+
+def driver_mismatch(
+    ticker: str,
+    stated: str,
+    sector: str | None = None,
+    ai_exposure: str | None = None,
+) -> str | None:
+    """Reason string when `stated` contradicts this ticker's canonical driver.
+
+    THE HOLE THIS CLOSES. validator._check_demand_driver_field only ever verified
+    that the stated label was a MEMBER of KNOWN_DRIVERS. That fix was written after
+    an exploit was reproduced (validator.py docstring): a book at the theme cap
+    rejected a same-theme BUY under `hyperscaler_server_capex` and approved the
+    identical BUY under `hyperscaler_capex_supercycle`. Blocking novel labels closed
+    the NOVEL-label path and left the ADJACENT-CANONICAL path wide open — DELL is
+    mapped to hyperscaler_server_capex, but `ai_supplier_other`, `software_platforms`
+    and `broad_market` are all equally legal KNOWN_DRIVERS. Declaring the second
+    server OEM under any of them reset both theme caps to zero.
+
+    DELL+HPE — one economic bet entered twice — is this book's entire realized loss
+    history. The 2% theme risk cap exists because of it, and until now a one-word
+    relabel defeated that cap.
+
+    Fail-open by design when the canonical answer is a GUESS (ai_exposure fallback
+    or unresolved): rejecting there would block every genuinely new name the
+    universe_candidates path is meant to admit. Only a real mapping may contradict.
+    """
+    s = str(stated or "").strip().lower()
+    if not s:
+        return None
+    canonical, source = resolve_driver(ticker, sector=sector, ai_exposure=ai_exposure)
+    if source not in AUTHORITATIVE_SOURCES:
+        return None
+    if s == canonical:
+        return None
+    return (f"demand_driver_mismatch:{str(ticker).upper()} is canonically "
+            f"'{canonical}' (source: {source}), proposed as '{s}' — a same-theme bet "
+            f"relabelled under an adjacent driver escapes both theme caps; use the "
+            f"canonical driver, or correct the map in data/demand_drivers.json")
 
 
 def build_driver_map(
@@ -221,7 +279,7 @@ def theme_exposure(
             continue
         if mv <= 0 or not t:
             continue
-        d = str(pos.get("demand_driver") or driver_map.get(t) or "other").lower()
+        d = position_driver(pos, driver_map)
         b = buckets.setdefault(
             d,
             {"demand_driver": d, "market_value_usd": 0.0, "tickers": []},
@@ -241,6 +299,25 @@ def theme_exposure(
         })
     rows.sort(key=lambda r: r["market_value_usd"], reverse=True)
     return rows
+
+
+def position_driver(pos: dict, driver_map: dict[str, str]) -> str:
+    """The demand_driver a HELD position is budgeted under.
+
+    Canonical mapping wins over the lot's own stamp whenever the mapping is
+    authoritative. The stamp is written at fill time from the PROPOSAL
+    (runlib/brain_io.py), so trusting it first meant one mislabelled entry kept
+    poisoning every later theme calculation for as long as the position lived —
+    the persistence half of the relabelling exploit. The stamp still wins for names
+    the map does not really classify, where it is the only information we have.
+    """
+    t = str(pos.get("ticker") or "").upper()
+    stamped = str(pos.get("demand_driver") or "").strip().lower()
+    if t:
+        canonical, source = resolve_driver(t)
+        if source in AUTHORITATIVE_SOURCES:
+            return canonical
+    return stamped or str(driver_map.get(t) or "other").lower()
 
 
 def theme_concentration_breach(
@@ -268,8 +345,7 @@ def theme_concentration_breach(
     for pos in positions or []:
         if not isinstance(pos, dict):
             continue
-        pt = str(pos.get("ticker") or "").upper()
-        pd = str(pos.get("demand_driver") or driver_map.get(pt) or "").lower()
+        pd = position_driver(pos, driver_map)
         if pd == driver:
             try:
                 same += float(pos.get("market_value_usd") or 0)

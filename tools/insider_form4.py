@@ -118,8 +118,7 @@ def _parse_form4(xml_text: str) -> list[dict]:
 def get_insider_activity(tickers: list[str]) -> dict:
     from tools.sec_filings import ticker_to_cik
 
-    out = {"status": "ok",
-           "note": "Forms 4/5 open-market trades (codes P/S) from the LAST 120 DAYS only, "
+    out = {"note": "Forms 4/5 open-market trades (codes P/S) from the LAST 120 DAYS only, "
                    "classified. THE SIGNAL FIELD "
                    "IS PRE-COMPUTED: bullish_cluster_buying (2+ officers/directors buying "
                    "discretionarily) is the strongest positive; routine_or_sponsor_selling_only "
@@ -259,9 +258,41 @@ def get_insider_activity(tickers: list[str]) -> dict:
     # An all-tickers failure is a FEED outage, not a quiet market: degrade the
     # top-level status so the orchestrator's partial-data label actually fires
     # (it keys on this status) instead of the brain reading a clean empty.
-    if out["tickers"] and all(e.get("error") for e in out["tickers"].values()):
-        out["status"] = "error"
+    #
+    # COVERAGE (uniform contract, tools/freshness_audit.feed_status): counts are
+    # now disclosed even when SOME names came back, so a half-throttled EDGAR no
+    # longer looks identical to a clean run. Two distinct failure grades exist
+    # here and both are counted:
+    #   * `error` on the entry  - the submissions index itself was unreachable;
+    #   * signal `data_unavailable` - the index answered but every Form-4 XML
+    #     fetch failed, so "we could not read the filings" (NOT "insiders did
+    #     nothing" - the two mean opposite things to a thesis leaning on quiet).
+    from tools.freshness_audit import stamp_feed
+
+    requested = len(out["tickers"])
+    failed = sum(1 for e in out["tickers"].values() if e.get("error"))
+    unreadable = sum(1 for e in out["tickers"].values()
+                     if (e.get("summary") or {}).get("signal") == "data_unavailable")
+    with_activity = sum(
+        1 for e in out["tickers"].values()
+        if (e.get("summary") or {}).get("signal") not in
+        (None, "no_open_market_activity", "data_unavailable"))
+    failures = {tk: str(e["error"])[:120]
+                for tk, e in out["tickers"].items() if e.get("error")}
+    stamp_feed(out, requested, requested - failed, failed,
+               found=with_activity,
+               failures=dict(list(failures.items())[:10]),
+               filings_unreadable_tickers=unreadable or None)
+    if out["status"] == "error":
         out["error"] = "insider feed unreachable for every requested ticker"
+    # Index reachable everywhere but no Form-4 XML readable anywhere = the
+    # archive layer is down even though the submissions layer answered. That is
+    # an outage wearing a healthy costume; call it what it is.
+    elif requested and unreadable == requested:
+        out["status"] = "error"
+        out["error"] = ("submissions index answered for every ticker but EVERY "
+                        "Form-4 XML fetch failed - insider quiet here is UNREAD, "
+                        "not observed")
     return out
 
 

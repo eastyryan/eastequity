@@ -161,7 +161,18 @@ def preflight(cfg: dict, run_id: str, news_only: bool = False,
         if runs_file.exists():
             completed = 0
             for line in runs_file.read_text().splitlines():
-                rec = json.loads(line)
+                # journal.py appends non-atomically, so a crash mid-write leaves a
+                # truncated line. An unguarded json.loads here took the ENTIRE system
+                # dark: this runs before the lock and before the safety layer, so one
+                # bad byte meant every subsequent run died in preflight with stops
+                # unenforced. Count an unparseable line as a completed run — it is
+                # almost certainly a partial record of one, and erring toward the cap
+                # protects the usage budget rather than spending it.
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    completed += 1
+                    continue
                 if "halted" not in rec and not rec.get("manual"):
                     completed += 1
             if completed >= cap:

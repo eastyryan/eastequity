@@ -31,6 +31,21 @@ mkdir -p logs
       echo "RELAY: non-relay local commits conflict with origin — manual resolution needed; standing down"
       return 1
     fi
+    # UNCOMMITTED WORK IS ALSO "not ours to discard" — and this check was missing.
+    # 2026-07-19 incident: the commit guard above passed (only relay commits were
+    # local), so this fell through to `git reset --hard` and destroyed HOURS of
+    # uncommitted edits across validator.py, orchestrator.py, execution/ and tools/
+    # in one call. Nothing was recoverable: reset --hard leaves no stash, and
+    # unstaged content was never in the object database to be found by fsck.
+    # The intent stated three lines up was always right; it just only inspected
+    # COMMITS. A tracked-file edit in the working tree is exactly as much someone
+    # else's work as a commit is.
+    if ! git diff --quiet HEAD -- 2>/dev/null; then
+      echo "RELAY: working tree has uncommitted changes to tracked files —"
+      echo "RELAY: refusing to reset --hard over someone's work; standing down"
+      git status --porcelain | grep -vE '^\?\?' | head -20 | sed 's/^/RELAY:   /'
+      return 1
+    fi
     echo "RELAY: dropping superseded local data commit(s), taking origin"
     git reset --hard origin/main
   }

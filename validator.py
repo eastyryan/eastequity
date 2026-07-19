@@ -368,8 +368,23 @@ def _check_calibration_gate(p: dict, cfg: dict, sector_map: dict, reasons: list[
         driver = p.get("demand_driver")
         for r in check_buy_calibration(p, sector=sector, demand_driver=driver):
             reasons.append(r)
-    except Exception:
-        pass  # fail-open: never block trading because learning module crashed
+        # Target calibration: claimed RR vs REALIZED RR. min_risk_reward_ratio is
+        # computed from the model's own target_price, which exit_guard never reads —
+        # so without this the system's best-justified rule filters on a number
+        # nothing grades, passable by writing a bigger one. Returns [] until
+        # learning_controls.min_trades_for_binding closed trades exist.
+        try:
+            from tools.calibration_gate import check_buy_target_calibration
+            for r in check_buy_target_calibration(p):
+                reasons.append(r)
+        except ImportError:
+            pass  # target calibration not built yet on this checkout
+    except Exception as e:
+        # Fail-open is right — a crash in the LEARNING layer must not halt trading —
+        # but it must never be SILENT. This was a bare `except: pass`, so any
+        # exception here quietly removed the confidence cap and the losing-bucket
+        # exception requirement with no log line and no journal entry.
+        print(f"  (calibration gate failed open: {e})")
 
 
 def _conviction_unlocked(cfg: dict) -> tuple[bool, str]:
@@ -456,10 +471,22 @@ def _position_demand_driver(pos: dict, driver_map: dict | None = None) -> str | 
     reads only the position's own stamped field, so every lot predating the stamping
     — or one whose plan was rewritten by backfill — silently drops out of the theme
     bucket and the 2% cap under-counts. The notional cap already fell back this way;
-    the risk cap did not, which is the asymmetry this parameter closes."""
+    the risk cap did not, which is the asymmetry this parameter closes.
+
+    The CANONICAL mapping now outranks the stamp when it is authoritative: the stamp
+    is written at fill time from the proposal, so a single mislabelled entry would
+    otherwise keep the 2% risk cap mis-bucketed for the whole life of the position."""
+    t = str(pos.get("ticker", "")).upper()
+    try:
+        from tools.demand_drivers import AUTHORITATIVE_SOURCES, resolve_driver
+        canonical, source = resolve_driver(t)
+        if source in AUTHORITATIVE_SOURCES:
+            return canonical
+    except Exception:
+        pass  # fall through to the stamp — never halt sizing on a map failure
     d = pos.get("demand_driver") or (pos.get("plan") or {}).get("demand_driver")
     if not d and driver_map:
-        d = driver_map.get(str(pos.get("ticker", "")).upper())
+        d = driver_map.get(t)
     return str(d).strip().lower() if d else None
 
 
@@ -533,7 +560,7 @@ def _apply_risk_based_sizing(p: dict, cfg: dict, portfolio: dict,
 
 def _check_portfolio_heat(p: dict, cfg: dict, portfolio: dict,
                           proposed_risk: float, batch_risk: float,
-                          reasons: list[str]) -> None:
+                          reasons: list[str], market_context: dict | None = None) -> None:
     """Total committed risk across the book (entry-basis, to current stops)
     plus this batch's accepted BUY risk plus this proposal must stay under
     portfolio_heat_cap_pct of equity."""
@@ -545,7 +572,8 @@ def _check_portfolio_heat(p: dict, cfg: dict, portfolio: dict,
         return
     equity = portfolio.get("total_equity_usd",
                            cfg["position_sizing"]["starting_capital_usd"])
-    open_heat, unverifiable = _sum_committed_risk(portfolio.get("positions", []))
+    positions = portfolio.get("positions", [])
+    open_heat, unverifiable = _sum_committed_risk(positions)
     if unverifiable:
         # Fail CLOSED. True heat is unknown, so approving would be a guess in the
         # risk-increasing direction — and exit_guard may still stop these positions
@@ -556,11 +584,164 @@ def _check_portfolio_heat(p: dict, cfg: dict, portfolio: dict,
             f"{cap:.0%} heat cap cannot be enforced")
         return
     total = open_heat + batch_risk + proposed_risk
+
+    gap_note = ""
+    br = cfg.get("book_risk") or {}
+    if br.get("enabled") and br.get("gap_adjusted_heat") and positions:
+        try:
+            from tools.book_risk import gap_adjusted_heat
+            mc = market_context or {}
+            costs = cfg.get("execution_costs") or {}
+            total, detail = gap_adjusted_heat(
+                total, positions,
+                atr_pct_of=lambda pos: (mc.get(str(pos.get("ticker") or "").upper())
+                                        or {}).get("atr_pct"),
+                gap_atr_fraction=costs.get("stop_gap_atr_fraction"),
+                avg_pairwise_corr=(mc.get("_book") or {}).get("avg_pairwise_corr"),
+                corr_threshold=br.get("gap_correlation_threshold", 0.7))
+            if detail["gap_penalty_usd"] > 0:
+                gap_note = (f" [incl. ${detail['gap_penalty_usd']:.0f} modelled "
+                            f"stop gap-through]")
+        except Exception:
+            # Never let the ADJUSTMENT break the base cap: the un-adjusted total is
+            # still enforced below. Loosening on an internal error would be the
+            # fail-open pattern this whole rework exists to remove.
+            pass
+
     if total > equity * cap + 1e-9:
         reasons.append(
             f"portfolio_heat_cap_exceeded:open ${open_heat:.0f} + batch "
-            f"${batch_risk:.0f} + new ${proposed_risk:.0f} = ${total:.0f} > "
+            f"${batch_risk:.0f} + new ${proposed_risk:.0f} = ${total:.0f}{gap_note} > "
             f"{cap:.0%} of ${equity:.0f}")
+
+
+# --------------------------------------------------------------------------- #
+# Book-level risk: factor concentration, beta, stress. See tools/book_risk.py.
+# --------------------------------------------------------------------------- #
+def _canonical_driver_of(pos: dict) -> str:
+    """Driver resolver passed to book_risk — canonical wins over the lot stamp."""
+    return _position_demand_driver(pos) or "other"
+
+
+def _check_factor_stack(p: dict, cfg: dict, portfolio: dict, proposed_risk: float,
+                        reasons: list[str]) -> None:
+    """Aggregate exposure to the co-moving AI-stack factor group.
+
+    The 2% per-demand_driver cap permits roughly two positions per driver, and
+    factor_map classifies 15 of 27 drivers as AI-stack — so eight positions spread
+    across four different AI-stack drivers was a 100% AI book that passed every
+    hard limit in this file. A per-driver cap is not a factor cap.
+    """
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    br = cfg.get("book_risk") or {}
+    if not br.get("enabled"):
+        return
+    size = p.get("position_size_usd")
+    if not isinstance(size, (int, float)) or size <= 0:
+        return
+    equity = portfolio.get("total_equity_usd",
+                           cfg["position_sizing"]["starting_capital_usd"])
+    driver = str(p.get("demand_driver") or "").strip().lower()
+    if not driver:
+        return
+    try:
+        from tools.book_risk import factor_stack_breach, factor_stack_risk_breach
+        from tools.factor_map import AI_STACK_DRIVERS
+    except Exception:
+        return
+    positions = portfolio.get("positions", [])
+    breach = factor_stack_breach(
+        positions, driver, size, equity,
+        driver_of=_canonical_driver_of, stack_drivers=AI_STACK_DRIVERS,
+        max_pct=br.get("max_factor_stack_pct"))
+    if breach:
+        reasons.append(breach)
+    risk_breach = factor_stack_risk_breach(
+        positions, driver, proposed_risk, equity,
+        driver_of=_canonical_driver_of, risk_of=_position_committed_risk,
+        stack_drivers=AI_STACK_DRIVERS,
+        max_risk_pct=br.get("max_factor_stack_risk_pct"))
+    if risk_breach:
+        reasons.append(risk_breach)
+
+
+def _check_portfolio_beta(p: dict, cfg: dict, portfolio: dict, market_context: dict,
+                          reasons: list[str]) -> None:
+    """MV-weighted beta of the book the proposal would create, against equity.
+
+    Fails CLOSED when a held position has no beta: an unknown-beta book cannot be
+    shown to be inside the ceiling, and a long-only book of high-beta AI names is a
+    leveraged index bet wearing the costume of independent ideas.
+    """
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    br = cfg.get("book_risk") or {}
+    cap = br.get("max_portfolio_beta")
+    if not br.get("enabled") or not isinstance(cap, (int, float)) or cap <= 0:
+        return
+    book = (market_context or {}).get("_book") or {}
+    betas = book.get("betas") or {}
+    if not betas:
+        return  # correlation feed unavailable this run — nothing to enforce against
+    equity = portfolio.get("total_equity_usd",
+                           cfg["position_sizing"]["starting_capital_usd"])
+    size = p.get("position_size_usd")
+    ticker = str(p.get("ticker", "")).upper()
+    try:
+        from tools.book_risk import projected_portfolio_beta
+    except Exception:
+        return
+    beta, missing = projected_portfolio_beta(
+        portfolio.get("positions", []),
+        beta_of=lambda pos: betas.get(str(pos.get("ticker") or "").upper()),
+        equity=equity, proposed_ticker=ticker,
+        proposed_size_usd=size if isinstance(size, (int, float)) else 0.0,
+        proposed_beta=betas.get(ticker))
+    if missing:
+        reasons.append(
+            f"portfolio_beta_unverifiable:{','.join(sorted(set(missing)))} have no "
+            f"beta in the correlation feed — projected book beta cannot be checked "
+            f"against the {cap:.2f} ceiling")
+        return
+    if beta is not None and beta > cap + 1e-9:
+        reasons.append(
+            f"portfolio_beta_cap_exceeded:projected {beta:.2f} > {cap:.2f} — the "
+            f"book the proposal creates is a leveraged index bet, not eight ideas")
+
+
+def _check_stress_scenarios(p: dict, cfg: dict, portfolio: dict, market_context: dict,
+                            reasons: list[str]) -> None:
+    """Named shocks priced against the book the proposal would create."""
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    br = cfg.get("book_risk") or {}
+    scenarios = br.get("stress_scenarios") or []
+    cap = br.get("max_stress_loss_pct")
+    if not br.get("enabled") or not scenarios or not isinstance(cap, (int, float)):
+        return
+    equity = portfolio.get("total_equity_usd",
+                           cfg["position_sizing"]["starting_capital_usd"])
+    size = p.get("position_size_usd")
+    ticker = str(p.get("ticker", "")).upper()
+    betas = ((market_context or {}).get("_book") or {}).get("betas") or {}
+    try:
+        from tools.book_risk import stress_breach, stress_losses
+        from tools.factor_map import AI_STACK_DRIVERS
+    except Exception:
+        return
+    rows = stress_losses(
+        portfolio.get("positions", []), scenarios,
+        driver_of=_canonical_driver_of,
+        beta_of=lambda pos: betas.get(str(pos.get("ticker") or "").upper()),
+        equity=equity, stack_drivers=AI_STACK_DRIVERS,
+        proposed={"ticker": ticker,
+                  "market_value_usd": size if isinstance(size, (int, float)) else 0.0,
+                  "demand_driver": str(p.get("demand_driver") or "").strip().lower(),
+                  "beta": betas.get(ticker)})
+    breach = stress_breach(rows, cap)
+    if breach:
+        reasons.append(breach)
 
 
 def _check_theme_initial_risk(p: dict, cfg: dict, portfolio: dict,
@@ -603,6 +784,45 @@ def _check_theme_initial_risk(p: dict, cfg: dict, portfolio: dict,
         reasons.append(
             f"theme_risk_cap_exceeded:{driver} committed risk ${total:.0f} > "
             f"{cap:.0%} of ${equity:.0f} (one economic bet, capped as one)")
+
+
+def _check_data_quality(p: dict, cfg: dict, market_context: dict,
+                        reasons: list[str]) -> None:
+    """No new risk on data the run already knows is bad.
+
+    CLAUDE.md calls fundamentals freshness a "HARD RULE" and instructs the brain that
+    on an EMPTY/degraded bundle it must not open positions. Neither was enforced by
+    anything: a grep for `stale`, `data_quality` or `freshness` across validator.py
+    returned NOTHING. The rule existed only as prose addressed to the same model whose
+    judgement it was supposed to constrain.
+
+    Two gates, both BUY-only — exits and holds are never blocked, because acting on
+    stale data to REDUCE risk is fine and refusing to exit would be the dangerous
+    direction.
+    """
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    dq = (market_context or {}).get("_data_quality") or {}
+    if not dq:
+        return  # no label published this run — nothing asserted, nothing to enforce
+    if dq.get("empty"):
+        reasons.append(
+            "data_quality_empty:context bundle is EMPTY (feeds blocked and no usable "
+            "relay) — opening a position would be a decision made on absent data")
+        return
+    if dq.get("stale"):
+        age = dq.get("age_hours")
+        age_s = f" ({age:.1f}h old)" if isinstance(age, (int, float)) else ""
+        reasons.append(
+            f"data_quality_stale:run is trading a stale relay bundle{age_s} "
+            f"(source: {dq.get('source')}) — prices and catalysts may have moved")
+        return
+    stale_tickers = dq.get("stale_tickers") or []
+    ticker = str(p.get("ticker", "")).upper()
+    if ticker and ticker in {str(t).upper() for t in stale_tickers}:
+        reasons.append(
+            f"fundamentals_stale:{ticker} — extracted fundamentals do not reach the "
+            f"latest filed period, so any fundamental leg of this thesis is unverified")
 
 
 def _check_regime_gate(p: dict, cfg: dict, market_context: dict,
@@ -770,13 +990,22 @@ def _check_demand_driver_field(p: dict, reasons: list[str]) -> None:
     # is badly wrong), because halting all trading on it would be worse than
     # falling back to the format check the system ran for its whole life until now.
     try:
-        from tools.demand_drivers import KNOWN_DRIVERS
+        from tools.demand_drivers import KNOWN_DRIVERS, driver_mismatch
     except Exception:
         return
     if driver not in KNOWN_DRIVERS:
         reasons.append(
             f"demand_driver_unknown:{driver} (not in KNOWN_DRIVERS — a novel label "
             f"would escape both theme caps; use the closest canonical driver)")
+        return
+    # Membership alone was never enough: every ADJACENT canonical label is also a
+    # member, so the novel-label fix above closed one door and left the next one
+    # open. Cross-check the stated driver against the TICKER's own mapping so the
+    # same economic bet cannot be relabelled past the 2% theme risk cap. Fails open
+    # when the canonical answer is only a guess — see demand_drivers.driver_mismatch.
+    mismatch = driver_mismatch(p.get("ticker", ""), driver)
+    if mismatch:
+        reasons.append(mismatch)
 
 
 def _check_theme_concentration(p: dict, cfg: dict, portfolio: dict,
@@ -799,11 +1028,20 @@ def _check_theme_concentration(p: dict, cfg: dict, portfolio: dict,
     equity = portfolio.get("total_equity_usd",
                            cfg["position_sizing"]["starting_capital_usd"])
     try:
-        from tools.demand_drivers import build_driver_map, theme_concentration_breach
+        from tools.demand_drivers import (AUTHORITATIVE_SOURCES, build_driver_map,
+                                          resolve_driver, theme_concentration_breach)
         dmap = build_driver_map()
-        # Prefer the proposal's stated driver for the new name.
         dmap = dict(dmap)
-        dmap[str(p.get("ticker", "")).upper()] = driver
+        # The proposal's stated driver is accepted ONLY for names we do not really
+        # classify. This line used to be unconditional, which meant the concentration
+        # math was computed against whatever label the proposal supplied — the
+        # persistence half of the relabelling exploit _check_demand_driver_field
+        # now rejects. Defense in depth: even if that check fails open on an import
+        # error, a mapped ticker is still budgeted under its canonical driver.
+        tk = str(p.get("ticker", "")).upper()
+        _canon, _source = resolve_driver(tk)
+        if _source not in AUTHORITATIVE_SOURCES:
+            dmap[tk] = driver
         breach = theme_concentration_breach(
             portfolio.get("positions") or [],
             str(p.get("ticker", "")).upper(),
@@ -920,18 +1158,25 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
         _check_confidence(p, cfg, reasons)
         _check_calibration_gate(p, cfg, sector_map, reasons)
         _check_regime_gate(p, cfg, market_context or {}, reasons)
+        _check_data_quality(p, cfg, market_context or {}, reasons)
         # Risk-based sizing clamps position_size_usd BEFORE the notional checks
         # so every downstream cap sees the final size.
         proposed_risk = _apply_risk_based_sizing(
             p, cfg, portfolio, market_context or {}, reasons)
         _check_sizing(p, cfg, portfolio, reasons)
-        _check_portfolio_heat(p, cfg, portfolio, proposed_risk, batch_risk, reasons)
+        _check_portfolio_heat(p, cfg, portfolio, proposed_risk, batch_risk, reasons,
+                              market_context or {})
         _check_theme_initial_risk(p, cfg, portfolio, proposed_risk,
                                   batch_theme_risk, reasons)
         _check_sector_concentration(p, cfg, portfolio, sector_map, reasons)
         _check_thesis_invalidators(p, cfg, reasons)
         _check_demand_driver_field(p, reasons)
         _check_theme_concentration(p, cfg, portfolio, reasons)
+        # Book-level risk runs AFTER the driver checks so a mislabelled proposal is
+        # rejected on the label before its factor exposure is computed from it.
+        _check_factor_stack(p, cfg, portfolio, proposed_risk, reasons)
+        _check_portfolio_beta(p, cfg, portfolio, market_context or {}, reasons)
+        _check_stress_scenarios(p, cfg, portfolio, market_context or {}, reasons)
         _check_entry_cooldown(p, cfg, portfolio, reasons)
         if str(p.get("action", "")).upper() == "BUY":
             buys_this_batch += 1

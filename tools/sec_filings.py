@@ -336,6 +336,47 @@ def get_filing_brief(ticker: str) -> dict:
         return {"status": "error", "reason": f"{type(e).__name__}: {e}"}
 
 
+def get_filing_briefs(tickers) -> dict:
+    """Per-ticker filing briefs UNDER the uniform feed-status envelope.
+
+    THE INCIDENT THIS PREVENTS: the bundle's `sec_filings` key was built as a
+    bare `{t: get_filing_brief(t) for t in focus}` comprehension
+    (runlib/context_gather.py:233), producing a map with no top-level status.
+    orchestrator's health check called `.get("status")` on it, got None, found
+    None not in ("error","unavailable"), and passed a TOTAL EDGAR OUTAGE as a
+    healthy feed. Every focus name carrying {"status": "error"} still summed to
+    "all good" at the bundle level.
+
+    Returns {"status", "coverage", "briefs": {T: brief}, ...} AND mirrors each
+    brief at the top level under its ticker key so existing consumers that index
+    `sec_filings["NVDA"]` keep working unchanged.
+    """
+    from tools.freshness_audit import stamp_feed
+
+    ts = [str(t).upper() for t in (tickers or []) if t]
+    briefs: dict = {}
+    failures: dict = {}
+    ok = 0
+    for t in ts:
+        try:
+            b = get_filing_brief(t)
+        except Exception as e:  # get_filing_brief is fail-soft; never trust that
+            b = {"status": "error", "reason": f"{type(e).__name__}: {e}"}
+        briefs[t] = b
+        if b.get("status") == "ok":
+            ok += 1
+        else:
+            failures[t] = str(b.get("reason") or b.get("status"))[:120]
+    out: dict = dict(briefs)          # backward-compatible {TICKER: brief} shape
+    out["briefs"] = briefs            # explicit, non-ticker-keyed access
+    out["note"] = ("EDGAR filing briefs. status/coverage describe the FETCH, not the "
+                   "market: status 'error' means we could not read EDGAR at all this "
+                   "run - absent fundamentals are absent-because-blocked, NOT "
+                   "absent-because-none-exist. Do not reason from missing numbers.")
+    return stamp_feed(out, len(ts), ok, len(ts) - ok,
+                      failures=dict(list(failures.items())[:10]))
+
+
 def download_latest_filing(ticker: str, form: str = "10-Q") -> dict:
     """Download the latest filing document text (truncated) for deep reading."""
     brief = get_filing_brief(ticker)

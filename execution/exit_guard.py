@@ -78,7 +78,17 @@ def check_forced_exits(portfolio: dict, prices: dict, atr_by_ticker: dict | None
     for pos in portfolio.get("positions", []):
         plan = pos.get("original_plan")
         if not plan:
-            continue  # no recorded plan — never force-exit blind
+            # Never force-exit blind — but never do it SILENTLY either. A position
+            # with no recoverable plan is one this layer will not stop on any run,
+            # for as long as it is held, and it used to vanish from the loop without
+            # a single line of output. It is the same condition that makes
+            # validator._check_portfolio_heat fail closed and block all new BUYs, so
+            # the operator needs to see it here, where it is diagnosable, rather than
+            # inferring it from a heat rejection three layers away.
+            print(f"  UNSTOPPABLE POSITION {str(pos.get('ticker', '?')).upper()}: no "
+                  f"recoverable plan (journal backfill found none) — this layer "
+                  f"cannot stop it; new BUYs are blocked while it is open")
+            continue
         ticker = pos["ticker"].upper()
         last = prices.get(ticker)
         if last is None:

@@ -274,15 +274,18 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
     if not buys:
         return proposals
 
-    def _no_desk(reason: str) -> list[dict]:
-        """CLI absent or review failed: pass-through by default, or reject BUYs
-        when risk_controls.require_risk_desk_for_buys is set (cloud discipline)."""
-        rc = {}
+    def _require_desk() -> bool:
+        """risk_controls.require_risk_desk_for_buys, read defensively."""
         try:
             rc = validator.load_config().get("risk_controls") or {}
         except Exception:
-            pass
-        if not rc.get("require_risk_desk_for_buys"):
+            return False
+        return bool(rc.get("require_risk_desk_for_buys"))
+
+    def _no_desk(reason: str) -> list[dict]:
+        """CLI absent or review failed: pass-through by default, or reject BUYs
+        when risk_controls.require_risk_desk_for_buys is set (cloud discipline)."""
+        if not _require_desk():
             print(f"  ({reason} - proposals pass unreviewed)")
             # Leave a public trace: CLAUDE.md promises every BUY an adversarial
             # review, so a run where that layer silently didn't exist must be
@@ -342,7 +345,29 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
     kept = []
     for p in proposals:
         r = reviews.get(str(p.get("ticker", "")).upper())
-        if r is None or str(p.get("action", "")).upper() != "BUY":
+        is_buy = str(p.get("action", "")).upper() == "BUY"
+        if r is None and is_buy:
+            # FAIL CLOSED on an UNREVIEWED buy. This used to fall through to
+            # kept.append(p): a desk response that returned valid JSON but simply
+            # omitted a ticker waved that BUY through completely unreviewed, with no
+            # journal line and no console warning — and _no_desk never fired, because
+            # `reviews` was non-empty. A truncated or lazy desk reply therefore
+            # bypassed the entire adversarial pass while looking like it had run.
+            # Silence is not approval.
+            if _require_desk():
+                miss = ("risk_desk_no_review: the desk returned reviews but none for "
+                        "this ticker — an unreviewed BUY is treated as vetoed")
+                print(f"  RISK DESK MISSING REVIEW {p.get('ticker')}: rejected")
+                journal.log_rejection(p, [miss], run_id)
+                LAST_RISK_DESK_VETOES.append(
+                    validator.ValidationResult(proposal=p, approved=False,
+                                               reasons=[miss]))
+                continue
+            print(f"  (risk desk returned no review for {p.get('ticker')} — "
+                  f"kept, require_risk_desk_for_buys is off)")
+            kept.append(p)
+            continue
+        if r is None or not is_buy:
             kept.append(p)
             continue
         if r.get("verdict") == "veto":
@@ -429,7 +454,16 @@ def execute(approved: list[validator.ValidationResult], context: dict,
     buys_today = 0
     if trades_file.exists():
         for line in trades_file.read_text().splitlines():
-            if json.loads(line).get("fill", {}).get("action") == "BUY":
+            # Guarded for the same reason the intents loop below already is: a
+            # truncated JSONL line from a crash mid-append must not abort execution
+            # with proposals already validated.
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                print("  (warning: unparseable line in today's trade journal — "
+                      "daily BUY cap may under-count)")
+                continue
+            if rec.get("fill", {}).get("action") == "BUY":
                 buys_today += 1
     # BUY intents queued for the Actions executor count against the daily cap
     # too — they are commitments, just not filled yet (cloud->executor latency).

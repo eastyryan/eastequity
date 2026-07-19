@@ -26,19 +26,56 @@ any more. A marker that advanced past an unprocessed event would lose that event
 permanently, whereas re-scanning the full series and deduping precisely cannot.
 The scan floor is therefore opened_at alone, which also makes a
 closed-then-reopened position pick up only events from its own holding period.
+
+CALENDAR (fixed 2026-07-19 — the first fix was half a fix):
+
+The rewrite above compared an ET calendar date against two UTC calendar dates.
+_event_day called .date() on the vendor's tz-aware timestamp WITHOUT converting, so
+it yielded the America/New_York date (correct, despite a docstring claiming UTC),
+while _position_floor and `today` both yielded UTC dates. Between 20:00 ET and
+midnight ET the UTC date is already tomorrow, so:
+
+  - the future filter (day_d > today_d) admitted events ex-dated TOMORROW ET,
+    applying them a day early; and
+  - the floor filter (day_d <= floor_day) silently DROPPED a genuine event on the
+    first ET day of any position opened during evening hours - permanently, which is
+    exactly the lose-an-event failure the per-event key was introduced to prevent.
+
+Every comparison is now on the ET calendar, matching the vendor. This also removes a
+wall-clock dependency from the suite: the idempotency tests passed all day and failed
+every evening after 20:00 ET, which is precisely how a red CI gets dismissed as flaky
+and how the ORIGINAL double-apply survived review.
 """
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 
 from execution import simulated_broker
+
+try:  # stdlib since 3.9; the fallback keeps a broken tzdata from blocking a run
+    from zoneinfo import ZoneInfo
+    _ET = ZoneInfo("America/New_York")
+except Exception:  # pragma: no cover
+    _ET = timezone(timedelta(hours=-4))
 
 # A split outside this band is a vendor error, not a corporate action. yfinance is
 # an unofficial scraper with no schema guarantee, and a split write is the only
 # mutation in this system that PERMANENTLY rewrites share count, cost basis, and
 # the enforced stop with no second source to reconcile against.
 MIN_SPLIT_RATIO, MAX_SPLIT_RATIO = 0.01, 100.0
+
+
+def _et_date(dt: datetime):
+    """The America/New_York calendar date of an instant. Pure.
+
+    Every date comparison in this module goes through here so the vendor's calendar
+    (yfinance reports action timestamps in ET) is the only calendar in play. See the
+    module docstring for what mixing ET and UTC dates cost.
+    """
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=_ET)
+    return dt.astimezone(_ET).date()
 
 
 def _position_floor(pos: dict) -> datetime:
@@ -78,18 +115,18 @@ def processed_event_keys(state: dict) -> set:
 
 
 def _event_day(ts) -> str | None:
-    """ISO date of a yfinance action timestamp, normalized to UTC. None if unusable.
+    """ISO ET calendar date of a yfinance action timestamp. None if unusable.
 
     Compare on the DATE, never the datetime: the vendor's tz (America/New_York) and
-    the marker's implied tz (UTC) are what produced the original defect.
+    the marker's implied tz (UTC) are what produced the original defect. A naive
+    timestamp is read as ET, not UTC — this vendor's action index is an ET calendar,
+    so assuming UTC would shift a midnight ex-date onto the previous day.
     """
     try:
         event_dt = ts.to_pydatetime()
     except Exception:
         return None
-    if event_dt.tzinfo is None:
-        event_dt = event_dt.replace(tzinfo=timezone.utc)
-    return event_dt.date().isoformat()
+    return _et_date(event_dt).isoformat()
 
 
 def apply_corporate_actions() -> dict:
@@ -121,8 +158,9 @@ def apply_corporate_actions() -> dict:
         return summary
 
     now = datetime.now(timezone.utc)
-    today = now.date().isoformat()
-    today_d = now.date()
+    # Dates on the ET trading calendar; the instant stays UTC for the audit trail.
+    today_d = _et_date(now)
+    today = today_d.isoformat()
     changed = False
 
     # Durable dedupe set, rebuilt from the persisted event trail on every call.
@@ -131,7 +169,7 @@ def apply_corporate_actions() -> dict:
     for pos in state["positions"]:
         ticker = pos["ticker"].upper()
         try:
-            floor_day = _position_floor(pos).date()
+            floor_day = _et_date(_position_floor(pos))
             tk = yf.Ticker(ticker)
 
             # Dividends: cash credit per share held at the event.
@@ -203,6 +241,19 @@ def apply_corporate_actions() -> dict:
                     for key in ("stop_loss", "target_price", "entry_price_max"):
                         if isinstance(plan.get(key), (int, float)):
                             plan[key] = round(plan[key] / ratio, 4)
+                # The TRAIL state lives on the position, not in the plan, and was
+                # missed by the fix above. Unscaled, high_water sits ~ratio× above
+                # the post-split market, so _chandelier_stop returns a level far
+                # overhead, the trail binds (exit_guard.py:101-102), and a perfectly
+                # healthy position force-exits as "trailing_stop_breached" on the
+                # very next tick. Worse, update_trailing_stops is ratchet-only
+                # (simulated_broker.py:443), so a corrupted level can NEVER be
+                # lowered by any subsequent run — the position is unrecoverable
+                # short of hand-editing the ledger. Scale both, on every backend:
+                # unlike quantity, these are OUR risk state, never the broker's.
+                for key in ("high_water", "trailing_stop"):
+                    if isinstance(pos.get(key), (int, float)) and pos[key]:
+                        pos[key] = round(pos[key] / ratio, 4)
                 record = {"type": "split", "ticker": ticker, "ratio": ratio,
                           "quantity": pos["quantity"], "avg_cost": pos["avg_cost"],
                           "date": day,

@@ -17,7 +17,40 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+import validator as _validator  # noqa: E402
 from execution import simulated_broker as _sb  # noqa: E402
+
+
+@pytest.fixture(autouse=True)
+def _isolate_kill_switch(tmp_path, monkeypatch):
+    """The suite must not read the OPERATOR's live state/KILL_SWITCH.
+
+    validate_proposals short-circuits the entire batch to KILL_SWITCH_ACTIVE, so
+    engaging the switch — a legitimate production action, and exactly what you do
+    while reworking risk code — turned 47 tests red and made every safety assertion
+    unverifiable at the precise moment you most want to verify it. Halted is when
+    the suite matters MOST, so it must be hermetic with respect to that file.
+
+    Redirects the CONFIG path rather than stubbing kill_switch_active(), so the real
+    predicate still runs and tests can exercise it by touching the temp file.
+    """
+    real_load_config = _validator.load_config
+    switch = tmp_path / "KILL_SWITCH"
+
+    def _test_config():
+        cfg = real_load_config()
+        cfg.setdefault("risk_controls", {})["kill_switch_file"] = str(switch)
+        return cfg
+
+    monkeypatch.setattr(_validator, "load_config", _test_config)
+    return switch
+
+
+@pytest.fixture
+def kill_switch(_isolate_kill_switch):
+    """Engage the isolated kill switch for a test that wants it active."""
+    _isolate_kill_switch.write_text("engaged by test")
+    return _isolate_kill_switch
 
 
 @pytest.fixture(autouse=True)

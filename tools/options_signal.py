@@ -633,8 +633,21 @@ def _signal_for(ticker: str) -> dict:
 
 
 def get_options_signals(tickers: list[str]) -> dict:
+    """Per-focus-name options read under the uniform feed-status envelope.
+
+    STATUS CONTRACT: the top-level status was hardcoded "ok" while per-ticker
+    failures were demoted to `tickers[T] = {"status": "error"}`. A fully blocked
+    options feed therefore advertised health, and the geometry layer
+    (expected_move -> stop_engineering floors) silently lost its input while the
+    bundle still said the feed was fine.
+
+    "no_chain" is NOT a failure: plenty of universe names have no listed options,
+    and that is an observed fact about the name, not a fetch that died. It is
+    counted separately (`no_chain`) so the two never blur.
+    """
+    from tools.freshness_audit import stamp_feed
+
     out = {
-        "status": "ok",
         "note": AMBIGUITY_NOTE,
         "learning": {
             "purpose": "Teach the brain how free options data informs a 3–90 day LONG equity swing.",
@@ -662,12 +675,24 @@ def get_options_signals(tickers: list[str]) -> dict:
         },
         "tickers": {},
     }
+    tickers = list(tickers or [])
+    failures: dict = {}
     for t in tickers:
         try:
             out["tickers"][t.upper()] = _signal_for(t)
         except Exception as e:
             out["tickers"][t.upper()] = {"status": "error", "reason": str(e)[:150]}
-    return out
+    for tk, sig in out["tickers"].items():
+        if sig.get("status") == "error":
+            failures[tk] = str(sig.get("reason"))[:120]
+        elif not sig.get("status"):  # shapeless result is a failure, not a signal
+            failures[tk] = "no status on signal"
+    no_chain = sum(1 for s in out["tickers"].values() if s.get("status") == "no_chain")
+    live = sum(1 for s in out["tickers"].values() if s.get("status") == "ok")
+    n = len(tickers)
+    return stamp_feed(out, n, n - len(failures), len(failures), found=live,
+                      failures=dict(list(failures.items())[:10]),
+                      no_chain=no_chain)
 
 
 if __name__ == "__main__":

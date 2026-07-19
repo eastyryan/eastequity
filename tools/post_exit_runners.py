@@ -97,6 +97,58 @@ def _save(state: dict) -> None:
     RUNNERS_FILE.write_text(json.dumps(state, indent=2, default=str))
 
 
+def reconciles_with_ledger(record: dict, closed_trades: list[dict] | None = None,
+                           pnl_tolerance_usd: float = 1.0) -> bool:
+    """Does this runner record correspond to a trade that actually happened?
+
+    THE INCIDENT (found 2026-07-19). data/post_exit_runners.json shipped a committed
+    HPE record in which EVERY number contradicted the real exit autopsy:
+
+        record : exit_price 40.00  pnl -50.00  days_held 20  stop 41.00
+        reality: exit_price 46.08  pnl -45.33  days_held  4  stop 43.75
+
+    It came from tests/test_learning_systems.py::test_exit_grade, whose tmp_learning
+    fixture isolated five learning modules and missed this one, so a synthetic stub
+    chained through grade_and_persist_autopsy into the REAL store. It was committed
+    on 2026-07-16, re-marked on every run for three days, and the runner-learning
+    loop computed current_leftover_pct against it — measuring how much upside was
+    left on the table by a trade that never occurred. Nothing anywhere compared a
+    learning artifact against the ledger.
+
+    Fabricated inputs are worse than missing ones: the loop reported healthy while
+    studying fiction. This is the reconciliation that was absent.
+
+    Returns True when the record matches a closed trade on ticker and realized P&L,
+    and — deliberately — True when there is no ledger to compare against, so a
+    reconciliation failure can never itself destroy real tracking data.
+    """
+    try:
+        ticker = str(record.get("ticker") or "").upper()
+        if not ticker:
+            return False
+        if closed_trades is None:
+            from execution import simulated_broker
+            state = simulated_broker._load()
+            closed_trades = [h for h in (state.get("history") or [])
+                             if "SELL" in str(h.get("action", "")).upper()]
+        if not closed_trades:
+            return True  # nothing to reconcile against; do not delete on ignorance
+        pnl = record.get("realized_pnl_usd")
+        for t in closed_trades:
+            if str(t.get("ticker") or "").upper() != ticker:
+                continue
+            if pnl is None:
+                return True
+            try:
+                if abs(float(t.get("realized_pnl_usd") or 0) - float(pnl)) <= pnl_tolerance_usd:
+                    return True
+            except (TypeError, ValueError):
+                continue
+        return False
+    except Exception:
+        return True  # never let a reconciliation bug delete real tracking
+
+
 def register_from_exit(autopsy: dict) -> dict | None:
     """Start post-exit tracking from a graded exit autopsy.
 

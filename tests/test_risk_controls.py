@@ -13,6 +13,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import validator
+from tools.demand_drivers import driver_for_ticker
 
 CFG = validator.load_config()
 SECTOR_MAP = validator.load_sector_map()
@@ -45,7 +46,9 @@ def buy(ticker, size=900.0, entry=450.0, stop=400.0, target=560.0):
         "macro_context": "Regime supports adding measured long exposure.",
         "variant_perception": "Consensus sees a fair multiple; I see mispriced growth because estimates lag; resolves at the next print.",
         "thesis_invalidators": {"invalidating_print": "EPS guide cut or estimate cuts >5%", "invalidating_structure": "Close below the 50-DMA on rising volume", "time_box": "If no progress toward thesis in 25 trading days, exit"},
-        "demand_driver": "hyperscaler_server_capex",
+        # Canonical driver for THIS ticker. A hardcoded label made every fixture
+        # a demand_driver_mismatch once the canonical cross-check landed.
+        "demand_driver": driver_for_ticker(ticker),
         "catalysts": ["Earnings in ~3 weeks"],
         "risk_map": "Stop below recent structure; thesis invalid if sector leadership fails.",
         "scenarios": {"base": "Thesis plays out over the hold window.",

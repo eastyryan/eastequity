@@ -84,10 +84,24 @@ def _agreement_8ks(recent: dict, cik: str, lookback_days: int = 120) -> list[dic
 
 
 def get_partnerships(tickers: list, lookback_days: int = 120, max_news: int = 5) -> dict:
-    """Per-ticker deal artifacts. Fail-soft per name and per source."""
+    """Per-ticker deal artifacts. Fail-soft per name and per source.
+
+    STATUS CONTRACT: this used to hardcode {"status": "ok"} and demote every
+    failure into per-ticker `sec_error` / `news_error` sub-keys that nothing
+    aggregated. A run where EDGAR and yfinance were both blocked for every name
+    returned an "ok" feed full of empty deal lists - and an empty deal list reads
+    as "this company signed nothing", the exact inverse of "we could not look".
+    Now both sources are counted: a name counts as SUCCEEDED only if at least one
+    source answered, and a name with neither carries a top-level `error` so
+    orchestrator's feed_is_alive sees it.
+    """
+    from tools.freshness_audit import stamp_feed
     from tools.sec_filings import _get, ticker_to_cik
 
-    out = {"status": "ok", "note": NOTE, "tickers": {}}
+    out = {"note": NOTE, "tickers": {}}
+    tickers = list(tickers or [])
+    sec_ok = news_ok = both_failed = with_deals = 0
+    failures: dict = {}
     for t in tickers:
         entry: dict = {"material_agreement_8ks": [], "partnership_headlines": []}
         try:
@@ -113,8 +127,25 @@ def get_partnerships(tickers: list, lookback_days: int = 120, max_news: int = 5)
                     break
         except Exception as e:
             entry["news_error"] = str(e)[:120]
+        if not entry.get("sec_error"):
+            sec_ok += 1
+        if not entry.get("news_error"):
+            news_ok += 1
+        if entry.get("sec_error") and entry.get("news_error"):
+            both_failed += 1
+            # Top-level `error` is the key orchestrator.feed_is_alive inspects on
+            # the per-ticker layer; sec_error/news_error alone were invisible to it.
+            entry["error"] = (f"both sources failed - sec: {entry['sec_error'][:60]}; "
+                              f"news: {entry['news_error'][:60]}")
+            failures[t.upper()] = entry["error"][:120]
+        elif entry["material_agreement_8ks"] or entry["partnership_headlines"]:
+            with_deals += 1
         out["tickers"][t.upper()] = entry
-    return out
+    n = len(tickers)
+    out["source_coverage"] = {"sec_ok": sec_ok, "news_ok": news_ok,
+                              "both_failed": both_failed}
+    return stamp_feed(out, n, n - both_failed, both_failed, found=with_deals,
+                      failures=dict(list(failures.items())[:10]))
 
 
 if __name__ == "__main__":

@@ -105,6 +105,45 @@ _benchmark_close = benchmark_close
 _trade_plans = trade_plans
 
 
+# Feed statuses that mean "this feed did not deliver", regardless of shape.
+DEAD_FEED_STATUSES = ("error", "unavailable", "degraded_all_feeds_empty")
+
+
+def feed_is_alive(feed) -> bool:
+    """Is this research feed actually alive?
+
+    The predicate this replaces was `v.get("status") not in ("error","unavailable")`,
+    written as a closure inside main() and therefore never unit-tested — which is how
+    it stayed DEAD CODE for two of the three feeds it guarded:
+      - `sec_filings` is a {TICKER: brief} map with NO top-level status, so
+        .get("status") returned None, None is not in the tuple, and a total EDGAR
+        outage read as healthy;
+      - `news_and_catalysts` hardcodes {"status": "ok"} and never downgrades it no
+        matter how many per-ticker calls fail.
+    Only `insider_activity` ever reported failure. The system's single automated
+    data-health check was one-third functional, and on the four holdings_watchlist
+    slots — the primary trading slots — it was not consulted at all.
+
+    This also inspects the per-ticker layer, so a feed advertising "ok" while every
+    one of its entries carries an error is correctly called dead.
+
+    Pure. Module-level specifically so it can be tested.
+    """
+    if not isinstance(feed, dict):
+        return False
+    if feed.get("status") in DEAD_FEED_STATUSES:
+        return False
+    entries = feed.get("tickers") if isinstance(feed.get("tickers"), dict) else {
+        k: e for k, e in feed.items()
+        if isinstance(e, dict) and k.isalpha() and k.upper() == k}
+    if entries:
+        bad = sum(1 for e in entries.values()
+                  if e.get("error") or e.get("status") in DEAD_FEED_STATUSES)
+        if bad == len(entries):
+            return False   # every name failed — the top-level "ok" was a lie
+    return True
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--research-only", action="store_true",
@@ -249,15 +288,28 @@ def main() -> int:
         degraded = macro_bad or scan_empty
 
         def _feed_ok(key: str) -> bool:
-            v = context.get(key) or {}
-            return isinstance(v, dict) and v.get("status") not in ("error", "unavailable")
+            return feed_is_alive(context.get(key))
+
         scan_ctx = context.get("universe_scan") or {}
+        # Coverage is checked on EVERY depth that scans, not only full runs. The four
+        # holdings_watchlist slots are the PRIMARY trading slots (4x/day) and used to
+        # evaluate neither scan_empty nor low_coverage — on those runs a total
+        # price-feed collapse produced no data_quality label at all, and the only way
+        # to be flagged degraded was for FRED to fail.
+        scans = run_depth in ("full", "weekly_market", "holdings_watchlist")
+        requested = scan_ctx.get("requested")
         low_coverage = bool(
-            expects_full_scan and not degraded
-            and isinstance(scan_ctx.get("requested"), int) and scan_ctx["requested"] > 0
-            and scan_ctx.get("scanned", 0) < 0.8 * scan_ctx["requested"])
-        partial = (not degraded) and (low_coverage or not all(
-            _feed_ok(k) for k in ("news_and_catalysts", "sec_filings", "insider_activity")))
+            scans and not degraded
+            and isinstance(requested, int) and requested > 0
+            and scan_ctx.get("scanned", 0) < 0.8 * requested)
+        dead_feeds = [k for k in ("news_and_catalysts", "sec_filings", "insider_activity")
+                      if not _feed_ok(k)]
+        partial = (not degraded) and (low_coverage or bool(dead_feeds))
+        if dead_feeds:
+            print(f"  DATA QUALITY: dead feed(s) {dead_feeds} - run marked partial")
+        if low_coverage:
+            print(f"  DATA QUALITY: low coverage "
+                  f"{scan_ctx.get('scanned', 0)}/{requested} - run marked partial")
 
         relay = ROOT / "data" / "cloud_context.json"
         if degraded and relay.exists():
@@ -455,11 +507,30 @@ def main() -> int:
             "process_ok": audit.get("process_ok"),
             "full_run_no_trade_ok": audit.get("full_run_no_trade_ok"),
             "issues": audit.get("issues") or [],
+            "blocking_issues": audit.get("blocking_issues") or [],
+            "blocks_new_buys": bool(audit.get("blocks_new_buys")),
         }
         if audit.get("issues"):
             print(f"      process gates: {audit['issues'][:6]}")
             journal.log_improvement(
                 "Process gate: " + "; ".join(audit["issues"][:12]), run_id)
+        # TEETH. Risk-relevant gates now BLOCK new BUYs instead of being journaled
+        # and forgotten. factor_response is owed when factor_map flags high/extreme
+        # concentration; seat_reviews are owed before capital opens a new seat. A
+        # run that skips either does not get to add risk this cycle. Exits, holds
+        # and trims are never blocked — the asymmetry the whole system runs on.
+        if audit.get("blocks_new_buys"):
+            blocking = audit.get("blocking_issues") or []
+            dropped = [p for p in proposals
+                       if str(p.get("action", "")).upper() == "BUY"]
+            if dropped:
+                print(f"      PROCESS GATE BLOCKS {len(dropped)} BUY(s): {blocking[:4]}")
+                for p in dropped:
+                    journal.log_rejection(
+                        p, [f"process_gate_blocked:{'; '.join(blocking[:6])}"], run_id)
+                proposals = [p for p in proposals
+                             if str(p.get("action", "")).upper() != "BUY"]
+                parsed["proposals"] = proposals
         if (run_depth == "full" and not proposals
                 and audit.get("full_run_no_trade_ok") is False):
             tag = (" [process: full-run no-trade needs rejected_ideas "
@@ -566,7 +637,13 @@ def main() -> int:
         risk_halts = validator.risk_halt_reasons(
             live_portfolio.get("total_equity_usd"), equity_hist, cfg, today_et=et_date())
     except Exception as e:
-        print(f"  (risk-halt check failed open: {e})")
+        # FAIL CLOSED. This used to print "failed open" and continue, which meant an
+        # unreadable equity_history.json silently disabled BOTH account circuit
+        # breakers (-3% daily, -15% drawdown) while the run went on to open new risk.
+        # A breaker that skips itself on a read error is not a breaker. A MISSING
+        # file is not an error (fresh book) — that path yields [] above.
+        risk_halts = [f"risk_halt_check_unverifiable:{e}"]
+        print(f"  RISK-HALT CHECK FAILED CLOSED: {e} - new BUYs blocked this run")
     context["risk_halts"] = risk_halts
     if risk_halts:
         print(f"  RISK HALT ACTIVE: {risk_halts} - new BUYs blocked this run")
@@ -596,6 +673,55 @@ def main() -> int:
                   f"momentum={mh.get('status')} - gate/risk-scale active")
     except Exception as e:
         print(f"  (regime context skipped: {e})")
+    # Data-quality feed. The bundle has labelled itself stale/degraded since forever
+    # and the validator never looked — CLAUDE.md's "HARD RULE" on fundamentals
+    # freshness was enforced by nothing. Absent keys mean nothing is asserted.
+    try:
+        dq = context.get("data_quality") or {}
+        fresh = context.get("fundamentals_freshness") or {}
+        stale_tickers = fresh.get("stale_tickers") or []
+        if dq or stale_tickers:
+            market_context["_data_quality"] = {
+                "source": dq.get("source"),
+                "stale": bool(dq.get("stale")),
+                "empty": dq.get("source") == "degraded_empty",
+                "age_hours": dq.get("age_hours"),
+                "stale_tickers": [str(t).upper() for t in stale_tickers],
+            }
+            if dq.get("stale") or stale_tickers:
+                print(f"  DATA QUALITY GATE: source={dq.get('source')} "
+                      f"stale={bool(dq.get('stale'))} "
+                      f"stale_tickers={len(stale_tickers)} - new BUYs restricted")
+    except Exception as e:
+        print(f"  (data-quality context skipped: {e})")
+    # Book-risk feed. tools/correlation.py has computed beta and pairwise
+    # correlation since day one and NOTHING consumed it — it reached the brain as
+    # prose and the validator not at all. These keys are what let the beta ceiling
+    # and the gap-correlation term in portfolio heat actually bind.
+    try:
+        pr = context.get("portfolio_risk") or {}
+        betas = {}
+        if isinstance(pr, dict) and pr.get("status") == "ok":
+            for group in ("holdings", "candidates"):
+                for tkr, row in (pr.get(group) or {}).items():
+                    b = (row or {}).get("beta")
+                    if isinstance(b, (int, float)):
+                        betas[str(tkr).upper()] = float(b)
+            market_context["_book"] = {
+                "portfolio_beta": pr.get("portfolio_beta"),
+                "avg_pairwise_corr": pr.get("avg_pairwise_holding_corr"),
+                "shared_left_tail": bool(pr.get("shared_left_tail")),
+                "betas": betas,
+            }
+            if pr.get("shared_left_tail"):
+                print(f"  BOOK RISK: shared_left_tail=True "
+                      f"beta={pr.get('portfolio_beta')} "
+                      f"avg_corr={pr.get('avg_pairwise_holding_corr')}")
+    except Exception as e:
+        # No _book key -> the beta ceiling stands down. Heat's gap term treats absent
+        # correlation as fully correlated, so a missing feed cannot BUY a cheaper
+        # risk number.
+        print(f"  (book-risk context skipped: {e})")
     for p in proposals:
         if str(p.get("action", "")).upper() != "BUY":
             continue

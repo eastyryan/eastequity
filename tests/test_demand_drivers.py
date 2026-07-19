@@ -131,16 +131,31 @@ def test_theme_exposure():
         rows[0]["demand_driver"] == "hyperscaler_server_capex",
         str([r["demand_driver"] for r in rows]),
     )
-    # stamped demand_driver on the lot wins over map
+    # CONTRACT CHANGE (2026-07-19): the canonical mapping now outranks the lot's
+    # stamp. The stamp comes from the proposal at fill time, so honouring it first
+    # let one mislabelled entry keep the theme caps mis-bucketed for the life of the
+    # position. DELL is canonically hyperscaler_server_capex and cannot be relabelled.
     stamped = theme_exposure(
         [{"ticker": "DELL", "market_value_usd": 100, "demand_driver": "fintech"}],
         dmap,
         equity=1000,
     )
     check(
-        "position demand_driver stamp overrides map",
-        stamped[0]["demand_driver"] == "fintech",
+        "canonical mapping overrides a mislabelled lot stamp",
+        stamped[0]["demand_driver"] == "hyperscaler_server_capex",
         str(stamped),
+    )
+    # The mirror: for a name the map cannot classify, the stamp is the only real
+    # information there is and must still win.
+    unmapped = theme_exposure(
+        [{"ticker": "ZZZZ", "market_value_usd": 100, "demand_driver": "fintech"}],
+        dmap,
+        equity=1000,
+    )
+    check(
+        "stamp still wins for an unmapped ticker",
+        unmapped[0]["demand_driver"] == "fintech",
+        str(unmapped),
     )
 
 

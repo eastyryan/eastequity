@@ -94,9 +94,12 @@ def test_portfolio_heat_cap():
 
 def test_trailed_stop_frees_heat():
     # Same book, but stops ratcheted above cost: committed risk = 0 -> BUY fits.
-    positions = [pos("AAPL", 100, 85, 10, trailing=105.0),
-                 pos("MSFT", 200, 170, 10, trailing=210.0),
-                 pos("AMZN", 150, 120, 10, trailing=155.0)]
+    # Holdings deliberately OUTSIDE factor_map.AI_STACK_DRIVERS so this isolates the
+    # heat control. AAPL/MSFT/AMZN are all mega_tech_platforms (an AI-stack driver),
+    # which made the book 45% factor-stacked and tripped the new cap instead.
+    positions = [pos("ABBV", 100, 85, 10, trailing=105.0),
+                 pos("CAT", 200, 170, 10, trailing=210.0),
+                 pos("JNJ", 150, 120, 10, trailing=155.0)]
     p = buy(size=1000.0)
     r = validator.validate_proposals([p], pf(positions=positions), {})[0]
     assert r.approved, r.reasons
@@ -109,10 +112,23 @@ def test_theme_risk_cap():
     r = validator.validate_proposals([p], pf(positions=positions), {})[0]
     assert not r.approved
     assert any("theme_risk_cap_exceeded" in x for x in r.reasons)
-    # A different theme with the same book passes.
-    p2 = buy(ticker="CEG", size=1000.0, driver="datacenter_power")
+    # A different theme passes the PER-DRIVER cap — but it must be outside the AI
+    # factor stack. CONTRACT CHANGE (2026-07-19): datacenter_power is a different
+    # demand_driver AND a member of AI_STACK_DRIVERS, so it is now caught one level
+    # up by the aggregate factor cap. That was the point: "different driver" no
+    # longer implies "different bet".
+    p2 = buy(ticker="ABBV", size=1000.0, driver="healthcare")
     r2 = validator.validate_proposals([p2], pf(positions=positions), {})[0]
     assert r2.approved, r2.reasons
+
+
+def test_a_different_ai_stack_driver_still_hits_the_factor_cap():
+    """The gap the per-driver cap left open: 8 positions / 4 AI drivers = 100% AI."""
+    positions = [pos("DELL", 450, 435, 10, "hyperscaler_server_capex")]  # $4500 MV
+    p = buy(ticker="CEG", size=1000.0, driver="datacenter_power")
+    r = validator.validate_proposals([p], pf(positions=positions), {})[0]
+    assert not r.approved
+    assert any("factor_stack_concentration_exceeded" in x for x in r.reasons), r.reasons
 
 
 def test_theme_cap_batch_accumulates():

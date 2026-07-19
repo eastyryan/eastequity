@@ -435,8 +435,16 @@ def get_smart_money(tickers, company_names=None, ticker_cusip=None) -> dict:
                 key=lambda m: m["value_delta_usd"])[:3]
             by_ticker[tu] = a
 
-        return {
-            "status": "ok", "tickers": list(tickers),
+        # COVERAGE (uniform contract, tools/freshness_audit.feed_status). The
+        # total-outage guard above already refuses to dress a dead SEC feed as
+        # no_tracked_activity; this adds the PARTIAL case it did not cover - with
+        # 8 of 9 managers throttled the feed reported a flat "ok" and the brain
+        # read thin activity as low institutional interest. The manager fetch is
+        # this feed's unit of coverage, so it is what the counters describe.
+        from tools.freshness_audit import stamp_feed
+
+        out = {
+            "tickers": list(tickers),
             "note": ("13F data is ~45 days stale - conviction/positioning ONLY, never "
                      "timing. Signal is QUARTER-OVER-QUARTER activity: "
                      "by_ticker[T].net_activity says whether the 9 tracked elite funds "
@@ -454,6 +462,12 @@ def get_smart_money(tickers, company_names=None, ticker_cusip=None) -> dict:
             "holdings": holdings,
             "cusips_learned": cusips_learned,  # {TICKER: CUSIP} newly persisted this run
         }
+        active = sum(1 for a in by_ticker.values()
+                     if a.get("net_activity") not in (None, "no_tracked_activity"))
+        return stamp_feed(out, managers_ok + managers_failed, managers_ok,
+                          managers_failed, found=active,
+                          unit="tracked_manager_13f_fetch",
+                          tickers_with_activity=active)
     except Exception as e:
         return {"status": "error", "reason": str(e)[:200]}
 

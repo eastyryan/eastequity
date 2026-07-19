@@ -191,13 +191,31 @@ def _ratings_from_info(info: dict):
 
 def get_news_and_catalysts(tickers: list[str], max_headlines: int = 6,
                            max_age_days: float = NEWS_MAX_AGE_DAYS) -> dict:
+    """Per-focus-name headlines, earnings date, ratings and beat history.
+
+    STATUS CONTRACT (tools/freshness_audit.feed_status): this function used to
+    hardcode {"status": "ok"} at line 199 and NEVER downgrade it, no matter how
+    many per-ticker calls raised. orchestrator's only automated data-health check
+    read that key, so `news_and_catalysts` could not fail - a run where every
+    yfinance news fetch was rate-limited still advertised a healthy feed and the
+    brain reasoned from an empty tape as if the tape were genuinely quiet.
+
+    Now: "error" when every name failed, "degraded" with counts on partial
+    failure, "empty" when every name was reachable but nobody had a fresh
+    headline (a real, honest market state, and a different fact from a dead feed).
+    """
     import yfinance as yf
+
+    from tools.freshness_audit import stamp_feed
 
     now = datetime.now(timezone.utc)
     finnhub_key = os.environ.get("FINNHUB_API_KEY")
     alpaca_by_symbol = _fetch_alpaca_news_by_symbol(list(tickers), max_age_days)
-    out = {"status": "ok", "as_of": now.isoformat(),
+    out = {"as_of": now.isoformat(),
            "news_max_age_days": max_age_days, "tickers": {}}
+    tickers = list(tickers or [])
+    failures: dict = {}
+    fetched = with_headlines = 0
     for t in tickers:
         entry: dict = {"headlines": [], "next_earnings": None, "analyst_ratings": None}
         try:
@@ -248,10 +266,23 @@ def get_news_and_catalysts(tickers: list[str], max_headlines: int = 6,
                     }
             except Exception:
                 pass
+            fetched += 1
+            if entry["headlines"]:
+                with_headlines += 1
         except Exception as e:
             entry["error"] = str(e)
+            failures[t.upper()] = str(e)[:120]
         out["tickers"][t.upper()] = entry
-    return out
+    out["note"] = (
+        "status/coverage describe the FETCH, not the tape. 'error' = every news "
+        "call failed (absence of headlines is NOT a quiet tape - do not read it "
+        "as 'no news'); 'degraded' = some names unfetched, listed in "
+        "coverage.failures; 'empty' = every name reachable, none had a headline "
+        "inside news_max_age_days.")
+    return stamp_feed(out, len(tickers), fetched, len(tickers) - fetched,
+                      found=with_headlines,
+                      failures=dict(list(failures.items())[:10]),
+                      tickers_with_headlines=with_headlines)
 
 
 if __name__ == "__main__":

@@ -1,0 +1,53 @@
+name: Heartbeat
+
+# Gives the health signal a way OUT of the box.
+#
+# runlib/analytics.build_health() has computed missed slots and bundle age for a
+# long time, and its own docstring names why it exists: "the plan-mode parse bug
+# ran for DAYS unnoticed". The remedy shipped then was a number on a dashboard.
+# A grep for notify|alert|pushover|slack|smtp across the whole repo returned
+# nothing, so a dead pipeline still looked exactly like a quiet one.
+#
+# A failing scheduled job on your own repo is the cheapest real alerting that
+# exists: GitHub emails you on the transition to failure, with no credential, no
+# third-party service and no webhook to maintain. Set the EE_ALERT_WEBHOOK secret
+# to additionally push to Slack/Discord.
+
+on:
+  schedule:
+    # Twice during the session (14:30 and 20:30 UTC = 10:30 and 16:30 ET) — after
+    # the morning slots should have landed and after the close. Deliberately NOT
+    # every hour: an alarm that fires on routine cron jitter gets muted, and a
+    # muted alarm is worse than no alarm.
+    - cron: "30 14 * * 1-5"
+    - cron: "30 20 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: heartbeat
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Report health
+        run: python scripts/heartbeat_check.py --json
+
+      # Separate step so the JSON above is always in the log even when this fails.
+      - name: Fail if unhealthy
+        env:
+          EE_ALERT_WEBHOOK: ${{ secrets.EE_ALERT_WEBHOOK }}
+        run: python scripts/heartbeat_check.py

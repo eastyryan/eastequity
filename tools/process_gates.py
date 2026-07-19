@@ -17,6 +17,32 @@ VALID_WATCH_STATUS = frozenset({"drop", "hold", "buy"})
 # Tickers that look like scan ideas mentioned in free-text no_trade_reason.
 _TICKER_TOKEN = re.compile(r"\b([A-Z]{1,5})\b")
 
+# Issues that BLOCK new BUYs, as opposed to being journaled and forgotten.
+#
+# Until 2026-07-19 this module blocked nothing at all — its own note said so, and
+# the single behavioural consequence anywhere in the codebase was appending a string
+# to no_trade_reason, which only fired when there were already no proposals. A run
+# could fail every gate and still execute BUYs.
+#
+# The split is deliberate and narrow. A gate blocks when it is about the RISK OF THE
+# BOOK, not journaling hygiene:
+#   factor_response_*  - factor_map raised requires_factor_response because
+#                        concentration is high or extreme, and the model owes a
+#                        concrete plan before it may add MORE risk.
+#   seat_reviews_*     - capital must re-earn its seat. No new risk until the risk
+#                        already carried has been re-underwritten this run.
+# Watchlist status and rejected_ideas stay advisory: they are learning-discipline
+# artifacts, and killing a genuine fat pitch over a missing enum would be a worse
+# error than the one being corrected.
+BLOCKING_ISSUE_PREFIXES = (
+    "factor_response_missing",
+    "factor_response_plan_weak",
+    "factor_response_actions_empty",
+    "seat_reviews_missing",
+    "seat_reviews_action_invalid",
+    "seat_reviews_reason_weak",
+)
+
 
 def normalize_watchlist(watchlist: list | None) -> tuple[list[dict], list[str]]:
     """Ensure each entry has status in {drop,hold,buy}.
@@ -178,11 +204,14 @@ def audit_brain_process(
         or i.startswith("rejected_ideas_need")
         for i in issues
     )
+    blocking = [i for i in issues if i.startswith(BLOCKING_ISSUE_PREFIXES)]
     return {
         "watchlist": watchlist,
         "rejected_ideas": rejected,
         "issues": issues,
         "process_ok": process_ok,
+        "blocking_issues": blocking,
+        "blocks_new_buys": bool(blocking),
         "full_run_no_trade_ok": full_run_no_trade_ok,
         "note": "Process gates for learning discipline. Issues are journaled; "
                 "they do not halt the run. Fix the schema next cycle.",

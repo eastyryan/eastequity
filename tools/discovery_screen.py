@@ -35,6 +35,12 @@ from pathlib import Path
 from tools.universe_scanner import (
     SESS_1M, SESS_3M, SESS_6M, SESS_ADV, MIN_ADV_USD,
     _median_dollar_volume, _rel_strength, _return_over_sessions,
+    # Session-completeness semantics are now CANONICAL in universe_scanner (it
+    # needed them too - it runs 4x/day on intraday slots and was computing
+    # vol_surge on a half-formed bar). Imported rather than duplicated so the
+    # weekly screen and the daily scanner can never disagree about what "a
+    # completed session" means.
+    _chunks, _completed_series, _last_bar_is_partial,
 )
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -115,29 +121,7 @@ def _blend_score(mom_3m, mom_1m, rs_3m, rs_1m):
     return round(s * 100.0, 2)
 
 
-def _last_bar_is_partial(last_bar_date: str, now_et_date: str, now_et_minutes: int) -> bool:
-    """No-lookahead guard: True when the newest bar is TODAY's (ET) and the regular
-    session has not closed (before 16:00 ET) — i.e. the bar is still forming and
-    must be dropped. Date args are ISO YYYY-MM-DD strings; pure for offline tests."""
-    return bool(last_bar_date) and last_bar_date == now_et_date and now_et_minutes < 16 * 60
 
-
-def _chunks(seq: list, size: int):
-    """Split a list into consecutive chunks of at most `size`. Pure."""
-    return [seq[i:i + size] for i in range(0, len(seq), size)]
-
-
-def _completed_series(df, now_et) -> "object":
-    """Drop the still-forming bar (if any) from a per-ticker OHLCV frame. Fail-soft:
-    on any surprise, return the frame unchanged rather than lose the name."""
-    try:
-        if len(df) and _last_bar_is_partial(
-                str(df.index[-1].date()), str(now_et.date()),
-                now_et.hour * 60 + now_et.minute):
-            return df.iloc[:-1]
-    except Exception:
-        pass
-    return df
 
 
 def run_discovery(top_n: int = 25) -> dict:
