@@ -619,3 +619,119 @@ was (2021) — these are simply flat.
   anchor in this universe resolves to a real 20-day-high breakout.
 - Absolute return columns are meaningless off a survivor universe. Only the
   cross-sectional, ATR-matched column is a verdict.
+
+---
+
+# Round 3 — the entry-timing and volume indicators
+
+**Date:** 2026-07-19 (same day, third pass)
+**Sample:** 184 names x 12 years, ~88,200 observations, step = 5 sessions
+**Indicators:** IMPORTED from `tools/universe_scanner.py` and `tools/volume_analysis.py`
+**Tests:** `tests/test_signal_study.py` (warm-up invariance, tri-state breakout, sentinel
+exclusion, no-lookahead, volume-surge regression)
+
+## Why this round exists
+
+The entry-timing and volume block is the LONGEST section of CLAUDE.md and the oldest
+shipped, and unlike most of the prompt it makes **comparative** claims — "X fails far
+more often than Y", "distrust breakouts there", "the actionable moment". Comparative
+claims are the refutable kind. None had been tested.
+
+Nothing needed extracting. `analyze_volume`, `_rsi14`, `_macd_state`, `_adx14` and
+`_gap_events` were already pure module-level functions, private by name only. The study
+**imports the shipped functions** rather than reimplementing them, so these arms score
+the code the brain actually receives.
+
+## Verdict table — ATR-matched excess (pp)
+
+| Group | n | 21d | 63d | +years | Verdict |
+|---|---|---|---|---|---|
+| **ADX interaction — the one real finding** | | | | | |
+| breakout & ADX<20 ("chop") | 2,417 | **+0.06** | +0.03 | 7/12 | the regime the prompt said to distrust |
+| breakout & ADX>25 ("established trend") | 3,158 | **−0.35** | −0.42 | **2/12** | **inverted, and stable** |
+| ADX>25 & DI+ > DI− | 19,403 | −0.13 | −0.25 | — | negative standalone |
+| **Breakout confirmation** | | | | | |
+| breakout CONFIRMED (≥1.5x vol) | 1,482 | **−0.32** | −0.45 | 6/12 | worse than unconfirmed |
+| breakout UNCONFIRMED (<1.5x vol) | 5,595 | **−0.15** | −0.22 | 4/12 | no support for the claim |
+| **RSI** | | | | | |
+| RSI 40-50 pullback \| 200dma up | 11,551 | −0.10 | −0.05 | 4/12 | right sign, trivial size |
+| RSI >70 overbought \| 200dma up | 7,021 | −0.19 | −0.27 | 5/12 | |
+| RSI <30 oversold \| 200dma up | 257 | +0.85 | +0.50 | — | **underpowered**, worth watching |
+| **MACD** | | | | | |
+| bull_cross_recent | 13,802 | **−0.01** | −0.10 | 6/12 | flat |
+| above_zero (standing regime) | 27,079 | +0.01 | −0.04 | — | flat |
+| bear_cross_recent | 13,818 | +0.02 | +0.06 | — | fractionally best |
+| **Volume reads** | | | | | |
+| no_supply_pullback | 5,972 | **+0.22** | **+0.25** | 7/12 | **the only survivor** |
+| no_supply (unconditional key) | 6,106 | +0.21 | +0.23 | — | confirms it |
+| pocket_pivot (headline read) | 4,929 | +0.12 | −0.06 | — | nothing |
+| pocket_pivot (unconditional key) | 8,226 | +0.01 | −0.13 | — | nothing |
+| absorption_at_lows | 52 | −0.20 | +2.62 | — | **n too small to read** |
+| absorption_at_highs | 24 | +0.01 | −0.60 | — | **n too small to read** |
+| selling_climax | 81 | −0.88 | −0.31 | — | **n too small to read** |
+| selling_climax_reversal_watch | 12 | −1.21 | −0.35 | — | **n too small to read** |
+| **Numeric volume sub-metrics** | | | | | |
+| obv_divergence bullish | 5,751 | +0.08 | +0.12 | 6/12 | ~0.3pp spread vs bearish |
+| obv_divergence bearish | 8,386 | −0.22 | −0.24 | 4/12 | directionally right, weak |
+| cmf_20 > 0 | 46,722 | −0.03 | −0.09 | — | nothing |
+| updown_vol_ratio > 1 (excl. sentinel) | 46,960 | −0.06 | −0.12 | — | nothing |
+| **Baseline trend flags** | | | | | |
+| above_50dma | 49,078 | −0.05 | −0.11 | — | mildly negative |
+| trend_up_50_over_200 | 55,935 | −0.08 | −0.10 | — | mildly negative |
+
+## The ADX inversion
+
+This is the only result in three rounds that is both sizeable and STABLE. CLAUDE.md said
+to distrust breakouts when ADX<20 and to read ADX>25 as an established trend. Measured,
+the ADX>25 arm scored −0.35pp at 21d and was **negative in 10 of the 12 years**; the
+ADX<20 arm was mildly positive and positive in 7 of 12. The spread is ~0.41pp in the
+opposite direction from the instruction.
+
+The plausible mechanism is unremarkable once stated: a high ADX means the trend has
+*already* been running. In a universe of momentum names, "already been running" is closer
+to a late-entry warning than to confirmation. The prompt was treating an extension
+measure as a permission slip.
+
+Everything else this round is a coin flip, which is what makes this one worth acting on:
+it is the only arm whose year-by-year sign does not oscillate.
+
+## Three honest corrections to how this round was run
+
+**1. The gap groups were redundant.** "up-gap unfilled & held" returned n=10,929 —
+*identical* to the pre-existing `EAR gap_held` arm, and likewise faded (1,378) and filled
+(5,080). They are the same predicate under new labels, because `gap_hold_reaction` already
+encodes exactly this. They therefore REPLICATE round 1's finding (filled gaps +0.28 beat
+held gaps −0.04) rather than adding evidence. Duplicate arms should have been caught before
+the run, not after.
+
+**2. The volume-surge fix was correct but immaterial.** `signal_lanes` carried the
+divide-by-one expression the scanner had already fixed, and `swing_setup_score` gives
++0.5 for `vol_surge > 1.3`, which `top_setups` ranks on. The bug is real — the negative
+control reproduces a surge of 5,000,000 from an absent baseline. But after the fix
+`top_setups` came back at −0.17 against a recorded −0.16: unchanged. The bug only bites
+when a volume baseline is zero, which effectively never happens in a universe of liquid
+large caps. Worth fixing; not worth the significance initially claimed for it.
+
+**3. Four volume reads are unmeasurable at this sample size.** absorption_at_lows (52),
+absorption_at_highs (24), selling_climax (81) and selling_climax_reversal_watch (12) are
+reported above for completeness and are NOT verdicts. The +2.62 on absorption_at_lows at
+63d is 52 observations and should not be cited. CLAUDE.md's claims about these remain
+UNTESTED rather than refuted — a distinction worth preserving, since "we looked and found
+nothing" and "we could not look" are different states.
+
+## Caveats
+
+- The warm-up window (400 bars) is asserted, not assumed: RSI, MACD and ADX all seed from
+  the head of the slice they receive, and `tests/test_signal_study.py` pins that 400 and
+  800 bars give the same readings as full history. Without that, every arm here could
+  have been measuring a warm-up artifact.
+- `breakout_volume_confirmed` is tri-state (True / False / absent). Both breakout arms
+  require the key to be PRESENT, so they compare breakouts to breakouts rather than
+  breakouts to quiet bars.
+- `updown_vol_ratio_25d` returns 99.0 as a sentinel for "no down-volume in the window".
+  It is excluded from its predicate; averaging it in would let missing data render as the
+  most extreme reading on the board.
+- The volume reads are a first-match cascade, so `pocket_pivot` and `no_supply` are
+  measured both as the shipped headline `read` and as their standalone keys.
+- Absolute return columns are meaningless off a survivor universe. Only the
+  cross-sectional, ATR-matched column is a verdict.

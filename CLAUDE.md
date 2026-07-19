@@ -366,10 +366,27 @@ Beyond filings/13F/news, every run now includes:
   showed up into the close. Never buy the climax bar itself; plan the retest.
   (3) TREND HEALTH: healthy uptrends expand volume on advances and dry up on pullbacks -
   `no_supply_pullback` is the constructive continuation tell. Rallies on shrinking volume
-  are suspect. `pocket_pivot` = an up day out-voluming every down day of the prior two
-  weeks - an institutional footprint inside a base.
-  (4) BREAKOUTS: `unconfirmed_breakout_suspect` (new 20d high on <1.5x volume) fails far
-  more often - demand `confirmed_breakout` or wait for the retest.
+  are suspect. `pocket_pivot` = an up day out-voluming every down day of the prior TEN
+  SESSIONS (the code's window; "two weeks" was loose) - an institutional footprint
+  inside a base.
+  MEASURED 2026-07-19 over 12 years: `no_supply_pullback` IS THE ONE READ IN THIS ENTIRE
+  BLOCK THAT SURVIVED. +0.22pp ATR-matched at 21d and +0.25 at 63d (n=5,972), positive
+  in 7 of 12 years - small, but consistent at both horizons and the only positive result
+  among ~25 indicator arms tested. Weight it as a genuine mild tell, not as a thesis.
+  `pocket_pivot` did NOT survive: +0.12 as the headline read (n=4,929) and +0.01 as an
+  unconditional flag (n=8,226), i.e. nothing. Note the two are scored separately because
+  the volume reads are a FIRST-MATCH CASCADE - a pocket pivot that printed under a
+  higher-priority read still set its own key.
+  (4) BREAKOUTS: `confirmed_breakout` = new 20d high on >=1.5x volume;
+  `unconfirmed_breakout_suspect` = the same high on lighter volume.
+  MEASURED 2026-07-19 over 12 years: NO SUPPORT for "unconfirmed fails far more often",
+  which is what this line used to assert. Confirmed breakouts scored -0.32pp ATR-matched
+  at 21d (n=1,482) and unconfirmed scored -0.15 (n=5,595) - the volume-confirmation leg
+  came out MILDLY INVERTED, not merely absent. Year stability is 6/12 vs 4/12, so treat
+  the inversion as noise rather than as a reason to prefer light volume; what is
+  established is that demanding >=1.5x volume did NOT select better breakouts. Both arms
+  are negative. Do not reject a setup solely because its breakout was unconfirmed, and
+  do not count `confirmed_breakout` as corroboration in a thesis.
   (5) DIVERGENCE: obv_divergence "bullish" = price lower low, cumulative volume higher
   low - accumulation under the surface; a prompt to look closer, never a standalone signal.
   cmf_20 > 0 sustained = closes near highs on volume (accumulation); updown_vol_ratio_25d
@@ -380,11 +397,37 @@ Beyond filings/13F/news, every run now includes:
   rsi_14 (Wilder) - overbought/oversold CONTEXT, never a standalone signal: in an
   uptrend RSI > 70 is strength to monitor, not an automatic sell; the classic pullback
   entry is RSI resetting to ~40-50 while trend structure holds.
+  MEASURED 2026-07-19 over 12 years: WEAKLY DIRECTIONALLY CONSISTENT, magnitude trivial.
+  Holding the 200-DMA fixed, RSI 40-50 scored -0.10pp ATR-matched at 21d (n=11,551) and
+  RSI>70 scored -0.19 (n=7,021) - the pullback cell beat the overbought cell by 0.09pp,
+  which is the right sign and far too small to trade on, with 4/12 vs 5/12 positive
+  years. Keep using RSI as the context this line already says it is; do not upgrade a
+  setup because RSI sits in the 40-50 band. One cell is genuinely interesting and
+  UNDERPOWERED: RSI<30 inside a 200-DMA uptrend scored +0.85 / +0.50 on just n=257 -
+  worth watching, not yet worth weighting.
   macd {hist, hist_direction, state} - bull_cross_recent / bear_cross_recent means the
-  histogram flipped sign within ~5 sessions (the actionable moment); above_zero /
-  below_zero is the standing regime.
-  adx_14 with di_plus / di_minus - trend STRENGTH, not direction (<20 = chop: distrust
-  "breakouts" there; >25 = established trend; direction comes from DI+ vs DI-).
+  histogram flipped sign within ~5 sessions; above_zero / below_zero is the standing
+  regime.
+  MEASURED 2026-07-19 over 12 years: FLAT. bull_cross_recent -0.01pp ATR-matched at 21d
+  (n=13,802), above_zero +0.01 (n=27,079), bear_cross_recent +0.02 (n=13,818). The
+  "actionable moment" is statistically indistinguishable from the standing regime it
+  resolves into, and the BEARISH cross scored fractionally best. This block is
+  DESCRIPTIVE ONLY - use it to say where momentum sits, never as timing evidence for or
+  against an entry, and do not cite a bull cross as a reason to act now.
+  adx_14 with di_plus / di_minus - trend STRENGTH, not direction (<20 = chop, >25 =
+  established trend; direction comes from DI+ vs DI-).
+  MEASURED 2026-07-19 over 12 years: THE "DISTRUST BREAKOUTS IN CHOP" RULE THIS LINE
+  USED TO CARRY IS INVERTED, and this is the single most stable result in the whole
+  study. Breakouts with ADX>25 - the "established trend" the rule said to TRUST -
+  scored -0.35pp ATR-matched at 21d and -0.42 at 63d, and were NEGATIVE IN 10 OF 12
+  YEARS (n=3,158). Breakouts with ADX<20 - the "chop" the rule said to distrust -
+  scored +0.06 / +0.03, positive in 7 of 12 (n=2,417). Everything else measured this
+  round is a coin flip; this one is not. ADX>25 with DI+ > DI- is also negative
+  standalone (-0.13 / -0.25, n=19,403).
+  So: do NOT downgrade a breakout because ADX is under 20, and do NOT treat ADX>25 as
+  corroboration for one. A high ADX means the move has ALREADY been trending, which in
+  this universe is closer to a late-entry warning than a green light. Read adx_14 as a
+  description of how extended a trend already is, not as permission.
   gap_analysis - >=2% open gaps in the last 20 sessions with direction, whether each
   later CLOSED back through the pre-gap close ("filled"), and retained_pct = the
   fraction of the OPEN gap still held at the gap DAY's own close ((close - prev_close)
