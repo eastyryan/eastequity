@@ -109,23 +109,47 @@ def today_8ks(universe_tickers) -> dict:
     walk-backs when today's index doesn't exist yet). Fail-soft: any total
     failure returns status:error with empty filers, never raises."""
     from tools.net import get_sec
-    from tools.sec_filings import ticker_to_cik
+    from tools.sec_filings import ticker_to_cik_result
 
     now = datetime.now(timezone.utc)
     out = {"status": "ok", "as_of": now.isoformat(), "index_date": None, "filers": []}
 
     # cik -> ticker map from the locally-cached company_tickers.json.
+    # Unmapped names used to vanish with no requested-vs-mapped count, so a
+    # partly-unreachable ticker map narrowed the sweep silently: the 8-Ks of the
+    # dropped names simply never appeared, and nothing said they were unscanned.
     cik_to_ticker = {}
-    for t in sorted(set(str(t).upper() for t in (universe_tickers or []))):
+    requested = sorted(set(str(t).upper() for t in (universe_tickers or [])))
+    lookup_failed, not_listed = [], []
+    for t in requested:
         try:
-            cik = ticker_to_cik(t)
+            cik, why = ticker_to_cik_result(t)
         except Exception:
-            cik = None
+            cik, why = None, "lookup_failed"
         if cik:
             cik_to_ticker[str(int(cik))] = t
+        elif why == "lookup_failed":
+            lookup_failed.append(t)
+        else:
+            not_listed.append(t)
+    out["coverage"] = {
+        "requested": len(requested), "mapped": len(cik_to_ticker),
+        "lookup_failed": len(lookup_failed), "not_listed": len(not_listed),
+        "unit": "ticker_to_cik",
+    }
+    if lookup_failed:
+        # Not an outright failure — the sweep still covers what it mapped — but
+        # these names are UNSCANNED, not clean, and the bundle must say so.
+        out["coverage"]["lookup_failed_tickers"] = lookup_failed[:20]
+        out["note_unscanned"] = (
+            f"{len(lookup_failed)} universe names could not be mapped to a CIK "
+            f"(SEC ticker map unreachable); their 8-Ks are UNSCANNED this run, "
+            f"not absent.")
     if not cik_to_ticker:
         out["status"] = "error"
-        out["error"] = "could not map any universe tickers to CIKs"
+        out["error"] = ("could not map any universe tickers to CIKs "
+                        f"({len(lookup_failed)} lookup failures, "
+                        f"{len(not_listed)} not listed)")
         return out
 
     text, last_err = None, None

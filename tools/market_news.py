@@ -159,9 +159,17 @@ def get_market_news(max_items: int = 15) -> dict:
     try:
         from tools import alpaca_data
         if alpaca_data.has_keys():
-            rows = alpaca_data.get_news(hours=MAX_AGE_HOURS, limit=30)
-            items.extend(rows)
-            sources.append({"name": "alpaca_news", "ok": True, "items": len(rows)})
+            # get_news_result reports whether the CALL completed. The bare
+            # get_news returns [] on network error, non-200 and on a quiet feed
+            # alike, so this block used to record a dead Alpaca feed as
+            # {"ok": True, "items": 0} — and that False "ok" also propped up
+            # any_ok below, letting a total news outage report status "ok".
+            rows, err = alpaca_data.get_news_result(hours=MAX_AGE_HOURS, limit=30)
+            if err is None:
+                items.extend(rows)
+                sources.append({"name": "alpaca_news", "ok": True, "items": len(rows)})
+            else:
+                sources.append({"name": "alpaca_news", "ok": False, "error": err})
     except Exception as e:
         sources.append({"name": "alpaca_news", "ok": False, "error": str(e)[:200]})
 
