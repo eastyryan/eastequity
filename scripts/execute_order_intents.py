@@ -54,6 +54,14 @@ def execute_intents() -> dict:
     intents = alpaca_broker.queued_intents()
     if not intents:
         return summary
+    # VALIDATE AT BOTH ENDS OF THE RELAY. The queueing node validated against
+    # its view of the ledger, which is hours old by the time this runner fires:
+    # cash has moved, and an earlier intent in this very batch may already have
+    # consumed it. Re-read the account before judging any of them.
+    try:
+        alpaca_broker.sync_mirror()
+    except Exception as e:
+        print(f"  (mirror sync failed before execution: {e})")
     kill = _kill_switch_on()
     consumed: list[str] = []
     for intent in intents:
@@ -66,6 +74,17 @@ def execute_intents() -> dict:
                 {"ticker": ticker, "action": action},
                 ["kill_switch_active_buy_intent_dropped"], run_id)
             summary["dropped"].append(f"{action} {ticker}")
+            consumed.append(oid)
+            continue
+        stale = alpaca_broker.validate_order_static(intent)
+        if stale:
+            # A stale unfundable intent must never reach the broker — that is
+            # the UNH failure arriving hours late instead of at commit time.
+            journal.log_rejection(
+                {"ticker": ticker, "action": action},
+                [f"stale_intent_revalidation_failed:{stale}"], run_id)
+            summary["rejected"].append(f"{action} {ticker} ({stale})")
+            alpaca_broker.clear_intents([oid])
             consumed.append(oid)
             continue
         # Consume the intent from the LOCAL file BEFORE placing: readback()

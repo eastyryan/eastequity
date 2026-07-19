@@ -19,12 +19,24 @@ from execution import broker
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def _already_journaled(client_order_id: str | None) -> bool:
-    """True when a trade with this client_order_id is already in the journal.
+_ID_FIELDS = ("client_order_id", "order_id", "alpaca_order_id")
+
+
+def _already_journaled(client_order_id: str | None,
+                       alpaca_order_id: str | None = None) -> bool:
+    """True when a trade carrying either id is already in the journal.
+
     Guards against two nodes reconciling the same resting fill (each node has
-    its own checkout of the mirror until git syncs them). Scans only the most
-    recent trade files — a resting order never outlives a few sessions."""
-    if not client_order_id:
+    its own checkout of the mirror until git syncs them, so the journal is the
+    shared record). Scans only the most recent trade files — a resting order
+    never outlives a few sessions.
+
+    The Alpaca order id counts as a match because an OUT-OF-BAND fill is
+    discovered from the broker's ORDER LIST, so it can arrive carrying a client
+    id this system never issued; the broker's own id is then the only handle
+    both nodes agree on."""
+    ids = [str(i) for i in (client_order_id, alpaca_order_id) if i]
+    if not ids:
         return False
     trades_dir = ROOT / "journal" / "trades"
     try:
@@ -34,11 +46,15 @@ def _already_journaled(client_order_id: str | None) -> bool:
     for f in recent:
         try:
             for line in f.read_text().splitlines():
-                if client_order_id in line:
-                    rec = json.loads(line)
-                    if (rec.get("order", {}).get("client_order_id") == client_order_id
-                            or rec.get("fill", {}).get("client_order_id") == client_order_id):
-                        return True
+                if not any(i in line for i in ids):
+                    continue
+                rec = json.loads(line)
+                for blob in (rec.get("order"), rec.get("fill")):
+                    if not isinstance(blob, dict):
+                        continue
+                    for k in _ID_FIELDS:
+                        if blob.get(k) and str(blob[k]) in ids:
+                            return True
         except Exception:
             continue
     return False
@@ -46,7 +62,8 @@ def _already_journaled(client_order_id: str | None) -> bool:
 
 def record_fill(order: dict, fill: dict) -> None:
     """Journal one async fill + replicate brain_io.execute()'s side effects."""
-    if _already_journaled(order.get("client_order_id")):
+    if _already_journaled(order.get("client_order_id"),
+                          order.get("alpaca_order_id")):
         print(f"  (fill {order.get('client_order_id')} already journaled — skipped)")
         return
     run_id = str(order.get("proposal_id") or "async-executor")

@@ -39,6 +39,11 @@ def _isolate(tmp_path, monkeypatch):
                                              "buy_poll_timeout_seconds": 0.05,
                                              "sell_poll_timeout_seconds": 0.05})
     monkeypatch.setattr(ab.time, "sleep", lambda *_: None)
+    # These tests script the ACCOUNT directly (cash=100, cash=5000, ...) with no
+    # matching history, so the ledger cross-check would read every scripted
+    # balance as a corrupt read. Zero starting capital turns it off; its own
+    # behaviour is covered in tests/test_resting_stops.py.
+    monkeypatch.setattr(ab, "_starting_capital", lambda: 0.0)
     yield
 
 

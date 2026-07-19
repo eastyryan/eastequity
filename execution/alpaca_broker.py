@@ -36,6 +36,48 @@ Order mapping (long-only equities):
 NOT modeled by Alpaca paper (was modeled by the simulator): dividends,
 SEC/FINRA sell fees, borrow. Fills carry zeroed fee fields so downstream
 math keeps working; dividend attribution still reads the mirror metadata.
+
+RESTING PROTECTIVE STOPS (config: alpaca.resting_stops)
+-------------------------------------------------------
+Until this existed, every order body in the repo was `type: "market"` and a
+"stop" was a float in state/portfolio.json evaluated only when a cycle ran —
+scripts/stop_watch.py measured the blind windows at ~2h intraday, ~17.5h
+overnight and ~65.5h over a weekend, and the one closed stop in this book's
+history filled 4.5% THROUGH its level. A filled BUY now leaves a real stop
+order resting at the exchange.
+
+It is a SEPARATE stop order, deliberately NOT a bracket/OTO/OCO:
+  1. Alpaca rejects `order_class` alongside `notional`, and every entry here is
+     notional (position_size_usd) by design.
+  2. Notional orders cannot be PATCHed at all — so a bracket's stop leg could
+     never be ratcheted by the chandelier trail. That alone disqualifies it.
+  3. Bracket/OCO are unsupported for fractional quantities generally.
+A standalone qty-based stop is submitted after the entry readback: replaceable
+(therefore ratchetable), and a failed arm is a LOUD journaled RISK EVENT rather
+than a silent kill of the entry.
+
+THE CONSTRAINT THAT COULD NOT BE ENGINEERED AROUND: Alpaca supports fractional
+quantities only with time_in_force=day. A notional entry leaves a fractional
+position, so a GTC stop on the full quantity is rejected outright. What we do
+instead — and do not paper over — is cover the WHOLE-SHARE portion GTC (that is
+what genuinely survives overnight and the weekend) and record the sub-share
+remainder as protective_stop.uncovered_qty: visible, never assumed safe. A
+position under one share has no whole-share leg at all and can only get a DAY
+stop (protective_stop.session_only), which scripts/stop_watch.py re-arms on its
+5-minute tick.
+
+OUT-OF-BAND FILLS: a stop that fires at 03:00 is invisible to reconcile() — no
+journal line, no closed trade, and a phantom position exit_guard re-fires on
+forever. ingest_out_of_band_fills() sweeps the broker's closed-order list and
+replays unseen SELLS through the ordinary _apply_fill path. Unknown broker-side
+BUYS are flagged but NEVER journaled: inventing a trade record corrupts cost
+basis and every closed-trade figure derived from it.
+
+BROKER_SYNC_SUSPECT: broker equity is cross-checked against
+starting_capital + sum(realized P&L) — a figure reconstructed entirely from our
+own permanent record, which no broker read can corrupt. On material
+disagreement the mirror is flagged and left UNTOUCHED, and new BUYs are refused
+(exits never are). An agreeing read clears it.
 """
 
 from __future__ import annotations
@@ -45,11 +87,12 @@ import os
 import tempfile
 import time
 import uuid
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import requests
 
+import journal
 from execution import simulated_broker
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -62,7 +105,19 @@ _DEFAULTS = {
     "buy_poll_timeout_seconds": 90.0,
     "sell_poll_timeout_seconds": 90.0,
     "price_guard": True,       # live last-trade vs entry_price_max pre-check
+    # Fallbacks used only when autonomy_config.json is unreadable. resting_stops
+    # defaults OFF there deliberately: if we cannot read the config we cannot
+    # know the account is the one these stops belong on, and an unreadable
+    # config is not the moment to start writing orders the operator did not ask
+    # for. The shipped config turns it on.
+    "resting_stops": False,
+    "out_of_band_lookback_hours": 96.0,
+    "sync_suspect_tolerance": 0.35,
 }
+
+# Alpaca order statuses that mean "this order is live and holding shares".
+_STOP_WORKING = ("new", "accepted", "held", "partially_filled", "pending_new",
+                 "accepted_for_bidding", "calculated")
 
 _probe_cache: dict = {}        # process-lifetime reachability memo
 
@@ -152,7 +207,94 @@ def _clock() -> dict:
 # --------------------------------------------------------------------------- #
 _META_FIELDS = ("opened_at", "proposal_id", "plan", "high_water", "trailing_stop",
                 "adds_count", "buy_commission_usd", "dividends_received_usd",
-                "demand_driver")
+                "demand_driver", "protective_stop")
+
+
+def _f(v, default: float = 0.0) -> float:
+    try:
+        return float(v)
+    except (TypeError, ValueError):
+        return default
+
+
+# --------------------------------------------------------------------------- #
+# broker_sync_suspect — the ledger cross-check
+#
+# 2026-07-17, twice, 103 seconds apart: a bad /v2/account read persisted
+# cash_usd = 0 over a $9,819.48 ledger and rejected every BUY for four days.
+# The old guard compared the incoming read against total_equity_usd — a field
+# the FIRST bad read had already zeroed — so prior_equity was 0 and the second
+# read sailed straight through. The reconstruction below is built only from
+# starting capital and our own booked realizations, so no broker read can move
+# it, and it still fires on read #2.
+# --------------------------------------------------------------------------- #
+def _starting_capital() -> float:
+    try:
+        cfg = json.loads((ROOT / "autonomy_config.json").read_text())
+        return float(cfg["position_sizing"]["starting_capital_usd"])
+    except Exception:
+        return 0.0
+
+
+def ledger_expected_equity() -> float | None:
+    """Account equity implied by our OWN permanent record: starting capital plus
+    every realization we have ever booked (plus dividends still attributed to
+    open positions, which were credited to cash when the event was processed).
+    None when the baseline is unknown — the cross-check then stays off rather
+    than inventing a comparison."""
+    start = _starting_capital()
+    if start <= 0:
+        return None
+    state = simulated_broker._load()
+    total = start
+    for h in state.get("history", []) or []:
+        if str(h.get("action", "")).upper() != "SELL_TO_CLOSE":
+            continue
+        if str(h.get("status", "")) != "filled":
+            continue
+        v = h.get("total_realized_pnl_usd")
+        if v is None:
+            v = h.get("realized_pnl_usd")
+        if v is None:
+            continue
+        total += _f(v)
+    for p in state.get("positions", []) or []:
+        total += _f(p.get("dividends_received_usd"))
+    return round(total, 2)
+
+
+def sync_suspect() -> dict | None:
+    """The active broker_sync_suspect record, or None when the mirror is trusted."""
+    d = simulated_broker._load().get("broker_sync_suspect")
+    return d if isinstance(d, dict) and d.get("active") else None
+
+
+def _flag_sync_suspect(reason: str, expected, actual) -> None:
+    """Raise the circuit breaker WITHOUT touching cash/equity/positions.
+
+    Deliberately re-loads the mirror instead of writing the half-rebuilt state
+    sync_mirror was assembling: the whole point is that a suspect read must not
+    reach the ledger."""
+    already = sync_suspect() is not None
+    state = simulated_broker._load()
+    state["broker_sync_suspect"] = {
+        "active": True,
+        "allows_new_buys": False,
+        "reason": reason,
+        "ledger_expected_equity": expected,
+        "broker_equity": actual,
+        "detected_at": datetime.now(timezone.utc).isoformat(),
+    }
+    simulated_broker._save(state)
+    if not already:
+        try:
+            journal.log_rejection(
+                {"ticker": "*", "action": "BROKER_SYNC"},
+                ["RISK_EVENT_broker_sync_suspect", reason],
+                "broker-sync")
+        except Exception:
+            pass
+        print(f"  RISK EVENT: broker sync suspect — {reason}")
 
 
 def _fetch_account_positions() -> tuple[dict | None, list | None]:
@@ -219,14 +361,31 @@ def sync_mirror() -> dict | None:
         new_equity = round(
             new_cash + sum(p.get("market_value_usd", 0.0)
                            for p in new_positions), 2)
-    # Corrupt-read guard: a reachable /v2/account that reports zero equity while
-    # the mirror last held real money is a bad read (empty or mis-authed relay
-    # response), not a real wipeout — a paper account cannot drop to $0 cash and
-    # $0 equity with no positions. Never persist it over a known-good ledger;
-    # leave the mirror untouched so downstream keeps the last committed balance.
+    # ---- corrupt-read guards, in order of strength ----
+    # (1) LEDGER CROSS-CHECK. What the account must hold according to our own
+    # booked history — a figure no broker read contributes to, and therefore the
+    # only one a bad read cannot corrupt. A material disagreement is flagged and
+    # the mirror is left EXACTLY as it was.
     prior_equity = round(float(state.get("total_equity_usd") or 0.0), 2)
+    expected = ledger_expected_equity()
+    tol = _f(_cfg().get("sync_suspect_tolerance", 0.35), 0.35) or 0.35
+    if expected is not None and expected > 0:
+        dev = abs(new_equity - expected) / expected
+        if dev > tol:
+            _flag_sync_suspect(
+                f"broker equity ${new_equity:,.2f} disagrees with the ledger's "
+                f"${expected:,.2f} by {dev * 100:.1f}% (tolerance {tol * 100:.0f}%)",
+                expected, new_equity)
+            return None
+    # (2) Legacy zero-equity guard, still load-bearing when the baseline is
+    # unknown: a paper account cannot drop to $0 with no closing trade.
     if new_equity <= 0 and prior_equity > 0:
+        _flag_sync_suspect(
+            f"zero-equity read (${new_equity:,.2f}) over a funded mirror "
+            f"(${prior_equity:,.2f})", prior_equity, new_equity)
         return None
+    # An agreeing read is the all-clear: this is a circuit breaker, not a latch.
+    state.pop("broker_sync_suspect", None)
     state["cash_usd"] = new_cash
     state["total_equity_usd"] = new_equity
     state["broker_synced_at"] = datetime.now(timezone.utc).isoformat()
@@ -251,7 +410,75 @@ def mark_to_market(prices: dict) -> dict:
 
 
 def update_trailing_stops(trailing: dict) -> int:
-    return simulated_broker.update_trailing_stops(trailing)  # mirror metadata only
+    """Persist ratcheted chandelier levels AND move the resting stop orders.
+
+    Before this, a ratcheted trail lived only in the ledger while the broker
+    still held the original level — the trail was fiction to the exchange."""
+    changed = simulated_broker.update_trailing_stops(trailing)  # mirror metadata
+    if trailing and _stop_cfg_on() and api_reachable():
+        for t in trailing:
+            try:
+                ensure_protective_stop(str(t).upper(), reason="trail_ratchet")
+            except Exception as e:
+                print(f"  (trail re-arm failed for {t}: {e})")
+    return changed
+
+
+# --------------------------------------------------------------------------- #
+# static order guards — these must run ABOVE the intent short-circuit
+# --------------------------------------------------------------------------- #
+def _validate_static(order: dict) -> tuple[str | None, dict]:
+    """(rejection_status, extra_fields). None = the order may proceed."""
+    action = str(order.get("action", "")).upper()
+    # A halt must stop the system OPENING risk, never CLOSING it. Protective
+    # sells bypass every guard here by design.
+    if action == "SELL_TO_CLOSE":
+        return None, {}
+    if action != "BUY":
+        return "rejected_unsupported_action", {}
+
+    if sync_suspect():
+        return "rejected_broker_sync_suspect", {}
+
+    notional = round(_f(order.get("position_size_usd")), 2)
+    if notional < 1.0:
+        return "rejected_bad_notional", {}
+
+    reachable = api_reachable()
+    state = sync_mirror() if reachable else None
+    if reachable and sync_suspect():   # the fresh read raised it
+        return "rejected_broker_sync_suspect", {}
+    if state is None:
+        state = simulated_broker._load()
+    if notional > _f(state.get("cash_usd")):
+        return "rejected_insufficient_cash", {}
+
+    if reachable:
+        # BUYs never queue overnight: the brain priced NOW, not tomorrow's open.
+        # Only checkable with a live clock — the executor re-validates at the
+        # other end of the relay, where a clock exists.
+        if not bool(_clock().get("is_open")):
+            return "rejected_market_closed", {}
+        if _cfg().get("price_guard", True):
+            entry_max = order.get("entry_price_max")
+            live = _live_last_trade(str(order.get("ticker", "")).upper())
+            if entry_max is not None and live is not None and live > _f(entry_max):
+                return "rejected_price_above_entry_max_live", {"live_price": live}
+    return None, {}
+
+
+def validate_order_static(order: dict) -> str | None:
+    """Cash / notional / market-hours / live-price / sync-suspect guards.
+
+    THE UNH FAILURE: place_order returned the queued intent BEFORE any of these
+    ran, so a cloud-queued order carried ZERO validation at commit time and the
+    broker rejected it hours later for insufficient cash on a fully funded
+    account. They now run above the intent short-circuit AND again at execution
+    time in scripts/execute_order_intents.py (after a fresh sync_mirror), because
+    the ledger the queueing node validated against is hours old by then.
+
+    Returns the rejection status string, or None when the order is acceptable."""
+    return _validate_static(order)[0]
 
 
 # --------------------------------------------------------------------------- #
@@ -308,6 +535,15 @@ def place_order(order: dict) -> dict:
                "status": "pending",
                "submitted_at": datetime.now(timezone.utc).isoformat()}
 
+    # THE GUARDS RUN FIRST — above the intent short-circuit. An order that
+    # cannot be funded/priced/timed must never reach the cloud queue, because
+    # nothing downstream re-derives that judgement from the run's context.
+    bad, extra = _validate_static(order)
+    if bad:
+        pending.update(extra)
+        pending["status"] = bad
+        return _record_dead_order(pending)
+
     if not api_reachable():  # cloud node: queue for the GitHub Actions executor
         pending["status"] = "queued_intent"
         blob = _load_intents()
@@ -319,33 +555,21 @@ def place_order(order: dict) -> dict:
 
     action = str(order.get("action", "")).upper()
     ticker = str(order.get("ticker", "")).upper()
-    is_open = bool(_clock().get("is_open"))
 
     if action == "BUY":
-        if not is_open:
-            # BUYs never queue overnight: the brain priced NOW, not tomorrow's open.
-            pending["status"] = "rejected_market_closed"
-            return _record_dead_order(pending)
-        notional = round(float(order.get("position_size_usd") or 0.0), 2)
-        if notional < 1.0:
-            pending["status"] = "rejected_bad_notional"
-            return _record_dead_order(pending)
-        state = sync_mirror() or simulated_broker._load()
-        if notional > float(state.get("cash_usd") or 0.0):
-            pending["status"] = "rejected_insufficient_cash"
-            return _record_dead_order(pending)
-        if _cfg().get("price_guard", True):
-            entry_max = order.get("entry_price_max")
-            live = _live_last_trade(ticker)
-            if entry_max is not None and live is not None \
-                    and live > float(entry_max):
-                pending["status"] = "rejected_price_above_entry_max_live"
-                pending["live_price"] = live
-                return _record_dead_order(pending)
+        notional = round(_f(order.get("position_size_usd")), 2)
         body = {"symbol": ticker, "side": "buy", "type": "market",
                 "time_in_force": "day", "notional": f"{notional:.2f}",
                 "client_order_id": order_id}
     elif action == "SELL_TO_CLOSE":
+        # STAND THE RESTING STOP DOWN FIRST. A resting sell stop HOLDS the
+        # shares it covers (qty_available -> the uncovered tail), so without
+        # this every discretionary exit is sized at a fraction of the position
+        # — or rejected outright as rejected_no_position.
+        try:
+            _stand_down_protective_stop(ticker, reason="discretionary_sell")
+        except Exception as e:
+            print(f"  (stop stand-down failed for {ticker}: {e})")
         qty = _sell_qty(ticker, order.get("sell_fraction"))
         if qty is None or qty <= 0:
             pending["status"] = "rejected_no_position"
@@ -479,6 +703,409 @@ def reconcile() -> list[tuple[dict, dict]]:
             st["history"].append({**pending,
                                   "filled_at": datetime.now(timezone.utc).isoformat()})
             simulated_broker._save(st)
+    # Every existing reconcile() call site absorbs broker-side fills for free —
+    # that is how the Actions executor and the 5-minute stop_watch tick pick up
+    # a stop that fired at 03:00.
+    try:
+        done.extend(ingest_out_of_band_fills())
+    except Exception as e:
+        print(f"  (out-of-band ingestion failed: {e})")
+    return done
+
+
+# --------------------------------------------------------------------------- #
+# resting protective stops
+# --------------------------------------------------------------------------- #
+def _stop_cfg_on() -> bool:
+    return bool(_cfg().get("resting_stops", False))
+
+
+def _position_in_mirror(ticker: str) -> dict | None:
+    for p in simulated_broker._load().get("positions", []) or []:
+        if str(p.get("ticker", "")).upper() == ticker:
+            return p
+    return None
+
+
+def _broker_position(ticker: str) -> dict | None:
+    code, ap = _req("GET", f"/v2/positions/{ticker}")
+    return ap if code == 200 and isinstance(ap, dict) else None
+
+
+def _working_stop_order(ticker: str, rec: dict | None) -> dict | None:
+    """The stop order actually resting at the broker for this ticker, or None.
+
+    The mirror's own record is checked first; the open-order sweep behind it is
+    not redundant, because a stop we have FORGOTTEN about still holds shares —
+    a fresh checkout or a restored ledger would otherwise write a second stop
+    over the top of a live one and hold the position twice."""
+    cid = (rec or {}).get("client_order_id")
+    if cid:
+        o = _get_order_by_client_id(str(cid))
+        if o and o.get("status") in _STOP_WORKING:
+            return o
+    code, orders = _req("GET", "/v2/orders",
+                        params={"status": "open", "limit": 500})
+    if code == 200 and isinstance(orders, list):
+        for o in orders:
+            if not isinstance(o, dict):
+                continue
+            if str(o.get("symbol", "")).upper() == ticker \
+                    and str(o.get("type")) == "stop" \
+                    and str(o.get("side")) == "sell" \
+                    and o.get("status") in _STOP_WORKING:
+                return o
+    return None
+
+
+def _desired_stop_level(pos: dict) -> float | None:
+    """Highest protective level the ledger asks for: the plan stop, ratcheted by
+    the chandelier trail. Never the lower of the two."""
+    levels = []
+    plan = pos.get("plan") if isinstance(pos.get("plan"), dict) else {}
+    for v in (plan.get("stop_loss"), pos.get("trailing_stop")):
+        f = _f(v, 0.0)
+        if f > 0:
+            levels.append(f)
+    return round(max(levels), 4) if levels else None
+
+
+def _stop_shape(qty: float, existing_tif: str | None) -> tuple[float, str, float]:
+    """(order qty, time_in_force, uncovered qty) for a position of `qty` shares.
+
+    Alpaca accepts fractional quantities ONLY with time_in_force=day, and every
+    entry here is notional by design — so a notional entry leaves a fractional
+    position and a GTC stop on the whole quantity is rejected. Cover the
+    WHOLE-SHARE portion GTC (what genuinely survives overnight and the weekend)
+    and DISCLOSE the sub-share remainder rather than assume it is safe. Under
+    one share there is no whole-share leg, so DAY is the only order the broker
+    will take: session-only protection, re-armed each stop_watch tick."""
+    if str(existing_tif or "").lower() == "day":
+        return round(qty, 6), "day", 0.0
+    whole = float(int(qty))
+    if whole >= 1.0:
+        return whole, "gtc", round(qty - whole, 6)
+    return round(qty, 6), "day", 0.0
+
+
+def _submit_stop(ticker: str, qty: float, stop_price: float,
+                 tif: str) -> dict | None:
+    body = {"symbol": ticker, "side": "sell", "type": "stop",
+            "time_in_force": tif, "qty": _fmt_qty(qty),
+            "stop_price": f"{float(stop_price):.2f}",
+            "client_order_id": f"EESTOP-{ticker}-{uuid.uuid4().hex[:10]}"}
+    code, resp = _req("POST", "/v2/orders", body=body, timeout=15)
+    if code == 200 and isinstance(resp, dict) and resp.get("id"):
+        return resp
+    return None
+
+
+def _write_protective_stop(ticker: str, rec: dict | None) -> None:
+    state = simulated_broker._load()
+    for p in state.get("positions", []) or []:
+        if str(p.get("ticker", "")).upper() == ticker:
+            if rec is None:
+                p.pop("protective_stop", None)
+            else:
+                p["protective_stop"] = rec
+            simulated_broker._save(state)
+            return
+
+
+def _record_protective_stop(ticker: str, o: dict, qty: float, tif: str,
+                            uncovered: float, level: float) -> dict:
+    rec = {
+        "status": "resting",
+        "stop_price": round(float(level), 4),
+        "qty": round(float(qty), 6),
+        # The share fraction NO resting order can carry. Disclosed, never
+        # silently treated as protected.
+        "uncovered_qty": round(float(uncovered), 6),
+        "session_only": tif == "day",
+        "time_in_force": tif,
+        "client_order_id": o.get("client_order_id"),
+        "alpaca_order_id": o.get("id"),
+        "armed_at": datetime.now(timezone.utc).isoformat(),
+    }
+    _write_protective_stop(ticker, rec)
+    return rec
+
+
+def _fail_protective_stop(ticker: str, level, qty: float, reason: str) -> dict:
+    """A position with NO resting stop is a risk event, not a footnote."""
+    rec = {
+        "status": "FAILED",
+        "stop_price": round(float(level), 4) if level else None,
+        "qty": round(float(qty), 6),
+        "uncovered_qty": round(float(qty), 6),
+        "session_only": False,
+        "time_in_force": None,
+        "reason": reason or None,
+        "failed_at": datetime.now(timezone.utc).isoformat(),
+    }
+    _write_protective_stop(ticker, rec)
+    try:
+        journal.log_rejection(
+            {"ticker": ticker, "action": "PROTECTIVE_STOP",
+             "stop_price": rec["stop_price"], "quantity": rec["qty"]},
+            ["RISK_EVENT_protective_stop_not_armed",
+             f"the broker refused every protective stop for {ticker} "
+             f"({reason or 'no reason given'}) — the position is carrying "
+             f"UNPROTECTED risk until a cycle or stop_watch tick re-arms it"],
+            "protective-stop")
+    except Exception:
+        pass
+    print(f"  RISK EVENT: protective stop NOT armed for {ticker} @ {level}")
+    return rec
+
+
+def _stand_down_protective_stop(ticker: str, *, reason: str = "") -> bool:
+    """Cancel the resting stop so the shares are free to sell."""
+    ticker = str(ticker).upper()
+    if not api_reachable():
+        return False
+    pos = _position_in_mirror(ticker)
+    rec = (pos or {}).get("protective_stop")
+    o = _working_stop_order(ticker, rec if isinstance(rec, dict) else None)
+    if o is None or not o.get("id"):
+        return False
+    _req("DELETE", f"/v2/orders/{o['id']}")
+    if isinstance(rec, dict):
+        _write_protective_stop(ticker, {
+            **rec, "status": "stood_down", "stood_down_reason": reason or None,
+            "stood_down_at": datetime.now(timezone.utc).isoformat()})
+    return True
+
+
+def _retire_protective_stop(ticker: str, *, reason: str = "") -> None:
+    """Position is gone: cancel anything still resting and drop the record.
+    NOT gated on the resting_stops config — cleaning up after a disabled
+    feature is always correct."""
+    ticker = str(ticker).upper()
+    if not api_reachable():
+        return
+    pos = _position_in_mirror(ticker)
+    rec = (pos or {}).get("protective_stop")
+    o = _working_stop_order(ticker, rec if isinstance(rec, dict) else None)
+    if o is not None and o.get("id"):
+        _req("DELETE", f"/v2/orders/{o['id']}")
+    if isinstance(rec, dict):
+        _write_protective_stop(ticker, None)
+
+
+def ensure_protective_stop(ticker: str, *, reason: str = "") -> dict | None:
+    """Arm / re-size / ratchet the resting stop for one position.
+
+    Called on every filled BUY (including scale-ins), after a sell_fraction
+    partial, and from update_trailing_stops. Idempotent: re-running it against
+    an already-correct stop touches nothing.
+
+    RATCHET-ONLY, ENFORCED AT THE BROKER as well as in the ledger. A live
+    protective stop is raised or left alone — never widened. The mirror's guard
+    is not sufficient on its own: a bad write or a stale metadata replay can ask
+    for a lower level, and widening a live stop is the one thing a trail must
+    never do."""
+    ticker = str(ticker).upper()
+    if not _stop_cfg_on() or not api_reachable():
+        return None
+
+    pos = _position_in_mirror(ticker)
+    if pos is None:
+        _retire_protective_stop(ticker, reason=reason or "no_mirror_position")
+        return None
+
+    bp = _broker_position(ticker)
+    qty = round(_f(bp.get("qty") if bp else pos.get("quantity")), 6)
+    if qty <= 0:
+        _retire_protective_stop(ticker, reason=reason or "flat")
+        return None
+
+    desired = _desired_stop_level(pos)
+    if desired is None:
+        # No plan stop and no trail: there is no level to protect at. exit_guard
+        # already shouts about unstoppable positions; do not invent one here.
+        return pos.get("protective_stop")
+
+    rec = pos.get("protective_stop")
+    existing = _working_stop_order(ticker, rec if isinstance(rec, dict) else None)
+
+    if existing is not None:
+        cur_price = round(_f(existing.get("stop_price")), 4)
+        cur_qty = round(_f(existing.get("qty")), 6)
+        cur_tif = str(existing.get("time_in_force") or "").lower()
+        level = max(desired, cur_price)          # <- the ratchet
+        want_qty, want_tif, uncovered = _stop_shape(qty, cur_tif)
+        if want_tif == cur_tif:
+            if abs(level - cur_price) < 5e-5 and abs(want_qty - cur_qty) < 1e-6:
+                return _record_protective_stop(ticker, existing, want_qty,
+                                               want_tif, uncovered, level)
+            code, resp = _req("PATCH", f"/v2/orders/{existing['id']}",
+                              body={"qty": _fmt_qty(want_qty),
+                                    "stop_price": f"{level:.2f}"})
+            if code == 200 and isinstance(resp, dict):
+                return _record_protective_stop(ticker, resp, want_qty,
+                                               want_tif, uncovered, level)
+        # A replace the broker will not take (tif has to change, or the order
+        # went terminal under us): cancel and rewrite — never at a lower level.
+        _req("DELETE", f"/v2/orders/{existing['id']}")
+        desired = level
+
+    want_qty, want_tif, uncovered = _stop_shape(qty, None)
+    o = _submit_stop(ticker, want_qty, desired, want_tif)
+    if o is None and want_tif == "gtc":
+        # GTC refused (the fractional rule, or anything else): a DAY stop on the
+        # FULL position beats leaving it naked. Session-only, and it says so.
+        o = _submit_stop(ticker, qty, desired, "day")
+        want_qty, want_tif, uncovered = round(qty, 6), "day", 0.0
+    if o is None:
+        return _fail_protective_stop(ticker, desired, qty, reason)
+    return _record_protective_stop(ticker, o, want_qty, want_tif,
+                                   uncovered, desired)
+
+
+def unprotected_positions() -> list[dict]:
+    """Open positions with no resting stop at the broker. Anything in here is
+    exposed to exactly the overnight/weekend windows this subsystem exists to
+    close, so it belongs in front of a human."""
+    return [p for p in simulated_broker._load().get("positions", []) or []
+            if not (isinstance(p.get("protective_stop"), dict)
+                    and p["protective_stop"].get("status") == "resting")]
+
+
+def _maintain_protective_stop(ticker: str, action: str) -> None:
+    """Post-fill stop maintenance: arm on a BUY, re-size on a partial, retire on
+    a full close. Never lets a stop failure lose the fill it followed."""
+    try:
+        if action == "BUY" or _position_in_mirror(ticker) is not None:
+            ensure_protective_stop(ticker, reason=f"{action.lower()}_fill")
+        else:
+            _retire_protective_stop(ticker, reason="position_closed")
+    except Exception as e:
+        print(f"  (protective stop maintenance failed for {ticker}: {e})")
+
+
+# --------------------------------------------------------------------------- #
+# out-of-band fill ingestion
+# --------------------------------------------------------------------------- #
+def ingest_out_of_band_fills() -> list[tuple[dict, dict]]:
+    """Absorb fills that happened at the broker with nobody watching.
+
+    A resting stop that fires at 03:00 produces no journal line, no closed
+    trade, and a PHANTOM POSITION that exit_guard re-fires on forever. This
+    sweeps the closed-order list and replays unseen SELLS through the ordinary
+    _apply_fill path, so they become indistinguishable from a synchronous exit
+    (same mirror update, same history record, same exit-autopsy grading via
+    reconcile_runner.record_fill).
+
+    Idempotency is layered, because double-counting a realization corrupts the
+    permanent track record: (1) the order is already in the mirror's history or
+    pending set, (2) it is in the persisted ingested-ids set, (3) the JOURNAL
+    already carries it — the cross-node guard, since each node has its own
+    checkout of the mirror until git syncs them.
+
+    Unknown broker-side BUYS are FLAGGED and never journaled: sync_mirror
+    already adopts the stray position, and inventing a trade record for it would
+    corrupt cost basis and every closed-trade figure derived from it."""
+    if not api_reachable():
+        return []
+    from execution import reconcile_runner   # local: avoids an import cycle
+
+    lookback = _f(_cfg().get("out_of_band_lookback_hours", 96), 96.0) or 96.0
+    after = (datetime.now(timezone.utc) - timedelta(hours=lookback)).isoformat()
+    code, orders = _req("GET", "/v2/orders",
+                        params={"status": "closed", "limit": 500,
+                                "direction": "desc", "after": after})
+    if code != 200 or not isinstance(orders, list):
+        return []
+
+    state = simulated_broker._load()
+    pending_ids = set((state.get("pending_orders") or {}).keys())
+    known: set[str] = set()
+    for h in state.get("history", []) or []:
+        for k in ("client_order_id", "order_id", "alpaca_order_id"):
+            if h.get(k):
+                known.add(str(h[k]))
+    seen = set(str(x) for x in (state.get("ingested_broker_orders") or []))
+
+    done: list[tuple[dict, dict]] = []
+    flagged: list[tuple[str, str]] = []
+    touched = False
+
+    for ao in orders:
+        if not isinstance(ao, dict) or str(ao.get("status")) != "filled":
+            continue
+        qty = _f(ao.get("filled_qty"))
+        if qty <= 0:
+            continue
+        cid = str(ao.get("client_order_id") or "")
+        oid = str(ao.get("id") or "")
+        key = cid or oid
+        if not key:
+            continue
+        if cid in pending_ids:
+            continue                                   # reconcile() owns it
+        if (cid and cid in known) or (oid and oid in known):
+            continue
+        if cid in seen or oid in seen:
+            continue
+        if reconcile_runner._already_journaled(cid or None, oid or None):
+            continue
+
+        side = str(ao.get("side", "")).lower()
+        symbol = str(ao.get("symbol", "")).upper()
+        if side == "buy":
+            flagged.append((symbol, key))
+            seen.add(key)
+            touched = True
+            continue
+        if side != "sell" or not symbol:
+            continue
+
+        price = round(_f(ao.get("filled_avg_price")), 4)
+        pending = {
+            "ticker": symbol,
+            "action": "SELL_TO_CLOSE",
+            "order_id": key,
+            "client_order_id": key,
+            "alpaca_order_id": oid or None,
+            "proposal_id": "out-of-band",
+            "out_of_band": True,
+            "forced_exit_reason": ("resting_stop_breached"
+                                   if str(ao.get("type")) == "stop"
+                                   else "broker_side_fill"),
+            "reference_price": price,
+            "submitted_at": (ao.get("submitted_at") or ao.get("created_at")
+                             or ao.get("filled_at")),
+        }
+        seen.add(key)
+        touched = True
+        try:
+            fill = _apply_fill(pending, ao)
+        except Exception as e:
+            print(f"  (out-of-band fill {key} failed to apply: {e})")
+            continue
+        if fill and fill.get("status") == "filled":
+            print(f"  OUT-OF-BAND FILL {symbol} {fill.get('quantity')} "
+                  f"@ {fill.get('fill_price')} ({pending['forced_exit_reason']})")
+            done.append((pending, fill))
+
+    for symbol, key in flagged:
+        try:
+            journal.log_rejection(
+                {"ticker": symbol, "action": "BUY", "broker_order": key},
+                ["RISK_EVENT_unrecognized_broker_side_buy",
+                 f"a BUY for {symbol} filled at the broker that this system "
+                 f"never placed — flagged, NEVER journaled: fabricating a trade "
+                 f"record would corrupt cost basis and the closed-trade math"],
+                "out-of-band")
+        except Exception:
+            pass
+        print(f"  RISK EVENT: unrecognized broker-side BUY {symbol} ({key})")
+
+    if touched:
+        st = simulated_broker._load()
+        st["ingested_broker_orders"] = sorted(seen)[-500:]
+        simulated_broker._save(st)
     return done
 
 
@@ -637,13 +1264,17 @@ def _apply_fill(pending: dict, ao: dict) -> dict:
                 if pre_pos.get(k) is not None and pos.get(k) is None:
                     pos[k] = pre_pos[k]
 
-    state["pending_orders"].pop(pending["order_id"], None)
+    state.setdefault("pending_orders", {}).pop(pending["order_id"], None)
     state["history"].append(fill)
     if state.get("positions"):
         state["total_equity_usd"] = round(
             float(state.get("cash_usd") or 0.0)
             + sum(p.get("market_value_usd", 0.0) for p in state["positions"]), 2)
     simulated_broker._save(state)
+
+    # The resting stop follows the position: armed on entry, re-sized on a
+    # scale-in or a sell_fraction partial, retired on a full close.
+    _maintain_protective_stop(ticker, action)
     return fill
 
 

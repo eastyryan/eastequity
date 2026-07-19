@@ -60,7 +60,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from execution import exit_guard  # noqa: E402
+from execution import broker, exit_guard  # noqa: E402
+from execution.reconcile_runner import run_reconcile  # noqa: E402
 from runlib import preflight  # noqa: E402
 from tools.envload import load_env  # noqa: E402
 from tools.portfolio_state import get_portfolio_state  # noqa: E402
@@ -115,6 +116,41 @@ def _live_prices(max_age_min: int) -> tuple[dict, dict]:
     return prices, meta
 
 
+def _broker_maintenance(out: dict) -> None:
+    """Absorb broker-side fills and keep the resting stops armed.
+
+    This tick is the only thing that runs while the market is open and a trading
+    cycle is not, so it is where a stop that fired overnight or over a weekend
+    finally gets noticed — and where a sub-one-share position's session-only DAY
+    stop gets re-armed (Alpaca will not carry a fractional stop GTC, so that leg
+    genuinely expires every session).
+
+    Strictly risk-reducing: it records exits that already happened and arms
+    protective sell orders. Nothing here can increase exposure. Fail-soft — a
+    broker hiccup must never stop the stop check that follows."""
+    if broker.backend_name() != "alpaca_paper":
+        return  # simulation has no broker-side lifecycle
+    try:
+        ingested = run_reconcile()
+        if ingested:
+            out["ingested_fills"] = [
+                f"{f.get('ticker')} {f.get('quantity')} @ {f.get('fill_price')}"
+                for f in ingested]
+    except Exception as e:
+        out["ingest_error"] = str(e)
+    try:
+        from execution import alpaca_broker
+        for pos in (alpaca_broker.get_portfolio().get("positions") or []):
+            alpaca_broker.ensure_protective_stop(
+                str(pos.get("ticker", "")).upper(), reason="stop_watch_tick")
+        naked = [str(p.get("ticker")) for p in alpaca_broker.unprotected_positions()]
+        if naked:
+            out["unprotected"] = naked
+            print(f"  UNPROTECTED POSITIONS (no resting stop): {', '.join(naked)}")
+    except Exception as e:
+        out["stop_arm_error"] = str(e)
+
+
 def run(dry_run: bool = False) -> dict:
     """One stop-enforcement pass. Never raises; returns a structured result."""
     started = datetime.now(timezone.utc).isoformat()
@@ -125,6 +161,11 @@ def run(dry_run: bool = False) -> dict:
     if cfg.get("mode", {}).get("trading_mode") == "dry_run":
         out.update(status="skipped", note="trading_mode=dry_run")
         return out
+
+    # Runs BEFORE the book is read (and even on a flat book): a fired stop is
+    # exactly what makes the book flat, and that fill still needs recording.
+    if not dry_run:
+        _broker_maintenance(out)
 
     portfolio = get_portfolio_state()
     positions = portfolio.get("positions") or []
