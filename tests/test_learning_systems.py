@@ -178,6 +178,14 @@ def test_post_exit_runners(tmp_learning, monkeypatch):
     import tools.post_exit_runners as PR
     monkeypatch.setattr(PR, "RUNNERS_FILE", tmp_learning / "post_exit_runners.json")
     monkeypatch.setattr(PR, "ROOT", tmp_learning)
+    # mark_post_exit_runners now reconciles every track against the real ledger
+    # before marking it, and correctly quarantines this SYNTHETIC DELL record —
+    # which is precisely the fabricated-artifact class it was added to catch
+    # (2026-07-16 incident). This test exercises mark/scoring logic, so stub the
+    # ledger check out; reconciliation has dedicated coverage in
+    # tests/test_runner_ledger_reconciliation.py and
+    # tests/test_runner_quarantine.py.
+    monkeypatch.setattr(PR, "reconciles_with_ledger", lambda *_a, **_k: True)
     from tools.post_exit_runners import (
         register_from_exit, mark_post_exit_runners, brain_facing_runner_learning,
         _score_runner,

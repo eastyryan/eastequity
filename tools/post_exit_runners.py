@@ -612,6 +612,40 @@ def mark_post_exit_runners(prices: dict, *, cache_news_on_marks: bool = True) ->
         still = []
         completed = []
         news_cached = 0
+        quarantined = []
+        # Reconcile against the ledger BEFORE marking. reconciles_with_ledger was
+        # written for the 2026-07-16 incident, unit-tested, and then never called
+        # from production — its own docstring closes "This is the reconciliation
+        # that was absent", and it still was. A fabricated HPE record survived
+        # three days of marking while the real DELL track was silently lost,
+        # because nothing ever compared a learning artifact against the ledger.
+        #
+        # Quarantine, never delete: an unreconciled record is evidence of a bug,
+        # and reconciliation itself fails OPEN (returns True with no ledger to
+        # compare against) so this can never destroy real tracking data.
+        try:
+            closed = None
+            checked = []
+            for rec in state.get("tracking") or []:
+                if reconciles_with_ledger(rec, closed):
+                    checked.append(rec)
+                else:
+                    r = dict(rec)
+                    r["unreconciled"] = (
+                        "no closed trade in the ledger matches this ticker and "
+                        "realized P&L — quarantined, not marked. A learning record "
+                        "with no trade behind it teaches fiction.")
+                    r["quarantined_at"] = _today()
+                    quarantined.append(r)
+            if quarantined:
+                state["tracking"] = checked
+                state["quarantined"] = (state.get("quarantined") or []) + quarantined
+                print(f"  (post-exit runners: quarantined {len(quarantined)} "
+                      f"unreconciled record(s): "
+                      f"{[q.get('ticker') for q in quarantined]})")
+        except Exception as e:
+            print(f"  (runner ledger reconciliation skipped: {e})")
+
         for rec in state.get("tracking") or []:
             rec = dict(rec)
             t = rec.get("ticker")
@@ -719,6 +753,10 @@ def mark_post_exit_runners(prices: dict, *, cache_news_on_marks: bool = True) ->
             "tracking": len(still),
             "completed_now": len(completed),
             "news_cached": news_cached,
+            # Surfaced in the return so a caller/health check can see fabricated
+            # records being caught, rather than it living only in a print().
+            "quarantined_now": len(quarantined),
+            "quarantined_tickers": [q.get("ticker") for q in quarantined],
         }
     except Exception as e:
         return {"status": "error", "reason": str(e)[:150]}
