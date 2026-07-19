@@ -209,17 +209,30 @@ def _pos(ticker="NVDA"):
 # --------------------------------------------------------------------------- #
 # 1. resting stops
 # --------------------------------------------------------------------------- #
-def test_entry_is_not_a_bracket_order(api, monkeypatch):
-    """DESIGN CONTRACT. Entries are NOTIONAL, and Alpaca rejects
-    bracket/OCO/OTO alongside `notional` (and cannot PATCH a notional order, so
-    a bracket's stop leg could never be ratcheted by the chandelier trail).
-    The protection is therefore a SEPARATE stop submitted after the fill —
-    if anyone ever puts order_class on the entry, this fails."""
+def test_a_notional_entry_never_carries_an_order_class(api, monkeypatch):
+    """DESIGN CONTRACT, still binding on the FALLBACK path.
+
+    Alpaca rejects bracket/OCO/OTO alongside `notional`, and cannot PATCH a notional
+    order — so a notional entry's stop could never be ratcheted by the chandelier
+    trail even if it were accepted. Protection on this path is therefore a SEPARATE
+    stop submitted after the fill.
+
+    CONTRACT NARROWED 2026-07-19: this was previously asserted of EVERY entry,
+    because every entry was notional. Whole-share entries can and now do carry an
+    OTO stop leg — see test_a_whole_share_entry_rests_with_its_stop_attached. The
+    assertion below still governs whenever the notional fallback is taken (a name
+    priced too high for >=4 whole shares, or a proposal missing its entry ceiling
+    or plan stop).
+    """
     entry_buy(api, monkeypatch)
     entry = next(b for b in api.submits if b["side"] == "buy")
-    assert "order_class" not in entry
-    assert "take_profit" not in entry and "stop_loss" not in entry
-    assert entry["type"] == "market" and "notional" in entry
+    if "notional" in entry:
+        assert "order_class" not in entry
+        assert "take_profit" not in entry and "stop_loss" not in entry
+        assert entry["type"] == "market"
+    else:
+        # took the whole-share path; that shape is asserted in its own test
+        assert entry["type"] == "limit" and entry["order_class"] == "oto"
 
 
 def test_filled_buy_arms_a_resting_stop_at_the_plan_level(api, monkeypatch):

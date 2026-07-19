@@ -558,9 +558,7 @@ def place_order(order: dict) -> dict:
 
     if action == "BUY":
         notional = round(_f(order.get("position_size_usd")), 2)
-        body = {"symbol": ticker, "side": "buy", "type": "market",
-                "time_in_force": "day", "notional": f"{notional:.2f}",
-                "client_order_id": order_id}
+        body = _buy_body(ticker, notional, order, order_id)
     elif action == "SELL_TO_CLOSE":
         # STAND THE RESTING STOP DOWN FIRST. A resting sell stop HOLDS the
         # shares it covers (qty_available -> the uncovered tail), so without
@@ -1173,6 +1171,69 @@ def _await_shares_released(ticker: str, timeout_s: float = 6.0,
     print(f"  !! {ticker}: shares still held {timeout_s:.0f}s after stop stand-down "
           f"— sell would be UNDERSIZED; refusing to size against a partial")
     return False
+
+
+# Below this share count the whole-share rounding error is too large to accept, so
+# the entry falls back to a notional market order. At a ~$1,400 position (1% risk /
+# 7% stop on this book) 4 shares means <=12% granularity, which covers 69% of the
+# universe; the remainder are names above ~$350 where 1-3 shares would be 25-50% off
+# target, and three names above $1,600 that a whole-share order could not buy at all.
+MIN_WHOLE_SHARES_FOR_LIMIT = 4
+
+
+def _buy_body(ticker: str, notional: float, order: dict, order_id: str) -> dict:
+    """Entry order body — a resting GTC limit with an attached stop when possible.
+
+    WHY TWO SHAPES. Alpaca's fractional/notional orders are time_in_force=DAY ONLY
+    and accept no order_class, so a notional entry can neither rest overnight nor
+    carry a broker-managed stop. A WHOLE-SHARE qty order can do both. That single
+    difference decides four things at once:
+
+      * the entry executes when price reaches the level, with NO run in progress,
+        no local watcher and no polling latency — the broker does it;
+      * `order_class: "oto"` attaches the protective stop AT ENTRY, armed by the
+        exchange, so there is no arming race and no window where a filled position
+        is unprotected;
+      * GTC means that stop survives overnight and weekends for the ENTIRE position,
+        with no fractional remainder left uncovered;
+      * entry_price_max is enforced by the exchange rather than by our own guard —
+        which is worth noting, because that guard read a key nobody set and had
+        never once fired.
+
+    OTO rather than `bracket` deliberately: a bracket demands a take-profit leg, and
+    targets in this system are explicitly milestones, not tripwires ("holding past it
+    is allowed and encouraged"). A binding take-profit would contradict that and cap
+    the right tail the strategy depends on.
+
+    Falls back to today's notional market order below MIN_WHOLE_SHARES_FOR_LIMIT, so
+    high-priced names stay tradeable. The chosen shape is recorded on the order so a
+    position is never ambiguous about what is protecting it.
+    """
+    limit = _f(order.get("entry_price_max"))
+    stop = _f(((order.get("plan") or {}).get("stop_loss")))
+    shares = int(notional // limit) if (limit and limit > 0) else 0
+
+    if (limit and stop and 0 < stop < limit
+            and shares >= MIN_WHOLE_SHARES_FOR_LIMIT):
+        order["entry_mode"] = "whole_share_limit_oto"
+        order["entry_shares"] = shares
+        return {
+            "symbol": ticker, "side": "buy", "type": "limit",
+            "time_in_force": "gtc", "qty": str(shares),
+            "limit_price": f"{limit:.2f}",
+            "order_class": "oto",
+            "stop_loss": {"stop_price": f"{stop:.2f}"},
+            "client_order_id": order_id,
+        }
+
+    why = ("no entry_price_max" if not limit
+           else "no plan stop" if not stop
+           else f"only {shares} whole share(s) at {limit:.2f}")
+    order["entry_mode"] = "notional_market"
+    order["entry_fallback_reason"] = why
+    return {"symbol": ticker, "side": "buy", "type": "market",
+            "time_in_force": "day", "notional": f"{notional:.2f}",
+            "client_order_id": order_id}
 
 
 def _sell_qty(ticker: str, sell_fraction) -> float | None:
