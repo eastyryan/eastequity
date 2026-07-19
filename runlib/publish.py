@@ -227,12 +227,32 @@ def redeploy_dashboard() -> None:
                 print("  data pushed - Vercel deploying")
                 return
             print(f"  push rejected (attempt {attempt + 1}/3), rebasing...")
-            rb = subprocess.run(["git", "pull", "--rebase", "origin", "main"],
+            # --autostash is REQUIRED, not a nicety. A trading run writes several
+            # tracked files that are deliberately NOT in the add-list above
+            # (data/universe.json, data/earnings_calendar.json,
+            # data/discovery_screen.json, data/fundamental_screen.json,
+            # data/universe_history.jsonl, data/cache/*), so the working tree is
+            # ALWAYS dirty at this point. Plain `git pull --rebase` refuses outright
+            # with "cannot pull with rebase: You have unstaged changes", the abort
+            # below fires, and the dashboard silently goes stale — every single time
+            # origin has moved, which with the relay and Actions pushing is most
+            # runs. Reproduced on the 2026-07-19 dry run.
+            #
+            # Note this is autostash WITHOUT the `git reset --hard` fallback that
+            # scripts/relay_data.sh used to carry. The reset is what destroyed
+            # uncommitted work; stashing and popping around a rebase is the ordinary,
+            # safe remedy and is what lets a dirty tree rebase at all.
+            rb = subprocess.run(["git", "pull", "--rebase", "--autostash",
+                                 "origin", "main"],
                                 cwd=ROOT, capture_output=True, text=True, timeout=120)
             if rb.returncode != 0:
                 subprocess.run(["git", "rebase", "--abort"], cwd=ROOT,
                                capture_output=True, text=True)
-                print(f"  REBASE FAILED (site going stale): {rb.stderr[-300:]}")
+                # A local commit exists that was never pushed. Say so plainly: the
+                # stale site is the visible symptom, the unpushed commit is the
+                # thing that will surprise the next run.
+                print(f"  REBASE FAILED — local commit is UNPUSHED and the site is "
+                      f"stale; resolve by hand: {rb.stderr[-300:]}")
                 return
         print(f"  PUSH FAILED after retries (site going stale): {r.stderr[-300:]}")
     except Exception as e:
