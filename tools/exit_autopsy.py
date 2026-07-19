@@ -233,10 +233,104 @@ def _compact_autopsy(rec: dict) -> dict:
     }
 
 
-def grade_exit_autopsy(record: dict) -> dict:
+def _lookup_atr_pct(ticker: str) -> float | None:
+    """ATR as a fraction of price for `ticker`, from the freshest bundle. None if unknown.
+
+    Fail-safe on purpose: a None here must never resolve to a favourable grade.
+    See grade_exit_autopsy for why that direction matters.
+    """
+    if not ticker:
+        return None
+    try:
+        from runlib.capabilities import _newest_context
+        ctx = _newest_context() or {}
+    except Exception:
+        return None
+    t = str(ticker).upper()
+    try:
+        # Preferred: the same ATR map the trailing stop and volatility floor use.
+        atr_map = (ctx.get("universe_scan") or {}).get("atr_by_ticker") or {}
+        raw = atr_map.get(t)
+        if raw is not None:
+            v = float(raw)
+            if v > 0:
+                # Map may hold either a fraction (0.04) or a percent (4.0).
+                return v / 100.0 if v > 1.0 else v
+        # Fallback: stop_engineering's floor is max(1x ATR, 0.5x expected move),
+        # so it is an UPPER bound on 1 ATR — using it makes the noise-band test
+        # stricter, never laxer, which is the safe direction for a grader.
+        floors = (ctx.get("stop_engineering") or {}).get("floors") or {}
+        f = (floors.get(t) or {}).get("min_stop_distance_pct")
+        if f is not None:
+            v = float(f)
+            if v > 0:
+                return v / 100.0 if v > 1.0 else v
+    except Exception:
+        return None
+    return None
+
+
+def _stop_geometry(rec: dict) -> dict:
+    """Measured facts about how a stop exit actually went. All optional-safe."""
+    def _f(v):
+        try:
+            return float(v) if v is not None else None
+        except (TypeError, ValueError):
+            return None
+
+    plan = rec.get("entry_plan") if isinstance(rec.get("entry_plan"), dict) else {}
+    entry = _f(rec.get("avg_cost")) or _f(plan.get("entry_price_max"))
+    stop = _f(plan.get("stop_loss"))
+    fill = _f(rec.get("fill_price"))
+    out: dict = {}
+    if entry and stop and entry > 0 and stop < entry:
+        out["stop_distance_pct"] = round((entry - stop) / entry, 4)
+    if stop and fill and stop > 0:
+        # Positive = filled BELOW the stop, i.e. price gapped through it.
+        out["gap_through_pct"] = round((stop - fill) / stop, 4)
+    if entry and fill and entry > 0:
+        out["realized_loss_pct"] = round((fill - entry) / entry, 4)
+    sd, rl = out.get("stop_distance_pct"), out.get("realized_loss_pct")
+    if sd and rl is not None and sd > 0:
+        # How many PLANNED risk units the loss actually cost. >1 means the stop
+        # did not hold the line it was sized against.
+        out["realized_risk_multiple"] = round(abs(rl) / sd, 2)
+    return out
+
+
+def grade_exit_autopsy(record: dict, *, atr_pct: float | None = None) -> dict:
     """Deterministic grade for a system_stub autopsy (no LLM).
 
     Returns grade fields to merge into the record + a binding lesson string.
+
+    THE BUG THIS BRANCH USED TO HAVE (audited 2026-07-19)
+    -----------------------------------------------------
+    A stop exit at a loss was graded `process_win` whenever `plan.stop_loss` was
+    merely PRESENT, with the comment "We don't have ATR here". The only route to
+    `process_fail` was having no recorded stop at all — which the validator already
+    makes impossible. The branch was therefore unfalsifiable: every stopped-out
+    loss became a process win.
+
+    Live consequence, the real DELL record:
+        entry 450.67 -> stop 408.00 -> filled 389.75
+        stop distance 9.5%, GAPPED THROUGH by 4.5%, realized -13.5% = 1.43x the
+        planned risk, -1.43R
+    graded: process_win, "risk management worked". That lesson then propagated
+    verbatim into concept memory. Both of this book's closed trades were losses
+    and both were graded process wins.
+
+    Now the grade is earned from measured geometry:
+      * stop inside the volatility noise band  -> process_fail (you were stopped
+        by an ordinary day, not a broken thesis)
+      * price gapped through the stop, or the loss materially exceeded planned
+        risk                                    -> mixed (the stop did not hold
+        the line it was sized against; that is a risk-model miss, not a win)
+      * ATR unknown, so the noise-band test could not run
+                                                -> mixed, explicitly unverified
+      * stop honoured near its level for about the planned risk -> process_win
+
+    ATR UNKNOWN MUST NOT MEAN WIN. That is the whole shape of the original bug:
+    an unrunnable check resolved in the graded party's favour.
     """
     rec = record if isinstance(record, dict) else {}
     forced = bool(rec.get("forced"))
@@ -257,23 +351,69 @@ def grade_exit_autopsy(record: dict) -> dict:
     process = "mixed"
     lesson = ""
 
+    geom: dict = {}
     if forced and str(reason).startswith("stop"):
         tags.append("stop_exit")
         if pnl_f is not None and pnl_f < 0:
-            # Stop loss working as designed is process_win if stop was outside noise
-            # We don't have ATR here — mark as process_win_risk_managed if plan had stop
-            if plan.get("stop_loss") is not None:
-                process = "process_win"
-                lesson = (
-                    f"{rec.get('ticker')}: stop enforced as planned — risk management "
-                    f"worked (loss ${pnl_f:.0f}). Review if stop was inside noise band."
-                )
-            else:
+            if plan.get("stop_loss") is None:
                 process = "process_fail"
                 lesson = (
                     f"{rec.get('ticker')}: stop exit without a recorded plan stop — "
                     "plan integrity failure."
                 )
+            else:
+                tkr = rec.get("ticker")
+                geom = _stop_geometry(rec)
+                atr = atr_pct if atr_pct is not None else _lookup_atr_pct(tkr)
+                sd = geom.get("stop_distance_pct")
+                gap = geom.get("gap_through_pct")
+                mult = geom.get("realized_risk_multiple")
+
+                inside_band = (atr is not None and sd is not None and sd < atr)
+                gapped = (gap is not None and gap > 0.01)
+                over_risk = (mult is not None and mult > 1.25)
+
+                if inside_band:
+                    process = "process_fail"
+                    tags.append("stop_inside_noise_band")
+                    lesson = (
+                        f"{tkr}: stop was {sd:.1%} below entry against ~{atr:.1%} ATR — "
+                        f"INSIDE the noise band. An ordinary session took you out, not a "
+                        f"broken thesis (loss ${pnl_f:.0f}). Size stops from volatility, "
+                        f"not from the risk budget you wish you had."
+                    )
+                elif gapped or over_risk:
+                    process = "mixed"
+                    tags.append("stop_gapped_through")
+                    parts = [f"{tkr}: stop honoured but it did not hold the line it was "
+                             f"sized against"]
+                    if sd is not None:
+                        parts.append(f"planned risk {sd:.1%}")
+                    if gap is not None and gap > 0:
+                        parts.append(f"gapped {gap:.1%} through the stop")
+                    if mult is not None:
+                        parts.append(f"realized {mult:.2f}x planned risk")
+                    parts.append(f"loss ${pnl_f:.0f}")
+                    lesson = ("; ".join(parts) +
+                              ". Stops do not fill at the stop — this is exactly why "
+                              "portfolio heat is gap-adjusted. Widen the gap assumption "
+                              "on names that move like this, or size smaller.")
+                elif atr is None:
+                    process = "mixed"
+                    tags.append("noise_band_unverified")
+                    lesson = (
+                        f"{tkr}: stop enforced as planned (loss ${pnl_f:.0f}), but ATR "
+                        f"was unavailable so the noise-band check could NOT run. Not "
+                        f"scored as a process win on an unverifiable stop."
+                    )
+                else:
+                    process = "process_win"
+                    tags.append("stop_outside_noise_band")
+                    lesson = (
+                        f"{tkr}: stop at {sd:.1%} sat outside the ~{atr:.1%} noise band "
+                        f"and filled near its level — risk management worked as designed "
+                        f"(loss ${pnl_f:.0f})."
+                    )
         else:
             process = "mixed"
             lesson = f"{rec.get('ticker')}: forced stop with non-negative PnL — check fill."
@@ -324,17 +464,24 @@ def grade_exit_autopsy(record: dict) -> dict:
     else:
         tags.append("missing_invalidators_on_plan")
 
+    grade = {
+        "process": process,  # process_win | process_fail | mixed
+        "tags": tags,
+        "graded_by": "deterministic_v2_atr",
+        "graded_at": datetime.now(timezone.utc).isoformat(),
+    }
+    if geom:
+        # Show the working. A grade whose inputs are not visible cannot be argued
+        # with, and this branch spent its whole life unfalsifiable.
+        grade["stop_geometry"] = geom
     return {
         "status": "graded",
         "needs_brain_grade": False,
-        "brain_grade": {
-            "process": process,  # process_win | process_fail | mixed
-            "tags": tags,
-            "graded_by": "deterministic_v1",
-            "graded_at": datetime.now(timezone.utc).isoformat(),
-        },
+        "brain_grade": grade,
         "lesson": lesson[:400],
-        "binding": process == "process_fail",  # fails become binding cautions
+        # Gap-throughs bind too: "the stop did not hold the line it was sized
+        # against" is a lesson worth carrying forward, not a shrug.
+        "binding": process == "process_fail" or "stop_gapped_through" in tags,
     }
 
 
