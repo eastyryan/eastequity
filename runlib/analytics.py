@@ -67,9 +67,17 @@ def build_health() -> dict:
     bundle_alarm = bool(bundle_age_h is not None and
                         (bundle_age_h > 2 if market_hours else bundle_age_h > 8))
     learning = learning_loop_freshness()
+    try:
+        spend = brain_call_report(days=1)
+        dead = run_produced_nothing()
+    except Exception:
+        spend, dead = {}, {}
     status = "ok"
     if missed > 1:
         status = "DEGRADED - scheduled runs are being missed"
+    elif dead.get("empty"):
+        # A run that completes and says nothing used to count as healthy.
+        status = f"DEGRADED - {dead['note']}"
     elif bundle_alarm:
         status = f"WARNING - data bundle is {bundle_age_h}h old (gatherers may be down)"
     elif learning.get("stale"):
@@ -82,8 +90,125 @@ def build_health() -> dict:
         "bundle_age_hours": bundle_age_h,
         "last_scheduled_run_utc": last_ts,
         "learning_loop": learning,
+        "brain_spend_today": spend,
+        "last_brain_call": dead,
         "status": status,
     }
+
+
+def brain_call_report(days: int = 1) -> dict:
+    """Spend, latency and research behaviour from journal/brain_calls/.
+
+    Before 2026-07-19 nothing recorded any of this: the system made 15-30 Opus
+    sessions a day and the only cost control was a 12-runs/day cap, which cannot
+    tell a 4k-token run from a 400k one.
+
+    Three things worth watching, and each answers a question that was previously
+    unanswerable:
+
+      * cost / tokens - what a day of this actually costs.
+      * cache_read vs cache_creation - the 7 daily slots share ~95% identical
+        context, but they are hours apart and the prompt cache does not live that
+        long, so most of it is re-created rather than re-read. The CLI CAN reuse a
+        session (-c/--continue), but that would carry conversation state between
+        runs and CLAUDE.md's whole design is a brain invoked fresh each cycle. So
+        this is measured, not "fixed": the number is here to make that trade-off
+        an informed decision rather than an assumption.
+      * buys_without_web_search - CLAUDE.md declares "WebSearch MANDATORY before
+        any BUY" and nothing had ever verified it. usage.server_tool_use gives the
+        count, so a brain call that proposed while searching nothing is now
+        visible. Reported, never enforced: this is evidence for a human, and a
+        run legitimately searches zero times when it proposes nothing.
+    """
+    from datetime import timedelta as _td
+    out = {"days": days, "n_calls": 0, "total_cost_usd": 0.0,
+           "input_tokens": 0, "output_tokens": 0,
+           "cache_read_tokens": 0, "cache_creation_tokens": 0,
+           "failures": 0, "timeouts": 0, "slowest_s": None,
+           "web_search_requests": 0, "calls_with_zero_search": 0,
+           "models": []}
+    models: set = set()
+    slowest = 0.0
+    for delta in range(days):
+        day = (datetime.now(timezone.utc) - _td(days=delta)).date().isoformat()
+        f = ROOT / "journal" / "brain_calls" / f"{day}.jsonl"
+        if not f.exists():
+            continue
+        for line in f.read_text().splitlines():
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            out["n_calls"] += 1
+            out["total_cost_usd"] += float(rec.get("total_cost_usd") or 0)
+            for k, j in (("input_tokens", "input_tokens"),
+                         ("output_tokens", "output_tokens"),
+                         ("cache_read_tokens", "cache_read_input_tokens"),
+                         ("cache_creation_tokens", "cache_creation_input_tokens")):
+                out[k] += int(rec.get(j) or 0)
+            if not rec.get("ok"):
+                out["failures"] += 1
+                if "timeout" in str(rec.get("error") or ""):
+                    out["timeouts"] += 1
+            slowest = max(slowest, float(rec.get("elapsed_s") or 0))
+            ws = rec.get("web_search_requests")
+            if ws is not None:
+                out["web_search_requests"] += int(ws)
+                if int(ws) == 0 and str(rec.get("call", "")).startswith("brain"):
+                    out["calls_with_zero_search"] += 1
+            for m in (rec.get("models_served_by") or []):
+                models.add(str(m))
+    out["total_cost_usd"] = round(out["total_cost_usd"], 4)
+    out["slowest_s"] = slowest or None
+    out["models"] = sorted(models)
+    tot_cache = out["cache_read_tokens"] + out["cache_creation_tokens"]
+    out["cache_hit_pct"] = (round(100 * out["cache_read_tokens"] / tot_cache, 1)
+                            if tot_cache else None)
+    return out
+
+
+def run_produced_nothing(*, min_response_chars: int = 400) -> dict:
+    """Did the most recent brain call complete but say essentially nothing?
+
+    build_health counts MISSED runs and bundle age. A run that completes, parses
+    nothing, and publishes the fallback "did not include a machine-readable order
+    block" string increments `completed` and reports status ok. heartbeat.yml
+    cites the plan-mode parse bug that "ran for DAYS unnoticed" as its reason for
+    existing — and the check as built would not have caught it, because what it
+    watches is the ABSENCE of runs, not the EMPTINESS of them.
+
+    response_chars from the brain-call journal is the cheap signal: a successful
+    call that returned almost nothing is a semantically dead run.
+    """
+    out = {"checked": False, "empty": False, "response_chars": None}
+    from datetime import timedelta as _td
+    for delta in (0, 1):
+        day = (datetime.now(timezone.utc) - _td(days=delta)).date().isoformat()
+        f = ROOT / "journal" / "brain_calls" / f"{day}.jsonl"
+        if not f.exists():
+            continue
+        rows = []
+        for line in f.read_text().splitlines():
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if rec.get("ok") and str(rec.get("call", "")).startswith("brain"):
+                rows.append(rec)
+        if rows:
+            last = rows[-1]
+            n = int(last.get("response_chars") or 0)
+            out.update(checked=True, response_chars=n,
+                       empty=n < min_response_chars,
+                       run_id=last.get("run_id"), ts=last.get("ts"))
+            if out["empty"]:
+                out["note"] = (
+                    f"last brain call returned only {n} characters — the run "
+                    f"completed but produced almost nothing. A parse failure or a "
+                    f"truncated answer looks identical to a deliberate quiet day "
+                    f"in the run counters.")
+            return out
+    return out
 
 
 def learning_loop_freshness(*, stale_after_days: int = 4) -> dict:
