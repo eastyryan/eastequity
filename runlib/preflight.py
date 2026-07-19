@@ -215,6 +215,18 @@ def preflight(cfg: dict, run_id: str, news_only: bool = False,
         return "KILL_SWITCH file present — no runs until it is removed"
     if not news_only and datetime.now().strftime("%a") not in cfg["schedule"]["run_days"]:
         return "not a configured run day (weekend/holiday guard)"
+    # The weekday check above cannot see HOLIDAYS -- its own message claimed a holiday
+    # guard that did not exist. On Christmas or Thanksgiving a full trading cycle ran,
+    # burned budget and researched against the prior session. Fail-SAFE: a calendar we
+    # could not fetch answers "assumed", and an assumption never halts a run.
+    if not news_only:
+        try:
+            from tools.market_calendar import session as _session
+            _s = _session()
+            if _s["source"] == "calendar" and not _s["is_trading_day"]:
+                return "market holiday (NYSE calendar) - no trading session today"
+        except Exception:
+            pass
     # Usage budget: hard cap on SCHEDULED runs per day so the automation can never
     # drain the subscription's usage pool. Manual (user-initiated) runs are marked
     # in the journal and neither count toward nor are blocked by the budget.

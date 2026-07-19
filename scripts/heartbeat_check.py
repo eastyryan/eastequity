@@ -58,7 +58,18 @@ def assess() -> dict:
     # Key names come from runlib.analytics.build_health() — verified against real
     # output, not assumed. A mis-named key here would make the alarm silently never
     # fire, which is precisely the failure class this script exists to end.
+    # A holiday has no scheduled slots, so counting them as missed would page you
+    # every Thanksgiving and train you to ignore the alarm.
+    try:
+        from tools.market_calendar import session as _session
+        _s = _session()
+        holiday = _s["source"] == "calendar" and not _s["is_trading_day"]
+    except Exception:
+        holiday = False
+
     missed = health.get("missed")
+    if holiday and isinstance(missed, int) and missed > 0:
+        missed = 0
     if isinstance(missed, int) and missed > MAX_MISSED_SLOTS:
         reasons.append(
             f"{missed} scheduled run(s) missed today "
