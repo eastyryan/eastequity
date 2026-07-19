@@ -21,7 +21,11 @@ permissions:
   contents: write
 
 concurrency:
-  group: gather-data
+  # SHARED across every workflow that writes main. Per-workflow groups only
+  # serialize a workflow against ITSELF, so gather-data, execute-orders and
+  # stop-watch could all push simultaneously — which is what produced the
+  # rejected-push / rebase churn. They now queue instead of colliding.
+  group: main-writer
   cancel-in-progress: false
 
 jobs:

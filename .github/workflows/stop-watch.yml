@@ -1,0 +1,91 @@
+name: Stop watch
+
+# POLLED STOP ENFORCEMENT, IN THE CLOUD.
+#
+# This ran only on one Mac, via scripts/push_live_prices.sh. The reasoning at the
+# time was sound: an ephemeral runner that executes a fill reaches Alpaca while the
+# ledger record dies with the sandbox — the orphan-position failure mode, where a
+# real broker fill has no journal line, no closed trade, and leaves a position
+# exit_guard re-fires on forever.
+#
+# That objection no longer holds. Three things closed it:
+#   * ingest_out_of_band_fills() sweeps the broker's closed orders and replays any
+#     fill the ledger has not seen, through the normal _apply_fill / exit_autopsy
+#     path — so a fill can no longer be lost by the process that made it;
+#   * _apply_fill now refuses to book the same BROKER order id twice, which is the
+#     one key that is identical across checkouts, so two nodes applying the same
+#     fill produce one record;
+#   * this job COMMITS the ledger and journal, so the record leaves the sandbox.
+#
+# What it costs to keep it local instead: with the laptop asleep there is NO polled
+# stop enforcement between cycles at all, and DAY stops — every sub-1-share position,
+# and the fractional tail of any notional entry — expire at the close and are never
+# re-armed. Whole-share entries now carry a GTC stop the exchange holds, so this is a
+# narrower gap than it was, but it is a gap that depends on a lid being open.
+
+on:
+  schedule:
+    # Every 10 minutes through the session. GitHub coalesces */5 under load anyway
+    # (observed ~hourly on 2026-07-15), so asking for */5 buys nothing but queue
+    # contention with the price feed this job depends on.
+    - cron: "*/10 13-21 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  # SHARED with every other workflow that writes main. Per-workflow groups only
+  # serialize a workflow against ITSELF; they did nothing about gather-data,
+  # execute-orders and this job pushing simultaneously, which is what produced the
+  # rejected-push / rebase churn. cancel-in-progress stays false: a stop check must
+  # queue, never be cancelled.
+  group: main-writer
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - run: pip install -r requirements.txt
+
+      - name: Pull the latest live prices
+        # Published by live-prices.yml to the orphan live-data branch. Without this
+        # the runner's checkout carries whatever price was committed to main last,
+        # which the trade-age gate would reject anyway — correctly, but pointlessly.
+        run: |
+          git fetch origin live-data --depth=1 || exit 0
+          git checkout origin/live-data -- state/live_prices.json || true
+
+      - name: Enforce stops and re-arm protective orders
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+        run: python -m scripts.stop_watch
+
+      - name: Commit the ledger if anything changed
+        run: |
+          git config user.name "ee-stopwatch"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A state/portfolio.json journal data/cache/market_calendar.json 2>/dev/null || true
+          git diff --cached --quiet && { echo "no ledger change"; exit 0; }
+          git commit -m "Stop watch: enforce stops and re-arm protective orders [vercel skip]"
+          # Rebase-retry with --autostash: this runner writes tracked files outside
+          # the add-list above, so a plain pull --rebase would refuse on a dirty tree.
+          for i in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase --autostash origin main || { git rebase --abort || true; }
+            sleep $((2 ** i))
+          done
+          echo "PUSH FAILED after retries — ledger change is UNPUSHED"
+          exit 1

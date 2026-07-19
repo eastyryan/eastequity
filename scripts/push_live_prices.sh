@@ -42,6 +42,11 @@ print('refreshed', r.get('n'), 'quotes as of', r.get('as_of'))" || exit 0
   # sandbox — the orphan-position failure mode. Here the ledger is on disk and the
   # next local run reads it. Cloud stop-watching needs the same out-of-band fill
   # ingestion path that broker-resting stops need.
+  # Still runs locally when the laptop happens to be awake, but is no longer
+  # the ONLY place stop enforcement happens: .github/workflows/stop-watch.yml
+  # runs the same module every 10 minutes in the cloud and commits the ledger.
+  # Both nodes are safe to run concurrently — _apply_fill refuses to book the
+  # same broker order id twice, which is the one key identical across checkouts.
   .venv/bin/python -W ignore -m scripts.stop_watch || true
   BLOB=$(git hash-object -w state/live_prices.json) || exit 0
   SUBTREE=$(printf '100644 blob %s\tlive_prices.json\n' "$BLOB" | git mktree)
