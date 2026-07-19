@@ -45,16 +45,16 @@ def buy(ticker, size=900.0, entry=450.0, stop=400.0, target=560.0):
         "risk_reward_ratio": 2.2,
         "thesis": "Clean swing setup with a real catalyst and rising estimates.",
         "macro_context": "Regime supports adding measured long exposure.",
-        "variant_perception": "Consensus sees a fair multiple; I see mispriced growth because estimates lag; resolves at the next print.",
+        "variant_perception": "Consensus models a flat multiple into FY2027 and the sell-side mean target sits 4% below spot; I think estimates lag the order book by a full quarter. The mechanism is that backlog conversion is booked on shipment, so the revenue already contracted does not appear until the next print. Resolves at the Q3 earnings report on 2026-08-27.",
         "thesis_invalidators": {"invalidating_print": "EPS guide cut or estimate cuts >5%", "invalidating_structure": "Close below the 50-DMA on rising volume", "time_box": "If no progress toward thesis in 25 trading days, exit"},
         # Canonical driver for THIS ticker. A hardcoded label made every fixture
         # a demand_driver_mismatch once the canonical cross-check landed.
         "demand_driver": driver_for_ticker(ticker),
         "catalysts": ["Earnings in ~3 weeks"],
         "risk_map": "Stop below recent structure; thesis invalid if sector leadership fails.",
-        "scenarios": {"base": "Thesis plays out over the hold window.",
-                      "bull": "Estimates re-accelerate and multiple expands.",
-                      "bear": "Macro tightens and the name mean-reverts to support."},
+        "scenarios": {"bull": {"price": entry * 1.25, "prob": 0.3},
+                      "base": {"price": entry * 1.12, "prob": 0.5},
+                      "bear": {"price": entry * 0.92, "prob": 0.2}},
     }
 
 

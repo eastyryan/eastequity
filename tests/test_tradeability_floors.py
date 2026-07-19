@@ -39,7 +39,9 @@ def buy(ticker="NVDA", size=900.0, entry=100.0, stop=92.0, target=120.0):
         "demand_driver": driver_for_ticker(ticker),
         "catalysts": ["Earnings in ~3 weeks"],
         "risk_map": "Stop below recent structure; invalid if leadership fails.",
-        "scenarios": {"base": "Plays out.", "bull": "Expands.", "bear": "Reverts."},
+        "scenarios": {"bull": {"price": entry * 1.25, "prob": 0.3},
+                      "base": {"price": entry * 1.12, "prob": 0.5},
+                      "bear": {"price": entry * 0.92, "prob": 0.2}},
     }
 
 

@@ -81,7 +81,7 @@ def test_heat_cap_refuses_when_a_position_is_unverifiable(cfg):
          "position_size_usd": 200, "entry_price_max": 100.0, "stop_loss": 92.0,
          "target_price": 115.0, "holding_horizon_days": 30, "confidence": 0.72,
          "risk_reward_ratio": 2.0, "thesis": "x" * 80,
-         "demand_driver": "ai_compute_gpu", "variant_perception": "y" * 120,
+         "demand_driver": "ai_compute_gpu", "variant_perception": "Consensus models a flat multiple into FY2027 and the sell-side mean target sits 4% below spot; I think estimates lag the order book by a full quarter. The mechanism is that backlog conversion is booked on shipment, so the revenue already contracted does not appear until the next print. Resolves at the Q3 earnings report on 2026-08-27." * 120,
          "risk_map": "z" * 60, "macro_context": "m" * 40,
          "catalysts": ["dated catalyst"],
          "scenarios": {"bull": {"price": 115, "prob": 0.3},

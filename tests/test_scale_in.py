@@ -88,7 +88,7 @@ def _prop(**kw):
          "position_size_usd": 400, "entry_price_max": 460.0, "stop_loss": 415.0,
          "target_price": 555.0, "holding_horizon_days": 30, "confidence": 0.7,
          "risk_reward_ratio": 2.1, "thesis": "t", "macro_context": "m", "catalysts": ["c"],
-         "variant_perception": "Consensus sees X; I see Y because Z; resolves at earnings.",
+         "variant_perception": "Consensus models a flat multiple into FY2027 and the sell-side mean target sits 4% below spot; I think estimates lag the order book by a full quarter. The mechanism is that backlog conversion is booked on shipment, so the revenue already contracted does not appear until the next print. Resolves at the Q3 earnings report on 2026-08-27.",
          "risk_map": "Guide cut or break of 50-DMA kills the trade.",
          "scenarios": {"bull": {"price": 520, "prob": 0.3}, "base": {"price": 500, "prob": 0.45},
                        "bear": {"price": 400, "prob": 0.25}},

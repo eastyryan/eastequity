@@ -24,7 +24,7 @@ def buy(ticker="NVDA", size=1000.0, entry=100.0, stop=92.0, target=120.0,
          "scenarios": {"bull": {"price": 125, "prob": 0.3},
                        "base": {"price": 115, "prob": 0.5},
                        "bear": {"price": 90, "prob": 0.2}},
-         "variant_perception": "Consensus sees a fair multiple; I see mispriced "
+         "variant_perception": "Consensus models a flat multiple into FY2027 and the sell-side mean target sits 4% below spot; I think estimates lag the order book by a full quarter. The mechanism is that backlog conversion is booked on shipment, so the revenue already contracted does not appear until the next print. Resolves at the Q3 earnings report on 2026-08-27."
                                "growth because estimates lag; resolves at the next print.",
          "demand_driver": driver,
          "thesis_invalidators": {
