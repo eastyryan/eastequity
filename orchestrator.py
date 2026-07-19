@@ -662,6 +662,34 @@ def main() -> int:
         # file is not an error (fresh book) — that path yields [] above.
         risk_halts = [f"risk_halt_check_unverifiable:{e}"]
         print(f"  RISK-HALT CHECK FAILED CLOSED: {e} - new BUYs blocked this run")
+    # CAPABILITY AUDIT. Proves every load-bearing guard is wired AND fed on the
+    # production path before this run is allowed to open risk. Three days of
+    # hardening found the same shape of defect five separate times — code present,
+    # unit tests green, production either never invoking it or feeding it an empty
+    # map. Unit tests structurally cannot see that; they supply the inputs
+    # themselves. A dead capability blocks new BUYs only: exits, holds and stop
+    # enforcement are never blocked, because refusing to reduce risk is always the
+    # wrong direction.
+    try:
+        from runlib.capabilities import audit_capabilities
+        caps = audit_capabilities()
+        context["capabilities"] = caps
+        if not caps["ok"]:
+            for name in caps["dead"]:
+                print(f"  CAPABILITY DEAD: {name} — "
+                      f"{caps['results'][name]['detail']}")
+            journal.log_improvement(
+                "Capability audit FAILED: " + "; ".join(
+                    f"{n}: {caps['results'][n]['detail'][:160]}" for n in caps["dead"]),
+                run_id)
+            risk_halts = list(risk_halts) + [
+                f"capability_dead:{','.join(caps['dead'])}"]
+            print("  new BUYs blocked until every capability is live again")
+    except Exception as e:
+        # The audit failing IS a failure. An unverifiable guard and an absent one
+        # are the same thing to the position it was meant to protect.
+        risk_halts = list(risk_halts) + [f"capability_audit_unavailable:{e}"]
+        print(f"  CAPABILITY AUDIT FAILED TO RUN: {e} - new BUYs blocked")
     context["risk_halts"] = risk_halts
     if risk_halts:
         print(f"  RISK HALT ACTIVE: {risk_halts} - new BUYs blocked this run")

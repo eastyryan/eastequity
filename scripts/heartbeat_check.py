@@ -71,6 +71,20 @@ def assess() -> dict:
             f"relay bundle is {age:.1f}h old (> {MAX_BUNDLE_AGE_H}h) — the gatherers "
             f"feeding cloud runs may be dead")
 
+    # Capability audit: the same probes the run uses, surfaced out of band. A guard
+    # that quietly stops being wired is exactly what this whole alarm exists for.
+    try:
+        import sys as _sys
+        _sys.path.insert(0, str(ROOT))
+        from runlib.capabilities import audit_capabilities
+        caps = audit_capabilities()
+        if not caps["ok"]:
+            for name in caps["dead"]:
+                reasons.append(f"capability DEAD: {name} — "
+                               f"{caps['results'][name]['detail'][:160]}")
+    except Exception as e:
+        reasons.append(f"capability audit could not run: {e}")
+
     if (ROOT / "state" / "KILL_SWITCH").exists():
         # Not a failure, but it must be surfaced: a halted system looks identical to
         # a healthy idle one from the outside, and that is how a halt outlives its
