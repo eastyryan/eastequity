@@ -66,11 +66,14 @@ def build_health() -> dict:
     market_hours = weekday and 9.5 <= now_h <= 16
     bundle_alarm = bool(bundle_age_h is not None and
                         (bundle_age_h > 2 if market_hours else bundle_age_h > 8))
+    learning = learning_loop_freshness()
     status = "ok"
     if missed > 1:
         status = "DEGRADED - scheduled runs are being missed"
     elif bundle_alarm:
         status = f"WARNING - data bundle is {bundle_age_h}h old (gatherers may be down)"
+    elif learning.get("stale"):
+        status = f"WARNING - {learning['note']}"
     return {
         "as_of_et": now.isoformat(timespec="minutes"),
         "expected_runs_so_far": expected,
@@ -78,8 +81,81 @@ def build_health() -> dict:
         "missed": missed,
         "bundle_age_hours": bundle_age_h,
         "last_scheduled_run_utc": last_ts,
+        "learning_loop": learning,
         "status": status,
     }
+
+
+def learning_loop_freshness(*, stale_after_days: int = 4) -> dict:
+    """Is the proactive learning loop still producing? Days since the last lesson.
+
+    THE GAP THIS CLOSES (audited 2026-07-19). CLAUDE.md states that "every weekday
+    after the close, a dedicated STUDY SESSION researches ONE curriculum topic".
+    The scheduling for it is real — scripts/run_cycle.sh chains `--study` on the
+    weekday 17:30 slot — but across ~8 eligible weekdays only TWO sessions ever
+    ran, both on 2026-07-17 six minutes apart, and one of the two failed to parse.
+    Total yield: one lesson.
+
+    Nothing noticed. build_health counts MISSED RUNS and bundle age; a knowledge
+    base that has not grown in a week looks identical to one that is merely
+    well-curated. This is the same failure class as the rest of the audit — a loop
+    that stops producing and reports nothing — applied to the learning layer.
+
+    Deliberately NOT an error: a quiet learning loop is a warning, never something
+    that should block trading. Exits and risk reduction are never gated on it.
+    """
+    out: dict = {"stale": False, "n_lessons": None, "days_since_last_lesson": None}
+    try:
+        store = json.loads((ROOT / "data" / "knowledge_base.json").read_text())
+    except Exception:
+        out["note"] = "knowledge base unreadable — learning freshness unknown"
+        return out
+
+    entries = store.get("entries") or []
+    out["n_lessons"] = len(entries)
+
+    newest = None
+    for e in entries:
+        for key in ("learned_at", "created_at", "studied_at"):
+            raw = e.get(key)
+            if not isinstance(raw, str) or not raw:
+                continue
+            try:
+                ts = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+            except Exception:
+                continue
+            if ts.tzinfo is None:
+                ts = ts.replace(tzinfo=timezone.utc)
+            newest = ts if newest is None or ts > newest else newest
+            break
+    # Fall back to the store's own stamp so a lesson missing learned_at (the
+    # current single entry has learned_at: None) does not read as "never ran".
+    if newest is None:
+        try:
+            raw = store.get("updated_at")
+            newest = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+            if newest.tzinfo is None:
+                newest = newest.replace(tzinfo=timezone.utc)
+            out["basis"] = "store_updated_at"
+        except Exception:
+            newest = None
+
+    if newest is None:
+        out["note"] = ("no dated lesson in the knowledge base — the study loop has "
+                       "produced nothing datable")
+        out["stale"] = bool(entries)
+        return out
+
+    days = round((datetime.now(timezone.utc) - newest).total_seconds() / 86400, 1)
+    out["days_since_last_lesson"] = days
+    out["last_lesson_utc"] = newest.isoformat()
+    if days > stale_after_days:
+        out["stale"] = True
+        out["note"] = (
+            f"learning loop quiet: no new lesson in {days:.0f} days "
+            f"({len(entries)} total). CLAUDE.md promises a weekday study session; "
+            f"check that the scheduler is loaded and that --study is parsing.")
+    return out
 
 
 def _universe_audit_summary() -> dict | None:
