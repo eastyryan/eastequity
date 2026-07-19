@@ -45,6 +45,11 @@ FOCUS_KEYS = (
     "guidance_ledger", "fundamental_screen", "todays_8ks", "portfolio_risk",
     "stack_cards", "financial_checklists", "concept_memory", "discovery_screen",
     "market_checkin",
+    # Wired into the bundle 2026-07-19. Omitting them here would have been the
+    # second half of the same bug: the blocks would exist in the full archive and
+    # be stripped from the slim pack the brain actually reads, so factor_map's
+    # requires_factor_response would still never reach a decision.
+    "factor_map", "portfolio_competition", "ownership_flow",
 )
 
 # Learning-related keys that get compacted into reasoning_process.learning_pack

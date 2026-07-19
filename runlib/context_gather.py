@@ -611,6 +611,46 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
     except Exception as e:
         portfolio_risk = {"status": "error", "reason": str(e)[:150]}
 
+    # Factor map / seat competition / ownership flow.
+    #
+    # All three modules (1,445 lines, fully tested) existed and were called by
+    # NOTHING in production — `git log -S build_factor_map -- runlib/context_gather.py`
+    # returns no commits, so their bundle wiring only ever lived in an uncommitted
+    # working tree and a `git reset --hard` erased it. The consequence was not merely
+    # a missing card: `factor_map.requires_factor_response` is the trigger for the
+    # process gate that blocks new BUYs on unanswered concentration, so that gate
+    # could never fire, and the validator's factor-stack cap had no narrative
+    # counterpart for the brain to reason with.
+    print("  • factor map / seat competition / ownership flow...")
+    try:
+        from tools.demand_drivers import build_driver_map
+        _dmap = build_driver_map()
+    except Exception:
+        _dmap = {}
+    try:
+        from tools.factor_map import build_factor_map
+        _theme_cap = ((cfg.get("theme_risk") or {})
+                      .get("max_demand_driver_concentration_pct"))
+        factor_map_block = build_factor_map(
+            portfolio, driver_map=_dmap, portfolio_risk=portfolio_risk,
+            theme_cap_pct=_theme_cap)
+    except Exception as e:
+        factor_map_block = {"status": "error", "reason": str(e)[:150]}
+    try:
+        from tools.portfolio_competition import build_portfolio_competition
+        competition_block = build_portfolio_competition(
+            portfolio, scan, _dmap,
+            watchlist_tickers=[w.get("ticker") for w in (prev_watchlist() or [])
+                               if isinstance(w, dict) and w.get("ticker")])
+    except Exception as e:
+        competition_block = {"status": "error", "reason": str(e)[:150]}
+    try:
+        from tools.ownership_flow import get_ownership_flow
+        ownership_block = get_ownership_flow(
+            focus, smart_money=smart_money, options_signals=options_signals, scan=scan)
+    except Exception as e:
+        ownership_block = {"status": "error", "reason": str(e)[:150]}
+
     # The agent's own track record: what it predicted vs. what actually happened.
     closed = compute_closed_trades()
     hist_file = ROOT / "dashboard" / "data" / "equity_history.json"
@@ -881,6 +921,28 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
                     "flagged diversifier=true is worth extra attention when the book "
                     "is clustered.",
             **(portfolio_risk if isinstance(portfolio_risk, dict) else {}),
+        },
+        "factor_map": {
+            "note": "Demand-driver concentration for the CURRENT book: AI-stack %, "
+                    "shared_left_tail echo, what_kills_the_book, unwind_playbook. "
+                    "When requires_factor_response is true the run OWES a "
+                    "factor_response with a plan and actions — process_gates BLOCKS "
+                    "every new BUY until it is filed.",
+            **(factor_map_block if isinstance(factor_map_block, dict) else {}),
+        },
+        "portfolio_competition": {
+            "note": "Every open seat vs its challengers from the scan, with a "
+                    "competition_hint. Capital must re-earn its seat: on a trading "
+                    "depth with an open book, a seat_review per holding is REQUIRED "
+                    "and its absence blocks new BUYs.",
+            **(competition_block if isinstance(competition_block, dict) else {}),
+        },
+        "ownership_flow": {
+            "note": "Composite institutional-vs-retail-proxy-vs-price card per focus "
+                    "name. Read by_ticker[T].alignment and read_for_swing first. "
+                    "PROXY only — free chains carry no aggressor side, so this is "
+                    "never a standalone thesis.",
+            **(ownership_block if isinstance(ownership_block, dict) else {}),
         },
         "insider_activity": insiders,
         "partnerships": partnerships,
