@@ -45,25 +45,72 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def _newest_context() -> dict:
-    """The most recent bundle by MTIME, or {} when none exists.
+def bundle_generated_at(bundle: dict, path: Path) -> float:
+    """When this bundle's DATA was gathered — not when its file was written.
 
-    Genuinely newest, not relay-first. An earlier version preferred
-    data/cloud_context.json unconditionally and therefore probed a bundle produced
-    before the wiring it was checking — reporting factor_map dead minutes after it
-    had been verified present in a live run. A staleness bug inside the staleness
-    detector is the same failure this module exists to prevent.
+    Falls back to file mtime only when the bundle carries no parseable run_date,
+    which for a real gather it always does.
+    """
+    raw = (bundle or {}).get("run_date")
+    if isinstance(raw, str) and raw:
+        try:
+            from datetime import datetime
+            return datetime.fromisoformat(raw.replace("Z", "+00:00")).timestamp()
+        except Exception:
+            pass
+    try:
+        return path.stat().st_mtime
+    except Exception:
+        return 0.0
+
+
+def _newest_context() -> dict:
+    """The bundle whose DATA is newest, or {} when none exists.
+
+    SORTED BY CONTENT TIMESTAMP, NOT FILE MTIME — and the distinction is the whole
+    point of this function. Two earlier versions got this wrong in the same way:
+
+      v1 preferred data/cloud_context.json unconditionally, so it probed a bundle
+      produced before the wiring it was checking.
+      v2 (the mtime fix) still failed, because the relay file is DOWNLOADED long
+      after its data was gathered. Measured 2026-07-19:
+
+          data/cloud_context.json   mtime 14:25 local   run_date 06:20 UTC
+          state/context_...a0990f   mtime 12:59 local   run_date 16:59 UTC
+
+      mtime ranked the relay first. Its 06:20 content predated the 13:44 UTC commit
+      that wired factor_map, so the probe reported book_risk_bundle_blocks DEAD —
+      blocking every new BUY — while the genuinely freshest local bundle had all
+      three keys present. A file's write time is not its data's age.
+
+    A staleness bug inside the staleness detector is the exact failure this module
+    exists to prevent, so it is now pinned by tests/test_capabilities_freshness.py.
     """
     candidates = list((ROOT / "state").glob("context_2*.json"))
     relay = ROOT / "data" / "cloud_context.json"
     if relay.exists():
         candidates.append(relay)
-    for path in sorted(candidates, key=lambda f: f.stat().st_mtime, reverse=True)[:3]:
+
+    # Prefilter by mtime purely to bound how many megabyte bundles we parse — the
+    # state dir holds ~190 of them. This is SAFE as a prefilter (though not as the
+    # ranking) because a file's data can never be newer than the moment it was
+    # written: run_date <= mtime always. So the newest-content bundle is always
+    # inside the newest-mtime window, even when its rank within that window is
+    # wrong — which is exactly the relay's case.
+    recent = sorted(candidates, key=lambda f: f.stat().st_mtime, reverse=True)[:8]
+
+    loaded = []
+    for path in recent:
         try:
-            return json.loads(path.read_text())
+            data = json.loads(path.read_text())
         except Exception:
             continue
-    return {}
+        if isinstance(data, dict) and data:
+            loaded.append((bundle_generated_at(data, path), data))
+    if not loaded:
+        return {}
+    loaded.sort(key=lambda pair: pair[0], reverse=True)
+    return loaded[0][1]
 
 
 def _source_of(module_path: str, func_name: str) -> str:
