@@ -1293,6 +1293,34 @@ def _apply_fill(pending: dict, ao: dict) -> dict:
                  "slippage_bps": 0.0, "effective_slippage_pct": 0.0}
 
     state = simulated_broker._load()
+
+    # ALREADY-APPLIED GUARD. Two reconcilers run on schedule against SEPARATE
+    # checkouts of this ledger: the Actions executor (*/15 weekdays) on a fresh
+    # origin clone, and the local stop_watch tick (every 5 min) on the persistent
+    # Mac checkout. Both call run_reconcile(); neither pushes at the same moment.
+    # The three documented idempotency layers -- history ids, the persisted
+    # ingested_broker_orders set, and reconcile_runner._already_journaled -- are ALL
+    # per-checkout, and the module's own comment concedes the journal is only shared
+    # "after git syncs them". An overnight stop fill was therefore applied on both
+    # nodes and merged on rebase into TWO history records for one broker order.
+    #
+    # That is not merely cosmetic. ledger_expected_equity() sums realized P&L across
+    # SELL_TO_CLOSE rows, so a double-counted realization shifts the reconstruction;
+    # past sync_suspect_tolerance it trips broker_sync_suspect and refuses every new
+    # BUY until a human intervenes. Closed-trade stats are corrupted either way.
+    #
+    # The broker's order id is globally unique and identical on both nodes, so it is
+    # the one key that survives the merge. Checking it here covers every caller --
+    # reconcile, the intent executor, and out-of-band ingestion alike.
+    broker_oid = str(ao.get("id") or "")
+    if broker_oid:
+        for h in (state.get("history") or []):
+            if str(h.get("alpaca_order_id") or "") == broker_oid:
+                print(f"  (fill {broker_oid[:12]} already applied — not double-booking)")
+                state["pending_orders"].pop(pending.get("order_id"), None)
+                simulated_broker._save(state)
+                return dict(h)
+
     pre_pos = next((p for p in state.get("positions", [])
                     if str(p.get("ticker", "")).upper() == ticker), None)
 
