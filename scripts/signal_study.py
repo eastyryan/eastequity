@@ -473,11 +473,12 @@ def make_lane_signal(top_n=15):
     filter) and `sel_<lane>` (made the top 5 the brain actually sees).
     """
     from tools import signal_lanes as SL
+    from tools import technicals as TA
 
     def signal_fn(ctx):
         wpos = ctx.extra.get("weekly_pos")
         wcl = ctx.extra.get("weekly_closes")
-        wupto = None
+        wupto, k = None, 0
         if wpos:
             k = bisect.bisect_right(wpos, ctx.i)
             wupto = wcl[:k] if k else None
@@ -487,7 +488,32 @@ def make_lane_signal(top_n=15):
                                weekly_closes_upto=wupto, ticker=ctx.ticker)
         if row is None:
             return None
+        # lane_features does not carry a sector (the scanner sets it from its own
+        # ticker_sector map). cross_fn's sector-RS passes key off these.
+        row["real_sector"] = ctx.extra.get("sector")
+        row["pseudo_sector"] = ctx.extra.get("pseudo_sector")
         reaction, _read = SL.gap_hold_reaction(ctx.opens, ctx.closes, ctx.i)
+
+        # --- anchored VWAP, evaluated AT bar i ------------------------------
+        # technicals.anchored_vwap_block treats the LAST element of what it is
+        # given as "now", so it must be handed a slice ending at i. The slice is
+        # also bounded on the left: find_anchor_index looks back at most
+        # ANCHOR_MAX_SESSIONS (120) bars, so nothing older can be reached and a
+        # full-history slice would only pay to copy bars the function cannot see.
+        lo_i = max(0, ctx.i - (TA.ANCHOR_MAX_SESSIONS + 20))
+        hi_i = ctx.i + 1
+        av = TA.anchored_vwap_block(ctx.closes[lo_i:hi_i], ctx.highs[lo_i:hi_i],
+                                    ctx.lows[lo_i:hi_i], ctx.vols[lo_i:hi_i])
+        av_ok = av.get("status") == "ok"
+
+        # --- weekly structure, using only CLOSED weeks as of bar i ----------
+        wk = {}
+        if wpos and k:
+            wk = TA.weekly_structure(
+                wcl[:k],
+                (ctx.extra.get("weekly_highs") or [])[:k],
+                (ctx.extra.get("weekly_lows") or [])[:k])
+
         return {
             "row": row,
             "score": row["swing_setup_score"],
@@ -498,36 +524,149 @@ def make_lane_signal(top_n=15):
             "ear_reaction": reaction,
             "sel_top_setups": False, "sel_contrarian_reversal": False,
             "sel_deep_value_200w": False, "sel_supplier_pullback": False,
+            # --- the four 32fbac9 technical layers, under measurement -------
+            "avwap_status": av.get("status"),
+            "avwap_above": av.get("above_anchored_vwap") if av_ok else None,
+            "avwap_pct": av.get("pct_vs_anchored_vwap") if av_ok else None,
+            "avwap_anchor": av.get("anchor_reason") if av_ok else None,
+            "wk_structure": wk.get("weekly_structure"),
+            "wk_above_30w": wk.get("above_30w_ma"),
+            "wk_30w_rising": wk.get("wma_30w_rising"),
+            "wk_rsi": wk.get("weekly_rsi_14"),
+            # The daily trend flag these two are supposed to ADD to. Every
+            # marginal-value group below conditions on it, so a "weekly uptrend"
+            # edge cannot be just "daily uptrend" measured a second time.
+            "daily_above_200dma": row.get("above_200dma"),
+            "rs_spy_1m": row.get("rel_strength_1m_pct"),
+            # filled by cross_fn — they need the whole day's pool
+            "rs_sector_1m": None, "rs_pseudo_1m": None,
+            "sel_rs_spy_top": False, "sel_rs_sector_top": False,
+            "sel_rs_pseudo_top": False, "sel_rs_sector_only": False,
+            "sel_rs_spy_only": False,
         }
 
     def cross_fn(date, recs):
-        lanes = SL.select_lanes([r["row"] for r in recs], top_n=top_n)
+        rows = [r["row"] for r in recs]
+        lanes = SL.select_lanes(rows, top_n=top_n)
         by_row = {id(r["row"]): r for r in recs}
         for lane, picked in lanes.items():
             for row in picked:
                 rec = by_row.get(id(row))
                 if rec is not None:
                     rec["sel_" + lane] = True
+
+        # --- RS vs SECTOR vs RS vs SPY: the comparison, done fairly ---------
+        # attach_sector_relative_strength is cross-sectional by construction — it
+        # needs the whole day's pool, which is exactly what cross_fn holds. It
+        # keys off row["sector"] and mutates in place, so each grouping is run as
+        # its own pass and harvested before the next one overwrites the key.
+        # Both passes score the SAME observations, so the ablation is a like-for-
+        # like comparison rather than two separate runs.
+        def _rs_pass(group_key):
+            for r in rows:
+                r["sector"] = r.get(group_key)
+                r.pop("rel_strength_vs_sector_1m_pct", None)
+                r.pop("rel_strength_vs_sector_3m_pct", None)
+            TA.attach_sector_relative_strength(rows)
+            return [r.get("rel_strength_vs_sector_1m_pct") for r in rows]
+
+        real_rs = _rs_pass("real_sector")
+        pseudo_rs = _rs_pass("pseudo_sector")
+        for rec, real_v, pseudo_v in zip(recs, real_rs, pseudo_rs):
+            rec["rs_sector_1m"] = real_v
+            rec["rs_pseudo_1m"] = pseudo_v
+
+        # THE POOL MUST BE IDENTICAL or the comparison is confounded: a name with
+        # no sector RS (thin sector, <3 scored peers) must be excluded from the
+        # SPY arm too, otherwise the two arms rank different universes and any
+        # difference could be composition rather than signal.
+        pool = [r for r in recs
+                if r.get("rs_spy_1m") is not None
+                and r.get("rs_sector_1m") is not None
+                and r.get("rs_pseudo_1m") is not None]
+        if len(pool) >= 20:
+            cut = max(1, len(pool) // 5)          # top quintile, equal n per arm
+            for key, sel in (("rs_spy_1m", "sel_rs_spy_top"),
+                             ("rs_sector_1m", "sel_rs_sector_top"),
+                             ("rs_pseudo_1m", "sel_rs_pseudo_top")):
+                for r in sorted(pool, key=lambda x: x[key], reverse=True)[:cut]:
+                    r[sel] = True
+            # The names each metric uniquely surfaces. This is the incremental
+            # question — not "is sector RS good" but "does it find anything the
+            # SPY version does not already find".
+            for r in pool:
+                r["sel_rs_sector_only"] = (r["sel_rs_sector_top"]
+                                           and not r["sel_rs_spy_top"])
+                r["sel_rs_spy_only"] = (r["sel_rs_spy_top"]
+                                        and not r["sel_rs_sector_top"])
+
         for r in recs:
             r.pop("row", None)          # drop the row once ranking is done: memory
 
     return signal_fn, cross_fn
 
 
-def build_extras(panel, tickers):
-    """Per-ticker static context: ai_exposure labels + precomputed weekly closes."""
+def pseudo_sectors(sectors: dict) -> dict:
+    """A deterministic ABLATION grouping: same shape, no sector information.
+
+    data/universe.json's sector labels are a 2026 classification applied to
+    historical bars — the same lookahead hole that made supplier_pullbacks look
+    like a +0.47 edge until the ai_supplier label was removed and it collapsed to
+    +0.07. Sector membership is far more stable than an AI-exposure label, so the
+    contamination is milder, but "milder" is not "measured".
+
+    So rel_strength_vs_sector gets an ablation the way supplier_pullbacks got one.
+    This assigns every ticker to an arbitrary group, preserving the number of
+    groups and their sizes exactly, by dealing the alphabetical ticker list round
+    robin into buckets of the real sizes. If relative strength measured against
+    THIS grouping scores like relative strength against the real one, then what
+    the metric captures is "beat an arbitrary cohort of your peers" — i.e. a
+    restatement of cross-sectional momentum — and the sector labels carry nothing.
+
+    Deterministic on purpose: no shuffling, so the control is reproducible across
+    runs and a verdict can be re-derived rather than re-rolled.
+    """
+    names, order = sorted({t for v in sectors.values() for t in v}), sorted(sectors)
+    sizes = [(s, len(set(sectors[s]))) for s in order]
+    out, k = {}, 0
+    for s, n in sizes:
+        for t in names[k:k + n]:
+            out[t] = "pseudo_" + s
+        k += n
+    for t in names[k:]:
+        out[t] = "pseudo_" + order[-1]
+    return out
+
+
+def build_extras(panel, tickers, sectors=None):
+    """Per-ticker static context: ai_exposure, sector, and weekly OHLC bars.
+
+    Everything in here is NOT point-in-time — today's labels applied to old bars.
+    ai_exposure already carried that disclosure; `sector` inherits it, which is
+    why pseudo_sectors() exists as its control.
+    """
     from tools import signal_lanes as SL
     try:
         labels = json.loads((ROOT / "data" / "ai_exposure.json").read_text())["labels"]
     except Exception:
         labels = {}
+    sectors = sectors or {}
+    by_ticker = {t: s for s, names in sectors.items() for t in names}
+    pseudo = pseudo_sectors(sectors) if sectors else {}
     extras = {}
     for t in tickers:
         df = panel.get(t)
-        e = {"ai_exposure": (labels.get(t.upper()) or {}).get("exposure")}
+        e = {"ai_exposure": (labels.get(t.upper()) or {}).get("exposure"),
+             "sector": by_ticker.get(t.upper()),
+             "pseudo_sector": pseudo.get(t.upper())}
         if df is not None:
-            wc, wp = SL.weekly_closes(list(df.index), [float(x) for x in df["Close"]])
+            idx = list(df.index)
+            wc, wh, wl, wp = SL.weekly_ohlc(
+                idx,
+                [float(x) for x in df["Open"]], [float(x) for x in df["High"]],
+                [float(x) for x in df["Low"]], [float(x) for x in df["Close"]])
             e["weekly_closes"], e["weekly_pos"] = wc, wp
+            e["weekly_highs"], e["weekly_lows"] = wh, wl
         extras[t] = e
     return extras
 
@@ -641,6 +780,78 @@ LANE_GROUPS = [
     ("EAR down_gap", lambda r: r.get("ear_reaction") == "down_gap"),
 ]
 
+# ---------------------------------------------------------------------------
+# The four technical layers added in 32fbac9, none of which had been measured.
+#
+# The bar is what supplier_pullbacks failed: an edge must survive an ATR-matched
+# control AND an ablation that removes only the thing being claimed. That lane
+# looked like +0.47pp until the ai_supplier label came out of the predicate and
+# it fell to +0.07 — "well-established" is exactly what it looked like first.
+#
+# So every group here is paired. A raw arm answers "does this state co-occur with
+# returns", which momentum alone can produce; the CONDITIONED arm holds the daily
+# trend flag fixed and answers the only question that matters for CLAUDE.md —
+# does the NEW block add anything over what the bundle already told the brain.
+#
+# indicators_by_ticker is deliberately absent. It is a projection of fields
+# already computed elsewhere (technicals.build_indicator_map), not a signal: it
+# has no predicate and no forward return of its own. Measuring it would mean
+# measuring its components, and half of those are still inline arithmetic in
+# universe_scanner.py rather than extractable pure functions.
+NEW_SIGNAL_GROUPS = [
+    # --- 1. Anchored VWAP -------------------------------------------------
+    # CLAIM (CLAUDE.md): "above it, buyers since that event are collectively in
+    # profit and it tends to act as support; below it, as resistance."
+    ("aVWAP above", lambda r: r.get("avwap_above") is True),
+    ("aVWAP below", lambda r: r.get("avwap_above") is False),
+    # The control that matters: hold the daily 200-DMA trend fixed. If "above
+    # aVWAP" only pays because names above their aVWAP are also in uptrends,
+    # these two collapse toward each other and the level adds nothing.
+    ("aVWAP above | 200dma up", lambda r: (r.get("avwap_above") is True
+                                           and r.get("daily_above_200dma") is True)),
+    ("aVWAP below | 200dma up", lambda r: (r.get("avwap_above") is False
+                                           and r.get("daily_above_200dma") is True)),
+    # Anchor provenance: a real breakout anchor vs the highest-volume fallback.
+    # If only the fallback arm scores, the "breakout" framing is decoration.
+    ("aVWAP above | breakout anchor",
+     lambda r: (r.get("avwap_above") is True
+                and r.get("avwap_anchor") == "breakout_above_20d_high")),
+    ("aVWAP above | volume anchor",
+     lambda r: (r.get("avwap_above") is True
+                and r.get("avwap_anchor") == "highest_volume_session")),
+
+    # --- 2. Weekly structure ----------------------------------------------
+    # CLAIM (CLAUDE.md): "a name can be a daily uptrend while its weekly
+    # structure rolls over - that divergence is a warning the daily set cannot
+    # show you." That is a falsifiable statement about the DIVERGENCE cells.
+    ("weekly uptrend", lambda r: r.get("wk_structure") == "uptrend"),
+    ("weekly downtrend", lambda r: r.get("wk_structure") == "downtrend"),
+    # THE DIVERGENCE TEST. Both arms are daily uptrends; they differ only in the
+    # weekly read. If CLAUDE.md is right, the second underperforms the first.
+    # If they match, the weekly block is telling the brain nothing new and the
+    # prompt should stop claiming otherwise.
+    ("wk uptrend | 200dma up", lambda r: (r.get("wk_structure") == "uptrend"
+                                          and r.get("daily_above_200dma") is True)),
+    ("wk ROLLOVER | 200dma up", lambda r: (r.get("wk_structure") == "downtrend"
+                                           and r.get("daily_above_200dma") is True)),
+    ("wk above 30w MA", lambda r: r.get("wk_above_30w") is True),
+    ("wk 30w MA rising", lambda r: r.get("wk_30w_rising") is True),
+
+    # --- 3. RS vs sector vs RS vs SPY -------------------------------------
+    # Equal-n top quintiles drawn from an IDENTICAL pool (see cross_fn), so the
+    # two arms differ only in the benchmark the ranking used.
+    ("RS-vs-SPY top quintile", lambda r: r.get("sel_rs_spy_top") is True),
+    ("RS-vs-SECTOR top quintile", lambda r: r.get("sel_rs_sector_top") is True),
+    # THE ABLATION: same construction against an arbitrary grouping of the same
+    # shape. Whatever this scores is what the METHOD earns without any sector
+    # information; the real arm has to beat it, not merely beat zero.
+    ("RS-vs-PSEUDO-sector (ablation)", lambda r: r.get("sel_rs_pseudo_top") is True),
+    # The incremental cells: names each benchmark uniquely surfaces. This is the
+    # actual decision — whether to cite sector RS when SPY RS already ranked it.
+    ("RS sector-only (not SPY top)", lambda r: r.get("sel_rs_sector_only") is True),
+    ("RS SPY-only (not sector top)", lambda r: r.get("sel_rs_spy_only") is True),
+]
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -654,6 +865,7 @@ def main():
     args = ap.parse_args()
 
     sectors = json.loads((ROOT / "data" / "universe.json").read_text())["sectors"]
+    sectors = {s: [t.upper() for t in v] for s, v in sectors.items()}
     tickers = sorted({t for v in sectors.values() for t in v})
     if args.limit:
         tickers = tickers[:args.limit]
@@ -662,18 +874,18 @@ def main():
           % (len(tickers), args.years, args.step, args.top_n))
     panel = load_panel(tickers, args.years, args.cache or None)
     print("panel names=%d" % len(panel))
-    extras = build_extras(panel, tickers)
+    extras = build_extras(panel, tickers, sectors)
     signal_fn, cross_fn = make_lane_signal(top_n=args.top_n)
     rows = run(tickers, args.years, args.step, signal_fn, cross_fn=cross_fn,
                panel=panel, extras=extras, progress=True)
     if isinstance(rows, dict):
         print(rows)
         return
-    report(rows, LANE_GROUPS)
+    report(rows, LANE_GROUPS + NEW_SIGNAL_GROUPS)
 
     if args.json_out:
         blob = {}
-        for lbl, pred in LANE_GROUPS:
+        for lbl, pred in LANE_GROUPS + NEW_SIGNAL_GROUPS:
             blob[lbl] = {
                 "naive": summarize(rows, lbl, pred)["horizons"],
                 "book_rules": summarize_atr_rules(rows, lbl, pred)["horizons"],

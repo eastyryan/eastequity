@@ -313,3 +313,181 @@ def test_lane_selection_never_exceeds_five_names_per_date():
     for recs in by_date.values():
         for lane in ("contrarian_reversal", "deep_value_200w", "supplier_pullback"):
             assert sum(1 for r in recs if r["sel_" + lane]) <= 5
+
+
+# ---------------------------------------------------------------------------
+# The four technical layers added in 32fbac9 — measurement wiring.
+#
+# These signals ship to the brain through CLAUDE.md, which makes claims about
+# them ("above it ... tends to act as support", "a name can be a daily uptrend
+# while its weekly structure rolls over"). supplier_pullbacks and
+# earnings_reaction both read as well-established and both measured as noise, so
+# the claims get measured before they get weighted. What is pinned here is the
+# WIRING — that the study computes these at the right bar, from the right data,
+# with no lookahead. A measurement harness that quietly saw the future would
+# manufacture exactly the confident verdict this repo is trying not to ship.
+# ---------------------------------------------------------------------------
+
+def _sector_panel(n=420):
+    """Three names with distinguishable trends, plus SPY."""
+    spy = _frame([100.0 + 0.05 * k for k in range(n)])
+    up = _frame([50.0 + 0.10 * k for k in range(n)])
+    flat = _frame([60.0 + 0.001 * k for k in range(n)])
+    down = _frame([90.0 - 0.03 * k for k in range(n)])
+    return {"SPY": spy, "AAA": up, "BBB": flat, "CCC": down}
+
+
+def test_new_signals_are_populated_on_every_record():
+    """A predicate over a key the signal never writes is silently always-False.
+
+    That failure mode reports `n=0` for a lane and reads as "no observations"
+    rather than "broken wiring" — the same absent-vs-inconclusive ambiguity the
+    context pack fights. Assert the keys exist and at least one is decided.
+    """
+    panel = _sector_panel()
+    tickers = ["AAA", "BBB", "CCC"]
+    sectors = {"alpha": ["AAA", "BBB"], "beta": ["CCC"]}
+    extras = SS.build_extras(panel, tickers, sectors)
+    signal_fn, cross_fn = SS.make_lane_signal(top_n=2)
+    rows = SS.run(tickers, 2, 20, signal_fn, cross_fn=cross_fn,
+                  panel=panel, extras=extras, min_bars=300)
+    assert rows
+    for key in ("avwap_status", "avwap_above", "wk_structure", "wk_above_30w",
+                "daily_above_200dma", "rs_spy_1m", "rs_sector_1m", "rs_pseudo_1m"):
+        assert key in rows[0], f"{key} missing — its lane would report n=0 forever"
+    assert any(r["avwap_status"] == "ok" for r in rows), "anchored VWAP never resolved"
+    assert any(r["wk_above_30w"] is not None for r in rows), "weekly block never resolved"
+
+
+def test_weekly_ohlc_bars_are_real_weekly_highs_and_lows():
+    """weekly_structure needs highs/lows for higher-highs/higher-lows; without
+    them it silently skips weekly_structure, which is the half CLAUDE.md makes a
+    claim about. A week's high must be the max across its daily bars."""
+    from tools import signal_lanes as SL
+    idx = list(pd.bdate_range(start="2015-01-05", periods=15))   # 3 full weeks
+    highs = [float(x) for x in range(1, 16)]
+    lows = [float(-x) for x in range(1, 16)]
+    closes = [float(x) for x in range(1, 16)]
+    wc, wh, wl, wp = SL.weekly_ohlc(idx, closes, highs, lows, closes)
+    assert wh[0] == 5.0 and wl[0] == -5.0, "week 1 high/low are not the week's extremes"
+    assert wh[1] == 10.0 and wl[1] == -10.0
+    assert wc[0] == 5.0, "week close must be the last daily close of the week"
+    assert wp[0] == 4, "position must be the daily index of the week's last bar"
+    assert len(wh) == len(wl) == len(wc) == len(wp)
+
+
+def test_weekly_bars_used_are_only_the_CLOSED_ones():
+    """Using the in-progress week's final close mid-week is lookahead.
+
+    weekly_ohlc emits a week only once the NEXT week has started, so the last
+    daily position it reports must always be strictly before the final bar.
+    """
+    from tools import signal_lanes as SL
+    idx = list(pd.bdate_range(start="2015-01-05", periods=13))   # 2 full + partial
+    v = [float(x) for x in range(1, 14)]
+    _wc, _wh, _wl, wp = SL.weekly_ohlc(idx, v, v, v, v)
+    assert wp[-1] < len(idx) - 1, (
+        "the in-progress week was emitted — its close is not knowable at bar i")
+
+
+def test_new_signals_cannot_see_the_future():
+    """THE test, applied to the new layers specifically.
+
+    Corrupt every bar after a cut point; every record dated before it must be
+    byte-identical. anchored_vwap_block and weekly_structure both treat the LAST
+    element of what they receive as "now", so a slicing mistake in signal_fn
+    would let them read forward and this is what catches it.
+    """
+    panel = _sector_panel()
+    tickers = ["AAA", "BBB", "CCC"]
+    sectors = {"alpha": ["AAA", "BBB"], "beta": ["CCC"]}
+    signal_fn, cross_fn = SS.make_lane_signal(top_n=2)
+
+    clean = SS.run(tickers, 2, 20, signal_fn,
+                   cross_fn=cross_fn, panel=panel,
+                   extras=SS.build_extras(panel, tickers, sectors), min_bars=300)
+
+    corrupted = {k: v.copy() for k, v in panel.items()}
+    cut = 380
+    for t, df in corrupted.items():
+        for col in ("Open", "High", "Low", "Close"):
+            df.iloc[cut:, df.columns.get_loc(col)] *= 3.0
+        df.iloc[cut:, df.columns.get_loc("Volume")] *= 50.0
+
+    dirty = SS.run(tickers, 2, 20, signal_fn,
+                   cross_fn=cross_fn, panel=corrupted,
+                   extras=SS.build_extras(corrupted, tickers, sectors), min_bars=300)
+
+    watched = ("avwap_status", "avwap_above", "avwap_pct", "avwap_anchor",
+               "wk_structure", "wk_above_30w", "wk_30w_rising", "wk_rsi")
+    # Records are dated, not indexed. A signal at a bar before the cut reads only
+    # clean bars, so those are the ones that must be identical.
+    cut_date = panel["SPY"].index[cut]
+    by_key = {(r["ticker"], r["date"]): r for r in dirty}
+    compared = 0
+    for r in clean:
+        d = by_key.get((r["ticker"], r["date"]))
+        if d is None or r["date"] >= cut_date:
+            continue
+        for key in watched:
+            assert r[key] == d[key], (
+                f"{key} changed for {r['ticker']} on {r['date']} ({r[key]!r} -> "
+                f"{d[key]!r}) when only bars after index {cut} were corrupted — "
+                f"the signal is reading forward")
+        compared += 1
+    assert compared > 5, "too few pre-cut records compared to trust this"
+
+
+def test_sector_and_pseudo_sector_arms_are_scored_on_the_same_pool():
+    """The RS comparison is only fair if both arms rank identical observations.
+
+    A name with no sector RS (thin sector) excluded from one arm but not the
+    other would make the difference composition rather than signal — the exact
+    confound that made supplier_pullbacks look like an edge.
+    """
+    panel = _sector_panel()
+    tickers = ["AAA", "BBB", "CCC"]
+    sectors = {"alpha": ["AAA", "BBB", "CCC"]}
+    extras = SS.build_extras(panel, tickers, sectors)
+    signal_fn, cross_fn = SS.make_lane_signal(top_n=2)
+    rows = SS.run(tickers, 2, 20, signal_fn, cross_fn=cross_fn,
+                  panel=panel, extras=extras, min_bars=300)
+    for r in rows:
+        has_real = r["rs_sector_1m"] is not None
+        has_pseudo = r["rs_pseudo_1m"] is not None
+        assert has_real == has_pseudo, (
+            f"{r['ticker']} has real={has_real} pseudo={has_pseudo} — the arms "
+            f"are scoring different observations")
+
+
+def test_pseudo_sectors_preserve_group_sizes_and_carry_no_real_membership():
+    """The ablation must differ from the real grouping ONLY in its information.
+
+    Same number of groups and same sizes, so any scoring difference is the
+    sector labels rather than a different cross-sectional construction.
+    """
+    sectors = {"a": ["AAA", "BBB", "CCC"], "b": ["DDD", "EEE"], "c": ["FFF"]}
+    pseudo = SS.pseudo_sectors(sectors)
+    assert set(pseudo) == {"AAA", "BBB", "CCC", "DDD", "EEE", "FFF"}
+    sizes = sorted(
+        len([t for t, g in pseudo.items() if g == grp]) for grp in set(pseudo.values()))
+    assert sizes == sorted(len(v) for v in sectors.values()), (
+        "the ablation changed the shape of the grouping, not just its content")
+    assert SS.pseudo_sectors(sectors) == pseudo, "ablation must be deterministic"
+
+
+def test_indicators_by_ticker_is_not_claimed_to_be_measured():
+    """indicators_by_ticker is a PROJECTION, not a signal.
+
+    technicals.build_indicator_map compacts already-computed scanner fields; it
+    has no predicate and no forward return of its own. Listing it as a measured
+    lane would put a verdict next to a name that was never tested — which is how
+    supplier_pullbacks kept its authority for so long.
+    """
+    labels = [lbl for lbl, _ in SS.NEW_SIGNAL_GROUPS]
+    assert not any("indicators_by_ticker" in lbl for lbl in labels)
+    assert any("aVWAP" in lbl for lbl in labels)
+    assert any("wk " in lbl or "weekly" in lbl for lbl in labels)
+    assert any("RS-vs-SECTOR" in lbl for lbl in labels)
+    assert any("ablation" in lbl.lower() for lbl in labels), (
+        "the sector arm shipped without its ablation control")

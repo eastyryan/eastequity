@@ -170,6 +170,46 @@ def weekly_closes(dates, closes):
     return wc, pos
 
 
+def weekly_ohlc(dates, opens, highs, lows, closes):
+    """Weekly bars derived from the daily panel: (closes, highs, lows, positions).
+
+    weekly_closes() above gives the closes only, which is all the 200-week MA
+    needs. technicals.weekly_structure() additionally wants weekly HIGHS and LOWS
+    — without them it computes wma_30w and weekly RSI but silently skips
+    weekly_higher_highs / weekly_higher_lows / weekly_structure, which is the
+    half of the block CLAUDE.md actually makes a claim about ("a name can be a
+    daily uptrend while its weekly structure rolls over").
+
+    Same ISO-week keying and the same closed-week discipline as weekly_closes:
+    a week is emitted only once the NEXT week has started, and `positions` is the
+    daily index of each week's last bar so a caller can take only the weeks that
+    had closed as of bar i. Highs/lows are the max/min across the week's daily
+    bars, which is what a real weekly bar is.
+
+    `opens` is accepted and unused — it keeps the signature shaped like the OHLC
+    tuple callers already hold, so nobody has to remember the argument order is
+    different here.
+    """
+    wc, wh, wl, pos, prev_key = [], [], [], [], None
+    cur_hi, cur_lo = None, None
+    for k, d in enumerate(dates):
+        try:
+            key = tuple(d.isocalendar()[:2])
+        except Exception:
+            key = (getattr(d, "year", k), k)
+        if prev_key is not None and key != prev_key:
+            wc.append(closes[k - 1])
+            wh.append(cur_hi)
+            wl.append(cur_lo)
+            pos.append(k - 1)
+            cur_hi, cur_lo = None, None
+        h, lo = highs[k], lows[k]
+        cur_hi = h if cur_hi is None else max(cur_hi, h)
+        cur_lo = lo if cur_lo is None else min(cur_lo, lo)
+        prev_key = key
+    return wc, wh, wl, pos
+
+
 # --- the row the lanes read --------------------------------------------------
 def lane_features(closes, highs, lows, vols, i, spy_closes=None, spy_i=None,
                   ai_exposure=None, weekly_closes_upto=None, ticker=None):
