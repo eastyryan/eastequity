@@ -188,10 +188,24 @@ def redeploy_dashboard() -> None:
         paths = ["dashboard/data", "journal", "state/portfolio.json",
                  # queued broker orders from cloud runs — the push of this file
                  # is what TRIGGERS the Actions executor (execute-orders.yml)
-                 "state/order_intents.json"]
+                 "state/order_intents.json",
+                 # UNCONDITIONAL, and that is the fix. This entry used to be
+                 # gated on `if (ROOT / "state" / "KILL_SWITCH").exists()`, which
+                 # made the "add -A so a REMOVED kill switch (all-clear) also
+                 # propagates" comment below unachievable by construction: on the
+                 # run where an operator REMOVES the switch, the file does not
+                 # exist, so the path was never in this list, so `git add -A` was
+                 # never called for it and the deletion never staged. Engaging a
+                 # halt propagated; lifting one did not.
+                 #
+                 # It fails safe — the cloud stays halted — but it misleads in the
+                 # worst direction available to an operator: the local switch is
+                 # gone, the publish reports success, and every remote node is
+                 # still refusing to run. Absent must not read as all-clear.
+                 # `git add -A` on a path that is both missing and untracked is a
+                 # no-op whose error the loop below already swallows.
+                 "state/KILL_SWITCH"]
         paths += _glob.glob(str(ROOT / "state" / "x_draft_*.txt"))
-        if (ROOT / "state" / "KILL_SWITCH").exists():
-            paths.append("state/KILL_SWITCH")
         if (ROOT / "data" / "cusip_map.json").exists():
             paths.append("data/cusip_map.json")  # learned ticker->CUSIP, must persist in cloud
         if (ROOT / "data" / "ai_exposure.json").exists():
