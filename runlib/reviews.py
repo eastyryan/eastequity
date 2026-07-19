@@ -137,7 +137,7 @@ def self_review(run_id: str) -> int:
     # DETERMINISTIC MAINTENANCE FIRST — never a hostage of an unrelated LLM call.
     run_learning_maintenance(run_id)
     try:
-        out = run_claude(prompt)  # pinned model + tool allowlist, with retry
+        out = run_claude(prompt, call="self_review", run_id=run_id)  # pinned model + tool allowlist, with retry
     except Exception as e:
         print(f"self-review failed: {str(e)[:800]}")
         return 1
@@ -283,7 +283,7 @@ def daily_study(run_id: str) -> int:
         "inside the summary."
     )
     try:
-        out = run_claude(prompt)
+        out = run_claude(prompt, call="daily_study", run_id=run_id)
     except Exception as e:
         print(f"daily study failed: {str(e)[:600]}")
         return 1
@@ -376,7 +376,7 @@ def _run_consolidation(run_id: str, study_file) -> int:
         'kept, cut, and why"}}'
     )
     try:
-        out = run_claude(prompt)
+        out = run_claude(prompt, call="_run_consolidation", run_id=run_id)
     except Exception as e:
         print(f"consolidation failed: {str(e)[:600]}")
         return 1
@@ -714,7 +714,7 @@ def universe_review(run_id: str) -> int:
     _fail_entry = {"date": et_date(), "added": [], "removed": [],
                    "dropped_unpriceable": [], "size": universe_size}
     try:
-        out = run_claude(prompt)  # pinned model + tool allowlist, with retry
+        out = run_claude(prompt, call="universe_review", run_id=run_id)  # pinned model + tool allowlist, with retry
     except Exception as e:
         print(f"universe review failed: {str(e)[:600]}")
         universe_log_append({**_fail_entry, "status": "error",
