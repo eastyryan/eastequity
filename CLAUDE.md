@@ -727,12 +727,27 @@ Sample-size rules (never overfit noise):
   proposing into a sector/theme with ≥5 trades and WR &lt; 40%. Check
   `reasoning_process.calibration_status` for phase = anecdote|caution|binding.
 
-### Context pack (tiered)
-You receive a **slim** context pack (`_context_tier: brain_slim_v1`). Full history lives
-in the archive path `full_context_path` — do not need it for routine decisions. Learning
-signals are compact under `reasoning_process.learning_pack` (top-N regrets, good skips,
-exit lessons, left-on-table with WHY, adopted lessons, calibration phase). Prefer the
-pack over fishing for raw dumps.
+### Context pack (tiered, and ordered for how you read it)
+You receive a **slim** context pack (`_context_tier: brain_slim_v2`). Full history lives
+in the archive path `full_context_path` — you do not need it for routine decisions.
+Learning signals are compact under `reasoning_process.learning_pack` (top-N regrets,
+good skips, exit lessons, left-on-table with WHY, adopted lessons, calibration phase).
+Prefer the pack over fishing for raw dumps.
+
+**Your Read tool returns ~2,000 lines.** The pack is deliberately ordered so that
+everything that can BLOCK a proposal is inside that window — limits, digest,
+`factor_map`, `portfolio_competition`, `reasoning_process`, the book,
+`stop_engineering`, freshness — followed by the regime read. A single default Read
+is enough to answer every gate. Per-ticker research detail sits *below* the window
+on purpose; page to it with `Read(offset=N)` when you are drilling into a name.
+
+**`_pack_budget` (top of the pack) tells you what you did not get.** It carries the
+measured `total_lines`, a `keys_beyond_read_window` list of `key@line` offsets, and
+`trimmed` — every cap applied this run and what it dropped. Blocks that were capped
+also carry an in-place `_trimmed` note where the data used to be. Treat a `_trimmed`
+marker as "there is more in the archive", never as "this is all there is": a
+truncated filing excerpt says so inside the text, and you must not quote a
+truncated section as though it were the complete disclosure.
 
 ### 2) Shadow book (`reasoning_process.learning_pack.shadow` / legacy `shadow_learning`)
 Counterfactual skips: rejected_ideas + watchlist triggers not bought, marked forward.
@@ -771,11 +786,20 @@ a later review supersedes (`superseded_by` removes them from the active pack).
 
 ### 6) Knowledge base (`reasoning_process.learning_pack.knowledge_base`)
 The five systems above are reactive — they grade what already happened. This one is
-proactive: every weekday after the close, a dedicated STUDY SESSION researches ONE
-curriculum topic (technical analysis, fundamentals, risk management, strategy playbooks,
-microstructure, psychology, macro regimes — weighted toward the least-covered discipline
-and whatever your feedback loops say is weakest) and writes a durable lesson with a
-`how_to_apply` line mapped onto this system's actual rules. In trading runs: apply the
+proactive: on the weekday 17:30 slot (chained after the evening review by
+`scripts/run_cycle.sh`, so it only runs when the scheduler is actually loaded) a
+dedicated STUDY SESSION researches ONE curriculum topic (technical analysis,
+fundamentals, risk management, strategy playbooks, microstructure, psychology, macro
+regimes — weighted toward the least-covered discipline and whatever your feedback loops
+say is weakest) and writes a durable lesson with a `how_to_apply` line mapped onto this
+system's actual rules.
+
+**Do not assume the loop has been running.** Through 2026-07-19 it produced exactly ONE
+lesson across ~8 eligible weekdays, and nothing noticed. `health.learning_loop` now
+reports `days_since_last_lesson` and flags the loop stale after 4 days. If the knowledge
+base is thin, that is a fact about the scheduler, not evidence that there is little to
+learn — weight it as the small sample it is rather than treating an empty playbook as a
+finished one. In trading runs: apply the
 how_to_apply lines when the situation matches, and CITE the lesson id when one drives a
 decision ("per KB-0123456789, waiting for the light-volume retest"). Lessons compound —
 treat the knowledge base as your own accumulated craft, senior to generic intuition but
