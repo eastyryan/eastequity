@@ -116,6 +116,32 @@ That is not automatically a broken company — but it is also not a free pass:
 
 ## Your Context Bundle (use all of it)
 
+- **factor_map** — demand_driver concentration for the CURRENT book: AI-stack %,
+  `concentration_level`, `shared_left_tail` echo, `what_kills_the_book`, and an
+  `unwind_playbook`. This is the answer to "what single shock takes out most of this
+  book at once", which per-position risk cannot see. When `requires_factor_response`
+  is true you OWE a `factor_response` — code BLOCKS every new BUY until you file one.
+  Theme risk is not sector risk: DELL and HPE sit in different GICS sleeves and are
+  one `hyperscaler_server_capex` bet. That pair is this book's entire realized loss
+  history.
+- **portfolio_competition** — every open seat scored against challengers from the
+  scan, with a `competition_hint` (`under_pressure` / `contested` / `defensible`).
+  Capital must re-earn its seat: output `seat_reviews` for EVERY holding on a
+  trading depth. "Thesis still holds" is not enough when a higher-scoring
+  alternative exists — keep only with an edge the score misses (catalyst,
+  structure, ownership), otherwise free the capital.
+- **ownership_flow** — a composite card per focus name: institutional (13F + tape
+  sponsorship) vs retail PROXY (options heat / unsponsored volume) vs price action.
+  Read `by_ticker[T].alignment` and `read_for_swing` first. Alignments:
+  `institutions_buying_price_rising` = sponsorship agrees with trend;
+  `institutions_buying_price_weak` = accumulation candidate ONLY if structure holds;
+  `institutions_selling_price_rising` = distribution / late-move risk;
+  `retail_hot_institutions_quiet` = FOMO without sponsorship, raise the bar;
+  `sparse_data` = ignore as a vote and lean on structure.
+  PROXY ONLY — free option chains carry no aggressor side, so this is never a
+  standalone thesis and `sparse_data` frequently means the feed was thin, not that
+  the market is quiet.
+
 Beyond filings/13F/news, every run now includes:
 - **reasoning_process** - process_checklist, watchlist_feedback (opportunity cost),
   exit_lessons, demand_driver_map, theme_exposure, theme_concentration_cap_pct,
@@ -445,6 +471,25 @@ Output proposals inside a fenced ```json block as a list under key `"proposals"`
     {"ticker": "MU", "reason": "Unconfirmed reclaim; memory cycle-peak risk; would deepen AI-supplier theme."},
     {"ticker": "PANW", "reason": "Extended after headline pop; analyst target below price; not a fat pitch."}
   ],
+  "seat_reviews": [
+    {
+      "ticker": "NET",
+      "action": "keep",
+      "challenger_considered": "CRWD",
+      "reason": "Still better RR than CRWD: cleaner base, stronger ownership_flow alignment, invalidators clean."
+    },
+    {
+      "ticker": "OKTA",
+      "action": "trim",
+      "challenger_considered": "S",
+      "reason": "under_pressure vs S on setup score; free 1/3 of the capital for a higher-scoring diversifier."
+    }
+  ],
+  "factor_response": {
+    "concentration_level": "high",
+    "plan": "AI-stack heat is elevated; no new cybersecurity add. Prefer cash or a different driver if buying.",
+    "actions": ["no_same_theme_buy", "cash", "hold_plan"]
+  },
   "commentary": "REQUIRED every run: 3-6 plain-English sentences for the public dashboard. What you are watching, why you are holding or waiting, what would change your mind. Write for a smart non-trader. No jargon, no hedging boilerplate.",
   "watchlist": [
     {
@@ -461,6 +506,8 @@ Output proposals inside a fenced ```json block as a list under key `"proposals"`
 **Process gates (machine-checked every run):**
 - Every watchlist entry **must** include `status`: `drop` | `hold` | `buy` (missing → treated as hold + journaled).
 - On **full** depth with empty `proposals`, include **`rejected_ideas`**: at least **2** objects `{ticker, reason}` for scan ideas you passed on. Free-text mood alone is a process miss.
+- **BLOCKING** — on **full** / **holdings_watchlist** with open positions: **`seat_reviews`**, one row per holding, `action` in `keep|trim|swap|reduce|sell` with a real `reason` (>=20 chars) and the `challenger_considered` when you weighed one. Read `portfolio_competition` first. **A missing or weak seat review rejects EVERY BUY in the run** as `process_gate_blocked` — capital must re-earn its seat before new capital is committed. Exits, holds and trims are never blocked.
+- **BLOCKING** — when `factor_map.requires_factor_response` is true (concentration high or extreme): **`factor_response`** with a `concentration_level`, a concrete `plan` (>=20 chars) and non-empty `actions` from `trim | cash | no_same_theme_buy | rotate | hold_plan`, aligned to `factor_map.unwind_playbook`. **Missing or weak rejects EVERY BUY in the run.** You are being asked what you will do about the concentration you already carry, before you add more.
 
 `demand_driver` must be snake_case from `reasoning_process.demand_driver_map` (e.g.
 `ai_compute_gpu`, `networking`, `hyperscaler_server_capex`). Validator rejects missing/weak

@@ -236,8 +236,23 @@ def get_news_and_catalysts(tickers: list[str], max_headlines: int = 6,
             try:
                 cal = tk.calendar
                 dates = cal.get("Earnings Date") if isinstance(cal, dict) else None
-                if dates:
-                    entry["next_earnings"] = str(dates[0])
+                # yfinance's calendar returns whatever it holds, INCLUDING a date that
+                # has already passed. ZS on 2026-07-19 returned 2026-05-26 — its LAST
+                # report — and that landed in the digest as `next_earnings`, 54 days in
+                # the past. CLAUDE.md tells the brain to choose the earnings path
+                # "through binary vs around it", so a stale date here is worse than no
+                # date: it says a print is coming that already happened. Only a FUTURE
+                # date is a next-earnings date.
+                today = now.date() if hasattr(now, "date") else None
+                for d in (dates or []):
+                    try:
+                        dd = d.date() if hasattr(d, "date") else None
+                        if today is not None and dd is not None and dd < today:
+                            continue
+                    except Exception:
+                        pass
+                    entry["next_earnings"] = str(d)
+                    break
             except Exception:
                 pass
             try:  # analyst consensus: tk.info is flaky — degrade to None, never fail the entry

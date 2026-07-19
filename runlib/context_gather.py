@@ -270,6 +270,28 @@ def deep_research_bundle(focus: list[str]) -> tuple[dict, dict, dict]:
     return filings, deep_fundamentals, filing_texts
 
 
+def _earnings_next(ticker: str) -> str | None:
+    """The NEXT earnings date for a ticker from data/earnings_calendar.json.
+
+    The calendar distinguishes `last` from `next`; the news scrape does not, and
+    yfinance's tk.calendar will happily lead with a date that has already passed.
+    Returns an ISO date string, or None when unknown — never a past date.
+    """
+    try:
+        import json as _j
+        from datetime import date as _date
+        cal = _j.loads((ROOT / "data" / "earnings_calendar.json").read_text())
+        nxt = ((cal.get("by_ticker") or {}).get(str(ticker).upper()) or {}).get("next")
+        if not nxt:
+            return None
+        day = str(nxt)[:10]
+        if day < _date.today().isoformat():
+            return None
+        return day
+    except Exception:
+        return None
+
+
 def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
                    earnings_trigger: dict | None = None) -> dict:
     """Build the brain's context bundle.
@@ -709,8 +731,15 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
             "sbc_pct_of_revenue": rv("sbc_pct_of_revenue"),
             "market_cap_usd": rv("market_cap_usd") or row.get("market_cap_usd"),
             "fundamentals_stale": bool(br.get("stale_fundamentals_warning")),
-            "next_earnings": (news.get("tickers", {}).get(t) or {}).get("next_earnings")
-                             if isinstance(news, dict) else None,
+            # Prefer the earnings CALENDAR over the news scrape. The calendar
+            # separates `last` from `next`; yfinance's tk.calendar returns a single
+            # list that can lead with a date already in the past, which is how ZS
+            # showed next_earnings 2026-05-26 on 2026-07-19 while days_to_earnings
+            # (computed from the calendar) correctly said 45. Two fields disagreeing
+            # about the same print is worse than one missing field.
+            "next_earnings": (_earnings_next(t)
+                              or ((news.get("tickers", {}).get(t) or {}).get("next_earnings")
+                                  if isinstance(news, dict) else None)),
             "days_to_earnings": row.get("days_to_earnings"),
             # daily-fresh layer
             "last_close": row.get("last_close"),
