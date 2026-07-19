@@ -301,12 +301,33 @@ def run_discovery(top_n: int = 25) -> dict:
                 continue
 
     rows.sort(key=lambda r: (r["score"], r["adv_usd"]), reverse=True)
+
+    # BROAD-MARKET BREADTH, computed over every scanned row BEFORE the top-N
+    # truncation. ~950 names get scored here and 25 survive into the output; the
+    # other ~925 were thrown away, and they are the only market-wide
+    # participation sample this system has. The universe scan's breadth covers
+    # 184 AI-biased names, which is the hunting ground, not the market.
+    #
+    # Thinner fields than the universe read by construction — this sweep carries
+    # no 1-day bar and no 200-DMA, so advance/decline and the 200-DMA share come
+    # back None with the reason recorded rather than defaulted to zero.
+    try:
+        from tools.market_breadth import compute_breadth
+        breadth = compute_breadth(
+            rows, sample="broad",
+            note=(f"{len(rows)} scored names from the discovery pool (S&P 500 + "
+                  f"Russell 1000 + NDX + EM ADR), universe members excluded. "
+                  f"Weekly cadence: this is a rotation read, not a daily one."))
+    except Exception as e:
+        breadth = {"status": f"error:{type(e).__name__}", "sample": "broad"}
+
     out.update({
         "scanned": scanned,
         "dropped_illiquid": illiquid,
         "dropped_insufficient_history": insufficient,
         "dropped_no_data": no_data,
         "chunk_errors": chunk_errors,
+        "breadth": breadth,
         "top_candidates": rows[:top_n],
     })
     _write_output(out)

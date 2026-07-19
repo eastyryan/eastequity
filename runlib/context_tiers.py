@@ -117,6 +117,7 @@ BLOCKING_KEYS = (
 # alerts and book risk get the remaining window space, and the history follows.
 DECISION_CONTEXT = (
     "macro_regime", "benchmark_close", "market_events",
+    "market_breadth", "momentum_health",
     "watchlist_trigger_alerts", "tape_focus_promotions",
     "portfolio_risk",
     "track_record",
@@ -150,6 +151,10 @@ ALWAYS_KEYS = (
     # genuine `unknown` verdict on live data. Absent and inconclusive must not
     # look the same.
     "momentum_health",
+    # Breadth is a step-1 REGIME input, so it rides with the regime read rather
+    # than inside universe_scan — which starts thousands of lines past the read
+    # window, and is precisely where momentum_health was lost.
+    "market_breadth",
     "risk_halts", "forced_exits", "corporate_actions", "lessons_learned",
     "track_record",  # compact closed trades already truncated in gather
     "earnings_deep_dive",     # why a full run was forced (earnings reporter)

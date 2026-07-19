@@ -292,6 +292,49 @@ def _earnings_next(ticker: str) -> str | None:
         return None
 
 
+def _market_breadth_block(scan: dict, discovery: dict | None) -> dict:
+    """Both breadth samples plus the sector-rotation trend, in one readable block.
+
+    Two samples, and the distinction is load-bearing rather than pedantic:
+      universe  ~184 names, every run, rich fields (200-DMA, 1-day A/D, 52w
+                highs). This book's HUNTING GROUND, AI-biased by construction —
+                a narrow reading here is a fact about the universe, not the tape.
+      broad     ~950 names from the weekly discovery sweep (S&P 500 + Russell
+                1000 + NDX + EM ADR). Thinner fields, genuinely market-wide.
+
+    Citing the universe number as "market breadth" would be the same category
+    error as reading a curated momentum list as the market. The note on each
+    sample says so where the brain will read it.
+    """
+    out: dict = {
+        "note": ("Participation, not price level. `universe` is this book's "
+                 "AI-biased hunting ground; `broad` is the market-wide sweep. "
+                 "Never cite the universe number as market breadth. A measure "
+                 "that could not be computed is null with a reason in "
+                 "`unavailable` — never zero."),
+    }
+    try:
+        out["universe"] = (scan or {}).get("breadth")
+    except Exception:
+        out["universe"] = None
+    try:
+        b = (discovery or {}).get("breadth")
+        if b:
+            out["broad"] = b
+        else:
+            out["broad_unavailable"] = (
+                "no discovery sweep this run — the broad sample refreshes on "
+                "weekly (Sunday) depth only")
+    except Exception:
+        out["broad_unavailable"] = "discovery block unreadable"
+    try:
+        from tools.sector_history import sector_trends
+        out["sector_rotation_30d"] = sector_trends(lookback_days=30)
+    except Exception as e:
+        out["sector_rotation_30d"] = {"status": f"error:{type(e).__name__}"}
+    return out
+
+
 def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
                    earnings_trigger: dict | None = None) -> dict:
     """Build the brain's context bundle.
@@ -851,6 +894,13 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
         },
         "benchmark_close": benchmark_close(),
         "macro_regime": macro,
+        # MARKET BREADTH, hoisted to the top level on purpose. It also lives
+        # inside universe_scan, but universe_scan starts thousands of lines past
+        # the brain's ~2,000-line read window — which is exactly how
+        # momentum_health ended up gathered, consumed by the validator, and
+        # invisible to the brain. Breadth is a step-1 REGIME input; it has to sit
+        # with the regime read or it is not an input at all.
+        "market_breadth": _market_breadth_block(scan, discovery_block),
         "portfolio": portfolio,
         "position_histories": {
             "note": "Last 10 daily sessions for each CURRENT HOLDING, newest last, "

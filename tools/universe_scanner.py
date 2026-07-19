@@ -814,6 +814,7 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
     # daily pull). Fail-soft: if the weekly fetch dies, the scan proceeds without the
     # deep-value lane rather than failing the whole cycle.
     w200: dict[str, tuple] = {}  # ticker -> (ma, is_full, pct_vs_ma)
+    weekly_by_ticker: dict[str, dict] = {}  # ticker -> weekly structure block
     weekly_chunk_failures = 0
     try:
         # drop_partial=False: the still-forming bar on a WEEKLY series is the
@@ -833,6 +834,19 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
                 ma, full = _ma_tail(wcloses, WEEKS_200)
                 if ma:
                     w200[t] = (ma, full, (wcloses[-1] / ma - 1) * 100)
+                # KEEP the weekly bars. They were downloaded, used for one 200-week
+                # average, and discarded — while the whole indicator set stayed
+                # single-timeframe. For a 3-90 day swing the WEEKLY chart is where
+                # base structure lives, and it was already paid for.
+                try:
+                    from tools.technicals import weekly_structure
+                    whi = [float(x) for x in wf["High"].dropna().tolist()]
+                    wlo = [float(x) for x in wf["Low"].dropna().tolist()]
+                    ws = weekly_structure(wcloses, whi, wlo)
+                    if ws:
+                        weekly_by_ticker[t] = ws
+                except Exception:
+                    pass
             except Exception:
                 continue
     except Exception:
@@ -978,8 +992,24 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
             if rel_1m is not None:  # bounded [-0.2, +0.4]: refine, don't reorder
                 score += max(min(rel_1m * 4, 0.4), -0.2)
 
+            # Weekly structure (already-downloaded bars) + anchored VWAP from the
+            # last breakout. The VWAP is the first NUMERIC support level this
+            # scanner has produced — until now "support at $345-352" came from the
+            # brain reading a PNG, which nothing could audit or backtest.
+            _weekly = weekly_by_ticker.get(t)
+            try:
+                from tools.technicals import anchored_vwap_block
+                _avwap = anchored_vwap_block(
+                    close_list, high_list,
+                    [float(x) for x in low.tolist()],
+                    [float(x) for x in vol.tolist()])
+            except Exception:
+                _avwap = None
+
             rows.append({
                 "ticker": t, "sector": ticker_sector[t],
+                "weekly": _weekly,
+                "anchored_vwap": _avwap,
                 "last_close": round(last, 2),
                 "price_as_of": price_as_of,  # YYYY-MM-DD of the bar used for last_close
                 "pct_change_1d": round(pct_1d * 100, 2),
@@ -1327,6 +1357,49 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
          for s, xs in by_sector.items() if xs),
         key=lambda d: d["avg_momentum_1m_pct"], reverse=True)
 
+    # RELATIVE STRENGTH VS SECTOR, computed over every scanned row before any
+    # truncation. Beating SPY while LAGGING your own sector is not leadership —
+    # it is a laggard in a strong group, a materially different trade, and it was
+    # not computed anywhere. Medians, not means, so one +300% name cannot
+    # redefine what keeping up with the group means for its peers.
+    try:
+        from tools.technicals import attach_sector_relative_strength, build_indicator_map
+        sector_rs_meta = attach_sector_relative_strength(rows)
+        # EVERY scanned name keeps a compact indicator line. The scanner computed
+        # ~38 indicators for all ~184 names and retained them for the ~35 that
+        # surfaced into a lane; the rest were reduced to a price and an ATR —
+        # including watchlist names the brain must rule drop/hold/buy every run.
+        indicator_map = build_indicator_map(rows)
+    except Exception as e:
+        sector_rs_meta = {"error": f"{type(e).__name__}"}
+        indicator_map = {}
+
+    # Breadth over the SCANNED UNIVERSE — how many names are participating, which
+    # no index level or sector average can tell you. Explicitly labelled
+    # sample="universe": this book's universe is AI-biased, so a narrow reading
+    # here is a fact about the hunting ground, not about the market. The broad
+    # read comes from the weekly discovery sweep over ~950 names.
+    try:
+        from tools.market_breadth import compute_breadth
+        breadth = compute_breadth(
+            rows, sample="universe",
+            note=("the curated universe only — AI/tech biased by construction. "
+                  "For a market-wide read see discovery_screen.breadth "
+                  "(sample='broad', ~950 names, refreshed weekly)."))
+    except Exception as e:
+        breadth = {"status": f"error:{type(e).__name__}", "sample": "universe"}
+
+    # Persist the sector snapshot. Recomputed and discarded every run until now,
+    # so a rotation could be noticed in one response's prose and never afterwards
+    # asked about ("was the AI stack unwinding on 2026-07-19?"). Never raises.
+    try:
+        from tools.sector_history import record_sector_momentum
+        record_sector_momentum(
+            sector_rs,
+            benchmark_1m_pct=(benchmark_trend or {}).get("spy_momentum_1m_pct"))
+    except Exception:
+        pass
+
     from datetime import datetime, timezone
     scan_fetched_at = datetime.now(timezone.utc).isoformat()
     prices_meta = {
@@ -1343,6 +1416,16 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
         "supplier_pullbacks": supplier_pullbacks,
         "benchmark_trend": benchmark_trend,
         "sector_relative_strength": sector_rs,
+        "breadth": breadth,
+        # One compact line per SCANNED name, not just the surfaced ones.
+        "indicators_by_ticker": indicator_map,
+        "indicators_note": (
+            "Compact technical line for EVERY scanned name. Surfaced lane rows "
+            "carry the full field set; this is what the other ~150 retain, so a "
+            "watchlist name that did not rank into a lane can still be judged on "
+            "trend, momentum, RS vs SPY *and vs its own sector*, RSI, ADX, weekly "
+            "structure and anchored VWAP rather than on price alone."),
+        "sector_rs_meta": sector_rs_meta,
         # `scanned` is what the orchestrator's low-coverage check reads via
         # scan_ctx.get("scanned", 0) - it is compared against `requested`, so if
         # it were ever missing the check would silently compare a default of 0

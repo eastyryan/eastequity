@@ -63,6 +63,65 @@ Honor the depth you were given:
 
 Also use **market_events** (oil/VIX + geopolitical/macro headline flags) in the regime read every run.
 
+**universe_scan.indicators_by_ticker** - a compact technical line for EVERY scanned
+name (~184), not just the ~35 that surface into a lane. Trend (above_50/200dma,
+trend_up_50_over_200), momentum, RS vs SPY **and vs sector**, rsi_14, adx_14,
+macd_state, volume_read, weekly structure, and distance from anchored VWAP. Use it to
+rule drop/hold/buy on a watchlist name that did not rank into a lane - previously those
+names carried only a price and an ATR.
+
+**rel_strength_vs_sector_1m/3m_pct** (on scanned rows and in the compact line) - the
+name's momentum MINUS its sector's MEDIAN. This is the distinction rel_strength_1m_pct
+(vs SPY) cannot make: a semi flat while semis are -12% is a leader inside a broken
+group; a name beating SPY but lagging its own sector is a laggard in a strong group.
+Cite BOTH when arguing leadership. Sectors with fewer than 3 scored peers are skipped
+rather than compared against a one-name "median", so an absent value means a thin
+sector, not weakness.
+
+**weekly** (per scanned name) - the WEEKLY timeframe, where a 3-90 day swing's base
+actually lives: `wma_30w` and `pct_vs_30w_ma` (the weekly equivalent of the 200-DMA),
+`wma_30w_rising`, `weekly_rsi_14`, and `weekly_structure` (uptrend / downtrend / mixed
+from higher-highs AND higher-lows). A name can be a daily uptrend while its weekly
+structure rolls over - that divergence is a warning the daily set cannot show you.
+`insufficient_for_30w_ma` means too little history, NOT a failing trend.
+
+**anchored_vwap** (per scanned name) - the volume-weighted average price paid since the
+last breakout (`anchor_reason: breakout_above_20d_high`) or, absent one, since the
+highest-volume session. This is the first MEASURED support level in the bundle: above
+it, buyers since that event are collectively in profit and it tends to act as support;
+below it, as resistance. Cite `pct_vs_anchored_vwap` instead of eyeballing a shelf off
+the chart - a level you can name is auditable, one you saw is not. `status:
+unavailable` carries a `reason`; it never guesses a level.
+
+**market_breadth** - how many names are PARTICIPATING, which no index level can tell
+you. An index making highs on narrowing participation and one making highs on broad
+participation are different regimes that look identical in SPY. Read it in the regime
+step with benchmark_trend and momentum_health.
+
+Two samples, and the difference is load-bearing — **never cite the universe number as
+market breadth**:
+- `market_breadth.universe` (~184 names, EVERY run): this book's hunting ground,
+  AI/tech-biased by construction. A narrow reading here tells you the UNIVERSE is
+  concentrated, not that the market is. Rich fields: `pct_above_200dma`,
+  advancers/decliners and `advance_decline_ratio`, `pct_beating_spy_1m`.
+- `market_breadth.broad` (~950 names, WEEKLY from the discovery sweep over S&P 500 +
+  Russell 1000 + NDX + EM ADRs): genuinely market-wide. Thinner fields — the weekly
+  sweep carries no 1-day bar and no 200-DMA, so advance/decline and the 200-DMA share
+  come back **null with a reason in `unavailable`**, never as zero. A null there means
+  "not measured", NOT "nothing is above its 200-DMA".
+
+`pct_beating_spy_1m` is the sharpest single number: when it is under ~40% the index is
+being carried by a minority, however healthy the level looks. `pct_near_high` /
+`pct_deep_below_high` are PROXIMITY to the trailing high on daily bars, not literal
+same-session new highs — daily bars cannot see intraday extremes.
+
+`market_breadth.sector_rotation_30d` is the sector history: per-sector 1-month momentum
+at the start and end of the window and the change in PERCENTAGE POINTS, plus
+`accelerating` / `decelerating`. This is what a snapshot cannot give you — a sector at
++5% that was +30% a fortnight ago is a very different trade from one at +5% and rising.
+A sector with fewer than 2 observations is listed under `insufficient_history` rather
+than given a delta: one observation is a level, not a trend.
+
 **momentum_health** - is the momentum FACTOR itself unwinding (leaders sold hard while
 SPY holds up, July-2026 style)? Combines our own scan's 3-month leaders' 1-month relative
 strength with MTUM/SPMO drawdowns vs SPY: status healthy / softening / unwind / unknown,
