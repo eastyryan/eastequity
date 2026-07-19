@@ -26,6 +26,17 @@ def test_build_health_emits_the_keys_the_alarm_reads():
         assert key in health, (key, sorted(health))
 
 
+def _no_capability_noise(monkeypatch):
+    """These tests assert the missed-run and bundle-age thresholds.
+
+    assess() also runs the real capability audit, which reports on LIVE state — so
+    without this, a bundle that predates a wiring change makes every threshold test
+    fail for a reason that has nothing to do with what it is testing.
+    """
+    monkeypatch.setattr("runlib.capabilities.audit_capabilities",
+                        lambda: {"ok": True, "dead": [], "results": {}})
+
+
 def _force_trading_day(monkeypatch):
     """These tests are about the missed-run THRESHOLD, not the calendar.
 
@@ -41,6 +52,7 @@ def _force_trading_day(monkeypatch):
 
 
 def test_missed_runs_trip_the_alarm(monkeypatch):
+    _no_capability_noise(monkeypatch)
     _force_trading_day(monkeypatch)
     monkeypatch.setattr(hb, "build_health", lambda: {}, raising=False)
     monkeypatch.setattr("runlib.analytics.build_health",
@@ -56,6 +68,7 @@ def test_missed_runs_trip_the_alarm(monkeypatch):
 def test_a_holiday_is_not_a_missed_run(monkeypatch):
     """A holiday has no scheduled slots. Counting them as missed would page you every
     Thanksgiving and train you to ignore the alarm."""
+    _no_capability_noise(monkeypatch)
     monkeypatch.setattr("tools.market_calendar.session",
                         lambda *a, **k: {"is_trading_day": False, "source": "calendar",
                                          "open": None, "close": None,
@@ -69,6 +82,7 @@ def test_a_holiday_is_not_a_missed_run(monkeypatch):
 
 
 def test_one_missed_slot_is_tolerated(monkeypatch):
+    _no_capability_noise(monkeypatch)
     _force_trading_day(monkeypatch)
     """GitHub coalesces cron under load (observed ~hourly on 2026-07-15). An alarm
     that fires on routine jitter gets muted, and a muted alarm is worse than none."""
@@ -81,6 +95,7 @@ def test_one_missed_slot_is_tolerated(monkeypatch):
 
 
 def test_a_stale_relay_bundle_trips_the_alarm(monkeypatch):
+    _no_capability_noise(monkeypatch)
     monkeypatch.setattr("runlib.analytics.build_health",
                         lambda: {"missed": 0, "expected_runs_so_far": 7,
                                  "completed_scheduled_runs": 7,
@@ -94,6 +109,7 @@ def test_a_stale_relay_bundle_trips_the_alarm(monkeypatch):
 def test_engaged_kill_switch_is_surfaced(monkeypatch, tmp_path):
     """A halted system looks identical to a healthy idle one from outside — which is
     how a halt outlives the reason it was engaged for."""
+    _no_capability_noise(monkeypatch)
     (tmp_path / "state").mkdir()
     (tmp_path / "state" / "KILL_SWITCH").write_text("halted")
     monkeypatch.setattr("runlib.analytics.build_health",
@@ -108,6 +124,7 @@ def test_engaged_kill_switch_is_surfaced(monkeypatch, tmp_path):
 
 def test_a_healthy_pipeline_is_silent(monkeypatch):
     """The mirror — without it, 'always unhealthy' passes every test above."""
+    _no_capability_noise(monkeypatch)
     monkeypatch.setattr("runlib.analytics.build_health",
                         lambda: {"missed": 0, "expected_runs_so_far": 7,
                                  "completed_scheduled_runs": 7,

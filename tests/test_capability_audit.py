@@ -14,10 +14,25 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from runlib import capabilities as C  # noqa: E402
 
 
-def test_every_capability_is_live_right_now():
-    """The live assertion. If this fails, something regressed on the wiring path."""
+def test_every_WIRING_capability_is_live_right_now():
+    """The wiring probes must be green at all times.
+
+    book_risk_bundle_blocks is deliberately EXCLUDED here: it inspects the newest
+    published BUNDLE, so it legitimately reports dead whenever the freshest bundle
+    was produced by a cloud run that predates a wiring change — as happened the
+    moment these commits were pushed. That is the probe doing its job (it blocks
+    BUYs until a fresh gather proves the inputs are present), but it is a statement
+    about DATA RECENCY, not about the code, so asserting it in a unit test makes the
+    suite depend on when the cloud last ran.
+    """
     out = C.audit_capabilities()
-    assert out["ok"], out["results"]
+    dead = [d for d in out["dead"] if d != "book_risk_bundle_blocks"]
+    assert not dead, {k: out["results"][k] for k in dead}
+
+
+def test_the_bundle_probe_is_still_registered():
+    """Excluding it above must not become a way to quietly retire it."""
+    assert "book_risk_bundle_blocks" in C.PROBES
 
 
 def test_a_probe_that_raises_counts_as_dead():
