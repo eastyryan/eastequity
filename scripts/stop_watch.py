@@ -107,11 +107,37 @@ def _live_prices(max_age_min: int) -> tuple[dict, dict]:
         meta["status"] = "stale"
         return {}, meta
 
-    prices = {}
+    # PER-TICKER trade-age gate. The snapshot age above only says how long ago the
+    # feeder RAN. Alpaca's ladder falls back latest_trade -> minute_bar -> dailyBar
+    # -> prevDailyBar, and a prior-session close was previously written with a fresh
+    # wall-clock stamp, so it read as age 0.0m and was indistinguishable from a live
+    # tick. On a thin name IEX can go 15-60 minutes between prints. The failure is
+    # directional and silent: the stale price is the PRE-selloff price, it sits above
+    # the stop, the stop does not fire, and the layer reports itself healthy.
+    #
+    # A price may only decide a stop if it is a genuine intraday mark whose TRADE
+    # time is inside the window. Unknown provenance fails CLOSED — skipping this tick
+    # is cheap (the next is minutes away); firing on a day-old close is not, and
+    # neither is silently not firing.
+    from tools.live_prices import price_is_enforceable
+    price_meta = blob.get("price_meta") or {}
+    prices, rejected = {}, []
     for t, v in (blob.get("prices") or {}).items():
         px = v.get("price") if isinstance(v, dict) else v
-        if isinstance(px, (int, float)) and px > 0:
-            prices[str(t).upper()] = float(px)
+        if not (isinstance(px, (int, float)) and px > 0):
+            continue
+        tu = str(t).upper()
+        ok, why = price_is_enforceable(price_meta.get(tu),
+                                       max_age_min=max_age_min,
+                                       require_intraday=True)
+        if ok:
+            prices[tu] = float(px)
+        else:
+            rejected.append(f"{tu}:{why}")
+    if rejected:
+        meta["rejected_prices"] = rejected[:12]
+        meta["n_rejected"] = len(rejected)
+        print(f"  ({len(rejected)} price(s) not enforceable: {rejected[:4]})")
     meta["n"] = len(prices)
     return prices, meta
 

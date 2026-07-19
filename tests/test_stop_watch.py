@@ -22,12 +22,26 @@ from scripts import stop_watch  # noqa: E402
 ROOT = Path(__file__).resolve().parent.parent
 
 
-def write_snapshot(tmp_path, monkeypatch, prices, age_min=1.0):
-    as_of = (datetime.now(timezone.utc) - timedelta(minutes=age_min)).isoformat()
+def write_snapshot(tmp_path, monkeypatch, prices, age_min=1.0, via="latest_trade",
+                   trade_age_min=None):
+    """A snapshot in the shape production now writes.
+
+    price_meta carries the TRADE time and the ladder rung per ticker. It is not
+    optional decoration: stop_watch refuses to enforce a stop off a price whose
+    provenance it cannot establish, because a prior-session close used to be stamped
+    with a fresh wall clock and read as age 0.0m. Defaults here describe a healthy
+    live tick; pass `via`/`trade_age_min` to describe a stale or non-intraday one.
+    """
+    now = datetime.now(timezone.utc)
+    as_of = (now - timedelta(minutes=age_min)).isoformat()
+    t_age = age_min if trade_age_min is None else trade_age_min
+    traded = (now - timedelta(minutes=t_age)).isoformat()
     d = tmp_path / "state"
     d.mkdir(parents=True, exist_ok=True)
-    (d / "live_prices.json").write_text(json.dumps(
-        {"as_of": as_of, "source": "test", "prices": prices, "n": len(prices)}))
+    (d / "live_prices.json").write_text(json.dumps({
+        "as_of": as_of, "source": "test", "prices": prices, "n": len(prices),
+        "price_meta": {str(t).upper(): {"asof": traded, "via": via} for t in prices},
+    }))
     monkeypatch.setattr(stop_watch, "ROOT", tmp_path)
     return d / "live_prices.json"
 
@@ -179,3 +193,48 @@ def test_watcher_invokes_no_llm():
     code = src.split('"""', 2)[-1]
     for token in ("claude", "ask_claude", "run_claude", "brain_io"):
         assert token not in code, f"stop watcher must not reach the LLM ({token})"
+
+
+# --------------------------------------------------------------------------- #
+# Trade-time freshness (2026-07-19). Freshness used to be measured on SNAPSHOT
+# time only — how long ago the feeder RAN — so a prevDailyBar close from a prior
+# session was written with a fresh wall clock and read as age 0.0m, indistinguishable
+# from a live tick. The failure is silent and directional: the stale price is the
+# PRE-selloff price, it sits above the stop, and the stop does not fire.
+# --------------------------------------------------------------------------- #
+def test_a_prior_session_close_cannot_decide_a_stop(tmp_path, monkeypatch):
+    """dailyBar/prevDailyBar are a session CLOSE, not an intraday mark."""
+    write_snapshot(tmp_path, monkeypatch, {"DELL": 400.0}, age_min=1.0,
+                   via="prev_daily_bar")
+    prices, meta = stop_watch._live_prices(30)
+    assert prices == {}
+    assert meta["n_rejected"] == 1
+
+
+def test_a_fresh_snapshot_carrying_a_stale_trade_is_rejected(tmp_path, monkeypatch):
+    """THE bug: the feeder ran 1 minute ago, but the last IEX print is 90 minutes
+    old. On a thin name that is routine — IEX is ~2-3% of consolidated volume."""
+    write_snapshot(tmp_path, monkeypatch, {"DELL": 400.0}, age_min=1.0,
+                   trade_age_min=90.0)
+    prices, meta = stop_watch._live_prices(30)
+    assert prices == {}
+    assert "90m old" in meta["rejected_prices"][0]
+
+
+def test_a_genuine_live_tick_is_enforceable(tmp_path, monkeypatch):
+    """The mirror — without it, 'reject everything' passes both tests above and no
+    stop ever fires."""
+    write_snapshot(tmp_path, monkeypatch, {"DELL": 400.0}, age_min=1.0)
+    prices, meta = stop_watch._live_prices(30)
+    assert prices == {"DELL": 400.0}
+    assert meta.get("n_rejected") is None
+
+
+def test_missing_provenance_fails_closed(tmp_path, monkeypatch):
+    """An old-format snapshot with no price_meta must not be trusted."""
+    import json as _j
+    snap = write_snapshot(tmp_path, monkeypatch, {"DELL": 400.0}, age_min=1.0)
+    blob = _j.loads(snap.read_text()); blob.pop("price_meta")
+    snap.write_text(_j.dumps(blob))
+    prices, _ = stop_watch._live_prices(30)
+    assert prices == {}

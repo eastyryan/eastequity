@@ -52,6 +52,47 @@ def _parse_ts(iso: str | None) -> datetime | None:
     return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt
 
 
+# Per-ticker provenance from the most recent fetch: {TICKER: {"asof", "via"}}.
+LAST_PRICE_META: dict = {}
+
+# Ladder rungs that are a genuine intraday mark. dailyBar / prevDailyBar are a
+# session CLOSE and must never be used to decide a stop while the market is open —
+# that is a prior close wearing a live-price costume.
+INTRADAY_RUNGS = ("latest_trade", "minute_bar")
+
+
+def trade_age_minutes(meta: dict | None, now: datetime | None = None) -> float | None:
+    """Minutes since the PRICE happened (not since we asked). None if unknown."""
+    now = now or _now_utc()
+    asof = _parse_ts((meta or {}).get("asof"))
+    if asof is None:
+        return None
+    return (now - asof).total_seconds() / 60.0
+
+
+def price_is_enforceable(meta: dict | None, *, max_age_min: float,
+                         require_intraday: bool,
+                         now: datetime | None = None) -> tuple[bool, str]:
+    """May this price decide a STOP? (ok, reason).
+
+    Fails CLOSED on unknown provenance. A price whose age cannot be established is
+    exactly the case this exists to catch — the old check measured only how long ago
+    the API was CALLED, so a prior-session close was stamped age 0.0m and was
+    indistinguishable from a live tick.
+    """
+    if not isinstance(meta, dict) or not meta:
+        return False, "no provenance (trade time unknown)"
+    via = str(meta.get("via") or "")
+    if require_intraday and via not in INTRADAY_RUNGS:
+        return False, f"not an intraday mark (via={via or 'unknown'})"
+    age = trade_age_minutes(meta, now)
+    if age is None:
+        return False, f"no trade timestamp (via={via or 'unknown'})"
+    if age > max_age_min:
+        return False, f"trade is {age:.0f}m old (> {max_age_min:.0f}m)"
+    return True, f"via={via} age={age:.1f}m"
+
+
 def live_age_minutes(blob: dict | None, now: datetime | None = None) -> float | None:
     """Minutes since the live snapshot was taken, or None if unknown. Pure."""
     now = now or _now_utc()
@@ -191,6 +232,7 @@ def fetch_live_prices(tickers: Iterable[str],
     yfinance exactly as before. Network wrapped; never raises."""
     want = list(dict.fromkeys(str(x).upper() for x in tickers if x))
     out: dict = {}
+    meta: dict = {}          # {TICKER: {"asof": iso, "via": ladder_rung}}
     source = "yfinance_intraday"
     try:
         from tools import alpaca_data
@@ -200,6 +242,17 @@ def fetch_live_prices(tickers: Iterable[str],
                 # fallback is yesterday's close — keep it, it matches the old
                 # behaviour of "freshest price yfinance would give us".
                 out[t] = round(float(rec["price"]), 2)
+                # KEEP THE PROVENANCE. `asof` (when the PRICE happened) and `via`
+                # (which rung of the ladder produced it) were both fetched and then
+                # thrown away here, so every downstream freshness check measured
+                # only how long ago we CALLED the API. A prevDailyBar close from a
+                # prior session was written with a wall-clock timestamp and read as
+                # age 0.0m — indistinguishable from a live tick. On a thin name IEX
+                # can go 15-60 minutes between prints, and the failure is
+                # directional: the stale price is the PRE-selloff price, it sits
+                # above the stop, and the stop does not fire while the layer
+                # reports itself healthy.
+                meta[t] = {"asof": rec.get("asof"), "via": rec.get("via")}
             if out:
                 source = "alpaca_iex"
     except Exception:
@@ -214,6 +267,9 @@ def fetch_live_prices(tickers: Iterable[str],
         if yf_prices:
             out.update(yf_prices)
             source = "alpaca_iex+yfinance" if source == "alpaca_iex" else source
+    # yfinance rows carry no trade time; absent meta is treated as UNKNOWN age,
+    # which the staleness gate below treats as stale rather than fresh.
+    LAST_PRICE_META.clear(); LAST_PRICE_META.update(meta)
     return out, source
 
 
@@ -254,6 +310,11 @@ def write_live_prices(tickers: Iterable[str], *, now: datetime | None = None,
         "as_of": now.isoformat(),
         "source": source,
         "prices": prices,
+        # Per-ticker trade time and ladder rung. `as_of` above is only when we
+        # ASKED; this is when the price actually happened. Stop enforcement gates
+        # on max(snapshot_age, trade_age) so a prior-session close can no longer
+        # present itself as a fresh tick.
+        "price_meta": dict(LAST_PRICE_META),
         "requested": tickers,
         "n": len(prices),
     }
