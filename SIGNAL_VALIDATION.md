@@ -482,3 +482,140 @@ deliberately — a study must be frozen against the predicate it measured, or ne
 results describe code that no longer exists. `tests/test_signal_lanes.py` pins the copied
 boundaries. If `universe_scanner.py`'s thresholds move, those tests are where the drift
 should surface; re-run this study before trusting these numbers against a changed scanner.
+
+---
+
+# Round 2 — the four technical layers from 32fbac9
+
+**Date:** 2026-07-19 (later same day)
+**Sample:** 184 names x 12 years, ~88,200 observations, step = 5 sessions
+**Added by:** commit `32fbac9`, wired into `tools/universe_scanner.py`, documented in CLAUDE.md
+**Tests:** `tests/test_signal_study.py` (new: wiring, weekly bar construction, no-lookahead)
+
+## Why this round exists
+
+`32fbac9` added four technical layers and CLAUDE.md immediately told the brain to weight
+them, in language that makes falsifiable claims:
+
+- anchored VWAP — *"above it, buyers since that event are collectively in profit and it
+  tends to act as support; below it, as resistance."*
+- weekly structure — *"a name can be a daily uptrend while its weekly structure rolls
+  over — that divergence is a warning the daily set cannot show you."*
+- RS vs sector — *"Cite BOTH when arguing leadership."*
+
+None had been measured. Round 1 is the reason that matters: `supplier_pullbacks` read as
+well-established too, and its entire +0.47 collapsed to +0.07 when one label came out of
+the predicate.
+
+## Harness reproduction check (run this before believing any new number)
+
+The same invocation re-measured Round 1's lanes. It reproduces them, so the new columns
+are measuring what the old ones measured:
+
+| Lane | Round 1 ATR-matched 21d | This run | n |
+|---|---|---|---|
+| supplier_pb (raw) | +0.47 | **+0.49** | 5,453 |
+| pullback ABLATION (no label) | +0.07 | **+0.07** | 17,798 |
+| EAR gap_held | −0.07 | **−0.04** | 10,929 |
+
+## Verdict table — ATR-matched excess (pp)
+
+Every row is paired with the control that isolates its *marginal* contribution. A raw arm
+answers "does this state co-occur with returns", which cross-sectional momentum can answer
+by itself; the conditioned arm holds the daily 200-DMA flag fixed and answers the only
+question CLAUDE.md's claims depend on.
+
+| Group | n | 21d | 63d | Verdict |
+|---|---|---|---|---|
+| **1. Anchored VWAP** | | | | |
+| aVWAP above | 26,886 | **−0.12** | −0.17 | no edge; sign mildly inverted |
+| aVWAP below | 53,591 | **+0.06** | +0.09 | *below* scores higher than above |
+| aVWAP above \| 200dma up | 23,177 | **−0.11** | −0.18 | survives conditioning — still nothing |
+| aVWAP below \| 200dma up | 32,769 | **0.00** | −0.01 | the two cells do not separate |
+| aVWAP above \| breakout anchor | 26,783 | −0.11 | −0.17 | the "breakout" framing adds nothing |
+| aVWAP above \| volume anchor | 103 | −1.17 | −1.76 | n too small to read |
+| **2. Weekly structure** | | | | |
+| weekly uptrend | 38,981 | **−0.09** | −0.13 | no edge |
+| weekly downtrend | 22,943 | **+0.18** | — | *downtrend* scores higher |
+| wk uptrend \| 200dma up | 34,015 | **−0.06** | −0.10 | the "healthy" divergence cell |
+| wk ROLLOVER \| 200dma up | 9,602 | **+0.14** | +0.14 | the "warning" cell — **outperformed it** |
+| wk above 30w MA | 53,900 | −0.07 | −0.13 | no edge |
+| wk 30w MA rising | 56,255 | −0.07 | −0.06 | no edge |
+| **3. RS vs sector vs RS vs SPY** | | | | |
+| RS-vs-SPY top quintile | 14,312 | **−0.11** | −0.18 | negative |
+| RS-vs-SECTOR top quintile | 14,312 | **−0.09** | −0.15 | negative |
+| RS-vs-PSEUDO-sector *(ablation)* | 14,312 | **−0.06** | −0.18 | **matches the real one** |
+| RS sector-only (not SPY top) | 4,745 | −0.04 | −0.18 | surfaces nothing extra |
+| RS SPY-only (not sector top) | 4,745 | −0.12 | −0.29 | surfaces nothing extra |
+
+Both RS arms rank an **identical pool** — a name with no sector RS (thin sector) is
+dropped from the SPY arm too — so the two differ only in the benchmark used, not in
+composition.
+
+## What each result means
+
+**1. Anchored VWAP carries no directional edge.** Above-aVWAP measured −0.12pp and
+below-aVWAP +0.06pp; conditioning on the 200-DMA leaves the two cells at −0.11 and 0.00.
+Everything is inside the ±0.2pp band where `supplier_pullbacks`' +0.07 was called nothing.
+The support/resistance claim is not supported as a return predictor.
+
+**This does not retire the block.** A measured, named level is a genuine *auditability*
+gain over an eyeballed chart shelf — "a level you can name is auditable, one you saw is
+not" is a process claim and it survives untouched. What must go is the implication that
+being above it is bullish evidence. Keep it as geometry; stop treating it as a signal.
+
+**2. The weekly-divergence claim is backwards.** Among names already in a daily uptrend,
+the cell CLAUDE.md calls a warning (weekly rollover) scored **+0.14pp at both horizons**
+while the healthy cell scored −0.06 / −0.10. The warning cell outperformed at 21d and 63d.
+Both are inside noise, so the honest statement is *no discriminating power* rather than
+"buy the rollover" — but there is no support whatever for the direction claimed, and the
+prompt currently instructs the brain to act on that direction.
+
+**3. Sector RS fails its ablation outright.** Relative strength against a name's real
+sector (−0.09) is indistinguishable from relative strength against an **arbitrary grouping
+of identical shape** (−0.06). The construction earns whatever it earns without any sector
+information in it; the labels contribute nothing. This is the `supplier_pullbacks` result
+in a new costume — a real-looking number whose content disappears under ablation.
+
+Note also that *both* RS arms are negative: top-quintile relative strength underperformed
+its ATR-matched peers over 12 years in this universe.
+
+**4. `indicators_by_ticker` was not measured, deliberately.** It is a projection of
+already-computed fields (`technicals.build_indicator_map`) with no predicate and no forward
+return of its own. There is nothing in it to test. Its *components* are testable, but half
+are still inline arithmetic inside `universe_scanner.py` rather than extractable pure
+functions. Listing it as a measured lane would put a verdict beside something never
+tested — which is exactly how `supplier_pullbacks` held its authority.
+`tests/test_signal_study.py` asserts it stays off the measured list.
+
+## Year-by-year stability (21d, book's rules)
+
+Overlapping windows break independence, so stability across regimes is the test, not a
+p-value. Every group is a coin flip:
+
+| Group | positive years / 12 |
+|---|---|
+| aVWAP above \| 200dma up | 4 / 12 |
+| aVWAP below \| 200dma up | 6 / 12 |
+| wk uptrend \| 200dma up | 6 / 12 |
+| wk ROLLOVER \| 200dma up | 7 / 12 |
+| RS-vs-SPY top quintile | 4 / 12 |
+| RS-vs-SECTOR top quintile | 5 / 12 |
+| RS-vs-PSEUDO-sector (ablation) | 4 / 12 |
+
+No group holds a sign. Nothing here is regime-concentrated in the way `deep_value_200w`
+was (2021) — these are simply flat.
+
+## Caveats
+
+- **Sector labels are a 2026 classification applied to historical bars**, and
+  `data/universe.json` is survivors. That is lookahead, and it biases the real-sector arm
+  *upward*. It still failed to beat its ablation — the caveat makes the negative verdict
+  stronger, not weaker.
+- **Weekly bars are derived from the daily panel** (`signal_lanes.weekly_ohlc`), not from
+  a separate weekly download as the live scanner uses. Closes match by construction;
+  highs/lows are the max/min across each ISO week's daily bars.
+- **The anchored-VWAP volume-anchor arm has n=103** and is not readable. Nearly every
+  anchor in this universe resolves to a real 20-day-high breakout.
+- Absolute return columns are meaningless off a survivor universe. Only the
+  cross-sectional, ATR-matched column is a verdict.

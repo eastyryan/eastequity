@@ -71,27 +71,60 @@ rule drop/hold/buy on a watchlist name that did not rank into a lane - previousl
 names carried only a price and an ATR.
 
 **rel_strength_vs_sector_1m/3m_pct** (on scanned rows and in the compact line) - the
-name's momentum MINUS its sector's MEDIAN. This is the distinction rel_strength_1m_pct
-(vs SPY) cannot make: a semi flat while semis are -12% is a leader inside a broken
-group; a name beating SPY but lagging its own sector is a laggard in a strong group.
-Cite BOTH when arguing leadership. Sectors with fewer than 3 scored peers are skipped
-rather than compared against a one-name "median", so an absent value means a thin
-sector, not weakness.
+name's momentum MINUS its sector's MEDIAN. Descriptive framing: a semi flat while semis
+are -12% sits differently inside its group than a name beating SPY while lagging its own
+sector. Sectors with fewer than 3 scored peers are skipped rather than compared against
+a one-name "median", so an absent value means a thin sector, not weakness.
+
+MEASURED 2026-07-19 over 12 years / 88,200 observations: this metric FAILS ITS ABLATION.
+Ranking on relative strength vs a name's real sector scored -0.09pp ATR-matched (21d),
+and the identical construction against an ARBITRARY grouping of the same shape scored
+-0.06pp - statistically the same. The sector labels contribute nothing; what the metric
+measures is cross-sectional momentum wearing a sector costume. Both arms are NEGATIVE,
+and the incremental cell (names sector-RS surfaces that SPY-RS does not) scored -0.04.
+This is the supplier_pullbacks result again: a real-looking number whose content
+disappears under ablation. Treat rel_strength_vs_sector as DESCRIPTIVE COLOUR - it tells
+you where a name sits inside its group, which is worth SAYING - but do NOT cite it as
+evidence of leadership and do not treat a higher value as a better idea. If you argue
+leadership, argue it from the thesis, not from this number.
 
 **weekly** (per scanned name) - the WEEKLY timeframe, where a 3-90 day swing's base
 actually lives: `wma_30w` and `pct_vs_30w_ma` (the weekly equivalent of the 200-DMA),
 `wma_30w_rising`, `weekly_rsi_14`, and `weekly_structure` (uptrend / downtrend / mixed
-from higher-highs AND higher-lows). A name can be a daily uptrend while its weekly
-structure rolls over - that divergence is a warning the daily set cannot show you.
-`insufficient_for_30w_ma` means too little history, NOT a failing trend.
+from higher-highs AND higher-lows). `insufficient_for_30w_ma` means too little history,
+NOT a failing trend.
+
+MEASURED 2026-07-19 over 12 years: the DIVERGENCE WARNING THIS BLOCK WAS ADDED FOR DOES
+NOT HOLD, and the measured sign is the opposite of the claim. Among names already in a
+daily uptrend (above the 200-DMA), the "weekly structure rolling over" cell scored
++0.14pp ATR-matched at BOTH 21d and 63d, while the healthy weekly-uptrend cell scored
+-0.06 / -0.10. The warning cell OUTPERFORMED the cell it was supposed to warn you about.
+Weekly uptrend alone scored -0.09, above-30w-MA -0.07, 30w-MA-rising -0.07 - all inside
+noise, 4-7 positive years out of 12. So: the honest read is NO DISCRIMINATING POWER (not
+"buy the rollover" - the magnitudes are far too small to trade either way). Use the
+weekly block to DESCRIBE the higher-timeframe base a 3-90 day swing sits in, which is a
+real thing to know. Do NOT downgrade a setup because weekly structure disagrees with the
+daily read, and do not cite the divergence as a risk - that specific inference was
+measured and it is not there.
 
 **anchored_vwap** (per scanned name) - the volume-weighted average price paid since the
 last breakout (`anchor_reason: breakout_above_20d_high`) or, absent one, since the
-highest-volume session. This is the first MEASURED support level in the bundle: above
-it, buyers since that event are collectively in profit and it tends to act as support;
-below it, as resistance. Cite `pct_vs_anchored_vwap` instead of eyeballing a shelf off
-the chart - a level you can name is auditable, one you saw is not. `status:
-unavailable` carries a `reason`; it never guesses a level.
+highest-volume session. This is the first MEASURED level in the bundle. Cite
+`pct_vs_anchored_vwap` when you need a reference price instead of eyeballing a shelf off
+the chart - a level you can name is auditable, one you saw is not. `status: unavailable`
+carries a `reason`; it never guesses a level.
+
+MEASURED 2026-07-19 over 12 years: being ABOVE the anchored VWAP predicts NOTHING, and
+the sign is mildly inverted. Above scored -0.12pp ATR-matched (21d) and below scored
++0.06; holding the 200-DMA trend fixed leaves the two cells at -0.11 and 0.00 - they do
+not separate. Restricting to a real breakout anchor changes nothing (-0.11). So the
+"buyers are collectively in profit, it tends to act as support" reading is NOT supported
+as evidence about direction: do not cite being above the anchored VWAP as a reason a
+setup is constructive, and do not treat being below it as a strike against one.
+
+What SURVIVES is the auditability, and that is why the block stays: it gives you a
+named, reproducible reference price for stop and target GEOMETRY instead of a level you
+eyeballed. Use it that way - as measurement, not as signal.
 
 **market_breadth** - how many names are PARTICIPATING, which no index level can tell
 you. An index making highs on narrowing participation and one making highs on broad

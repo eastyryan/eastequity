@@ -28,6 +28,7 @@ the prompt naming a location that does not exist.
 from __future__ import annotations
 
 import json
+import sys
 import re
 from pathlib import Path
 
@@ -127,26 +128,97 @@ def _newest_bundle_path():
     return files[0] if files else None
 
 
-def _newest_gather_source():
-    """Newest source file that can change what a gather emits."""
-    newest = None
-    for sub in ("tools", "runlib"):
-        for p in (ROOT / sub).rglob("*.py"):
-            if newest is None or p.stat().st_mtime > newest.stat().st_mtime:
-                newest = p
-    return newest
+def _gather_sources():
+    """Every repo source file that can actually change what a gather emits.
+
+    DISCOVERED, not listed. An earlier version walked all of tools/ and runlib/,
+    which tripped on modules that cannot touch the bundle at all — the backtest
+    helpers in tools/signal_lanes.py, for one. A staleness alarm that fires on
+    unrelated edits gets muted, and a muted guard is the same as no guard, which
+    is the failure this file exists to prevent. So the watched set is derived
+    from what context_gather actually imports rather than from a directory that
+    happens to contain it.
+
+    Discovery runs in a SUBPROCESS, which is not fussiness. sys.modules is
+    global and pytest shares one interpreter across the whole suite, so reading
+    it in-process picks up whatever every other test file happened to import
+    first — the discovered set then depends on test execution ORDER, and this
+    check passed alone while failing under the full suite. A guard whose result
+    depends on what ran before it is not a guard.
+    """
+    import subprocess
+    probe = (
+        "import sys, json;"
+        "import runlib.context_gather, runlib.context_tiers;"
+        "print(json.dumps([m.__file__ for m in list(sys.modules.values())"
+        " if getattr(m, '__file__', None)]))"
+    )
+    try:
+        r = subprocess.run([sys.executable, "-c", probe],
+                           cwd=ROOT, capture_output=True, text=True, timeout=120)
+    except Exception:
+        return []
+    if r.returncode != 0 or not r.stdout.strip():
+        return []
+    out = []
+    for f in json.loads(r.stdout.strip().splitlines()[-1]):
+        p = Path(f)
+        try:
+            p.relative_to(ROOT)
+        except ValueError:
+            continue                       # third-party / stdlib
+        if ".venv" in p.parts or "tests" in p.parts:
+            continue
+        out.append(p)
+    return out
+
+
+def _last_commit_time(paths) -> tuple[float, str] | None:
+    """(unix time, subject) of the newest COMMIT touching any of `paths`.
+
+    Commit time, not file mtime. mtime measures when a file was last WRITTEN,
+    which `touch`, `git checkout`, and every fresh CI clone all change without
+    changing a byte of content — a staleness alarm keyed on it fires constantly
+    in CI and gets muted, which is the failure mode this guard exists to avoid.
+    Commit time is content-anchored and survives a clone.
+
+    The tradeoff is deliberate: uncommitted local edits to the gatherer will not
+    trip this. That is the right call — the question being asked is whether the
+    committed gatherer has moved past the fixture, and a dirty working tree is
+    the developer's own business.
+    """
+    import subprocess
+    rel = [str(Path(p).relative_to(ROOT)) for p in paths]
+    try:
+        r = subprocess.run(
+            ["git", "log", "-1", "--format=%ct%x09%s", "--"] + rel,
+            cwd=ROOT, capture_output=True, text=True, timeout=30)
+    except Exception:
+        return None
+    if r.returncode != 0 or not r.stdout.strip():
+        return None
+    ts, _, subject = r.stdout.strip().partition("\t")
+    try:
+        return float(ts), subject
+    except ValueError:
+        return None
 
 
 def _fixture_staleness():
     """(is_stale, message). The bundle is evidence; evidence can go out of date."""
-    bundle, src = _newest_bundle_path(), _newest_gather_source()
-    if bundle is None or src is None:
+    bundle = _newest_bundle_path()
+    sources = _gather_sources()
+    if bundle is None or not sources:
         return False, ""
-    if bundle.stat().st_mtime >= src.stat().st_mtime:
+    commit = _last_commit_time(sources)
+    if commit is None:
+        return False, ""          # no git history to compare against: say nothing
+    ts, subject = commit
+    if bundle.stat().st_mtime >= ts:
         return False, ""
     return True, (
-        f"the newest bundle ({bundle.name}) predates the newest gather source "
-        f"({src.relative_to(ROOT)}) — run a gather to refresh the fixture")
+        f"the newest bundle ({bundle.name}) predates the last commit to the "
+        f"gather code (\"{subject[:60]}\") — run a gather to refresh the fixture")
 
 
 @pytest.mark.parametrize("dotted", DOCUMENTED_PATHS)
