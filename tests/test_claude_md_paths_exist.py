@@ -176,3 +176,26 @@ def test_blocking_paths_are_inside_the_read_window(pack):
             assert starts[top] <= READ_WINDOW_LINES, (
                 f"{top} resolves but starts at line {starts[top]} — past the "
                 f"default Read window, so the brain does not actually receive it")
+
+
+def test_momentum_health_reaches_the_brain():
+    """FOUND BY THE BRAIN, 2026-07-19 weekly run.
+
+    momentum_health was in neither ALWAYS_KEYS nor FOCUS_KEYS, so it was
+    gathered, written to the full archive, READ BY THE VALIDATOR — which halves
+    new-BUY size on an unwind — and stripped from the slim pack. CLAUDE.md names
+    it a required input to the regime step on EVERY run.
+
+    That run's archive carried {"status": "unwind", "momentum_unwind": true}
+    while the brain, unable to see the block, reconstructed the unwind by hand
+    from sector_relative_strength and filed it as its improvement note. The
+    validator and the brain were reading different worlds.
+    """
+    from runlib.context_tiers import ALWAYS_KEYS, FOCUS_KEYS
+    assert "momentum_health" in ALWAYS_KEYS or "momentum_health" in FOCUS_KEYS, (
+        "momentum_health is in neither key list, so it cannot survive slimming")
+    pack = slim_context_for_brain({
+        "momentum_health": {"status": "unwind", "momentum_unwind": True},
+        "reasoning_process": {}, "portfolio": {},
+    })
+    assert pack.get("momentum_health", {}).get("status") == "unwind"

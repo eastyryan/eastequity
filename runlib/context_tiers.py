@@ -136,6 +136,20 @@ ALWAYS_KEYS = (
     "watchlist_trigger_alerts", "tape_focus_promotions", "market_events",
     "market_news", "market_radar", "data_quality", "stale_data_notice",
     "benchmark_close",
+    # FOUND BY THE BRAIN ITSELF, 2026-07-19 weekly run. momentum_health was in
+    # neither ALWAYS_KEYS nor FOCUS_KEYS, so it was gathered, written to the full
+    # archive, READ BY THE VALIDATOR (which halves new-BUY size on an unwind) and
+    # stripped from the slim pack. CLAUDE.md names it a required input to the
+    # regime step on every run. That run's archive carried
+    # {"status": "unwind", "momentum_unwind": true} while the brain, unable to see
+    # the block, reconstructed the unwind by hand from sector_relative_strength
+    # and filed it as its improvement note.
+    #
+    # The silent-omission shape again: fail-open treats a missing block as
+    # "unknown, no adjustment", which is indistinguishable in the pack from a
+    # genuine `unknown` verdict on live data. Absent and inconclusive must not
+    # look the same.
+    "momentum_health",
     "risk_halts", "forced_exits", "corporate_actions", "lessons_learned",
     "track_record",  # compact closed trades already truncated in gather
     "earnings_deep_dive",     # why a full run was forced (earnings reporter)
