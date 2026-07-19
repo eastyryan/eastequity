@@ -39,13 +39,16 @@ from pathlib import Path
 import pytest
 
 from runlib.context_tiers import (
+    ARCHIVE_ONLY_KEYS,
     BLOCKING_KEYS,
     DECISION_CRITICAL,
     MAX_PACK_LINES,
     READ_WINDOW_LINES,
+    UNREGISTERED_INLINE_MAX_LINES,
     key_start_lines,
     pack_line_count,
     slim_context_for_brain,
+    unregistered_keys,
 )
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -356,6 +359,115 @@ def test_watchlist_feedback_is_where_claude_md_says_it_is():
     assert "watchlist_feedback" in rp
     assert "watchlist_feedback" not in rp["learning_pack"], (
         "duplicated between parent and learning_pack — two copies can drift")
+
+
+# ---------------------------------------------------------------------------
+# 5. THE COUPLING IS STRUCTURAL, NOT REMEMBERED.
+#
+# Four blocks have now been gathered, archived, and stripped from the pack the
+# brain reads because nobody added their key to a tuple in context_tiers.py:
+# factor_map / portfolio_competition, watchlist_feedback, the learning-pack
+# shadow disclosures, and momentum_health — which the BRAIN found itself, after
+# reconstructing an unwind by hand from a block the validator was already using
+# to halve its position sizes.
+#
+# These tests remove the remembering. The first fails on the commit that adds an
+# untiered block; the rest pin the runtime behaviour that keeps such a block
+# visible while the bug is live.
+# ---------------------------------------------------------------------------
+
+def test_every_gathered_key_is_tiered():
+    """No top-level key may exist in the bundle without a declared intention.
+
+    If this fails, add the key to ONE of: BLOCKING_KEYS (a gate depends on it),
+    DECISION_CONTEXT (the regime/book read), ALWAYS_KEYS (copied verbatim),
+    FOCUS_KEYS (a research map that gets capped), or ARCHIVE_ONLY_KEYS (you
+    genuinely mean to withhold it — say why in the tuple). Do NOT silence this
+    by deleting the key from the bundle.
+    """
+    real = _newest_full_bundle()
+    for label, bundle in [("synthetic", _synthetic_bundle())] + (
+            [("newest-real-bundle", real)] if real is not None else []):
+        stray = unregistered_keys(bundle)
+        assert not stray, (
+            f"[{label}] {len(stray)} gathered key(s) that no tier claims: {stray}. "
+            f"They were carried to the END of the pack, past the brain's "
+            f"~{READ_WINDOW_LINES}-line read window, uncapped. This is the "
+            f"2026-07-19 momentum_health bug: gathered, archived, read by the "
+            f"validator, invisible to the brain.")
+
+
+def test_an_untiered_block_reaches_the_brain_and_is_named():
+    """NEGATIVE CONTROL for the test above.
+
+    This repo has shipped guards that could not fire (reconciles_with_ledger was
+    tested and never called for three days), so the guard is exercised against a
+    bundle that actually violates it. A key no tier claims must (a) still appear
+    in the pack and (b) be named in _pack_budget.unregistered_keys.
+    """
+    bundle = _synthetic_bundle()
+    bundle["a_block_nobody_tiered"] = {"status": "unwind", "halves_buy_size": True}
+
+    assert unregistered_keys(bundle) == ["a_block_nobody_tiered"], (
+        "the detector cannot see an untiered key — it would never have caught "
+        "momentum_health either")
+
+    pack = slim_context_for_brain(bundle)
+    assert "a_block_nobody_tiered" in pack, (
+        "an untiered block was DROPPED. The inverted default is the whole point: "
+        "late and loud beats absent and silent.")
+    assert pack["a_block_nobody_tiered"]["status"] == "unwind", (
+        "the block reached the brain but its payload did not survive")
+    assert "a_block_nobody_tiered" in pack["_pack_budget"]["unregistered_keys"], (
+        "carried but not disclosed — the brain cannot tell this block had no cap "
+        "and no read-order position")
+
+
+def test_a_tiered_block_is_not_reported_as_unregistered():
+    """The other half of the control: no false positives on declared keys.
+
+    A detector that flagged everything would be as useless as one that flagged
+    nothing, and would train the operator to ignore the field.
+    """
+    assert unregistered_keys(_synthetic_bundle()) == []
+    pack = slim_context_for_brain(_synthetic_bundle())
+    assert pack["_pack_budget"]["unregistered_keys"] == []
+
+
+def test_a_large_untiered_block_is_stubbed_not_inlined():
+    """Carrying an undeclared block must not let it blow the pack budget.
+
+    The stub is still a disclosure — it names the block, its true size, and
+    where to read it. What it must never be is silence.
+    """
+    bundle = _synthetic_bundle()
+    bundle["huge_untiered_map"] = {f"TK{i:03d}": {"f%d" % j: j for j in range(20)}
+                                   for i in range(200)}
+    pack = slim_context_for_brain(bundle)
+    blk = pack["huge_untiered_map"]
+    assert "_unregistered_stub" in blk, "a large untiered block was inlined whole"
+    assert blk["_lines_in_archive"] > UNREGISTERED_INLINE_MAX_LINES
+    assert "full_context_path" in blk["_unregistered_stub"], (
+        "the stub must say where the real block lives")
+    assert "huge_untiered_map" in pack["_pack_budget"]["unregistered_keys"]
+    assert pack_line_count(pack) <= MAX_PACK_LINES, (
+        "stubbing failed to bound the cost of an undeclared block")
+
+
+def test_withheld_keys_are_disclosed_not_merely_absent():
+    """ARCHIVE_ONLY_KEYS is a declaration site, so what it withholds must show.
+
+    'Not in the pack because we decided' and 'not in the pack because nobody
+    looked' must never be indistinguishable to the brain — that ambiguity is the
+    same shape as absent-vs-inconclusive on live data.
+    """
+    pack = slim_context_for_brain(_synthetic_bundle())
+    withheld = pack["_pack_budget"]["withheld_by_design"]
+    assert isinstance(withheld, list)
+    assert len(withheld) == len(ARCHIVE_ONLY_KEYS)
+    for entry, (key, why) in zip(withheld, ARCHIVE_ONLY_KEYS):
+        assert key in entry and why in entry, (
+            "a withheld block must carry its reason, not just its name")
 
 
 def test_slim_does_not_mutate_the_full_bundle():

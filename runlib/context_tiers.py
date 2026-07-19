@@ -183,6 +183,55 @@ LEARNING_SOURCE_KEYS = (
     "reasoning_process",
 )
 
+# TIER 0 — DELIBERATELY WITHHELD from the slim pack.
+#
+# This tuple exists so that dropping a block is an ACT, not an omission. Every
+# other tuple above is an allowlist, and an allowlist fails the same way every
+# time: you add a block to context_gather, forget to name it here, and it is
+# gathered, archived, read by the validator, and stripped from the pack the brain
+# actually reads. That has now happened four times — factor_map /
+# portfolio_competition, watchlist_feedback, the learning-pack shadow
+# disclosures, and momentum_health, which the BRAIN found itself.
+#
+# So the default is inverted below: a top-level key that appears in NO tuple is
+# no longer dropped. It is carried to the end of the pack and named in
+# _pack_budget.unregistered_keys. To keep a block out you must say so HERE, in
+# one line, with a reason — which is a code review someone can actually see.
+#
+# Each entry is (key, why it is archive-only).
+ARCHIVE_ONLY_KEYS: tuple[tuple[str, str], ...] = ()
+
+# Keys the slim pack SYNTHESIZES rather than copies. They are not expected in the
+# incoming bundle, so they must not be reported as unregistered.
+_SYNTHETIC_KEYS = ("_context_tier", "_tier_note", "_pack_budget", "full_context_path")
+
+# A carried-through unregistered block is emitted whole when it is small, and
+# stubbed when it is not. An undeclared 20,000-line map should not silently
+# double the pack — but it must not silently VANISH either, which is the whole
+# point. Both paths disclose; only the payload differs.
+UNREGISTERED_INLINE_MAX_LINES = 200
+
+
+def declared_keys() -> set[str]:
+    """Every top-level key any tier declares an intention about."""
+    return (
+        set(ALWAYS_KEYS) | set(FOCUS_KEYS) | set(DECISION_CRITICAL)
+        | set(LEARNING_SOURCE_KEYS) | {k for k, _ in ARCHIVE_ONLY_KEYS}
+        | set(_SYNTHETIC_KEYS)
+    )
+
+
+def unregistered_keys(full: dict) -> list[str]:
+    """Top-level keys in the bundle that no tier has an opinion about.
+
+    This is the measurement the four incidents above were missing. It is checked
+    at runtime (so the brain is told) and in tests/test_context_budget.py (so the
+    commit that introduces one fails).
+    """
+    if not isinstance(full, dict):
+        return []
+    return sorted(k for k in full if k not in declared_keys())
+
 
 def _top(lst, n: int) -> list:
     if not isinstance(lst, list):
@@ -792,6 +841,36 @@ def slim_context_for_brain(full: dict, *, learning_n: int = 5) -> dict:
         else:
             built[k] = v
 
+    # ---- Carry through anything no tier claimed ------------------------------
+    # THE INVERTED DEFAULT. Everything above is an allowlist; this is the safety
+    # net under it. A block wired into context_gather without being tiered now
+    # reaches the brain (last, past the read window, but present and named)
+    # instead of disappearing between the archive and the pack.
+    #
+    # Landing here is a BUG, not a feature — tests/test_context_budget.py fails
+    # on a non-empty list. The carry-through exists so that the failure mode
+    # while the bug is live is "late and loud" rather than "absent and silent".
+    unregistered = unregistered_keys(full)
+    for k in unregistered:
+        v = full[k]
+        try:
+            n_lines = len(json.dumps(v, indent=2, default=str).split("\n"))
+        except Exception:
+            n_lines = UNREGISTERED_INLINE_MAX_LINES + 1
+        if n_lines <= UNREGISTERED_INLINE_MAX_LINES:
+            built[k] = v
+        else:
+            built[k] = {
+                "_unregistered_stub": (
+                    f"This block ({n_lines} lines) is in the bundle but no tier in "
+                    f"runlib/context_tiers.py declares it, so it has no cap and no "
+                    f"read-order position. It is stubbed here rather than inlined. "
+                    f"Read the full block from full_context_path if it matters to a "
+                    f"decision — and note that this is a system bug worth reporting "
+                    f"in your improvement note."),
+                "_lines_in_archive": n_lines,
+            }
+
     if full.get("full_context_path"):
         built["full_context_path"] = full["full_context_path"]
 
@@ -841,6 +920,14 @@ def slim_context_for_brain(full: dict, *, learning_n: int = 5) -> dict:
             # very window this block exists to protect.
             "keys_beyond_read_window": [f"{k}@{ln}" for ln, k in beyond],
             "trimmed": trim_log,
+            # Blocks deliberately left in the archive. Named so that "not in the
+            # pack" is always distinguishable from "nobody thought about it".
+            "withheld_by_design": [f"{k}: {why}" for k, why in ARCHIVE_ONLY_KEYS],
+            # Blocks NOBODY thought about. Non-empty means context_gather grew a
+            # key that runlib/context_tiers.py has no opinion on: it was carried
+            # to the end of this pack with no cap and no read-order position.
+            # This is a system bug — surface it in your improvement note.
+            "unregistered_keys": unregistered,
             "full_archive": full.get("full_context_path"),
         }
         if slim["_pack_budget"] == budget:

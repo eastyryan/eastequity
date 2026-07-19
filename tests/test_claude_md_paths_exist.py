@@ -121,15 +121,71 @@ def pack():
     return slim_context_for_brain(full)
 
 
+def _newest_bundle_path():
+    files = sorted((ROOT / "state").glob("context_full_2*.json"),
+                   key=lambda f: f.stat().st_mtime, reverse=True)
+    return files[0] if files else None
+
+
+def _newest_gather_source():
+    """Newest source file that can change what a gather emits."""
+    newest = None
+    for sub in ("tools", "runlib"):
+        for p in (ROOT / sub).rglob("*.py"):
+            if newest is None or p.stat().st_mtime > newest.stat().st_mtime:
+                newest = p
+    return newest
+
+
+def _fixture_staleness():
+    """(is_stale, message). The bundle is evidence; evidence can go out of date."""
+    bundle, src = _newest_bundle_path(), _newest_gather_source()
+    if bundle is None or src is None:
+        return False, ""
+    if bundle.stat().st_mtime >= src.stat().st_mtime:
+        return False, ""
+    return True, (
+        f"the newest bundle ({bundle.name}) predates the newest gather source "
+        f"({src.relative_to(ROOT)}) — run a gather to refresh the fixture")
+
+
 @pytest.mark.parametrize("dotted", DOCUMENTED_PATHS)
 def test_documented_path_resolves_in_the_pack(pack, dotted):
     found, _ = _resolve(pack, dotted)
+    stale, why = _fixture_staleness()
     assert found, (
         f"CLAUDE.md points the brain at `{dotted}` and it does not exist in the "
         f"slim pack. Either the pack lost it (an allowlist dropped it, or a cap "
         f"trimmed it) or CLAUDE.md is describing a location that never existed. "
         f"Both look identical to the brain: it follows the instruction and finds "
-        f"nothing.")
+        f"nothing."
+        + (f"\n\nNOTE: {why}. A path added to the gatherer after this bundle was "
+           f"written will fail here until a fresh run exists — check that before "
+           f"concluding the pack drops it." if stale else ""))
+
+
+def test_the_bundle_this_file_checks_against_is_not_older_than_the_code():
+    """The fixture is EVIDENCE, and stale evidence fails in both directions.
+
+    Every assertion in this file resolves paths against the newest bundle found
+    on disk. That bundle is produced by tools/ and runlib/, so when it predates
+    them the check is no longer measuring the current system:
+
+      * a path ADDED to the gatherer fails here though the pack is correct
+        (loud, survivable — it is what surfaced this test);
+      * a path REMOVED from the gatherer still resolves in the old bundle and
+        PASSES. That is the dangerous direction, and it is silent.
+
+    The second is this repo's recurring failure — a guard that cannot fire
+    (reconciles_with_ledger was tested and never called for three days). A guard
+    whose fixture has drifted is the same thing wearing a green tick, so the
+    drift itself is asserted rather than assumed away.
+    """
+    stale, why = _fixture_staleness()
+    assert not stale, (
+        f"{why}. Until then this file cannot verify the CLAUDE.md contract: a "
+        f"documented path deleted from the gatherer would still resolve in the "
+        f"old bundle and pass. Do not skip this — re-gather.")
 
 
 @pytest.mark.parametrize("dotted", CONDITIONAL_PATHS)
