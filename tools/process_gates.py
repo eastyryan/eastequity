@@ -140,6 +140,59 @@ def infer_rejected_from_no_trade_text(
     return found
 
 
+_SEAT_ACTIONS = ("keep", "trim", "swap", "reduce", "sell")
+_MIN_SEAT_REASON_CHARS = 20
+
+
+def normalize_seat_reviews(seat_reviews, held_tickers=None) -> tuple[list[dict], list[str]]:
+    """Validate one seat_review per open holding. Returns (clean, issues).
+
+    "Capital must re-earn its seat": on a trading depth with an open book, every
+    holding owes a keep/trim/swap/reduce/sell with a real reason. Restored
+    2026-07-19 after a `git reset --hard` wiped it; the BLOCKING_ISSUE_PREFIXES
+    above depend on the issue codes emitted here, so without this the gate that
+    blocks new BUYs had nothing to fire on.
+    """
+    issues: list[str] = []
+    held = [str(t).upper() for t in (held_tickers or []) if t]
+    if seat_reviews is None:
+        if held:
+            issues.append(f"seat_reviews_missing_need_{len(held)}_got_0")
+        return [], issues
+    if not isinstance(seat_reviews, list):
+        issues.append("seat_reviews_not_a_list")
+        return [], issues
+
+    clean: list[dict] = []
+    seen: set[str] = set()
+    for i, row in enumerate(seat_reviews):
+        if not isinstance(row, dict):
+            issues.append(f"seat_reviews[{i}]_not_object")
+            continue
+        t = str(row.get("ticker") or "").upper()
+        if not t:
+            issues.append(f"seat_reviews[{i}]_missing_ticker")
+            continue
+        action = str(row.get("action") or "").strip().lower()
+        if action not in _SEAT_ACTIONS:
+            issues.append(f"seat_reviews_action_invalid:{t}:{action or 'none'}")
+            continue
+        reason = str(row.get("reason") or "").strip()
+        if len(reason) < _MIN_SEAT_REASON_CHARS:
+            issues.append(f"seat_reviews_reason_weak:{t}")
+            continue
+        if t in seen:
+            continue
+        seen.add(t)
+        clean.append({"ticker": t, "action": action, "reason": reason,
+                      "challenger_considered": row.get("challenger_considered")})
+
+    missing = [t for t in held if t not in seen]
+    if missing:
+        issues.append(f"seat_reviews_missing_holding:{','.join(sorted(missing))}")
+    return clean, issues
+
+
 def audit_brain_process(
     parsed: dict,
     *,
@@ -147,6 +200,10 @@ def audit_brain_process(
     proposals: list | None = None,
     top_scan_tickers: list[str] | None = None,
     universe: set[str] | None = None,
+    held_tickers: list[str] | None = None,
+    require_seat_reviews: bool = False,
+    require_factor_response: bool = False,
+    factor_concentration_level: str | None = None,
 ) -> dict:
     """Full process audit for a parsed brain response.
 
@@ -199,15 +256,44 @@ def audit_brain_process(
     if depth in ("full", "holdings_watchlist") and not watchlist:
         issues.append("watchlist_empty_on_trading_depth")
 
+    # Seat re-earn: every open holding owes a review on a trading depth.
+    seat_reviews: list[dict] = []
+    if require_seat_reviews or parsed.get("seat_reviews") is not None:
+        seat_reviews, s_issues = normalize_seat_reviews(
+            parsed.get("seat_reviews"), held_tickers if require_seat_reviews else None)
+        issues.extend(s_issues)
+
+    # Factor / unwind acknowledgment when concentration is high or extreme.
+    factor_response = None
+    if require_factor_response or parsed.get("factor_response") is not None:
+        try:
+            from tools.factor_map import validate_factor_response
+            factor_response, f_issues = validate_factor_response(
+                parsed.get("factor_response"),
+                required=bool(require_factor_response),
+                expected_level=factor_concentration_level,
+            )
+            issues.extend(f_issues)
+        except Exception:
+            pass  # pure module; never halt the audit on an import failure
+
     process_ok = not any(
         i.startswith("watchlist_status_") or i.startswith("full_run_no_trade")
         or i.startswith("rejected_ideas_need")
+        or i.startswith("seat_reviews_missing")
+        or i.startswith("seat_reviews_action_invalid")
+        or i.startswith("seat_reviews_reason_weak")
+        or i.startswith("factor_response_missing")
+        or i.startswith("factor_response_plan_weak")
+        or i.startswith("factor_response_actions_empty")
         for i in issues
     )
     blocking = [i for i in issues if i.startswith(BLOCKING_ISSUE_PREFIXES)]
     return {
         "watchlist": watchlist,
         "rejected_ideas": rejected,
+        "seat_reviews": seat_reviews,
+        "factor_response": factor_response,
         "issues": issues,
         "process_ok": process_ok,
         "blocking_issues": blocking,

@@ -498,11 +498,29 @@ def main() -> int:
             ((context.get("universe_scan") or {}).get("top_setups") or [])[:8]
             if r.get("ticker")
         ]
+        # Seat reviews are owed on a trading depth whenever the book is non-empty;
+        # factor_response is owed whenever factor_map says concentration is high or
+        # extreme. Without these four arguments the gates default OFF and the teeth
+        # added to process_gates have nothing to bite on — the audit would report
+        # process_ok on a run that reviewed no seats and answered no concentration
+        # warning. That is precisely the "wired but never invoked" shape this rework
+        # exists to remove, so they are passed explicitly.
+        held = [str(x.get("ticker") or "").upper()
+                for x in ((context.get("portfolio") or {}).get("positions") or [])
+                if x.get("ticker")]
+        fmap = context.get("factor_map") or {}
+        trading_depth = run_depth in ("full", "holdings_watchlist")
         audit = audit_brain_process(
             parsed, depth=run_depth, proposals=proposals,
-            top_scan_tickers=top_scan, universe=validator.load_universe())
+            top_scan_tickers=top_scan, universe=validator.load_universe(),
+            held_tickers=held,
+            require_seat_reviews=bool(trading_depth and held),
+            require_factor_response=bool(fmap.get("requires_factor_response")),
+            factor_concentration_level=fmap.get("concentration_level"))
         parsed["watchlist"] = audit.get("watchlist") or parsed.get("watchlist") or []
         parsed["rejected_ideas"] = audit.get("rejected_ideas") or []
+        parsed["seat_reviews"] = audit.get("seat_reviews") or []
+        parsed["factor_response"] = audit.get("factor_response")
         parsed["process_audit"] = {
             "process_ok": audit.get("process_ok"),
             "full_run_no_trade_ok": audit.get("full_run_no_trade_ok"),
