@@ -116,6 +116,40 @@ def _live_prices(max_age_min: int) -> tuple[dict, dict]:
     return prices, meta
 
 
+def _load_atr_map() -> dict:
+    """{TICKER: atr_pct} for the chandelier trail and the simulated gap model.
+
+    This used to read data/universe_scan.json, WHICH HAS NEVER EXISTED - the scan is
+    built in memory by tools/universe_scanner.py and only ever persisted inside a
+    context bundle. A bare `except: pass` turned that permanently-failing read into a
+    silent no-op, so atr_map was {} on every single tick, with two consequences:
+
+      1. exit_guard._chandelier_stop returns None without ATR, so the trail NEVER
+         ratcheted on a tick - only during full cycles, 4-6x/day, despite the
+         documented "ratchets as the trade works". The existing persisted trail was
+         still honoured, so this under-protected rather than over-fired.
+      2. On the simulation backend the stop gap-through model needs atr_pct, so every
+         tick-driven stop exit filled AT the stop with no gap - exactly the optimism
+         execution_costs.model_stop_gaps was added to remove after the DELL
+         408.00 -> 389.75 case.
+
+    Reads the committed relay bundle first, then the newest local context archive.
+    Returns {} only when genuinely nothing is available, and says so out loud.
+    """
+    for path in (ROOT / "data" / "cloud_context.json",
+                 *sorted((ROOT / "state").glob("context_2*.json"),
+                         key=lambda f: f.stat().st_mtime, reverse=True)[:1]):
+        try:
+            scan = json.loads(path.read_text()).get("universe_scan") or {}
+            atr = scan.get("atr_by_ticker") or {}
+            if atr:
+                return atr
+        except Exception:
+            continue
+    print("  (no atr_by_ticker available - trail cannot ratchet this tick)")
+    return {}
+
+
 def _broker_maintenance(out: dict) -> None:
     """Absorb broker-side fills and keep the resting stops armed.
 
@@ -190,12 +224,7 @@ def run(dry_run: bool = False) -> dict:
         out.update(status="skipped", note="no fresh price for any holding")
         return out
 
-    atr_map = {}
-    try:
-        scan = json.loads((ROOT / "data" / "universe_scan.json").read_text())
-        atr_map = scan.get("atr_by_ticker") or {}
-    except Exception:
-        pass  # gap modeling degrades; enforcement does not
+    atr_map = _load_atr_map()
 
     forced = exit_guard.check_forced_exits(portfolio, prices, atr_map)
     out["forced"] = forced

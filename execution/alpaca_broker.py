@@ -568,6 +568,18 @@ def place_order(order: dict) -> dict:
         # — or rejected outright as rejected_no_position.
         try:
             _stand_down_protective_stop(ticker, reason="discretionary_sell")
+            # WAIT FOR THE CANCEL TO PROPAGATE. Alpaca's DELETE is ASYNCHRONOUS:
+            # the order goes pending_cancel and the held shares are only released
+            # on canceled. Sizing the sell immediately read qty_available while the
+            # stop still held the whole-share leg, so on a 5.34-share position with
+            # a 5-share GTC stop the "full close" was submitted for 0.34 shares —
+            # then booked by _apply_fill as a 6% PARTIAL, journaled as a filled
+            # forced exit, and graded by exit_autopsy, while 94% of the position
+            # stayed open and a fresh stop was armed over it. The ledger said the
+            # stop was honoured. It was not.
+            # The BUY path already knew cancels are async (it sleeps and re-reads);
+            # this path did not.
+            _await_shares_released(ticker)
         except Exception as e:
             print(f"  (stop stand-down failed for {ticker}: {e})")
         qty = _sell_qty(ticker, order.get("sell_fraction"))
@@ -1134,16 +1146,55 @@ def _get_order_by_client_id(client_order_id: str) -> dict | None:
     return body if code == 200 and isinstance(body, dict) else None
 
 
+def _await_shares_released(ticker: str, timeout_s: float = 6.0,
+                           interval_s: float = 0.5) -> bool:
+    """Block until a cancelled protective stop has released its shares.
+
+    Returns True when qty_available reaches the full position quantity, False on
+    timeout. A False here means the caller is about to size a sell against a
+    partially-held position, so it is reported loudly rather than swallowed — an
+    under-sized "full close" is the failure mode this exists to prevent.
+    """
+    deadline = time.time() + timeout_s
+    while time.time() < deadline:
+        code, ap = _req("GET", f"/v2/positions/{ticker}")
+        if code != 200 or not isinstance(ap, dict):
+            return False
+        try:
+            qty = abs(float(ap.get("qty") or 0.0))
+            avail = abs(float(ap.get("qty_available") or 0.0))
+        except (TypeError, ValueError):
+            return False
+        if qty <= 0:
+            return False
+        if avail >= qty - 1e-9:
+            return True
+        time.sleep(interval_s)
+    print(f"  !! {ticker}: shares still held {timeout_s:.0f}s after stop stand-down "
+          f"— sell would be UNDERSIZED; refusing to size against a partial")
+    return False
+
+
 def _sell_qty(ticker: str, sell_fraction) -> float | None:
     """Quantity for a sell: live position qty_available pro-rata by fraction."""
     code, ap = _req("GET", f"/v2/positions/{ticker}")
     if code != 200 or not isinstance(ap, dict):
         return None
     try:
+        qty_total = abs(float(ap.get("qty") or 0.0))
         avail = float(ap.get("qty_available") or ap.get("qty") or 0.0)
     except (TypeError, ValueError):
         return None
     if avail <= 0:
+        return None
+    # A FULL close must never be silently converted into a partial. If shares are
+    # still held by a working order, selling `avail` books a fraction and reports
+    # success. Refuse instead: the caller surfaces it and the position keeps its
+    # protection, which is strictly safer than a phantom exit.
+    frac_req = float(sell_fraction or 1.0) if sell_fraction is not None else 1.0
+    if frac_req >= 1.0 and qty_total > 0 and avail < qty_total - 1e-9:
+        print(f"  !! {ticker}: full close requested but only {avail} of {qty_total} "
+              f"available (shares still held by a working order) — refusing")
         return None
     try:
         frac = float(sell_fraction or 1.0)

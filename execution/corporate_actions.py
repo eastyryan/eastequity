@@ -238,9 +238,9 @@ def apply_corporate_actions() -> dict:
                 # force-closes a healthy position as "stop_loss_breached".
                 plan = pos.get("plan")
                 if isinstance(plan, dict):
-                    for key in ("stop_loss", "target_price", "entry_price_max"):
-                        if isinstance(plan.get(key), (int, float)):
-                            plan[key] = round(plan[key] / ratio, 4)
+                    for _f in ("stop_loss", "target_price", "entry_price_max"):
+                        if isinstance(plan.get(_f), (int, float)):
+                            plan[_f] = round(plan[_f] / ratio, 4)
                 # The TRAIL state lives on the position, not in the plan, and was
                 # missed by the fix above. Unscaled, high_water sits ~ratio× above
                 # the post-split market, so _chandelier_stop returns a level far
@@ -251,9 +251,14 @@ def apply_corporate_actions() -> dict:
                 # lowered by any subsequent run — the position is unrecoverable
                 # short of hand-editing the ledger. Scale both, on every backend:
                 # unlike quantity, these are OUR risk state, never the broker's.
-                for key in ("high_water", "trailing_stop"):
-                    if isinstance(pos.get(key), (int, float)) and pos[key]:
-                        pos[key] = round(pos[key] / ratio, 4)
+                # Loop variable deliberately NOT named `key`: both this loop and the
+                # plan loop above used to rebind it, so the `seen.add(key)` below
+                # added the literal string "trailing_stop" instead of the split's
+                # event key. That silently disabled the within-run dedupe guard whose
+                # absence produced the documented quantity 10->160 double-apply.
+                for _f in ("high_water", "trailing_stop"):
+                    if isinstance(pos.get(_f), (int, float)) and pos[_f]:
+                        pos[_f] = round(pos[_f] / ratio, 4)
                 record = {"type": "split", "ticker": ticker, "ratio": ratio,
                           "quantity": pos["quantity"], "avg_cost": pos["avg_cost"],
                           "date": day,

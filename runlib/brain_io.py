@@ -533,6 +533,14 @@ def execute(approved: list[validator.ValidationResult], context: dict,
             # ATR lets the broker vol-scale slippage and model an entry gap (a $400 name
             # swinging 7%/day costs more to fill than a flat 10bps implies).
             "atr_pct": atr_map.get(p["ticker"].upper()),
+            # TOP-LEVEL entry ceiling. alpaca_broker's live last-trade guard reads
+            # order["entry_price_max"], and this key was never set - it existed only
+            # nested inside `plan` - so that guard evaluated None and silently
+            # no-opped on EVERY buy since it was written. The only ceiling actually
+            # enforced was against the bundle's `ref`, which the live overlay allows
+            # to be up to 30 minutes old. A name gapping between the overlay snapshot
+            # and submission filled above the brain's stated maximum entry.
+            "entry_price_max": p.get("entry_price_max"),
             # Numeric plan (+ theme/falsifiers) persisted ONTO the position at fill.
             "plan": plan,
             "demand_driver": p.get("demand_driver"),
