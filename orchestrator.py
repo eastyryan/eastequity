@@ -144,6 +144,119 @@ def feed_is_alive(feed) -> bool:
     return True
 
 
+def assess_bundle_health(context: dict, run_depth: str) -> dict:
+    """How well was this bundle gathered? Flags only — no relay substitution.
+
+    Extracted from the --gather-only branch on 2026-07-19. It had lived entirely
+    inside `if args.gather_only:`, so the LIVE TRADING PATH set no data_quality
+    label at all — and validator._check_data_quality opens with:
+
+        dq = (market_context or {}).get("_data_quality") or {}
+        if not dq:
+            return   # nothing asserted, nothing to enforce
+
+    So `data_quality_stale`, `data_quality_empty` and `fundamentals_stale:<TICKER>`
+    — which CLAUDE.md advertises as "real rejections, not prose" — were unreachable
+    on every real trading run. Measured across the last 12 runs: dq=None, 12/12.
+    """
+    scan_ctx = context.get("universe_scan") or {}
+    expects_full_scan = run_depth in ("full", "weekly_market")
+    scan_empty = (expects_full_scan and not scan_ctx.get("top_setups")
+                  and scan_ctx.get("status") not in ("light", "holdings_watchlist"))
+    macro_bad = (context.get("macro_regime") or {}).get("status") != "ok"
+    degraded = bool(macro_bad or scan_empty)
+
+    # Coverage is checked on EVERY depth that scans, not only full runs: the four
+    # holdings_watchlist slots are the PRIMARY trading slots.
+    scans = run_depth in ("full", "weekly_market", "holdings_watchlist")
+    requested = scan_ctx.get("requested")
+    low_coverage = bool(
+        scans and not degraded
+        and isinstance(requested, int) and requested > 0
+        and scan_ctx.get("scanned", 0) < 0.8 * requested)
+    dead_feeds = [k for k in ("news_and_catalysts", "sec_filings", "insider_activity")
+                  if not feed_is_alive(context.get(k))]
+    return {
+        "degraded": degraded, "scan_empty": scan_empty, "macro_bad": macro_bad,
+        "low_coverage": low_coverage, "dead_feeds": dead_feeds,
+        "partial": (not degraded) and (low_coverage or bool(dead_feeds)),
+        "scanned": scan_ctx.get("scanned"), "requested": requested,
+    }
+
+
+def bundle_age_hours(context: dict) -> float | None:
+    """Hours since this bundle's DATA was gathered, from its own run_date."""
+    raw = (context or {}).get("run_date")
+    if not isinstance(raw, str) or not raw:
+        return None
+    try:
+        gathered = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+    except Exception:
+        return None
+    if gathered.tzinfo is None:
+        gathered = gathered.replace(tzinfo=timezone.utc)
+    return round((datetime.now(timezone.utc) - gathered).total_seconds() / 3600.0, 2)
+
+
+def label_data_quality(context: dict, run_depth: str, *,
+                       max_age_hours: float = 4.0) -> dict:
+    """Stamp context['data_quality'] for a bundle we are about to ACT on.
+
+    Covers two holes found 2026-07-19:
+      * the live trading path never labelled anything (see assess_bundle_health);
+      * --act-on never checked the bundle's AGE. Age was computed only in the
+        gather-only relay-fallback branch, so a HEALTHY gather set no label, and
+        a cloud routine acting on a 10-hour-old bundle passed every freshness
+        gate. Live prices are overlaid for holdings/watchlist only — fundamentals,
+        news, filings and setups in that bundle are arbitrarily old and were
+        labelled fresh.
+
+    Never DOWNGRADES an existing label: a relay/degraded stamp from the gathering
+    node is more specific than anything we can infer here.
+    """
+    existing = context.get("data_quality") or {}
+    health = assess_bundle_health(context, run_depth)
+    age_h = bundle_age_hours(context)
+    stale_by_age = age_h is not None and age_h >= max_age_hours
+
+    if existing.get("source") in ("relay_bundle", "degraded_empty"):
+        if stale_by_age and not existing.get("stale"):
+            existing["stale"] = True
+            existing["age_hours"] = age_h
+        return existing
+
+    label: dict = {}
+    if health["degraded"]:
+        label = {"source": "degraded_empty", "stale": True}
+        context["stale_data_notice"] = (
+            "Live feeds failed and this context is largely EMPTY. Treat scan/macro "
+            "data as missing; do not open new positions on absent data.")
+    elif health["partial"]:
+        note = ("universe scan covered only "
+                f"{health['scanned']}/{health['requested']} names - missing names "
+                "have no fresh prices; treat absent setups as unscanned, not "
+                "unattractive"
+                if health["low_coverage"] else
+                f"price scan OK but research feed(s) failed: {health['dead_feeds']}")
+        label = {"source": "live_partial", "note": note}
+    elif stale_by_age:
+        label = {"source": "aged_bundle"}
+
+    if age_h is not None:
+        label.setdefault("source", "live")
+        label["age_hours"] = age_h
+        if stale_by_age:
+            label["stale"] = True
+            context["stale_data_notice"] = (
+                f"This bundle's data was gathered {age_h:.1f}h ago. Live prices are "
+                f"overlaid for holdings/watchlist only — fundamentals, news, filings "
+                f"and scan setups are that old. Lower confidence and avoid "
+                f"time-sensitive entries.")
+    if label:
+        context["data_quality"] = label
+    return label
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--research-only", action="store_true",
@@ -281,30 +394,17 @@ def main() -> int:
                 print(f"  (gather corporate actions skipped: {e})")
         context = gather_context(cfg, light=args.light, depth=run_depth,
                                  earnings_trigger=earnings_trigger)
-        expects_full_scan = run_depth in ("full", "weekly_market")
-        scan_empty = expects_full_scan and not context["universe_scan"].get("top_setups") \
-            and context["universe_scan"].get("status") not in ("light", "holdings_watchlist")
-        macro_bad = context["macro_regime"].get("status") != "ok"
-        degraded = macro_bad or scan_empty
-
-        def _feed_ok(key: str) -> bool:
-            return feed_is_alive(context.get(key))
-
+        # Same assessment the live/act-on paths now use — one implementation so the
+        # two cannot drift. Coverage is checked on EVERY depth that scans, not only
+        # full runs: the four holdings_watchlist slots are the PRIMARY trading slots.
+        _health = assess_bundle_health(context, run_depth)
+        scan_empty = _health["scan_empty"]
+        degraded = _health["degraded"]
+        low_coverage = _health["low_coverage"]
+        dead_feeds = _health["dead_feeds"]
+        partial = _health["partial"]
         scan_ctx = context.get("universe_scan") or {}
-        # Coverage is checked on EVERY depth that scans, not only full runs. The four
-        # holdings_watchlist slots are the PRIMARY trading slots (4x/day) and used to
-        # evaluate neither scan_empty nor low_coverage — on those runs a total
-        # price-feed collapse produced no data_quality label at all, and the only way
-        # to be flagged degraded was for FRED to fail.
-        scans = run_depth in ("full", "weekly_market", "holdings_watchlist")
-        requested = scan_ctx.get("requested")
-        low_coverage = bool(
-            scans and not degraded
-            and isinstance(requested, int) and requested > 0
-            and scan_ctx.get("scanned", 0) < 0.8 * requested)
-        dead_feeds = [k for k in ("news_and_catalysts", "sec_filings", "insider_activity")
-                      if not _feed_ok(k)]
-        partial = (not degraded) and (low_coverage or bool(dead_feeds))
+        requested = _health["requested"]
         if dead_feeds:
             print(f"  DATA QUALITY: dead feed(s) {dead_feeds} - run marked partial")
         if low_coverage:
@@ -434,6 +534,13 @@ def main() -> int:
             print(f"  (using full archive {load_path.name} for act-on)")
         context = json.loads(load_path.read_text())
         run_depth = context.get("run_depth") or run_depth
+        # Age this bundle BEFORE anything acts on it. --act-on used to perform no
+        # age check at all: a healthy gather wrote no data_quality label, so the
+        # validator's staleness gate asserted nothing and a cloud routine could
+        # trade a 10-hour-old bundle with every freshness gate green.
+        _age = bundle_age_hours(context)
+        if _age is not None:
+            print(f"  bundle data gathered {_age:.1f}h ago")
         # Re-derive the trading gates from the bundle's ACTUAL depth: acting on
         # a light/evening context without a matching --depth flag must not run
         # with full-depth gating (BUYs would survive a no-BUY slot).
@@ -454,6 +561,11 @@ def main() -> int:
             except Exception as e:
                 print(f"  (mark-to-market from bundle failed: {e})")
         context["portfolio"] = get_portfolio_state()
+        _dq = label_data_quality(context, run_depth)
+        if _dq.get("stale") or _dq.get("source") not in (None, "live"):
+            print(f"  DATA QUALITY: {_dq.get('source')} "
+                  f"stale={bool(_dq.get('stale'))} age={_dq.get('age_hours')}h "
+                  f"- new BUYs restricted")
         if run_safety:
             forced_exit_fills = apply_safety_layer(context, cfg, run_id)
         response = Path(args.act_on).read_text()
@@ -481,6 +593,13 @@ def main() -> int:
                 f"Note:\n\n{args.note}")
         if run_safety:
             forced_exit_fills = apply_safety_layer(context, cfg, run_id)
+        # Label the bundle on the LIVE path too. This assessment used to run only
+        # under --gather-only, so validator._check_data_quality found no label and
+        # returned without asserting anything on every real trading run.
+        _dq = label_data_quality(context, run_depth)
+        if _dq.get("stale") or _dq.get("source") not in (None, "live"):
+            print(f"  DATA QUALITY: {_dq.get('source')} "
+                  f"stale={bool(_dq.get('stale'))} age={_dq.get('age_hours')}h")
         print("[2/5] Waking the brain (Claude)...")
         response = ask_claude(
             context, run_id,
