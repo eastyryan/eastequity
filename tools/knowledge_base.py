@@ -18,6 +18,7 @@ Fail-soft; never raises from public APIs.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
@@ -63,7 +64,13 @@ def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
 
 
-def _load() -> dict:
+def _load_raw() -> dict:
+    """The store EXACTLY as it sits on disk. Never heals, never writes.
+
+    store_health() must read through THIS and not _load(): a diagnostic that
+    repairs what it measures reports a permanent green over a subsystem that
+    dies after every deploy.
+    """
     try:
         if KB_JSON.exists():
             doc = json.loads(KB_JSON.read_text())
@@ -73,6 +80,121 @@ def _load() -> dict:
     except Exception:
         pass
     return {"entries": [], "updated_at": None}
+
+
+def _load() -> dict:
+    """READ path, self-healing IN MEMORY from the published journal.
+
+    The incident this guards: data/knowledge_base.json was untracked (and not
+    gitignored) while its derived public view dashboard/data/learning_journal.json
+    WAS committed. An ephemeral runner therefore lost the source of truth and kept
+    the derived view — after which record_citations / link_lessons_to_trade /
+    update_lesson_outcomes each iterated an empty list and returned 0. Silently.
+    Forever. A lesson could be cited and never graded.
+
+    Healing here is in-memory only; callers that mutate persist through _save(),
+    and ensure_store() is the one place that materializes the repair on disk. That
+    keeps reads side-effect free while making the grading APIs work again.
+    """
+    doc = _load_raw()
+    try:
+        pub = published_entries()
+        if pub:
+            have = {e.get("id") for e in doc.get("entries") or []
+                    if isinstance(e, dict)}
+            missing = [_normalize_published(e) for e in pub
+                       if e.get("id") not in have]
+            if missing:
+                doc["entries"] = (list(doc.get("entries") or []) + missing)[-MAX_HISTORY:]
+    except Exception:
+        pass
+    return doc
+
+
+def _published_rows() -> list:
+    """EVERY row in the public journal, well-formed or not.
+
+    Counting happens here and recovery happens in published_entries(), and the
+    two must stay separate: n_published is a measure of what the journal CLAIMS
+    to hold, so filtering it down to what happens to be recoverable would let a
+    corrupted journal report a cheerful zero — the silent-zero failure this whole
+    check exists to catch.
+    """
+    try:
+        if not JOURNAL_JSON.exists():
+            return []
+        doc = json.loads(JOURNAL_JSON.read_text())
+        if isinstance(doc, list):
+            return doc
+        if isinstance(doc, dict):
+            # The journal writes {"updated_at", "note", "discipline_counts",
+            # "entries"}. Guessing one key name would report zero here too.
+            return list(doc.get("entries") or doc.get("lessons") or [])
+        return []
+    except Exception:
+        return []
+
+
+def published_entries() -> list:
+    """Lesson records recoverable from the tracked PUBLIC journal — the record of
+    last resort, because it is the copy that survives an ephemeral runner.
+
+    Only rows carrying an id are recoverable: the id IS the citation key, and a
+    lesson restored without one could never be graded, so it would be furniture.
+    """
+    return [dict(e) for e in _published_rows()
+            if isinstance(e, dict) and e.get("id")]
+
+
+def _normalize_published(entry: dict) -> dict:
+    """A published row back into store shape. The journal carries the lesson
+    text but not the private bookkeeping, so provenance is stamped: a recovered
+    lesson's citation/outcome history is genuinely gone, and pretending
+    otherwise would fabricate evidence."""
+    out = dict(entry)
+    out.setdefault("discipline", "strategy_playbooks")
+    out.setdefault("learned_at", _now())
+    out["recovered_from_published"] = True
+    return out
+
+
+def ensure_store(persist: bool = True) -> dict:
+    """Materialize data/knowledge_base.json, rebuilding it from the published
+    journal when the store was lost.
+
+    Called from runlib/publish.py BEFORE the git-add path list, because that
+    list gates every entry on .exists() — so listing knowledge_base.json there
+    was purely decorative for a file that had never existed.
+
+    Statuses: rebuilt_from_published | present | empty. "empty" is NOT a
+    rebuild — no published lessons means a quiet curriculum, not a loss, and
+    reporting it as recovery would invent a store out of nothing.
+    """
+    try:
+        raw = _load_raw()
+        existed = KB_JSON.exists()
+        have = {e.get("id") for e in raw.get("entries") or [] if isinstance(e, dict)}
+        pub = published_entries()
+        missing = [e for e in pub if e.get("id") not in have]
+
+        if not existed and not pub:
+            return {"status": "empty", "n_entries": 0, "n_published": 0, "ids": [],
+                    "detail": "no store and no published lessons — nothing to recover"}
+        if missing:
+            raw["entries"] = (list(raw.get("entries") or [])
+                              + [_normalize_published(e) for e in missing])[-MAX_HISTORY:]
+            if persist:
+                _save(raw)
+            return {"status": "rebuilt_from_published",
+                    "n_entries": len(raw["entries"]),
+                    "n_published": len(pub),
+                    "ids": [e.get("id") for e in missing],
+                    "detail": (f"recovered {len(missing)} lesson(s) from "
+                               f"{JOURNAL_JSON.name}; citation grading is live again")}
+        return {"status": "present", "n_entries": len(raw.get("entries") or []),
+                "n_published": len(pub), "ids": [], "detail": None}
+    except Exception as e:
+        return {"status": "error", "reason": str(e)[:150], "n_entries": 0, "ids": []}
 
 
 def _save(doc: dict) -> None:
@@ -99,41 +221,62 @@ def store_health() -> dict:
     study session ran, published a lesson, and the source of truth vanished. Every
     subsequent citation graded against an empty list and returned 0, silently.
 
-    Returns {"ok", "status", "n_entries", "n_published", "detail"} so a caller can
-    surface the mismatch instead of inferring health from silence.
+    Returns {"ok", "status", "n_entries", "n_published", "recoverable", "detail"}
+    so a caller can surface the mismatch instead of inferring health from silence.
+
+    Reads the store RAW, through _load_raw(). _load() self-heals from the
+    published journal, and a check that repairs what it measures would report
+    permanent green over a loop that dies on every deploy — the outage would
+    survive precisely because the instrument hid it. `recoverable` says whether
+    ensure_store() can restore what is missing.
     """
-    n_entries = len((_load().get("entries") or []))
-    n_published = 0
-    try:
-        if JOURNAL_JSON.exists():
-            pub = json.loads(JOURNAL_JSON.read_text())
-            if isinstance(pub, list):
-                n_published = len(pub)
-            else:
-                # The journal writes {"updated_at", "note", "discipline_counts",
-                # "entries"}. Guessing a key name here would make this check report a
-                # cheerful zero — the exact silent-zero failure it exists to catch.
-                n_published = len(pub.get("entries") or pub.get("lessons") or [])
-    except Exception:
-        pass
+    raw = _load_raw()
+    entries = [e for e in (raw.get("entries") or []) if isinstance(e, dict)]
+    n_entries = len(entries)
+    # COUNT every published row; RECOVER only the well-formed ones. A journal
+    # row we cannot restore still proves the store is behind.
+    n_published = len(_published_rows())
+    have = {e.get("id") for e in entries}
+    missing = [e.get("id") for e in published_entries() if e.get("id") not in have]
 
     if not KB_JSON.exists() and n_published:
         return {"ok": False, "status": "store_missing_but_lessons_published",
                 "n_entries": 0, "n_published": n_published,
+                "recoverable": True, "recoverable_ids": missing,
                 "detail": (f"{n_published} lesson(s) are published but "
                            f"{KB_JSON.name} does not exist — citations grade against "
-                           f"nothing. Check that runlib/publish.py commits it.")}
-    if n_published > n_entries:
+                           f"nothing. ensure_store() rebuilds it from the journal; "
+                           f"runlib/publish.py must commit it.")}
+    if n_published > n_entries or missing:
         return {"ok": False, "status": "store_behind_published",
                 "n_entries": n_entries, "n_published": n_published,
+                "recoverable": bool(missing), "recoverable_ids": missing,
                 "detail": (f"published journal has {n_published} lesson(s) but the "
                            f"store has {n_entries} — the store is not persisting.")}
     return {"ok": True, "status": "ok", "n_entries": n_entries,
-            "n_published": n_published, "detail": None}
+            "n_published": n_published, "recoverable": False, "detail": None}
 
 
 def _fingerprint(text: str, n: int = 48) -> str:
     return re.sub(r"\s+", " ", str(text or "").lower()).strip()[:n]
+
+
+def _lesson_id(fingerprint: str) -> str:
+    """The citation key, as a pure function of the lesson's content.
+
+    ROOT CAUSE of the dead grading loop: this was
+    `KB-{abs(hash(fp + today)) % 10**10:010d}`. Python SALTS hash() per process
+    (PYTHONHASHSEED is random unless pinned), so the SAME lesson received a
+    different id in every process. The id is what record_citations,
+    link_lessons_to_trade and update_lesson_outcomes all join on, so a citation
+    written by one run could never match the lesson stored by another — and
+    because every one of those APIs is fail-soft, the mismatch surfaced as a
+    return value of 0, indistinguishable from "no lessons matched".
+
+    sha1 is used as a content digest, not a security primitive.
+    """
+    digest = hashlib.sha1(str(fingerprint or "").encode("utf-8")).hexdigest()
+    return f"KB-{int(digest[:15], 16) % 10 ** 10:010d}"
 
 
 def _active(entries: list) -> list:
@@ -466,7 +609,7 @@ def add_lesson(lesson: dict, run_id: str | None = None) -> dict:
                         "topic": topic}
 
         entry = {
-            "id": f"KB-{abs(hash(fp + _now()[:10])) % 10**10:010d}",
+            "id": _lesson_id(fp),
             "discipline": discipline,
             "topic": topic[:200],
             "summary": summary[:1500],

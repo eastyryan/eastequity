@@ -24,6 +24,11 @@ DEFAULTS = {
     "high_conf_min_win_rate_pct": 50.0,
     "confidence_cap_when_inflated": 0.69,
     "require_exception_paragraph_chars": 80,
+    # Target attainment (see tools/exit_autopsy.build_target_calibration).
+    # rr_inflation = mean claimed RR - mean realized RR. Above this, the model's
+    # targets are systematically bigger than what the trades actually delivered.
+    "target_rr_inflation_limit": 1.0,
+    "confidence_cap_when_targets_inflated": 0.69,
 }
 
 
@@ -166,6 +171,117 @@ def check_buy_calibration(
                     )
 
     return reasons
+
+
+# --------------------------------------------------------------------------- #
+# Target calibration — the 2:1 gate, made falsifiable
+# --------------------------------------------------------------------------- #
+def load_target_calibration() -> dict:
+    """The published target_calibration block from latest.json. Fail-soft to {}."""
+    try:
+        latest = json.loads((ROOT / "dashboard" / "data" / "latest.json").read_text())
+        tc = latest.get("target_calibration")
+        return tc if isinstance(tc, dict) else {}
+    except Exception:
+        return {}
+
+
+def targets_inflated(target_calibration: dict,
+                     cfg: dict | None = None) -> tuple[bool, str]:
+    """Are stated targets systematically bigger than realized outcomes?
+
+    Returns (hit, why) and refuses to fire before the record supports it. The
+    whole point of grading a claim is that you do not act on the grade until you
+    have one: at n=2 the arithmetic exists but means nothing, so a non-binding
+    record returns False with "not binding" in the reason rather than silently
+    passing — a caller reading only the boolean should still be able to log WHY.
+    """
+    cfg = cfg or _load_cfg_block()
+    if not isinstance(target_calibration, dict) or not target_calibration:
+        return False, "no target calibration published yet"
+    if not target_calibration.get("binding"):
+        return False, (f"target calibration not binding "
+                       f"(n_gradeable={target_calibration.get('n_gradeable')}, "
+                       f"phase={target_calibration.get('phase')})")
+    infl = target_calibration.get("rr_inflation")
+    limit = cfg["target_rr_inflation_limit"]
+    if isinstance(infl, (int, float)) and infl > limit:
+        return True, (
+            f"claimed RR {target_calibration.get('mean_claimed_rr')} vs realized "
+            f"{target_calibration.get('mean_realized_rr')} over "
+            f"{target_calibration.get('n_gradeable')} graded trades "
+            f"(inflation {infl} > {limit})"
+        )
+    return False, f"targets within tolerance (inflation {infl} <= {limit})"
+
+
+def check_buy_target_calibration(proposal: dict) -> list[str]:
+    """Rejection reasons for a BUY when the record shows inflated targets.
+
+    Wired into validator._check_calibration_gate. Deliberately narrow: it caps
+    CONFIDENCE, it does not reject the trade and it does not touch the target.
+    Targets remain non-binding for exits by design — the decision to let winners
+    run past a milestone is correct. What is not acceptable is claiming 2.5:1
+    repeatedly, realizing 0.6:1, and carrying the confidence that the claim
+    bought. SELLs are never gated on entry calibration: reducing risk must never
+    be blocked by a learning-layer verdict.
+    """
+    reasons: list[str] = []
+    try:
+        if str(proposal.get("action") or "").upper() != "BUY":
+            return reasons
+        cfg = _load_cfg_block()
+        hit, why = targets_inflated(load_target_calibration(), cfg)
+        if not hit:
+            return reasons
+        conf = proposal.get("confidence")
+        cap = cfg["confidence_cap_when_targets_inflated"]
+        if isinstance(conf, (int, float)) and conf > cap:
+            reasons.append(
+                f"target_calibration_confidence_cap:{conf} > {cap} ({why}) — "
+                f"your stated targets have not been delivered; state confidence "
+                f"at or below {cap} until the record closes the gap"
+            )
+    except Exception as e:
+        # Fail OPEN: a learning-layer crash must never halt trading. It must not
+        # be silent either — the caller prints, and this reason is inert.
+        print(f"  (target calibration gate failed open: {str(e)[:120]})")
+    return reasons
+
+
+def brain_facing_target_calibration() -> dict:
+    """Context-bundle view: what the model claimed vs what it delivered."""
+    try:
+        cfg = _load_cfg_block()
+        tc = load_target_calibration()
+        if not tc:
+            return {"note": "no target calibration published yet", "phase": "anecdote",
+                    "binding": False, "n_gradeable": 0}
+        hit, why = targets_inflated(tc, cfg)
+        return {
+            "note": ("TARGET ATTAINMENT: your claimed risk_reward_ratio graded against "
+                     "the REALIZED move on the same risk unit. The 2:1 floor is computed "
+                     "from your own target_price, which the exit layer never reads - this "
+                     "is what keeps that claim honest. Targets are still NOT tripwires: "
+                     "holding past one is allowed. Binding only at "
+                     f"{tc.get('min_trades_for_binding')} graded trades."),
+            "phase": tc.get("phase"),
+            "binding": tc.get("binding"),
+            "n_gradeable": tc.get("n_gradeable"),
+            "mean_claimed_rr": tc.get("mean_claimed_rr"),
+            "mean_realized_rr": tc.get("mean_realized_rr"),
+            "rr_inflation": tc.get("rr_inflation"),
+            "provisional_rr_inflation": tc.get("provisional_rr_inflation"),
+            "mean_capture_fraction": tc.get("mean_capture_fraction"),
+            "n_target_reached": tc.get("n_target_reached"),
+            "n_target_path_observed": tc.get("n_target_path_observed"),
+            "targets_inflated": hit,
+            "detail": why,
+            "confidence_cap_when_targets_inflated":
+                cfg["confidence_cap_when_targets_inflated"],
+        }
+    except Exception as e:
+        return {"status": "error", "reason": str(e)[:150], "binding": False}
 
 
 def brain_facing_calibration_status() -> dict:

@@ -40,6 +40,15 @@ DEDUPE_DAYS = 5
 MAX_OPEN_SHADOWS = 1200
 MARK_WINDOWS = (30, 60, 90)
 
+# Benchmark used for beta attribution on close.
+BENCHMARK_TICKER = "SPY"
+# A market move only "explains" a shadow's excursion when it is BOTH absolutely
+# large and proportionally large. Either test alone lies: a 0.4% tape against a
+# 0.5% wobble is a ratio, not an explanation, and a -1.5% SPY against a -17%
+# collapse is a rounding error dressed as a cause.
+BENCH_MIN_ABS_MOVE_PCT = 2.0
+BENCH_MIN_EXPLAINED_FRACTION = 0.5
+
 
 def _now() -> datetime:
     return datetime.now(timezone.utc)
@@ -271,67 +280,280 @@ def close_shadow_if_bought(ticker: str, fill_price: float | None = None) -> int:
     return n
 
 
-def mark_shadows(prices: dict) -> dict:
-    """Mark all open shadows to current prices; expire past horizon; score."""
+def _needs_bar_check(p: dict, age_days: int) -> bool:
+    """Should we spend a bar download on this shadow? Pure.
+
+    Two rules, both about not paying for information we already have:
+
+    1. A DAY-ZERO shadow has exactly one bar — the one its entry price came
+       from. Fetching for it would download history for every idea skipped this
+       morning, every morning, and learn nothing.
+
+    2. A SAMPLED TOUCH IS PROOF; a sampled NON-touch is merely UNPROVEN. Sampling
+       can only miss an excursion, never invent one, so once low_water is already
+       through the stop (or high_water through the target) the verdict is settled
+       and real bars cannot overturn it. Bars are only worth buying for the
+       unproven side.
+    """
+    try:
+        if age_days is None or int(age_days) < 1:
+            return False
+        entry = float(p.get("entry_price") or 0)
+        if entry <= 0:
+            return False
+        lo = float(p.get("low_water") if p.get("low_water") is not None else entry)
+        hi = float(p.get("high_water") if p.get("high_water") is not None else entry)
+        stop = float(p.get("stop_price") or 0)
+        target = float(p.get("target_price") or 0)
+        if stop > 0 and lo <= stop:
+            return False
+        if target > 0 and hi >= target:
+            return False
+        return True
+    except (TypeError, ValueError):
+        return False
+
+
+def _fetch_bars_for(tickers, start: str, end: str) -> dict:
+    """{TICKER: {date: {high, low, close}}} for the unproven shadows, in ONE
+    batched call. Network + cached + fail-soft: a blocked feed returns {} and
+    every touch flag falls back to the sampled evidence, which is honest because
+    sampling under-detects rather than over-detects."""
+    try:
+        from tools.benchmark import daily_ohlc_batch
+        return daily_ohlc_batch(tickers, start, end) or {}
+    except Exception:
+        return {}
+
+
+def _bar_window_extremes(bars: dict | None, start: str, end: str) -> dict:
+    try:
+        from tools.benchmark import window_extremes
+        return window_extremes(bars, start, end)
+    except Exception:
+        return {"high": None, "low": None, "n_bars": 0}
+
+
+def _benchmark_window_return_pct(bench_bars: dict | None, start: str, end: str):
+    """Benchmark % return over exactly this shadow's window, from the same daily
+    bars. None when unknowable — never 0, which would read as "the tape was
+    flat" and quietly charge an entire market drawdown to the name."""
+    try:
+        rows = {str(d)[:10]: b for d, b in (bench_bars or {}).items()
+                if isinstance(b, dict) and b.get("close") is not None}
+        if not rows:
+            return None
+        s, e = str(start)[:10], str(end)[:10]
+        before = sorted(d for d in rows if d <= s)
+        upto = sorted(d for d in rows if d <= e)
+        if not before or not upto:
+            return None
+        first, last = float(rows[before[-1]]["close"]), float(rows[upto[-1]]["close"])
+        if first <= 0:
+            return None
+        return round((last / first - 1) * 100, 2)
+    except Exception:
+        return None
+
+
+def _excursion_pct(p: dict):
+    """The shadow's OWN move in the direction its verdict is about. Pure."""
+    up = p.get("max_upside_pct")
+    dd = p.get("max_drawdown_pct")
+    verdict = str(p.get("verdict") or "")
+    if verdict == "good_skip":
+        return dd if isinstance(dd, (int, float)) else None
+    if verdict == "regret_miss":
+        return up if isinstance(up, (int, float)) else None
+    cands = [x for x in (up, dd) if isinstance(x, (int, float))]
+    return max(cands, key=abs) if cands else None
+
+
+def _benchmark_explained_fraction(p: dict):
+    """How much of this shadow's excursion the tape moved with it. Pure.
+
+    None when there is no benchmark window; 0.0 when the benchmark moved the
+    OTHER way, which explains nothing at all.
+    """
+    b = p.get("benchmark_return_pct")
+    if not isinstance(b, (int, float)):
+        return None
+    exc = _excursion_pct(p)
+    if not isinstance(exc, (int, float)) or abs(exc) < 1e-9:
+        return None
+    if (b > 0) != (exc > 0):
+        return 0.0
+    return round(abs(b) / abs(exc), 3)
+
+
+def _verdict_attribution(p: dict) -> str:
+    """market_wide | idiosyncratic | unknown. Pure.
+
+    Roughly 38 open shadows once showed would_hit_stop true off ONE market-wide
+    drawdown. Resolved naively they read as 38 independent pieces of evidence
+    that the entry bar is set correctly — a beta detector wearing a skill
+    detector's clothes. A verdict is only charged to the tape when the benchmark
+    move clears BOTH gates: absolutely large (>= 2%) AND proportionally large
+    (>= 50% of the shadow's own excursion). Either test alone produces a
+    confident lie in one direction or the other.
+    """
+    if not isinstance(p.get("benchmark_return_pct"), (int, float)):
+        return "unknown"
+    frac = _benchmark_explained_fraction(p)
+    if frac is None:
+        return "unknown"
+    if (abs(float(p["benchmark_return_pct"])) >= BENCH_MIN_ABS_MOVE_PCT
+            and frac >= BENCH_MIN_EXPLAINED_FRACTION):
+        return "market_wide"
+    return "idiosyncratic"
+
+
+def _shadow_stats(closed: list) -> dict:
+    """Raw rates AND beta-stripped rates side by side. Pure.
+
+    The raw good_skip rate answers "did skipping avoid a drawdown"; the
+    idiosyncratic rate answers "did skipping avoid a drawdown the MARKET did not
+    hand everyone" — which is the only one that says anything about the bar.
+    """
+    rows = [c for c in (closed or []) if isinstance(c, dict)]
+
+    def _rate(pool, verdict):
+        if not pool:
+            return None
+        return round(100 * sum(1 for c in pool if c.get("verdict") == verdict)
+                     / len(pool), 1)
+
+    idio = [c for c in rows if c.get("verdict_attribution") == "idiosyncratic"]
+    return {
+        "n_closed": len(rows),
+        "regret_rate_pct": _rate(rows, "regret_miss"),
+        "good_skip_rate_pct": _rate(rows, "good_skip"),
+        "n_market_wide": sum(1 for c in rows
+                             if c.get("verdict_attribution") == "market_wide"),
+        "n_idiosyncratic": len(idio),
+        "n_unknown_attribution": sum(1 for c in rows
+                                     if c.get("verdict_attribution")
+                                     not in ("market_wide", "idiosyncratic")),
+        "idiosyncratic_regret_rate_pct": _rate(idio, "regret_miss"),
+        "idiosyncratic_good_skip_rate_pct": _rate(idio, "good_skip"),
+        "n_bar_verified": sum(1 for c in rows
+                              if c.get("touch_source") == "daily_bars"),
+        "note": ("idiosyncratic_* strip out shadows whose excursion the benchmark "
+                 "already explains; those say nothing about where the entry bar is set."),
+    }
+
+
+def mark_shadows(prices: dict, bars: dict | None = None) -> dict:
+    """Mark open shadows, resolve on FIRST TOUCH, expire at the horizon.
+
+    THE BUG this replaces: every close was gated behind `age >= 30` — even when
+    the stop was already through. A shadow that gapped past its stop on day two
+    sat "open" for a month, so with `binding` needing 8 closed shadows the whole
+    loop produced nothing for 30 days after any restart. Live state was
+    49 open / 0 closed. First touch RESOLVES the counterfactual; the horizon is
+    only the fallback for a shadow that never touched anything.
+
+    `bars` ({TICKER: {date: {high, low, close}}}) overrides the fetch, so the
+    caller — or a test — can supply real tape.
+    """
     try:
         state = _load()
-        still_open = []
-        closed_now = []
         today = _now()
-        for p in state["positions"]:
-            p = dict(p)
+        today_s = _today()
+        supplied = {str(k).upper(): v for k, v in (bars or {}).items()}
+
+        # --- pass 1: sampled marks (cheap, no network) --------------------- #
+        marked = []
+        for raw in state["positions"]:
+            p = dict(raw)
             t = p.get("ticker")
             px = prices.get(t)
             if isinstance(px, (int, float)) and px > 0:
                 entry = float(p["entry_price"])
                 p["last_price"] = round(float(px), 4)
-                p["last_mark_at"] = _today()
+                p["last_mark_at"] = today_s
                 p["high_water"] = round(max(float(p.get("high_water") or entry), float(px)), 4)
                 p["low_water"] = round(min(float(p.get("low_water") or entry), float(px)), 4)
                 p["unrealized_pct"] = round((float(px) / entry - 1) * 100, 2)
-                p["max_upside_pct"] = round((float(p["high_water"]) / entry - 1) * 100, 2)
-                p["max_drawdown_pct"] = round((float(p["low_water"]) / entry - 1) * 100, 2)
-                p["would_hit_target"] = float(p["high_water"]) >= float(p["target_price"])
-                p["would_hit_stop"] = float(p["low_water"]) <= float(p["stop_price"])
-                # window marks
-                opened = _parse_day(p.get("opened_at"))
-                if opened:
-                    age = (today.date() - opened.date()).days
-                    for w in MARK_WINDOWS:
-                        if age >= w and not any(
-                            m.get("window") == w for m in (p.get("marks") or [])
-                        ):
-                            p.setdefault("marks", []).append({
-                                "window": w,
-                                "price": p["last_price"],
-                                "pct": p["unrealized_pct"],
-                                "at": _today(),
-                            })
-
             opened = _parse_day(p.get("opened_at"))
-            age = (today.date() - opened.date()).days if opened else 0
-            # Resolve verdict on horizon or stop/target first-touch score
-            if age >= HORIZON_DAYS or p.get("would_hit_target") or p.get("would_hit_stop"):
-                if age >= HORIZON_DAYS or (
-                    p.get("would_hit_target") is not None
-                    and (p.get("would_hit_target") or p.get("would_hit_stop") or age >= 30)
-                ):
-                    # Only close at 30d+ for target/stop resolution, or hard 90d
-                    if age >= HORIZON_DAYS or age >= 30:
-                        p["status"] = "closed"
-                        p["closed_at"] = _today()
-                        p["verdict"] = _verdict(p)
-                        p["lesson"] = _lesson(p)
-                        closed_now.append(p)
-                        continue
-            still_open.append(p)
+            p["_age"] = (today.date() - opened.date()).days if opened else 0
+            p["_opened_s"] = str(p.get("opened_at") or today_s)[:10]
+            marked.append(p)
+
+        # --- fetch real bars ONLY for the unproven side, batched ----------- #
+        need = sorted({str(p.get("ticker")).upper() for p in marked
+                       if _needs_bar_check(p, p["_age"])
+                       and str(p.get("ticker")).upper() not in supplied})
+        fetched: dict = {}
+        if need or (marked and BENCHMARK_TICKER not in supplied):
+            oldest = min((p["_opened_s"] for p in marked), default=today_s)
+            # SPY rides along in the same batch so a closing shadow can be
+            # attributed to the tape without a second network path.
+            fetched = _fetch_bars_for(need + [BENCHMARK_TICKER], oldest, today_s)
+        all_bars = {**(fetched or {}), **supplied}
+        bench_bars = all_bars.get(BENCHMARK_TICKER)
+
+        # --- pass 2: resolve ---------------------------------------------- #
+        still_open, closed_now = [], []
+        for p in marked:
+            entry = float(p["entry_price"])
+            age = p.pop("_age")
+            opened_s = p.pop("_opened_s")
+            t = str(p.get("ticker") or "").upper()
+
+            ext = _bar_window_extremes(all_bars.get(t), opened_s, today_s)
+            bar_verified = bool(ext.get("n_bars"))
+            if bar_verified:
+                # TRUE intraday extremes supersede sampled marks: sampling can
+                # only understate an excursion.
+                if ext.get("high") is not None:
+                    p["high_water"] = round(max(float(p.get("high_water") or entry),
+                                                float(ext["high"])), 4)
+                if ext.get("low") is not None:
+                    p["low_water"] = round(min(float(p.get("low_water") or entry),
+                                               float(ext["low"])), 4)
+            p["touch_source"] = "daily_bars" if bar_verified else "sampled_only"
+            p["bars_seen"] = int(ext.get("n_bars") or 0)
+
+            p["max_upside_pct"] = round((float(p["high_water"]) / entry - 1) * 100, 2)
+            p["max_drawdown_pct"] = round((float(p["low_water"]) / entry - 1) * 100, 2)
+            p["would_hit_target"] = float(p["high_water"]) >= float(p["target_price"])
+            p["would_hit_stop"] = float(p["low_water"]) <= float(p["stop_price"])
+
+            for w in MARK_WINDOWS:
+                if age >= w and not any(m.get("window") == w
+                                        for m in (p.get("marks") or [])):
+                    p.setdefault("marks", []).append({
+                        "window": w, "price": p.get("last_price"),
+                        "pct": p.get("unrealized_pct"), "at": today_s,
+                    })
+
+            touched = bool(p["would_hit_target"] or p["would_hit_stop"])
+            if not touched and age < HORIZON_DAYS:
+                still_open.append(p)
+                continue
+
+            p["status"] = "closed"
+            p["closed_at"] = today_s
+            p["close_trigger"] = "level_touched" if touched else "horizon_expired"
+            p["age_days_at_close"] = age
+            p["verdict"] = _verdict(p)
+            # Beta attribution: the counterfactual is only evidence about OUR bar
+            # to the extent the tape did not do the work.
+            p["benchmark_return_pct"] = _benchmark_window_return_pct(
+                bench_bars, opened_s, today_s)
+            p["benchmark_explained_fraction"] = _benchmark_explained_fraction(p)
+            p["verdict_attribution"] = _verdict_attribution(p)
+            p["lesson"] = _lesson(p)
+            closed_now.append(p)
 
         state["positions"] = still_open
         if closed_now:
             state.setdefault("closed", []).extend(closed_now)
             state["closed"] = state["closed"][-200:]
         _save(state)
-        return {"marked": len(still_open), "closed_now": len(closed_now)}
+        return {"marked": len(still_open), "closed_now": len(closed_now),
+                "bar_checked": len(need), "bars_available": len(all_bars)}
     except Exception as e:
         return {"status": "error", "reason": str(e)[:150]}
 
@@ -361,13 +583,21 @@ def _lesson(p: dict) -> str:
     v = p.get("verdict")
     t = p.get("ticker")
     src = p.get("source")
+    # Disclosures travel WITH the lesson: an unverified verdict and a verdict the
+    # market already explains are both weaker evidence than they read as.
+    suffix = ""
+    if p.get("verdict_attribution") == "market_wide":
+        suffix += (f" NOTE: the tape did this — SPY {p.get('benchmark_return_pct')}% over "
+                   f"the same window; charge it to beta, not to the entry bar.")
+    if p.get("touch_source") == "sampled_only":
+        suffix += " (resolved on sampled marks only — not bar-verified.)"
     if v == "regret_miss":
         return (f"{t}: skipped ({src}) but would have reached +{p.get('max_upside_pct')}% "
-                f"before stop — review bar / trigger discipline.")
+                f"before stop — review bar / trigger discipline.{suffix}")
     if v == "good_skip":
         return (f"{t}: skip ({src}) looked right — price hit stop zone "
-                f"({p.get('max_drawdown_pct')}%); process held.")
-    return f"{t}: shadow closed as {v} (src={src})."
+                f"({p.get('max_drawdown_pct')}%); process held.{suffix}")
+    return f"{t}: shadow closed as {v} (src={src}).{suffix}"
 
 
 def brain_facing_shadow_learning(limit: int = 12) -> dict:
@@ -409,7 +639,9 @@ def brain_facing_shadow_learning(limit: int = 12) -> dict:
             "good_skips": [
                 {"ticker": r.get("ticker"), "source": r.get("source"),
                  "max_drawdown_pct": r.get("max_drawdown_pct"),
-                 "lesson": r.get("lesson"), "opened_at": r.get("opened_at")}
+                 "lesson": r.get("lesson"), "opened_at": r.get("opened_at"),
+                 "verdict_attribution": r.get("verdict_attribution"),
+                 "touch_source": r.get("touch_source")}
                 for r in good
             ],
             "open_running_best": [
@@ -418,16 +650,7 @@ def brain_facing_shadow_learning(limit: int = 12) -> dict:
                  "reason": (p.get("reason") or "")[:120]}
                 for p in open_running if float(p.get("unrealized_pct") or 0) > 5
             ],
-            "stats": {
-                "regret_rate_pct": round(
-                    100 * len([c for c in (state.get("closed") or [])
-                               if c.get("verdict") == "regret_miss"])
-                    / max(1, n_closed), 1) if n_closed else None,
-                "good_skip_rate_pct": round(
-                    100 * len([c for c in (state.get("closed") or [])
-                               if c.get("verdict") == "good_skip"])
-                    / max(1, n_closed), 1) if n_closed else None,
-            },
+            "stats": _shadow_stats(state.get("closed") or []),
         }
     except Exception as e:
         return {"status": "error", "reason": str(e)[:150],

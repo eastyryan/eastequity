@@ -18,6 +18,20 @@ from runlib.analytics import (
     build_health, proposal_ev, sector_exposure, sector_map, benchmark_close,
 )
 
+def _target_calibration(closed: list) -> dict:
+    """Grade claimed RR vs realized RR over the closed book. Fail-soft: a
+    learning-layer failure must never take the dashboard publish down with it."""
+    try:
+        from tools.exit_autopsy import build_target_calibration
+        from tools.calibration_gate import _load_cfg_block
+        return build_target_calibration(
+            closed, min_trades_for_binding=_load_cfg_block()["min_trades_for_binding"])
+    except Exception as e:
+        print(f"  (target calibration unavailable: {str(e)[:120]})")
+        return {"status": "unavailable", "binding": False, "phase": "anecdote",
+                "n_gradeable": 0, "rr_inflation": None}
+
+
 def refresh_dashboard(context: dict, response: str, results: list, fills: list,
                       run_id: str, no_trade_reason: str | None = None,
                       commentary: str | None = None,
@@ -74,6 +88,10 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
         "performance": compute_performance_stats(closed, hist),
         "performance_breakdown": build_performance_breakdown(closed),
         "calibration": compute_calibration(closed),
+        # The key tools/calibration_gate.load_target_calibration() reads back.
+        # Without it published here the gate reads nothing and the 2:1 rule stays
+        # ungraded — which is the state it was in.
+        "target_calibration": _target_calibration(closed),
         "position_risk": (context.get("position_stop_cushion") or {}).get("positions", {}),
         "sector_exposure": sector_exposure(context["portfolio"]),
         "sector_concentration_cap_pct": (
@@ -150,6 +168,23 @@ def redeploy_dashboard() -> None:
     relay + gather Action push concurrently) instead of wedging the node permanently."""
     import glob as _glob
     try:
+        # MATERIALIZE THE KNOWLEDGE BASE BEFORE the .exists()-gated path list
+        # below. Listing data/knowledge_base.json there was purely decorative:
+        # every learning-store entry is gated on the file existing, and that file
+        # had NEVER existed in this repo (untracked, and not gitignored) while its
+        # derived public view dashboard/data/learning_journal.json was committed
+        # and carried a real lesson. So the store was recreated empty on every
+        # ephemeral runner, the git-add skipped it for not existing, and the loop
+        # stayed dead. ensure_store() rebuilds it from the published journal, which
+        # is what turns that path entry from decoration into persistence.
+        try:
+            from tools.knowledge_base import ensure_store
+            kb = ensure_store()
+            if kb.get("status") == "rebuilt_from_published":
+                print(f"  knowledge base rebuilt from published journal: {kb.get('ids')}")
+        except Exception as e:
+            print(f"  (knowledge base ensure_store failed: {str(e)[:120]})")
+
         paths = ["dashboard/data", "journal", "state/portfolio.json",
                  # queued broker orders from cloud runs — the push of this file
                  # is what TRIGGERS the Actions executor (execute-orders.yml)

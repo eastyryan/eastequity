@@ -387,6 +387,256 @@ def grade_and_persist_autopsy(record: dict) -> dict:
         return {"status": "error", "reason": str(e)[:150]}
 
 
+# --------------------------------------------------------------------------- #
+# TARGET ATTAINMENT — grading the claim behind the 2:1 gate
+#
+# min_risk_reward_ratio (2.0) is the most rigorously justified rule in the
+# system: at realistic 40-55% win rates a 1:1 book loses money and 2:1 stays
+# profitable across the whole band. But the ratio is computed from the model's
+# own `target_price`, and `target_price` appears ZERO times in
+# execution/exit_guard.py — exits are stop, trail or horizon only, and CLAUDE.md
+# calls the target "a milestone, not a tripwire". So the gate filtered on a
+# number nothing enforced and nothing graded, which the model could always clear
+# by writing a bigger one. That is an unfalsifiable claim.
+#
+# The fix is NOT to make targets binding on exits. Letting winners run is correct
+# and well supported, and turning the target into a tripwire would cap every
+# trend trade at its first milestone. The fix is to make the claim FALSIFIABLE:
+# grade claimed RR against REALIZED RR on every close, and let the calibration
+# gate act on the record — only once there is a record.
+# --------------------------------------------------------------------------- #
+
+# Capture fraction at or above which the trade essentially got what it claimed.
+NEAR_TARGET_CAPTURE = 0.8
+
+
+def grade_target_attainment(entry_price=None, exit_price=None, stop_loss=None,
+                            target_price=None, high_during_hold=None) -> dict:
+    """Claimed RR at entry vs REALIZED RR at exit, on the SAME risk unit. Pure.
+
+    Both ratios are divided by the identical entry-to-stop distance, so they are
+    directly comparable; dividing the realized move by anything else would let a
+    trade look good against a risk it never took.
+
+    target_reached is True / False / None, and the None is load-bearing: None
+    means the path was UNOBSERVABLE (no daily highs, and the exit itself does not
+    prove it), False means we looked and it did not happen. Averaging those
+    together manufactures a hit rate out of missing data. An exit at or above the
+    target proves attainment without any bars at all.
+
+    A non-positive risk unit (stop at or above entry) yields None rather than a
+    confident nonsense ratio, and a missing plan is ungradeable rather than zero.
+    """
+    e = _safe_float(entry_price)
+    x = _safe_float(exit_price)
+    s = _safe_float(stop_loss)
+    tp = _safe_float(target_price)
+    hi = _safe_float(high_during_hold)
+
+    risk = (e - s) if (e is not None and s is not None) else None
+    reward = (tp - e) if (e is not None and tp is not None) else None
+    bad = []
+    if e is None or x is None:
+        bad.append("missing_entry_or_exit")
+    if s is None or tp is None:
+        bad.append("missing_plan")            # no stop/target recovered
+    if risk is not None and risk <= 0:
+        bad.append("non_positive_risk_unit")  # stop at or above entry
+    if reward is not None and reward <= 0:
+        bad.append("non_positive_reward")
+
+    gradeable = not bad
+    out = {
+        "gradeable": gradeable,
+        "entry_price": e, "exit_price": x,
+        "stop_loss": s, "target_price": tp,
+        "risk_unit": round(risk, 4) if (gradeable and risk is not None) else None,
+        "claimed_rr": None, "realized_rr": None,
+        "capture_fraction": None, "target_reached": None, "near_target": False,
+    }
+    if not gradeable:
+        out["ungradeable_reason"] = ",".join(bad)
+        return out
+
+    out["claimed_rr"] = round(reward / risk, 2)
+    out["realized_rr"] = round((x - e) / risk, 2)
+    out["capture_fraction"] = round((x - e) / reward, 4)
+    if x >= tp:
+        out["target_reached"] = True          # the exit itself is proof
+    elif hi is not None:
+        out["target_reached"] = bool(hi >= tp)
+        out["high_during_hold"] = hi
+    else:
+        out["target_reached"] = None          # could not look — NOT False
+    out["near_target"] = bool(out["capture_fraction"] >= NEAR_TARGET_CAPTURE)
+    return out
+
+
+def _buy_plan_lookup() -> list:
+    """Every BUY proposal as (ts, TICKER, {stop_loss, target_price, rr, conf}).
+
+    Mirrors performance_breakdown._confidence_lookup: closed trades do not always
+    carry the entry plan (the lot is gone by then), so the ORIGINAL proposal is
+    where the claim lives. Grading the claim requires recovering it. Fail-soft.
+    """
+    rows: list = []
+    proposals_dir = ROOT / "journal" / "proposals"
+    if not proposals_dir.exists():
+        return rows
+    try:
+        for f in sorted(proposals_dir.glob("*.jsonl")):
+            for line in f.read_text().splitlines():
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                p = rec.get("proposal") if isinstance(rec, dict) else None
+                if not isinstance(p, dict):
+                    continue
+                if str(p.get("action", "")).upper() != "BUY" or not p.get("ticker"):
+                    continue
+                rows.append((rec.get("ts", ""), str(p["ticker"]).upper(), {
+                    "stop_loss": _safe_float(p.get("stop_loss")),
+                    "target_price": _safe_float(p.get("target_price")),
+                    "claimed_risk_reward_ratio": _safe_float(p.get("risk_reward_ratio")),
+                    "confidence": _safe_float(p.get("confidence")),
+                }))
+    except Exception:
+        return rows
+    return rows
+
+
+def _plan_for_trade(trade: dict, plans: list) -> dict:
+    """Latest BUY plan for this ticker on or before the trade's opened_at."""
+    ticker = str(trade.get("ticker", "")).upper()
+    opened = str(trade.get("opened_at") or "")[:10]
+    if not ticker or not opened:
+        return {}
+    best_ts, best = "", {}
+    for ts, t, plan in plans:
+        if t == ticker and str(ts)[:10] <= opened and str(ts) >= best_ts:
+            best_ts, best = str(ts), plan
+    return best
+
+
+def _highs_during_holds(trades: list) -> dict:
+    """{(ticker, opened, closed): high} from real daily bars, one batched fetch.
+
+    Without true daily highs, target_reached collapses to "did the EXIT clear the
+    target", which under-counts every trade that touched its target and gave it
+    back. Fail-soft to {} — the grade then reports None, not False.
+    """
+    try:
+        from tools.benchmark import daily_ohlc_batch, window_extremes
+        rows = [t for t in trades if t.get("ticker") and t.get("opened_at")
+                and t.get("closed_at")]
+        if not rows:
+            return {}
+        days = [str(t["opened_at"])[:10] for t in rows] + \
+               [str(t["closed_at"])[:10] for t in rows]
+        bars = daily_ohlc_batch(sorted({str(t["ticker"]).upper() for t in rows}),
+                                min(days), max(days))
+        out = {}
+        for t in rows:
+            key = (str(t["ticker"]).upper(), str(t["opened_at"])[:10],
+                   str(t["closed_at"])[:10])
+            ext = window_extremes(bars.get(key[0]), key[1], key[2])
+            if ext.get("n_bars"):
+                out[key] = ext.get("high")
+        return out
+    except Exception:
+        return {}
+
+
+def build_target_calibration(closed_trades: list, *, fetch_bars: bool = True,
+                             min_trades_for_binding: int = 15) -> dict:
+    """Aggregate target attainment across closed trades.
+
+    Publishes `rr_inflation` (mean claimed RR minus mean realized RR) ONLY once
+    the sample is binding. Below that the same arithmetic is published as
+    `provisional_rr_inflation`, clearly labelled, because a binding-grade number
+    at n=2 is exactly the failure this whole layer exists to prevent — the point
+    of grading a claim is that you do not act on the grade before you have one.
+    """
+    try:
+        trades = [t for t in (closed_trades or []) if isinstance(t, dict)]
+        plans = _buy_plan_lookup()
+        highs = _highs_during_holds(trades) if fetch_bars else {}
+
+        rows = []
+        for t in trades:
+            plan = _plan_for_trade(t, plans) or {}
+            stop = (_safe_float(t.get("stop_loss"))
+                    or _safe_float((t.get("entry_plan") or {}).get("stop_loss")
+                                   if isinstance(t.get("entry_plan"), dict) else None)
+                    or plan.get("stop_loss"))
+            target = (_safe_float(t.get("target_price"))
+                      or _safe_float((t.get("entry_plan") or {}).get("target_price")
+                                     if isinstance(t.get("entry_plan"), dict) else None)
+                      or plan.get("target_price"))
+            key = (str(t.get("ticker", "")).upper(),
+                   str(t.get("opened_at") or "")[:10],
+                   str(t.get("closed_at") or "")[:10])
+            high = _safe_float(t.get("high_during_hold"))
+            if high is None:
+                high = highs.get(key)
+            g = grade_target_attainment(
+                entry_price=t.get("entry_price"), exit_price=t.get("exit_price"),
+                stop_loss=stop, target_price=target, high_during_hold=high)
+            rows.append({"ticker": key[0], "opened_at": key[1],
+                         "closed_at": key[2],
+                         "claimed_rr_stated": plan.get("claimed_risk_reward_ratio"),
+                         **g})
+
+        graded = [r for r in rows if r.get("gradeable")]
+        n = len(graded)
+        binding = n >= int(min_trades_for_binding or 15)
+        phase = ("binding" if binding else "caution" if n >= 5 else "anecdote")
+
+        def _mean(vals):
+            vals = [v for v in vals if isinstance(v, (int, float))]
+            return round(sum(vals) / len(vals), 2) if vals else None
+
+        mean_claimed = _mean([r["claimed_rr"] for r in graded])
+        mean_realized = _mean([r["realized_rr"] for r in graded])
+        inflation = (round(mean_claimed - mean_realized, 2)
+                     if mean_claimed is not None and mean_realized is not None
+                     else None)
+        # target_reached is scored over the OBSERVED subset only; rows where the
+        # path was unobservable are excluded rather than counted as misses.
+        observed = [r for r in graded if r.get("target_reached") is not None]
+
+        return {
+            "note": ("Grades the claim behind min_risk_reward_ratio. Targets stay "
+                     "NON-BINDING for exits (letting winners run is correct); this "
+                     "measures whether the claimed RR was ever real. rr_inflation is "
+                     "WITHHELD until the sample binds."),
+            "n_trades": len(rows),
+            "n_gradeable": n,
+            "n_ungradeable": len(rows) - n,
+            "phase": phase,
+            "binding": binding,
+            "sufficient_sample": binding,
+            "min_trades_for_binding": int(min_trades_for_binding or 15),
+            "mean_claimed_rr": mean_claimed,
+            "mean_realized_rr": mean_realized,
+            "rr_inflation": inflation if binding else None,
+            "provisional_rr_inflation": None if binding else inflation,
+            "mean_capture_fraction": _mean([r["capture_fraction"] for r in graded]),
+            "n_target_path_observed": len(observed),
+            "n_target_reached": sum(1 for r in observed if r.get("target_reached")),
+            "target_hit_rate_pct": (round(100 * sum(1 for r in observed
+                                                    if r.get("target_reached"))
+                                          / len(observed), 1)
+                                    if binding and observed else None),
+            "trades": rows[-25:],
+        }
+    except Exception as e:
+        return {"status": "error", "reason": str(e)[:200], "n_gradeable": 0,
+                "binding": False, "phase": "anecdote", "rr_inflation": None,
+                "sufficient_sample": False}
+
+
 BINDING_FILE = ROOT / "data" / "binding_exit_lessons.json"
 
 

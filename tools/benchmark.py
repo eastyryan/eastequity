@@ -283,6 +283,184 @@ def attach_benchmark_to_closed(closed: list[dict], ticker: str = BENCHMARK) -> l
     return closed
 
 
+# --------------------------------------------------------------------------- #
+# Daily OHLC bars — TRUE intraday extremes, for anything that needs to know
+# whether a level was TOUCHED rather than merely sampled.
+#
+# WHY THIS LIVES HERE: this module already owns the cached, fail-soft price
+# history path (benchmark_closes above). The shadow book's would_hit_stop /
+# would_hit_target flags were accumulated from whatever last price happened to
+# be passed at mark time, and sampling can only MISS an excursion, never invent
+# one — so those flags were a systematic UNDER-count of touches. Real daily
+# highs/lows fix the direction of that error.
+#
+# The asymmetry that keeps this cheap: a sampled touch is PROOF and needs no
+# bars; a sampled non-touch is merely UNPROVEN. So callers should fetch bars
+# only for the unproven side, in one batch.
+# --------------------------------------------------------------------------- #
+OHLC_CACHE_FILE = ROOT / "data" / "cache" / "daily_ohlc.json"
+
+
+def _load_ohlc_cache() -> dict:
+    try:
+        blob = json.loads(OHLC_CACHE_FILE.read_text())
+        return blob if isinstance(blob, dict) else {}
+    except Exception:
+        return {}
+
+
+def _save_ohlc_cache(blob: dict) -> None:
+    try:
+        OHLC_CACHE_FILE.parent.mkdir(parents=True, exist_ok=True)
+        OHLC_CACHE_FILE.write_text(json.dumps(blob, indent=0, sort_keys=True))
+    except Exception:
+        pass
+
+
+def window_extremes(bars: dict | None, start: str, end: str) -> dict:
+    """{"high", "low", "n_bars"} over the INCLUSIVE [start, end] date window.
+
+    high/low are None — never 0 — when no bar covers the window. A 0 low reads
+    as "the stop was touched" to every caller downstream, which would turn
+    missing data into manufactured evidence. n_bars travels with the answer so
+    a caller can tell "looked and found nothing" from "did not look". Pure.
+    """
+    lo_bound = str(start or "")[:10]
+    hi_bound = str(end or "")[:10]
+    highs: list[float] = []
+    lows: list[float] = []
+    n = 0
+    for day, bar in (bars or {}).items():
+        d = str(day)[:10]
+        if lo_bound and d < lo_bound:
+            continue
+        if hi_bound and d > hi_bound:
+            continue
+        if not isinstance(bar, dict):
+            continue
+        got = False
+        try:
+            if bar.get("high") is not None:
+                highs.append(float(bar["high"]))
+                got = True
+            if bar.get("low") is not None:
+                lows.append(float(bar["low"]))
+                got = True
+        except (TypeError, ValueError):
+            continue
+        if got:
+            n += 1
+    return {"high": max(highs) if highs else None,
+            "low": min(lows) if lows else None,
+            "n_bars": n}
+
+
+def touched_levels(ticker: str, start: str, end: str, *,
+                   stop: float | None = None, target: float | None = None,
+                   bars: dict | None = None) -> dict:
+    """Was `stop` or `target` touched between start and end, on REAL daily bars?
+
+    hit_stop / hit_target are None when no bar covers the window — "we could not
+    look", which is a different claim from "we looked and it did not happen".
+    Returning False there would let missing history masquerade as a clean path.
+    `source` discloses which it was. Pass `bars` to avoid a fetch (an empty dict
+    means "no bars available", NOT "go fetch some").
+    """
+    t = str(ticker or "").upper()
+    if bars is None:
+        bars = daily_ohlc(t, start, end)
+    ext = window_extremes(bars, start, end)
+    if not ext["n_bars"]:
+        return {"ticker": t, "hit_stop": None, "hit_target": None,
+                "high": None, "low": None, "n_bars": 0,
+                "source": "unavailable",
+                "note": "no daily bars cover this window — unknown, not False"}
+    hit_stop = None
+    hit_target = None
+    try:
+        if stop is not None and ext["low"] is not None:
+            hit_stop = float(ext["low"]) <= float(stop)
+        if target is not None and ext["high"] is not None:
+            hit_target = float(ext["high"]) >= float(target)
+    except (TypeError, ValueError):
+        pass
+    return {"ticker": t, "hit_stop": hit_stop, "hit_target": hit_target,
+            "high": ext["high"], "low": ext["low"], "n_bars": ext["n_bars"],
+            "source": "daily_bars"}
+
+
+def daily_ohlc(ticker: str, start: str, end: str) -> dict:
+    """{YYYY-MM-DD: {high, low, close}} for one ticker. Cached; fail-soft to {}."""
+    return daily_ohlc_batch([ticker], start, end).get(str(ticker or "").upper(), {})
+
+
+def daily_ohlc_batch(tickers, start: str, end: str) -> dict:
+    """{TICKER: {YYYY-MM-DD: {high, low, close}}} for many tickers in ONE call.
+
+    Batched because the caller (the shadow book) has dozens of unproven shadows
+    at a time; per-shadow fetching is what made real-bar verification look
+    expensive enough to skip. Cached per ticker with its covered window, so a
+    repeat mark inside the same window costs nothing. Fail-soft: a blocked feed
+    yields {} for that name and every downstream flag becomes None, not False.
+    """
+    want = sorted({str(t or "").upper() for t in (tickers or []) if str(t or "").strip()})
+    if not want or not start or not end:
+        return {}
+    s10, e10 = str(start)[:10], str(end)[:10]
+    cache = _load_ohlc_cache()
+    out: dict = {}
+    missing: list[str] = []
+    for t in want:
+        blob = cache.get(t)
+        if (isinstance(blob, dict) and isinstance(blob.get("bars"), dict)
+                and str(blob.get("from") or "9999") <= s10
+                and str(blob.get("to") or "0000") >= e10):
+            out[t] = blob["bars"]
+        else:
+            missing.append(t)
+    if not missing:
+        return out
+
+    try:
+        import yfinance as yf
+    except Exception:
+        return out
+    # Pad the window: a shadow can open on a market holiday, and the caller's
+    # `end` is usually today (whose bar may not have printed yet).
+    try:
+        fetch_from = (datetime.fromisoformat(s10) - timedelta(days=7)).date().isoformat()
+        fetch_to = (datetime.fromisoformat(e10) + timedelta(days=2)).date().isoformat()
+    except Exception:
+        fetch_from, fetch_to = s10, e10
+    for t in missing:
+        try:
+            hist = yf.Ticker(t).history(start=fetch_from, end=fetch_to,
+                                        interval="1d", auto_adjust=True)
+            bars = {}
+            for idx, row in hist.iterrows():
+                try:
+                    bars[str(idx)[:10]] = {
+                        "high": round(float(row["High"]), 4),
+                        "low": round(float(row["Low"]), 4),
+                        "close": round(float(row["Close"]), 4),
+                    }
+                except (TypeError, ValueError, KeyError):
+                    continue
+            if bars:
+                prev = cache.get(t) if isinstance(cache.get(t), dict) else {}
+                merged = {**(prev.get("bars") or {}), **bars}
+                cache[t] = {
+                    "bars": merged,
+                    "from": min(str(prev.get("from") or fetch_from), fetch_from),
+                    "to": max(str(prev.get("to") or fetch_to), e10),
+                }
+                out[t] = merged
+        except Exception:
+            continue
+    _save_ohlc_cache(cache)
+    return out
+
+
 def book_risk_metrics(equity_hist: list[dict], rf_annual: float = 0.0) -> dict:
     """Sharpe / Sortino / beta / Jensen's alpha, each with its sample size.
 

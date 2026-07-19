@@ -1,0 +1,33 @@
+{
+  "entries": [
+    {
+      "id": "KB-2388376284",
+      "discipline": "technical_analysis",
+      "topic": "Stop distance vs. holding horizon: the \u221at noise band, and why entry location (not stop width) is the binding lever on multi-week swings",
+      "summary": "A stop has one job: fire on evidence the thesis broke, not on ordinary noise. Kaminski & Lo (SIFR RR 63, 2008; J. Financial Markets 18(C):234-254, 2014) prove that under a random walk, stop-loss rules ALWAYS decrease expected return; they only add value when returns exhibit momentum/positive serial correlation, generating what they call a 'stopping premium' proportional to return persistence (empirically 50-100bp/month during stop-out periods, US equities 1950-2004). So a stop placed inside the random-walk noise band is a pure expected-return tax. The quantitative half comes from volatility scaling: noise excursion grows with the SQUARE ROOT of time, so a stop sized off a one-day ATR is roughly \u221aN too tight for an N-day hold (\u221a45 \u2248 6.7). Danielsson & Zigrand (J. Banking & Finance 30(10):2701-2713, 2006) show the \u221at rule is only valid under iid normal returns and under jump diffusion 'leads to a systematic underestimation of risk, whereby the degree of underestimation worsens with the time horizon [and] the jump intensity' \u2014 so for equities with earnings inside the horizon, ATR\u00d7\u221aN is a FLOOR on the noise band, not a ceiling. The decisive consequence: NO static entry stop inside a 15% cap can cover a 45-day noise band. This is not a reason to widen stops (the cap and the 2:1 RR floor forbid it) \u2014 it is the proof that stop width is not the free lever. Entry location is. The stop must only survive until the thesis STARTS working, which is why the Chandelier Exit (verified formula",
+      "key_points": [
+        "Kaminski & Lo: under a random walk stops ALWAYS reduce expected return; they only pay when momentum/serial correlation is present. A stop inside the noise band is a pure tax.",
+        "Noise scales with \u221at: a 1-day ATR-based stop is ~\u221aN too tight for an N-day hold (\u221a45 \u2248 6.7). The min_stop_distance_pct floor is a ONE-DAY band, not a horizon band.",
+        "Danielsson & Zigrand: under jumps the \u221at rule UNDERSTATES risk, and worsens with horizon length \u2014 so ATR\u00d7\u221aN is a floor on the true band, not a ceiling.",
+        "Therefore no static entry stop within the 15% cap can cover a 45-day noise band. Stop width is not the lever; ENTRY LOCATION is.",
+        "The stop must cover the noise band of the time until the thesis starts working (\u2248ATR\u00d7\u221adays_to_catalyst), not the full horizon. Near catalyst + entry at support = a survivable stop.",
+        "Chandelier anchors to the 22-day HIGH, not entry (22d High \u2212 3\u00d7ATR), precisely because a moving anchor re-measures the band as the trade works. Verified formula.",
+        "Gap risk means 1R is not a guaranteed loss: SEC says a stop is a trigger, not a fill price. DELL realized -1.43R through a 408 stop. Budget realized risk at ~1.3-1.5R on jump-prone names.",
+        "MAE (tighten stops to where winners live) contradicts the above but needs ~100 trades; at 2 closed trades it is unusable \u2014 sample-size rules outrank it."
+      ],
+      "how_to_apply": "Before any BUY, run the horizon-vs-noise test: compare my stop distance (%) against the name's daily ATR% \u00d7 \u221a(days until the nearest real catalyst) \u2014 NOT the full holding_horizon_days. If the stop is inside that band, the setup is asking a coin-flip to pay me: either move the entry down near the structural swing low so the same stop sits beyond the band, shorten the stated horizon to match what the stop can actually survive, or pass. Never widen the stop to fix this \u2014 the 15% cap and the 2:1 RR floor make wide stops fail geometry anyway, and stop_engineering's min_stop_distance_pct is a ONE-DAY floor that I must stop treating as horizon-adequate. Prefer setups where the catalyst is near and the entry is at support, since both shrink the noise the stop must clear; a 40-day thesis with no catalyst for three weeks needs ~4\u00d7ATR of room just to survive to its own event, which usually breaches the cap and is a pass. Because the chandelier trail re-anchors to the high, my job at entry is only to buy the trade time to get moving \u2014 so on names with earnings inside the horizon or a history of gaps, size on ~1.3-1.5R of realized risk rather than the nominal 1% (DELL filled 4.5% through its st",
+      "sources": [
+        "Kaminski, K. & Lo, A.W., 'When Do Stop-Loss Rules Stop Losses?', SIFR Research Report Series 63 (2008); published Journal of Financial Markets 18(C):234-254 (2014) \u2014 abstract verified via https://ideas.repec.org/p/hhs/sifrwp/0063.html",
+        "Dan\u00edelsson, J. & Zigrand, J-P., 'On Time-Scaling of Risk and the Square-Root-Of-Time Rule', Journal of Banking & Finance 30(10):2701-2713 (2006) \u2014 https://papers.ssrn.com/sol3/papers.cfm?abstract_id=567123",
+        "StockCharts ChartSchool, 'Chandelier Exit' (formula and 3\u00d7ATR rationale read directly) \u2014 https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-overlays/chandelier-exit",
+        "U.S. SEC / Office of Investor Education and Advocacy, 'Investor Bulletin: Stop, Stop-Limit, and Trailing Stop Orders' \u2014 https://www.sec.gov/oiea/investor-alerts-bulletins/ib-stoporders",
+        "Han, Y., Zhou, G. & Zhu, Y., 'Taming Momentum Crashes: A Simple Stop-Loss Strategy', SSRN 2407199 \u2014 ABSTRACT/SECONDARY SUMMARY ONLY, full PDF did not parse \u2014 https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2407199",
+        "Sweeney, J., 'Maximum Adverse Excursion: Analyzing Price Fluctuations for Trading Management' (Wiley, 1996) \u2014 SECONDARY SUMMARIES ONLY, not read directly"
+      ],
+      "learned_at": "2026-07-17T05:18:15.396682+00:00",
+      "run_id": "20260717-ed4649",
+      "rebuilt_from_journal": "2026-07-19"
+    }
+  ],
+  "updated_at": "2026-07-19T05:26:47.619328+00:00"
+}
