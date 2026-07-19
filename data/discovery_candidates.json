@@ -1,62 +1,142 @@
 {
  "as_of": "2026-07",
- "note": "Static broad-market candidate pool for the weekly discovery screen (tools/discovery_screen.py): liquid US-listed common equities/ADRs >=$1B across all sectors - S&P 500 core + Nasdaq 100 + notable liquid mid-caps. Universe members are deliberately INCLUDED (the screen excludes them at runtime via validator.load_universe(), so this file stays valid as the universe evolves). No MLPs, no leveraged/inverse products, no sub-$1B names. Refresh deliberately (~quarterly) for IPOs, ticker changes, and M&A delistings. Every name verified to return recent yfinance daily bars as of 2026-07-14 (dead/renamed tickers pruned: BK->BNY; CFLT/CTRA/EXAS/FI/HOLX/MMC/PSTG returned no data).",
+ "generated_at_utc": "2026-07-19T21:13:53.657637+00:00",
+ "note": "Broad discovery pool for the weekly discovery screen (tools/discovery_screen.py). Built by tools/discovery_pool.py from FREE public sources only (Wikipedia SPX + Russell 1000, NDX seed/Wikipedia, em_adr_seed, prior pool). No Alpaca/Polygon/Finnhub/FRED bulk calls. Universe members are INCLUDED on purpose; discovery_screen excludes them at runtime. Liquidity ($20M ADV) and tradeability are enforced at screen time via yfinance OHLCV (keyless), not here. No levered/inverse products. Refresh monthly or after major index rebalances: `python -m tools.discovery_pool`.",
+ "api_policy": {
+  "bulk_history": "yfinance only (weekly discovery_screen, chunked)",
+  "pool_build": "wikipedia + ishares csv + local seeds (no paid keys)",
+  "never": [
+   "alpaca_mass_history",
+   "polygon_bulk",
+   "finnhub_bulk"
+  ]
+ },
+ "sources_status": {
+  "prior_pool": "ok:587",
+  "sp500": "ok:503 via wikipedia_sp500",
+  "ndx": "ok:101 via ndx_seed_json",
+  "r1000": "ok:1016 via wikipedia_r1000",
+  "em_adr_seed": "ok:80"
+ },
+ "stats": {
+  "n_tickers": 1132,
+  "n_em_adr_sleeve": 80,
+  "n_with_sector": 1093
+ },
  "tickers": [
   "A",
   "AA",
+  "AAL",
+  "AAOI",
+  "AAON",
   "AAPL",
   "ABBV",
+  "ABEV",
   "ABNB",
   "ABT",
   "ACGL",
   "ACHR",
+  "ACI",
+  "ACM",
   "ACN",
   "ADBE",
+  "ADC",
   "ADI",
   "ADM",
   "ADP",
   "ADSK",
+  "ADT",
   "AEE",
+  "AEIS",
   "AEM",
   "AEP",
+  "AES",
+  "AFG",
   "AFL",
   "AFRM",
+  "AGCO",
+  "AGNC",
+  "AGO",
+  "AHR",
   "AIG",
+  "AIT",
+  "AIZ",
   "AJG",
   "AKAM",
   "ALAB",
   "ALB",
   "ALGM",
   "ALGN",
+  "ALK",
   "ALL",
+  "ALLE",
   "ALLY",
+  "ALM",
   "ALNY",
+  "ALSN",
+  "AM",
   "AMAT",
+  "AMCR",
   "AMD",
   "AME",
+  "AMG",
   "AMGN",
   "AMH",
+  "AMKR",
   "AMP",
   "AMT",
+  "AMTM",
+  "AMX",
   "AMZN",
+  "AN",
   "ANET",
+  "ANSS",
   "AON",
+  "AOS",
   "APA",
   "APD",
+  "APG",
   "APH",
+  "APLD",
   "APO",
   "APP",
+  "APPF",
+  "APTV",
   "AR",
+  "ARCO",
+  "ARE",
   "ARES",
   "ARM",
+  "ARMK",
+  "ARW",
+  "ARWR",
+  "AS",
+  "ASH",
   "ASML",
+  "ASND",
+  "ASR",
   "ASTS",
+  "ASX",
+  "ATI",
   "ATO",
+  "ATR",
+  "AU",
+  "AUGO",
+  "AUR",
   "AVAV",
   "AVB",
   "AVGO",
+  "AVT",
+  "AVTR",
+  "AVY",
+  "AWI",
+  "AWK",
   "AXON",
   "AXP",
+  "AXS",
+  "AXSM",
+  "AXTA",
+  "AYI",
   "AZN",
   "AZO",
   "B",
@@ -67,466 +147,894 @@
   "BALL",
   "BAM",
   "BAX",
+  "BBD",
+  "BBWI",
+  "BBY",
+  "BC",
   "BDX",
   "BE",
+  "BEN",
+  "BEPC",
+  "BF-A",
   "BF-B",
+  "BFAM",
   "BG",
+  "BGNE",
+  "BHF",
   "BHP",
+  "BIDU",
   "BIIB",
+  "BILI",
   "BILL",
+  "BIO",
+  "BIRK",
   "BJ",
   "BKNG",
   "BKR",
+  "BLDR",
   "BLK",
+  "BLSH",
+  "BMA",
   "BMRN",
   "BMY",
   "BN",
   "BNY",
+  "BOKF",
+  "BPOP",
   "BR",
+  "BRBR",
   "BRK-B",
+  "BRKR",
   "BRO",
+  "BROS",
+  "BRX",
+  "BSBR",
   "BSX",
   "BSY",
   "BURL",
+  "BWA",
   "BWXT",
   "BX",
+  "BXP",
+  "BYD",
+  "BZ",
   "C",
+  "CACC",
   "CACI",
+  "CAG",
   "CAH",
+  "CAI",
   "CAMT",
+  "CAR",
   "CARR",
   "CART",
   "CASY",
   "CAT",
   "CAVA",
   "CB",
+  "CBC",
   "CBOE",
   "CBRE",
+  "CBSH",
+  "CCC",
+  "CCEP",
   "CCI",
   "CCJ",
+  "CCK",
   "CCL",
   "CDNS",
+  "CDW",
+  "CE",
   "CEG",
   "CELH",
+  "CERT",
   "CF",
   "CFG",
+  "CFR",
   "CG",
+  "CGNX",
   "CHD",
+  "CHDN",
+  "CHE",
+  "CHH",
   "CHRD",
   "CHRW",
   "CHTR",
   "CHWY",
   "CI",
   "CIEN",
+  "CIG",
   "CINF",
   "CL",
+  "CLF",
   "CLH",
   "CLS",
+  "CLVT",
   "CLX",
   "CMCSA",
   "CME",
   "CMG",
   "CMI",
   "CMS",
+  "CNA",
   "CNC",
+  "CNH",
+  "CNM",
   "CNP",
+  "CNXC",
   "COF",
   "COHR",
   "COIN",
+  "COKE",
+  "COLB",
+  "COLD",
+  "COLM",
+  "COO",
   "COP",
   "COR",
+  "CORT",
   "COST",
+  "COTY",
+  "CPAY",
+  "CPB",
   "CPNG",
   "CPRT",
+  "CPT",
+  "CR",
   "CRCL",
   "CRDO",
+  "CRH",
+  "CRL",
   "CRM",
   "CROX",
+  "CRS",
+  "CRUS",
   "CRWD",
   "CSCO",
   "CSGP",
+  "CSL",
   "CSX",
   "CTAS",
+  "CTSH",
   "CTVA",
+  "CUBE",
+  "CUZ",
   "CVNA",
   "CVS",
   "CVX",
   "CW",
+  "CWEN",
+  "CWEN-A",
+  "CX",
+  "CXT",
+  "CZR",
   "D",
   "DAL",
+  "DAR",
   "DASH",
   "DBX",
+  "DCI",
   "DD",
   "DDOG",
+  "DDS",
   "DE",
   "DECK",
   "DELL",
+  "DESP",
   "DG",
   "DGX",
+  "DHI",
   "DHR",
+  "DINO",
   "DIS",
+  "DJT",
   "DKNG",
+  "DKS",
+  "DLB",
   "DLR",
   "DLTR",
+  "DOC",
   "DOCS",
   "DOCU",
   "DOV",
   "DOW",
+  "DOX",
   "DPZ",
   "DRI",
+  "DRS",
+  "DT",
   "DTE",
+  "DTM",
   "DUK",
   "DUOL",
+  "DV",
+  "DVA",
   "DVN",
+  "DXC",
   "DXCM",
   "DY",
   "EA",
   "EAT",
   "EBAY",
+  "ECG",
+  "ECHO",
   "ECL",
   "ED",
+  "EEFT",
+  "EFX",
+  "EG",
+  "EGP",
+  "EHC",
   "EIX",
   "EL",
   "ELAN",
+  "ELF",
+  "ELS",
   "ELV",
   "EME",
+  "EMN",
   "EMR",
   "ENPH",
   "ENTG",
   "EOG",
+  "EPAM",
+  "EPR",
+  "EQH",
   "EQIX",
   "EQR",
   "EQT",
+  "ERIE",
+  "ERJ",
   "ES",
+  "ESAB",
+  "ESI",
   "ESS",
   "ESTC",
   "ETN",
   "ETR",
   "ETSY",
+  "EVR",
   "EVRG",
   "EW",
   "EWBC",
   "EXC",
+  "EXE",
+  "EXEL",
+  "EXLS",
+  "EXP",
   "EXPD",
   "EXPE",
   "EXR",
   "F",
+  "FAF",
   "FANG",
   "FAST",
+  "FBIN",
+  "FCN",
+  "FCNCA",
   "FCX",
   "FDS",
   "FDX",
+  "FDXF",
   "FE",
+  "FERG",
   "FFIV",
+  "FHB",
+  "FHN",
+  "FICO",
   "FIG",
+  "FIGR",
   "FIS",
+  "FISV",
   "FITB",
   "FIVE",
   "FIX",
   "FLEX",
+  "FLO",
+  "FLS",
   "FLUT",
+  "FMC",
+  "FMX",
+  "FNB",
+  "FND",
+  "FNF",
   "FNV",
   "FOUR",
+  "FOX",
   "FOXA",
+  "FR",
+  "FRHC",
+  "FRMI",
+  "FRPT",
+  "FRT",
   "FSLR",
+  "FTAI",
+  "FTI",
   "FTNT",
   "FTV",
+  "FWONA",
+  "FWONK",
+  "G",
+  "GAP",
   "GD",
+  "GDDY",
+  "GDS",
   "GE",
   "GEHC",
   "GEN",
   "GEV",
+  "GFI",
   "GFS",
+  "GGAL",
+  "GGG",
   "GILD",
   "GIS",
+  "GL",
+  "GLIBA",
+  "GLIBK",
+  "GLOB",
+  "GLPI",
   "GLW",
   "GM",
+  "GME",
+  "GMED",
+  "GNRC",
+  "GNTX",
+  "GOLD",
+  "GOOG",
   "GOOGL",
   "GPC",
+  "GPK",
   "GPN",
   "GRAB",
   "GRMN",
   "GS",
   "GSK",
+  "GTES",
   "GTLB",
+  "GTM",
+  "GWRE",
   "GWW",
+  "GXO",
   "H",
   "HAL",
+  "HALO",
+  "HAS",
+  "HAYW",
   "HBAN",
   "HCA",
   "HD",
+  "HDB",
   "HEI",
+  "HEI-A",
+  "HHH",
   "HIG",
   "HII",
   "HIMS",
+  "HIMX",
+  "HIW",
+  "HLI",
+  "HLNE",
   "HLT",
+  "HOG",
   "HON",
+  "HONA",
   "HOOD",
   "HPE",
   "HPQ",
+  "HR",
+  "HRB",
+  "HRL",
+  "HSIC",
+  "HST",
   "HSY",
+  "HTHT",
   "HUBB",
   "HUBS",
   "HUM",
+  "HUN",
   "HWM",
+  "HXL",
   "IBKR",
   "IBM",
+  "IBN",
   "ICE",
+  "IDA",
   "IDXX",
   "IESC",
+  "IEX",
   "IFF",
   "ILMN",
   "INCY",
+  "INFY",
+  "INGM",
+  "INGR",
+  "INSM",
+  "INSP",
   "INTC",
   "INTU",
   "INVH",
   "IONQ",
+  "IONS",
   "IOT",
   "IP",
+  "IPGP",
+  "IQ",
   "IQV",
   "IR",
+  "IRDM",
   "IRM",
   "ISRG",
+  "IT",
+  "ITT",
+  "ITUB",
   "ITW",
+  "IVZ",
   "J",
+  "JAN",
+  "JAZZ",
   "JBHT",
   "JBL",
   "JCI",
   "JD",
+  "JEF",
+  "JHX",
+  "JKHY",
+  "JLL",
   "JNJ",
   "JOBY",
   "JPM",
+  "KB",
+  "KBR",
+  "KD",
   "KDP",
+  "KEX",
   "KEY",
   "KEYS",
   "KGC",
   "KHC",
+  "KIM",
   "KKR",
   "KLAC",
   "KMB",
   "KMI",
+  "KMPR",
   "KMX",
   "KNSL",
+  "KNX",
   "KO",
+  "KOF",
   "KR",
+  "KRC",
+  "KRMN",
   "KTOS",
   "KVUE",
+  "L",
+  "LAD",
+  "LAMR",
+  "LAZ",
+  "LBRDA",
+  "LBRDK",
+  "LBTYA",
+  "LBTYK",
+  "LCID",
   "LDOS",
+  "LEA",
+  "LECO",
+  "LEGN",
+  "LEN",
+  "LEN-B",
+  "LFUS",
   "LH",
   "LHX",
+  "LI",
   "LII",
   "LIN",
+  "LINE",
   "LITE",
+  "LKQ",
   "LLY",
+  "LLYVA",
+  "LLYVK",
   "LMT",
+  "LNC",
   "LNG",
   "LNT",
+  "LOAR",
+  "LOPE",
   "LOW",
+  "LPL",
   "LPLA",
+  "LPX",
   "LRCX",
   "LSCC",
+  "LSTR",
   "LULU",
   "LUV",
   "LVS",
+  "LW",
   "LYB",
   "LYFT",
   "LYV",
+  "M",
   "MA",
   "MAA",
+  "MAN",
+  "MANH",
   "MAR",
+  "MAS",
+  "MASI",
+  "MAT",
   "MCD",
   "MCHP",
   "MCK",
   "MCO",
   "MDB",
+  "MDLN",
   "MDLZ",
   "MDT",
+  "MDU",
   "MEDP",
   "MELI",
   "MET",
   "META",
   "MGM",
+  "MHK",
+  "MIDD",
+  "MKC",
+  "MKL",
+  "MKSI",
   "MKTX",
+  "MLI",
   "MLM",
+  "MMM",
+  "MMYT",
   "MNST",
   "MO",
   "MOH",
+  "MORN",
   "MOS",
+  "MP",
   "MPC",
+  "MPT",
   "MPWR",
   "MRK",
   "MRNA",
+  "MRP",
+  "MRSH",
   "MRVL",
   "MS",
+  "MSA",
   "MSCI",
   "MSFT",
+  "MSGS",
+  "MSI",
+  "MSM",
   "MSTR",
   "MTB",
   "MTCH",
   "MTD",
   "MTDR",
+  "MTG",
+  "MTN",
+  "MTSI",
   "MTZ",
   "MU",
+  "MUSA",
+  "MWH",
+  "NAN",
   "NBIX",
   "NCLH",
+  "NCNO",
   "NDAQ",
+  "NDSN",
   "NEE",
   "NEM",
   "NET",
+  "NEU",
+  "NFG",
   "NFLX",
   "NI",
+  "NIO",
+  "NIQ",
   "NKE",
+  "NLY",
+  "NNN",
   "NOC",
+  "NOV",
   "NOW",
   "NRG",
+  "NSA",
   "NSC",
   "NTAP",
+  "NTES",
+  "NTNX",
   "NTR",
+  "NTRA",
   "NTRS",
   "NU",
   "NUE",
   "NVDA",
   "NVO",
+  "NVR",
   "NVS",
+  "NVST",
   "NVT",
+  "NWL",
+  "NWS",
+  "NWSA",
   "NXPI",
+  "NXST",
+  "NYT",
   "O",
+  "OC",
   "ODFL",
+  "OGE",
+  "OGN",
+  "OHI",
   "OKE",
   "OKLO",
   "OKTA",
+  "OLED",
   "OLLI",
+  "OLN",
+  "OMAB",
+  "OMC",
+  "OMF",
   "ON",
   "ONON",
   "ONTO",
   "ORCL",
+  "ORI",
   "ORLY",
+  "OSK",
   "OTIS",
   "OVV",
   "OWL",
   "OXY",
+  "OZK",
+  "P",
+  "PAC",
+  "PAG",
+  "PAGS",
+  "PAM",
   "PANW",
   "PATH",
   "PAYC",
   "PAYX",
+  "PB",
+  "PBR",
   "PCAR",
   "PCG",
+  "PCOR",
   "PCTY",
   "PDD",
   "PEG",
+  "PEGA",
+  "PEN",
+  "PENN",
   "PEP",
   "PFE",
   "PFG",
+  "PFGC",
   "PG",
   "PGR",
   "PH",
+  "PHM",
   "PINS",
+  "PK",
   "PKG",
+  "PKX",
   "PLD",
+  "PLNT",
   "PLTR",
   "PM",
   "PNC",
+  "PNFP",
+  "PNR",
+  "PNW",
   "PODD",
   "POOL",
+  "POST",
+  "PPC",
   "PPG",
   "PPL",
+  "PPLI",
   "PR",
+  "PRGO",
+  "PRI",
+  "PRMB",
   "PRU",
   "PSA",
+  "PSKY",
+  "PSN",
   "PSX",
+  "PTC",
+  "PVH",
   "PWR",
   "PYPL",
+  "Q",
   "QCOM",
+  "QGEN",
   "QRVO",
+  "QS",
   "QSR",
+  "QXO",
+  "R",
+  "RAL",
+  "RARE",
+  "RBA",
+  "RBC",
   "RBLX",
   "RBRK",
   "RCL",
   "RDDT",
+  "RDY",
+  "REG",
   "REGN",
+  "REXR",
+  "REYN",
   "RF",
+  "RGA",
+  "RGEN",
   "RGLD",
   "RH",
+  "RHI",
   "RIO",
+  "RITM",
   "RIVN",
   "RJF",
   "RKLB",
+  "RKT",
   "RL",
   "RLI",
   "RMBS",
   "RMD",
+  "RNG",
+  "RNR",
+  "ROIV",
   "ROK",
+  "ROKU",
+  "ROL",
   "ROP",
   "ROST",
+  "RPM",
   "RPRX",
   "RRC",
+  "RRX",
+  "RS",
   "RSG",
   "RTX",
+  "RVMD",
   "RVTY",
+  "RYAN",
+  "RYN",
   "S",
   "SAIA",
   "SAIC",
+  "SAIL",
+  "SAM",
   "SAP",
+  "SARO",
   "SBAC",
+  "SBS",
   "SBUX",
   "SCCO",
   "SCHW",
+  "SCI",
   "SE",
+  "SEB",
+  "SEIC",
+  "SF",
+  "SFD",
   "SFM",
+  "SGI",
+  "SHC",
+  "SHG",
   "SHOP",
   "SHW",
+  "SIMO",
+  "SIRI",
+  "SITE",
+  "SJM",
   "SLB",
+  "SLGN",
+  "SLM",
   "SMCI",
+  "SMG",
+  "SMMT",
   "SMR",
+  "SN",
+  "SNA",
   "SNAP",
   "SNDK",
+  "SNDR",
   "SNOW",
   "SNPS",
+  "SNX",
   "SNY",
   "SO",
   "SOFI",
+  "SOLS",
+  "SOLV",
+  "SON",
+  "SPCX",
   "SPG",
   "SPGI",
   "SPOT",
+  "SQM",
   "SRE",
+  "SRPT",
+  "SSB",
+  "SSD",
   "SSNC",
+  "ST",
+  "STAG",
+  "STE",
   "STLD",
   "STM",
+  "STNE",
   "STRL",
   "STT",
+  "STWD",
   "STX",
   "STZ",
+  "SUI",
+  "SW",
+  "SWK",
   "SWKS",
   "SYF",
   "SYK",
   "SYY",
   "T",
+  "TAP",
+  "TCOM",
+  "TDC",
   "TDG",
   "TDY",
   "TEAM",
+  "TECH",
   "TEL",
   "TEM",
   "TER",
   "TFC",
+  "TFSL",
+  "TFX",
   "TGT",
   "THC",
+  "THG",
+  "THO",
+  "TIGO",
+  "TIMB",
   "TJX",
+  "TKO",
+  "TKR",
   "TLN",
+  "TME",
   "TMO",
   "TMUS",
+  "TNL",
+  "TOL",
   "TOST",
   "TPG",
   "TPL",
+  "TPR",
+  "TREX",
   "TRGP",
+  "TRMB",
   "TROW",
+  "TRU",
   "TRV",
   "TSCO",
   "TSLA",
   "TSM",
   "TSN",
   "TT",
+  "TTC",
   "TTD",
+  "TTEK",
   "TTWO",
+  "TV",
   "TW",
   "TWLO",
   "TXN",
@@ -534,60 +1042,10332 @@
   "TXT",
   "TYL",
   "U",
+  "UA",
+  "UAA",
   "UAL",
   "UBER",
+  "UDR",
+  "UGI",
+  "UHAL",
+  "UHAL-B",
+  "UHS",
+  "UI",
   "ULTA",
   "UMC",
   "UNH",
+  "UNM",
   "UNP",
   "UPS",
   "URI",
   "USB",
   "USFD",
   "UTHR",
+  "UWMC",
   "V",
   "VALE",
   "VEEV",
+  "VFC",
+  "VGNT",
   "VICI",
+  "VIK",
+  "VIRT",
+  "VIV",
+  "VKTX",
   "VLO",
+  "VLTO",
   "VMC",
+  "VMI",
+  "VNET",
+  "VNO",
+  "VNOM",
+  "VNT",
+  "VOYA",
+  "VRSK",
+  "VRSN",
   "VRT",
   "VRTX",
+  "VSNT",
   "VST",
   "VTR",
+  "VTRS",
+  "VVV",
   "VZ",
+  "W",
+  "WAB",
   "WAL",
   "WAT",
   "WBD",
+  "WBS",
+  "WCC",
   "WCN",
   "WDAY",
   "WDC",
   "WEC",
   "WELL",
+  "WEN",
+  "WEX",
   "WFC",
+  "WFRD",
+  "WH",
+  "WHR",
   "WING",
+  "WIT",
+  "WLK",
   "WM",
   "WMB",
+  "WMS",
   "WMT",
+  "WPC",
   "WPM",
   "WRB",
+  "WSC",
   "WSM",
   "WSO",
+  "WST",
+  "WTFC",
+  "WTM",
+  "WTRG",
   "WTW",
+  "WU",
   "WWD",
   "WY",
   "WYNN",
+  "XE",
   "XEL",
   "XOM",
+  "XP",
+  "XPEV",
   "XPO",
+  "XRAY",
   "XYL",
   "XYZ",
+  "YETI",
+  "YMM",
+  "YPF",
   "YUM",
+  "YUMC",
+  "Z",
   "ZBH",
   "ZBRA",
   "ZG",
+  "ZION",
+  "ZLAB",
   "ZM",
   "ZS",
+  "ZTO",
   "ZTS"
- ]
+ ],
+ "meta": {
+  "A": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "AA": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AAPL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ABBV": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "ABNB": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "ABT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "ACGL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ACHR": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "ACN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ADBE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ADI": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ADM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "ADP": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ADSK": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "AEE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "AEM": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "AEP": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "AFL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AFRM": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "AIG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AJG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AKAM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ALAB": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ALB": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ALGM": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ALGN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "ALL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ALLY": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ALNY": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "AMAT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "AMD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "AME": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AMGN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "AMH": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "AMP": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AMT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "AMZN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "ANET": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "AON": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "APA": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "APD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "APH": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "APO": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "APP": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "AR": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "ARES": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ARM": {
+   "sources": [
+    "prior_pool",
+    "ndx"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "ASML": {
+   "sources": [
+    "prior_pool",
+    "ndx",
+    "em_adr_seed"
+   ],
+   "sector": "semi_equipment",
+   "sleeve": "em_adr",
+   "country": "NL"
+  },
+  "ASTS": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "ATO": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "AVAV": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AVB": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "AVGO": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "AXON": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AXP": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AZN": {
+   "sources": [
+    "prior_pool",
+    "ndx"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "AZO": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "B": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "BA": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "BABA": {
+   "sources": [
+    "prior_pool",
+    "em_adr_seed"
+   ],
+   "sector": "platforms",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "BAC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "BAH": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "BALL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "BAM": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "BAX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "BDX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "BE": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "BF-B": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "BG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "BHP": {
+   "sources": [
+    "prior_pool",
+    "em_adr_seed"
+   ],
+   "sector": "materials",
+   "sleeve": "em_adr",
+   "country": "AU"
+  },
+  "BIIB": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "BILL": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "BJ": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "BKNG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "BKR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "BLK": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "BMRN": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "BMY": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "BN": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "BNY": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "BR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "BRK-B": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "BRO": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "BSX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "BSY": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "BURL": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "BWXT": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "BX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "C": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CACI": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CAH": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "CAMT": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "CARR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CART": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "CASY": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "CAT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CAVA": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "CB": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CBOE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CBRE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "CCI": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "CCJ": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "CCL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "CDNS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "CEG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "CELH": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "CF": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CFG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CG": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CHD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "CHRD": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "CHRW": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CHTR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "CHWY": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "CI": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "CIEN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "CINF": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "CLH": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CLS": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "CLX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "CMCSA": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "CME": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CMG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "CMI": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CMS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "CNC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "CNP": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "COF": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "COHR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "COIN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "COP": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "COR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "COST": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "CPNG": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "CPRT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CRCL": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "CRDO": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "CRM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "CROX": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "CRWD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "CSCO": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "CSGP": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "CSX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CTAS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CTVA": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CVNA": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "CVS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "CVX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "CW": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "D": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "DAL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "DASH": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "DBX": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "DD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "DDOG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "DE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "DECK": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "DELL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "DG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "DGX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "DHR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "DIS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "DKNG": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "DLR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "DLTR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "DOCS": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "DOCU": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "DOV": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "DOW": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "DPZ": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "DRI": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "DTE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "DUK": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "DUOL": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "DVN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "DXCM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "DY": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "EA": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "EAT": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "EBAY": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "ECL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ED": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "EIX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "EL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "ELAN": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "ELV": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "EME": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "EMR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ENPH": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ENTG": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "EOG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "EQIX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "EQR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "EQT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "ES": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "ESS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "ESTC": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ETN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ETR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "ETSY": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "EVRG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "EW": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "EWBC": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "EXC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "EXPD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "EXPE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "EXR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "F": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "FANG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "FAST": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FCX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000",
+    "em_adr_seed"
+   ],
+   "sector": "Materials",
+   "sleeve": "em_adr",
+   "country": "US"
+  },
+  "FDS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FDX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "FFIV": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "FIG": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "FIS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FITB": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FIVE": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "FIX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FLEX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "FLUT": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "FNV": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "FOUR": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "FOXA": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "FSLR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "FTNT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "FTV": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "GD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "GE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "GEHC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "GEN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "GEV": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "GFS": {
+   "sources": [
+    "prior_pool",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "GILD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "GIS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "GLW": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "GM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "GOOGL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "GPC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "GPN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "GRAB": {
+   "sources": [
+    "prior_pool",
+    "em_adr_seed"
+   ],
+   "sector": "platforms",
+   "sleeve": "em_adr",
+   "country": "SG"
+  },
+  "GRMN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "GS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "GSK": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "GTLB": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "GWW": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "H": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "HAL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "HBAN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "HCA": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "HD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "HEI": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "HIG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "HII": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "HIMS": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "HLT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "HON": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "HOOD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "HPE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "HPQ": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "HSY": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "HUBB": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "HUBS": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "HUM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "HWM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "IBKR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "IBM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ICE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "IDXX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "IESC": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "IFF": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ILMN": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "INCY": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "INTC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "INTU": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "INVH": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "IONQ": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "IOT": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "IP": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "IQV": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "IR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "IRM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "ISRG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "ITW": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "J": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "JBHT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "JBL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "JCI": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "JD": {
+   "sources": [
+    "prior_pool",
+    "em_adr_seed"
+   ],
+   "sector": "platforms",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "JNJ": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "JOBY": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "JPM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "KDP": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "KEY": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "KEYS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "KGC": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "KHC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "KKR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "KLAC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "KMB": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "KMI": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "KMX": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "KNSL": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "KO": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "KR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "KTOS": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "KVUE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "LDOS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LH": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "LHX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LII": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LIN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LITE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "LLY": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "LMT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LNG": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "LNT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "LOW": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "LPLA": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LRCX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "LSCC": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "LULU": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "LUV": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LVS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "LYB": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LYFT": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LYV": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "MA": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MAA": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "MAR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "MCD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "MCHP": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "MCK": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "MCO": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MDB": {
+   "sources": [
+    "prior_pool",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "MDLZ": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "MDT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "MEDP": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "MELI": {
+   "sources": [
+    "prior_pool",
+    "ndx",
+    "em_adr_seed"
+   ],
+   "sector": "fintech_platforms",
+   "sleeve": "em_adr",
+   "country": "AR"
+  },
+  "MET": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "META": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "MGM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "MKTX": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MLM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MNST": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "MO": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "MOH": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "MOS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MPC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "MPWR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "MRK": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "MRNA": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "MRVL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "MS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MSCI": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MSFT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "MSTR": {
+   "sources": [
+    "prior_pool",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "MTB": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MTCH": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "MTD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "MTDR": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "MTZ": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MU": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "NBIX": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "NCLH": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "NDAQ": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "NEE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "NEM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000",
+    "em_adr_seed"
+   ],
+   "sector": "Materials",
+   "sleeve": "em_adr",
+   "country": "US"
+  },
+  "NET": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "NFLX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "NI": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "NKE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "NOC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "NOW": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "NRG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "NSC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "NTAP": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "NTR": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "NTRS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "NU": {
+   "sources": [
+    "prior_pool",
+    "r1000",
+    "em_adr_seed"
+   ],
+   "sector": "Financials",
+   "sleeve": "em_adr",
+   "country": "BR"
+  },
+  "NUE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "NVDA": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "NVO": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "NVS": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "NVT": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "NXPI": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "O": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "ODFL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "OKE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "OKLO": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "OKTA": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "OLLI": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "ON": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ONON": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "ONTO": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ORCL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ORLY": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "OTIS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "OVV": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "OWL": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "OXY": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "PANW": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "PATH": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "PAYC": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "PAYX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "PCAR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "PCG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "PCTY": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "PDD": {
+   "sources": [
+    "prior_pool",
+    "ndx",
+    "em_adr_seed"
+   ],
+   "sector": "platforms",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "PEG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "PEP": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "PFE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "PFG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "PG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "PGR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "PH": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "PINS": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "PKG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "PLD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "PLTR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "PM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "PNC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "PODD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "POOL": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "PPG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "PPL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "PR": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "PRU": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "PSA": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "PSX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "PWR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "PYPL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "QCOM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "QRVO": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "QSR": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "RBLX": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "RBRK": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "RCL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "RDDT": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "REGN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "RF": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RGLD": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RH": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "RIO": {
+   "sources": [
+    "prior_pool",
+    "em_adr_seed"
+   ],
+   "sector": "materials",
+   "sleeve": "em_adr",
+   "country": "UK"
+  },
+  "RIVN": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "RJF": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RKLB": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "RLI": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RMBS": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "RMD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "ROK": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ROP": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ROST": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "RPRX": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "RRC": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "RSG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RTX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RVTY": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "S": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "SAIA": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SAIC": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SAP": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "SBAC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "SBUX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "SCCO": {
+   "sources": [
+    "prior_pool",
+    "r1000",
+    "em_adr_seed"
+   ],
+   "sector": "Materials",
+   "sleeve": "em_adr",
+   "country": "PE"
+  },
+  "SCHW": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SE": {
+   "sources": [
+    "prior_pool",
+    "em_adr_seed"
+   ],
+   "sector": "platforms",
+   "sleeve": "em_adr",
+   "country": "SG"
+  },
+  "SFM": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "SHOP": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "SHW": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SLB": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "SMCI": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "SMR": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "SNAP": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "SNDK": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "SNOW": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "SNPS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "SNY": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "SO": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "SOFI": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SPG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "SPGI": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SPOT": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "SRE": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "SSNC": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "STLD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "STM": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "STRL": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "STT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "STX": {
+   "sources": [
+    "prior_pool",
+    "sp500"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "STZ": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "SWKS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "SYF": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SYK": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "SYY": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "T": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "TDG": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "TDY": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "TEAM": {
+   "sources": [
+    "prior_pool",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "TEL": {
+   "sources": [
+    "prior_pool",
+    "sp500"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "TEM": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "TER": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "TFC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "TGT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "THC": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "TJX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "TLN": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "TMO": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "TMUS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "TOST": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "TPG": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "TPL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "TRGP": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "TROW": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "TRV": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "TSCO": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "TSLA": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "TSM": {
+   "sources": [
+    "prior_pool",
+    "em_adr_seed"
+   ],
+   "sector": "semis",
+   "sleeve": "em_adr",
+   "country": "TW"
+  },
+  "TSN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "TT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "TTD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "TTWO": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "TW": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "TWLO": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "TXN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "TXRH": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "TXT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "TYL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "U": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "UAL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "UBER": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ULTA": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "UMC": {
+   "sources": [
+    "prior_pool",
+    "em_adr_seed"
+   ],
+   "sector": "semis",
+   "sleeve": "em_adr",
+   "country": "TW"
+  },
+  "UNH": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "UNP": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "UPS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "URI": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "USB": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "USFD": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "UTHR": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "V": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "VALE": {
+   "sources": [
+    "prior_pool",
+    "em_adr_seed"
+   ],
+   "sector": "materials",
+   "sleeve": "em_adr",
+   "country": "BR"
+  },
+  "VEEV": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "VICI": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "VLO": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "VMC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "VRT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "VRTX": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "VST": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "VTR": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "VZ": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "WAL": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WAT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "WBD": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "WCN": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "WDAY": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "WDC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "WEC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "WELL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "WFC": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WING": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "WM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WMB": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "WMT": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "WPM": {
+   "sources": [
+    "prior_pool"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "WRB": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WSM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "WSO": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WTW": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WWD": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WY": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "WYNN": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "XEL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "XOM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "XPO": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "XYL": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "XYZ": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "YUM": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "ZBH": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "ZBRA": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ZG": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "ZM": {
+   "sources": [
+    "prior_pool",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ZS": {
+   "sources": [
+    "prior_pool",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ZTS": {
+   "sources": [
+    "prior_pool",
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "MMM": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AOS": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AES": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "ARE": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "ALLE": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "GOOG": {
+   "sources": [
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "AMCR": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AWK": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "APTV": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "AIZ": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AVY": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "BBY": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "TECH": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "BLDR": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "BXP": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "CPT": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "CDW": {
+   "sources": [
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "CRL": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "CTSH": {
+   "sources": [
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "COO": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "CPAY": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CRH": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "DVA": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "DHI": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "ECHO": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "EFX": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ERIE": {
+   "sources": [
+    "sp500"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "EG": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "EXE": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "FICO": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "FRT": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "FDXF": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FISV": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FOX": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "BEN": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "IT": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "GNRC": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "GL": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "GDDY": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "HAS": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "DOC": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "HSIC": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "HONA": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "HRL": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "HST": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "IEX": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "IVZ": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "JKHY": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "KIM": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "LEN": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "L": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MRSH": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MAS": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MKC": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "TAP": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "MSI": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "NWSA": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "NWS": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "NDSN": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "NVR": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "OMC": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "PSKY": {
+   "sources": [
+    "sp500"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "PNR": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "PNW": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "PTC": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "PHM": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "Q": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "REG": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "ROL": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SJM": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "SW": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SNA": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SOLV": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "SWK": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "STE": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "TPR": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "TKO": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "TRMB": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "UDR": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "UHS": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "VLTO": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "VRSN": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "VRSK": {
+   "sources": [
+    "sp500",
+    "ndx",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "VTRS": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "WAB": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WST": {
+   "sources": [
+    "sp500",
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "ANSS": {
+   "sources": [
+    "ndx"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "CCEP": {
+   "sources": [
+    "ndx"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "AAON": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AYI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ADT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "WMS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AEIS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ACM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AMG": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AGCO": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ADC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "AGNC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ALK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ACI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "ALSN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ALM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "DOX": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "AMTM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "AAL": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AFG": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AHR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "COLD": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "AMKR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "AU": {
+   "sources": [
+    "r1000",
+    "em_adr_seed"
+   ],
+   "sector": "Materials",
+   "sleeve": "em_adr",
+   "country": "ZA"
+  },
+  "NLY": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "APG": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "APPF": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "APLD": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "AIT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AAOI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ATR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ARMK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "AWI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ARW": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ARWR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "ASND": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "ASH": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AGO": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ATI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AUGO": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AUR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "AN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "AVTR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "CAR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AVT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "AXTA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AXS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "AXSM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "OZK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "BBWI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "BRBR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "BIO": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "BIRK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "HRB": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "BOKF": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "BWA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "SAM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "BYD": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "BFAM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "BHF": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "BRX": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "BEPC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "BF-A": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "BRKR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "BC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "BLSH": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CZR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "CPB": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "CAI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "CSL": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CRS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CCC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "CE": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CBC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CERT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "CHE": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "CHH": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "CHDN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "CRUS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "CLVT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CWEN-A": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "CWEN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "CLF": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CNA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CNH": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "COKE": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "CGNX": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "COLB": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "COLM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "CBSH": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CAG": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "CNXC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "CORT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "CNM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "COTY": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "CUZ": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "CR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CXT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CACC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CCK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "CUBE": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "DAR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "XRAY": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "DKS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "DDS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "DLB": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "DCI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "DV": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "DTM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "BROS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "DXC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "DT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ELF": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "EXP": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "EGP": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "EMN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ESI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "EHC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "NVST": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "EPAM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "EPR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "EQH": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ELS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "ESAB": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WTRG": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "EEFT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "EVR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "P": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "ECG": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "EXEL": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "EXLS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FERG": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FRMI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "FNF": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FIGR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FAF": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FCNCA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FHB": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FHN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "FND": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "FLO": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "FLS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FMC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FNB": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FBIN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FRHC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FRPT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "CFR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FTAI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "FCN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "GME": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "GLPI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "GAP": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "GTES": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "GLIBA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "GLIBK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "G": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "GNTX": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "GLOB": {
+   "sources": [
+    "r1000",
+    "em_adr_seed"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "em_adr",
+   "country": "AR"
+  },
+  "GMED": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "GGG": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LOPE": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "GPK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "GWRE": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "GXO": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "HALO": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "HLNE": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "THG": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "HOG": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "HAYW": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "HR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "HEI-A": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "HXL": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "DINO": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "HIW": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "HLI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "HHH": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "HUN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "IDA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "INGM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "INGR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "INSM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "INSP": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "IONS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "IPGP": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "IRDM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "ITT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "JHX": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "JAN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "JAZZ": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "JEF": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "JLL": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "KRMN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "KBR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "KMPR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "KRC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "KEX": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "KNX": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "KD": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "LAMR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "LW": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "LSTR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LAZ": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LEA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "LEN-B": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "DRS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LBRDA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "LBRDK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "LBTYA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "LBTYK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "FWONA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "FWONK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "LLYVA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "LLYVK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "LECO": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LNC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LINE": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "LAD": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "LFUS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "LKQ": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "LOAR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LPX": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "LCID": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "MTSI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "M": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "MSGS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "MANH": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "MAN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MKL": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MASI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "MAT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "MDU": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "MPT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "MDLN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "MTG": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MIDD": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "TIGO": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "MRP": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "MKSI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "MHK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "MORN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MP": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MSA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MSM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MLI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MUSA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "NTRA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "NFG": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "NSA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "NCNO": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "NYT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "NWL": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "NEU": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "NXST": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "NIQ": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "NNN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "NOV": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "NTNX": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "OGE": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "ORI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "OLN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "OHI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "OMF": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "OGN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "OSK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "OC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "PK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "PSN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "PEGA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "PENN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "PAG": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "PEN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "PPLI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "PFGC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "PRGO": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "PPC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "PNFP": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "PLNT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "BPOP": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "POST": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "PRI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "PRMB": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "PCOR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "PB": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "PVH": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "QGEN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "QS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "QXO": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RAL": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "RYN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "RBA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RBC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RRX": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RGA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RNR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RGEN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "RVMD": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "REXR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "REYN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "RNG": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "RITM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RHI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RKT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ROIV": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "ROKU": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "RPM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "RYAN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "R": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SAIL": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "SLM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SRPT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "SNDR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SMG": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SEB": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "SEIC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "ST": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SCI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "SN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "SLGN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SSD": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SIRI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "SITE": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SFD": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Staples",
+   "sleeve": "us",
+   "country": null
+  },
+  "SOLS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MWH": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SGI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "SON": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SHC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "SSB": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SPCX": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "STAG": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "SARO": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "STWD": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SF": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "SMMT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "SUI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "SNX": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "FTI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "TFX": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "TDC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "TTEK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "TFSL": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "THO": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "TKR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "TOL": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "TTC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "TRU": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "TNL": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "TREX": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "DJT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "UHAL": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "UHAL-B": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "UI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "UGI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Utilities",
+   "sleeve": "us",
+   "country": null
+  },
+  "RARE": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "UAA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "UA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "UWMC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "OLED": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "UNM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "MTN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "VMI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "VVV": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "VSNT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "VGNT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "VFC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "VIK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "VKTX": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Health Care",
+   "sleeve": "us",
+   "country": null
+  },
+  "VNOM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "VIRT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "VNT": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "VNO": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "VOYA": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WPC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "W": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "WFRD": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Energy",
+   "sleeve": "us",
+   "country": null
+  },
+  "WBS": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WEN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "WCC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WU": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Information Technology",
+   "sleeve": "us",
+   "country": null
+  },
+  "WLK": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Materials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WEX": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WHR": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "WTM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WSC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WTFC": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "WH": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "XE": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Industrials",
+   "sleeve": "us",
+   "country": null
+  },
+  "XP": {
+   "sources": [
+    "r1000",
+    "em_adr_seed"
+   ],
+   "sector": "Financials",
+   "sleeve": "em_adr",
+   "country": "BR"
+  },
+  "YETI": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Consumer Discretionary",
+   "sleeve": "us",
+   "country": null
+  },
+  "Z": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Real Estate",
+   "sleeve": "us",
+   "country": null
+  },
+  "ZION": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Financials",
+   "sleeve": "us",
+   "country": null
+  },
+  "GTM": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": "Communication Services",
+   "sleeve": "us",
+   "country": null
+  },
+  "NAN": {
+   "sources": [
+    "r1000"
+   ],
+   "sector": null,
+   "sleeve": "us",
+   "country": null
+  },
+  "BIDU": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "platforms",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "NIO": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "auto",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "LI": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "auto",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "XPEV": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "auto",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "PAGS": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "fintech",
+   "sleeve": "em_adr",
+   "country": "BR"
+  },
+  "STNE": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "fintech",
+   "sleeve": "em_adr",
+   "country": "BR"
+  },
+  "ITUB": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "banks",
+   "sleeve": "em_adr",
+   "country": "BR"
+  },
+  "PBR": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "energy",
+   "sleeve": "em_adr",
+   "country": "BR"
+  },
+  "INFY": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "it_services",
+   "sleeve": "em_adr",
+   "country": "IN"
+  },
+  "WIT": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "it_services",
+   "sleeve": "em_adr",
+   "country": "IN"
+  },
+  "HDB": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "banks",
+   "sleeve": "em_adr",
+   "country": "IN"
+  },
+  "IBN": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "banks",
+   "sleeve": "em_adr",
+   "country": "IN"
+  },
+  "RDY": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "healthcare",
+   "sleeve": "em_adr",
+   "country": "IN"
+  },
+  "MMYT": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "consumer",
+   "sleeve": "em_adr",
+   "country": "IN"
+  },
+  "TCOM": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "travel",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "YUMC": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "consumer",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "BGNE": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "biotech",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "ZTO": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "logistics",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "KB": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "banks",
+   "sleeve": "em_adr",
+   "country": "KR"
+  },
+  "SHG": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "banks",
+   "sleeve": "em_adr",
+   "country": "KR"
+  },
+  "PKX": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "materials",
+   "sleeve": "em_adr",
+   "country": "KR"
+  },
+  "LPL": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "tech",
+   "sleeve": "em_adr",
+   "country": "KR"
+  },
+  "ASX": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "semis",
+   "sleeve": "em_adr",
+   "country": "TW"
+  },
+  "GFI": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "gold",
+   "sleeve": "em_adr",
+   "country": "ZA"
+  },
+  "GOLD": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "gold",
+   "sleeve": "em_adr",
+   "country": "CA"
+  },
+  "SQM": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "materials",
+   "sleeve": "em_adr",
+   "country": "CL"
+  },
+  "BBD": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "banks",
+   "sleeve": "em_adr",
+   "country": "BR"
+  },
+  "ABEV": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "consumer",
+   "sleeve": "em_adr",
+   "country": "BR"
+  },
+  "ERJ": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "industrials",
+   "sleeve": "em_adr",
+   "country": "BR"
+  },
+  "CIG": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "utilities",
+   "sleeve": "em_adr",
+   "country": "BR"
+  },
+  "SBS": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "utilities",
+   "sleeve": "em_adr",
+   "country": "BR"
+  },
+  "TIMB": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "telecom",
+   "sleeve": "em_adr",
+   "country": "BR"
+  },
+  "VIV": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "telecom",
+   "sleeve": "em_adr",
+   "country": "BR"
+  },
+  "BSBR": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "banks",
+   "sleeve": "em_adr",
+   "country": "BR"
+  },
+  "GGAL": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "banks",
+   "sleeve": "em_adr",
+   "country": "AR"
+  },
+  "YPF": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "energy",
+   "sleeve": "em_adr",
+   "country": "AR"
+  },
+  "PAM": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "utilities",
+   "sleeve": "em_adr",
+   "country": "AR"
+  },
+  "BMA": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "banks",
+   "sleeve": "em_adr",
+   "country": "AR"
+  },
+  "DESP": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "travel",
+   "sleeve": "em_adr",
+   "country": "AR"
+  },
+  "ARCO": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "consumer",
+   "sleeve": "em_adr",
+   "country": "UY"
+  },
+  "FMX": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "consumer",
+   "sleeve": "em_adr",
+   "country": "MX"
+  },
+  "AMX": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "telecom",
+   "sleeve": "em_adr",
+   "country": "MX"
+  },
+  "KOF": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "consumer",
+   "sleeve": "em_adr",
+   "country": "MX"
+  },
+  "CX": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "materials",
+   "sleeve": "em_adr",
+   "country": "MX"
+  },
+  "OMAB": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "industrials",
+   "sleeve": "em_adr",
+   "country": "MX"
+  },
+  "PAC": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "industrials",
+   "sleeve": "em_adr",
+   "country": "MX"
+  },
+  "ASR": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "industrials",
+   "sleeve": "em_adr",
+   "country": "MX"
+  },
+  "TV": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "media",
+   "sleeve": "em_adr",
+   "country": "MX"
+  },
+  "SIMO": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "semis",
+   "sleeve": "em_adr",
+   "country": "TW"
+  },
+  "HIMX": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "semis",
+   "sleeve": "em_adr",
+   "country": "TW"
+  },
+  "GDS": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "datacenter",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "VNET": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "datacenter",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "IQ": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "media",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "BILI": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "media",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "NTES": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "media",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "TME": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "media",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "BZ": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "platforms",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "YMM": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "platforms",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "HTHT": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "consumer",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "ZLAB": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "biotech",
+   "sleeve": "em_adr",
+   "country": "CN"
+  },
+  "LEGN": {
+   "sources": [
+    "em_adr_seed"
+   ],
+   "sector": "biotech",
+   "sleeve": "em_adr",
+   "country": "CN"
+  }
+ }
 }

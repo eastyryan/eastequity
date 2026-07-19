@@ -45,6 +45,13 @@ from tools.universe_scanner import (
 
 ROOT = Path(__file__).resolve().parent.parent
 CANDIDATES_PATH = ROOT / "data" / "discovery_candidates.json"
+# Rebuild the pool when the file is older than this. Index membership drifts and
+# a hand-maintained list ages silently; 21 days is well inside a quarter.
+POOL_MAX_AGE_DAYS = 21
+# A rebuild that produces fewer than this is treated as a PARTIAL fetch and
+# rejected, so one unreachable source can never quietly narrow the sweep.
+# The full merge (SPX + Russell 1000 + NDX + EM ADR) is ~1130.
+POOL_MIN_TICKERS = 800
 OUTPUT_PATH = ROOT / "data" / "discovery_screen.json"
 
 # ~150 tickers per yf.download call: large enough to keep the sweep to ~4 batches,
@@ -138,7 +145,54 @@ def run_discovery(top_n: int = 25) -> dict:
                  "These are CANDIDATES for curation research, not trade signals."),
     }
 
-    # --- candidate pool (static file; fail-soft to an explicit error status) ---
+    # --- candidate pool (rebuilt when stale; fail-soft to the file on disk) ---
+    #
+    # THE INCIDENT (2026-07-19). tools/discovery_pool.py builds this file from
+    # Wikipedia SPX (503) + Russell 1000 (1016) + NDX (101) + the EM ADR seed
+    # (80) — 1132 names merged. NOTHING EVER CALLED IT. No cron, no workflow, no
+    # script referenced it; it was manual-only. So the pool sat at a 587-name
+    # hand-maintained fallback whose own note said "S&P 500 core + Nasdaq 100 +
+    # notable liquid mid-caps" — no Russell 1000 at all.
+    #
+    # The weekly sweep therefore screened ~405 non-universe names instead of
+    # ~950, and the ~545 invisible ones were the Russell 1000 mid-cap tail —
+    # exactly where rotation out of mega-cap AI shows up first. On the week the
+    # brain concluded the AI stack was unwinding, this lane was blind to most of
+    # where the money was going.
+    #
+    # Rebuilt HERE rather than on a schedule on purpose: the launchd jobs are not
+    # even loaded on the operator's machine, so a scheduler-dependent refresh is
+    # just another thing that silently never runs. Staleness-triggered and
+    # fail-soft means the pool maintains itself wherever the screen runs, and a
+    # failed rebuild degrades to the existing file instead of losing the sweep.
+    pool_meta: dict = {}
+    try:
+        age_days = (datetime.now(timezone.utc).timestamp()
+                    - CANDIDATES_PATH.stat().st_mtime) / 86400.0
+    except Exception:
+        age_days = None
+    if age_days is None or age_days > POOL_MAX_AGE_DAYS:
+        try:
+            from tools.discovery_pool import build_pool, write_pool
+            doc_new = build_pool()
+            n_new = len(doc_new.get("tickers") or [])
+            if n_new < POOL_MIN_TICKERS:
+                # A partial build (one source unreachable) must not SHRINK the
+                # pool — that is how coverage silently narrows. Keep what we have.
+                pool_meta["rebuilt"] = False
+                pool_meta["rebuild_rejected"] = (
+                    f"built only {n_new} tickers (< {POOL_MIN_TICKERS}); kept the "
+                    f"existing pool rather than narrowing coverage")
+            else:
+                write_pool(doc_new)
+                pool_meta["rebuilt"] = True
+                pool_meta["rebuild_n"] = n_new
+                pool_meta["rebuild_sources"] = (
+                    doc_new.get("sources_status") or doc_new.get("stats"))
+        except Exception as e:
+            pool_meta["rebuilt"] = False
+            pool_meta["rebuild_error"] = f"{type(e).__name__}: {str(e)[:120]}"
+
     try:
         doc = json.loads(CANDIDATES_PATH.read_text())
         pool = sorted({str(t).upper() for t in doc.get("tickers", []) if t})
@@ -150,6 +204,16 @@ def run_discovery(top_n: int = 25) -> dict:
         _write_output(out)
         return out
     out["candidate_pool"] = len(pool)
+    # Disclose the pool's provenance and age. A static list that quietly ages is
+    # indistinguishable in the output from a freshly-built one, and that is how
+    # 545 names went missing without anything saying so.
+    try:
+        pool_meta["age_days"] = (None if age_days is None else round(age_days, 1))
+        pool_meta["built_at"] = doc.get("as_of")
+        pool_meta["max_age_days"] = POOL_MAX_AGE_DAYS
+    except Exception:
+        pass
+    out["pool_provenance"] = pool_meta
 
     # --- exclude current universe members (the whole point of the screen) ---
     try:

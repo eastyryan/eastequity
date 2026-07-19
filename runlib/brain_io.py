@@ -262,6 +262,15 @@ def unwrap_cli_json(stdout: str) -> tuple[str, dict]:
     # tried to reach for something and could not — previously invisible.
     denials = env.get("permission_denials") if isinstance(
         env.get("permission_denials"), list) else []
+    # A COUNT is half an instrument. The 2026-07-19 weekly run reported
+    # permission_denials: 1 and there was no way to learn which tool the brain
+    # reached for — so the signal said "something was blocked" and nothing else.
+    # Names only; the arguments can carry bundle content and this record is
+    # committed to a public repo.
+    denied_tools = sorted({
+        str(d.get("tool_name") or d.get("tool") or d.get("name") or "unknown")
+        for d in denials if isinstance(d, dict)
+    }) or None
     meta = {
         "duration_ms": env.get("duration_ms"),
         "duration_api_ms": env.get("duration_api_ms"),
@@ -273,6 +282,7 @@ def unwrap_cli_json(stdout: str) -> tuple[str, dict]:
         "stop_reason": env.get("stop_reason"),
         "models_served_by": sorted(model_usage) or None,
         "permission_denials": len(denials) or None,
+        "permission_denied_tools": denied_tools,
         # 0 is a MEANINGFUL value here, not a missing one: it says the brain ran
         # no web search this call. CLAUDE.md makes WebSearch mandatory before any
         # BUY and nothing had ever verified it. Kept even when zero (see the

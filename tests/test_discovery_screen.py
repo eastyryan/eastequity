@@ -132,7 +132,16 @@ def test_candidates_file():
     print("discovery_candidates.json (static pool, offline sanity):")
     doc = json.loads(CANDIDATES_PATH.read_text())
     tickers = doc.get("tickers", [])
-    check("450-600 tickers", 450 <= len(tickers) <= 600, str(len(tickers)))
+    # WAS 450-600, which pinned the BROKEN state as correct. tools/discovery_pool.py
+    # merges Wikipedia SPX (503) + Russell 1000 (1016) + NDX (101) + the EM ADR seed
+    # (80) into ~1130 names — but nothing ever called it, so the pool sat at a
+    # 587-name hand-maintained fallback with no Russell 1000 in it, and this
+    # assertion certified that as healthy. The weekly sweep was screening ~405
+    # non-universe names instead of ~950; the ~545 missing ones were the mid-cap
+    # tail, which is exactly where rotation out of mega-cap AI shows up first.
+    # The floor is the point: an upper bound here would re-create the same trap.
+    check("pool >= 800 tickers (SPX + R1000 + NDX + EM ADR)",
+          len(tickers) >= 800, str(len(tickers)))
     check("all unique", len(tickers) == len(set(tickers)))
     check("all uppercase US-listing format",
           all(re.fullmatch(r"[A-Z][A-Z0-9\-]{0,5}", t) for t in tickers))
@@ -162,3 +171,28 @@ if __name__ == "__main__":
         print(f"FAILED: {len(FAILURES)} check(s): {FAILURES}")
         sys.exit(1)
     print("All discovery-screen helper checks passed.")
+
+
+def test_pool_rebuild_is_wired_and_cannot_narrow_coverage():
+    """The pool must maintain itself, and a partial fetch must never shrink it.
+
+    THE INCIDENT (2026-07-19). tools/discovery_pool.py could build a ~1130-name
+    pool from SPX + Russell 1000 + NDX + EM ADR. NOTHING CALLED IT — manual-only,
+    no cron, no workflow — so the file sat at a 587-name fallback and the weekly
+    sweep screened ~405 non-universe names instead of ~950.
+
+    Rebuilt on STALENESS from inside the screen rather than on a schedule,
+    because the operator's launchd jobs are not loaded and a scheduler-dependent
+    refresh is just another thing that silently never runs.
+    """
+    import tools.discovery_screen as D
+    src = (Path(__file__).resolve().parent.parent
+           / "tools" / "discovery_screen.py").read_text()
+    check("rebuild wired into the screen", "build_pool" in src and "write_pool" in src)
+    check("staleness-triggered", "POOL_MAX_AGE_DAYS" in src)
+    check("age disclosed in output", "pool_provenance" in src)
+    # A partial build must be REJECTED, not written — one unreachable source
+    # cannot be allowed to quietly narrow the sweep.
+    check("partial build rejected", "POOL_MIN_TICKERS" in src
+          and "rebuild_rejected" in src)
+    check("floor is meaningful", D.POOL_MIN_TICKERS >= 800, str(D.POOL_MIN_TICKERS))
