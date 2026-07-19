@@ -253,7 +253,25 @@ def lane_features(closes, highs, lows, vols, i, spy_closes=None, spy_i=None,
 
     adv = _median_dollar_volume(c, v)
     pullback_20d = last / max(h[-20:]) - 1 if n >= 20 else None
-    vol_surge = (sum(v[-5:]) / 5) / max(sum(v[-65:-5]) / 60, 1) if n >= 65 else None
+    # THE DIVIDE-BY-ONE BUG, kept in sync with universe_scanner.py:920-926.
+    #
+    # This module still carried the expression the scanner replaced:
+    #     (sum(v[-5:]) / 5) / max(sum(v[-65:-5]) / 60, 1)
+    # The max(..., 1) floor avoided ZeroDivisionError by turning an ABSENT volume
+    # baseline into a denominator of ONE SHARE, so a halted or freshly-listed name
+    # produced a surge in the millions — and vol_surge > 1.3 scores +0.5 on
+    # swing_setup_score, which is what the study's top_setups lane RANKS on. The
+    # measured top_setups verdict was therefore scoring a name's own missing data.
+    #
+    # That is worse here than it was in the scanner: a study exists to tell you
+    # what the shipped lane does, and this one was measuring a lane the scanner
+    # no longer has. No usable baseline -> None, no score.
+    vol_surge = None
+    if n >= 65:
+        base_vol = sum(v[-65:-5]) / 60.0
+        recent_vol = sum(v[-5:]) / 5.0
+        if base_vol > 0 and base_vol == base_vol and recent_vol == recent_vol:
+            vol_surge = recent_vol / base_vol
 
     # 200-week MA context (universe_scanner.py:640-646, 794-797).
     w_ma = w_full = pct_vs_200w = None

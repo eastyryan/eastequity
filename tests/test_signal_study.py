@@ -491,3 +491,206 @@ def test_indicators_by_ticker_is_not_claimed_to_be_measured():
     assert any("RS-vs-SECTOR" in lbl for lbl in labels)
     assert any("ablation" in lbl.lower() for lbl in labels), (
         "the sector arm shipped without its ablation control")
+
+
+# ---------------------------------------------------------------------------
+# Round 3 — entry-timing and volume indicators.
+#
+# These are IMPORTED from universe_scanner / volume_analysis rather than
+# reimplemented, so the study scores the code that actually ships. What needs
+# pinning is the wiring around them: the warm-up window, the tri-state breakout
+# key, the sentinel in updown_vol_ratio, and no-lookahead.
+# ---------------------------------------------------------------------------
+
+def test_the_study_imports_the_shipped_indicator_functions_not_copies():
+    """A second implementation would measure a lane the scanner does not have.
+
+    This is not hypothetical: signal_lanes carried a stale copy of the
+    volume-surge expression after the scanner fixed it, so the top_setups verdict
+    was scoring a name's own missing volume history.
+    """
+    import inspect
+    from tools import universe_scanner as US
+    from tools import volume_analysis as VA
+    src = inspect.getsource(SS.make_lane_signal)
+    assert "from tools.universe_scanner import" in src
+    assert "from tools.volume_analysis import analyze_volume" in src
+    # and the imports resolve to the real things
+    assert callable(US._rsi14) and callable(US._macd_state) and callable(US._adx14)
+    assert callable(VA.analyze_volume)
+
+
+def test_warmup_window_does_not_change_the_indicator_readings():
+    """THE claim behind WARMUP=400, asserted rather than asserted-in-a-comment.
+
+    _rsi14 / _macd_state / _adx14 all seed from the HEAD of whatever list they
+    receive and smooth forward, so a short slice gives a different answer than
+    full history. 400 bars is chosen as far past convergence — if that is wrong,
+    every indicator arm in the study is measuring a warm-up artifact.
+    """
+    from tools.universe_scanner import _adx14, _macd_state, _rsi14
+    n = 1200
+    closes = [50.0 + 10 * ((k % 97) / 97.0) + 0.02 * k for k in range(n)]
+    highs = [c * 1.012 for c in closes]
+    lows = [c * 0.988 for c in closes]
+    i = n - 1
+
+    for warm in (400, 800):
+        sl = slice(max(0, i - warm), i + 1)
+        assert abs(_rsi14(closes[sl]) - _rsi14(closes[:i + 1])) < 0.05, (
+            f"RSI at warm-up {warm} differs from full history")
+        assert (_macd_state(closes[sl])["state"]
+                == _macd_state(closes[:i + 1])["state"]), (
+            f"MACD state at warm-up {warm} differs from full history")
+        a_w, _, _ = _adx14(highs[sl], lows[sl], closes[sl])
+        a_f, _, _ = _adx14(highs[:i + 1], lows[:i + 1], closes[:i + 1])
+        assert abs(a_w - a_f) < 0.5, f"ADX at warm-up {warm} differs from full history"
+
+
+def test_breakout_key_is_tri_state_and_predicates_respect_it():
+    """volume_analysis only SETS breakout_volume_confirmed when a breakout
+    printed, so absent != unconfirmed. A predicate using truthiness instead of
+    `is False` would score every non-breakout bar as a failed breakout."""
+    groups = dict(SS.INDICATOR_GROUPS)
+    conf = groups["breakout CONFIRMED (>=1.5x vol)"]
+    unconf = groups["breakout UNCONFIRMED (<1.5x vol)"]
+    assert conf({"vol_breakout_confirmed": True}) is True
+    assert conf({"vol_breakout_confirmed": False}) is False
+    assert unconf({"vol_breakout_confirmed": False}) is True
+    assert unconf({"vol_breakout_confirmed": True}) is False
+    # THE BUG THIS PREVENTS: no breakout at all must match NEITHER arm.
+    assert conf({}) is False and unconf({}) is False
+    assert conf({"vol_breakout_confirmed": None}) is False
+    assert unconf({"vol_breakout_confirmed": None}) is False
+
+
+def test_updown_volume_sentinel_is_excluded_from_its_predicate():
+    """updown_volume_ratio returns 99.0 for "no down-volume in the window".
+
+    That is an ABSENCE marker, not a ratio of 99. Counting it as an extreme
+    reading would let missing data render as the strongest possible signal —
+    the same rule the volume-surge divide-by-one bug broke.
+    """
+    pred = dict(SS.INDICATOR_GROUPS)["updown_vol_ratio > 1 (excl. sentinel)"]
+    assert pred({"updown_vol_ratio_25d": 1.4}) is True
+    assert pred({"updown_vol_ratio_25d": 0.8}) is False
+    assert pred({"updown_vol_ratio_25d": 99.0}) is False, (
+        "the no-down-volume sentinel was scored as a real ratio")
+    assert pred({"updown_vol_ratio_25d": None}) is False
+
+
+def test_short_history_trend_flags_resolve_to_none_not_false():
+    """`above_50dma` must be None under 50 bars, never False.
+
+    The scanner's inline pandas version computes `last > close.rolling(50).mean()`,
+    which on short history is `last > NaN` -> False. That reports "not above its
+    50-DMA" for a name that HAS no 50-DMA, and absent data must not resolve to a
+    substantive reading.
+
+    Tested on the primitive, not through run(): the study's min_bars floor is 260,
+    so this branch is unreachable from a real study and a test routed through
+    run() would pass without ever evaluating it — a guard that cannot fire.
+    """
+    from tools import signal_lanes as SL
+    short = [100.0 + k for k in range(30)]
+    assert SL._sma(short, 50) is None, "the pure primitive should decline, not NaN"
+
+    # The mapping the study applies on top of it.
+    sma50, sma200, last = SL._sma(short, 50), SL._sma(short, 200), short[-1]
+    above_50 = (last > sma50) if sma50 is not None else None
+    trend = (sma50 > sma200) if (sma50 is not None and sma200 is not None) else None
+    assert above_50 is None and trend is None
+
+    # Contrast: the pandas expression the scanner still uses inline.
+    import math
+    assert (last > float("nan")) is False, (
+        "this is the shape being avoided — NaN comparison yields a confident False")
+    assert math.isnan(float("nan"))
+
+
+def test_trend_flags_are_decided_on_real_history():
+    """The other half: with enough bars the flags must actually resolve, or the
+    None-safety above would be silently suppressing every reading."""
+    panel = _sector_panel()
+    extras = SS.build_extras(panel, ["AAA"], {"alpha": ["AAA"]})
+    signal_fn, cross_fn = SS.make_lane_signal(top_n=2)
+    rows = SS.run(["AAA"], 2, 20, signal_fn, cross_fn=cross_fn,
+                  panel=panel, extras=extras, min_bars=300)
+    assert rows
+    assert all(r["above_50dma"] in (True, False) for r in rows)
+    assert any(r["trend_up_50_over_200"] is True for r in rows)
+
+
+def test_indicator_signals_cannot_see_the_future():
+    """No-lookahead, applied to the imported indicator functions.
+
+    Every one of them treats the last element it receives as "now", so the
+    slice ending at ctx.i is the entire guard. Volume is corrupted too, since
+    the whole volume block keys off relative volume.
+    """
+    panel = _sector_panel()
+    tickers = ["AAA", "BBB", "CCC"]
+    sectors = {"alpha": ["AAA", "BBB"], "beta": ["CCC"]}
+    signal_fn, cross_fn = SS.make_lane_signal(top_n=2)
+
+    clean = SS.run(tickers, 2, 20, signal_fn, cross_fn=cross_fn, panel=panel,
+                   extras=SS.build_extras(panel, tickers, sectors), min_bars=300)
+
+    corrupted = {k: v.copy() for k, v in panel.items()}
+    cut = 380
+    for df in corrupted.values():
+        for col in ("Open", "High", "Low", "Close"):
+            df.iloc[cut:, df.columns.get_loc(col)] *= 3.0
+        df.iloc[cut:, df.columns.get_loc("Volume")] *= 50.0
+
+    dirty = SS.run(tickers, 2, 20, signal_fn, cross_fn=cross_fn, panel=corrupted,
+                   extras=SS.build_extras(corrupted, tickers, sectors), min_bars=300)
+
+    watched = ("rsi_14", "macd_state", "adx_14", "di_bull", "above_50dma",
+               "trend_up_50_over_200", "vol_read", "vol_pocket_pivot",
+               "vol_no_supply", "vol_breakout_confirmed", "obv_divergence",
+               "cmf_20", "updown_vol_ratio_25d", "gap_filled", "gap_retained_pct")
+    cut_date = panel["SPY"].index[cut]
+    by_key = {(r["ticker"], r["date"]): r for r in dirty}
+    compared = 0
+    for r in clean:
+        d = by_key.get((r["ticker"], r["date"]))
+        if d is None or r["date"] >= cut_date:
+            continue
+        for key in watched:
+            assert r[key] == d[key], (
+                f"{key} changed for {r['ticker']} on {r['date']} ({r[key]!r} -> "
+                f"{d[key]!r}) when only bars after index {cut} were corrupted — "
+                f"the indicator is reading forward")
+        compared += 1
+    assert compared > 5, "too few pre-cut records compared to trust this"
+
+
+def test_volume_surge_no_longer_divides_by_one_share():
+    """REGRESSION: signal_lanes kept the divide-by-one expression the scanner
+    fixed, and swing_setup_score (+0.5 for vol_surge > 1.3) is what the study's
+    top_setups lane RANKS on — so an absent volume baseline promoted a name up
+    the ranking on the strength of its own missing data.
+
+    Absence must resolve to None, never to a substantive reading.
+    """
+    from tools import signal_lanes as SL
+    n = 300
+    closes = [100.0 + 0.05 * k for k in range(n)]
+    highs = [c * 1.01 for c in closes]
+    lows = [c * 0.99 for c in closes]
+    # The exact bug shape: no baseline history, then real volume prints. The old
+    # max(..., 1) floor made the denominator ONE SHARE, so this returned ~5,000,000.
+    vols = [0.0] * (n - 5) + [5_000_000.0] * 5
+    row = SL.lane_features(closes, highs, lows, vols, n - 1)
+    assert row is not None
+    assert row["volume_surge_5d_vs_3m"] is None, (
+        f"an absent volume baseline produced a surge of "
+        f"{row['volume_surge_5d_vs_3m']:,.0f} — the max(...,1) floor is back, and "
+        f"vol_surge > 1.3 scores +0.5 on swing_setup_score, so a data hole is "
+        f"again promoting a name up the ranking on the strength of its absence")
+
+    vols_ok = [1_000_000.0] * (n - 5) + [2_000_000.0] * 5
+    row_ok = SL.lane_features(closes, highs, lows, vols_ok, n - 1)
+    assert 1.9 < row_ok["volume_surge_5d_vs_3m"] < 2.1, (
+        "the fix broke the ordinary case")

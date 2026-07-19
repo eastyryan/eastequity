@@ -474,6 +474,30 @@ def make_lane_signal(top_n=15):
     """
     from tools import signal_lanes as SL
     from tools import technicals as TA
+    # IMPORTED, NOT REIMPLEMENTED. These are the exact functions universe_scanner
+    # calls to build the row the brain reads (they are private by NAME only —
+    # module-level and pure). A study exists to say what the SHIPPED lane does, so
+    # a second implementation here would measure a lane the scanner does not have.
+    # signal_lanes carried a stale copy of the volume-surge expression for exactly
+    # this reason and the top_setups verdict was scoring a name's missing data.
+    from tools.universe_scanner import (
+        _adx14, _gap_events, _macd_state, _rsi14, _trailing_high)
+    from tools.volume_analysis import analyze_volume
+
+    # Warm-up window for the Wilder/EMA-smoothed indicators.
+    #
+    # _rsi14, _macd_state and _adx14 all seed from the HEAD of whatever list they
+    # are given and smooth forward, so their value at bar i depends on where the
+    # slice starts. Passing closes[:i+1] from bar 0 matches the scanner exactly but
+    # is O(i) per bar per indicator — quadratic over 88k observations.
+    #
+    # 400 bars is far past convergence for all three (RSI-14 settles in ~100,
+    # MACD-26/9 in ~150, ADX-14 needs 42 bars before it returns at all and settles
+    # by ~150), so the values are indistinguishable from the full-history ones while
+    # the cost becomes O(1) per bar. This is a performance choice with a correctness
+    # argument behind it, not a shortcut: tests/test_signal_study.py pins that a
+    # longer warm-up does not move the readings.
+    WARMUP = 400
 
     def signal_fn(ctx):
         wpos = ctx.extra.get("weekly_pos")
@@ -514,6 +538,63 @@ def make_lane_signal(top_n=15):
                 (ctx.extra.get("weekly_highs") or [])[:k],
                 (ctx.extra.get("weekly_lows") or [])[:k])
 
+        # --- entry-timing + volume indicators, evaluated AT bar i -----------
+        # Every slice ends at ctx.i, which is the no-lookahead guarantee; the left
+        # bound is the warm-up window described above.
+        w0 = max(0, ctx.i - WARMUP)
+        wc_, wh_, wl_, wv_, wo_ = (ctx.closes[w0:hi_i], ctx.highs[w0:hi_i],
+                                   ctx.lows[w0:hi_i], ctx.vols[w0:hi_i],
+                                   ctx.opens[w0:hi_i])
+        rsi = _rsi14(wc_)
+        macd = _macd_state(wc_) or {}
+        adx, di_p, di_n = _adx14(wh_, wl_, wc_)
+        vol = analyze_volume(wo_, wh_, wl_, wc_, wv_) or {}
+        gaps = _gap_events(wo_, wc_) or {}
+        last_gap = gaps.get("last") or {}
+
+        sma50 = SL._sma(wc_, 50)
+        sma200 = SL._sma(wc_, 200)
+        last_c = ctx.closes[ctx.i]
+        # None, not False, when the history is short. The scanner's inline pandas
+        # version yields `last > NaN` -> False for above_50dma under 50 bars, which
+        # reports "not above its 50-DMA" for a name that HAS no 50-DMA. Absent must
+        # not resolve to a substantive reading; that is the house rule.
+        above_50 = (last_c > sma50) if sma50 is not None else None
+        trend_50_200 = (sma50 > sma200) if (sma50 is not None
+                                            and sma200 is not None) else None
+
+        udv = vol.get("updown_vol_ratio_25d")
+        ind = {
+            "rsi_14": rsi,
+            "macd_state": macd.get("state"),
+            "adx_14": adx,
+            "di_bull": (None if (di_p is None or di_n is None) else di_p > di_n),
+            "above_50dma": above_50,
+            "trend_up_50_over_200": trend_50_200,
+            # The SHIPPED headline read. A strict first-match cascade in
+            # volume_analysis.py:173-196, so these are mutually exclusive.
+            "vol_read": vol.get("read"),
+            # The standalone keys, which survive even when the cascade reported
+            # something higher-priority. Measure these for unconditional
+            # incidence and vol_read for what the brain is actually shown.
+            "vol_pocket_pivot": vol.get("pocket_pivot"),
+            "vol_no_supply": vol.get("no_supply_pullback"),
+            # TRI-STATE: True / False / absent. Absent means no breakout printed at
+            # all, which is not the same as an unconfirmed one — predicates below
+            # use `is True` / `is False` so the third state cannot leak in.
+            "vol_breakout_confirmed": vol.get("breakout_volume_confirmed"),
+            "obv_divergence": vol.get("obv_divergence"),
+            "cmf_20": vol.get("cmf_20"),
+            # 99.0 is a SENTINEL for "no down-volume in the window", not a ratio of
+            # 99. Left as-is on the record and excluded from the predicate below so
+            # it cannot masquerade as an extreme reading.
+            "updown_vol_ratio_25d": udv,
+            "gap_up_recent": (last_gap.get("direction") == "up"
+                              and last_gap.get("sessions_ago", 99) <= 10) or None,
+            "gap_filled": last_gap.get("filled"),
+            "gap_retained_pct": last_gap.get("retained_pct"),
+        }
+
         return {
             "row": row,
             "score": row["swing_setup_score"],
@@ -538,6 +619,7 @@ def make_lane_signal(top_n=15):
             # edge cannot be just "daily uptrend" measured a second time.
             "daily_above_200dma": row.get("above_200dma"),
             "rs_spy_1m": row.get("rel_strength_1m_pct"),
+            **ind,
             # filled by cross_fn — they need the whole day's pool
             "rs_sector_1m": None, "rs_pseudo_1m": None,
             "sel_rs_spy_top": False, "sel_rs_sector_top": False,
@@ -852,6 +934,120 @@ NEW_SIGNAL_GROUPS = [
     ("RS SPY-only (not sector top)", lambda r: r.get("sel_rs_spy_only") is True),
 ]
 
+# ---------------------------------------------------------------------------
+# Round 3 — the entry-timing and volume indicators.
+#
+# These have shipped to the brain the longest and are the most heavily
+# documented block in CLAUDE.md, which makes several COMPARATIVE claims about
+# them. Comparative claims are the valuable kind: "X fails more often than Y" is
+# refutable in a way that "X is context" is not. Each pair below is one such
+# claim, measured head to head on the same days.
+#
+# The indicator functions are IMPORTED from universe_scanner / volume_analysis,
+# so these arms score the code that actually ships, not a restatement of it.
+INDICATOR_GROUPS = [
+    # --- Breakout confirmation ------------------------------------------
+    # CLAIM: "unconfirmed_breakout_suspect (new 20d high on <1.5x volume) fails
+    # far more often - demand confirmed_breakout or wait for the retest."
+    # Both arms REQUIRE a breakout to have printed (the tri-state key is present),
+    # so this isolates the volume leg rather than comparing breakouts to
+    # non-breakouts.
+    ("breakout CONFIRMED (>=1.5x vol)",
+     lambda r: r.get("vol_breakout_confirmed") is True),
+    ("breakout UNCONFIRMED (<1.5x vol)",
+     lambda r: r.get("vol_breakout_confirmed") is False),
+
+    # --- The ADX interaction --------------------------------------------
+    # CLAIM: "adx_14 <20 = chop: distrust 'breakouts' there; >25 = established
+    # trend". This is the only claim in the prompt that says a signal INVERTS
+    # depending on a second indicator, which makes it the sharpest test here.
+    ("breakout & ADX<20 (chop)",
+     lambda r: (r.get("vol_breakout_confirmed") is not None
+                and r.get("adx_14") is not None and r["adx_14"] < 20)),
+    ("breakout & ADX>25 (trending)",
+     lambda r: (r.get("vol_breakout_confirmed") is not None
+                and r.get("adx_14") is not None and r["adx_14"] > 25)),
+    ("ADX>25 & DI+ > DI- (trend up)",
+     lambda r: (r.get("adx_14") is not None and r["adx_14"] > 25
+                and r.get("di_bull") is True)),
+
+    # --- RSI entry timing -------------------------------------------------
+    # CLAIM: "in an uptrend RSI > 70 is strength to monitor, not an automatic
+    # sell; the classic pullback entry is RSI resetting to ~40-50 while trend
+    # structure holds." Both arms hold the 200-DMA fixed, so this measures the
+    # RSI level and not the trend it sits in.
+    ("RSI 40-50 pullback | 200dma up",
+     lambda r: (r.get("rsi_14") is not None and 40 <= r["rsi_14"] <= 50
+                and r.get("daily_above_200dma") is True)),
+    ("RSI >70 overbought | 200dma up",
+     lambda r: (r.get("rsi_14") is not None and r["rsi_14"] > 70
+                and r.get("daily_above_200dma") is True)),
+    ("RSI <30 oversold | 200dma up",
+     lambda r: (r.get("rsi_14") is not None and r["rsi_14"] < 30
+                and r.get("daily_above_200dma") is True)),
+
+    # --- MACD -------------------------------------------------------------
+    # CLAIM: bull_cross_recent "means the histogram flipped sign within ~5
+    # sessions (the actionable moment)"; above_zero/below_zero is "the standing
+    # regime". So the cross should beat the regime it resolves into.
+    ("MACD bull_cross_recent", lambda r: r.get("macd_state") == "bull_cross_recent"),
+    ("MACD above_zero (standing)", lambda r: r.get("macd_state") == "above_zero"),
+    ("MACD bear_cross_recent", lambda r: r.get("macd_state") == "bear_cross_recent"),
+
+    # --- Volume reads (the shipped cascade) -------------------------------
+    # CLAIM: "no_supply_pullback is the constructive continuation tell";
+    # "absorption_at_lows_accumulation after a decline is a bullish tell" with
+    # "absorption_at_highs_distribution the bearish mirror"; "selling_climax
+    # often MARKS the low but is not the entry"; "pocket_pivot = an
+    # institutional footprint inside a base".
+    ("vol: no_supply_pullback", lambda r: r.get("vol_read") == "no_supply_pullback"),
+    ("vol: absorption_at_lows", lambda r: r.get("vol_read") == "absorption_at_lows_accumulation"),
+    ("vol: absorption_at_highs", lambda r: r.get("vol_read") == "absorption_at_highs_distribution"),
+    ("vol: selling_climax", lambda r: r.get("vol_read") == "selling_climax"),
+    ("vol: selling_climax_rev_watch",
+     lambda r: r.get("vol_read") == "selling_climax_reversal_watch"),
+    ("vol: pocket_pivot (read)", lambda r: r.get("vol_read") == "pocket_pivot"),
+    # The standalone key, unconditional on the cascade — a pocket pivot that
+    # printed while a higher-priority read fired is still a pocket pivot.
+    ("vol: pocket_pivot (any)", lambda r: r.get("vol_pocket_pivot") is True),
+    ("vol: no_supply (any)", lambda r: r.get("vol_no_supply") is True),
+
+    # --- The numeric volume sub-metrics -----------------------------------
+    # CLAIM: "obv_divergence bullish = accumulation under the surface"; "cmf_20
+    # > 0 sustained = accumulation"; "updown_vol_ratio_25d > 1 = up-day volume
+    # dominating". The 99.0 sentinel ("no down volume in the window") is
+    # EXCLUDED — it is an absence marker, not a ratio, and averaging it in would
+    # manufacture an extreme.
+    ("obv_divergence bullish", lambda r: r.get("obv_divergence") == "bullish"),
+    ("obv_divergence bearish", lambda r: r.get("obv_divergence") == "bearish"),
+    ("cmf_20 > 0", lambda r: (r.get("cmf_20") is not None and r["cmf_20"] > 0)),
+    ("updown_vol_ratio > 1 (excl. sentinel)",
+     lambda r: (r.get("updown_vol_ratio_25d") is not None
+                and r["updown_vol_ratio_25d"] != 99.0
+                and r["updown_vol_ratio_25d"] > 1)),
+
+    # --- Gap reads --------------------------------------------------------
+    # CLAIM: "an unfilled up-gap on volume is institutional urgency ONLY if it
+    # also HELD (retained_pct >= ~0.5); a big open that closed near the prior
+    # close is a faded reaction dressed up as a hold". "A quickly-filled gap is
+    # a failed move."
+    ("up-gap UNFILLED & held (ret>=0.5)",
+     lambda r: (r.get("gap_up_recent") is True and r.get("gap_filled") is False
+                and r.get("gap_retained_pct") is not None
+                and r["gap_retained_pct"] >= 0.5)),
+    ("up-gap unfilled & FADED (ret<0.5)",
+     lambda r: (r.get("gap_up_recent") is True and r.get("gap_filled") is False
+                and r.get("gap_retained_pct") is not None
+                and r["gap_retained_pct"] < 0.5)),
+    ("up-gap FILLED (failed move)",
+     lambda r: (r.get("gap_up_recent") is True and r.get("gap_filled") is True)),
+
+    # --- Baseline trend flags, for reference ------------------------------
+    # Not claims so much as the backdrop every arm above is measured against.
+    ("above_50dma", lambda r: r.get("above_50dma") is True),
+    ("trend_up_50_over_200", lambda r: r.get("trend_up_50_over_200") is True),
+]
+
 
 def main():
     ap = argparse.ArgumentParser()
@@ -881,11 +1077,11 @@ def main():
     if isinstance(rows, dict):
         print(rows)
         return
-    report(rows, LANE_GROUPS + NEW_SIGNAL_GROUPS)
+    report(rows, LANE_GROUPS + NEW_SIGNAL_GROUPS + INDICATOR_GROUPS)
 
     if args.json_out:
         blob = {}
-        for lbl, pred in LANE_GROUPS + NEW_SIGNAL_GROUPS:
+        for lbl, pred in LANE_GROUPS + NEW_SIGNAL_GROUPS + INDICATOR_GROUPS:
             blob[lbl] = {
                 "naive": summarize(rows, lbl, pred)["horizons"],
                 "book_rules": summarize_atr_rules(rows, lbl, pred)["horizons"],
