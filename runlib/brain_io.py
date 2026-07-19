@@ -382,6 +382,11 @@ def _log_brain_call(call: str, run_id: str, model, allowed_tools, attempt: int,
 # buying Abbott" while the veto left the site with an empty proposals list).
 LAST_RISK_DESK_VETOES: list = []
 
+# The largest confidence haircut the desk may apply, matching the figure stated
+# in its own prompt. A desk that could cut arbitrarily deep would be a veto by
+# another name, routed around the veto's journaling and dashboard surfacing.
+MAX_RISK_DESK_HAIRCUT = -0.10
+
 
 def adversarial_review(proposals: list[dict], context_file: str, run_id: str) -> list[dict]:
     """Second pass by a separate Claude session prompted to REFUTE each BUY.
@@ -440,7 +445,18 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
         "5) FRESHNESS: if data_quality/stale_data_notice or price_freshness says stale "
         "on a catalyst day, haircut or veto chasing.\n"
         "6) CHARTS: if charts missing for the ticker, haircut confidence.\n"
-        "Be a skeptic, not a contrarian for sport - approve genuinely sound trades.\n"
+        # REMOVED 2026-07-19: "Be a skeptic, not a contrarian for sport - approve
+        # genuinely sound trades." That is an approval-bias instruction inside the
+        # one component whose entire job is refusal, and it was the only sentence
+        # in this prompt telling the desk to lean toward yes. The desk already
+        # cannot over-approve anything — its power is veto or a haircut, and every
+        # validator floor still runs afterwards — so the downside of a strict desk
+        # is a missed trade, while the downside of a lenient one is an unexamined
+        # position. Those are not symmetric.
+        "You are not the proposer's colleague. Your job is to find the reason this "
+        "trade fails, state it plainly, and veto when you find one. A trade that "
+        "survives a genuine attempt to kill it is worth more than one that was "
+        "never attacked. If the case is merely adequate, that is a veto.\n"
         "Output ONLY a ```json block: {\"reviews\": [{\"ticker\": \"X\", "
         "\"verdict\": \"approve\"|\"veto\", \"objection\": \"one paragraph covering the "
         "checklist\", \"confidence_adjustment\": 0.0}]} where confidence_adjustment is "
@@ -502,7 +518,12 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
                                            reasons=[veto_reason]))
             continue
         try:
-            adj = min(float(r.get("confidence_adjustment", 0) or 0), 0)
+            # The prompt states "max -0.10", but this only ever clamped the UPPER
+            # bound at 0 — the floor was never enforced, so a desk returning -0.5
+            # had it applied in full and could silently drive a proposal under the
+            # 0.60 confidence floor. Clamp both ends to the documented range.
+            adj = max(min(float(r.get("confidence_adjustment", 0) or 0), 0.0),
+                      MAX_RISK_DESK_HAIRCUT)
         except (TypeError, ValueError):
             adj = 0  # non-numeric desk output: keep the proposal, no haircut
         if adj:
