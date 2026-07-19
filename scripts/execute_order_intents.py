@@ -49,6 +49,35 @@ def _kill_switch_on() -> bool:
     return (ROOT / "state" / "KILL_SWITCH").exists()
 
 
+def _book_revalidation_reasons(intent: dict) -> list:
+    """Book-shape caps for one intent against the CURRENT book. Fail CLOSED.
+
+    A BUY that cannot be shown to be inside the caps does not execute. That is
+    the opposite direction from most fail-open gates in this repo, and it is
+    deliberate: this runs after the queueing node's judgement is already hours
+    stale, so "we could not check" is precisely when a queued BUY is most likely
+    to be wrong. Exits are never routed through here.
+    """
+    try:
+        import validator
+        from tools.portfolio_state import get_portfolio_state
+        portfolio = get_portfolio_state()
+        market_context = {}
+        try:
+            relay = ROOT / "data" / "cloud_context.json"
+            if relay.exists():
+                ctx = json.loads(relay.read_text())
+                pr = ctx.get("portfolio_risk") or {}
+                if pr.get("status") == "ok":
+                    market_context["_book"] = pr
+        except Exception:
+            pass
+        return validator.revalidate_intent_against_book(
+            intent, portfolio, market_context)
+    except Exception as e:
+        return [f"book_revalidation_unavailable:{str(e)[:120]}"]
+
+
 def execute_intents() -> dict:
     summary = {"executed": [], "resting": [], "rejected": [], "dropped": []}
     intents = alpaca_broker.queued_intents()
@@ -84,6 +113,25 @@ def execute_intents() -> dict:
                 {"ticker": ticker, "action": action},
                 [f"stale_intent_revalidation_failed:{stale}"], run_id)
             summary["rejected"].append(f"{action} {ticker} ({stale})")
+            alpaca_broker.clear_intents([oid])
+            consumed.append(oid)
+            continue
+        # BOOK-SHAPE CAPS, re-run against the book as it stands NOW. Until
+        # 2026-07-19 validate_order_static was the ONLY gate here — cash,
+        # notional, hours, live price — so a BUY validated at 7.9% portfolio heat
+        # could execute into a book well past the 8% cap, and none of theme risk,
+        # theme notional, factor stack, beta, stress or sector concentration was
+        # re-checked. state/order_intents.json is git-committed and a push to it
+        # TRIGGERS this script, so repo write access was effectively broker
+        # access. The prose gates are deliberately NOT re-run: those judged the
+        # IDEA at commit time, and re-litigating them here would let a transient
+        # data gap cancel an approved trade.
+        book_reasons = _book_revalidation_reasons(intent)
+        if book_reasons:
+            journal.log_rejection(
+                {"ticker": ticker, "action": action}, book_reasons, run_id)
+            summary["rejected"].append(
+                f"{action} {ticker} (book: {'; '.join(book_reasons)[:120]})")
             alpaca_broker.clear_intents([oid])
             consumed.append(oid)
             continue
