@@ -20,6 +20,43 @@ LOCK_FILE = ROOT / "state" / "RUN_LOCK"
 LOCK_STALE_SECONDS = 45 * 60
 
 
+def _lock_holder() -> tuple[str | None, int | None]:
+    """(run_id, pid) recorded in the lock file. Either may be None on an old-format
+    or unreadable lock, which callers must treat as "unknown", never as "mine"."""
+    try:
+        parts = LOCK_FILE.read_text().strip().split()
+    except OSError:
+        return None, None
+    run_id = parts[0] if parts else None
+    pid = None
+    if len(parts) > 1:
+        try:
+            pid = int(parts[1])
+        except ValueError:
+            pid = None
+    return run_id, pid
+
+
+def _pid_alive(pid: int | None) -> bool:
+    """Is a process with this pid running? Unknown pid -> assume ALIVE.
+
+    Erring toward alive means a lock of unknown provenance is respected rather than
+    stolen, which is the safe direction: two concurrent cycles trade on stale
+    portfolio snapshots.
+    """
+    if pid is None:
+        return True
+    try:
+        os.kill(pid, 0)          # signal 0 = liveness probe, no signal delivered
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True              # exists, owned by another user
+    except OSError:
+        return True
+
+
 def acquire_run_lock(run_id: str) -> bool:
     """One run at a time: concurrent cycles trade on stale portfolio snapshots.
 
@@ -28,32 +65,58 @@ def acquire_run_lock(run_id: str) -> bool:
     textbook TOCTOU window in which two processes microseconds apart both saw no
     lock and both proceeded. That matters more now that the 5-minute stop watcher
     can run concurrently with a scheduled trading cycle.
+
+    LIVENESS (added 2026-07-19, after reproducing the failure live). The lock was
+    released only by an atexit handler, whose comment claimed it fired "on every exit
+    path, crashes included". atexit does NOT run on SIGKILL, and a weekly-market run
+    killed mid-flight left a lock naming a dead process. The only recovery was the
+    45-minute staleness timer, so a run killed at the 09:00 slot would have blocked
+    every cycle until ~09:45 — two lost trading slots on a seven-slot day, with stop
+    enforcement offline for the same window.
+
+    The lock now records the PID alongside the run id, and a lock whose holder is
+    gone is reclaimed immediately. The age-based steal is kept as a backstop for
+    cross-node and PID-reuse cases, where liveness cannot be established.
     """
     LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
     try:
         fd = os.open(str(LOCK_FILE), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
     except FileExistsError:
-        # Someone holds it. Only steal a demonstrably stale lock.
-        try:
-            age = datetime.now().timestamp() - LOCK_FILE.stat().st_mtime
-        except OSError:
-            return False
-        if age < LOCK_STALE_SECONDS:
-            return False
-        print(f"  (clearing stale run lock, {age/60:.0f} min old)")
+        held_run, held_pid = _lock_holder()
+        if not _pid_alive(held_pid):
+            print(f"  (reclaiming run lock from dead process {held_pid}"
+                  f" [run {held_run}])")
+        else:
+            try:
+                age = datetime.now().timestamp() - LOCK_FILE.stat().st_mtime
+            except OSError:
+                return False
+            if age < LOCK_STALE_SECONDS:
+                return False
+            print(f"  (clearing stale run lock, {age/60:.0f} min old)")
         LOCK_FILE.unlink(missing_ok=True)
         try:
             fd = os.open(str(LOCK_FILE), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
         except FileExistsError:
             return False  # lost the race to another reaper — stand down
     with os.fdopen(fd, "w") as fh:
-        fh.write(run_id)
+        fh.write(f"{run_id} {os.getpid()}")
     import atexit
-    atexit.register(release_run_lock)  # releases on every exit path, crashes included
+    atexit.register(release_run_lock, run_id)
     return True
 
 
-def release_run_lock() -> None:
+def release_run_lock(run_id: str | None = None) -> None:
+    """Release the lock, but ONLY if it is still ours.
+
+    The unconditional unlink was a real hazard: if process B reclaimed a lock while
+    A was still alive, A's atexit handler would delete B's lock and admit a third
+    run. Passing the run id makes release idempotent and ownership-checked.
+    """
+    if run_id is not None:
+        held_run, _ = _lock_holder()
+        if held_run is not None and held_run != run_id:
+            return  # not ours any more — leave it alone
     LOCK_FILE.unlink(missing_ok=True)
 
 
