@@ -89,11 +89,15 @@ def assess() -> dict:
         missed = 0
     if isinstance(missed, int) and missed > MAX_MISSED_SLOTS:
         which = health.get("missed_slots") or []
+        died = health.get("died_slots") or []
         detail = f" [{', '.join(which)} ET]" if which else ""
+        # A died slot fired and left a session behind; a plain missed slot never fired.
+        # Naming which is which points the operator straight at the right thing to read.
+        died_note = f"; fired-and-died (session to read): {', '.join(died)}" if died else ""
         reasons.append(
             f"{missed} scheduled run(s) missed today{detail} "
             f"(expected {health.get('expected_runs_so_far')}, "
-            f"completed {health.get('completed_scheduled_runs')})")
+            f"completed {health.get('completed_scheduled_runs')}){died_note}")
 
     age = health.get("bundle_age_hours")
     if isinstance(age, (int, float)) and age > MAX_BUNDLE_AGE_H:

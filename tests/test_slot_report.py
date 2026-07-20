@@ -40,8 +40,24 @@ def _journal(tmp_path, hours, node="vm"):
     return tmp_path
 
 
-def _report(monkeypatch, tmp_path, hours, now_h, node="vm"):
+def _starts(tmp_path, hours, node="vm"):
+    """Write run_started breadcrumbs at the given ET hours, each tagged with its slot."""
+    d = tmp_path / "journal" / "run_starts"
+    d.mkdir(parents=True, exist_ok=True)
+    lines = []
+    for i, h in enumerate(hours):
+        utc_h = h + 4
+        slot = f"{int(h):02d}:{int(round((h % 1) * 60)):02d}"
+        lines.append(json.dumps({
+            "ts": f"2026-07-20T{int(utc_h):02d}:{int(round((utc_h % 1) * 60)):02d}:00+00:00",
+            "run_id": f"mk-{i}", "node": node, "slot": slot, "stage": "start"}))
+    (d / "2026-07-20.jsonl").write_text("\n".join(lines) + "\n")
+
+
+def _report(monkeypatch, tmp_path, hours, now_h, node="vm", start_hours=None):
     _journal(tmp_path, hours, node)
+    if start_hours:
+        _starts(tmp_path, start_hours, node)
     monkeypatch.setattr(A, "ROOT", tmp_path)
     monkeypatch.setattr(A, "et_date", lambda: "2026-07-20")
     monkeypatch.setattr(A, "to_et_date", lambda ts: "2026-07-20")
@@ -152,3 +168,46 @@ def test_a_fully_healthy_day_is_silent(monkeypatch, tmp_path):
     r = _report(monkeypatch, tmp_path, SLOTS, now_h=19.0)
     assert r["missed_slots"] == [] and r["missed_count"] == 0
     assert r["hit"] == len(SLOTS)
+
+
+# --- run_started breadcrumbs: fired-and-died vs never-fired -------------------
+# The 2026-07-20 root cause: a run recorded nothing until it succeeded, so a session
+# that died mid-run was indistinguishable from a fire that never happened. A start
+# breadcrumb makes the difference visible.
+
+def test_a_slot_that_fired_and_died_is_labelled_died_not_missed(monkeypatch, tmp_path):
+    """A start breadcrumb landed for the 14:00 slot but no summary followed. That is a
+    run that fired and DIED — there is a session to read — not a fire that never was."""
+    r = _report(monkeypatch, tmp_path, [9.0, 10.0, 12.0], now_h=16.5,
+                start_hours=[14.0])
+    statuses = {s["label"]: s["status"] for s in r["slots"]}
+    assert statuses["14:00"] == "died"
+    assert r["died_slots"] == ["14:00"]
+
+
+def test_a_died_slot_still_counts_as_missed_for_paging(monkeypatch, tmp_path):
+    """Fired-and-died is a lost slot too — it must still trip the miss count, just with
+    a more precise label. A death that did not page would be the original bug again."""
+    r = _report(monkeypatch, tmp_path, [9.0, 10.0, 12.0], now_h=16.5,
+                start_hours=[14.0])
+    assert "14:00" in r["missed_slots"]
+    assert r["missed_count"] >= 1
+
+
+def test_never_fired_slot_has_no_breadcrumb_and_reads_missed(monkeypatch, tmp_path):
+    """The mirror: no start breadcrumb → the fire never happened → plain 'missed',
+    which tells the operator to look at the routine/platform, not a dead session."""
+    r = _report(monkeypatch, tmp_path, [9.0, 10.0, 12.0], now_h=16.5, start_hours=[])
+    statuses = {s["label"]: s["status"] for s in r["slots"]}
+    assert statuses["14:00"] == "missed"
+    assert r["died_slots"] == []
+
+
+def test_a_breadcrumb_followed_by_a_summary_is_just_a_hit(monkeypatch, tmp_path):
+    """A healthy run marks its start AND journals its summary. The start must not turn a
+    successful slot into a phantom death."""
+    r = _report(monkeypatch, tmp_path, [9.0, 10.0, 12.0, 14.0], now_h=16.5,
+                start_hours=[14.0])
+    statuses = {s["label"]: s["status"] for s in r["slots"]}
+    assert statuses["14:00"] == "hit"
+    assert r["died_slots"] == []

@@ -83,6 +83,36 @@ def completed_runs_today() -> list[dict]:
     return sorted(out, key=lambda r: r["et_hour"])
 
 
+def run_starts_today() -> list[dict]:
+    """run_started breadcrumbs journaled for TODAY (ET), newest last.
+
+    Written and pushed by scripts/mark_run_start.py at the START of a run, before the
+    heavy work. A start whose slot never gets a matching summary is a run that fired and
+    DIED — the failure mode that was invisible before 2026-07-20. Manual/off-slot markers
+    (slot is None) are ignored: they cannot certify a scheduled slot.
+    """
+    out = []
+    for delta in (0, 1):
+        f = ROOT / "journal" / "run_starts" / (
+            f"{(datetime.now(timezone.utc) - timedelta(days=delta)).date().isoformat()}.jsonl")
+        if not f.exists():
+            continue
+        for line in f.read_text().splitlines():
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if to_et_date(rec.get("ts")) != et_date():
+                continue
+            hour = _to_et_hour(rec.get("ts"))
+            if hour is None:
+                continue
+            out.append({"et_hour": round(hour, 2), "ts": rec.get("ts"),
+                        "slot": rec.get("slot"), "stage": rec.get("stage") or "start",
+                        "node": rec.get("node") or "unknown"})
+    return sorted(out, key=lambda r: r["et_hour"])
+
+
 def slot_report(now_h: float | None = None, weekday: bool | None = None) -> dict:
     """PER-SLOT accounting: which scheduled slots actually produced a run today.
 
@@ -107,6 +137,7 @@ def slot_report(now_h: float | None = None, weekday: bool | None = None) -> dict
     # past heartbeat must not see runs from later in the day) and guards against a
     # future-dated ts from clock skew silently satisfying a slot that never ran.
     runs = [r for r in completed_runs_today() if r["et_hour"] <= now_h]
+    starts = [s for s in run_starts_today() if s["et_hour"] <= now_h]
     used: set[int] = set()
     report = []
     for i, slot in enumerate(slots):
@@ -123,10 +154,20 @@ def slot_report(now_h: float | None = None, weekday: bool | None = None) -> dict
             # Still inside its window — not late yet, so not a miss.
             report.append({"slot": slot, "label": label, "status": "pending"})
         else:
-            report.append({"slot": slot, "label": label, "status": "missed"})
-    missed = [s["label"] for s in report if s["status"] == "missed"]
+            # No summary and the window has closed — a miss. If a start breadcrumb
+            # landed in the window, the run FIRED AND DIED (distinct, and diagnosable);
+            # otherwise the fire never happened. Both are missed slots, but the label
+            # tells you where to look: a "died" slot has a session to read, a "missed"
+            # one means the routine/platform never triggered.
+            died = any(lo <= s["et_hour"] < hi for s in starts)
+            report.append({"slot": slot, "label": label,
+                           "status": "died" if died else "missed"})
+    # A died slot is still a slot that produced no run — count it as missed for paging,
+    # but surface it separately so the alert can say "fired and died" vs "never fired".
+    missed = [s["label"] for s in report if s["status"] in ("missed", "died")]
+    died_slots = [s["label"] for s in report if s["status"] == "died"]
     nodes = sorted({runs[j]["node"] for j in used}) if used else []
-    return {"slots": report, "missed_slots": missed,
+    return {"slots": report, "missed_slots": missed, "died_slots": died_slots,
             "hit": len(used), "missed_count": len(missed),
             "elapsed": sum(1 for s in report if s["status"] != "pending"),
             "nodes_seen": nodes,
@@ -174,8 +215,10 @@ def build_health() -> dict:
         # Every missed slot is a lost chance to enter, exit, or learn (user policy
         # 2026-07-20), so ONE is already worth saying on the dashboard. The alarm's
         # own paging threshold is separate and lives in scripts/heartbeat_check.py.
-        status = (f"DEGRADED - missed scheduled run(s): "
-                  f"{', '.join(report['missed_slots'])}")
+        detail = ", ".join(report["missed_slots"])
+        if report["died_slots"]:
+            detail += f" (fired-and-died: {', '.join(report['died_slots'])})"
+        status = f"DEGRADED - missed scheduled run(s): {detail}"
     elif dead.get("empty"):
         # A run that completes and says nothing used to count as healthy.
         status = f"DEGRADED - {dead['note']}"
@@ -191,6 +234,9 @@ def build_health() -> dict:
         # WHICH slots, not just how many — "missed 14:00" is actionable, "missed 1" is
         # a number you have to go investigate before you can do anything with it.
         "missed_slots": report["missed_slots"],
+        # Slots that fired and DIED (a start breadcrumb but no summary) — these have a
+        # session to read; a plain "missed" slot means the fire never happened.
+        "died_slots": report["died_slots"],
         "slots": report["slots"],
         # Which node(s) actually ran today. Run records carried no node identity until
         # 2026-07-20, so a live cloud trader masked a completely dead local one and the

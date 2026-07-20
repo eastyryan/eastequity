@@ -60,6 +60,28 @@ def node_id() -> str:
         return "unknown-node"
 
 
+def log_run_start(run_id: str, slot: str | None = None, stage: str = "start",
+                  extra: dict | None = None) -> "Path":
+    """A durable 'a run began' breadcrumb, written and (by the caller) pushed BEFORE
+    the heavy work.
+
+    THE PROBLEM THIS SOLVES (2026-07-20). A run's first durable record was
+    log_run_summary at the very END, after gather + brain + validate + execute. So a
+    session that died mid-run — the documented context-death of the heavy evening
+    review, a pip/gather failure, any error before the final push — left ZERO trace:
+    no log, no commit, nothing. On 2026-07-20 three slots (10am, 2pm, 5:30) vanished
+    that way and were byte-for-byte indistinguishable from fires that never happened.
+    You cannot read why a run died when the run recorded nothing until it succeeded.
+
+    A start marker makes a death VISIBLE and DIAGNOSABLE: a start with no matching
+    summary in its slot window is a run that fired and died, which the heartbeat can
+    now report and the watchdog can re-run. `stage` lets a caller advance the marker
+    (start -> gathered -> brain_done) so we also learn HOW FAR it got.
+    """
+    return _write("run_starts", {"run_id": run_id, "node": node_id(),
+                                 "slot": slot, "stage": stage, **(extra or {})})
+
+
 def log_run_summary(summary: dict, run_id: str) -> None:
     """One completed run.
 
