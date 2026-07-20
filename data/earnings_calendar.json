@@ -93,7 +93,7 @@
       "last_when": "amc",
       "next": "2026-08-04T16:00:00-04:00",
       "next_when": "amc",
-      "fetched_at": "2026-07-19T01:59:55.859640-04:00",
+      "fetched_at": "2026-07-19T22:49:02.151034-04:00",
       "source": "yfinance"
     },
     "AMGN": {
@@ -349,7 +349,7 @@
       "last_when": "amc",
       "next": "2026-09-02T16:00:00-04:00",
       "next_when": "amc",
-      "fetched_at": "2026-07-19T01:59:55.859640-04:00",
+      "fetched_at": "2026-07-19T22:49:02.151034-04:00",
       "source": "yfinance"
     },
     "CRM": {
@@ -917,7 +917,7 @@
       "last_when": "bmo",
       "next": "2026-08-06T08:00:00-04:00",
       "next_when": "bmo",
-      "fetched_at": "2026-07-19T01:59:55.859640-04:00",
+      "fetched_at": "2026-07-19T22:49:02.151034-04:00",
       "source": "yfinance"
     },
     "NEE": {
@@ -1455,15 +1455,31 @@
       "next_when": "amc",
       "fetched_at": "2026-07-19T01:59:55.859640-04:00",
       "source": "yfinance"
+    },
+    "AAOI": {
+      "last": "2026-05-07T16:00:00-04:00",
+      "last_when": "amc",
+      "next": "2026-08-06T16:00:00-04:00",
+      "next_when": "amc",
+      "fetched_at": "2026-07-19T22:49:02.151034-04:00",
+      "source": "yfinance"
+    },
+    "SOFI": {
+      "last": "2026-04-27T20:00:00-04:00",
+      "last_when": "amc",
+      "next": "2026-07-29T08:00:00-04:00",
+      "next_when": "bmo",
+      "fetched_at": "2026-07-19T22:49:02.151034-04:00",
+      "source": "yfinance"
     }
   },
   "status": "ok",
-  "n": 182,
-  "fetched_this_sweep": 182,
+  "n": 184,
+  "fetched_this_sweep": 5,
   "coverage": {
-    "requested": 182,
-    "attempted": 182,
-    "succeeded": 182,
+    "requested": 5,
+    "attempted": 5,
+    "succeeded": 5,
     "failed": 0,
     "reachable_no_dates": 0,
     "unattempted": 0,
@@ -1473,5 +1489,5 @@
     "failures": {}
   },
   "next_source_note": "`next` (and therefore days_to_earnings) comes ONLY from the yfinance earnings endpoint. The EDGAR item-2.02 fallback can reconstruct `last` when that endpoint is blocked, but there is no keyless source for a FUTURE earnings date - so on a degraded sweep a MISSING `next` means UNKNOWN, never 'no print scheduled'.",
-  "built_at": "2026-07-19T01:59:55.859640-04:00"
+  "built_at": "2026-07-19T22:49:02.151034-04:00"
 }
