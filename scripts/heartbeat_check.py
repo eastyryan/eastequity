@@ -41,10 +41,27 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 # How many scheduled slots may be missed before this is an alarm rather than noise.
-# One missed slot is routine: GitHub coalesces cron under load (documented in
-# tools/live_prices.py:22-24 and observed ~hourly on 2026-07-15). Two consecutive
-# misses is a pipeline that is actually down.
-MAX_MISSED_SLOTS = 2
+#
+# WAS 2, AND THAT IS WHY THE 2026-07-20 OUTAGE WENT UNREPORTED. The check is
+# `missed > MAX_MISSED_SLOTS`, and the morning heartbeat fires at 10:30 ET when only
+# THREE slots have elapsed (6am, 9am, 10am). A tolerance of 2 therefore demanded a
+# 100% morning failure before it would page — on the day in question the local trader
+# was entirely dead, the cloud had covered exactly one slot, `missed` came to 2, and
+# `2 > 2` is False. The alarm reported healthy through a total node outage.
+#
+# Now 0 — ANY missed slot pages. Two reasons that is not the alarm-fatigue mistake it
+# looks like:
+#
+#  1. JITTER TOLERANCE MOVED TO THE RIGHT PLACE. It used to live here, as a count. It
+#     now lives in runlib.analytics.slot_report as a one-hour GRACE WINDOW per slot: a
+#     slot that is merely late is "pending" and never reaches this check. GitHub's cron
+#     coalescing (tools/live_prices.py:22-24, ~hourly on 2026-07-15) is absorbed by
+#     time, which is the dimension it actually varies in. A count threshold could not
+#     tell a late slot from a dead one; a window can.
+#  2. A SLOT AN HOUR LATE IS NOT A LATE SLOT, IT IS A DIFFERENT TRADE. A 2pm run landing
+#     at 3:30pm prices a different market. Per user policy 2026-07-20, every missed slot
+#     is a lost chance to enter, exit, or learn — so one is worth knowing about.
+MAX_MISSED_SLOTS = 0
 # The relay bundle goes stale at 4h (orchestrator's own threshold). Warn before that.
 MAX_BUNDLE_AGE_H = 6.0
 
@@ -71,8 +88,10 @@ def assess() -> dict:
     if holiday and isinstance(missed, int) and missed > 0:
         missed = 0
     if isinstance(missed, int) and missed > MAX_MISSED_SLOTS:
+        which = health.get("missed_slots") or []
+        detail = f" [{', '.join(which)} ET]" if which else ""
         reasons.append(
-            f"{missed} scheduled run(s) missed today "
+            f"{missed} scheduled run(s) missed today{detail} "
             f"(expected {health.get('expected_runs_so_far')}, "
             f"completed {health.get('completed_scheduled_runs')})")
 

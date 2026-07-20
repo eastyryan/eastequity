@@ -39,13 +39,29 @@ Full universe deep research is slow — most slots no longer do it.
 | 5:30pm | evening review | News-only commentary (no trading) |
 | Sunday 12:00am | `weekly_market` | Multi-sector breadth + discovery sweep; publishes `market_checkin.json`; no trading |
 
+### Running it by hand
+
+The **cloud routine is the scheduled trader.** Local runs are the operator deliberately
+driving, and they go through `scripts/manual_run.sh` — never `orchestrator.py` directly.
+
 ```bash
-python orchestrator.py --depth holdings_watchlist   # fast focused cycle
-python orchestrator.py --depth full                 # classic deep cycle
-python orchestrator.py --weekly-market              # Sunday breadth check-in
-python orchestrator.py --gather-only --depth full   # data only
-python orchestrator.py --learning-mark              # shadow + post-exit marks, news cache, lesson prune
+scripts/manual_run.sh                       # fast focused cycle (holdings_watchlist)
+scripts/manual_run.sh --depth full          # classic deep cycle
+scripts/manual_run.sh --weekly-market       # Sunday breadth check-in
+scripts/manual_run.sh --gather-only         # data only
+scripts/manual_run.sh --learning-mark       # shadow + post-exit marks, news cache, lesson prune
 ```
+
+The wrapper exists because `orchestrator.py`'s default is *"I am a scheduled run"*, so a
+hand-typed `python orchestrator.py --depth ...` (no `--manual`) is indistinguishable from
+one. That went wrong twice on 2026-07-20: the run journaled `manual: false` and was
+counted by the heartbeat as a **completed scheduled slot** — filling in a slot the cloud
+had actually missed, so an outage read as healthy — and it claimed the 30-minute
+cross-node lease, making the next scheduled cloud run stand down.
+
+Manual runs now **yield but never block**: they abort if the cloud holds the lease, and
+they never claim one. Scheduled wins, manual fits in the gaps. See
+`runlib/preflight.py:acquire_cross_node_lease` and `tests/test_manual_run_detached.py`.
 
 ## Quick start
 
@@ -54,7 +70,7 @@ cd ~/east-equity-agent
 source .venv/bin/activate
 cp .env.example .env          # add FRED_API_KEY
 python -m tools.universe_scanner --top 10   # test a tool
-python orchestrator.py --depth holdings_watchlist
+scripts/manual_run.sh                       # a real run, marked manual
 ```
 
 ## Safety model

@@ -27,20 +27,41 @@ def expected_slots(weekday: bool) -> list[float]:
     return [6, 9, 10, 12, 14, 16, 17.5] if weekday else [0, 23.98]
 
 
-def build_health() -> dict:
-    """Runs heartbeat: expected schedule slots so far today (ET) vs runs actually
-    journaled. A silently-dead pipeline (the plan-mode parse bug ran for DAYS
-    unnoticed) now shows up on the dashboard as missed runs instead of nothing."""
-    now = et_now()
-    weekday = now.weekday() < 5
-    slots = expected_slots(weekday)
-    now_h = now.hour + now.minute / 60
-    expected = sum(1 for s in slots if s <= now_h)
-    completed = 0
-    last_ts = None
-    from datetime import timedelta as _td
+# A run may fire slightly early (cron jitter) and still belong to its slot; and a slot
+# is not "missed" until it has had a full hour to land. GitHub coalesces cron under
+# load — observed ~hourly on 2026-07-15 — so a grace shorter than this pages on jitter,
+# and a muted alarm is worse than no alarm.
+SLOT_EARLY_TOLERANCE_H = 0.25
+SLOT_GRACE_H = 1.0
+
+
+def _to_et_hour(iso_ts: str | None) -> float | None:
+    """ET hour-of-day as a float, or None if unparseable."""
+    if not iso_ts:
+        return None
+    try:
+        dt = datetime.fromisoformat(str(iso_ts).replace("Z", "+00:00"))
+        try:
+            from zoneinfo import ZoneInfo
+            dt = dt.astimezone(ZoneInfo("America/New_York"))
+        except Exception:
+            dt = dt - timedelta(hours=4)
+        return dt.hour + dt.minute / 60
+    except Exception:
+        return None
+
+
+def completed_runs_today() -> list[dict]:
+    """Scheduled runs journaled for TODAY (ET), newest last.
+
+    Excludes halted runs (they did not trade) and MANUAL runs. Manual exclusion is
+    load-bearing: a hand-fired run must never be able to fill in a slot the scheduler
+    missed and turn the alarm green. See scripts/manual_run.sh.
+    """
+    out = []
     for delta in (0, 1):  # journal files are named by UTC date; today ET spans two
-        f = ROOT / "journal" / "runs" / f"{(datetime.now(timezone.utc) - _td(days=delta)).date().isoformat()}.jsonl"
+        f = ROOT / "journal" / "runs" / (
+            f"{(datetime.now(timezone.utc) - timedelta(days=delta)).date().isoformat()}.jsonl")
         if not f.exists():
             continue
         for line in f.read_text().splitlines():
@@ -48,11 +69,87 @@ def build_health() -> dict:
                 rec = json.loads(line)
             except json.JSONDecodeError:
                 continue
-            d = to_et_date(rec.get("ts"))
-            if d == et_date() and "halted" not in rec and not rec.get("manual"):
-                completed += 1
-                last_ts = rec.get("ts") or last_ts
-    missed = max(0, expected - completed)
+            if to_et_date(rec.get("ts")) != et_date():
+                continue
+            if "halted" in rec or rec.get("manual"):
+                continue
+            hour = _to_et_hour(rec.get("ts"))
+            if hour is None:
+                continue
+            out.append({"et_hour": round(hour, 2), "ts": rec.get("ts"),
+                        "run_id": rec.get("run_id"),
+                        # Older records predate node stamping (added 2026-07-20).
+                        "node": rec.get("node") or "unknown"})
+    return sorted(out, key=lambda r: r["et_hour"])
+
+
+def slot_report(now_h: float | None = None, weekday: bool | None = None) -> dict:
+    """PER-SLOT accounting: which scheduled slots actually produced a run today.
+
+    Replaces bare subtraction (expected − completed). That arithmetic could not name
+    WHICH slot was missed, and it silently miscounted whenever a slot fired twice: two
+    runs in the 9am slot and nothing at 10am netted to "0 missed". Per-slot matching
+    cannot be fooled that way — each run is consumed by at most one slot.
+
+    A slot's window is [slot − early_tolerance, min(slot + grace, next_slot)). Clamping
+    to the next slot matters because 9/10 and 16/17.5 sit closer together than the grace
+    period, so an ungated window would let one 9:55 run satisfy both the 9am and 10am
+    slots.
+    """
+    now = et_now()
+    if now_h is None:
+        now_h = now.hour + now.minute / 60
+    if weekday is None:
+        weekday = now.weekday() < 5
+    slots = expected_slots(weekday)
+    # Only runs that have actually happened by now_h. In production now IS now so this
+    # is a no-op, but it keeps the function honest under an explicit now_h (replaying a
+    # past heartbeat must not see runs from later in the day) and guards against a
+    # future-dated ts from clock skew silently satisfying a slot that never ran.
+    runs = [r for r in completed_runs_today() if r["et_hour"] <= now_h]
+    used: set[int] = set()
+    report = []
+    for i, slot in enumerate(slots):
+        nxt = slots[i + 1] if i + 1 < len(slots) else float("inf")
+        lo, hi = slot - SLOT_EARLY_TOLERANCE_H, min(slot + SLOT_GRACE_H, nxt)
+        hit = next((j for j, r in enumerate(runs)
+                    if j not in used and lo <= r["et_hour"] < hi), None)
+        label = f"{int(slot):02d}:{int(round((slot % 1) * 60)):02d}"
+        if hit is not None:
+            used.add(hit)
+            report.append({"slot": slot, "label": label, "status": "hit",
+                           "run_id": runs[hit]["run_id"], "node": runs[hit]["node"]})
+        elif now_h < hi:
+            # Still inside its window — not late yet, so not a miss.
+            report.append({"slot": slot, "label": label, "status": "pending"})
+        else:
+            report.append({"slot": slot, "label": label, "status": "missed"})
+    missed = [s["label"] for s in report if s["status"] == "missed"]
+    nodes = sorted({runs[j]["node"] for j in used}) if used else []
+    return {"slots": report, "missed_slots": missed,
+            "hit": len(used), "missed_count": len(missed),
+            "elapsed": sum(1 for s in report if s["status"] != "pending"),
+            "nodes_seen": nodes,
+            "unmatched_runs": [r["run_id"] for j, r in enumerate(runs) if j not in used]}
+
+
+def build_health() -> dict:
+    """Runs heartbeat: expected schedule slots so far today (ET) vs runs actually
+    journaled. A silently-dead pipeline (the plan-mode parse bug ran for DAYS
+    unnoticed) now shows up on the dashboard as missed runs instead of nothing."""
+    now = et_now()
+    weekday = now.weekday() < 5
+    now_h = now.hour + now.minute / 60
+    runs = completed_runs_today()
+    report = slot_report(now_h=now_h, weekday=weekday)
+    # `expected` counts slots whose window has CLOSED, not slots merely past their
+    # start time. The old version counted a slot as expected the instant the clock
+    # passed it, so the alarm reported a miss during the grace period it had itself
+    # granted, and every threshold was evaluated one slot early.
+    expected = report["elapsed"]
+    completed = len(runs)
+    last_ts = runs[-1]["ts"] if runs else None
+    missed = report["missed_count"]
     # Bundle-age alarm: the relay bundle is the cloud runs' data supply. If the
     # gatherers (GH Action / local relay) die, the bundle ages - warn well BEFORE
     # the 4h stale threshold so it gets fixed, not discovered after the fact.
@@ -73,8 +170,12 @@ def build_health() -> dict:
     except Exception:
         spend, dead = {}, {}
     status = "ok"
-    if missed > 1:
-        status = "DEGRADED - scheduled runs are being missed"
+    if missed:
+        # Every missed slot is a lost chance to enter, exit, or learn (user policy
+        # 2026-07-20), so ONE is already worth saying on the dashboard. The alarm's
+        # own paging threshold is separate and lives in scripts/heartbeat_check.py.
+        status = (f"DEGRADED - missed scheduled run(s): "
+                  f"{', '.join(report['missed_slots'])}")
     elif dead.get("empty"):
         # A run that completes and says nothing used to count as healthy.
         status = f"DEGRADED - {dead['note']}"
@@ -87,6 +188,14 @@ def build_health() -> dict:
         "expected_runs_so_far": expected,
         "completed_scheduled_runs": completed,
         "missed": missed,
+        # WHICH slots, not just how many — "missed 14:00" is actionable, "missed 1" is
+        # a number you have to go investigate before you can do anything with it.
+        "missed_slots": report["missed_slots"],
+        "slots": report["slots"],
+        # Which node(s) actually ran today. Run records carried no node identity until
+        # 2026-07-20, so a live cloud trader masked a completely dead local one and the
+        # aggregate count looked merely low rather than half-dead.
+        "nodes_seen": report["nodes_seen"],
         "bundle_age_hours": bundle_age_h,
         "last_scheduled_run_utc": last_ts,
         "learning_loop": learning,

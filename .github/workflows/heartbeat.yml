@@ -15,12 +15,23 @@ name: Heartbeat
 
 on:
   schedule:
-    # Twice during the session (14:30 and 20:30 UTC = 10:30 and 16:30 ET) — after
-    # the morning slots should have landed and after the close. Deliberately NOT
-    # every hour: an alarm that fires on routine cron jitter gets muted, and a
-    # muted alarm is worse than no alarm.
-    - cron: "30 14 * * 1-5"
-    - cron: "30 20 * * 1-5"
+    # HOURLY across the session, 10:00-23:00 UTC on weekdays.
+    #
+    # Was twice daily (14:30 and 20:30 UTC), on the reasoning that "an alarm that fires
+    # on routine cron jitter gets muted". The reasoning was right; the remedy was in the
+    # wrong dimension. Cron jitter is a TIME effect, so it is now absorbed by a per-slot
+    # one-hour grace window in runlib.analytics.slot_report — a late slot reads as
+    # "pending", not "missed". With jitter handled there, checking rarely buys nothing
+    # and costs everything: a 2pm slot that died was not reported until 16:30, by which
+    # point the trading opportunity it represented is gone.
+    #
+    # Hourly rather than seven slot-aligned crons because GitHub cron is UTC-only and
+    # the slots are defined in ET: fixed UTC times drift by an hour across DST, so
+    # slot-aligned entries would need doubling up and would still be wrong for the two
+    # weeks the US and the schedule disagree. The slot logic itself is timezone-aware,
+    # so a coarse hourly sweep is correct year-round — only the detection latency
+    # varies, and it is bounded at ~1h either way.
+    - cron: "0 10-23 * * 1-5"
   workflow_dispatch:
 
 permissions:
@@ -39,6 +50,9 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          # 14 runs a weekday now instead of 2; without the cache the dependency
+          # install dominates both the wall clock and the Actions bill.
+          cache: pip
 
       - name: Install dependencies
         run: pip install -r requirements.txt

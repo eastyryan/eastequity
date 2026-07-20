@@ -181,6 +181,10 @@ export type Latest = {
     expected_runs_so_far?: number;
     completed_scheduled_runs?: number;
     missed?: number;
+    /** ET labels of the slots that were missed, e.g. ["14:00"]. */
+    missed_slots?: string[];
+    /** Which execution node(s) actually ran today — a dead node is visible here. */
+    nodes_seen?: string[];
     bundle_age_hours?: number | null;
     status?: string;
   } | null;

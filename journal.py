@@ -43,8 +43,32 @@ def log_intent(order: dict, status: str, run_id: str) -> None:
     _write("intents", {"run_id": run_id, "status": status, "order": order})
 
 
+def node_id() -> str:
+    """Best-effort stable id for this execution node (cloud sandbox vs a Mac).
+
+    Mirrors runlib.preflight._node_id, deliberately duplicated rather than imported:
+    journal.py is a leaf module that everything writes through, and importing preflight
+    (which imports validator) would put a cycle under every journal write.
+    """
+    import os
+    import socket
+    if os.environ.get("EE_NODE"):
+        return os.environ["EE_NODE"]
+    try:
+        return socket.gethostname() or "unknown-node"
+    except Exception:
+        return "unknown-node"
+
+
 def log_run_summary(summary: dict, run_id: str) -> None:
-    _write("runs", {"run_id": run_id, **summary})
+    """One completed run.
+
+    `node` added 2026-07-20. Run records carried no execution identity, so the runs
+    heartbeat could only ask "did ANYONE run this slot?" — and a live cloud trader
+    masked a completely dead local one for eight days. The count looked low; nothing
+    said half the fleet was gone.
+    """
+    _write("runs", {"run_id": run_id, "node": node_id(), **summary})
 
 
 def log_improvement(note: str, run_id: str) -> None:

@@ -81,17 +81,31 @@ def test_a_holiday_is_not_a_missed_run(monkeypatch):
     assert hb.assess()["healthy"] is True
 
 
-def test_one_missed_slot_is_tolerated(monkeypatch):
+def test_one_missed_slot_now_pages(monkeypatch):
+    """POLICY REVERSED 2026-07-20. This test previously asserted that one missed slot
+    was TOLERATED, on the reasoning that GitHub coalesces cron under load and an alarm
+    firing on jitter gets muted. The reasoning was right and the remedy was in the wrong
+    dimension: a count threshold cannot distinguish a slot that is 20 minutes late from
+    one that never ran, so tolerating a count meant tolerating a death.
+
+    Jitter absorption moved to where it belongs — a per-slot one-hour grace window in
+    runlib.analytics.slot_report, pinned by tests/test_slot_report.py. A late slot now
+    reads 'pending' and never reaches this check at all. What arrives here as `missed`
+    has already had a full hour to land, and per user policy every missed slot is a lost
+    chance to enter, exit or learn.
+    """
     _no_capability_noise(monkeypatch)
     _force_trading_day(monkeypatch)
-    """GitHub coalesces cron under load (observed ~hourly on 2026-07-15). An alarm
-    that fires on routine jitter gets muted, and a muted alarm is worse than none."""
     monkeypatch.setattr("runlib.analytics.build_health",
                         lambda: {"missed": 1, "expected_runs_so_far": 7,
                                  "completed_scheduled_runs": 6,
+                                 "missed_slots": ["14:00"],
                                  "bundle_age_hours": 0.5})
     monkeypatch.setattr(hb, "ROOT", Path("/nonexistent"))
-    assert hb.assess()["healthy"] is True
+    out = hb.assess()
+    assert out["healthy"] is False
+    assert any("14:00" in r for r in out["reasons"]), \
+        "the alert must name WHICH slot died, not just how many"
 
 
 def test_a_stale_relay_bundle_trips_the_alarm(monkeypatch):

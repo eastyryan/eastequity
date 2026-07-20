@@ -149,10 +149,21 @@ def _read_remote_lease() -> dict | None:
 def acquire_cross_node_lease(run_id: str, cfg: dict, manual: bool = False) -> str | None:
     """Advisory cross-node lease over the shared ledger, arbitrated through git.
 
-    Returns a halt reason if another NODE holds an unexpired lease (scheduled runs
-    stand down; manual runs only warn), else None after claiming the lease. Fail-OPEN
+    Returns a halt reason if another NODE holds an unexpired lease, else None. Fail-OPEN
     on any git/parse error - the lease only prevents the clear double-trade case, it
-    must never prevent trading because of an infra hiccup."""
+    must never prevent trading because of an infra hiccup.
+
+    ASYMMETRIC BY DESIGN (2026-07-20, user policy): the CLOUD routine is the only
+    scheduled trader; local runs are hand-fired by the operator. So a manual run YIELDS
+    but never BLOCKS - it stands down when another node holds the lease, and it never
+    claims or pushes one of its own.
+
+    Before this, `manual` only skipped the stand-down, and then EVERY run fell through
+    to write/commit/push a 30-minute lease. A hand-fired local run therefore suppressed
+    the next scheduled cloud run - exactly backwards, and observed on 2026-07-20 when a
+    local catch-up run took the lease out from under the cloud trader mid-session. The
+    scheduled trader must always win. Scheduled runs keep the original claim-and-push
+    behaviour, which is what makes the stand-down meaningful in the first place."""
     rc = cfg.get("risk_controls", {})
     if not rc.get("cross_node_lease_enabled", True):
         return None
@@ -175,9 +186,16 @@ def acquire_cross_node_lease(run_id: str, cfg: dict, manual: bool = False) -> st
     conflict = _conflict(_read_remote_lease())
     if conflict:
         if manual:
-            print(f"  WARNING: {conflict} - proceeding anyway (manual run).")
-        else:
-            return f"{conflict} - standing down to avoid double-trading the ledger"
+            return (f"{conflict} - the scheduled trader holds the ledger; "
+                    f"re-run once it finishes")
+        return f"{conflict} - standing down to avoid double-trading the ledger"
+
+    if manual:
+        # Deliberately NO claim. A hand-fired run must never be able to make the
+        # scheduled cloud trader stand down. The conflict check above is the whole
+        # of a manual run's participation in the lease: it reads, it yields, it
+        # never writes.
+        return None
 
     # Claim the lease and push it so the other node can see it before it trades.
     lease = {"holder": _node_id(), "run_id": run_id, "acquired_at": now.isoformat(),
@@ -199,7 +217,7 @@ def acquire_cross_node_lease(run_id: str, cfg: dict, manual: bool = False) -> st
                     print("  (lease push race, rebase failed - proceeding fail-open)")
                     return None
                 conflict = _conflict(_read_remote_lease())
-                if conflict and not manual:
+                if conflict:  # manual runs never reach here - they return above
                     return f"lost the lease race: {conflict} - standing down"
                 subprocess.run(["git", "push", "origin", "main"], cwd=ROOT,
                                capture_output=True, timeout=120)

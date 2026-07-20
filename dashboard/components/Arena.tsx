@@ -189,7 +189,10 @@ function alertsFor(d: Latest): Alert[] {
 
   const h = d.health;
   if (h && (h.status ?? "ok") !== "ok") {
-    const missed = h.missed ? `${h.missed} missed · ` : "";
+    // Name the slots when we know them: "missed 14:00" is something you can act on,
+    // "1 missed" is a number you have to go investigate first.
+    const which = h.missed_slots?.length ? ` (${h.missed_slots.join(", ")} ET)` : "";
+    const missed = h.missed ? `${h.missed} missed${which} · ` : "";
     out.push({
       tone: "warn",
       label: "PIPELINE",
