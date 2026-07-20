@@ -87,6 +87,21 @@ from runlib.context_tiers import (
 
 load_env()
 
+
+def _should_mark_run_start(auto_depth: bool) -> bool:
+    """Whether this --gather-only invocation should push a run_started breadcrumb.
+
+    TRUE only for a cloud trading-ROUTINE gather. The hourly GitHub bundle-refresh
+    Action ALSO runs `orchestrator.py --gather-only --auto-depth`, so --auto-depth alone
+    cannot tell them apart — but GitHub Actions always sets GITHUB_ACTIONS in the
+    environment and the CCR routine sandbox does not. Marking on every bundle refresh
+    would scatter false "run started" records (~7/day) that no brain run backs, breaking
+    the died-vs-missed distinction the breadcrumb exists to draw.
+    """
+    import os
+    return bool(auto_depth) and not os.environ.get("GITHUB_ACTIONS")
+
+
 # ---------------------------------------------------------------------------
 # Backward-compatible private aliases (tests + older tools)
 # ---------------------------------------------------------------------------
@@ -378,6 +393,23 @@ def main() -> int:
         print(f"  (plan backfill skipped: {e})")
 
     if args.gather_only:
+        # Breadcrumb: mark that a trading-ROUTINE run has begun, BEFORE the heavy work.
+        # A run recorded nothing durable until log_run_summary at the very end, so a
+        # cloud session that died mid-run (context death, gather failure) left zero
+        # trace and looked identical to a fire that never happened (2026-07-20). This
+        # marks and pushes a run_started record so a death is visible and the watchdog
+        # can re-run the slot. GATED so ONLY the cloud routines mark, not the hourly
+        # GitHub bundle-refresh Action which also runs `--gather-only --auto-depth`:
+        # GitHub always sets GITHUB_ACTIONS, the CCR routine sandbox does not. Entirely
+        # fail-open — a breadcrumb must never be the reason a run does not run.
+        if _should_mark_run_start(args.auto_depth):
+            try:
+                import subprocess as _sp
+                _sp.run([sys.executable, str(ROOT / "scripts" / "mark_run_start.py")],
+                        cwd=str(ROOT), capture_output=True, timeout=180)
+            except Exception as e:
+                print(f"  (run-start marker skipped: {e})")
+
         # Pure data collection (used by the relay/Action): no preflight gates,
         # no lock, no budget - it must work on weekends and holidays too.
         if cfg["mode"]["trading_mode"] != "dry_run":
