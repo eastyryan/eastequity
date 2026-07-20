@@ -29,7 +29,32 @@
       "rebuilt_from_journal": "2026-07-19",
       "times_cited": 2,
       "last_cited": "2026-07-19T20:37:27.350128+00:00"
+    },
+    {
+      "id": "KB-1223831607",
+      "discipline": "risk_management",
+      "topic": "Correlation-adjusted position sizing: co-moving names are one bet (the effective-number-of-bets collapse), not many, and why that governs portfolio heat and the theme-risk cap",
+      "summary": "Diversification by COUNT is an illusion; only diversification by uncorrelated risk FACTORS reduces risk. For N equally-sized positions each with volatility sigma and pairwise correlation rho, portfolio volatility is sigma*sqrt([1+(N-1)*rho]/N): at rho=0 that is sigma/sqrt(N) (full benefit), but at rho->1 it goes to sigma, i.e. the N positions behave as ONE. The clean summary statistic is the effective number of independent bets, N_eff ~= N/[1+(N-1)*rho]; two names at rho~0.85 give N_eff~1.08 -- essentially a single bet. That is exactly my realized loss history: DELL and HPE were two tickers on ONE hyperscaler_server_capex driver, so a Meta-overbuild headline took both out at once, and my '2 positions' were 1 correlated bet the whole time. Attilio Meucci's Effective Number of Bets (exponential Shannon entropy of the diversification distribution) makes the same point formally: hidden correlation makes a book that LOOKS like N holdings act like ~1 exposure to one factor, and PCA can even hide this (minimum-torsion/factor framing is needed to see it). The Turtle system encoded the practitioner version as hard unit caps -- 4 units single market, 6 closely-correlated, 10 loosely, 12 in one direction -- precisely so a cluster of correlated trades could not become one oversized bet. Two cautions from the sources: (1) correlations RISE toward 1 in exactly the tail shock you are stopping for, so a benign-looking rho understates joint downside; (2) correlated stops fire and GAP together",
+      "key_points": [
+        "Portfolio vol for N equal positions = sigma*sqrt([1+(N-1)*rho]/N); as rho->1 the whole book collapses to one position's risk. Two 20%-vol names equal-weight: 14.1% vol at rho=0 vs 20% at rho=1 -- the entire benefit is gone.",
+        "Effective number of independent bets N_eff ~= N/[1+(N-1)*rho]; two names at rho~0.85 = ~1.08 bets. DELL+HPE was arithmetically one bet, and it is my only realized-loss cluster.",
+        "The diagnostic question (per practitioners): 'what single event would make most of my open positions lose at once?' If positions co-move >~0.7 or share a demand_driver, they are ONE bet regardless of ticker count or GICS label.",
+        "Meucci's ENB / diversification ratio: count-based diversification is meaningless; only exposure to uncorrelated factors counts, and hidden correlation can make an apparently-diversified book a concentrated one-factor bet.",
+        "Turtle caps (4 single / 6 closely-correlated / 10 loosely / 12 one direction units) are the practitioner encoding of 'do not let correlated trades stack into one oversized bet.'",
+        "Tail behavior is worse than the average rho suggests: correlations spike toward 1 in a shock, and correlated stops fire and gap together -- so sizing, not the stop, is the defense against a correlated gap-through (DELL filled ~4.5% past its stop).",
+        "Honesty check: a common 'effective risk = risk*sqrt(N*rho)' blog example (6x1% at 0.85 -> 13.6%) is inconsistent -- combined risk cannot exceed the sum of parts; use the portfolio-variance identity instead."
+      ],
+      "how_to_apply": "Before any BUY, run the one-bet test using portfolio_risk and the demand_driver_map: if the candidate shares a holding's demand_driver OR shows corr_to_book > ~0.7, treat it as ADDING to an existing bet, not opening a new one -- size the pair against the THEME RISK <= 2% cap as a single position, never as two independent 1% risks (this is the DELL+HPE lesson made quantitative). When shared_left_tail is true, actively prefer a low/negative corr_to_book diversifier (diversifier=true) over a higher-conviction clone of what I already own, because at book level the clone adds almost no independent bet. Cite the actual number ('~0.85 correlated to DELL, N_eff ~1.1, so this is one hyperscaler_server_capex bet in two tickers'), not a vibe, and let the factor-stack cap / factor_response gate do its job rather than relabeling a name into a cheaper theme bucket. Because correlations rise and stops gap together in the exact shock I am stopped for, on a correlated add I size on realized (gap-adjusted) risk -- lean to ~1.3-1.5R of modelled slippage and toward the lower end of size -- rather than assuming the stop caps the loss. Net rule: diversify by demand_driver, not by ticker count; if I cann",
+      "sources": [
+        "Portfolio variance identity and two-asset diversification: https://bookdown.org/compfinezbook/introcompfinr/Portfolios-of-Two-Risky-Assets.html and https://www.wallstreetoasis.com/resources/skills/finance/portfolio-variance",
+        "Attilio Meucci, 'Managing Diversification' (Effective Number of Bets): https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1358533 ; Portfolio Optimizer explainer: https://portfoliooptimizer.io/blog/the-effective-number-of-bets-measuring-portfolio-diversification/",
+        "Original Turtle Trading Rules (correlated-unit caps 4/6/10/12): https://www.tradingwithrayner.com/wp-content/uploads/2014/11/OriginalTurtleRules.pdf",
+        "Correlated stops fire/gap together; sizing (not stops) is the defense against gap risk: https://internationaltradinginstitute.com/blog/dynamic-position-sizing-and-risk-management-in-volatile-markets/ and https://eliteforextrading.com/gap-risk-in-forex/",
+        "Practitioner framing that correlated positions are one bet, with a cross-check that the 'sqrt(N*rho)' example is internally inconsistent: https://education.signalpilot.io/curriculum/intermediate/46-advanced-risk-management.html"
+      ],
+      "learned_at": "2026-07-20T23:57:11.414654+00:00",
+      "run_id": "20260720-a8b14c"
     }
   ],
-  "updated_at": "2026-07-19T20:37:27.350130+00:00"
+  "updated_at": "2026-07-20T23:57:11.414660+00:00"
 }

@@ -421,6 +421,10 @@
   "forced_exits": [],
   "improvements": [
     {
+      "date": "2026-07-20",
+      "note": "Daily study (risk_management): Correlation-adjusted position sizing: co-moving names are one bet (the effective-number-of-bets collapse), not many, and why that governs portfolio heat and the theme-risk cap - Diversification by COUNT is an illusion; only diversification by uncorrelated risk FACTORS reduces risk. For N equally-sized positions each with volatility sigma and pairwise correlation rho, portfoli"
+    },
+    {
       "date": "2026-07-19",
       "note": "Dynamic universe add: ['CVS', 'MPC'] (186 names). Proposed from the market-wide radar; tradeable from the next run."
     },
@@ -535,10 +539,6 @@
     {
       "date": "2026-07-09",
       "note": "** The context bundle gives me valuation and price/momentum but no consensus estimates or forward revenue-growth figures, so I'm forced to lean on trailing fundamentals plus headline sentiment when judging whether a rich multiple (ANET at 41x, ALAB at 97x) is justified. Adding forward revenue-growth and EPS-revision (analyst estimate trend) fields per candidate would materially sharpen the \"is this multiple deserved\" call and reduce reliance on qualitative news vibes \u2014 the single biggest lever on proposal quality this run."
-    },
-    {
-      "date": "2026-07-09",
-      "note": "** The context bundle deep-researches only the top-5 by deterministic score, but two of those five (TXN, AMD) are effectively un-actionable this run because of earnings timing (7/22) or a same-day news gap \u2014 meaning I burned my richest data (filings, 13F, news) on names I won't trade, while candidates like HPE and CRDO that I'm actively weighing had only a price and momentum row. Adding a `next_earnings` field and a `days_to_earnings` flag directly into the `universe_scan.top_setups` rows (not just the news block), plus expanding SEC/news enrichment to the top 8 rather than top 5, would let me screen out earnings-binary setups before spending research budget and give me fundamentals on the names I actually end up considering."
     }
   ],
   "trade_events": [
