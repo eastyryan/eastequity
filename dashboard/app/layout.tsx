@@ -33,6 +33,9 @@ export const metadata: Metadata = {
   title: "East Equity Agent",
   description:
     "A fully transparent AI swing-trading agent. Long-only equities in the AI supply chain, every decision published with full reasoning.",
+  // The label under the icon when the site is saved to an iOS home screen —
+  // without it iOS truncates the full <title>.
+  appleWebApp: { title: "East Equity" },
 };
 
 // Runs before first paint so the stored theme is on <html> by the time anything
