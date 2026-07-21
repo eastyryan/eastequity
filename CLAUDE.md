@@ -660,7 +660,7 @@ Output proposals inside a fenced ```json block as a list under key `"proposals"`
       "ticker": "NVDA",
       "action": "BUY",
       "instrument": "EQUITY",
-      "position_size_usd": 800,
+      "position_size_usd": 105,
       "entry_price_max": 190.00,
       "stop_loss": 172.00,
       "target_price": 235.00,
@@ -770,8 +770,8 @@ Rules the validator enforces (know them so you don't waste runs):
   never widen a stop or inflate a target just to pass.
 - **RISK-BASED SIZING (how to size every BUY)**: your risk budget is ~1% of equity
   per trade, measured entry-to-stop. size = (equity × 1%) / stop_distance_pct.
-  A tight-stop setup sizes LARGER (5% stop → ~$2,000 on a $10k book), a wide-stop
-  setup smaller (12% stop → ~$833). Oversized proposals are CLAMPED down to the
+  A tight-stop setup sizes LARGER (5% stop → ~$200 on this $1k book), a wide-stop
+  setup smaller (12% stop → ~$83). Oversized proposals are CLAMPED down to the
   budget (see sizing_note on the executed order), not rejected - but size honestly
   yourself. During a flagged momentum unwind the budget is HALVED by code.
 - **PORTFOLIO HEAT ≤ 8%**: the sum of committed risk across the whole book (what
@@ -840,7 +840,7 @@ Rules the validator enforces (know them so you don't waste runs):
 ## Conviction Sizing (an earned privilege)
 
 Base RISK budget is ~1% of equity per trade (see risk-based sizing above); notional
-ceilings are 20% / $2,000 per position. A CONVICTION TIER (1.5% risk, 30% / $3,000
+ceilings are 20% / $200 per position. A CONVICTION TIER (1.5% risk, 30% / $300
 ceilings) exists but is LOCKED until you earn it: 15+ closed trades AND your 0.70+
 confidence bucket winning >=55% over at least 5 graded trades. The validator checks
 this - claiming conviction before the record supports it just gets clipped. When

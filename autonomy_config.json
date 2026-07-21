@@ -73,16 +73,16 @@
     "reject_intraday_language": true
   },
   "position_sizing": {
-    "starting_capital_usd": 10000,
+    "starting_capital_usd": 1000,
     "max_position_pct_of_portfolio": 0.2,
-    "max_position_usd": 2000,
-    "_notional_cap_note": "Notional ceilings only. Risk-based sizing below is the binding constraint: a tight-stop setup may size up to these ceilings for the same 1% risk; a wide-stop setup sizes well under them. Raised from 10%/$1000 when risk-based sizing landed (2026-07-16).",
+    "max_position_usd": 200,
+    "_notional_cap_note": "Notional ceilings only. Risk-based sizing below is the binding constraint: a tight-stop setup may size up to these ceilings for the same 1% risk; a wide-stop setup sizes well under them. Raised from 10%/$1000 when risk-based sizing landed (2026-07-16). Rebased 10x DOWN on 2026-07-21 when the book was restated from a $10,000 start to a $1,000 start: every percentage stays identical, only the notional ceilings moved ($2000 -> $200, conviction $3000 -> $300, min clamp $200 -> $20). See _fractional_stop_note below — the smaller book changes what the broker can protect.",
     "risk_based_sizing": {
       "enabled": true,
       "risk_per_trade_pct": 0.01,
       "portfolio_heat_cap_pct": 0.08,
       "theme_initial_risk_cap_pct": 0.02,
-      "min_clamped_position_usd": 200,
+      "min_clamped_position_usd": 20,
       "momentum_unwind_risk_scale": 0.5,
       "_note": "Van Tharp / Elder / Turtle framework (research 2026-07-16, user-approved). Every BUY risks at most risk_per_trade_pct of equity measured entry-to-stop; the validator CLAMPS oversized proposals down to the risk budget rather than rejecting. Portfolio heat = sum over open positions of entry-basis committed risk max(0,(avg_cost-stop)*qty)/equity; new BUYs are rejected past portfolio_heat_cap_pct (user chose 8%; literature 6-10%). Theme cap: committed initial risk sharing one demand_driver <= theme_initial_risk_cap_pct. Entry-basis heat means trailed stops above cost free the budget (pyramiding into winners stays possible). momentum_unwind_risk_scale halves the risk budget when momentum_health flags an unwind."
     },
@@ -100,12 +100,13 @@
       "unlocked_after_closed_trades": 15,
       "required_high_conf_bucket_win_rate_pct": 55,
       "max_position_pct_of_portfolio": 0.3,
-      "max_position_usd": 3000,
+      "max_position_usd": 300,
       "risk_per_trade_pct": 0.015,
       "min_confidence": 0.75,
       "requires_conviction_case": true,
       "_note": "When earned, conviction raises the RISK budget to 1.5% (and the notional ceilings accordingly); base tier stays 1%."
-    }
+    },
+    "_fractional_stop_note": "CONSEQUENCE OF THE $1,000 BOOK, measured 2026-07-21 against the live 187-name universe. Alpaca carries fractional quantities only with time_in_force=day, so a GTC stop needs a whole-share leg (execution/alpaca_broker.py, MIN_WHOLE_SHARES_FOR_LIMIT=4 and _resting stop arming). At a $1,429 position (the $10,000 book) 69.5% of the universe got a full exchange-held GTC stop attached at entry and only 2.1% fell under one share. At a $143 position (this book) those become 3.2% and 72.2%: most entries are now sub-one-share, so their protective stop is a DAY order that expires at the close and is re-armed by scripts/stop_watch.py on the Actions cron. Intraday protection is a real resting broker order and is essentially unchanged; what is lost is the overnight/weekend leg, where the exit now depends on the poller's next tick rather than the opening print. Accepted deliberately: the gap risk is real but denominated in single-digit dollars at this size. Do NOT read a low whole-share count as a reason to skip a setup."
   },
   "trade_quality_requirements": {
     "required_proposal_fields": [

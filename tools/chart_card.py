@@ -29,7 +29,7 @@ BASELINE = "#c9c8c1"
 CHIP = "#ffffff"
 CHIP_BORDER = "#e4e3dd"
 PILL_INK = "#141413"
-START = 10000.0
+START = 1000.0
 
 
 def _fmt_date(d: str) -> str:

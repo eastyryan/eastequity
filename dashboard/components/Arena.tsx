@@ -15,7 +15,7 @@ import ArenaStudyHall, { type LearningJournal } from "./ArenaStudyHall";
 // fell back to its server-rendered props anyway. Removed rather than left to
 // fail on every load. Freshness already works without it: a trading run commits
 // latest.json without a [vercel skip] marker, which redeploys this page.
-const START = 10000;
+const START = 1000;
 const GREEN = "var(--ee-up)";
 const RED = "var(--ee-down)";
 

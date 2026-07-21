@@ -21,9 +21,21 @@ import validator as _validator  # noqa: E402
 from execution import simulated_broker as _sb  # noqa: E402
 
 
+# The account size every sizing test was written against. Pinned here so the
+# assertions below ($1250 clamp, $2000 ceiling, $625 halved budget, $200 floor)
+# describe the MATH rather than whatever capital the operator currently runs.
+_TEST_BOOK = {
+    "starting_capital_usd": 10000,
+    "max_position_usd": 2000,
+    "min_clamped_position_usd": 200,
+    "conviction_max_position_usd": 3000,
+}
+
+
 @pytest.fixture(autouse=True)
 def _isolate_kill_switch(tmp_path, monkeypatch):
-    """The suite must not read the OPERATOR's live state/KILL_SWITCH.
+    """The suite must not read the OPERATOR's live state/KILL_SWITCH or their
+    live account size.
 
     validate_proposals short-circuits the entire batch to KILL_SWITCH_ACTIVE, so
     engaging the switch — a legitimate production action, and exactly what you do
@@ -33,6 +45,15 @@ def _isolate_kill_switch(tmp_path, monkeypatch):
 
     Redirects the CONFIG path rather than stubbing kill_switch_active(), so the real
     predicate still runs and tests can exercise it by touching the temp file.
+
+    POSITION SIZING is pinned for the same reason (2026-07-21). The sizing suites
+    hardcode a $10,000 fixture book (`pf()` in test_risk_sizing.py) but read the
+    LIVE config for the notional ceilings, so they were asserting a $10k book
+    against whatever cap production happened to carry. Restating the book from a
+    $10,000 start to a $1,000 start turned 12 tests red and errored 20 more —
+    every one of them a false alarm about arithmetic that had not changed. The
+    operator's capital is a deployment fact; the clamp math is what these tests
+    exist to protect, so they now own their own book.
     """
     real_load_config = _validator.load_config
     switch = tmp_path / "KILL_SWITCH"
@@ -40,6 +61,13 @@ def _isolate_kill_switch(tmp_path, monkeypatch):
     def _test_config():
         cfg = real_load_config()
         cfg.setdefault("risk_controls", {})["kill_switch_file"] = str(switch)
+        ps = cfg.setdefault("position_sizing", {})
+        ps["starting_capital_usd"] = _TEST_BOOK["starting_capital_usd"]
+        ps["max_position_usd"] = _TEST_BOOK["max_position_usd"]
+        ps.setdefault("risk_based_sizing", {})["min_clamped_position_usd"] = (
+            _TEST_BOOK["min_clamped_position_usd"])
+        ps.setdefault("conviction_tier", {})["max_position_usd"] = (
+            _TEST_BOOK["conviction_max_position_usd"])
         return cfg
 
     monkeypatch.setattr(_validator, "load_config", _test_config)
