@@ -992,9 +992,12 @@ def main() -> int:
         except Exception as e:
             print(f"  (mark-to-market failed: {e})")
     context["portfolio"] = get_portfolio_state()
-    refresh_dashboard(context, response, results, fills, run_id, no_trade_reason,
-                      parsed["commentary"], parsed["watchlist"])
-    draft_x_summary(fills, results, context, run_id, parsed.get("x_post"))
+    # Log THIS run's summary BEFORE building the dashboard. refresh_dashboard embeds
+    # build_health() -> slot_report(), which grades slots by reading the run journal;
+    # if the summary is logged afterward the current slot has no journal record yet and
+    # publishes as "pending" on the very dashboard this run generates (the 2pm-slot-shows-
+    # pending bug). Logging first also makes the durable "this run happened" record
+    # independent of refresh_dashboard succeeding.
     journal.log_run_summary({
         "manual": args.manual,
         "trigger_run": args.trigger_run or None,
@@ -1005,6 +1008,9 @@ def main() -> int:
         "process_audit": parsed.get("process_audit"),
         "rejected_ideas": parsed.get("rejected_ideas") or [],
     }, run_id)
+    refresh_dashboard(context, response, results, fills, run_id, no_trade_reason,
+                      parsed["commentary"], parsed["watchlist"])
+    draft_x_summary(fills, results, context, run_id, parsed.get("x_post"))
     redeploy_dashboard()
     print("Done.")
     return 0
