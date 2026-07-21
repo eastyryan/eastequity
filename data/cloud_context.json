@@ -3,34 +3,35 @@
   "_tier_note": "SLIM brain pack, ordered so everything BINDING is inside the first ~2000 lines \u2014 the default Read window. Keys appear in decision order: limits, digest, factor_map, portfolio_competition, reasoning_process (learning_pack), book, then research detail. Research maps below are structurally capped; every cap stamps a `_trimmed` note naming what it dropped. Full archive: full_context_path.",
   "_pack_budget": {
     "note": "Measured line budget for this pack. Your Read tool returns ~2000 lines by default; anything starting past that is NOT read unless you page to it with Read(offset=N). Every input that can BLOCK a proposal is above that line by construction, so a default Read is sufficient to answer every gate. The entries below are what you did NOT get \u2014 page to them when a name matters.",
-    "total_lines": 30299,
+    "total_lines": 30407,
     "read_window_lines": 2000,
     "keys_beyond_read_window": [
-      "track_record@2026",
-      "ownership_flow@2213",
-      "earnings_deep_dive@2532",
-      "lessons_learned@2536",
-      "position_histories@2549",
-      "market_news@2553",
-      "market_radar@2737",
-      "universe_scan@2997",
-      "sec_filings@13354",
-      "deep_fundamentals@17935",
-      "filing_texts@22778",
-      "filing_texts_note@22972",
-      "news_and_catalysts@22973",
-      "insider_activity@24047",
-      "smart_money_13f@26755",
-      "options_signals@26984",
-      "partnerships@28535",
-      "guidance_ledger@28764",
-      "fundamental_screen@28765",
-      "todays_8ks@28977",
-      "stack_cards@28997",
-      "financial_checklists@29240",
-      "concept_memory@29813",
-      "discovery_screen@30295",
-      "market_checkin@30298"
+      "portfolio_risk@2011",
+      "track_record@2049",
+      "ownership_flow@2236",
+      "earnings_deep_dive@2555",
+      "lessons_learned@2559",
+      "position_histories@2572",
+      "market_news@2576",
+      "market_radar@2755",
+      "universe_scan@3015",
+      "sec_filings@13372",
+      "deep_fundamentals@17953",
+      "filing_texts@22796",
+      "filing_texts_note@22990",
+      "news_and_catalysts@22991",
+      "insider_activity@24065",
+      "smart_money_13f@26773",
+      "options_signals@27002",
+      "partnerships@28650",
+      "guidance_ledger@28872",
+      "fundamental_screen@28873",
+      "todays_8ks@29085",
+      "stack_cards@29105",
+      "financial_checklists@29348",
+      "concept_memory@29921",
+      "discovery_screen@30403",
+      "market_checkin@30406"
     ],
     "trimmed": [
       "reasoning_process.price_freshness: sample cut to 5 of 12 rows",
@@ -42,15 +43,15 @@
     ],
     "withheld_by_design": [],
     "unregistered_keys": [],
-    "full_archive": "/Users/eastonryan/east-equity-agent/state/context_full_20260720-df8d55.json"
+    "full_archive": "/Users/eastonryan/east-equity-agent/state/context_full_20260721-24db74.json"
   },
-  "run_date": "2026-07-21T03:55:48.834893+00:00",
-  "as_of_et": "2026-07-20",
+  "run_date": "2026-07-21T08:23:22.381568+00:00",
+  "as_of_et": "2026-07-21",
   "trading_mode": "paper",
   "run_depth": "full",
   "run_depth_note": "Full research cycle: entire trading universe scanned, multi-lane setups, deep research on focus + promoted fat pitches.",
   "allows_new_buys": true,
-  "full_context_path": "/Users/eastonryan/east-equity-agent/state/context_full_20260720-df8d55.json",
+  "full_context_path": "/Users/eastonryan/east-equity-agent/state/context_full_20260721-24db74.json",
   "hard_limits": {
     "note": "SINGLE SOURCE OF TRUTH for every threshold the validator enforces, read live from autonomy_config.json this run. Any number quoted in CLAUDE.md prose is DESCRIPTIVE \u2014 when the two disagree, these values win, because these are the ones the code actually checks. (CLAUDE.md stated RR >= 1.0 for two days after the floor was raised to 2.0 on 2026-07-16, so every proposal built against the prose was rejected on arrival.)",
     "effective_max_position_usd": 1963.9,
@@ -447,7 +448,7 @@
         "rel_strength_1m_pct": -3.0,
         "rsi_14": 40.8,
         "macd_state": "above_zero",
-        "volume_read": "no_supply_pullback",
+        "volume_read": "neutral",
         "ai_exposure": "ai_beneficiary",
         "insider_signal": "bullish_cluster_buying",
         "insider_distinct_buyers": 3,
@@ -652,10 +653,10 @@
     "theme_exposure": [],
     "theme_concentration_cap_pct": 0.35,
     "price_freshness": {
-      "bundle_as_of_et": "2026-07-20",
-      "bundle_run_utc": "2026-07-21T03:55:48.958286+00:00",
+      "bundle_as_of_et": "2026-07-21",
+      "bundle_run_utc": "2026-07-21T08:23:22.497189+00:00",
       "note": "Prefer universe_scan.prices_meta[T].price_as_of (bar session date) over bundle age alone. On catalyst days, verify live before chasing a trigger on a lagging close.",
-      "scan_fetched_at_utc": "2026-07-21T03:51:05.022989+00:00",
+      "scan_fetched_at_utc": "2026-07-21T04:51:06.451708+00:00",
       "prices_meta_sample": {
         "OKTA": {
           "last_close": 148.41,
@@ -684,7 +685,7 @@
         }
       },
       "n_priced": 186,
-      "bars_older_than_et_today": 0,
+      "bars_older_than_et_today": 186,
       "_trimmed": "prices_meta_sample cut to 5 of 12 illustrative rows. This is a sample, not the source: per-ticker freshness is in universe_scan.prices_meta[TICKER].price_as_of. Aggregates above (n_priced, bars_older_than_et_today) cover the whole set."
     },
     "demand_driver_map_note": "Primary economic bet per ticker (not GICS). Use these labels in proposal.demand_driver. Theme cap is separate from sector cap.",
@@ -710,7 +711,7 @@
           "price_when_added": 344.86,
           "latest_price": 341.3,
           "would_buy_at": "A reclaim of the 20-DMA (~$360) on above-average volume, or a confirmed higher low holding above $345-348.",
-          "one_line": "Beat-and-raise the market sold anyway -- about a point from my reclaim trigger, worth checking first thing tomorrow.",
+          "one_line": "About a point below my reclaim trigger, unchanged tonight -- proximity is not confirmation.",
           "first_watched": "2026-07-20",
           "hit_date": "2026-07-20",
           "dropped_date": null,
@@ -726,7 +727,7 @@
           "price_when_added": 206.41,
           "latest_price": 198.49,
           "would_buy_at": "An actual confirmed MACD bull cross alongside a higher low above $195 -- not just price crossing the level.",
-          "one_line": "Price hit my level today but the technical confirmation I actually wanted -- a MACD bull cross -- did not happen.",
+          "one_line": "Price crossed my level again but the MACD bull cross I actually want still has not printed.",
           "first_watched": "2026-07-14",
           "hit_date": "2026-07-20",
           "dropped_date": "2026-07-14",
@@ -1100,20 +1101,20 @@
         }
       },
       "demand_driver_map_focus": {
-        "ADBE": "software_platforms",
-        "GS": "broad_market",
-        "OKTA": "cybersecurity",
-        "DDOG": "software_platforms",
-        "BSX": "healthcare",
-        "NET": "software_platforms",
-        "AXON": "broad_market",
-        "CRWD": "cybersecurity",
-        "FTNT": "cybersecurity",
-        "S": "cybersecurity",
         "PANW": "cybersecurity",
+        "S": "cybersecurity",
+        "OKTA": "cybersecurity",
+        "AXON": "broad_market",
+        "ADBE": "software_platforms",
+        "CRWD": "cybersecurity",
         "ZS": "cybersecurity",
+        "AMD": "ai_compute_gpu",
+        "NET": "software_platforms",
+        "DDOG": "software_platforms",
         "SMR": "datacenter_power",
-        "AMD": "ai_compute_gpu"
+        "FTNT": "cybersecurity",
+        "BSX": "healthcare",
+        "GS": "broad_market"
       },
       "_deduped": "process_checklist, theme_exposure, theme_concentration_cap_pct, price_freshness, demand_driver_map_note and watchlist_feedback live one level up on reasoning_process \u2014 not repeated here."
     }
@@ -1261,7 +1262,7 @@
         "filled_at": "2026-07-17T18:20:41.642195+00:00"
       }
     ],
-    "broker_synced_at": "2026-07-21T03:50:08.924019+00:00",
+    "broker_synced_at": "2026-07-21T04:50:09.832043+00:00",
     "broker_backend": "alpaca_paper"
   },
   "stop_engineering": {
@@ -1269,49 +1270,49 @@
     "floors": {
       "OKTA": {
         "atr_pct": 5.85,
-        "expected_move_pct": 9.48,
+        "expected_move_pct": 9.67,
         "min_stop_distance_pct": 5.85,
         "tradeable": true
       },
       "PANW": {
         "atr_pct": 5.36,
-        "expected_move_pct": 8.71,
+        "expected_move_pct": 9.86,
         "min_stop_distance_pct": 5.36,
         "tradeable": true
       },
       "S": {
         "atr_pct": 5.52,
-        "expected_move_pct": 8.48,
+        "expected_move_pct": 9.25,
         "min_stop_distance_pct": 5.52,
         "tradeable": true
       },
       "CRWD": {
         "atr_pct": 5.72,
-        "expected_move_pct": 9.95,
+        "expected_move_pct": 10.61,
         "min_stop_distance_pct": 5.72,
         "tradeable": true
       },
       "DDOG": {
         "atr_pct": 5.38,
-        "expected_move_pct": 10.4,
+        "expected_move_pct": 10.47,
         "min_stop_distance_pct": 5.38,
         "tradeable": true
       },
       "AXON": {
         "atr_pct": 6.77,
-        "expected_move_pct": 10.36,
+        "expected_move_pct": 8.83,
         "min_stop_distance_pct": 6.77,
         "tradeable": true
       },
       "ZS": {
         "atr_pct": 5.48,
-        "expected_move_pct": 8.98,
+        "expected_move_pct": 8.58,
         "min_stop_distance_pct": 5.48,
         "tradeable": true
       },
       "ADBE": {
         "atr_pct": 3.9,
-        "expected_move_pct": 7.16,
+        "expected_move_pct": 7.39,
         "min_stop_distance_pct": 3.9,
         "tradeable": true
       },
@@ -1323,31 +1324,31 @@
       },
       "BSX": {
         "atr_pct": 3.51,
-        "expected_move_pct": 9.88,
-        "min_stop_distance_pct": 4.94,
+        "expected_move_pct": 9.82,
+        "min_stop_distance_pct": 4.91,
         "tradeable": true
       },
       "NET": {
         "atr_pct": 5.1,
-        "expected_move_pct": 8.88,
+        "expected_move_pct": 9.86,
         "min_stop_distance_pct": 5.1,
         "tradeable": true
       },
       "FTNT": {
         "atr_pct": 4.28,
-        "expected_move_pct": 14.45,
-        "min_stop_distance_pct": 7.22,
+        "expected_move_pct": 14.12,
+        "min_stop_distance_pct": 7.06,
         "tradeable": true
       },
       "GS": {
         "atr_pct": 3.53,
-        "expected_move_pct": 5.03,
+        "expected_move_pct": 5.36,
         "min_stop_distance_pct": 3.53,
         "tradeable": true
       },
       "AMD": {
         "atr_pct": 7.8,
-        "expected_move_pct": 9.93,
+        "expected_move_pct": 10.9,
         "min_stop_distance_pct": 7.8,
         "tradeable": true
       }
@@ -1383,7 +1384,7 @@
   },
   "macro_regime": {
     "status": "ok",
-    "as_of": "2026-07-20",
+    "as_of": "2026-07-21",
     "indicators": {
       "fed_funds_rate": {
         "latest": 3.63,
@@ -1469,19 +1470,19 @@
   "market_events": {
     "note": "commodities via yfinance (CL=F/USO, GC=F/GLD, ^VIX/VIXY, DX-Y.NYB/UUP); flags from keyword classification of market_news headlines \u2014 heuristic tags, not a risk model",
     "status": "ok",
-    "as_of": "2026-07-21T03:50:08.928219+00:00",
+    "as_of": "2026-07-21T04:50:09.836102+00:00",
     "commodities": {
       "oil": {
         "symbol": "CL=F",
-        "last": 82.23,
-        "pct_1d": -0.32,
-        "pct_5d": 5.23
+        "last": 82.11,
+        "pct_1d": -1.35,
+        "pct_5d": 3.49
       },
       "gold": {
         "symbol": "GC=F",
-        "last": 4048.6001,
-        "pct_1d": 0.89,
-        "pct_5d": 1.29
+        "last": 4051.1001,
+        "pct_1d": 1.02,
+        "pct_5d": -0.25
       },
       "vix": {
         "symbol": "^VIX",
@@ -1491,59 +1492,81 @@
       },
       "dxy": {
         "symbol": "DX-Y.NYB",
-        "last": 100.973,
-        "pct_1d": 0.22,
-        "pct_5d": -0.3
+        "last": 100.946,
+        "pct_1d": -0.04,
+        "pct_5d": 0.01
       }
     },
     "flags": {
       "counts": {
-        "geopolitical": 4,
-        "inflation_rates": 0,
+        "geopolitical": 6,
+        "inflation_rates": 1,
         "financial_stress": 0,
         "sector_macro": 1
       },
       "active": [
         "geopolitical",
+        "inflation_rates",
         "sector_macro"
       ],
-      "n_flagged": 5
+      "n_flagged": 8
     },
     "flagged_headlines": [
       {
-        "title": "Intel Launches Fresh Layoffs in Data Center and AI Unit Ahead of Earnings as Lip-Bu Tan Pushes Turnaround Strategy",
-        "tags": [
-          "sector_macro"
-        ],
-        "age_hours": 0.3
-      },
-      {
-        "title": "U.S. condemns China's 'dangerous and aggressive' acts after Philippine sailor injured at disputed shoal",
+        "title": "Trump Hits Canada With 50% Tariffs on Wine, Cement \u2014 Prediction Market Punters See Odds of Trade Deal Fading",
         "tags": [
           "geopolitical"
         ],
         "age_hours": 0.4
       },
       {
+        "title": "Inflation fears are back in the spotlight as the Middle East conflict keeps oil prices elevated, analysts say",
+        "tags": [
+          "inflation_rates"
+        ],
+        "age_hours": 0.8
+      },
+      {
+        "title": "John Bolton Says Revolutionary Guards 'Calling the Shots' in Iran: Calls For US to 'Flatten' IRGC Amid Regime Change Push",
+        "tags": [
+          "geopolitical"
+        ],
+        "age_hours": 0.8
+      },
+      {
+        "title": "Intel Launches Fresh Layoffs in Data Center and AI Unit Ahead of Earnings as Lip-Bu Tan Pushes Turnaround Strategy",
+        "tags": [
+          "sector_macro"
+        ],
+        "age_hours": 1.3
+      },
+      {
+        "title": "U.S. condemns China's 'dangerous and aggressive' acts after Philippine sailor injured at disputed shoal",
+        "tags": [
+          "geopolitical"
+        ],
+        "age_hours": 1.4
+      },
+      {
         "title": "Bitcoin, Dogecoin Flat; Ethereum, XRP Gain as US-Iran Hostilities Continue: Analyst Says Short-term Gains Can Invite 'Faster Selloffs' If\u2026",
         "tags": [
           "geopolitical"
         ],
-        "age_hours": 2.0
+        "age_hours": 3.0
       },
       {
         "title": "Trump Expands Iran Strikes as Houthis Threaten Saudi Oil Exports Through Red Sea\u2014Dow Futures Advance, Oil Reaches $83",
         "tags": [
           "geopolitical"
         ],
-        "age_hours": 2.3
+        "age_hours": 3.3
       },
       {
         "title": "U.S. hits Canada with stiff new tariffs, escalating trade tensions",
         "tags": [
           "geopolitical"
         ],
-        "age_hours": 3.6
+        "age_hours": 4.6
       }
     ],
     "headline_source": "market_news"
@@ -1936,7 +1959,7 @@
         "source": "live"
       }
     },
-    "as_of": "2026-07-21T03:55:45.537433+00:00",
+    "as_of": "2026-07-21T08:23:17.061467+00:00",
     "note": "Momentum-factor UNWIND: recent leaders are being sold hard while the index holds up (our 3m-RS leader decile averages +23.3% 1m rel strength; MTUM is -12.3% off its 20d high vs SPY -1.7%) \u2014 new-BUY risk is halved; do not chase momentum entries this run."
   },
   "watchlist_trigger_alerts": {
@@ -2098,8 +2121,8 @@
         "benchmark": "SPY"
       },
       "risk_adjusted": {
-        "n_observations": 10,
-        "n_paired_observations": 10,
+        "n_observations": 11,
+        "n_paired_observations": 11,
         "min_observations_for_ratios": 60,
         "sufficient_sample": false,
         "sharpe": null,
@@ -2259,7 +2282,7 @@
           "structure": "pullback_in_uptrend",
           "components": {
             "institutional_stance": "accumulating",
-            "retail_proxy_label": "elevated_hedging_or_fear",
+            "retail_proxy_label": "mild_activity",
             "price_lean": "rising",
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "constructive_sponsorship"
@@ -2279,7 +2302,7 @@
           "structure": "pullback_in_uptrend",
           "components": {
             "institutional_stance": "accumulating",
-            "retail_proxy_label": "elevated_speculation",
+            "retail_proxy_label": "mild_activity",
             "price_lean": "rising",
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "constructive_sponsorship"
@@ -2319,7 +2342,7 @@
           "structure": "pullback_in_uptrend",
           "components": {
             "institutional_stance": "accumulating",
-            "retail_proxy_label": "mild_activity",
+            "retail_proxy_label": "quiet",
             "price_lean": "rising",
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "constructive_sponsorship"
@@ -2339,7 +2362,7 @@
           "structure": "pullback_in_uptrend",
           "components": {
             "institutional_stance": "accumulating",
-            "retail_proxy_label": "mild_activity",
+            "retail_proxy_label": "quiet",
             "price_lean": "rising",
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "neutral_or_unknown"
@@ -2371,15 +2394,15 @@
       },
       "ADBE": {
         "ticker": "ADBE",
-        "alignment": "retail_hot_institutions_quiet",
-        "read_for_swing": "Speculative/options heat without clear institutional sponsorship \u2014 FOMO risk is elevated; need a stronger fundamental or structure case.",
+        "alignment": "mixed",
+        "read_for_swing": "Signals conflict or are only partially present \u2014 treat ownership flow as context, not a vote; require price structure + thesis agreement.",
         "synthesis": {
-          "alignment": "retail_hot_institutions_quiet",
-          "read_for_swing": "Speculative/options heat without clear institutional sponsorship \u2014 FOMO risk is elevated; need a stronger fundamental or structure case.",
+          "alignment": "mixed",
+          "read_for_swing": "Signals conflict or are only partially present \u2014 treat ownership flow as context, not a vote; require price structure + thesis agreement.",
           "structure": "intermediate_up_long_term_mixed",
           "components": {
             "institutional_stance": "sparse",
-            "retail_proxy_label": "elevated_activity_mixed",
+            "retail_proxy_label": "mild_activity",
             "price_lean": "rising",
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "neutral_or_unknown"
@@ -2411,18 +2434,18 @@
       },
       "BSX": {
         "ticker": "BSX",
-        "alignment": "institutions_buying_price_weak",
-        "read_for_swing": "Institutions accumulating while price is soft \u2014 classic absorption/accumulation candidate IF structure holds; do not buy a broken trend on 13F alone.",
+        "alignment": "institutions_selling_price_weak",
+        "read_for_swing": "Distribution pressure with weak price \u2014 raise the bar hard for new longs; prefer defense on holdings unless thesis is explicitly contrarian.",
         "synthesis": {
-          "alignment": "institutions_buying_price_weak",
-          "read_for_swing": "Institutions accumulating while price is soft \u2014 classic absorption/accumulation candidate IF structure holds; do not buy a broken trend on 13F alone.",
+          "alignment": "institutions_selling_price_weak",
+          "read_for_swing": "Distribution pressure with weak price \u2014 raise the bar hard for new longs; prefer defense on holdings unless thesis is explicitly contrarian.",
           "structure": "breakdown_or_downtrend",
           "components": {
-            "institutional_stance": "mixed",
+            "institutional_stance": "distributing",
             "retail_proxy_label": "elevated_hedging_or_fear",
             "price_lean": "falling",
             "thirteen_f_net": "no_tracked_activity",
-            "tape_lean": "constructive_sponsorship"
+            "tape_lean": "neutral_or_unknown"
           }
         },
         "_trimmed": {
@@ -2499,7 +2522,7 @@
           "structure": "pullback_in_uptrend",
           "components": {
             "institutional_stance": "accumulating",
-            "retail_proxy_label": "mild_activity",
+            "retail_proxy_label": "quiet",
             "price_lean": "flat",
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "neutral_or_unknown"
@@ -2526,7 +2549,7 @@
       "requested": 14,
       "succeeded": 14,
       "failed": 0,
-      "cards_with_alignment_vote": 13
+      "cards_with_alignment_vote": 12
     }
   },
   "earnings_deep_dive": {
@@ -2553,7 +2576,7 @@
   "market_news": {
     "note": "Market-wide headlines (last ~24h) for tape context - what is moving EVERYTHING today, not just your focus names. Weigh it in the macro/regime read; never build a single-name thesis on it alone.",
     "status": "ok",
-    "as_of": "2026-07-21T03:51:05.024494+00:00",
+    "as_of": "2026-07-21T04:51:06.452899+00:00",
     "sources": [
       {
         "name": "yahoo_finance",
@@ -2578,11 +2601,60 @@
     ],
     "headlines": [
       {
+        "title": "Anthony Pompliano Says Banning Chinese AI the 'Most un-American' Thing to Do: Trump Admin Should 'Stop Complaining and Start Competing'",
+        "source": "alpaca_benzinga",
+        "published": "2026-07-21T04:47:03Z",
+        "url": "https://www.benzinga.com/markets/tech/26/07/60568570/anthony-pompliano-chinese-ai-trump-competition",
+        "age_hours": 0.1,
+        "symbols": []
+      },
+      {
+        "title": "Trump Hits Canada With 50% Tariffs on Wine, Cement \u2014 Prediction Market Punters See Odds of Trade Deal Fading",
+        "source": "alpaca_benzinga",
+        "published": "2026-07-21T04:25:51Z",
+        "url": "https://www.benzinga.com/markets/prediction-markets/26/07/60568545/trump-canada-50-percent-tariffs-trade-deal-odds",
+        "age_hours": 0.4,
+        "symbols": [
+          "BTCUSD",
+          "POLUSD",
+          "ZECUSD"
+        ]
+      },
+      {
+        "title": "Inflation fears are back in the spotlight as the Middle East conflict keeps oil prices elevated, analysts say",
+        "source": "cnbc",
+        "published": "2026-07-21T04:01:09+00:00",
+        "url": "https://www.cnbc.com/2026/07/21/inflation-fears-return-as-iran-war-keeps-oil-prices-high-analysts.html",
+        "age_hours": 0.8
+      },
+      {
+        "title": "General Motors is set to report earnings before the bell. Here's what Wall Street expects",
+        "source": "cnbc",
+        "published": "2026-07-21T04:01:01+00:00",
+        "url": "https://www.cnbc.com/2026/07/21/general-motors-gm-earnings-q2-2026.html",
+        "age_hours": 0.8
+      },
+      {
+        "title": "Your healthcare could now cost $185,500 in retirement \u2014 and that doesn\u2019t include long-term care",
+        "source": "marketwatch",
+        "published": "2026-07-21T04:01:00+00:00",
+        "url": "https://www.marketwatch.com/story/your-healthcare-could-now-cost-185-500-in-retirement-and-that-doesnt-include-long-term-care-5f4f6da8?mod=mw_rss_topstories",
+        "age_hours": 0.8
+      },
+      {
+        "title": "John Bolton Says Revolutionary Guards 'Calling the Shots' in Iran: Calls For US to 'Flatten' IRGC Amid Regime Change Push",
+        "source": "alpaca_benzinga",
+        "published": "2026-07-21T04:04:19Z",
+        "url": "https://www.benzinga.com/news/politics/26/07/60568499/john-bolton-iran-irgc-regime-change",
+        "age_hours": 0.8,
+        "symbols": []
+      },
+      {
         "title": "Intel Launches Fresh Layoffs in Data Center and AI Unit Ahead of Earnings as Lip-Bu Tan Pushes Turnaround Strategy",
         "source": "alpaca_benzinga",
         "published": "2026-07-21T03:33:06Z",
         "url": "https://www.benzinga.com/markets/tech/26/07/60568468/intel-layoffs-data-center-ai-unit-earnings",
-        "age_hours": 0.3,
+        "age_hours": 1.3,
         "symbols": [
           "INTC"
         ]
@@ -2592,14 +2664,14 @@
         "source": "cnbc",
         "published": "2026-07-21T03:28:20+00:00",
         "url": "https://www.cnbc.com/2026/07/21/china-philippines-south-china-sea-disputes-sailor-injured-.html",
-        "age_hours": 0.4
+        "age_hours": 1.4
       },
       {
         "title": "Elizabeth Warren Says 'Dark Money' Groups Linked to Crypto, AI 'Spending Millions' to 'Hand-Pick' Congress Members",
         "source": "alpaca_benzinga",
         "published": "2026-07-21T03:23:20Z",
         "url": "https://www.benzinga.com/crypto/cryptocurrency/26/07/60568454/elizabeth-warren-crypto-ai-dark-money-congress",
-        "age_hours": 0.5,
+        "age_hours": 1.5,
         "symbols": [
           "BTCUSD",
           "COIN",
@@ -2612,7 +2684,7 @@
         "source": "alpaca_benzinga",
         "published": "2026-07-21T03:05:04Z",
         "url": "https://www.benzinga.com/etfs/broad-u-s-equity-etfs/26/07/60568428/cathie-wood-meta-spacex-investment-amd-robinhood",
-        "age_hours": 0.8,
+        "age_hours": 1.8,
         "symbols": [
           "ACHR",
           "AMD",
@@ -2631,14 +2703,14 @@
         "source": "cnbc",
         "published": "2026-07-21T02:33:54+00:00",
         "url": "https://www.cnbc.com/2026/07/21/strait-of-hormuz-traffic-renewed-us-iran-conflict-chokes-hormuz.html",
-        "age_hours": 1.3
+        "age_hours": 2.3
       },
       {
         "title": "Bitcoin, Dogecoin Flat; Ethereum, XRP Gain as US-Iran Hostilities Continue: Analyst Says Short-term Gains Can Invite 'Faster Selloffs' If\u2026",
         "source": "alpaca_benzinga",
         "published": "2026-07-21T01:51:14Z",
         "url": "https://www.benzinga.com/crypto/cryptocurrency/26/07/60568312/bitcoin-ethereum-xrp-dogecoin-price-analysis-us-iran-tensions",
-        "age_hours": 2.0,
+        "age_hours": 3.0,
         "symbols": [
           "BMNR",
           "BTCUSD",
@@ -2654,7 +2726,7 @@
         "source": "alpaca_benzinga",
         "published": "2026-07-21T01:32:01Z",
         "url": "https://www.benzinga.com/news/politics/26/07/60568278/trump-iran-strikes-houthis-red-sea-oil-dow-futures",
-        "age_hours": 2.3,
+        "age_hours": 3.3,
         "symbols": []
       },
       {
@@ -2662,7 +2734,7 @@
         "source": "alpaca_benzinga",
         "published": "2026-07-21T01:13:25Z",
         "url": "https://www.benzinga.com/markets/equities/26/07/60568239/amc-iren-ltd-archer-aviation-nebius-group-and-alibaba-why-these-5-stocks-are-on-investors-radars-today",
-        "age_hours": 2.6,
+        "age_hours": 3.6,
         "symbols": [
           "ACHR",
           "AMC",
@@ -2676,68 +2748,14 @@
         "source": "marketwatch",
         "published": "2026-07-21T00:13:00+00:00",
         "url": "https://www.marketwatch.com/story/u-s-hits-canada-with-stiff-new-tariffs-escalating-trade-tensions-4a97065f?mod=mw_rss_topstories",
-        "age_hours": 3.6
-      },
-      {
-        "title": "Trading Halt: Halted at 7:50:00 p.m. ET - Trading Halt: Halt News Pending",
-        "source": "alpaca_benzinga",
-        "published": "2026-07-20T23:50:00Z",
-        "url": "https://www.benzinga.com/quote/XPON",
-        "age_hours": 4.0,
-        "symbols": [
-          "XPON"
-        ]
-      },
-      {
-        "title": "$100 Invested In Zeta Global Holdings 5 Years Ago Would Be Worth This Much Today",
-        "source": "alpaca_benzinga",
-        "published": "2026-07-20T23:45:14Z",
-        "url": "https://www.benzinga.com/news/26/07/60568020/100-invested-zeta-global-holdings-5-years-ago-would-be-worth-much-today",
-        "age_hours": 4.1,
-        "symbols": [
-          "ZETA"
-        ]
-      },
-      {
-        "title": "Here\u2019s How Much You Would Have Made Owning Travelers Companies Stock In The Last 15 Years",
-        "source": "alpaca_benzinga",
-        "published": "2026-07-20T23:30:20Z",
-        "url": "https://www.benzinga.com/news/26/07/60567973/here-s-how-much-you-would-have-made-owning-travelers-companies-stock-last-15-years",
-        "age_hours": 4.3,
-        "symbols": [
-          "TRV"
-        ]
-      },
-      {
-        "title": "I racked up $35,000 in credit-card debt. Should I file for bankruptcy?",
-        "source": "marketwatch",
-        "published": "2026-07-20T23:15:00+00:00",
-        "url": "https://www.marketwatch.com/story/i-have-racked-up-35-000-in-credit-card-debt-should-i-file-for-bankruptcy-4c92d9e5?mod=mw_rss_topstories",
         "age_hours": 4.6
-      },
-      {
-        "title": "Here\u2019s How Much You Would Have Made Owning Bank of America Stock In The Last 10 Years",
-        "source": "alpaca_benzinga",
-        "published": "2026-07-20T23:15:28Z",
-        "url": "https://www.benzinga.com/news/26/07/60567948/here-s-how-much-you-would-have-made-owning-bank-america-stock-last-10-years",
-        "age_hours": 4.6,
-        "symbols": [
-          "BAC"
-        ]
-      },
-      {
-        "title": "Jamie Dimon says markets underestimate risks and he wouldn't buy stocks or Treasurys at current prices",
-        "source": "cnbc",
-        "published": "2026-07-20T23:01:01+00:00",
-        "url": "https://www.cnbc.com/2026/07/20/jpmorgan-chase-ceo-jamie-dimon-market-risk.html",
-        "age_hours": 4.8
       }
     ]
   },
   "market_radar": {
     "note": "Market-WIDE radar (Alpaca screeners + news), not limited to the universe. off_universe_symbols are candidates for the universe_candidates output field IF a real swing setup exists \u2014 they are not tradeable until deterministically added ($1B cap, priceable, liquid) and are never a buy signal by themselves.",
     "status": "ok",
-    "as_of": "2026-07-21T03:51:05.801438+00:00",
+    "as_of": "2026-07-21T04:51:07.321038+00:00",
     "coverage": {
       "requested": 3,
       "succeeded": 3,
@@ -3015,7 +3033,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 9,
-          "anchored_vwap": 574.16,
+          "anchored_vwap": 574.09,
           "pct_vs_anchored_vwap": -8.1,
           "above_anchored_vwap": false,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -3068,7 +3086,7 @@
         "ai_exposure_reason": "AI report-writing/evidence products (Draft One) drive ARPU",
         "fwd_pe_est": 68.59,
         "volume_signal": {
-          "rvol": 0.68,
+          "rvol": 0.69,
           "cmf_20": 0.117,
           "updown_vol_ratio_25d": 1.88,
           "obv_divergence": "none",
@@ -3307,8 +3325,8 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 1,
-          "anchored_vwap": 235.14,
-          "pct_vs_anchored_vwap": -0.2,
+          "anchored_vwap": 235.09,
+          "pct_vs_anchored_vwap": -0.1,
           "above_anchored_vwap": false,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
         },
@@ -3327,7 +3345,7 @@
         "is_full_52w_window": true,
         "high_window_sessions": 252,
         "pullback_from_20d_high_pct": -2.3,
-        "volume_surge_5d_vs_3m": 0.89,
+        "volume_surge_5d_vs_3m": 0.9,
         "atr_pct": 3.9,
         "rsi_14": 58.8,
         "macd": {
@@ -3360,8 +3378,8 @@
         "ai_exposure_reason": "genAI commoditizes photo/video editing (core Creative Cloud); Firefly upsell unproven vs free frontier tools",
         "fwd_pe_est": 9.61,
         "volume_signal": {
-          "rvol": 0.73,
-          "cmf_20": 0.116,
+          "rvol": 0.77,
+          "cmf_20": 0.117,
           "updown_vol_ratio_25d": 0.93,
           "obv_divergence": "none",
           "pocket_pivot": false,
@@ -3453,8 +3471,8 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 2,
-          "anchored_vwap": 99.77,
-          "pct_vs_anchored_vwap": 1.9,
+          "anchored_vwap": 99.82,
+          "pct_vs_anchored_vwap": 1.8,
           "above_anchored_vwap": true,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
         },
@@ -3473,7 +3491,7 @@
         "is_full_52w_window": true,
         "high_window_sessions": 252,
         "pullback_from_20d_high_pct": -0.8,
-        "volume_surge_5d_vs_3m": 1.41,
+        "volume_surge_5d_vs_3m": 1.44,
         "atr_pct": 3.25,
         "rsi_14": 68.6,
         "macd": {
@@ -3506,13 +3524,13 @@
         "ai_exposure_reason": "diversified devices/diagnostics; CGM growth drives it, AI-orthogonal",
         "fwd_pe_est": 18.45,
         "volume_signal": {
-          "rvol": 0.91,
-          "cmf_20": -0.08,
-          "updown_vol_ratio_25d": 1.23,
+          "rvol": 1.07,
+          "cmf_20": -0.076,
+          "updown_vol_ratio_25d": 1.24,
           "obv_divergence": "none",
-          "pocket_pivot": false,
+          "pocket_pivot": true,
           "no_supply_pullback": false,
-          "read": "neutral"
+          "read": "pocket_pivot"
         },
         "swing_setup_score": 2.97,
         "lane": "contrarian_reversal",
@@ -3600,7 +3618,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 12,
-          "anchored_vwap": 122.59,
+          "anchored_vwap": 122.6,
           "pct_vs_anchored_vwap": 1.5,
           "above_anchored_vwap": true,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -3643,7 +3661,7 @@
         },
         "rel_strength_1m_pct": 14.8,
         "rel_strength_3m_pct": -9.9,
-        "avg_dollar_volume_20d_usd": 893341630,
+        "avg_dollar_volume_20d_usd": 904815201,
         "liquid": true,
         "wma_200w": 88.54,
         "pct_vs_200w_ma": 40.6,
@@ -3653,7 +3671,7 @@
         "ai_exposure_reason": "AI commerce tooling deepens merchant lock-in",
         "fwd_pe_est": 67.29,
         "volume_signal": {
-          "rvol": 0.71,
+          "rvol": 0.73,
           "cmf_20": 0.024,
           "updown_vol_ratio_25d": 1.19,
           "obv_divergence": "none",
@@ -3748,8 +3766,8 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 32,
-          "anchored_vwap": 10.28,
-          "pct_vs_anchored_vwap": -22.6,
+          "anchored_vwap": 10.27,
+          "pct_vs_anchored_vwap": -22.5,
           "above_anchored_vwap": false,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
         },
@@ -3768,7 +3786,7 @@
         "is_full_52w_window": true,
         "high_window_sessions": 252,
         "pullback_from_20d_high_pct": -32.8,
-        "volume_surge_5d_vs_3m": 0.73,
+        "volume_surge_5d_vs_3m": 0.75,
         "atr_pct": 8.48,
         "rsi_14": 35.4,
         "macd": {
@@ -3801,9 +3819,9 @@
         "ai_exposure_reason": "power for AI datacenters",
         "fwd_pe_est": null,
         "volume_signal": {
-          "rvol": 1.02,
-          "cmf_20": -0.178,
-          "updown_vol_ratio_25d": 1.1,
+          "rvol": 1.09,
+          "cmf_20": -0.175,
+          "updown_vol_ratio_25d": 1.11,
           "obv_divergence": "none",
           "pocket_pivot": false,
           "no_supply_pullback": false,
@@ -3894,7 +3912,7 @@
           "status": "ok",
           "anchor_reason": "highest_volume_session",
           "sessions_since_anchor": 113,
-          "anchored_vwap": 58.71,
+          "anchored_vwap": 58.69,
           "pct_vs_anchored_vwap": -25.4,
           "above_anchored_vwap": false,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -3914,7 +3932,7 @@
         "is_full_52w_window": true,
         "high_window_sessions": 252,
         "pullback_from_20d_high_pct": -5.6,
-        "volume_surge_5d_vs_3m": 0.77,
+        "volume_surge_5d_vs_3m": 0.79,
         "atr_pct": 3.51,
         "rsi_14": 40.8,
         "macd": {
@@ -3947,13 +3965,13 @@
         "ai_exposure_reason": "med-device compounder; AI-enabled cardiac mapping and imaging differentiate its devices",
         "fwd_pe_est": 13.03,
         "volume_signal": {
-          "rvol": 0.54,
+          "rvol": 0.63,
           "cmf_20": -0.206,
           "updown_vol_ratio_25d": 0.72,
           "obv_divergence": "bullish",
           "pocket_pivot": false,
-          "no_supply_pullback": true,
-          "read": "no_supply_pullback"
+          "no_supply_pullback": false,
+          "read": "neutral"
         },
         "swing_setup_score": -0.25,
         "lane": "deep_value_200w",
@@ -4040,7 +4058,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 32,
-          "anchored_vwap": 32.28,
+          "anchored_vwap": 32.27,
           "pct_vs_anchored_vwap": -26.2,
           "above_anchored_vwap": false,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -4093,8 +4111,8 @@
         "ai_exposure_reason": "AI server/storage hardware",
         "fwd_pe_est": 9.2,
         "volume_signal": {
-          "rvol": 0.43,
-          "cmf_20": -0.249,
+          "rvol": 0.45,
+          "cmf_20": -0.25,
           "updown_vol_ratio_25d": 0.5,
           "obv_divergence": "none",
           "pocket_pivot": false,
@@ -4240,7 +4258,7 @@
         "fwd_pe_est": 25.35,
         "volume_signal": {
           "rvol": 0.74,
-          "cmf_20": 0.035,
+          "cmf_20": 0.036,
           "updown_vol_ratio_25d": 0.82,
           "obv_divergence": "none",
           "pocket_pivot": false,
@@ -4480,7 +4498,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 7,
-          "anchored_vwap": 422.59,
+          "anchored_vwap": 422.35,
           "pct_vs_anchored_vwap": -9.6,
           "above_anchored_vwap": false,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -4500,7 +4518,7 @@
         "is_full_52w_window": true,
         "high_window_sessions": 252,
         "pullback_from_20d_high_pct": -17.6,
-        "volume_surge_5d_vs_3m": 0.87,
+        "volume_surge_5d_vs_3m": 0.88,
         "atr_pct": 8.43,
         "rsi_14": 45.4,
         "macd": {
@@ -4533,8 +4551,8 @@
         "ai_exposure_reason": "AI server/storage hardware",
         "fwd_pe_est": 20.78,
         "volume_signal": {
-          "rvol": 0.45,
-          "cmf_20": 0.111,
+          "rvol": 0.49,
+          "cmf_20": 0.108,
           "updown_vol_ratio_25d": 1.16,
           "obv_divergence": "bullish",
           "pocket_pivot": false,
@@ -4627,7 +4645,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 13,
-          "anchored_vwap": 531.82,
+          "anchored_vwap": 531.81,
           "pct_vs_anchored_vwap": -5.3,
           "above_anchored_vwap": false,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -4680,7 +4698,7 @@
         "ai_exposure_reason": "sells AI compute itself",
         "fwd_pe_est": 67.78,
         "volume_signal": {
-          "rvol": 0.7,
+          "rvol": 0.71,
           "cmf_20": 0.126,
           "updown_vol_ratio_25d": 1.19,
           "obv_divergence": "bullish",
@@ -4774,7 +4792,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 23,
-          "anchored_vwap": 931.95,
+          "anchored_vwap": 931.88,
           "pct_vs_anchored_vwap": -13.9,
           "above_anchored_vwap": false,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -4827,8 +4845,8 @@
         "ai_exposure_reason": "AI server/storage hardware",
         "fwd_pe_est": 53.89,
         "volume_signal": {
-          "rvol": 1.1,
-          "cmf_20": -0.082,
+          "rvol": 1.12,
+          "cmf_20": -0.083,
           "updown_vol_ratio_25d": 1.5,
           "obv_divergence": "bullish",
           "pocket_pivot": false,
@@ -4921,7 +4939,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 13,
-          "anchored_vwap": 603.8,
+          "anchored_vwap": 603.78,
           "pct_vs_anchored_vwap": -12.9,
           "above_anchored_vwap": false,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -4950,13 +4968,13 @@
           "state": "below_zero"
         },
         "adx_14": 18.6,
-        "di_plus": 24.6,
+        "di_plus": 24.7,
         "di_minus": 29.1,
         "gap_analysis": {
           "count_20d": 13,
           "last": {
             "sessions_ago": 0,
-            "pct": 2.9,
+            "pct": 3.0,
             "direction": "up",
             "filled": true,
             "retained_pct": -0.25
@@ -5122,7 +5140,7 @@
         "fwd_pe_est": 25.86,
         "volume_signal": {
           "rvol": 0.58,
-          "cmf_20": -0.008,
+          "cmf_20": -0.009,
           "updown_vol_ratio_25d": 0.52,
           "obv_divergence": "none",
           "pocket_pivot": false,
@@ -5623,7 +5641,7 @@
       "SNOW": {
         "last_close": 274.34,
         "pct_change_1d": 2.02,
-        "atr_pct": 4.45,
+        "atr_pct": 4.46,
         "momentum_1m_pct": 17.0,
         "momentum_3m_pct": 90.5,
         "rel_strength_1m_pct": 16.6,
@@ -5767,7 +5785,7 @@
       "CVS": {
         "last_close": 107.61,
         "pct_change_1d": 0.13,
-        "atr_pct": 2.36,
+        "atr_pct": 2.37,
         "momentum_1m_pct": 8.5,
         "momentum_3m_pct": 40.4,
         "rel_strength_1m_pct": 8.1,
@@ -5786,7 +5804,7 @@
         "above_30w_ma": true,
         "weekly_rsi_14": 71.7,
         "weekly_structure": "uptrend",
-        "pct_vs_anchored_vwap": 2.5
+        "pct_vs_anchored_vwap": 2.4
       },
       "DXCM": {
         "last_close": 75.69,
@@ -5887,7 +5905,7 @@
       "CB": {
         "last_close": 352.53,
         "pct_change_1d": 0.11,
-        "atr_pct": 2.36,
+        "atr_pct": 2.37,
         "momentum_1m_pct": 7.5,
         "momentum_3m_pct": 6.9,
         "rel_strength_1m_pct": 7.1,
@@ -5911,7 +5929,7 @@
       "PM": {
         "last_close": 192.72,
         "pct_change_1d": -0.13,
-        "atr_pct": 2.76,
+        "atr_pct": 2.77,
         "momentum_1m_pct": 8.3,
         "momentum_3m_pct": 23.1,
         "rel_strength_1m_pct": 7.9,
@@ -6046,7 +6064,7 @@
         "dist_from_52w_high_pct": 6.4,
         "sector": "energy_power",
         "macd_state": "above_zero",
-        "volume_read": "neutral",
+        "volume_read": "pocket_pivot",
         "above_30w_ma": true,
         "weekly_rsi_14": 56.0,
         "weekly_structure": "mixed",
@@ -6074,7 +6092,7 @@
         "above_30w_ma": true,
         "weekly_rsi_14": 59.9,
         "weekly_structure": "uptrend",
-        "pct_vs_anchored_vwap": -4.0
+        "pct_vs_anchored_vwap": -3.9
       },
       "DUOL": {
         "last_close": 133.89,
@@ -6146,7 +6164,7 @@
         "above_30w_ma": true,
         "weekly_rsi_14": 56.6,
         "weekly_structure": "uptrend",
-        "pct_vs_anchored_vwap": -2.2
+        "pct_vs_anchored_vwap": -1.8
       },
       "EOG": {
         "last_close": 141.09,
@@ -6242,7 +6260,7 @@
         "above_30w_ma": true,
         "weekly_rsi_14": 61.1,
         "weekly_structure": "uptrend",
-        "pct_vs_anchored_vwap": -0.4
+        "pct_vs_anchored_vwap": -0.3
       },
       "ZS": {
         "last_close": 149.82,
@@ -6506,7 +6524,7 @@
         "above_30w_ma": true,
         "weekly_rsi_14": 55.2,
         "weekly_structure": "mixed",
-        "pct_vs_anchored_vwap": -1.1
+        "pct_vs_anchored_vwap": -1.0
       },
       "XOM": {
         "last_close": 148.36,
@@ -6554,12 +6572,12 @@
         "above_30w_ma": true,
         "weekly_rsi_14": 61.0,
         "weekly_structure": "uptrend",
-        "pct_vs_anchored_vwap": -1.4
+        "pct_vs_anchored_vwap": -1.3
       },
       "SPGI": {
         "last_close": 448.35,
         "pct_change_1d": -0.55,
-        "atr_pct": 3.3,
+        "atr_pct": 3.31,
         "momentum_1m_pct": 13.4,
         "momentum_3m_pct": 7.3,
         "rel_strength_1m_pct": 13.0,
@@ -6794,7 +6812,7 @@
         "above_30w_ma": false,
         "weekly_rsi_14": 44.1,
         "weekly_structure": "mixed",
-        "pct_vs_anchored_vwap": -0.2
+        "pct_vs_anchored_vwap": -0.1
       },
       "DUK": {
         "last_close": 125.85,
@@ -6842,7 +6860,7 @@
         "above_30w_ma": true,
         "weekly_rsi_14": 55.3,
         "weekly_structure": "uptrend",
-        "pct_vs_anchored_vwap": -1.7
+        "pct_vs_anchored_vwap": -1.5
       },
       "PGR": {
         "last_close": 212.23,
@@ -6866,7 +6884,7 @@
         "above_30w_ma": true,
         "weekly_rsi_14": 51.5,
         "weekly_structure": "uptrend",
-        "pct_vs_anchored_vwap": -2.9
+        "pct_vs_anchored_vwap": -2.8
       },
       "ABT": {
         "last_close": 101.66,
@@ -6886,11 +6904,11 @@
         "dist_from_52w_high_pct": 24.4,
         "sector": "healthcare",
         "macd_state": "bull_cross_recent",
-        "volume_read": "neutral",
+        "volume_read": "pocket_pivot",
         "above_30w_ma": true,
         "weekly_rsi_14": 53.2,
         "weekly_structure": "uptrend",
-        "pct_vs_anchored_vwap": 1.9
+        "pct_vs_anchored_vwap": 1.8
       },
       "AXON": {
         "last_close": 527.48,
@@ -7154,7 +7172,7 @@
         "above_30w_ma": true,
         "weekly_rsi_14": 52.4,
         "weekly_structure": "mixed",
-        "pct_vs_anchored_vwap": -3.1
+        "pct_vs_anchored_vwap": -3.0
       },
       "AMZN": {
         "last_close": 249.99,
@@ -7183,7 +7201,7 @@
       "GILD": {
         "last_close": 133.21,
         "pct_change_1d": -0.8,
-        "atr_pct": 3.15,
+        "atr_pct": 3.16,
         "momentum_1m_pct": 6.2,
         "momentum_3m_pct": -2.6,
         "rel_strength_1m_pct": 5.8,
@@ -7366,11 +7384,11 @@
         "dist_from_52w_high_pct": 9.0,
         "sector": "consumer_industrial_leaders",
         "macd_state": "bear_cross_recent",
-        "volume_read": "no_supply_pullback",
+        "volume_read": "pocket_pivot",
         "above_30w_ma": true,
         "weekly_rsi_14": 57.0,
         "weekly_structure": "uptrend",
-        "pct_vs_anchored_vwap": -1.2
+        "pct_vs_anchored_vwap": -1.1
       },
       "PG": {
         "last_close": 149.13,
@@ -7390,7 +7408,7 @@
         "dist_from_52w_high_pct": 10.2,
         "sector": "consumer_industrial_leaders",
         "macd_state": "below_zero",
-        "volume_read": "no_supply_pullback",
+        "volume_read": "neutral",
         "above_30w_ma": true,
         "weekly_rsi_14": 51.4,
         "weekly_structure": "uptrend",
@@ -7490,7 +7508,7 @@
         "above_30w_ma": false,
         "weekly_rsi_14": 43.9,
         "weekly_structure": "downtrend",
-        "pct_vs_anchored_vwap": -1.6
+        "pct_vs_anchored_vwap": -1.5
       },
       "INTU": {
         "last_close": 293.82,
@@ -7586,7 +7604,7 @@
         "above_30w_ma": false,
         "weekly_rsi_14": 47.4,
         "weekly_structure": "downtrend",
-        "pct_vs_anchored_vwap": 0.2
+        "pct_vs_anchored_vwap": 0.1
       },
       "BX": {
         "last_close": 123.61,
@@ -7610,12 +7628,12 @@
         "above_30w_ma": false,
         "weekly_rsi_14": 48.9,
         "weekly_structure": "uptrend",
-        "pct_vs_anchored_vwap": 2.1
+        "pct_vs_anchored_vwap": 2.0
       },
       "KKR": {
         "last_close": 96.97,
         "pct_change_1d": -3.93,
-        "atr_pct": 3.45,
+        "atr_pct": 3.48,
         "momentum_1m_pct": -0.2,
         "momentum_3m_pct": -6.2,
         "rel_strength_1m_pct": -0.6,
@@ -7709,7 +7727,7 @@
       "RDDT": {
         "last_close": 181.64,
         "pct_change_1d": 0.25,
-        "atr_pct": 7.08,
+        "atr_pct": 7.09,
         "momentum_1m_pct": 9.5,
         "momentum_3m_pct": 10.9,
         "rel_strength_1m_pct": 9.0,
@@ -7728,7 +7746,7 @@
         "above_30w_ma": true,
         "weekly_rsi_14": 53.0,
         "weekly_structure": "uptrend",
-        "pct_vs_anchored_vwap": -6.6
+        "pct_vs_anchored_vwap": -6.5
       },
       "MSFT": {
         "last_close": 402.29,
@@ -7796,7 +7814,7 @@
         "dist_from_52w_high_pct": 20.4,
         "sector": "healthcare",
         "macd_state": "bear_cross_recent",
-        "volume_read": "no_supply_pullback",
+        "volume_read": "neutral",
         "above_30w_ma": false,
         "weekly_rsi_14": 45.9,
         "weekly_structure": "uptrend",
@@ -7853,7 +7871,7 @@
       "HD": {
         "last_close": 333.04,
         "pct_change_1d": -1.72,
-        "atr_pct": 2.82,
+        "atr_pct": 2.83,
         "momentum_1m_pct": 1.7,
         "momentum_3m_pct": -4.0,
         "rel_strength_1m_pct": 1.3,
@@ -8204,7 +8222,7 @@
         "dist_from_52w_high_pct": 15.0,
         "sector": "semi_manufacturing",
         "macd_state": "below_zero",
-        "volume_read": "no_supply_pullback",
+        "volume_read": "neutral",
         "above_30w_ma": true,
         "weekly_rsi_14": 57.0,
         "weekly_structure": "mixed",
@@ -8475,7 +8493,7 @@
       "HOOD": {
         "last_close": 99.28,
         "pct_change_1d": -0.68,
-        "atr_pct": 6.89,
+        "atr_pct": 6.9,
         "momentum_1m_pct": -5.6,
         "momentum_3m_pct": 9.4,
         "rel_strength_1m_pct": -6.0,
@@ -8494,7 +8512,7 @@
         "above_30w_ma": true,
         "weekly_rsi_14": 52.8,
         "weekly_structure": "uptrend",
-        "pct_vs_anchored_vwap": -10.7
+        "pct_vs_anchored_vwap": -10.6
       },
       "WMT": {
         "last_close": 112.2,
@@ -8686,7 +8704,7 @@
         "above_30w_ma": true,
         "weekly_rsi_14": 56.7,
         "weekly_structure": "mixed",
-        "pct_vs_anchored_vwap": -8.4
+        "pct_vs_anchored_vwap": -8.3
       },
       "BSX": {
         "last_close": 43.77,
@@ -8706,7 +8724,7 @@
         "dist_from_52w_high_pct": 60.0,
         "sector": "healthcare",
         "macd_state": "above_zero",
-        "volume_read": "no_supply_pullback",
+        "volume_read": "neutral",
         "above_30w_ma": false,
         "weekly_rsi_14": 23.8,
         "weekly_structure": "downtrend",
@@ -8782,7 +8800,7 @@
         "above_30w_ma": true,
         "weekly_rsi_14": 52.8,
         "weekly_structure": "downtrend",
-        "pct_vs_anchored_vwap": -10.5
+        "pct_vs_anchored_vwap": -10.4
       },
       "EME": {
         "last_close": 744.03,
@@ -8883,7 +8901,7 @@
       "FNV": {
         "last_close": 200.17,
         "pct_change_1d": -0.3,
-        "atr_pct": 3.2,
+        "atr_pct": 3.21,
         "momentum_1m_pct": -11.8,
         "momentum_3m_pct": -23.6,
         "rel_strength_1m_pct": -12.2,
@@ -8902,7 +8920,7 @@
         "above_30w_ma": false,
         "weekly_rsi_14": 40.5,
         "weekly_structure": "downtrend",
-        "pct_vs_anchored_vwap": -14.0
+        "pct_vs_anchored_vwap": -13.9
       },
       "HON": {
         "last_close": 226.18,
@@ -8974,7 +8992,7 @@
         "above_30w_ma": false,
         "weekly_rsi_14": 44.8,
         "weekly_structure": "downtrend",
-        "pct_vs_anchored_vwap": -7.1
+        "pct_vs_anchored_vwap": -7.0
       },
       "TLN": {
         "last_close": 360.32,
@@ -9070,7 +9088,7 @@
         "above_30w_ma": false,
         "weekly_rsi_14": 35.6,
         "weekly_structure": "mixed",
-        "pct_vs_anchored_vwap": -4.4
+        "pct_vs_anchored_vwap": -4.3
       },
       "TSLA": {
         "last_close": 369.57,
@@ -9171,7 +9189,7 @@
       "DLR": {
         "last_close": 176.25,
         "pct_change_1d": 1.36,
-        "atr_pct": 2.73,
+        "atr_pct": 2.74,
         "momentum_1m_pct": -5.8,
         "momentum_3m_pct": -12.9,
         "rel_strength_1m_pct": -6.2,
@@ -9188,7 +9206,7 @@
         "above_30w_ma": false,
         "weekly_rsi_14": 47.5,
         "weekly_structure": "downtrend",
-        "pct_vs_anchored_vwap": -2.5
+        "pct_vs_anchored_vwap": -2.4
       },
       "GLW": {
         "last_close": 153.1,
@@ -9212,12 +9230,12 @@
         "above_30w_ma": true,
         "weekly_rsi_14": 48.4,
         "weekly_structure": "mixed",
-        "pct_vs_anchored_vwap": -24.3
+        "pct_vs_anchored_vwap": -24.2
       },
       "APO": {
         "last_close": 118.24,
         "pct_change_1d": -1.85,
-        "atr_pct": 3.31,
+        "atr_pct": 3.33,
         "momentum_1m_pct": -14.9,
         "momentum_3m_pct": -4.7,
         "rel_strength_1m_pct": -15.3,
@@ -9236,7 +9254,7 @@
         "above_30w_ma": false,
         "weekly_rsi_14": 44.4,
         "weekly_structure": "downtrend",
-        "pct_vs_anchored_vwap": -6.1
+        "pct_vs_anchored_vwap": -6.0
       },
       "ISRG": {
         "last_close": 353.17,
@@ -9287,7 +9305,7 @@
       "APP": {
         "last_close": 424.6,
         "pct_change_1d": 0.01,
-        "atr_pct": 7.7,
+        "atr_pct": 7.71,
         "momentum_1m_pct": -11.4,
         "momentum_3m_pct": -11.0,
         "rel_strength_1m_pct": -11.9,
@@ -9330,7 +9348,7 @@
         "above_30w_ma": false,
         "weekly_rsi_14": 36.0,
         "weekly_structure": "uptrend",
-        "pct_vs_anchored_vwap": -4.2
+        "pct_vs_anchored_vwap": -4.1
       },
       "IBM": {
         "last_close": 213.0,
@@ -9551,7 +9569,7 @@
       "RGLD": {
         "last_close": 187.36,
         "pct_change_1d": -0.96,
-        "atr_pct": 3.31,
+        "atr_pct": 3.32,
         "momentum_1m_pct": -14.0,
         "momentum_3m_pct": -30.0,
         "rel_strength_1m_pct": -14.4,
@@ -9583,7 +9601,7 @@
         "rel_strength_vs_sector_1m_pct": -0.8,
         "rel_strength_vs_sector_3m_pct": 4.2,
         "rsi_14": 37.4,
-        "adx_14": 23.7,
+        "adx_14": 23.6,
         "above_50dma": false,
         "above_200dma": false,
         "trend_up_50_over_200": false,
@@ -9599,7 +9617,7 @@
       "CAMT": {
         "last_close": 147.09,
         "pct_change_1d": 0.64,
-        "atr_pct": 7.43,
+        "atr_pct": 7.44,
         "momentum_1m_pct": -17.4,
         "momentum_3m_pct": -18.2,
         "rel_strength_1m_pct": -17.8,
@@ -9719,7 +9737,7 @@
       "CLS": {
         "last_close": 307.34,
         "pct_change_1d": 1.99,
-        "atr_pct": 7.63,
+        "atr_pct": 7.65,
         "momentum_1m_pct": -19.2,
         "momentum_3m_pct": -22.4,
         "rel_strength_1m_pct": -19.6,
@@ -9834,7 +9852,7 @@
         "above_30w_ma": false,
         "weekly_rsi_14": 35.6,
         "weekly_structure": "downtrend",
-        "pct_vs_anchored_vwap": -22.6
+        "pct_vs_anchored_vwap": -22.5
       }
     },
     "indicators_note": "Compact technical line for EVERY scanned name. Surfaced lane rows carry the full field set; this is what the other ~150 retain, so a watchlist name that did not rank into a lane can still be judged on trend, momentum, RS vs SPY *and vs its own sector*, RSI, ADX, weekly structure and anchored VWAP rather than on price alone.",
@@ -9872,7 +9890,7 @@
     "price_basis": "split_dividend_adjusted",
     "price_basis_note": "All bars are split/dividend ADJUSTED (yfinance auto_adjust=True). Adjusted history is restated retroactively on every corporate action, so long-horizon MOVING-AVERAGE LEVELS computed from it (notably wma_200w) are NOT the levels printed on an unadjusted retail chart - the crowd watching 'the 200-week' may be watching a different number. Returns, momentum and relative strength are unaffected (adjustment is exactly what makes those correct). Treat pct_vs_200w_ma as a total-return reversion measure, and confirm the actual support level on a chart before placing a stop against it.",
     "bar_completeness_note": "The still-forming session bar is DROPPED from the daily series, so vol_surge, volume_signal and the breakout tests compare completed sessions to completed sessions. An intraday run therefore reports yesterday's close as last_close - check price_as_of.",
-    "scan_fetched_at_utc": "2026-07-21T03:51:05.022989+00:00",
+    "scan_fetched_at_utc": "2026-07-21T04:51:06.451708+00:00",
     "note": "Ranked by deterministic swing_setup_score; agent must apply judgment and research before proposing.",
     "sector_comps_note": "sector_comps (on surfaced rows): fwd_pe_est = last close / cached pre-market current-FY EPS estimate (snapshot may be ~a day old); growth = current-FY revenue-growth estimate. Medians span ALL scanned names with data - coverage.pe_n/growth_n are the true denominators; medians under 4 same-sector data points report None.",
     "top_setups": [
@@ -10040,7 +10058,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 12,
-          "anchored_vwap": 344.64,
+          "anchored_vwap": 344.66,
           "pct_vs_anchored_vwap": 1.2,
           "above_anchored_vwap": true,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -10060,7 +10078,7 @@
         "is_full_52w_window": true,
         "high_window_sessions": 252,
         "pullback_from_20d_high_pct": -5.5,
-        "volume_surge_5d_vs_3m": 0.78,
+        "volume_surge_5d_vs_3m": 0.79,
         "atr_pct": 5.36,
         "rsi_14": 62.1,
         "macd": {
@@ -10093,9 +10111,9 @@
         "ai_exposure_reason": "AI expands attack surface and security spend",
         "fwd_pe_est": 92.48,
         "volume_signal": {
-          "rvol": 0.62,
-          "cmf_20": 0.121,
-          "updown_vol_ratio_25d": 2.17,
+          "rvol": 0.65,
+          "cmf_20": 0.119,
+          "updown_vol_ratio_25d": 2.16,
           "obv_divergence": "none",
           "pocket_pivot": false,
           "no_supply_pullback": true,
@@ -10205,7 +10223,7 @@
         "is_full_52w_window": true,
         "high_window_sessions": 252,
         "pullback_from_20d_high_pct": -6.0,
-        "volume_surge_5d_vs_3m": 1.09,
+        "volume_surge_5d_vs_3m": 1.11,
         "atr_pct": 5.52,
         "rsi_14": 65.5,
         "macd": {
@@ -10238,9 +10256,9 @@
         "ai_exposure_reason": "AI expands attack surface and security spend",
         "fwd_pe_est": null,
         "volume_signal": {
-          "rvol": 0.41,
-          "cmf_20": 0.057,
-          "updown_vol_ratio_25d": 1.66,
+          "rvol": 0.48,
+          "cmf_20": 0.055,
+          "updown_vol_ratio_25d": 1.64,
           "obv_divergence": "none",
           "pocket_pivot": false,
           "no_supply_pullback": true,
@@ -10330,7 +10348,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 4,
-          "anchored_vwap": 205.0,
+          "anchored_vwap": 204.97,
           "pct_vs_anchored_vwap": -3.2,
           "above_anchored_vwap": false,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -10383,8 +10401,8 @@
         "ai_exposure_reason": "AI expands attack surface and security spend",
         "fwd_pe_est": 161.37,
         "volume_signal": {
-          "rvol": 0.53,
-          "cmf_20": 0.021,
+          "rvol": 0.56,
+          "cmf_20": 0.02,
           "updown_vol_ratio_25d": 1.63,
           "obv_divergence": "bearish",
           "pocket_pivot": false,
@@ -10475,7 +10493,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 33,
-          "anchored_vwap": 246.64,
+          "anchored_vwap": 246.67,
           "pct_vs_anchored_vwap": 6.7,
           "above_anchored_vwap": true,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -10495,7 +10513,7 @@
         "is_full_52w_window": true,
         "high_window_sessions": 252,
         "pullback_from_20d_high_pct": -4.9,
-        "volume_surge_5d_vs_3m": 0.58,
+        "volume_surge_5d_vs_3m": 0.59,
         "atr_pct": 5.38,
         "rsi_14": 60.0,
         "macd": {
@@ -10528,7 +10546,7 @@
         "ai_exposure_reason": "software with AI product surface",
         "fwd_pe_est": 108.76,
         "volume_signal": {
-          "rvol": 0.51,
+          "rvol": 0.55,
           "cmf_20": 0.189,
           "updown_vol_ratio_25d": 1.06,
           "obv_divergence": "none",
@@ -10640,7 +10658,7 @@
         "is_full_52w_window": true,
         "high_window_sessions": 252,
         "pullback_from_20d_high_pct": -6.4,
-        "volume_surge_5d_vs_3m": 0.77,
+        "volume_surge_5d_vs_3m": 0.78,
         "atr_pct": 5.1,
         "rsi_14": 61.0,
         "macd": {
@@ -10673,9 +10691,9 @@
         "ai_exposure_reason": "software with AI product surface",
         "fwd_pe_est": 227.02,
         "volume_signal": {
-          "rvol": 0.69,
-          "cmf_20": 0.228,
-          "updown_vol_ratio_25d": 1.74,
+          "rvol": 0.75,
+          "cmf_20": 0.223,
+          "updown_vol_ratio_25d": 1.72,
           "obv_divergence": "none",
           "pocket_pivot": false,
           "no_supply_pullback": true,
@@ -10818,7 +10836,7 @@
         "ai_exposure_reason": "AI expands attack surface and security spend",
         "fwd_pe_est": 50.75,
         "volume_signal": {
-          "rvol": 0.57,
+          "rvol": 0.58,
           "cmf_20": 0.119,
           "updown_vol_ratio_25d": 1.64,
           "obv_divergence": "bearish",
@@ -10910,7 +10928,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 12,
-          "anchored_vwap": 399.65,
+          "anchored_vwap": 399.66,
           "pct_vs_anchored_vwap": -0.4,
           "above_anchored_vwap": false,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -10930,7 +10948,7 @@
         "is_full_52w_window": true,
         "high_window_sessions": 252,
         "pullback_from_20d_high_pct": -7.2,
-        "volume_surge_5d_vs_3m": 0.93,
+        "volume_surge_5d_vs_3m": 0.97,
         "atr_pct": 4.03,
         "rsi_14": 60.5,
         "macd": {
@@ -10963,9 +10981,9 @@
         "ai_exposure_reason": null,
         "fwd_pe_est": 44.44,
         "volume_signal": {
-          "rvol": 0.46,
-          "cmf_20": 0.032,
-          "updown_vol_ratio_25d": 1.42,
+          "rvol": 0.67,
+          "cmf_20": 0.025,
+          "updown_vol_ratio_25d": 1.39,
           "obv_divergence": "none",
           "pocket_pivot": false,
           "no_supply_pullback": false,
@@ -11055,7 +11073,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 0,
-          "anchored_vwap": 315.88,
+          "anchored_vwap": 315.87,
           "pct_vs_anchored_vwap": -0.2,
           "above_anchored_vwap": false,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -11098,7 +11116,7 @@
         },
         "rel_strength_1m_pct": 28.5,
         "rel_strength_3m_pct": 43.3,
-        "avg_dollar_volume_20d_usd": 511678048,
+        "avg_dollar_volume_20d_usd": 511762078,
         "liquid": true,
         "wma_200w": 158.97,
         "pct_vs_200w_ma": 98.4,
@@ -11109,7 +11127,7 @@
         "fwd_pe_est": 8.7,
         "volume_signal": {
           "rvol": 0.66,
-          "cmf_20": 0.305,
+          "cmf_20": 0.306,
           "updown_vol_ratio_25d": 1.78,
           "obv_divergence": "none",
           "pocket_pivot": false,
@@ -11346,7 +11364,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 4,
-          "anchored_vwap": 270.71,
+          "anchored_vwap": 270.7,
           "pct_vs_anchored_vwap": 1.3,
           "above_anchored_vwap": true,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -11367,7 +11385,7 @@
         "high_window_sessions": 252,
         "pullback_from_20d_high_pct": -1.7,
         "volume_surge_5d_vs_3m": 0.52,
-        "atr_pct": 4.45,
+        "atr_pct": 4.46,
         "rsi_14": 67.5,
         "macd": {
           "hist": -0.6668,
@@ -11375,7 +11393,7 @@
           "state": "bear_cross_recent"
         },
         "adx_14": 32.7,
-        "di_plus": 23.2,
+        "di_plus": 23.1,
         "di_minus": 12.6,
         "gap_analysis": {
           "count_20d": 3,
@@ -11400,7 +11418,7 @@
         "fwd_pe_est": 142.15,
         "volume_signal": {
           "rvol": 0.45,
-          "cmf_20": 0.297,
+          "cmf_20": 0.298,
           "updown_vol_ratio_25d": 1.28,
           "obv_divergence": "none",
           "pocket_pivot": false,
@@ -11491,7 +11509,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 1,
-          "anchored_vwap": 299.61,
+          "anchored_vwap": 299.51,
           "pct_vs_anchored_vwap": -1.1,
           "above_anchored_vwap": false,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -11511,7 +11529,7 @@
         "is_full_52w_window": true,
         "high_window_sessions": 252,
         "pullback_from_20d_high_pct": -2.3,
-        "volume_surge_5d_vs_3m": 1.05,
+        "volume_surge_5d_vs_3m": 1.08,
         "atr_pct": 1.81,
         "rsi_14": 68.4,
         "macd": {
@@ -11521,7 +11539,7 @@
         },
         "adx_14": 37.2,
         "di_plus": 37.4,
-        "di_minus": 12.0,
+        "di_minus": 11.9,
         "gap_analysis": {
           "count_20d": 0,
           "last": null
@@ -11538,9 +11556,9 @@
         "ai_exposure_reason": "western rail duopoly; AI-optimized precision scheduling lifts margins on irreplaceable rails",
         "fwd_pe_est": 23.25,
         "volume_signal": {
-          "rvol": 0.98,
-          "cmf_20": 0.19,
-          "updown_vol_ratio_25d": 1.98,
+          "rvol": 1.16,
+          "cmf_20": 0.181,
+          "updown_vol_ratio_25d": 1.94,
           "obv_divergence": "none",
           "pocket_pivot": false,
           "no_supply_pullback": false,
@@ -11630,7 +11648,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 1,
-          "anchored_vwap": 362.9,
+          "anchored_vwap": 362.92,
           "pct_vs_anchored_vwap": 1.5,
           "above_anchored_vwap": true,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -11650,7 +11668,7 @@
         "is_full_52w_window": true,
         "high_window_sessions": 252,
         "pullback_from_20d_high_pct": -0.9,
-        "volume_surge_5d_vs_3m": 1.49,
+        "volume_surge_5d_vs_3m": 1.5,
         "atr_pct": 2.66,
         "rsi_14": 75.1,
         "macd": {
@@ -11683,9 +11701,9 @@
         "ai_exposure_reason": "commercial/personal insurer; pricing cycle, reserves and cat losses drive it, not AI",
         "fwd_pe_est": 11.82,
         "volume_signal": {
-          "rvol": 1.3,
+          "rvol": 1.32,
           "cmf_20": 0.307,
-          "updown_vol_ratio_25d": 2.54,
+          "updown_vol_ratio_25d": 2.53,
           "obv_divergence": "none",
           "pocket_pivot": false,
           "no_supply_pullback": false,
@@ -11775,7 +11793,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 7,
-          "anchored_vwap": 428.54,
+          "anchored_vwap": 428.53,
           "pct_vs_anchored_vwap": -1.6,
           "above_anchored_vwap": false,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -11839,7 +11857,7 @@
         "swing_setup_score": 6.01,
         "valuation": {
           "trailing_pe": 32.057034,
-          "forward_pe": 18.845226,
+          "forward_pe": 18.789461,
           "price_to_sales_ttm": 0.8504856,
           "ev_to_ebitda": 17.527
         },
@@ -11871,7 +11889,7 @@
         "earnings_reaction_validation": "MEASURED, NO EDGE on the price leg: gap_held scored -0.07pp ATR-matched over 12 years while gap_filled (+0.29) and down_gap (+0.18) - the two reads this lane calls failures - scored better. All inside noise. Treat earnings_reaction as DESCRIPTIVE only; it is not evidence for or against an entry. The revision leg is untested, not validated.",
         "fwd_pe_to_growth": null,
         "valuation_context": {
-          "fwd_pe": 18.845226,
+          "fwd_pe": 18.789461,
           "fwd_pe_est": 21.47,
           "fwd_pe_to_growth": null,
           "fwd_revenue_growth_pct": -0.3,
@@ -11920,7 +11938,7 @@
           "status": "ok",
           "anchor_reason": "breakout_above_20d_high",
           "sessions_since_anchor": 2,
-          "anchored_vwap": 330.91,
+          "anchored_vwap": 330.87,
           "pct_vs_anchored_vwap": -1.3,
           "above_anchored_vwap": false,
           "note": "Volume-weighted average price paid since the anchor event. Above it, buyers since the anchor are collectively in profit and it tends to act as support; below it, as resistance. This is a measured level, not a chart read."
@@ -11940,7 +11958,7 @@
         "is_full_52w_window": true,
         "high_window_sessions": 252,
         "pullback_from_20d_high_pct": -2.5,
-        "volume_surge_5d_vs_3m": 1.0,
+        "volume_surge_5d_vs_3m": 1.01,
         "atr_pct": 2.56,
         "rsi_14": 63.9,
         "macd": {
@@ -11957,7 +11975,7 @@
         },
         "rel_strength_1m_pct": 9.9,
         "rel_strength_3m_pct": 16.2,
-        "avg_dollar_volume_20d_usd": 16108966186,
+        "avg_dollar_volume_20d_usd": 16156346068,
         "liquid": true,
         "wma_200w": 209.57,
         "pct_vs_200w_ma": 55.8,
@@ -11967,8 +11985,8 @@
         "ai_exposure_reason": "unmatched distribution for on-device AI; execution currently lagging",
         "fwd_pe_est": 37.24,
         "volume_signal": {
-          "rvol": 0.9,
-          "cmf_20": 0.162,
+          "rvol": 0.95,
+          "cmf_20": 0.161,
           "updown_vol_ratio_25d": 1.75,
           "obv_divergence": "none",
           "pocket_pivot": false,
@@ -13172,19 +13190,19 @@
       "HUM": 4.03,
       "MPC": 2.77,
       "ABBV": 2.49,
-      "SNOW": 4.45,
+      "SNOW": 4.46,
       "UNP": 1.81,
       "TRV": 2.66,
       "UNH": 3.05,
       "AAPL": 2.56,
       "CNC": 3.85,
-      "CVS": 2.36,
+      "CVS": 2.37,
       "DXCM": 3.68,
       "WM": 2.27,
       "RBRK": 6.65,
       "ALL": 2.61,
-      "CB": 2.36,
-      "PM": 2.76,
+      "CB": 2.37,
+      "PM": 2.77,
       "AMGN": 2.48,
       "JPM": 2.35,
       "APD": 3.52,
@@ -13211,7 +13229,7 @@
       "WMB": 2.59,
       "XOM": 2.13,
       "MCO": 2.86,
-      "SPGI": 3.3,
+      "SPGI": 3.31,
       "HPE": 6.17,
       "ABNB": 2.87,
       "COP": 2.37,
@@ -13237,7 +13255,7 @@
       "MDT": 3.09,
       "BLK": 2.82,
       "AMZN": 2.7,
-      "GILD": 3.15,
+      "GILD": 3.16,
       "REGN": 2.46,
       "ANET": 6.58,
       "SCHW": 2.45,
@@ -13255,17 +13273,17 @@
       "CRM": 3.98,
       "ARES": 3.81,
       "BX": 3.15,
-      "KKR": 3.45,
+      "KKR": 3.48,
       "ROK": 3.34,
       "APH": 4.68,
       "TJX": 2.08,
-      "RDDT": 7.08,
+      "RDDT": 7.09,
       "MSFT": 2.72,
       "SPOT": 3.43,
       "SYK": 3.64,
       "LIN": 2.37,
       "MU": 8.8,
-      "HD": 2.82,
+      "HD": 2.83,
       "SCCO": 4.03,
       "ALAB": 13.69,
       "AMAT": 9.17,
@@ -13291,7 +13309,7 @@
       "QCOM": 5.17,
       "BKR": 3.0,
       "CME": 2.64,
-      "HOOD": 6.89,
+      "HOOD": 6.9,
       "WMT": 2.56,
       "KLAC": 9.71,
       "LMT": 2.49,
@@ -13308,7 +13326,7 @@
       "FIX": 5.99,
       "CDNS": 4.5,
       "ADI": 3.9,
-      "FNV": 3.2,
+      "FNV": 3.21,
       "HON": 3.18,
       "VRT": 7.14,
       "TDG": 2.87,
@@ -13320,12 +13338,12 @@
       "ONTO": 10.49,
       "MPWR": 6.43,
       "NRG": 4.15,
-      "DLR": 2.73,
+      "DLR": 2.74,
       "GLW": 11.07,
-      "APO": 3.31,
+      "APO": 3.33,
       "ISRG": 5.16,
       "NFLX": 4.21,
-      "APP": 7.7,
+      "APP": 7.71,
       "LOW": 3.11,
       "IBM": 7.78,
       "LITE": 8.54,
@@ -13336,14 +13354,14 @@
       "SMCI": 6.6,
       "CIEN": 7.7,
       "SNPS": 4.35,
-      "RGLD": 3.31,
+      "RGLD": 3.32,
       "B": 3.78,
-      "CAMT": 7.43,
+      "CAMT": 7.44,
       "NEM": 3.67,
       "COHR": 8.98,
       "KGC": 4.18,
       "WPM": 4.04,
-      "CLS": 7.63,
+      "CLS": 7.65,
       "AEM": 4.01,
       "CRWV": 9.2,
       "OKLO": 7.97,
@@ -22971,7 +22989,7 @@
   },
   "filing_texts_note": "Real MD&A and press-release prose per focus ticker. When earnings_release.contains_guidance_language is true, QUOTE the specific guidance sentence (numbers and fiscal period) instead of paraphrasing. mdna.section == 'document_start' means general filing text, not MD&A.",
   "news_and_catalysts": {
-    "as_of": "2026-07-21T03:52:05.207830+00:00",
+    "as_of": "2026-07-21T04:52:06.334408+00:00",
     "news_max_age_days": 7,
     "tickers": {
       "OKTA": {
@@ -22986,7 +23004,7 @@
             "title": "Wall Street Just Supersized Its Price Targets on Okta and Fortinet. Are Cybersecurity Stocks a Must-Own in 2026?",
             "published": "2026-07-20T17:24:20Z",
             "url": "https://247wallst.com/investing/2026/07/20/wall-street-just-supersized-its-price-targets-on-okta-and-fortinet-are-cybersecurity-stocks-a-must-own-in-2026/",
-            "age_days": 0.4
+            "age_days": 0.5
           },
           {
             "title": "Goldman Flags 3 AI-Resistant Investment Themes to Watch",
@@ -23069,13 +23087,13 @@
             "title": "Eli Lilly Stock And The Price Of Confidence",
             "published": "2026-07-20T17:45:23Z",
             "url": "https://www.trefis.com/articles/607976/eli-lilly-stock-and-the-price-of-confidence/2026-07-20",
-            "age_days": 0.4
+            "age_days": 0.5
           },
           {
             "title": "Wall Street Just Supersized Its Price Targets on Okta and Fortinet. Are Cybersecurity Stocks a Must-Own in 2026?",
             "published": "2026-07-20T17:24:20Z",
             "url": "https://247wallst.com/investing/2026/07/20/wall-street-just-supersized-its-price-targets-on-okta-and-fortinet-are-cybersecurity-stocks-a-must-own-in-2026/",
-            "age_days": 0.4
+            "age_days": 0.5
           },
           {
             "title": "Can XM Cyber IP Acquisition Strengthen CrowdStrike's Falcon Platform?",
@@ -23146,7 +23164,7 @@
             "title": "3 Cybersecurity Stocks to Buy Amid Rising Adoption of Agentic AI",
             "published": "2026-07-17T15:17:00Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/3-cybersecurity-stocks-buy-amid-151700734.html",
-            "age_days": 3.5
+            "age_days": 3.6
           },
           {
             "title": "Why Inflation Data Just Lit A Fire Under CRWD Stock",
@@ -23158,7 +23176,7 @@
             "title": "Cybersecurity Space is Buzzing on Recent Catalysts: 3 Top Picks",
             "published": "2026-07-15T13:03:00Z",
             "url": "https://finance.yahoo.com/technology/articles/cybersecurity-space-buzzing-recent-catalysts-130300250.html",
-            "age_days": 5.6
+            "age_days": 5.7
           },
           {
             "title": "Dow Jones Futures: Techs Rise, Oil Hits $80 On Iran News, ASML, Morgan Stanley Lead Earnings Movers",
@@ -23217,7 +23235,7 @@
             "title": "Wall Street Just Supersized Its Price Targets on Okta and Fortinet. Are Cybersecurity Stocks a Must-Own in 2026?",
             "published": "2026-07-20T17:24:20Z",
             "url": "https://247wallst.com/investing/2026/07/20/wall-street-just-supersized-its-price-targets-on-okta-and-fortinet-are-cybersecurity-stocks-a-must-own-in-2026/",
-            "age_days": 0.4
+            "age_days": 0.5
           },
           {
             "title": "CrowdStrike (CRWD) Expands STACKIT Partnership And Names AJ Shipley Product Chief",
@@ -23294,13 +23312,13 @@
             "title": "Why Datadog (DDOG) Stock Is Trading Up Today",
             "published": "2026-07-20T20:27:34Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/why-datadog-ddog-stock-trading-202734474.html",
-            "age_days": 0.3
+            "age_days": 0.4
           },
           {
             "title": "Wells Fargo cuts HubSpot to Equal Weight as AI transition clouds near-term outlook",
             "published": "2026-07-20T17:05:15Z",
             "url": "https://finance.yahoo.com/technology/ai/articles/wells-fargo-cuts-hubspot-equal-170515459.html",
-            "age_days": 0.4
+            "age_days": 0.5
           },
           {
             "title": "PENG vs. DDOG: Which AI Infrastructure Stock Is the Better Buy Now?",
@@ -23312,7 +23330,7 @@
             "title": "The One Deal That Could End Micron Stock's Old Boom-And-Bust Cycle",
             "published": "2026-07-20T12:54:58Z",
             "url": "https://www.trefis.com/articles/607950/the-one-deal-that-could-end-micron-stocks-old-boom-and-bust-cycle/2026-07-20",
-            "age_days": 0.6
+            "age_days": 0.7
           },
           {
             "title": "These 7 Stocks Are Analyst Favorites For Magnificent Earnings Growth; Google Holds Top Rating",
@@ -23507,7 +23525,7 @@
             "title": "CRM Stock: A Cash Gusher At A Marked-Down Price",
             "published": "2026-07-20T15:18:27Z",
             "url": "https://www.trefis.com/articles/607954/crm-stock-a-cash-gusher-at-a-marked-down-price/2026-07-20",
-            "age_days": 0.5
+            "age_days": 0.6
           },
           {
             "title": "Netflix upgraded, Microsoft initiated: Wall Street's top analyst calls",
@@ -23525,7 +23543,7 @@
             "title": "Adobe vs. Autodesk: What Revenue Trends Reveal About These Software Stocks",
             "published": "2026-07-17T17:48:01Z",
             "url": "https://www.fool.com/coverage/charts/2026/07/17/adobe-vs-autodesk-what-revenue-trends-reveal-about-these-software-stocks/",
-            "age_days": 3.4
+            "age_days": 3.5
           },
           {
             "title": "How to Find the Bargains in the Software Stock Wreckage",
@@ -23596,7 +23614,7 @@
             "title": "OKLO, XE, SMR, NNE, UEC Stocks Tumble On Thursday: AI Made Nuclear Stocks Market Darlings \u2013 Now Investors Want Proof",
             "published": "2026-07-17T05:40:27Z",
             "url": "https://stocktwits.com/news-articles/markets/equity/why-did-oklo-xe-smr-nne-uec-stocks-tumble-on-thursday/cZZ74pnR7ta",
-            "age_days": 3.9
+            "age_days": 4.0
           },
           {
             "title": "Why Did IBM, ORCL, SMR Stocks Drop To 52-Week Lows Today?",
@@ -23608,7 +23626,7 @@
             "title": "Oklo Just Dropped 28% in a Month. Is It Time to Abandon Nuclear Stocks Like OKLO, NuScale, and Uranium Energy Corp.?",
             "published": "2026-07-16T19:38:23Z",
             "url": "https://247wallst.com/investing/2026/07/16/oklo-just-dropped-28-in-a-month-is-it-time-to-abandon-nuclear-stocks-like-oklo-nuscale-and-uranium-energy-corp/",
-            "age_days": 4.3
+            "age_days": 4.4
           }
         ],
         "next_earnings": "2026-08-05",
@@ -23673,7 +23691,7 @@
             "title": "Can Abbott Stock Deliver on Its Second-Half Growth Promise?",
             "published": "2026-07-17T12:17:34Z",
             "url": "https://www.trefis.com/articles/607713/can-abbott-stock-deliver-on-its-second-half-growth-promise/2026-07-17",
-            "age_days": 3.6
+            "age_days": 3.7
           },
           {
             "title": "Why Abbott Stock Is Reimagining Its Future",
@@ -23685,7 +23703,7 @@
             "title": "Why Did SPCX, IBM, BSX Drop To 52-Week Lows Today?",
             "published": "2026-07-16T03:06:57Z",
             "url": "https://stocktwits.com/news-articles/markets/equity/why-did-spcx-ibm-bsx-drop-to-52-week-lows-today/cZZ3D18R7rn",
-            "age_days": 5.0
+            "age_days": 5.1
           }
         ],
         "next_earnings": "2026-07-29",
@@ -23738,7 +23756,7 @@
             "title": "2 Large-Cap Stocks on Our Buy List and 1 Facing Challenges",
             "published": "2026-07-20T13:03:33Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/2-large-cap-stocks-buy-130333015.html",
-            "age_days": 0.6
+            "age_days": 0.7
           },
           {
             "title": "Cloudflare (NET) Gains As Market Dips: What You Should Know",
@@ -23756,13 +23774,13 @@
             "title": "1 Unprofitable Stock with Exciting Potential and 2 Facing Challenges",
             "published": "2026-07-17T13:05:46Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/1-unprofitable-stock-exciting-potential-130546449.html",
-            "age_days": 3.6
+            "age_days": 3.7
           },
           {
             "title": "Cloudflare (NET) Stock Gets Fair Value Boost As Analysts Raise AI And Security Targets",
             "published": "2026-07-17T01:12:58Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/cloudflare-net-stock-gets-fair-011258252.html",
-            "age_days": 4.1
+            "age_days": 4.2
           }
         ],
         "next_earnings": "2026-08-06",
@@ -23815,7 +23833,7 @@
             "title": "Wall Street Just Supersized Its Price Targets on Okta and Fortinet. Are Cybersecurity Stocks a Must-Own in 2026?",
             "published": "2026-07-20T17:24:20Z",
             "url": "https://247wallst.com/investing/2026/07/20/wall-street-just-supersized-its-price-targets-on-okta-and-fortinet-are-cybersecurity-stocks-a-must-own-in-2026/",
-            "age_days": 0.4
+            "age_days": 0.5
           },
           {
             "title": "The Biggest Problem For GE Stock Is Also Its Biggest Opportunity",
@@ -23886,13 +23904,13 @@
             "title": "Goldman Sachs picks 36 market winners that aren't AI stocks",
             "published": "2026-07-20T15:10:02Z",
             "url": "https://finance.yahoo.com/markets/stocks/article/goldman-sachs-picks-36-market-winners-that-arent-ai-stocks-151002913.html",
-            "age_days": 0.5
+            "age_days": 0.6
           },
           {
             "title": "Best CD rates today, Monday, July 20, 2026: Lock in up to 4.20% APY",
             "published": "2026-07-20T10:00:00Z",
             "url": "https://finance.yahoo.com/personal-finance/banking/article/best-cd-rates-today-monday-july-20-2026-lock-in-up-to-420-apy-100000197.html",
-            "age_days": 0.7
+            "age_days": 0.8
           },
           {
             "title": "Goldman Sachs (GS) Says Hedge Funds Made Their Biggest US Tech Exit Yet",
@@ -23904,13 +23922,13 @@
             "title": "Zacks Market Edge Highlights: Goldman Sachs, Wells Fargo, JPMorgan Chase , Citigroup  and Bank of America",
             "published": "2026-07-20T17:16:00Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/zacks-market-edge-highlights-goldman-171600053.html",
-            "age_days": 0.4
+            "age_days": 0.5
           },
           {
             "title": "AI Stocks Are Hot, but Smart Investors Are Quickly and Quietly Cutting Their Risk",
             "published": "2026-07-20T14:55:53Z",
             "url": "https://247wallst.com/investing/2026/07/20/ai-stocks-are-hot-but-smart-investors-are-quickly-and-quietly-cutting-their-risk/",
-            "age_days": 0.5
+            "age_days": 0.6
           },
           {
             "title": "Goldman Says Hedge Funds Sell US Tech Stocks at Record Pace",
@@ -23975,7 +23993,7 @@
             "title": "Nvidia (NVDA) Faces Fresh Rack Server Pressure As AMD Launches Helios",
             "published": "2026-07-21T01:08:46Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/nvidia-nvda-faces-fresh-rack-010846712.html",
-            "age_days": 0.1
+            "age_days": 0.2
           },
           {
             "title": "After A Steep Run And A Sharp Drop, Is Marvell Technology Stock A Bet On The AI Buildout?",
@@ -23987,7 +24005,7 @@
             "title": "Stock Market Today, July 20: Hut 8  Surges 10% as Geopolitical Tensions Weigh on Broader Market",
             "published": "2026-07-20T22:17:56Z",
             "url": "https://www.fool.com/coverage/stock-market-today/2026/07/20/stock-market-today-july-20-hut-8-surges-10-as-geopolitical-tensions-weigh-on-broader-market/",
-            "age_days": 0.2
+            "age_days": 0.3
           },
           {
             "title": "Advanced Micro Devices (AMD) Increases Despite Market Slip: Here's What You Need to Know",
@@ -27011,52 +27029,53 @@
       "OKTA": {
         "status": "ok",
         "expiry": "2026-07-31",
-        "days_to_expiry": 11,
+        "days_to_expiry": 10,
         "spot": 148.41,
-        "expected_move_pct": 9.48,
-        "atm_iv_pct": 68.6,
+        "expected_move_pct": 9.67,
+        "atm_iv_pct": 0.2,
         "put_call_volume_ratio": 1.05,
-        "put_call_oi_ratio": 1.8,
+        "put_call_oi_ratio": null,
         "call_volume": 674,
         "put_volume": 710,
-        "call_open_interest": 1290,
-        "put_open_interest": 2327,
-        "iv_skew_pct": 0.9,
+        "call_open_interest": 0,
+        "put_open_interest": 0,
+        "iv_skew_pct": 3.0,
         "skew_read": "balanced",
         "unusual_strikes": [],
         "iv_rank": {
           "status": "ok",
-          "n_samples": 6,
-          "atm_iv_pct": 68.6,
-          "iv_percentile": 100.0,
+          "n_samples": 7,
+          "atm_iv_pct": 0.2,
+          "iv_percentile": 0.0,
           "iv_min_hist": 62.4,
-          "iv_max_hist": 67.8,
-          "regime": "high_vs_own_history",
-          "tilt": "caution_event_or_stress",
-          "note": "ATM IV is at the 100th percentile of the last 6 stored samples (range 62\u201368%). High = expensive options / event fear; low = calm vs this name's recent past."
+          "iv_max_hist": 68.6,
+          "regime": "low_vs_own_history",
+          "tilt": "calm_relatively",
+          "note": "ATM IV is at the 0th percentile of the last 7 stored samples (range 62\u201369%). High = expensive options / event fear; low = calm vs this name's recent past."
         },
         "term_structure": {
           "status": "ok",
-          "front_atm_iv_pct": 68.6,
-          "back_atm_iv_pct": 66.7,
-          "front_days": 11,
-          "back_days": 32,
-          "front_minus_back_pp": 1.9,
+          "front_atm_iv_pct": 0.2,
+          "back_atm_iv_pct": 0.4,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": -0.2,
           "shape": "flat",
           "tilt": "neutral",
-          "note": "Term structure roughly flat (front\u2212back 2pp).",
+          "note": "Term structure roughly flat (front\u2212back -0pp).",
           "back_expiry": "2026-08-21"
         },
         "oi_change": {
           "status": "ok",
-          "prior_date": "2026-07-19",
-          "call_oi": 1290,
-          "put_oi": 2327,
-          "call_oi_change": 97,
-          "put_oi_change": 314,
-          "total_oi_change": 411,
+          "prior_date": "2026-07-20",
+          "call_oi": 0,
+          "put_oi": 0,
+          "call_oi_change": -1290,
+          "put_oi_change": -2327,
+          "total_oi_change": -3617,
           "notes": [
-            "OI roughly stable vs prior sample."
+            "Call OI -1,290 since 2026-07-20 (call positions closed).",
+            "Put OI -2,327 since 2026-07-20 (puts closed)."
           ],
           "note": "OI change is positioning change, not aggressor side. Rising put OI can be new hedges by longs; rising call OI can be new longs or covered writes."
         },
@@ -27074,34 +27093,39 @@
               "note": "P/C vol 1.05: mild put lean \u2014 caution, not panic."
             },
             {
-              "source": "iv_level",
-              "tilt": "event_premium",
-              "note": "ATM IV ~69% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b19.5% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
-            },
-            {
-              "source": "iv_rank",
-              "tilt": "high_iv_rank",
-              "note": "ATM IV is at the 100th percentile of the last 6 stored samples (range 62\u201368%). High = expensive options / event fear; low = calm vs this name's recent past."
+              "source": "iv_skew",
+              "regime": "put_skew",
+              "tilt": "cautious",
+              "note": "Mild put skew (+3.0pp): modest demand for downside protection."
             }
           ],
           "neutral_notes": [
             {
-              "source": "iv_skew",
-              "regime": "balanced_skew",
+              "source": "iv_level",
               "tilt": "neutral",
-              "note": "Skew near flat (0.9pp)."
+              "note": "ATM IV ~0% relatively calm \u2014 less event premium in options. Nearest-expiry expected move \u00b19.7% \u2014 stops inside this band are noise for that window."
+            },
+            {
+              "source": "iv_rank",
+              "tilt": "low_iv_rank",
+              "note": "ATM IV is at the 0th percentile of the last 7 stored samples (range 62\u201369%). High = expensive options / event fear; low = calm vs this name's recent past."
             },
             {
               "source": "oi_change",
               "tilt": "positioning",
-              "note": "OI roughly stable vs prior sample."
+              "note": "Call OI -1,290 since 2026-07-20 (call positions closed)."
+            },
+            {
+              "source": "oi_change",
+              "tilt": "positioning",
+              "note": "Put OI -2,327 since 2026-07-20 (puts closed)."
             }
           ],
           "for_stop_engineering": {
-            "expected_move_pct": 9.48,
-            "atm_iv_pct": 68.6,
+            "expected_move_pct": 9.67,
+            "atm_iv_pct": 0.2,
             "expiry": "2026-07-31",
-            "days_to_expiry": 11,
+            "days_to_expiry": 10,
             "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
           },
           "swing_playbook": {
@@ -27116,58 +27140,59 @@
       "PANW": {
         "status": "ok",
         "expiry": "2026-07-31",
-        "days_to_expiry": 11,
+        "days_to_expiry": 10,
         "spot": 348.66,
-        "expected_move_pct": 8.71,
-        "atm_iv_pct": 63.0,
+        "expected_move_pct": 9.86,
+        "atm_iv_pct": 0.2,
         "put_call_volume_ratio": 3.11,
-        "put_call_oi_ratio": 2.34,
+        "put_call_oi_ratio": 0.0,
         "call_volume": 1052,
         "put_volume": 3270,
-        "call_open_interest": 8257,
-        "put_open_interest": 19290,
-        "iv_skew_pct": -0.9,
+        "call_open_interest": 2,
+        "put_open_interest": 0,
+        "iv_skew_pct": 0.9,
         "skew_read": "balanced",
         "unusual_strikes": [],
         "iv_rank": {
           "status": "ok",
-          "n_samples": 6,
-          "atm_iv_pct": 63.0,
-          "iv_percentile": 100.0,
+          "n_samples": 7,
+          "atm_iv_pct": 0.2,
+          "iv_percentile": 0.0,
           "iv_min_hist": 57.8,
-          "iv_max_hist": 62.2,
-          "regime": "high_vs_own_history",
-          "tilt": "caution_event_or_stress",
-          "note": "ATM IV is at the 100th percentile of the last 6 stored samples (range 58\u201362%). High = expensive options / event fear; low = calm vs this name's recent past."
+          "iv_max_hist": 63.0,
+          "regime": "low_vs_own_history",
+          "tilt": "calm_relatively",
+          "note": "ATM IV is at the 0th percentile of the last 7 stored samples (range 58\u201363%). High = expensive options / event fear; low = calm vs this name's recent past."
         },
         "term_structure": {
           "status": "ok",
-          "front_atm_iv_pct": 63.0,
-          "back_atm_iv_pct": 65.5,
-          "front_days": 11,
-          "back_days": 32,
-          "front_minus_back_pp": -2.5,
+          "front_atm_iv_pct": 0.2,
+          "back_atm_iv_pct": 0.2,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": 0.0,
           "shape": "flat",
           "tilt": "neutral",
-          "note": "Term structure roughly flat (front\u2212back -2pp).",
+          "note": "Term structure roughly flat (front\u2212back 0pp).",
           "back_expiry": "2026-08-21"
         },
         "oi_change": {
           "status": "ok",
-          "prior_date": "2026-07-19",
-          "call_oi": 8257,
-          "put_oi": 19290,
-          "call_oi_change": 403,
-          "put_oi_change": 1339,
-          "total_oi_change": 1742,
+          "prior_date": "2026-07-20",
+          "call_oi": 2,
+          "put_oi": 0,
+          "call_oi_change": -8255,
+          "put_oi_change": -19290,
+          "total_oi_change": -27545,
           "notes": [
-            "Put OI +1,339 since 2026-07-19 (new put open interest / hedges)."
+            "Call OI -8,255 since 2026-07-20 (call positions closed).",
+            "Put OI -19,290 since 2026-07-20 (puts closed)."
           ],
           "note": "OI change is positioning change, not aggressor side. Rising put OI can be new hedges by longs; rising call OI can be new longs or covered writes."
         },
         "swing_options_read": {
           "status": "ok",
-          "net_tilt": "lean_bearish",
+          "net_tilt": "slight_bearish",
           "direction_confidence": "low",
           "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
           "bullish_tilts": [],
@@ -27177,16 +27202,6 @@
               "regime": "put_heavy",
               "tilt": "bearish_or_hedging",
               "note": "P/C vol 3.11: elevated put volume \u2014 often protective hedging by longs OR downside speculation; with rising price can be bullish-compatible (collar/hedge). With falling price, risk of more deleveraging."
-            },
-            {
-              "source": "iv_level",
-              "tilt": "event_premium",
-              "note": "ATM IV ~63% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b18.7% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
-            },
-            {
-              "source": "iv_rank",
-              "tilt": "high_iv_rank",
-              "note": "ATM IV is at the 100th percentile of the last 6 stored samples (range 58\u201362%). High = expensive options / event fear; low = calm vs this name's recent past."
             }
           ],
           "neutral_notes": [
@@ -27194,19 +27209,34 @@
               "source": "iv_skew",
               "regime": "balanced_skew",
               "tilt": "neutral",
-              "note": "Skew near flat (-0.9pp)."
+              "note": "Skew near flat (0.9pp)."
+            },
+            {
+              "source": "iv_level",
+              "tilt": "neutral",
+              "note": "ATM IV ~0% relatively calm \u2014 less event premium in options. Nearest-expiry expected move \u00b19.9% \u2014 stops inside this band are noise for that window."
+            },
+            {
+              "source": "iv_rank",
+              "tilt": "low_iv_rank",
+              "note": "ATM IV is at the 0th percentile of the last 7 stored samples (range 58\u201363%). High = expensive options / event fear; low = calm vs this name's recent past."
             },
             {
               "source": "oi_change",
               "tilt": "positioning",
-              "note": "Put OI +1,339 since 2026-07-19 (new put open interest / hedges)."
+              "note": "Call OI -8,255 since 2026-07-20 (call positions closed)."
+            },
+            {
+              "source": "oi_change",
+              "tilt": "positioning",
+              "note": "Put OI -19,290 since 2026-07-20 (puts closed)."
             }
           ],
           "for_stop_engineering": {
-            "expected_move_pct": 8.71,
-            "atm_iv_pct": 63.0,
+            "expected_move_pct": 9.86,
+            "atm_iv_pct": 0.2,
             "expiry": "2026-07-31",
-            "days_to_expiry": 11,
+            "days_to_expiry": 10,
             "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
           },
           "swing_playbook": {
@@ -27221,58 +27251,58 @@
       "S": {
         "status": "ok",
         "expiry": "2026-07-31",
-        "days_to_expiry": 11,
+        "days_to_expiry": 10,
         "spot": 19.46,
-        "expected_move_pct": 8.48,
-        "atm_iv_pct": 61.1,
+        "expected_move_pct": 9.25,
+        "atm_iv_pct": 0.4,
         "put_call_volume_ratio": 0.41,
-        "put_call_oi_ratio": 0.09,
+        "put_call_oi_ratio": null,
         "call_volume": 307,
         "put_volume": 126,
-        "call_open_interest": 4924,
-        "put_open_interest": 445,
-        "iv_skew_pct": -5.0,
-        "skew_read": "calls_bid_over_puts (speculative upside demand)",
+        "call_open_interest": 0,
+        "put_open_interest": 0,
+        "iv_skew_pct": 2.6,
+        "skew_read": "balanced",
         "unusual_strikes": [],
         "iv_rank": {
           "status": "ok",
-          "n_samples": 6,
-          "atm_iv_pct": 61.1,
-          "iv_percentile": 83.3,
+          "n_samples": 7,
+          "atm_iv_pct": 0.4,
+          "iv_percentile": 0.0,
           "iv_min_hist": 57.9,
           "iv_max_hist": 64.5,
-          "regime": "high_vs_own_history",
-          "tilt": "caution_event_or_stress",
-          "note": "ATM IV is at the 83th percentile of the last 6 stored samples (range 58\u201364%). High = expensive options / event fear; low = calm vs this name's recent past."
+          "regime": "low_vs_own_history",
+          "tilt": "calm_relatively",
+          "note": "ATM IV is at the 0th percentile of the last 7 stored samples (range 58\u201364%). High = expensive options / event fear; low = calm vs this name's recent past."
         },
         "term_structure": {
           "status": "ok",
-          "front_atm_iv_pct": 61.1,
-          "back_atm_iv_pct": 57.8,
-          "front_days": 11,
-          "back_days": 32,
-          "front_minus_back_pp": 3.3,
-          "shape": "mild_backwardation",
-          "tilt": "event_front",
-          "note": "Front richer than back by 3pp \u2014 some near-term event pricing.",
+          "front_atm_iv_pct": 0.4,
+          "back_atm_iv_pct": 1.6,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": -1.2,
+          "shape": "flat",
+          "tilt": "neutral",
+          "note": "Term structure roughly flat (front\u2212back -1pp).",
           "back_expiry": "2026-08-21"
         },
         "oi_change": {
           "status": "ok",
-          "prior_date": "2026-07-19",
-          "call_oi": 4924,
-          "put_oi": 445,
-          "call_oi_change": 871,
-          "put_oi_change": 12,
-          "total_oi_change": 883,
+          "prior_date": "2026-07-20",
+          "call_oi": 0,
+          "put_oi": 0,
+          "call_oi_change": -4924,
+          "put_oi_change": -445,
+          "total_oi_change": -5369,
           "notes": [
-            "Call OI +871 since 2026-07-19 (new call open interest)."
+            "Call OI -4,924 since 2026-07-20 (call positions closed)."
           ],
           "note": "OI change is positioning change, not aggressor side. Rising put OI can be new hedges by longs; rising call OI can be new longs or covered writes."
         },
         "swing_options_read": {
           "status": "ok",
-          "net_tilt": "slight_bearish",
+          "net_tilt": "slight_bullish",
           "direction_confidence": "low",
           "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
           "bullish_tilts": [
@@ -27281,51 +27311,44 @@
               "regime": "call_heavy",
               "tilt": "bullish_or_call_overwriting",
               "note": "P/C vol 0.41: heavy call volume \u2014 speculative upside OR covered-call writing into strength. Confirm with price structure; do not buy only because calls are busy."
-            },
-            {
-              "source": "iv_skew",
-              "regime": "call_skew",
-              "tilt": "bullish_speculation",
-              "note": "Call IV 5.0pp over put IV: speculative upside demand (or short-put supply). Can mark FOMO; chase risk is real."
             }
           ],
-          "bearish_tilts": [
+          "bearish_tilts": [],
+          "neutral_notes": [
+            {
+              "source": "iv_skew",
+              "regime": "balanced_skew",
+              "tilt": "neutral",
+              "note": "Skew near flat (2.6pp)."
+            },
             {
               "source": "iv_level",
-              "tilt": "event_premium",
-              "note": "ATM IV ~61% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b18.5% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+              "tilt": "neutral",
+              "note": "ATM IV ~0% relatively calm \u2014 less event premium in options. Nearest-expiry expected move \u00b19.2% \u2014 stops inside this band are noise for that window."
             },
             {
               "source": "iv_rank",
-              "tilt": "high_iv_rank",
-              "note": "ATM IV is at the 83th percentile of the last 6 stored samples (range 58\u201364%). High = expensive options / event fear; low = calm vs this name's recent past."
+              "tilt": "low_iv_rank",
+              "note": "ATM IV is at the 0th percentile of the last 7 stored samples (range 58\u201364%). High = expensive options / event fear; low = calm vs this name's recent past."
             },
-            {
-              "source": "term_structure",
-              "tilt": "mild_backwardation",
-              "note": "Front richer than back by 3pp \u2014 some near-term event pricing."
-            }
-          ],
-          "neutral_notes": [
             {
               "source": "oi_change",
               "tilt": "positioning",
-              "note": "Call OI +871 since 2026-07-19 (new call open interest)."
+              "note": "Call OI -4,924 since 2026-07-20 (call positions closed)."
             }
           ],
           "for_stop_engineering": {
-            "expected_move_pct": 8.48,
-            "atm_iv_pct": 61.1,
+            "expected_move_pct": 9.25,
+            "atm_iv_pct": 0.4,
             "expiry": "2026-07-31",
-            "days_to_expiry": 11,
+            "days_to_expiry": 10,
             "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
           },
           "swing_playbook": {
             "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
             "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
             "if_mixed": "Default to price + fundamentals. Options are not voting.",
-            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself.",
-            "term_structure": "Front richer than back by 3pp \u2014 some near-term event pricing."
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
           },
           "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
         }
@@ -27333,61 +27356,68 @@
       "CRWD": {
         "status": "ok",
         "expiry": "2026-07-31",
-        "days_to_expiry": 11,
+        "days_to_expiry": 10,
         "spot": 198.49,
-        "expected_move_pct": 9.95,
-        "atm_iv_pct": 71.8,
+        "expected_move_pct": 10.61,
+        "atm_iv_pct": 0.1,
         "put_call_volume_ratio": 1.13,
-        "put_call_oi_ratio": 0.98,
+        "put_call_oi_ratio": 1.29,
         "call_volume": 5208,
         "put_volume": 5894,
-        "call_open_interest": 17806,
-        "put_open_interest": 17420,
-        "iv_skew_pct": 1.4,
-        "skew_read": "balanced",
+        "call_open_interest": 1754,
+        "put_open_interest": 2271,
+        "iv_skew_pct": 3.1,
+        "skew_read": "puts_bid_over_calls (downside protection in demand)",
         "unusual_strikes": [
           {
             "type": "call",
             "strike": 252.5,
             "volume": 824,
-            "open_interest": 267,
+            "open_interest": 0,
             "pct_from_spot": 27.2
+          },
+          {
+            "type": "call",
+            "strike": 255.0,
+            "volume": 551,
+            "open_interest": 0,
+            "pct_from_spot": 28.5
           }
         ],
         "iv_rank": {
           "status": "ok",
-          "n_samples": 6,
-          "atm_iv_pct": 71.8,
-          "iv_percentile": 100.0,
+          "n_samples": 7,
+          "atm_iv_pct": 0.1,
+          "iv_percentile": 0.0,
           "iv_min_hist": 61.9,
-          "iv_max_hist": 68.1,
-          "regime": "high_vs_own_history",
-          "tilt": "caution_event_or_stress",
-          "note": "ATM IV is at the 100th percentile of the last 6 stored samples (range 62\u201368%). High = expensive options / event fear; low = calm vs this name's recent past."
+          "iv_max_hist": 71.8,
+          "regime": "low_vs_own_history",
+          "tilt": "calm_relatively",
+          "note": "ATM IV is at the 0th percentile of the last 7 stored samples (range 62\u201372%). High = expensive options / event fear; low = calm vs this name's recent past."
         },
         "term_structure": {
           "status": "ok",
-          "front_atm_iv_pct": 71.8,
-          "back_atm_iv_pct": 64.2,
-          "front_days": 11,
-          "back_days": 32,
-          "front_minus_back_pp": 7.6,
-          "shape": "mild_backwardation",
-          "tilt": "event_front",
-          "note": "Front richer than back by 8pp \u2014 some near-term event pricing.",
+          "front_atm_iv_pct": 0.1,
+          "back_atm_iv_pct": 0.2,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": -0.1,
+          "shape": "flat",
+          "tilt": "neutral",
+          "note": "Term structure roughly flat (front\u2212back -0pp).",
           "back_expiry": "2026-08-21"
         },
         "oi_change": {
           "status": "ok",
-          "prior_date": "2026-07-19",
-          "call_oi": 17806,
-          "put_oi": 17420,
-          "call_oi_change": 3815,
-          "put_oi_change": 1748,
-          "total_oi_change": 5563,
+          "prior_date": "2026-07-20",
+          "call_oi": 1754,
+          "put_oi": 2271,
+          "call_oi_change": -16052,
+          "put_oi_change": -15149,
+          "total_oi_change": -31201,
           "notes": [
-            "Call OI +3,815 since 2026-07-19 (new call open interest).",
-            "Put OI +1,748 since 2026-07-19 (new put open interest / hedges)."
+            "Call OI -16,052 since 2026-07-20 (call positions closed).",
+            "Put OI -15,149 since 2026-07-20 (puts closed)."
           ],
           "note": "OI change is positioning change, not aggressor side. Rising put OI can be new hedges by longs; rising call OI can be new longs or covered writes."
         },
@@ -27405,27 +27435,17 @@
               "note": "P/C vol 1.13: mild put lean \u2014 caution, not panic."
             },
             {
-              "source": "iv_level",
-              "tilt": "event_premium",
-              "note": "ATM IV ~72% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b19.9% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
-            },
-            {
-              "source": "iv_rank",
-              "tilt": "high_iv_rank",
-              "note": "ATM IV is at the 100th percentile of the last 6 stored samples (range 62\u201368%). High = expensive options / event fear; low = calm vs this name's recent past."
-            },
-            {
-              "source": "term_structure",
-              "tilt": "mild_backwardation",
-              "note": "Front richer than back by 8pp \u2014 some near-term event pricing."
+              "source": "iv_skew",
+              "regime": "put_skew",
+              "tilt": "cautious",
+              "note": "Mild put skew (+3.1pp): modest demand for downside protection."
             }
           ],
           "neutral_notes": [
             {
-              "source": "iv_skew",
-              "regime": "balanced_skew",
+              "source": "iv_level",
               "tilt": "neutral",
-              "note": "Skew near flat (1.4pp)."
+              "note": "ATM IV ~0% relatively calm \u2014 less event premium in options. Nearest-expiry expected move \u00b110.6% \u2014 stops inside this band are noise for that window."
             },
             {
               "source": "unusual_strikes",
@@ -27433,29 +27453,38 @@
               "note": "Far OTM call interest ~27% above spot ($252.5) \u2014 lottery / squeeze narrative, not a base case."
             },
             {
-              "source": "oi_change",
-              "tilt": "positioning",
-              "note": "Call OI +3,815 since 2026-07-19 (new call open interest)."
+              "source": "unusual_strikes",
+              "tilt": "lottery_calls",
+              "note": "Far OTM call interest ~28% above spot ($255.0) \u2014 lottery / squeeze narrative, not a base case."
+            },
+            {
+              "source": "iv_rank",
+              "tilt": "low_iv_rank",
+              "note": "ATM IV is at the 0th percentile of the last 7 stored samples (range 62\u201372%). High = expensive options / event fear; low = calm vs this name's recent past."
             },
             {
               "source": "oi_change",
               "tilt": "positioning",
-              "note": "Put OI +1,748 since 2026-07-19 (new put open interest / hedges)."
+              "note": "Call OI -16,052 since 2026-07-20 (call positions closed)."
+            },
+            {
+              "source": "oi_change",
+              "tilt": "positioning",
+              "note": "Put OI -15,149 since 2026-07-20 (puts closed)."
             }
           ],
           "for_stop_engineering": {
-            "expected_move_pct": 9.95,
-            "atm_iv_pct": 71.8,
+            "expected_move_pct": 10.61,
+            "atm_iv_pct": 0.1,
             "expiry": "2026-07-31",
-            "days_to_expiry": 11,
+            "days_to_expiry": 10,
             "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
           },
           "swing_playbook": {
             "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
             "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
             "if_mixed": "Default to price + fundamentals. Options are not voting.",
-            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself.",
-            "term_structure": "Front richer than back by 8pp \u2014 some near-term event pricing."
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
           },
           "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
         }
@@ -27463,53 +27492,59 @@
       "DDOG": {
         "status": "ok",
         "expiry": "2026-07-31",
-        "days_to_expiry": 11,
+        "days_to_expiry": 10,
         "spot": 263.2,
-        "expected_move_pct": 10.4,
-        "atm_iv_pct": 75.2,
+        "expected_move_pct": 10.47,
+        "atm_iv_pct": 0.2,
         "put_call_volume_ratio": 0.78,
-        "put_call_oi_ratio": 0.92,
+        "put_call_oi_ratio": null,
         "call_volume": 2032,
         "put_volume": 1580,
-        "call_open_interest": 4203,
-        "put_open_interest": 3847,
-        "iv_skew_pct": 0.0,
+        "call_open_interest": 0,
+        "put_open_interest": 0,
+        "iv_skew_pct": 1.6,
         "skew_read": "balanced",
         "unusual_strikes": [],
         "iv_rank": {
-          "status": "warming_up",
-          "n_samples": 4,
-          "atm_iv_pct": 75.2,
-          "note": "Need \u22655 daily IV samples for percentile (have 4). Builds automatically as runs accumulate."
+          "status": "ok",
+          "n_samples": 5,
+          "atm_iv_pct": 0.2,
+          "iv_percentile": 0.0,
+          "iv_min_hist": 64.3,
+          "iv_max_hist": 75.2,
+          "regime": "low_vs_own_history",
+          "tilt": "calm_relatively",
+          "note": "ATM IV is at the 0th percentile of the last 5 stored samples (range 64\u201375%). High = expensive options / event fear; low = calm vs this name's recent past."
         },
         "term_structure": {
           "status": "ok",
-          "front_atm_iv_pct": 75.2,
-          "back_atm_iv_pct": 86.1,
-          "front_days": 11,
-          "back_days": 32,
-          "front_minus_back_pp": -10.9,
-          "shape": "contango",
-          "tilt": "longer_term_uncertainty",
-          "note": "Back IV higher than front (spread -11pp) \u2014 chronic/longer uncertainty or quiet front month.",
+          "front_atm_iv_pct": 0.2,
+          "back_atm_iv_pct": 0.4,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": -0.2,
+          "shape": "flat",
+          "tilt": "neutral",
+          "note": "Term structure roughly flat (front\u2212back -0pp).",
           "back_expiry": "2026-08-21"
         },
         "oi_change": {
           "status": "ok",
-          "prior_date": "2026-07-19",
-          "call_oi": 4203,
-          "put_oi": 3847,
-          "call_oi_change": 218,
-          "put_oi_change": 25,
-          "total_oi_change": 243,
+          "prior_date": "2026-07-20",
+          "call_oi": 0,
+          "put_oi": 0,
+          "call_oi_change": -4203,
+          "put_oi_change": -3847,
+          "total_oi_change": -8050,
           "notes": [
-            "OI roughly stable vs prior sample."
+            "Call OI -4,203 since 2026-07-20 (call positions closed).",
+            "Put OI -3,847 since 2026-07-20 (puts closed)."
           ],
           "note": "OI change is positioning change, not aggressor side. Rising put OI can be new hedges by longs; rising call OI can be new longs or covered writes."
         },
         "swing_options_read": {
           "status": "ok",
-          "net_tilt": "mixed_or_neutral",
+          "net_tilt": "slight_bullish",
           "direction_confidence": "low",
           "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
           "bullish_tilts": [
@@ -27520,31 +27555,40 @@
               "note": "P/C vol 0.78: call lean \u2014 mild constructive tilt if price confirms."
             }
           ],
-          "bearish_tilts": [
-            {
-              "source": "iv_level",
-              "tilt": "event_premium",
-              "note": "ATM IV ~75% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b110.4% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
-            }
-          ],
+          "bearish_tilts": [],
           "neutral_notes": [
             {
               "source": "iv_skew",
               "regime": "balanced_skew",
               "tilt": "neutral",
-              "note": "Skew near flat (0.0pp)."
+              "note": "Skew near flat (1.6pp)."
+            },
+            {
+              "source": "iv_level",
+              "tilt": "neutral",
+              "note": "ATM IV ~0% relatively calm \u2014 less event premium in options. Nearest-expiry expected move \u00b110.5% \u2014 stops inside this band are noise for that window."
+            },
+            {
+              "source": "iv_rank",
+              "tilt": "low_iv_rank",
+              "note": "ATM IV is at the 0th percentile of the last 5 stored samples (range 64\u201375%). High = expensive options / event fear; low = calm vs this name's recent past."
             },
             {
               "source": "oi_change",
               "tilt": "positioning",
-              "note": "OI roughly stable vs prior sample."
+              "note": "Call OI -4,203 since 2026-07-20 (call positions closed)."
+            },
+            {
+              "source": "oi_change",
+              "tilt": "positioning",
+              "note": "Put OI -3,847 since 2026-07-20 (puts closed)."
             }
           ],
           "for_stop_engineering": {
-            "expected_move_pct": 10.4,
-            "atm_iv_pct": 75.2,
+            "expected_move_pct": 10.47,
+            "atm_iv_pct": 0.2,
             "expiry": "2026-07-31",
-            "days_to_expiry": 11,
+            "days_to_expiry": 10,
             "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
           },
           "swing_playbook": {
@@ -27559,58 +27603,59 @@
       "AXON": {
         "status": "ok",
         "expiry": "2026-07-31",
-        "days_to_expiry": 11,
+        "days_to_expiry": 10,
         "spot": 527.48,
-        "expected_move_pct": 10.36,
-        "atm_iv_pct": 75.0,
+        "expected_move_pct": 8.83,
+        "atm_iv_pct": 0.4,
         "put_call_volume_ratio": 0.74,
-        "put_call_oi_ratio": 0.9,
+        "put_call_oi_ratio": null,
         "call_volume": 547,
         "put_volume": 403,
-        "call_open_interest": 1063,
-        "put_open_interest": 953,
-        "iv_skew_pct": 3.6,
-        "skew_read": "puts_bid_over_calls (downside protection in demand)",
+        "call_open_interest": 0,
+        "put_open_interest": 1,
+        "iv_skew_pct": 2.3,
+        "skew_read": "balanced",
         "unusual_strikes": [],
         "iv_rank": {
           "status": "ok",
-          "n_samples": 6,
-          "atm_iv_pct": 75.0,
-          "iv_percentile": 100.0,
+          "n_samples": 7,
+          "atm_iv_pct": 0.4,
+          "iv_percentile": 0.0,
           "iv_min_hist": 60.9,
-          "iv_max_hist": 70.2,
-          "regime": "high_vs_own_history",
-          "tilt": "caution_event_or_stress",
-          "note": "ATM IV is at the 100th percentile of the last 6 stored samples (range 61\u201370%). High = expensive options / event fear; low = calm vs this name's recent past."
+          "iv_max_hist": 75.0,
+          "regime": "low_vs_own_history",
+          "tilt": "calm_relatively",
+          "note": "ATM IV is at the 0th percentile of the last 7 stored samples (range 61\u201375%). High = expensive options / event fear; low = calm vs this name's recent past."
         },
         "term_structure": {
           "status": "ok",
-          "front_atm_iv_pct": 75.0,
-          "back_atm_iv_pct": 88.2,
-          "front_days": 11,
-          "back_days": 32,
-          "front_minus_back_pp": -13.2,
-          "shape": "contango",
-          "tilt": "longer_term_uncertainty",
-          "note": "Back IV higher than front (spread -13pp) \u2014 chronic/longer uncertainty or quiet front month.",
+          "front_atm_iv_pct": 0.4,
+          "back_atm_iv_pct": 0.2,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": 0.2,
+          "shape": "flat",
+          "tilt": "neutral",
+          "note": "Term structure roughly flat (front\u2212back 0pp).",
           "back_expiry": "2026-08-21"
         },
         "oi_change": {
           "status": "ok",
-          "prior_date": "2026-07-19",
-          "call_oi": 1063,
-          "put_oi": 953,
-          "call_oi_change": 44,
-          "put_oi_change": 156,
-          "total_oi_change": 200,
+          "prior_date": "2026-07-20",
+          "call_oi": 0,
+          "put_oi": 1,
+          "call_oi_change": -1063,
+          "put_oi_change": -952,
+          "total_oi_change": -2015,
           "notes": [
-            "OI roughly stable vs prior sample."
+            "Call OI -1,063 since 2026-07-20 (call positions closed).",
+            "Put OI -952 since 2026-07-20 (puts closed)."
           ],
           "note": "OI change is positioning change, not aggressor side. Rising put OI can be new hedges by longs; rising call OI can be new longs or covered writes."
         },
         "swing_options_read": {
           "status": "ok",
-          "net_tilt": "lean_bearish",
+          "net_tilt": "slight_bullish",
           "direction_confidence": "low",
           "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
           "bullish_tilts": [
@@ -27621,36 +27666,40 @@
               "note": "P/C vol 0.74: call lean \u2014 mild constructive tilt if price confirms."
             }
           ],
-          "bearish_tilts": [
+          "bearish_tilts": [],
+          "neutral_notes": [
             {
               "source": "iv_skew",
-              "regime": "put_skew",
-              "tilt": "cautious",
-              "note": "Mild put skew (+3.6pp): modest demand for downside protection."
+              "regime": "balanced_skew",
+              "tilt": "neutral",
+              "note": "Skew near flat (2.3pp)."
             },
             {
               "source": "iv_level",
-              "tilt": "event_premium",
-              "note": "ATM IV ~75% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b110.4% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+              "tilt": "neutral",
+              "note": "ATM IV ~0% relatively calm \u2014 less event premium in options. Nearest-expiry expected move \u00b18.8% \u2014 stops inside this band are noise for that window."
             },
             {
               "source": "iv_rank",
-              "tilt": "high_iv_rank",
-              "note": "ATM IV is at the 100th percentile of the last 6 stored samples (range 61\u201370%). High = expensive options / event fear; low = calm vs this name's recent past."
-            }
-          ],
-          "neutral_notes": [
+              "tilt": "low_iv_rank",
+              "note": "ATM IV is at the 0th percentile of the last 7 stored samples (range 61\u201375%). High = expensive options / event fear; low = calm vs this name's recent past."
+            },
             {
               "source": "oi_change",
               "tilt": "positioning",
-              "note": "OI roughly stable vs prior sample."
+              "note": "Call OI -1,063 since 2026-07-20 (call positions closed)."
+            },
+            {
+              "source": "oi_change",
+              "tilt": "positioning",
+              "note": "Put OI -952 since 2026-07-20 (puts closed)."
             }
           ],
           "for_stop_engineering": {
-            "expected_move_pct": 10.36,
-            "atm_iv_pct": 75.0,
+            "expected_move_pct": 8.83,
+            "atm_iv_pct": 0.4,
             "expiry": "2026-07-31",
-            "days_to_expiry": 11,
+            "days_to_expiry": 10,
             "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
           },
           "swing_playbook": {
@@ -27665,47 +27714,53 @@
       "ZS": {
         "status": "ok",
         "expiry": "2026-07-31",
-        "days_to_expiry": 11,
+        "days_to_expiry": 10,
         "spot": 149.82,
-        "expected_move_pct": 8.98,
-        "atm_iv_pct": 64.8,
+        "expected_move_pct": 8.58,
+        "atm_iv_pct": 0.1,
         "put_call_volume_ratio": 1.41,
-        "put_call_oi_ratio": 0.69,
+        "put_call_oi_ratio": 0.0,
         "call_volume": 792,
         "put_volume": 1119,
-        "call_open_interest": 5266,
-        "put_open_interest": 3624,
-        "iv_skew_pct": -1.1,
-        "skew_read": "balanced",
+        "call_open_interest": 43,
+        "put_open_interest": 0,
+        "iv_skew_pct": 3.7,
+        "skew_read": "puts_bid_over_calls (downside protection in demand)",
         "unusual_strikes": [],
         "iv_rank": {
-          "status": "warming_up",
-          "n_samples": 4,
-          "atm_iv_pct": 64.8,
-          "note": "Need \u22655 daily IV samples for percentile (have 4). Builds automatically as runs accumulate."
+          "status": "ok",
+          "n_samples": 5,
+          "atm_iv_pct": 0.1,
+          "iv_percentile": 0.0,
+          "iv_min_hist": 58.0,
+          "iv_max_hist": 64.8,
+          "regime": "low_vs_own_history",
+          "tilt": "calm_relatively",
+          "note": "ATM IV is at the 0th percentile of the last 5 stored samples (range 58\u201365%). High = expensive options / event fear; low = calm vs this name's recent past."
         },
         "term_structure": {
           "status": "ok",
-          "front_atm_iv_pct": 64.8,
-          "back_atm_iv_pct": 63.1,
-          "front_days": 11,
-          "back_days": 32,
-          "front_minus_back_pp": 1.7,
+          "front_atm_iv_pct": 0.1,
+          "back_atm_iv_pct": 0.1,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": 0.0,
           "shape": "flat",
           "tilt": "neutral",
-          "note": "Term structure roughly flat (front\u2212back 2pp).",
+          "note": "Term structure roughly flat (front\u2212back 0pp).",
           "back_expiry": "2026-08-21"
         },
         "oi_change": {
           "status": "ok",
-          "prior_date": "2026-07-19",
-          "call_oi": 5266,
-          "put_oi": 3624,
-          "call_oi_change": 283,
-          "put_oi_change": 353,
-          "total_oi_change": 636,
+          "prior_date": "2026-07-20",
+          "call_oi": 43,
+          "put_oi": 0,
+          "call_oi_change": -5223,
+          "put_oi_change": -3624,
+          "total_oi_change": -8847,
           "notes": [
-            "OI roughly stable vs prior sample."
+            "Call OI -5,223 since 2026-07-20 (call positions closed).",
+            "Put OI -3,624 since 2026-07-20 (puts closed)."
           ],
           "note": "OI change is positioning change, not aggressor side. Rising put OI can be new hedges by longs; rising call OI can be new longs or covered writes."
         },
@@ -27723,29 +27778,39 @@
               "note": "P/C vol 1.41: mild put lean \u2014 caution, not panic."
             },
             {
-              "source": "iv_level",
-              "tilt": "event_premium",
-              "note": "ATM IV ~65% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b19.0% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
+              "source": "iv_skew",
+              "regime": "put_skew",
+              "tilt": "cautious",
+              "note": "Mild put skew (+3.7pp): modest demand for downside protection."
             }
           ],
           "neutral_notes": [
             {
-              "source": "iv_skew",
-              "regime": "balanced_skew",
+              "source": "iv_level",
               "tilt": "neutral",
-              "note": "Skew near flat (-1.1pp)."
+              "note": "ATM IV ~0% relatively calm \u2014 less event premium in options. Nearest-expiry expected move \u00b18.6% \u2014 stops inside this band are noise for that window."
+            },
+            {
+              "source": "iv_rank",
+              "tilt": "low_iv_rank",
+              "note": "ATM IV is at the 0th percentile of the last 5 stored samples (range 58\u201365%). High = expensive options / event fear; low = calm vs this name's recent past."
             },
             {
               "source": "oi_change",
               "tilt": "positioning",
-              "note": "OI roughly stable vs prior sample."
+              "note": "Call OI -5,223 since 2026-07-20 (call positions closed)."
+            },
+            {
+              "source": "oi_change",
+              "tilt": "positioning",
+              "note": "Put OI -3,624 since 2026-07-20 (puts closed)."
             }
           ],
           "for_stop_engineering": {
-            "expected_move_pct": 8.98,
-            "atm_iv_pct": 64.8,
+            "expected_move_pct": 8.58,
+            "atm_iv_pct": 0.1,
             "expiry": "2026-07-31",
-            "days_to_expiry": 11,
+            "days_to_expiry": 10,
             "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
           },
           "swing_playbook": {
@@ -27760,61 +27825,67 @@
       "ADBE": {
         "status": "ok",
         "expiry": "2026-07-31",
-        "days_to_expiry": 11,
+        "days_to_expiry": 10,
         "spot": 234.74,
-        "expected_move_pct": 7.16,
-        "atm_iv_pct": 51.7,
+        "expected_move_pct": 7.39,
+        "atm_iv_pct": 0.1,
         "put_call_volume_ratio": 0.87,
-        "put_call_oi_ratio": 1.3,
+        "put_call_oi_ratio": null,
         "call_volume": 2285,
         "put_volume": 1988,
-        "call_open_interest": 9415,
-        "put_open_interest": 12262,
-        "iv_skew_pct": -2.7,
+        "call_open_interest": 0,
+        "put_open_interest": 0,
+        "iv_skew_pct": 2.6,
         "skew_read": "balanced",
         "unusual_strikes": [
           {
             "type": "call",
             "strike": 255.0,
             "volume": 565,
-            "open_interest": 155,
+            "open_interest": 0,
             "pct_from_spot": 8.6
+          },
+          {
+            "type": "put",
+            "strike": 205.0,
+            "volume": 850,
+            "open_interest": 0,
+            "pct_from_spot": -12.7
           }
         ],
         "iv_rank": {
-          "status": "warming_up",
-          "n_samples": 4,
-          "atm_iv_pct": 51.7,
-          "note": "Need \u22655 daily IV samples for percentile (have 4). Builds automatically as runs accumulate."
+          "status": "ok",
+          "n_samples": 5,
+          "atm_iv_pct": 0.1,
+          "iv_percentile": 0.0,
+          "iv_min_hist": 50.5,
+          "iv_max_hist": 51.8,
+          "regime": "low_vs_own_history",
+          "tilt": "calm_relatively",
+          "note": "ATM IV is at the 0th percentile of the last 5 stored samples (range 50\u201352%). High = expensive options / event fear; low = calm vs this name's recent past."
         },
         "term_structure": {
-          "status": "ok",
-          "front_atm_iv_pct": 51.7,
-          "back_atm_iv_pct": 51.6,
-          "front_days": 11,
-          "back_days": 32,
-          "front_minus_back_pp": 0.1,
-          "shape": "flat",
-          "tilt": "neutral",
-          "note": "Term structure roughly flat (front\u2212back 0pp).",
+          "status": "unavailable",
+          "note": "Need two expiries with ATM IV.",
           "back_expiry": "2026-08-21"
         },
         "oi_change": {
           "status": "ok",
-          "prior_date": "2026-07-19",
-          "call_oi": 9415,
-          "put_oi": 12262,
-          "call_oi_change": 1078,
-          "put_oi_change": 365,
-          "total_oi_change": 1443,
+          "prior_date": "2026-07-20",
+          "call_oi": 0,
+          "put_oi": 0,
+          "call_oi_change": -9415,
+          "put_oi_change": -12262,
+          "total_oi_change": -21677,
           "notes": [
-            "Call OI +1,078 since 2026-07-19 (new call open interest)."
+            "Call OI -9,415 since 2026-07-20 (call positions closed).",
+            "Put OI -12,262 since 2026-07-20 (puts closed)."
           ],
           "note": "OI change is positioning change, not aggressor side. Rising put OI can be new hedges by longs; rising call OI can be new longs or covered writes."
         },
         "swing_options_read": {
           "status": "ok",
-          "net_tilt": "mixed_or_neutral",
+          "net_tilt": "slight_bullish",
           "direction_confidence": "low",
           "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
           "bullish_tilts": [
@@ -27824,13 +27895,7 @@
               "note": "Near ATM/slightly OTM call heat at $255.0 (+9%) \u2014 upside magnet zone IF flow is buying (unknown)."
             }
           ],
-          "bearish_tilts": [
-            {
-              "source": "iv_level",
-              "tilt": "event_premium",
-              "note": "ATM IV ~52% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b17.2% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
-            }
-          ],
+          "bearish_tilts": [],
           "neutral_notes": [
             {
               "source": "put_call_volume",
@@ -27842,19 +27907,34 @@
               "source": "iv_skew",
               "regime": "balanced_skew",
               "tilt": "neutral",
-              "note": "Skew near flat (-2.7pp)."
+              "note": "Skew near flat (2.6pp)."
+            },
+            {
+              "source": "iv_level",
+              "tilt": "neutral",
+              "note": "ATM IV ~0% relatively calm \u2014 less event premium in options. Nearest-expiry expected move \u00b17.4% \u2014 stops inside this band are noise for that window."
+            },
+            {
+              "source": "iv_rank",
+              "tilt": "low_iv_rank",
+              "note": "ATM IV is at the 0th percentile of the last 5 stored samples (range 50\u201352%). High = expensive options / event fear; low = calm vs this name's recent past."
             },
             {
               "source": "oi_change",
               "tilt": "positioning",
-              "note": "Call OI +1,078 since 2026-07-19 (new call open interest)."
+              "note": "Call OI -9,415 since 2026-07-20 (call positions closed)."
+            },
+            {
+              "source": "oi_change",
+              "tilt": "positioning",
+              "note": "Put OI -12,262 since 2026-07-20 (puts closed)."
             }
           ],
           "for_stop_engineering": {
-            "expected_move_pct": 7.16,
-            "atm_iv_pct": 51.7,
+            "expected_move_pct": 7.39,
+            "atm_iv_pct": 0.1,
             "expiry": "2026-07-31",
-            "days_to_expiry": 11,
+            "days_to_expiry": 10,
             "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
           },
           "swing_playbook": {
@@ -27869,66 +27949,81 @@
       "SMR": {
         "status": "ok",
         "expiry": "2026-07-31",
-        "days_to_expiry": 11,
+        "days_to_expiry": 10,
         "spot": 7.96,
         "expected_move_pct": 13.44,
-        "atm_iv_pct": 96.9,
+        "atm_iv_pct": 0.8,
         "put_call_volume_ratio": 0.51,
-        "put_call_oi_ratio": 0.66,
+        "put_call_oi_ratio": null,
         "call_volume": 3444,
         "put_volume": 1756,
-        "call_open_interest": 11003,
-        "put_open_interest": 7242,
-        "iv_skew_pct": 1.8,
+        "call_open_interest": 0,
+        "put_open_interest": 0,
+        "iv_skew_pct": 0.0,
         "skew_read": "balanced",
         "unusual_strikes": [
+          {
+            "type": "call",
+            "strike": 9.0,
+            "volume": 1196,
+            "open_interest": 0,
+            "pct_from_spot": 13.1
+          },
+          {
+            "type": "call",
+            "strike": 8.0,
+            "volume": 587,
+            "open_interest": 0,
+            "pct_from_spot": 0.5
+          },
           {
             "type": "put",
             "strike": 7.0,
             "volume": 837,
-            "open_interest": 213,
+            "open_interest": 0,
             "pct_from_spot": -12.1
           }
         ],
         "iv_rank": {
           "status": "ok",
-          "n_samples": 6,
-          "atm_iv_pct": 96.9,
-          "iv_percentile": 100.0,
+          "n_samples": 7,
+          "atm_iv_pct": 0.8,
+          "iv_percentile": 0.0,
           "iv_min_hist": 90.2,
-          "iv_max_hist": 95.7,
-          "regime": "high_vs_own_history",
-          "tilt": "caution_event_or_stress",
-          "note": "ATM IV is at the 100th percentile of the last 6 stored samples (range 90\u201396%). High = expensive options / event fear; low = calm vs this name's recent past."
+          "iv_max_hist": 96.9,
+          "regime": "low_vs_own_history",
+          "tilt": "calm_relatively",
+          "note": "ATM IV is at the 0th percentile of the last 7 stored samples (range 90\u201397%). High = expensive options / event fear; low = calm vs this name's recent past."
         },
         "term_structure": {
           "status": "ok",
-          "front_atm_iv_pct": 96.9,
-          "back_atm_iv_pct": 104.9,
-          "front_days": 11,
-          "back_days": 32,
-          "front_minus_back_pp": -8.0,
-          "shape": "contango",
-          "tilt": "longer_term_uncertainty",
-          "note": "Back IV higher than front (spread -8pp) \u2014 chronic/longer uncertainty or quiet front month.",
+          "front_atm_iv_pct": 0.8,
+          "back_atm_iv_pct": 0.4,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": 0.4,
+          "shape": "flat",
+          "tilt": "neutral",
+          "note": "Term structure roughly flat (front\u2212back 0pp).",
           "back_expiry": "2026-08-21"
         },
         "oi_change": {
           "status": "ok",
-          "prior_date": "2026-07-19",
-          "call_oi": 11003,
-          "put_oi": 7242,
-          "call_oi_change": 1049,
-          "put_oi_change": 326,
-          "total_oi_change": 1375,
+          "prior_date": "2026-07-20",
+          "call_oi": 0,
+          "put_oi": 0,
+          "call_oi_change": -11003,
+          "put_oi_change": -7242,
+          "total_oi_change": -18245,
           "notes": [
-            "Call OI +1,049 since 2026-07-19 (new call open interest)."
+            "Call OI -11,003 since 2026-07-20 (call positions closed).",
+            "Put OI -7,242 since 2026-07-20 (puts closed)."
           ],
           "note": "OI change is positioning change, not aggressor side. Rising put OI can be new hedges by longs; rising call OI can be new longs or covered writes."
         },
         "swing_options_read": {
           "status": "ok",
-          "net_tilt": "slight_bearish",
+          "net_tilt": "lean_bullish",
           "direction_confidence": "low",
           "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
           "bullish_tilts": [
@@ -27937,38 +28032,47 @@
               "regime": "call_lean",
               "tilt": "constructive",
               "note": "P/C vol 0.51: call lean \u2014 mild constructive tilt if price confirms."
-            }
-          ],
-          "bearish_tilts": [
-            {
-              "source": "iv_level",
-              "tilt": "event_premium",
-              "note": "ATM IV ~97% is very elevated \u2014 event risk or crisis premium. Expected move may already price the next catalyst; buying equity into this is paying for volatility unless your edge is post-event drift. Nearest-expiry expected move \u00b113.4% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
             },
             {
-              "source": "iv_rank",
-              "tilt": "high_iv_rank",
-              "note": "ATM IV is at the 100th percentile of the last 6 stored samples (range 90\u201396%). High = expensive options / event fear; low = calm vs this name's recent past."
+              "source": "unusual_strikes",
+              "tilt": "call_heat",
+              "note": "Near ATM/slightly OTM call heat at $8.0 (+0%) \u2014 upside magnet zone IF flow is buying (unknown)."
             }
           ],
+          "bearish_tilts": [],
           "neutral_notes": [
             {
               "source": "iv_skew",
               "regime": "balanced_skew",
               "tilt": "neutral",
-              "note": "Skew near flat (1.8pp)."
+              "note": "Skew near flat (0.0pp)."
+            },
+            {
+              "source": "iv_level",
+              "tilt": "neutral",
+              "note": "ATM IV ~1% relatively calm \u2014 less event premium in options. Nearest-expiry expected move \u00b113.4% \u2014 stops inside this band are noise for that window."
+            },
+            {
+              "source": "iv_rank",
+              "tilt": "low_iv_rank",
+              "note": "ATM IV is at the 0th percentile of the last 7 stored samples (range 90\u201397%). High = expensive options / event fear; low = calm vs this name's recent past."
             },
             {
               "source": "oi_change",
               "tilt": "positioning",
-              "note": "Call OI +1,049 since 2026-07-19 (new call open interest)."
+              "note": "Call OI -11,003 since 2026-07-20 (call positions closed)."
+            },
+            {
+              "source": "oi_change",
+              "tilt": "positioning",
+              "note": "Put OI -7,242 since 2026-07-20 (puts closed)."
             }
           ],
           "for_stop_engineering": {
             "expected_move_pct": 13.44,
-            "atm_iv_pct": 96.9,
+            "atm_iv_pct": 0.8,
             "expiry": "2026-07-31",
-            "days_to_expiry": 11,
+            "days_to_expiry": 10,
             "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
           },
           "swing_playbook": {
@@ -27983,67 +28087,68 @@
       "BSX": {
         "status": "ok",
         "expiry": "2026-07-31",
-        "days_to_expiry": 11,
+        "days_to_expiry": 10,
         "spot": 43.77,
-        "expected_move_pct": 9.88,
-        "atm_iv_pct": 71.1,
+        "expected_move_pct": 9.82,
+        "atm_iv_pct": 0.4,
         "put_call_volume_ratio": 3.64,
-        "put_call_oi_ratio": 0.93,
+        "put_call_oi_ratio": null,
         "call_volume": 515,
         "put_volume": 1876,
-        "call_open_interest": 3571,
-        "put_open_interest": 3315,
-        "iv_skew_pct": -1.5,
+        "call_open_interest": 0,
+        "put_open_interest": 0,
+        "iv_skew_pct": 1.6,
         "skew_read": "balanced",
         "unusual_strikes": [
           {
             "type": "put",
             "strike": 43.0,
             "volume": 1029,
-            "open_interest": 76,
+            "open_interest": 0,
             "pct_from_spot": -1.8
           },
           {
             "type": "put",
             "strike": 41.5,
             "volume": 602,
-            "open_interest": 2,
+            "open_interest": 0,
             "pct_from_spot": -5.2
           }
         ],
         "iv_rank": {
           "status": "ok",
-          "n_samples": 6,
-          "atm_iv_pct": 71.1,
-          "iv_percentile": 100.0,
+          "n_samples": 7,
+          "atm_iv_pct": 0.4,
+          "iv_percentile": 0.0,
           "iv_min_hist": 44.2,
-          "iv_max_hist": 69.5,
-          "regime": "high_vs_own_history",
-          "tilt": "caution_event_or_stress",
-          "note": "ATM IV is at the 100th percentile of the last 6 stored samples (range 44\u201370%). High = expensive options / event fear; low = calm vs this name's recent past."
+          "iv_max_hist": 71.1,
+          "regime": "low_vs_own_history",
+          "tilt": "calm_relatively",
+          "note": "ATM IV is at the 0th percentile of the last 7 stored samples (range 44\u201371%). High = expensive options / event fear; low = calm vs this name's recent past."
         },
         "term_structure": {
           "status": "ok",
-          "front_atm_iv_pct": 71.1,
-          "back_atm_iv_pct": 52.6,
-          "front_days": 11,
-          "back_days": 32,
-          "front_minus_back_pp": 18.5,
-          "shape": "steep_backwardation",
-          "tilt": "event_front",
-          "note": "Front IV 71% >> back 53% (spread 18pp) \u2014 near-term event premium (earnings/binary). Prefer post-event entries for swings.",
+          "front_atm_iv_pct": 0.4,
+          "back_atm_iv_pct": 1.6,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": -1.2,
+          "shape": "flat",
+          "tilt": "neutral",
+          "note": "Term structure roughly flat (front\u2212back -1pp).",
           "back_expiry": "2026-08-21"
         },
         "oi_change": {
           "status": "ok",
-          "prior_date": "2026-07-19",
-          "call_oi": 3571,
-          "put_oi": 3315,
-          "call_oi_change": 267,
-          "put_oi_change": 87,
-          "total_oi_change": 354,
+          "prior_date": "2026-07-20",
+          "call_oi": 0,
+          "put_oi": 0,
+          "call_oi_change": -3571,
+          "put_oi_change": -3315,
+          "total_oi_change": -6886,
           "notes": [
-            "OI roughly stable vs prior sample."
+            "Call OI -3,571 since 2026-07-20 (call positions closed).",
+            "Put OI -3,315 since 2026-07-20 (puts closed)."
           ],
           "note": "OI change is positioning change, not aggressor side. Rising put OI can be new hedges by longs; rising call OI can be new longs or covered writes."
         },
@@ -28061,11 +28166,6 @@
               "note": "P/C vol 3.64: elevated put volume \u2014 often protective hedging by longs OR downside speculation; with rising price can be bullish-compatible (collar/hedge). With falling price, risk of more deleveraging."
             },
             {
-              "source": "iv_level",
-              "tilt": "event_premium",
-              "note": "ATM IV ~71% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b19.9% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
-            },
-            {
               "source": "unusual_strikes",
               "tilt": "near_support_hedge",
               "note": "Near ATM put heat at $43.0 (-2% from spot) \u2014 support/hedge zone; longs often defend here with puts."
@@ -28074,16 +28174,6 @@
               "source": "unusual_strikes",
               "tilt": "near_support_hedge",
               "note": "Near ATM put heat at $41.5 (-5% from spot) \u2014 support/hedge zone; longs often defend here with puts."
-            },
-            {
-              "source": "iv_rank",
-              "tilt": "high_iv_rank",
-              "note": "ATM IV is at the 100th percentile of the last 6 stored samples (range 44\u201370%). High = expensive options / event fear; low = calm vs this name's recent past."
-            },
-            {
-              "source": "term_structure",
-              "tilt": "steep_backwardation",
-              "note": "Front IV 71% >> back 53% (spread 18pp) \u2014 near-term event premium (earnings/binary). Prefer post-event entries for swings."
             }
           ],
           "neutral_notes": [
@@ -28091,27 +28181,41 @@
               "source": "iv_skew",
               "regime": "balanced_skew",
               "tilt": "neutral",
-              "note": "Skew near flat (-1.5pp)."
+              "note": "Skew near flat (1.6pp)."
+            },
+            {
+              "source": "iv_level",
+              "tilt": "neutral",
+              "note": "ATM IV ~0% relatively calm \u2014 less event premium in options. Nearest-expiry expected move \u00b19.8% \u2014 stops inside this band are noise for that window."
+            },
+            {
+              "source": "iv_rank",
+              "tilt": "low_iv_rank",
+              "note": "ATM IV is at the 0th percentile of the last 7 stored samples (range 44\u201371%). High = expensive options / event fear; low = calm vs this name's recent past."
             },
             {
               "source": "oi_change",
               "tilt": "positioning",
-              "note": "OI roughly stable vs prior sample."
+              "note": "Call OI -3,571 since 2026-07-20 (call positions closed)."
+            },
+            {
+              "source": "oi_change",
+              "tilt": "positioning",
+              "note": "Put OI -3,315 since 2026-07-20 (puts closed)."
             }
           ],
           "for_stop_engineering": {
-            "expected_move_pct": 9.88,
-            "atm_iv_pct": 71.1,
+            "expected_move_pct": 9.82,
+            "atm_iv_pct": 0.4,
             "expiry": "2026-07-31",
-            "days_to_expiry": 11,
+            "days_to_expiry": 10,
             "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
           },
           "swing_playbook": {
             "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
             "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
             "if_mixed": "Default to price + fundamentals. Options are not voting.",
-            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself.",
-            "term_structure": "Front IV 71% >> back 53% (spread 18pp) \u2014 near-term event premium (earnings/binary). Prefer post-event entries for swings."
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
           },
           "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
         }
@@ -28119,52 +28223,47 @@
       "NET": {
         "status": "ok",
         "expiry": "2026-07-31",
-        "days_to_expiry": 11,
+        "days_to_expiry": 10,
         "spot": 272.42,
-        "expected_move_pct": 8.88,
-        "atm_iv_pct": 64.2,
+        "expected_move_pct": 9.86,
+        "atm_iv_pct": 0.0,
         "put_call_volume_ratio": 3.54,
-        "put_call_oi_ratio": 2.95,
+        "put_call_oi_ratio": null,
         "call_volume": 617,
         "put_volume": 2183,
-        "call_open_interest": 3591,
-        "put_open_interest": 10595,
-        "iv_skew_pct": -2.7,
+        "call_open_interest": 0,
+        "put_open_interest": 0,
+        "iv_skew_pct": 1.4,
         "skew_read": "balanced",
-        "unusual_strikes": [],
+        "unusual_strikes": [
+          {
+            "type": "put",
+            "strike": 247.5,
+            "volume": 548,
+            "open_interest": 0,
+            "pct_from_spot": -9.1
+          }
+        ],
         "iv_rank": {
-          "status": "ok",
-          "n_samples": 6,
-          "atm_iv_pct": 64.2,
-          "iv_percentile": 100.0,
-          "iv_min_hist": 59.1,
-          "iv_max_hist": 63.8,
-          "regime": "high_vs_own_history",
-          "tilt": "caution_event_or_stress",
-          "note": "ATM IV is at the 100th percentile of the last 6 stored samples (range 59\u201364%). High = expensive options / event fear; low = calm vs this name's recent past."
+          "status": "unavailable",
+          "note": "no current IV"
         },
         "term_structure": {
-          "status": "ok",
-          "front_atm_iv_pct": 64.2,
-          "back_atm_iv_pct": 73.7,
-          "front_days": 11,
-          "back_days": 32,
-          "front_minus_back_pp": -9.5,
-          "shape": "contango",
-          "tilt": "longer_term_uncertainty",
-          "note": "Back IV higher than front (spread -10pp) \u2014 chronic/longer uncertainty or quiet front month.",
+          "status": "unavailable",
+          "note": "Need two expiries with ATM IV.",
           "back_expiry": "2026-08-21"
         },
         "oi_change": {
           "status": "ok",
-          "prior_date": "2026-07-19",
-          "call_oi": 3591,
-          "put_oi": 10595,
-          "call_oi_change": 91,
-          "put_oi_change": 953,
-          "total_oi_change": 1044,
+          "prior_date": "2026-07-20",
+          "call_oi": 0,
+          "put_oi": 0,
+          "call_oi_change": -3591,
+          "put_oi_change": -10595,
+          "total_oi_change": -14186,
           "notes": [
-            "Put OI +953 since 2026-07-19 (new put open interest / hedges)."
+            "Call OI -3,591 since 2026-07-20 (call positions closed).",
+            "Put OI -10,595 since 2026-07-20 (puts closed)."
           ],
           "note": "OI change is positioning change, not aggressor side. Rising put OI can be new hedges by longs; rising call OI can be new longs or covered writes."
         },
@@ -28182,14 +28281,9 @@
               "note": "P/C vol 3.54: elevated put volume \u2014 often protective hedging by longs OR downside speculation; with rising price can be bullish-compatible (collar/hedge). With falling price, risk of more deleveraging."
             },
             {
-              "source": "iv_level",
-              "tilt": "event_premium",
-              "note": "ATM IV ~64% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b18.9% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
-            },
-            {
-              "source": "iv_rank",
-              "tilt": "high_iv_rank",
-              "note": "ATM IV is at the 100th percentile of the last 6 stored samples (range 59\u201364%). High = expensive options / event fear; low = calm vs this name's recent past."
+              "source": "unusual_strikes",
+              "tilt": "near_support_hedge",
+              "note": "Near ATM put heat at $247.5 (-9% from spot) \u2014 support/hedge zone; longs often defend here with puts."
             }
           ],
           "neutral_notes": [
@@ -28197,19 +28291,29 @@
               "source": "iv_skew",
               "regime": "balanced_skew",
               "tilt": "neutral",
-              "note": "Skew near flat (-2.7pp)."
+              "note": "Skew near flat (1.4pp)."
+            },
+            {
+              "source": "iv_level",
+              "tilt": "neutral",
+              "note": "ATM IV ~0% relatively calm \u2014 less event premium in options. Nearest-expiry expected move \u00b19.9% \u2014 stops inside this band are noise for that window."
             },
             {
               "source": "oi_change",
               "tilt": "positioning",
-              "note": "Put OI +953 since 2026-07-19 (new put open interest / hedges)."
+              "note": "Call OI -3,591 since 2026-07-20 (call positions closed)."
+            },
+            {
+              "source": "oi_change",
+              "tilt": "positioning",
+              "note": "Put OI -10,595 since 2026-07-20 (puts closed)."
             }
           ],
           "for_stop_engineering": {
-            "expected_move_pct": 8.88,
-            "atm_iv_pct": 64.2,
+            "expected_move_pct": 9.86,
+            "atm_iv_pct": 0.0,
             "expiry": "2026-07-31",
-            "days_to_expiry": 11,
+            "days_to_expiry": 10,
             "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
           },
           "swing_playbook": {
@@ -28224,53 +28328,54 @@
       "FTNT": {
         "status": "ok",
         "expiry": "2026-07-31",
-        "days_to_expiry": 11,
+        "days_to_expiry": 10,
         "spot": 160.36,
-        "expected_move_pct": 14.45,
-        "atm_iv_pct": 104.6,
+        "expected_move_pct": 14.12,
+        "atm_iv_pct": 0.2,
         "put_call_volume_ratio": 0.21,
-        "put_call_oi_ratio": 0.71,
+        "put_call_oi_ratio": 0.0,
         "call_volume": 963,
         "put_volume": 202,
-        "call_open_interest": 2660,
-        "put_open_interest": 1899,
-        "iv_skew_pct": -0.9,
-        "skew_read": "balanced",
+        "call_open_interest": 1,
+        "put_open_interest": 0,
+        "iv_skew_pct": 3.9,
+        "skew_read": "puts_bid_over_calls (downside protection in demand)",
         "unusual_strikes": [],
         "iv_rank": {
           "status": "warming_up",
-          "n_samples": 2,
-          "atm_iv_pct": 104.6,
-          "note": "Need \u22655 daily IV samples for percentile (have 2). Builds automatically as runs accumulate."
+          "n_samples": 3,
+          "atm_iv_pct": 0.2,
+          "note": "Need \u22655 daily IV samples for percentile (have 3). Builds automatically as runs accumulate."
         },
         "term_structure": {
           "status": "ok",
-          "front_atm_iv_pct": 104.6,
-          "back_atm_iv_pct": 74.9,
-          "front_days": 11,
-          "back_days": 32,
-          "front_minus_back_pp": 29.7,
-          "shape": "steep_backwardation",
-          "tilt": "event_front",
-          "note": "Front IV 105% >> back 75% (spread 30pp) \u2014 near-term event premium (earnings/binary). Prefer post-event entries for swings.",
+          "front_atm_iv_pct": 0.2,
+          "back_atm_iv_pct": 0.1,
+          "front_days": 10,
+          "back_days": 31,
+          "front_minus_back_pp": 0.1,
+          "shape": "flat",
+          "tilt": "neutral",
+          "note": "Term structure roughly flat (front\u2212back 0pp).",
           "back_expiry": "2026-08-21"
         },
         "oi_change": {
           "status": "ok",
-          "prior_date": "2026-07-19",
-          "call_oi": 2660,
-          "put_oi": 1899,
-          "call_oi_change": 189,
-          "put_oi_change": 36,
-          "total_oi_change": 225,
+          "prior_date": "2026-07-20",
+          "call_oi": 1,
+          "put_oi": 0,
+          "call_oi_change": -2659,
+          "put_oi_change": -1899,
+          "total_oi_change": -4558,
           "notes": [
-            "OI roughly stable vs prior sample."
+            "Call OI -2,659 since 2026-07-20 (call positions closed).",
+            "Put OI -1,899 since 2026-07-20 (puts closed)."
           ],
           "note": "OI change is positioning change, not aggressor side. Rising put OI can be new hedges by longs; rising call OI can be new longs or covered writes."
         },
         "swing_options_read": {
           "status": "ok",
-          "net_tilt": "slight_bearish",
+          "net_tilt": "mixed_or_neutral",
           "direction_confidence": "low",
           "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
           "bullish_tilts": [
@@ -28283,42 +28388,41 @@
           ],
           "bearish_tilts": [
             {
-              "source": "iv_level",
-              "tilt": "event_premium",
-              "note": "ATM IV ~105% is very elevated \u2014 event risk or crisis premium. Expected move may already price the next catalyst; buying equity into this is paying for volatility unless your edge is post-event drift. Nearest-expiry expected move \u00b114.4% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
-            },
-            {
-              "source": "term_structure",
-              "tilt": "steep_backwardation",
-              "note": "Front IV 105% >> back 75% (spread 30pp) \u2014 near-term event premium (earnings/binary). Prefer post-event entries for swings."
+              "source": "iv_skew",
+              "regime": "put_skew",
+              "tilt": "cautious",
+              "note": "Mild put skew (+3.9pp): modest demand for downside protection."
             }
           ],
           "neutral_notes": [
             {
-              "source": "iv_skew",
-              "regime": "balanced_skew",
+              "source": "iv_level",
               "tilt": "neutral",
-              "note": "Skew near flat (-0.9pp)."
+              "note": "ATM IV ~0% relatively calm \u2014 less event premium in options. Nearest-expiry expected move \u00b114.1% \u2014 stops inside this band are noise for that window."
             },
             {
               "source": "oi_change",
               "tilt": "positioning",
-              "note": "OI roughly stable vs prior sample."
+              "note": "Call OI -2,659 since 2026-07-20 (call positions closed)."
+            },
+            {
+              "source": "oi_change",
+              "tilt": "positioning",
+              "note": "Put OI -1,899 since 2026-07-20 (puts closed)."
             }
           ],
           "for_stop_engineering": {
-            "expected_move_pct": 14.45,
-            "atm_iv_pct": 104.6,
+            "expected_move_pct": 14.12,
+            "atm_iv_pct": 0.2,
             "expiry": "2026-07-31",
-            "days_to_expiry": 11,
+            "days_to_expiry": 10,
             "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
           },
           "swing_playbook": {
             "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
             "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
             "if_mixed": "Default to price + fundamentals. Options are not voting.",
-            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself.",
-            "term_structure": "Front IV 105% >> back 75% (spread 30pp) \u2014 near-term event premium (earnings/binary). Prefer post-event entries for swings."
+            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
           },
           "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
         }
@@ -28326,52 +28430,53 @@
       "GS": {
         "status": "ok",
         "expiry": "2026-07-31",
-        "days_to_expiry": 11,
+        "days_to_expiry": 10,
         "spot": 1055.03,
-        "expected_move_pct": 5.03,
-        "atm_iv_pct": 38.2,
+        "expected_move_pct": 5.36,
+        "atm_iv_pct": 0.0,
         "put_call_volume_ratio": 2.94,
-        "put_call_oi_ratio": 1.81,
+        "put_call_oi_ratio": 0.0,
         "call_volume": 1884,
         "put_volume": 5548,
-        "call_open_interest": 3706,
-        "put_open_interest": 6708,
-        "iv_skew_pct": 4.7,
-        "skew_read": "puts_bid_over_calls (downside protection in demand)",
+        "call_open_interest": 5,
+        "put_open_interest": 0,
+        "iv_skew_pct": 0.8,
+        "skew_read": "balanced",
         "unusual_strikes": [
           {
             "type": "put",
             "strike": 900.0,
             "volume": 3422,
-            "open_interest": 617,
+            "open_interest": 0,
             "pct_from_spot": -14.7
           }
         ],
         "iv_rank": {
-          "status": "warming_up",
-          "n_samples": 0,
-          "atm_iv_pct": 38.2,
-          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
+          "status": "unavailable",
+          "note": "no current IV"
         },
         "term_structure": {
-          "status": "ok",
-          "front_atm_iv_pct": 38.2,
-          "back_atm_iv_pct": 36.1,
-          "front_days": 11,
-          "back_days": 32,
-          "front_minus_back_pp": 2.1,
-          "shape": "flat",
-          "tilt": "neutral",
-          "note": "Term structure roughly flat (front\u2212back 2pp).",
+          "status": "unavailable",
+          "note": "Need two expiries with ATM IV.",
           "back_expiry": "2026-08-21"
         },
         "oi_change": {
-          "status": "no_prior",
-          "note": "No prior OI snapshot yet \u2014 next run will compare."
+          "status": "ok",
+          "prior_date": "2026-07-20",
+          "call_oi": 5,
+          "put_oi": 0,
+          "call_oi_change": -3701,
+          "put_oi_change": -6708,
+          "total_oi_change": -10409,
+          "notes": [
+            "Call OI -3,701 since 2026-07-20 (call positions closed).",
+            "Put OI -6,708 since 2026-07-20 (puts closed)."
+          ],
+          "note": "OI change is positioning change, not aggressor side. Rising put OI can be new hedges by longs; rising call OI can be new longs or covered writes."
         },
         "swing_options_read": {
           "status": "ok",
-          "net_tilt": "lean_bearish",
+          "net_tilt": "slight_bearish",
           "direction_confidence": "low",
           "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
           "bullish_tilts": [],
@@ -28381,26 +28486,36 @@
               "regime": "put_heavy",
               "tilt": "bearish_or_hedging",
               "note": "P/C vol 2.94: elevated put volume \u2014 often protective hedging by longs OR downside speculation; with rising price can be bullish-compatible (collar/hedge). With falling price, risk of more deleveraging."
-            },
-            {
-              "source": "iv_skew",
-              "regime": "put_skew",
-              "tilt": "cautious",
-              "note": "Mild put skew (+4.7pp): modest demand for downside protection."
             }
           ],
           "neutral_notes": [
             {
+              "source": "iv_skew",
+              "regime": "balanced_skew",
+              "tilt": "neutral",
+              "note": "Skew near flat (0.8pp)."
+            },
+            {
               "source": "iv_level",
               "tilt": "neutral",
-              "note": "ATM IV ~38% moderate. Nearest-expiry expected move \u00b15.0% \u2014 stops inside this band are noise for that window."
+              "note": "ATM IV ~0% relatively calm \u2014 less event premium in options. Nearest-expiry expected move \u00b15.4% \u2014 stops inside this band are noise for that window."
+            },
+            {
+              "source": "oi_change",
+              "tilt": "positioning",
+              "note": "Call OI -3,701 since 2026-07-20 (call positions closed)."
+            },
+            {
+              "source": "oi_change",
+              "tilt": "positioning",
+              "note": "Put OI -6,708 since 2026-07-20 (puts closed)."
             }
           ],
           "for_stop_engineering": {
-            "expected_move_pct": 5.03,
-            "atm_iv_pct": 38.2,
+            "expected_move_pct": 5.36,
+            "atm_iv_pct": 0.0,
             "expiry": "2026-07-31",
-            "days_to_expiry": 11,
+            "days_to_expiry": 10,
             "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
           },
           "swing_playbook": {
@@ -28414,104 +28529,104 @@
       },
       "AMD": {
         "status": "ok",
-        "expiry": "2026-07-27",
-        "days_to_expiry": 7,
+        "expiry": "2026-07-29",
+        "days_to_expiry": 8,
         "spot": 503.57,
-        "expected_move_pct": 9.93,
-        "atm_iv_pct": 90.0,
-        "put_call_volume_ratio": 0.96,
-        "put_call_oi_ratio": 1.11,
-        "call_volume": 3131,
-        "put_volume": 3005,
-        "call_open_interest": 4091,
-        "put_open_interest": 4530,
-        "iv_skew_pct": 7.2,
-        "skew_read": "puts_bid_over_calls (downside protection in demand)",
+        "expected_move_pct": 10.9,
+        "atm_iv_pct": 0.2,
+        "put_call_volume_ratio": 1.02,
+        "put_call_oi_ratio": null,
+        "call_volume": 845,
+        "put_volume": 863,
+        "call_open_interest": 0,
+        "put_open_interest": 0,
+        "iv_skew_pct": 1.7,
+        "skew_read": "balanced",
         "unusual_strikes": [],
         "iv_rank": {
           "status": "ok",
-          "n_samples": 5,
-          "atm_iv_pct": 90.0,
-          "iv_percentile": 80.0,
+          "n_samples": 6,
+          "atm_iv_pct": 0.2,
+          "iv_percentile": 0.0,
           "iv_min_hist": 25.0,
           "iv_max_hist": 95.3,
-          "regime": "high_vs_own_history",
-          "tilt": "caution_event_or_stress",
-          "note": "ATM IV is at the 80th percentile of the last 5 stored samples (range 25\u201395%). High = expensive options / event fear; low = calm vs this name's recent past."
+          "regime": "low_vs_own_history",
+          "tilt": "calm_relatively",
+          "note": "ATM IV is at the 0th percentile of the last 6 stored samples (range 25\u201395%). High = expensive options / event fear; low = calm vs this name's recent past."
         },
         "term_structure": {
           "status": "ok",
-          "front_atm_iv_pct": 90.0,
-          "back_atm_iv_pct": 88.4,
-          "front_days": 7,
-          "back_days": 32,
-          "front_minus_back_pp": 1.6,
+          "front_atm_iv_pct": 0.2,
+          "back_atm_iv_pct": 0.4,
+          "front_days": 8,
+          "back_days": 31,
+          "front_minus_back_pp": -0.2,
           "shape": "flat",
           "tilt": "neutral",
-          "note": "Term structure roughly flat (front\u2212back 2pp).",
+          "note": "Term structure roughly flat (front\u2212back -0pp).",
           "back_expiry": "2026-08-21"
         },
         "oi_change": {
           "status": "ok",
-          "prior_date": "2026-07-19",
-          "call_oi": 4091,
-          "put_oi": 4530,
-          "call_oi_change": 626,
-          "put_oi_change": 1370,
-          "total_oi_change": 1996,
+          "prior_date": "2026-07-20",
+          "call_oi": 0,
+          "put_oi": 0,
+          "call_oi_change": -4091,
+          "put_oi_change": -4530,
+          "total_oi_change": -8621,
           "notes": [
-            "Call OI +626 since 2026-07-19 (new call open interest).",
-            "Put OI +1,370 since 2026-07-19 (new put open interest / hedges)."
+            "Call OI -4,091 since 2026-07-20 (call positions closed).",
+            "Put OI -4,530 since 2026-07-20 (puts closed)."
           ],
           "note": "OI change is positioning change, not aggressor side. Rising put OI can be new hedges by longs; rising call OI can be new longs or covered writes."
         },
         "swing_options_read": {
           "status": "ok",
-          "net_tilt": "lean_bearish",
+          "net_tilt": "slight_bearish",
           "direction_confidence": "low",
           "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
           "bullish_tilts": [],
           "bearish_tilts": [
             {
-              "source": "iv_skew",
-              "regime": "steep_put_skew",
-              "tilt": "bearish_hedging_demand",
-              "note": "Put IV 7.2pp over call IV: market pays up for downside protection. Common before earnings or after a run. For a swing long, size smaller or demand cleaner structure \u2014 fear is priced."
-            },
-            {
-              "source": "iv_level",
-              "tilt": "event_premium",
-              "note": "ATM IV ~90% is very elevated \u2014 event risk or crisis premium. Expected move may already price the next catalyst; buying equity into this is paying for volatility unless your edge is post-event drift. Nearest-expiry expected move \u00b19.9% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
-            },
-            {
-              "source": "iv_rank",
-              "tilt": "high_iv_rank",
-              "note": "ATM IV is at the 80th percentile of the last 5 stored samples (range 25\u201395%). High = expensive options / event fear; low = calm vs this name's recent past."
+              "source": "put_call_volume",
+              "regime": "put_lean",
+              "tilt": "cautious",
+              "note": "P/C vol 1.02: mild put lean \u2014 caution, not panic."
             }
           ],
           "neutral_notes": [
             {
-              "source": "put_call_volume",
-              "regime": "balanced",
+              "source": "iv_skew",
+              "regime": "balanced_skew",
               "tilt": "neutral",
-              "note": "P/C vol 0.96: roughly balanced volume."
+              "note": "Skew near flat (1.7pp)."
+            },
+            {
+              "source": "iv_level",
+              "tilt": "neutral",
+              "note": "ATM IV ~0% relatively calm \u2014 less event premium in options. Nearest-expiry expected move \u00b110.9% \u2014 stops inside this band are noise for that window."
+            },
+            {
+              "source": "iv_rank",
+              "tilt": "low_iv_rank",
+              "note": "ATM IV is at the 0th percentile of the last 6 stored samples (range 25\u201395%). High = expensive options / event fear; low = calm vs this name's recent past."
             },
             {
               "source": "oi_change",
               "tilt": "positioning",
-              "note": "Call OI +626 since 2026-07-19 (new call open interest)."
+              "note": "Call OI -4,091 since 2026-07-20 (call positions closed)."
             },
             {
               "source": "oi_change",
               "tilt": "positioning",
-              "note": "Put OI +1,370 since 2026-07-19 (new put open interest / hedges)."
+              "note": "Put OI -4,530 since 2026-07-20 (puts closed)."
             }
           ],
           "for_stop_engineering": {
-            "expected_move_pct": 9.93,
-            "atm_iv_pct": 90.0,
-            "expiry": "2026-07-27",
-            "days_to_expiry": 7,
+            "expected_move_pct": 10.9,
+            "atm_iv_pct": 0.2,
+            "expiry": "2026-07-29",
+            "days_to_expiry": 8,
             "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
           },
           "swing_playbook": {
@@ -28568,11 +28683,13 @@
             "url": "https://www.sec.gov/Archives/edgar/data/1327567/000119312526119729/d84927d8k.htm"
           }
         ],
-        "partnership_headlines": []
+        "partnership_headlines": [],
+        "news_error": "Failed to perform, curl: (28) Operation timed out after 2087010 milliseconds with 7705 bytes received. See https://curl."
       },
       "S": {
         "material_agreement_8ks": [],
-        "partnership_headlines": []
+        "partnership_headlines": [],
+        "news_error": "Failed to perform, curl: (28) Operation timed out after 466827 milliseconds with 0 bytes received. See https://curl.se/l"
       },
       "CRWD": {
         "material_agreement_8ks": [
@@ -28597,13 +28714,8 @@
             "url": "https://www.sec.gov/Archives/edgar/data/1535527/000153552726000013/crwd-20260406.htm"
           }
         ],
-        "partnership_headlines": [
-          {
-            "title": "CrowdStrike (CRWD) Expands STACKIT Partnership And Names AJ Shipley Product Chief",
-            "published": "2026-07-20T16:08:58Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/crowdstrike-crwd-expands-stackit-partnership-160858129.html"
-          }
-        ]
+        "partnership_headlines": [],
+        "news_error": "Failed to perform, curl: (28) Operation timed out after 4637900 milliseconds with 0 bytes received. See https://curl.se/"
       },
       "DDOG": {
         "material_agreement_8ks": [
@@ -28696,17 +28808,13 @@
       },
       "NET": {
         "material_agreement_8ks": [],
-        "partnership_headlines": []
+        "partnership_headlines": [],
+        "news_error": "Failed to perform, curl: (28) Operation timed out after 4408744 milliseconds with 0 bytes received. See https://curl.se/"
       },
       "FTNT": {
         "material_agreement_8ks": [],
-        "partnership_headlines": [
-          {
-            "title": "Should Fortinet\u2019s New TD SYNNEX Partnership and AI Endpoint Upgrades Require Action From Fortinet (FTNT) Investors?",
-            "published": "2026-07-18T07:11:14Z",
-            "url": "https://finance.yahoo.com/technology/ai/articles/fortinet-td-synnex-partnership-ai-071114463.html"
-          }
-        ]
+        "partnership_headlines": [],
+        "news_error": "Failed to perform, curl: (28) Operation timed out after 799950 milliseconds with 0 bytes received. See https://curl.se/l"
       },
       "GS": {
         "material_agreement_8ks": [
@@ -28751,7 +28859,7 @@
     },
     "source_coverage": {
       "sec_ok": 14,
-      "news_ok": 14,
+      "news_ok": 9,
       "both_failed": 0
     },
     "status": "ok",
@@ -28764,7 +28872,7 @@
   "guidance_ledger": {},
   "fundamental_screen": {
     "as_of": "2026-07-21T00:55:50.243082+00:00",
-    "age_hours": 2.9,
+    "age_hours": 3.9,
     "names_covered": 186,
     "note": "Full-universe estimate screen, refreshed pre-market (6am/9am ET, gated on true America/New_York time). top_upward_revisions = fundamental inflections regardless of price - candidates the momentum funnel may not surface. estimate_changes_since_previous = what moved THIS MORNING (earnings/guidance). Each row may carry revision_direction (up/down/flat), eps_growth_next_yr_pct (forward EPS growth), and eps_estimate_current_yr / eps_estimate_next_yr (current/next fiscal-year EPS estimates - the scanner's fwd_pe_est divides last close by the current-year figure) - judge a multiple against growth, not news tone.",
     "top_upward_revisions": [
@@ -28977,7 +29085,7 @@
   "todays_8ks": {
     "note": "8-K filings TODAY across the ENTIRE universe (one EDGAR index sweep). An 8-K on a non-focus name may be the day's real opportunity - pull the filing with WebFetch if the form looks material before dismissing it.",
     "status": "ok",
-    "as_of": "2026-07-21T03:51:06.412264+00:00",
+    "as_of": "2026-07-21T04:51:07.983380+00:00",
     "index_date": "2026-07-20",
     "filers": [
       {
@@ -29845,7 +29953,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-21T03:55:48.973888+00:00"
+        "updated_at": "2026-07-21T08:23:22.515799+00:00"
       },
       "PANW": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -29879,7 +29987,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-21T03:55:48.974353+00:00"
+        "updated_at": "2026-07-21T08:23:22.516388+00:00"
       },
       "S": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -29913,7 +30021,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-21T03:55:48.974862+00:00"
+        "updated_at": "2026-07-21T08:23:22.516744+00:00"
       },
       "CRWD": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -29947,7 +30055,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-21T03:55:48.975211+00:00"
+        "updated_at": "2026-07-21T08:23:22.517147+00:00"
       },
       "DDOG": {
         "what_they_do": "Operates in: Enterprise / AI software platforms",
@@ -29981,7 +30089,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-21T03:55:48.975530+00:00"
+        "updated_at": "2026-07-21T08:23:22.517605+00:00"
       },
       "AXON": {
         "what_they_do": "Operates in: unspecified (broad_market)",
@@ -30019,7 +30127,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-21T03:55:48.975857+00:00"
+        "updated_at": "2026-07-21T08:23:22.517984+00:00"
       },
       "ZS": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -30053,7 +30161,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-21T03:55:48.976261+00:00"
+        "updated_at": "2026-07-21T08:23:22.518356+00:00"
       },
       "ADBE": {
         "what_they_do": "Operates in: Enterprise / AI software platforms",
@@ -30087,7 +30195,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-21T03:55:48.976545+00:00"
+        "updated_at": "2026-07-21T08:23:22.518716+00:00"
       },
       "SMR": {
         "what_they_do": "Operates in: Power generation / power equipment for data centers",
@@ -30117,7 +30225,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-21T03:55:48.976824+00:00"
+        "updated_at": "2026-07-21T08:23:22.519131+00:00"
       },
       "BSX": {
         "what_they_do": "Operates in: unspecified (healthcare)",
@@ -30147,7 +30255,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-21T03:55:48.977156+00:00"
+        "updated_at": "2026-07-21T08:23:22.519471+00:00"
       },
       "NET": {
         "what_they_do": "Operates in: Enterprise / AI software platforms",
@@ -30181,7 +30289,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-21T03:55:48.977474+00:00"
+        "updated_at": "2026-07-21T08:23:22.519928+00:00"
       },
       "FTNT": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -30215,7 +30323,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-21T03:55:48.977739+00:00"
+        "updated_at": "2026-07-21T08:23:22.520300+00:00"
       },
       "GS": {
         "what_they_do": "Operates in: unspecified (broad_market)",
@@ -30253,7 +30361,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-21T03:55:48.978114+00:00"
+        "updated_at": "2026-07-21T08:23:22.520776+00:00"
       },
       "AMD": {
         "what_they_do": "Operates in: AI GPUs + CPU/server silicon",
@@ -30287,7 +30395,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-07-21T03:55:48.978549+00:00"
+        "updated_at": "2026-07-21T08:23:22.521163+00:00"
       }
     },
     "n": 14
