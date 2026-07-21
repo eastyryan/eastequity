@@ -1,16 +1,50 @@
 {
-  "updated_at": "2026-07-20T23:57:11.415322+00:00",
+  "updated_at": "2026-07-21T21:53:01.489024+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 1,
     "fundamental_analysis": 0,
     "risk_management": 1,
-    "strategy_playbooks": 0,
+    "strategy_playbooks": 1,
     "market_microstructure": 0,
     "trading_psychology": 0,
     "macro_regimes": 0
   },
   "entries": [
+    {
+      "id": "KB-0729128715",
+      "discipline": "strategy_playbooks",
+      "topic": "Trend path quality: ranking momentum candidates by HOW the move was built (continuous drip vs discrete gaps), and the boundaries where that filter stops working",
+      "summary": "Two stocks with identical 12-month returns can have completely different price paths, and the path predicts what happens next. Da, Gurun & Warachka (Review of Financial Studies 27(7), 2014; CRSP 1927-2007) proxy this with information discreteness, ID = sgn(PRET) x [%neg - %pos] over the formation window: low/negative ID means the advance was built from many small same-direction days (continuous), high ID means the same cumulative return was delivered by a few dramatic days (discrete). Their headline result is that over a six-month holding period momentum falls monotonically from +5.94% for continuous-information winners to -2.07% for discrete-information winners with MATCHED formation returns, and the continuous-information continuation does not reverse in the long run. The mechanism is limited attention - a slow drip never crosses the attention threshold so underreaction persists - and they show higher media coverage coincides with discrete information and mitigates the effect. An independently-constructed measure agrees: Cai, Li & Keasey score 'clarity of the trend' as the R-squared of a fitted trend line rather than counting day signs, and recover the same ranking; two different constructions agreeing is the standard my own ablation study demands. Three honest caveats. (1) Magnitudes are soft: I found a second figure pair (8.86% vs 2.91%) in secondary summaries, so treat the SIGN and the MONOTONICITY as the finding, not the exact spread - and note I could not extract the p",
+      "key_points": [
+        "ID = sgn(PRET) x [%neg - %pos] over the formation window: low/negative = continuous drip, high = a few dramatic days. Same cumulative return, opposite meaning.",
+        "Matched formation returns, divergent futures: +5.94% (continuous) vs -2.07% (discrete) over 6 months, monotone across quintiles, and continuous momentum does NOT reverse long-run.",
+        "Mechanism is limited attention, so high media coverage coincides with discrete information and kills the edge - the quiet name is the edge, the loud one is the crowd.",
+        "A differently-built measure (trend-line R-squared, Cai/Li/Keasey) reproduces the ranking - two constructions, one answer.",
+        "UP-market-state ONLY: no ID quintile pays in DOWN markets, and momentum crashes are preceded by high cross-sectional discreteness.",
+        "It ranks names that are ALREADY winners. It is not a turnaround finder - explicitly out of scope for deep_value_200w and contrarian_setups.",
+        "My own 2026-07-19 ablation lines up: no_supply_pullback +0.22/+0.25 (sole survivor of ~25 arms) vs confirmed_breakout -0.32, and gap_held -0.07 vs gap_filled +0.29.",
+        "Construction mismatch is real and limits the weight: 12m-formation/6m-hold cross-sectional portfolios are not a 3-90 day single-name swing entry."
+      ],
+      "how_to_apply": "When two candidates carry similar rel_strength_1m/3m_pct, break the tie on PATH rather than on level: open data/charts/<TICKER>.png and count how much of the advance came from >=2% gap days in gap_analysis, then say the count out loud in the thesis ('+18% over 3m with zero >=2% gaps' beats '+18% built on two earnings gaps'). Treat volume_signal: no_supply_pullback as the volume signature of a continuous trend and weight it as the mild positive my own study actually measured (+0.22pp), and stop counting an unfilled earnings gap (gap_held) as corroboration - it is the discrete signature my own study scored at -0.07. Apply this filter ONLY inside the winners lanes and only when benchmark_trend reads supportive or neutral; in a hostile tape it adds nothing beyond the regime gate that already blocks BUYs, and it is out of scope for deep_value_200w and contrarian_setups candidates whose formation return is negative by construction. In the regime step, read cross-sectional discreteness as a fragility warning: when market_radar is dominated by huge single-day gappers and market_news is headline-saturated, momentum is in exactly the high-discreteness state that has historically preceded mom",
+      "sources": [
+        "Da, Z., Gurun, U. G., & Warachka, M. (2014). 'Frog in the Pan: Continuous Information and Momentum.' Review of Financial Studies 27(7), 2171-2218. https://academic.oup.com/rfs/article-abstract/27/7/2171/1578455 (full abstract via https://ideas.repec.org/a/oup/rfinst/v27y2014i7p2171-2218..html)",
+        "CFA Institute Research Digest summary of Da, Gurun & Warachka (2015-03) - methodology, CRSP/Compustat/Factiva 1927-2007, the -2.07% to 5.94% risk-adjusted spread, and the media-coverage result. https://rpc.cfainstitute.org/research/cfa-digest/2015/03/frog-in-the-pan-continuous-information-and-moment",
+        "'Frog in the Pan and the market-state effect on momentum' (Finance Research Letters, 2024; EFMA 2024 Lisbon working version 'Information Discreteness and the Market-State Effect on Momentum', sample 1925-2022) - the UP-market-state exclusivity and the momentum-crash/discreteness link. https://www.sc",
+        "Cai, C. X., Li, P., & Keasey, K. - 'Momentum and the Clarity of the Trend' (trend-line R-squared as an independent path-quality measure), via Alpha Architect. https://alphaarchitect.com/momentum-and-the-clarity-of-the-trend/",
+        "Blitz, D., Huij, J., Lansdorp, S., & Verbeek, M. (2013). 'Short-term residual reversal.' Journal of Financial Markets. https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1911449",
+        "Minervini Volatility Contraction Pattern - practitioner description of contraction plus volume dry-up and the volume-expansion breakout trigger. https://traderlion.com/technical-analysis/volatility-contraction-pattern/"
+      ],
+      "learned_at": "2026-07-21T21:53:01.486900+00:00",
+      "run_id": "20260721-d65fe4",
+      "tensions": [
+        {
+          "with": "KB-2388376284",
+          "why": "KB-2388376284 concludes that entry location is the binding lever and recommends preferring setups with a NEAR dated catalyst, so the stop has less sqrt(t) noise to survive. This lesson pushes the opposite way on candidate selection: the highest-quality trends are low-media, low-drama continuous grin",
+          "noted_at": "2026-07-21"
+        }
+      ]
+    },
     {
       "id": "KB-1223831607",
       "discipline": "risk_management",
@@ -63,8 +97,8 @@
       "learned_at": "2026-07-17T05:18:15.396682+00:00",
       "run_id": "20260717-ed4649",
       "rebuilt_from_journal": "2026-07-19",
-      "times_cited": 2,
-      "last_cited": "2026-07-19T20:37:27.350128+00:00"
+      "times_cited": 6,
+      "last_cited": "2026-07-21T21:47:00.304591+00:00"
     }
   ]
 }

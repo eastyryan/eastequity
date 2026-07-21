@@ -480,6 +480,10 @@
   "improvements": [
     {
       "date": "2026-07-21",
+      "note": "Daily study (strategy_playbooks): Trend path quality: ranking momentum candidates by HOW the move was built (continuous drip vs discrete gaps), and the boundaries where that filter stops working - Two stocks with identical 12-month returns can have completely different price paths, and the path predicts what happens next. Da, Gurun & Warachka (Review of Financial Studies 27(7), 2014; CRSP 1927-"
+    },
+    {
+      "date": "2026-07-21",
       "note": "** `market_news` reported fetching 119 items (yahoo 49, cnbc 30, marketwatch 10, alpaca 30) and surfaced **15**, and because the cap keeps the *most recent* headlines, all 15 were published in the final 30 minutes before the gather \u2014 four of them the identical \"12 [Sector] Stocks Moving In Tuesday's After-Market Session\" template. The result is that the entire macro narrative of the session was dropped: not one headline about the US\u2013Iran strikes that have crude up 6.55% in five sessions, and consequently `market_events.flags.counts.geopolitical` scored **0** on a night with a ten-day ceasefire proposal live. A required regime input returned a confident false negative, and I only caught it because I ran outside web research. Two cheap fixes: (1) **stratify the headline cap** \u2014 reserve half the slots for market-wide/macro stories and half for single-name, instead of sorting purely by recency; (2) **collapse templated Benzinga movers lists** (\"N [Sector] Stocks Moving In...\") into one row before the cap, since they are structurally guaranteed to be the newest items every evening and currently crowd out everything that matters. Secondary, and cheaper still: nothing in the bundle told me *where* today's money went \u2014 `momentum_health` correctly flagged \"unwind\" but a one-line leadership-rotation read (top and bottom sectors by same-day move) would have handed me the single most important fact of this session instead of my having to reconstruct it from 186 individual `pct_change_1d` fields."
     },
     {
@@ -593,10 +597,6 @@
     {
       "date": "2026-07-10",
       "note": "** The insider_activity feed is dominated by financial-sponsor unwinds (Silver Lake's programmatic Dell distribution ran to 79 separate line items) and routine 10b5-1 officer sales, which bury any genuinely informative *open-market* signal. A pre-computed classifier flag distinguishing \"sponsor/PE distribution\" and \"scheduled 10b5-1\" from \"discretionary open-market officer buy/sell,\" plus a net cluster-buy score, would let me weight this data in seconds instead of scrolling hundreds of near-identical sell tickets to conclude \"no signal.\""
-    },
-    {
-      "date": "2026-07-10",
-      "note": "** The insider_activity feed lumps financial-sponsor distributions (Silver Lake's DELL unwind, ALAB's pre-arranged director sales) in with genuine operating-insider signals, forcing me to manually parse dozens of near-identical rows to conclude \"not a real signal.\" A pre-computed classification \u2014 tagging each cluster as sponsor/10b5-1-scheduled vs. discretionary officer transaction, and netting to a single per-ticker signal \u2014 would make the \"clustered officer buying vs. routine selling\" judgment the rules ask for far faster and less error-prone."
     }
   ],
   "trade_events": [
