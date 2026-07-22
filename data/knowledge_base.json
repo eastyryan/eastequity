@@ -109,7 +109,34 @@
       ],
       "learned_at": "2026-07-22T10:05:36.729458+00:00",
       "run_id": "20260722-599470"
+    },
+    {
+      "id": "KB-2596574918",
+      "discipline": "fundamental_analysis",
+      "topic": "Estimate-revision momentum: how upward EPS/revenue revision breadth leads price via the post-forecast-revision drift, and why breadth + price-confirmation beats a lone divergence",
+      "summary": "Analyst estimate revisions are a genuine, well-documented fundamental predictor: prices underreact to revisions and DRIFT in their direction for roughly six months (the post-forecast-revision drift, PFRD). Old evidence (Givoly/Lakonishok-era) put the up-minus-down revision portfolio spread near ~3% annually, and later work finds aggregated revisions can predict post-earnings-announcement returns as well as or better than the earnings surprise itself. The mechanism is the reason it persists and is the key to trading it: the DIRECTION of revisions is far more persistent than the direction of returns because analysts themselves underreact \u2014 anchoring-and-adjustment and herding make them revise incrementally and insufficiently, so a first up-revision statistically predicts more up-revisions (Chen et al. 2020, JBFA). Signal quality is not uniform. A single revision is mostly noise, and noise/bias in analyst forecasts rises with the forecast horizon (Noise in Expectations, RFS 2024), so BREADTH \u2014 how many analysts are raising vs cutting over ~100 days \u2014 and NEAR-TERM (next-quarter/next-FY) revisions carry the real signal, not one far-out number. Consistency matters more than magnitude: high-innovation revisions that are CONSISTENT with the prior trend and with price action drive more drift than larger 'reversal' revisions that fight the tape (Chen 2025), and revisions that merely drift toward existing consensus ('low-innovation') carry little information. Practitioners (Mill Street",
+      "key_points": [
+        "PFRD is real and persistent: prices drift in the revision's direction for ~6 months; my 3-90d swing only needs to capture the front of a durable trend, which is favorable.",
+        "The tradeable core: revision DIRECTION is more persistent than return direction because analysts underreact/anchor/herd \u2014 a first up-revision predicts more up-revisions.",
+        "Use BREADTH (raisers minus cutters over ~100d), not a single estimate change; a lone revision is noise.",
+        "Prefer NEAR-TERM revisions (next-Q/next-FY); noise and bias grow with forecast horizon.",
+        "Consistency > magnitude: revisions that agree with the prior trend and price drive more drift than larger reversal revisions; revisions merely converging to consensus carry little info.",
+        "Highest-conviction setup = up-revision breadth CONFIRMED by constructive price (this is exactly my post_earnings_drift_candidate gap_held_revisions_up flag).",
+        "The revisions-up / price-weak divergence (MU) is the seductive trap: sometimes underreaction opportunity, sometimes price-knows-first; resolve by diagnosing why price is weak and waiting for price confirmation, not by buying estimates alone.",
+        "But do not reflexively SKIP the divergence either \u2014 that is my documented over-skip; watchlist it with a price-reclaim trigger and act when price confirms."
+      ],
+      "how_to_apply": "Treat fundamental_screen.top_upward_revisions and revision_direction=up / positive eps_growth_next_yr_pct as a real candidate lane, not background noise \u2014 this is the direct fix for repeatedly defaulting MU-type names to the watchlist and eating +15% regret_misses. When underwriting one, weight BREADTH of near-term (30-day EPS / next-Q) revisions over any single number, and require the revision trend to be consistent (up-revisions following up-revisions), because that persistence is where the edge lives. For the fat pitch, demand price CONFIRMATION of the fundamentals \u2014 positive rel_strength_1m/3m, no_supply_pullback or a reclaim \u2014 which is precisely the post_earnings_drift_candidate gap_held_revisions_up read; that revisions-and-price-AGREE case gets full weight and can clear the bar now. For the pure divergence (revisions up, price down, MU-style), do NOT buy estimates into a falling knife and do NOT reflexively skip: name in the thesis whether price weakness is temporary (cyclical/sector/tax/macro) or structural (ai_at_risk, cycle-peak earnings embedding the cycle continuing), put it on the watchlist with a specific price-reclaim trigger, and promote to BUY when price confirms \u2014",
+      "sources": [
+        "Chen, Narayanamoorthy, Sougiannis & Zhou (2020), 'Analyst Underreaction and the Post-Forecast Revision Drift', Journal of Business Finance & Accounting \u2014 https://papers.ssrn.com/sol3/papers.cfm?abstract_id=2578757",
+        "Chen (2025), 'Analyst forecast revision consistency and reversal: Evidence of stock market efficiency', Journal of Corporate Accounting & Finance \u2014 https://onlinelibrary.wiley.com/doi/10.1002/jcaf.22744",
+        "'The Value of Analyst Forecast Revisions' \u2014 https://escholarship.org/content/qt2r7980f3/qt2r7980f3_noSplash_c002fc5c3b5de2401d705fadd922a1f3.pdf",
+        "'Noise in Expectations: Evidence from Analyst Forecasts', Review of Financial Studies 37(5), 2024 \u2014 https://academic.oup.com/rfs/article/37/5/1494/7461199",
+        "Mill Street Research, 'Do Analyst Estimate Revisions (Still) Help Forecast Relative Stock Returns?' and the MAER multi-factor model \u2014 https://www.millstreetresearch.com/do-analyst-estimate-revisions-still-help-forecast-relative-stock-returns/",
+        "Guerard, 'Earnings Forecasts and Revisions, Price Momentum, and Fundamental Data' \u2014 https://go.factset.com/hubfs/Symposium%20Images/Guerard_EARNINGS%20FORECASTS%20AND%20REVISIONS,%20PRICE%20MOMENTUM,%20AND%20FUNDAMENTAL%20DATA.pdf"
+      ],
+      "learned_at": "2026-07-22T10:12:55.570932+00:00",
+      "run_id": "20260722-2d9d1d"
     }
   ],
-  "updated_at": "2026-07-22T10:05:36.729516+00:00"
+  "updated_at": "2026-07-22T10:12:55.570946+00:00"
 }
