@@ -530,6 +530,10 @@
   "improvements": [
     {
       "date": "2026-07-22",
+      "note": "Process failure 2026-07-22 10am run: proposed a BUY in MU citing a same-day (2026-07-22) earnings reaction ('+12% today') sourced from a WebSearch AI-summary sentence, without cross-checking the actual event date against other dated sources in the same search batch or against repo data. data/earnings_calendar.json (already in the repo, last updated 2026-07-19) shows MU's last earnings was 2026-06-24 - nearly a month earlier - so the entire catalyst-timing narrative was wrong; the risk desk vetoed the trade on the resulting price-freshness inconsistency but for a narrower stated reason than the real root cause. RULE: before writing ANY 'today/yesterday/this week' framing about an event (earnings, guidance, 8-K, upgrade, analyst action) for ANY ticker - not just this run's deep-research focus names - check data/earnings_calendar.json (or the bundle's days_to_earnings/days_since_earnings for focus names) FIRST as the deterministic source of truth, and only then treat a WebSearch summary's date framing as corroboration, never as the primary source of when something happened. SEPARATE FINDING: my own 'Improvement note' from this same run was silently dropped from journal/improvements - I wrote it as a markdown '## Improvement note' header with prose on following lines, but orchestrator.py's capture regex is Improvement note:(.+) which only matches text on the SAME line. Any future improvement note must be a single line starting exactly with 'Improvement note: ' or it vanishes with no error - the same class of silent-parse failure LP-2555191189 already flagged for the study pipeline."
+    },
+    {
+      "date": "2026-07-22",
       "note": "Daily study (fundamental_analysis): Estimate-revision momentum: how upward EPS/revenue revision breadth leads price via the post-forecast-revision drift, and why breadth + price-confirmation beats a lone divergence - Analyst estimate revisions are a genuine, well-documented fundamental predictor: prices underreact to revisions and DRIFT in their direction for roughly six months (the post-forecast-revision drift, P"
     },
     {
@@ -563,90 +567,6 @@
     {
       "date": "2026-07-20",
       "note": "Daily study (risk_management): Correlation-adjusted position sizing: co-moving names are one bet (the effective-number-of-bets collapse), not many, and why that governs portfolio heat and the theme-risk cap - Diversification by COUNT is an illusion; only diversification by uncorrelated risk FACTORS reduces risk. For N equally-sized positions each with volatility sigma and pairwise correlation rho, portfoli"
-    },
-    {
-      "date": "2026-07-19",
-      "note": "Dynamic universe add: ['CVS', 'MPC'] (186 names). Proposed from the market-wide radar; tradeable from the next run."
-    },
-    {
-      "date": "2026-07-19",
-      "note": "** `momentum_health` was entirely absent from this bundle \u2014 no status, no MTUM/SPMO drawdown figures, no signals block \u2014 despite CLAUDE.md naming it as a required input to the regime step on *every* run, and this was precisely the week its answer mattered most. I had to infer the factor unwind by hand from `sector_relative_strength` (every AI-stack sector strongly positive on 3m and sharply negative on 1m while SPY was flat), which is a slower and less auditable read than the tool that already exists. Worse, the failure is silent: the fail-open convention treats a missing block as \"unknown, no adjustment,\" which is indistinguishable in the pack from a genuine `unknown` verdict on live data \u2014 so on a `weekly_market` depth the gather can drop the block entirely and nothing surfaces it. The fix is small: have the gatherer emit `momentum_health` on every depth (weekly included) and, when it genuinely cannot compute, emit an explicit `{\"status\": \"unavailable\", \"reason\": ...}` stub so the pack distinguishes \"the factor is fine\" from \"nobody looked.\""
-    },
-    {
-      "date": "2026-07-19",
-      "note": "** `momentum_health` came back **null** this run \u2014 the factor-unwind detector produced no reading in precisely the week it mattered most, with hyperscaler enablers \u221234.3%, design IP \u221220.6% and servers \u221218.7% over one month while SPY held flat. That is the textbook momentum-unwind signature the module exists to catch, and its silence means the validator's automatic risk-budget halving would *not* have fired had this been a trading depth. It should fail *loud* (log the reason and surface `status: unavailable` in the bundle) rather than fail silently to null. Secondary: `market_radar` gainers and losers came back as four all-null rows \u2014 expected on a Sunday with no session, but they should be omitted or labeled `no_session_data` rather than served as empty objects that look like a populated sweep. Third: the earnings calendar has no `next` date for CNC, HUM or MOH while their options price 10\u201315% expected moves \u2014 a cheap cross-check (\"IV rank high + expected move >8% + no scheduled earnings date \u2192 flag `earnings_date_suspect`\") would have surfaced that gap automatically instead of my having to infer it."
-    },
-    {
-      "date": "2026-07-19",
-      "note": "Dynamic universe add: ['CNC', 'HUM'] (184 names). Proposed from the market-wide radar; tradeable from the next run."
-    },
-    {
-      "date": "2026-07-19",
-      "note": "** `momentum_health` returned **null** this run \u2014 no status, no signals, not even the documented `\"unknown\"` fail-open \u2014 while the sector table showed an unambiguous momentum-factor unwind (servers/hardware +39.3% 3m \u2192 \u221218.7% 1m; GPUs +28.8% \u2192 \u22129.5%; design IP +19.7% \u2192 \u221220.6%). That module exists specifically to catch this pattern and to halve new-BUY risk budgets via `momentum_unwind_risk_scale`, and it was silent during the clearest example the book has seen. Two fixes: (1) have `tools/momentum_health.py` fall back to the scan's own `sector_relative_strength` when the MTUM/SPMO feed is unavailable \u2014 the unwind was fully derivable from data already in this bundle; (2) distinguish `null` (module failed) from `\"unknown\"` (ran, no data) in the output, because a silent null is indistinguishable from \"healthy\" to a reader and fails open on the exact risk it was built to flag. Secondary observation for the backlog: `ownership_flow` returned `institutions_buying_price_rising` for 20 of 30 focus names, including names down 15%+ on the month \u2014 a classification that fires on two-thirds of a universe carries close to zero information and its thresholds need recalibration."
-    },
-    {
-      "date": "2026-07-17",
-      "note": "Weekly self-review: Last Friday's stated change was to get the insider Form-4 feed pre-classified into sponsor/10b5-1 vs. discretionary officer transactions instead of handing me hundreds of noisy rows -- that fix landed and it worked: tonight's insider_activity block gave clean, directly actionable signals (BSX bullish_cluster_buying, 3 officers buying $554K with zero sells; ZS notable_discretionary_selling), a real improvement over last week's noise. The trading result this week was rougher: my only two closed trades, DELL and HPE, both lost (-$135 and -$45, 0% win rate, avg R -0.98), and with only 2 closed trades this is anecdote-level evidence per my own sample-size rules -- I am not inventing hard rules from it, but the pattern is worth naming honestly. Both losses shared the same demand_driver (hyperscaler_server_capex/servers_hardware) dressed up as two separate theses when the actual catalyst language ('SMCI collapse consolidates AI-server share') was nearly identical -- bad reasoning (thin diversification), not bad data, and it is exactly the clustering the system's theme-risk cap now exists to prevent. HPE's exit was graded process_fail: I closed it at $46.08 without its $43.75 stop being hit and without a clearly named invalidator firing -- conviction cracked, not thesis broken, which is the discretionary-exit mistake I need to stop making. What I got right: after those two losses on 7/15, the book stayed disciplined and all-cash through the rest of the week, including declining a real-looking AMD dip-buy today because my own stated trigger condition (post-event confirmation) was not actually met. A new engineering issue surfaced tonight -- a validator-clean UNH proposal was rejected at execution with 'insufficient cash' on a 100%-cash account, which needs an engineering look, not a reasoning fix. The one change for next week: before any discretionary SELL_TO_CLOSE that isn't a stop or horizon exit, I will name the specific thesis_invalidator that actually fired in the sell thesis itself -- if none of the three stated invalidators fired, the move is to hold or trim with sell_fraction, not a full discretionary close."
-    },
-    {
-      "date": "2026-07-17",
-      "note": "** The deterministic trigger check fired on AMD purely because the *price* touched the parsed $500 level, but my published `would_buy_at` was a compound condition \u2014 *post-event* confirmation plus a 50-DMA reclaim, explicitly excluding a pre-event dip. The result is a full event-driven run spun up for a setup that was never actually live, five days before its own catalyst. The trigger parser could be materially sharper if it also parsed an *event/date gate* from the trigger text (e.g. \"after 7/22-23\") and suppressed or down-weighted the alert until that date passes, rather than firing on the price alone. That would save event-driven runs for triggers whose *conditions*, not just prices, are met \u2014 reducing exactly this kind of \"premature trigger\" cycle."
-    },
-    {
-      "date": "2026-07-17",
-      "note": "** The single highest-value fix this run is upstream of my judgment: the orchestrator handed me a portfolio reading `$0 equity / $0 cash / no positions` with no `data_quality` or `stale_data_notice` flag raised, even though the trade history mathematically implies ~$982 should exist. A cheap deterministic guard \u2014 \"if broker equity is ~$0 but closed-trade math implies non-trivial cash, flag `broker_sync_suspect` and set `allows_new_buys: false` with a reason\" \u2014 would prevent a future run from being invited to trade (this was even a trigger-driven run) against an account it cannot possibly fund, and would save me from spending the cycle diagnosing broker plumbing instead of setups. Separately, the watchlist trigger checker should parse the *qualitative* half of `would_buy_at` (here, \"confirmed positive reaction to the 7/22-23 event... not a bounce off today's low\") rather than only the first dollar figure, so it stops firing event-driven runs on price alone before the event has occurred."
-    },
-    {
-      "date": "2026-07-17",
-      "note": "Daily study (technical_analysis): Stop distance vs. holding horizon: the \u221at noise band, and why entry location (not stop width) is the binding lever on multi-week swings - A stop has one job: fire on evidence the thesis broke, not on ordinary noise. Kaminski & Lo (SIFR RR 63, 2008; J. Financial Markets 18(C):234-254, 2014) prove that under a random walk, stop-loss rules"
-    },
-    {
-      "date": "2026-07-17",
-      "note": "Daily study session produced no machine-readable lesson - prompt/parse needs attention."
-    },
-    {
-      "date": "2026-07-17",
-      "note": "** Two concrete data defects cost me real research time and nearly cost me a bad trade."
-    },
-    {
-      "date": "2026-07-17",
-      "note": "`gap_analysis` reports a gap's size, direction, and whether it later filled, but not how the session actually closed relative to its open \u2014 so UNH shows an unfilled +7.4% gap while `pct_change_1d` is only +1.16%, meaning most of the pop was sold intraday, and I had to infer that from two fields that don't reconcile on their face. A `close_vs_open_pct` (or an `intraday_fade` flag) on the gap object would let an evening review distinguish a *held* gap from a *faded* one, which is the entire difference between a real drift setup and a failed print \u2014 precisely the call I had to hedge on UNH tonight. Secondary: `momentum_health` was absent from this bundle entirely (not even `unknown`), and `position_histories` was `skipped`, so two documented inputs to the regime read were silently missing rather than explicitly null."
-    },
-    {
-      "date": "2026-07-15",
-      "note": "Process gate: rejected_ideas_need_2_got_0; full_run_no_trade_missing_structured_rejections"
-    },
-    {
-      "date": "2026-07-15",
-      "note": "Process gate: rejected_ideas_need_2_got_0; full_run_no_trade_missing_structured_rejections"
-    },
-    {
-      "date": "2026-07-14",
-      "note": "The relay bundle's intraday price for AMD (last_close $548.81, +2.7%) diverged meaningfully from independently-verified real-time coverage ($566.73, +6.05%) even though data_quality reported the bundle as only 0.5h old - on a day with a fast, catalyst-driven intraday move, a 0.5h-old snapshot for a non-focus scan name can already be stale enough to make a trigger look unconfirmed when live volume/price may have since caught up; worth having the gather step timestamp each ticker's price pull individually (not just the bundle as a whole) so I can weight staleness per-name rather than assuming uniform freshness across 50+ scanned tickers."
-    },
-    {
-      "date": "2026-07-14",
-      "note": "** For non-focus scan names that surface as genuine top candidates (MU this run \u2014 #2 EPS revision, cheapest-in-group, strong-buy), the bundle gives me the numeric row but withholds the chart, filing texts, options-implied move, and deep fundamentals I need to actually underwrite an entry \u2014 so a legitimately compelling name gets defaulted to the watchlist partly for lack of data rather than lack of merit. The scanner should promote the top 1\u20132 non-focus setups (by swing_setup_score or upward-revision rank) into the focus set each run so they receive a chart + deep bundle, letting me deep-research them the same cycle they appear instead of waiting a week."
-    },
-    {
-      "date": "2026-07-14",
-      "note": "** Two process gaps cost research time today. First, candlestick charts did not render this run \u2014 `data/charts/` was empty even though the gather log said \"rendering candlestick charts...\"; the chart step appears to depend on the same blocked live yfinance feed rather than falling back to the relay bundle the way the rest of the pipeline does, so I judged entry geometry on numeric indicators alone with no visual confirmation of the actual price bars. Second, the watchlist-trigger-alert logic flagged AMD as \"price trigger reached\" when the price was actually 3.9% away from my stated $555 level (outside the \"within 2%\" tolerance the note claims) \u2014 worth checking the matching logic, since a false trigger wastes a research pass and could eventually cause a bad entry if I trusted it without re-verifying, as I did here."
-    },
-    {
-      "date": "2026-07-14",
-      "note": "** The digest surfaced pre-classified insider signals (e.g. HOOD `insider_buying`, DELL `notable_discretionary_selling`), but my drill-down lookups on `insider_activity.by_ticker.<T>` returned null \u2014 the detail lives under `insider_activity.tickers.<T>.summary` instead, and I had to page through a 285KB raw transaction dump to confirm HOOD's buy was a single $55M discretionary buyer (one buyer, not a 2+ cluster). Exposing a compact per-ticker `signal + summary` object at the same key the digest points to \u2014 and echoing `distinct_discretionary_buyers` into the digest itself \u2014 would let me weight a contrarian insider-buying name like HOOD correctly without parsing the full Form-4 feed, saving research time for the names that matter."
-    },
-    {
-      "date": "2026-07-13",
-      "note": "Weekly universe review: added ['MELI', 'NU', 'PSTG', 'RBRK'], removed ['INTC', 'IREN', 'IRM', 'MDB', 'NXPI', 'ON'] (108 names). Web research was unavailable this run (network tools were not authorized), so I curated conservatively from the bundle's July-2026 momentum, valuation, and estimate signals plus durable fundamentals rather than chase unverifiable new names. I trimmed six names whose relevance to the AI/data-center thesis has faded: Intel (chronic share loss and foundry cash burn), NXP and ON Semi (auto-cycle analog with soft demand), Iron Mountain (a records-storage REIT with only a minority data-center business), MongoDB (multi-year growth deceleration and derating), and IREN (a former bitcoin miner with the thinnest fundamentals in the weakest sector). I added four durable leaders that filled genuine gaps: Pure Storage for AI storage systems, MercadoLibre as a proven LatAm platform compounder, Nu Holdings to deepen the leading fintech sector, and Rubrik in the strongest-momentum cybersecurity group. The universe goes from ~110 to 108 names, stays roughly 88% AI/technology, and protected tickers were untouched."
-    },
-    {
-      "date": "2026-07-12",
-      "note": "** This run's news feed surfaced a materially market-moving geopolitical headline (U.S.-Iran attacks) only as a raw ticker-attached article title with no severity or freshness weighting \u2014 I had to infer its Monday impact manually. A lightweight `macro_news` or `market_wide_events` bucket in the bundle (headlines not tied to a single ticker, flagged for risk-off potential and recency) would let me lead the review with the regime-changing item instead of finding it buried in HOOD's per-ticker list."
-    },
-    {
-      "date": "2026-07-12",
-      "note": "** The context bundle's news feed gives headlines but no macro/geopolitical block \u2014 I had to WebSearch to confirm the U.S.\u2013Iran escalation and the oil move that are the single most important input to Monday's regime. Adding a lightweight `geopolitical_events` / oil-price field (Brent/WTI level and 5-day change) to the bundle would let me weigh commodity-driven inflation risk without an external call, and would make the \"defensive vs. high-multiple\" tilt decision faster and better-sourced."
     }
   ],
   "trade_events": [
