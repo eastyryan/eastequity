@@ -82,6 +82,32 @@ def kill_switch(_isolate_kill_switch):
 
 
 @pytest.fixture(autouse=True)
+def _isolate_journal(tmp_path, monkeypatch):
+    """No test may append to the REAL journal/.
+
+    Found 2026-07-21. Running the suite wrote genuine-looking RISK EVENTS into
+    journal/rejected/: every broker-sync test that exercises the circuit breaker called
+    journal.log_rejection() against the live path, producing
+
+        {"run_id": "broker-sync", "reasons": ["RISK_EVENT_broker_sync_suspect",
+         "zero-equity read ($0.00) over a funded mirror ($10,000.00)"]}
+
+    — the $10,000.00 is test_resting_stops' monkeypatched _starting_capital over an
+    empty history, and the $0.00 is the deliberately bad read the test feeds in. 94 of
+    these accumulated across 07-19 to 07-22 and were indistinguishable from a real
+    broker outage. They were read as evidence the trader had been locked out for days,
+    which sent an investigation down the wrong path entirely.
+
+    This is the same defect class as _no_writes_to_real_learning_stores below, and the
+    same lesson: fabricated records in an audit trail are worse than missing ones,
+    because the loops and the operator both read them as fact. journal/ is an audit
+    trail, so it gets the same treatment.
+    """
+    import journal as _j
+    monkeypatch.setattr(_j, "JOURNAL", tmp_path / "journal")
+
+
+@pytest.fixture(autouse=True)
 def _pin_simulation_backend(monkeypatch):
     """Tests must NEVER dispatch to a real broker API, regardless of what
     autonomy_config.json's mode.broker says (post-Alpaca-cutover it says
