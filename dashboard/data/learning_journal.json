@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-21T10:13:22.239108+00:00",
+  "updated_at": "2026-07-22T10:05:36.735864+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 1,
@@ -7,10 +7,34 @@
     "risk_management": 1,
     "strategy_playbooks": 1,
     "market_microstructure": 0,
-    "trading_psychology": 0,
+    "trading_psychology": 1,
     "macro_regimes": 0
   },
   "entries": [
+    {
+      "id": "KB-4213529672",
+      "discipline": "trading_psychology",
+      "topic": "Exit on pre-committed invalidators, not real-time conviction: the disposition effect, 'resulting', and why the written plan (not the mood) must license every early exit",
+      "summary": "My single binding process_fail is HPE: I closed a LOSING position ahead of its stop on a 'conviction crack,' graded process_fail with tag missing_invalidators_on_plan. The behavioral literature explains why that class of decision loses systematically. Odean's canonical study of 10,000 brokerage accounts (Journal of Finance 53:1775-1798, 1998) documents the disposition effect: investors are 1.5-2x more likely to sell a winner than a loser, and crucially this is NOT justified by subsequent returns - the losers they clung to did not go on to outperform, so the discretionary exit judgment was simply wrong on average. The practitioner consensus fix is pre-commitment: a 1991 study found the disposition effect weakens sharply when people sell at predetermined rules/intervals instead of discretionarily, and the reliable antidotes are predefined exit rules set BEFORE entry, mechanical stop/target execution, and documenting the rationale so the exit is a rule-check rather than a fresh emotional decision. Annie Duke's 'resulting' sharpens this: judging a decision by its outcome corrupts learning, so you must write the reasoning and the expected outcome distribution up front and grade the exit against THAT, not against the P&L - which is exactly why DELL (stop fired as planned, still a loss) is a process_win while HPE (discretionary, happened to save a few dollars) is a process_fail. The honest nuance: my HPE error was not the classic disposition effect (I cut a loser early, I didn't hol",
+      "key_points": [
+        "Odean 1998 (JoF 53:1775-1798): the disposition effect is real and NOT vindicated by later returns - discretionary 'when to exit' judgment loses on average, so it must be replaced by rules.",
+        "Pre-commitment is the measured fix: the disposition effect weakens when exits fire on predetermined rules; predefined criteria + mechanical execution + written rationale beat real-time discretion.",
+        "Duke's 'resulting': grade the exit against the plan you wrote at entry, never against the P&L - a planned stop-loss is a process_win (DELL), a discretionary exit is a process_fail even if it saved money (HPE).",
+        "My HPE loss wasn't classic disposition effect (I cut a loser early) but the same root: emotion overrode a plan that had no written invalidators to test the exit against.",
+        "Action bias and omission bias are the same disease, sign-flipped: over-trading AND the 6-day unwind paralysis both come from letting an emotional state, not the written bar, decide.",
+        "The antidote to cutting winners early is mechanical: sell_fraction partials at >=2R plus the chandelier trail, so the rule (not the itch to lock in) manages the runner.",
+        "Silence-of-invalidators is a HOLD signal: if no written invalidator fired, 'conviction cracked' or 'the tape feels bad' is not a licensed reason to exit before stop/target/horizon."
+      ],
+      "how_to_apply": "Treat the validator-enforced thesis_invalidators (invalidating_print, invalidating_structure, time_box) as the ONLY licensed early-exit reasons: before closing any holding ahead of its stop, name which specific invalidator fired and cite the observable print or structure - if none did and it is only conviction wobble, HOLD and let the stop/chandelier trail do its job, because that is the exact HPE process_fail I must not repeat. Grade every exit against the entry plan, not the P&L (Duke's resulting): a stop firing as written is a process_win even at a loss, a discretionary save is a process_fail. For winners, beat the cut-them-early disposition reflex mechanically - bank with sell_fraction (~0.4-0.6) at >=2R and trail the rest under structure while invalidators stay clear, per KB-2388376284's chandelier point and the runner playbook. Apply the same rule to the paralysis mirror-error: an unwind is a code-applied half-size haircut, not a trading halt, so if a setup clears the fat-pitch bar and validator floors honestly I take it, and if it does not I pass on its own merits - I never let a standing condition (unwind, thin tape, last week's loss) become an unwritten veto, and I never f",
+      "sources": [
+        "Odean, T. (1998), 'Are Investors Reluctant to Realize Their Losses?', Journal of Finance 53:1775-1798 (faculty.haas.berkeley.edu/odean/papers current versions/areinvestorsreluctant.pdf; SSRN abstract_id=94142)",
+        "Enlightened Stock Trading, 'The Disposition Effect in Trading: How to Fix This Costly Bias' (enlightenedstocktrading.com/disposition-effect-in-trading/) - predefined exit rules, automation, documented rationale; ~3-5%/yr return cost cited in practitioner literature",
+        "Annie Duke, 'Thinking in Bets' / 'resulting' - separating decision quality from outcome quality (investinglive.com/Education/annie-duke-on-the-investing-mistakes...; tomtunguz.com/outcome-quality-decision-quality/)",
+        "Action bias and omission bias in trading (effectiviology.com/action-bias/; en.wikipedia.org/wiki/Omission_bias) - real-money accounts trade more and underperform; inaction is the mirror error"
+      ],
+      "learned_at": "2026-07-22T10:05:36.729458+00:00",
+      "run_id": "20260722-599470"
+    },
     {
       "id": "KB-6241168493",
       "discipline": "strategy_playbooks",
@@ -36,7 +60,9 @@
         "East Equity CLAUDE.md measured ablation 2026-07-19: no_supply_pullback +0.22/+0.25pp; ADX>25 breakouts -0.35pp"
       ],
       "learned_at": "2026-07-21T10:13:22.231538+00:00",
-      "run_id": "20260721-b723ee"
+      "run_id": "20260721-b723ee",
+      "times_cited": 3,
+      "last_cited": "2026-07-22T04:22:23.046064+00:00"
     },
     {
       "id": "KB-1223831607",
@@ -61,7 +87,9 @@
         "Practitioner framing that correlated positions are one bet, with a cross-check that the 'sqrt(N*rho)' example is internally inconsistent: https://education.signalpilot.io/curriculum/intermediate/46-advanced-risk-management.html"
       ],
       "learned_at": "2026-07-20T23:57:11.414654+00:00",
-      "run_id": "20260720-a8b14c"
+      "run_id": "20260720-a8b14c",
+      "times_cited": 2,
+      "last_cited": "2026-07-22T04:22:23.046053+00:00"
     },
     {
       "id": "KB-2388376284",
@@ -90,8 +118,8 @@
       "learned_at": "2026-07-17T05:18:15.396682+00:00",
       "run_id": "20260717-ed4649",
       "rebuilt_from_journal": "2026-07-19",
-      "times_cited": 2,
-      "last_cited": "2026-07-19T20:37:27.350128+00:00"
+      "times_cited": 3,
+      "last_cited": "2026-07-21T16:15:16.015928+00:00"
     }
   ]
 }

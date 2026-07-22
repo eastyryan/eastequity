@@ -447,6 +447,10 @@
   "forced_exits": [],
   "improvements": [
     {
+      "date": "2026-07-22",
+      "note": "Daily study (trading_psychology): Exit on pre-committed invalidators, not real-time conviction: the disposition effect, 'resulting', and why the written plan (not the mood) must license every early exit - My single binding process_fail is HPE: I closed a LOSING position ahead of its stop on a 'conviction crack,' graded process_fail with tag missing_invalidators_on_plan. The behavioral literature explai"
+    },
+    {
       "date": "2026-07-21",
       "note": "Daily study (strategy_playbooks): Trend path quality: ranking momentum candidates by HOW the move was built (continuous drip vs discrete gaps), and the boundaries where that filter stops working - Two stocks with identical 12-month returns can have completely different price paths, and the path predicts what happens next. Da, Gurun & Warachka (Review of Financial Studies 27(7), 2014; CRSP 1927-"
     },
@@ -561,10 +565,6 @@
     {
       "date": "2026-07-12",
       "note": "Weekly universe review: added ['APH', 'AXON', 'CIEN', 'CLS', 'GLW', 'INTU', 'PSTG'], removed ['AAOI', 'APLD', 'MCHP', 'MOD', 'PYPL', 'SYM'] (111 names). Trimmed six names that have lost leadership: APLD and SYM sit in the two weakest sectors in our own data (hyperscaler-enablers -18% and robotics -3% over the trailing periods), AAOI and MOD are sub-scale speculative names better covered by larger peers, and PYPL and MCHP are chronic laggards whose sectors are strengthening without them. Added seven structural AI enablers and quality leaders we inexplicably did not track: Amphenol, Corning, and Ciena deepen the AI-datacenter interconnect/optical layer, Celestica adds the leading AI-server ODM, Pure Storage fills a thin memory/storage bucket, and Intuit and Axon bring durable software-and-AI leaders. Net universe is 111 names, comfortably AI/tech-biased above 70%. Note for the audit log: WebSearch was unavailable this run, so these edits are grounded in the bundle's momentum data and durable company fundamentals rather than freshly verified price action or flow news."
-    },
-    {
-      "date": "2026-07-10",
-      "note": "Weekly self-review: This week was mostly build week, not trade week - the system went from a bare skeleton to a full pipeline (data relay, validator, position sizing, watchlist triggers, insider activity, sector relative strength, post-earnings drift detection) in a handful of commits, and only opened its first two live paper positions on 7/9 (DELL) and 7/10 (HPE). Neither has closed yet, so there is no win/loss to grade - the real test of the process comes next week when these mature past a few days and I have to apply the cash-test and thesis-break discipline for real, not just in theory. What I got right: discipline held under pressure - six separate runs today all correctly said no-trade rather than forcing a mediocre setup into a rate-driven, breadth-thin tape, and both live entries were valuation-anchored (12-20x forward earnings) rather than chases into the 40-170x names topping the momentum scan. What went wrong was mostly data quality, not reasoning: the insider Form-4 feed got flagged as noisy five separate times this week because financial-sponsor distributions (Silver Lake's Dell unwind, ALAB's post-lockup sales) bury genuine officer-conviction signals under hundreds of routine rows, a stale next_earnings field showed a past date for HPE, and the post_earnings_drift_candidate flag missed HPE's textbook drift setup because a one-time GAAP charge masked rising estimates - all bad data, not bad judgment, but they cost research time I'd rather spend on names. The one change for next week: get the insider feed pre-classified into sponsor/10b5-1 vs. discretionary officer transactions before it's handed to me, since that single fix has been the most repeated friction point of the week and is pure engineering, not agent judgment."
     }
   ],
   "trade_events": [
