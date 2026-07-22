@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-07-21T21:53:01.489024+00:00",
+  "updated_at": "2026-07-21T10:13:22.239108+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 1,
@@ -12,38 +12,31 @@
   },
   "entries": [
     {
-      "id": "KB-0729128715",
+      "id": "KB-6241168493",
       "discipline": "strategy_playbooks",
-      "topic": "Trend path quality: ranking momentum candidates by HOW the move was built (continuous drip vs discrete gaps), and the boundaries where that filter stops working",
-      "summary": "Two stocks with identical 12-month returns can have completely different price paths, and the path predicts what happens next. Da, Gurun & Warachka (Review of Financial Studies 27(7), 2014; CRSP 1927-2007) proxy this with information discreteness, ID = sgn(PRET) x [%neg - %pos] over the formation window: low/negative ID means the advance was built from many small same-direction days (continuous), high ID means the same cumulative return was delivered by a few dramatic days (discrete). Their headline result is that over a six-month holding period momentum falls monotonically from +5.94% for continuous-information winners to -2.07% for discrete-information winners with MATCHED formation returns, and the continuous-information continuation does not reverse in the long run. The mechanism is limited attention - a slow drip never crosses the attention threshold so underreaction persists - and they show higher media coverage coincides with discrete information and mitigates the effect. An independently-constructed measure agrees: Cai, Li & Keasey score 'clarity of the trend' as the R-squared of a fitted trend line rather than counting day signs, and recover the same ranking; two different constructions agreeing is the standard my own ablation study demands. Three honest caveats. (1) Magnitudes are soft: I found a second figure pair (8.86% vs 2.91%) in secondary summaries, so treat the SIGN and the MONOTONICITY as the finding, not the exact spread - and note I could not extract the p",
+      "topic": "The pullback-continuation entry in a leading uptrend: buying the low-volume ('no-supply') dip to structural support instead of chasing the fresh high",
+      "summary": "The pullback-continuation setup buys a temporary dip inside an established uptrend rather than chasing a new high. It works because two well-documented return patterns run on different clocks: medium-term momentum persists over roughly 3-12 months while short-term returns (days to a few weeks) mean-revert (the short-term reversal effect, Blitz/Huij, Alpha Architect summaries). Buying the short-term dip in a medium-term leader therefore rides the durable trend while getting a better price and a tighter stop. The whole craft is separating a HEALTHY pullback -- shallow, orderly, on DRYING volume, the Wyckoff/VSA 'no supply' bar where professionals simply stop selling -- from a REVERSAL, which is sharp, wide-range, and comes on HIGH volume that breaks structure ('supply'). Volume is the tell, not price alone. Minervini's version: after a valid advance a healthy pullback retraces modestly (~8-10% max, or back to a rising 50-DMA), volume contracts into the dip and re-expands on the resumption; common support zones are the 20-EMA, 50-DMA, and the 38-62% Fibonacci band. Critically, the entry is the RESUMPTION, not the dip itself -- you wait for volume to dry up and then a confirming up-move, you do not catch the falling knife. This is the one thing my own 12-year ablation confirmed: no_supply_pullback scored +0.22pp (21d) / +0.25pp (63d), the only positive read among ~25 indicators tested, measured on names already above their 200-DMA. Reported win rates vary wildly and the high ones",
       "key_points": [
-        "ID = sgn(PRET) x [%neg - %pos] over the formation window: low/negative = continuous drip, high = a few dramatic days. Same cumulative return, opposite meaning.",
-        "Matched formation returns, divergent futures: +5.94% (continuous) vs -2.07% (discrete) over 6 months, monotone across quintiles, and continuous momentum does NOT reverse long-run.",
-        "Mechanism is limited attention, so high media coverage coincides with discrete information and kills the edge - the quiet name is the edge, the loud one is the crowd.",
-        "A differently-built measure (trend-line R-squared, Cai/Li/Keasey) reproduces the ranking - two constructions, one answer.",
-        "UP-market-state ONLY: no ID quintile pays in DOWN markets, and momentum crashes are preceded by high cross-sectional discreteness.",
-        "It ranks names that are ALREADY winners. It is not a turnaround finder - explicitly out of scope for deep_value_200w and contrarian_setups.",
-        "My own 2026-07-19 ablation lines up: no_supply_pullback +0.22/+0.25 (sole survivor of ~25 arms) vs confirmed_breakout -0.32, and gap_held -0.07 vs gap_filled +0.29.",
-        "Construction mismatch is real and limits the weight: 12m-formation/6m-hold cross-sectional portfolios are not a 3-90 day single-name swing entry."
+        "Two clocks: 3-12mo momentum persists while days-to-weeks returns revert (short-term reversal) -- a pullback in a leader rides the trend at a better price and a tighter stop.",
+        "Volume is the discriminator: healthy pullback = shallow, orderly, volume DRYING UP (Wyckoff 'no supply'); reversal = sharp, wide-range, HIGH volume breaking support. A high-volume dip is supply -- pass.",
+        "Depth/zone guides: after a valid advance ~8-10% max or back to a rising 50-DMA; support at the 20-EMA, 50-DMA, or 38-62% Fibonacci retracement.",
+        "Enter the RESUMPTION, not the dip: wait for volume to dry up, then a confirming up-bar / short-term-level reclaim -- never buy the falling knife.",
+        "My only ablation-confirmed edge: no_supply_pullback +0.22pp (21d)/+0.25pp (63d) on names above the 200-DMA -- this playbook is the one I have first-party evidence for.",
+        "Reconciles my own bundle: high-ADX breakouts measured -0.35pp (fail) but the low-volume pullback measured positive -- in an extended trend, buy the orderly dip, don't chase the breakout.",
+        "Win rates: distrust the '82%' SEO claim; credible ~55-65% for MA-reversion pullbacks, weaker in low-turnover names and stretched momentum-gap conditions -- real edge, not universal.",
+        "Buying at support satisfies KB-2388376284: the same stop then sits beyond the sqrt-t noise band, so entry location -- not stop width -- carries the risk."
       ],
-      "how_to_apply": "When two candidates carry similar rel_strength_1m/3m_pct, break the tie on PATH rather than on level: open data/charts/<TICKER>.png and count how much of the advance came from >=2% gap days in gap_analysis, then say the count out loud in the thesis ('+18% over 3m with zero >=2% gaps' beats '+18% built on two earnings gaps'). Treat volume_signal: no_supply_pullback as the volume signature of a continuous trend and weight it as the mild positive my own study actually measured (+0.22pp), and stop counting an unfilled earnings gap (gap_held) as corroboration - it is the discrete signature my own study scored at -0.07. Apply this filter ONLY inside the winners lanes and only when benchmark_trend reads supportive or neutral; in a hostile tape it adds nothing beyond the regime gate that already blocks BUYs, and it is out of scope for deep_value_200w and contrarian_setups candidates whose formation return is negative by construction. In the regime step, read cross-sectional discreteness as a fragility warning: when market_radar is dominated by huge single-day gappers and market_news is headline-saturated, momentum is in exactly the high-discreteness state that has historically preceded mom",
+      "how_to_apply": "When a universe leader (above a rising 50/200-DMA, positive rel_strength_1m and 3m vs SPY) pulls back, treat it as a BUY candidate only when the dip is orderly AND volume_signal reads no_supply_pullback -- my one ablation-confirmed tell; a high-volume, wide-range dip is supply, so pass. Do not buy the dip itself: wait for volume to dry up and a resumption bar (reclaim of a short-term level or a pocket-pivot-style up day), which is the concrete fix for my ANET regret_miss where I watched the pullback and never entered. Anchor the stop just below the pullback's swing low or the named anchored_vwap level so the same stop sits beyond the noise band per KB-2388376284, hold the 2:1 RR floor honestly, and let the chandelier trail run the winner rather than tightening early. Prefer pullbacks with a catalyst inside a short window so entry-to-event noise is small, and size the initial entry at 50-70% then scale in only on confirmed strength. In an already-extended, high-ADX leader this low-volume pullback -- not the fresh breakout my own data shows fails at ADX>25 -- is where the fat pitch lives.",
       "sources": [
-        "Da, Z., Gurun, U. G., & Warachka, M. (2014). 'Frog in the Pan: Continuous Information and Momentum.' Review of Financial Studies 27(7), 2171-2218. https://academic.oup.com/rfs/article-abstract/27/7/2171/1578455 (full abstract via https://ideas.repec.org/a/oup/rfinst/v27y2014i7p2171-2218..html)",
-        "CFA Institute Research Digest summary of Da, Gurun & Warachka (2015-03) - methodology, CRSP/Compustat/Factiva 1927-2007, the -2.07% to 5.94% risk-adjusted spread, and the media-coverage result. https://rpc.cfainstitute.org/research/cfa-digest/2015/03/frog-in-the-pan-continuous-information-and-moment",
-        "'Frog in the Pan and the market-state effect on momentum' (Finance Research Letters, 2024; EFMA 2024 Lisbon working version 'Information Discreteness and the Market-State Effect on Momentum', sample 1925-2022) - the UP-market-state exclusivity and the momentum-crash/discreteness link. https://www.sc",
-        "Cai, C. X., Li, P., & Keasey, K. - 'Momentum and the Clarity of the Trend' (trend-line R-squared as an independent path-quality measure), via Alpha Architect. https://alphaarchitect.com/momentum-and-the-clarity-of-the-trend/",
-        "Blitz, D., Huij, J., Lansdorp, S., & Verbeek, M. (2013). 'Short-term residual reversal.' Journal of Financial Markets. https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1911449",
-        "Minervini Volatility Contraction Pattern - practitioner description of contraction plus volume dry-up and the volume-expansion breakout trigger. https://traderlion.com/technical-analysis/volatility-contraction-pattern/"
+        "https://capital.com/en-int/learn/trading-strategies/pullback-trading",
+        "https://atas.net/volume-analysis/basics-of-volume-analysis/vsa-and-cluster-analysis-no-demand-and-no-supply/",
+        "https://www.quantvps.com/blog/mark-minervinis-guide-to-finding-winning-stocks",
+        "https://alphaarchitect.com/quantitative-momentum-research-short-term-return-reversal/",
+        "https://alphaarchitect.com/short-term-momentum/",
+        "East Equity CLAUDE.md measured ablation 2026-07-19: no_supply_pullback +0.22/+0.25pp; ADX>25 breakouts -0.35pp"
       ],
-      "learned_at": "2026-07-21T21:53:01.486900+00:00",
-      "run_id": "20260721-d65fe4",
-      "tensions": [
-        {
-          "with": "KB-2388376284",
-          "why": "KB-2388376284 concludes that entry location is the binding lever and recommends preferring setups with a NEAR dated catalyst, so the stop has less sqrt(t) noise to survive. This lesson pushes the opposite way on candidate selection: the highest-quality trends are low-media, low-drama continuous grin",
-          "noted_at": "2026-07-21"
-        }
-      ]
+      "learned_at": "2026-07-21T10:13:22.231538+00:00",
+      "run_id": "20260721-b723ee"
     },
     {
       "id": "KB-1223831607",
@@ -97,8 +90,8 @@
       "learned_at": "2026-07-17T05:18:15.396682+00:00",
       "run_id": "20260717-ed4649",
       "rebuilt_from_journal": "2026-07-19",
-      "times_cited": 6,
-      "last_cited": "2026-07-21T21:47:00.304591+00:00"
+      "times_cited": 2,
+      "last_cited": "2026-07-19T20:37:27.350128+00:00"
     }
   ]
 }
