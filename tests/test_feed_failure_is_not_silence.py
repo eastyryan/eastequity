@@ -106,6 +106,12 @@ def test_radar_total_outage_reports_failure_not_quiet_market(monkeypatch):
     """THE REGRESSION, reproduced: this exact scenario reported succeeded=3."""
     from tools import market_radar, alpaca_data
 
+    # has_keys() gates the three fetches below, so without this the whole test
+    # short-circuits to status "skipped" and never exercises the coverage
+    # accounting it exists to pin. Local runs have keys in ~/.config and passed;
+    # CI has none, so these three went red on every push from 2026-07-19.
+    monkeypatch.setattr(alpaca_data, "has_keys", lambda: True)
+
     monkeypatch.setattr(alpaca_data, "get_movers_result",
                         lambda **_k: ({}, "ConnectionError: egress blocked"))
     monkeypatch.setattr(alpaca_data, "get_most_actives_result",
@@ -129,6 +135,12 @@ def test_radar_quiet_market_is_still_reported_as_success(monkeypatch):
     """The inverse must hold or the fix just moved the lie."""
     from tools import market_radar, alpaca_data
 
+    # has_keys() gates the three fetches below, so without this the whole test
+    # short-circuits to status "skipped" and never exercises the coverage
+    # accounting it exists to pin. Local runs have keys in ~/.config and passed;
+    # CI has none, so these three went red on every push from 2026-07-19.
+    monkeypatch.setattr(alpaca_data, "has_keys", lambda: True)
+
     monkeypatch.setattr(alpaca_data, "get_movers_result", lambda **_k: ({}, None))
     monkeypatch.setattr(alpaca_data, "get_most_actives_result", lambda **_k: ([], None))
     monkeypatch.setattr(alpaca_data, "get_news_result", lambda **_k: ([], None))
@@ -141,6 +153,12 @@ def test_radar_quiet_market_is_still_reported_as_success(monkeypatch):
 
 def test_radar_partial_outage_is_disclosed(monkeypatch):
     from tools import market_radar, alpaca_data
+
+    # has_keys() gates the three fetches below, so without this the whole test
+    # short-circuits to status "skipped" and never exercises the coverage
+    # accounting it exists to pin. Local runs have keys in ~/.config and passed;
+    # CI has none, so these three went red on every push from 2026-07-19.
+    monkeypatch.setattr(alpaca_data, "has_keys", lambda: True)
 
     monkeypatch.setattr(alpaca_data, "get_movers_result",
                         lambda **_k: ({"gainers": [{"symbol": "AAA", "price": 50,

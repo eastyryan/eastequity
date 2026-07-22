@@ -119,12 +119,27 @@ def get_market_radar(top_movers: int = 10, top_actives: int = 20,
                  "they are not tradeable until deterministically added ($1B cap, "
                  "priceable, liquid) and are never a buy signal by themselves."),
     }
+    # Both early returns carry a coverage block for the same reason the three
+    # sub-feeds below are fetched independently: a caller reading this dict must be
+    # able to tell "the tape was quiet" from "we never looked". Returning without
+    # coverage made those two cases identical in shape, so a keyless or broken
+    # environment reported the market-wide radar as simply empty — the exact silence
+    # tests/test_feed_failure_is_not_silence.py exists to forbid, and the reason that
+    # suite has been red in CI (no ALPACA keys there) since 2026-07-19.
+    _NO_FEEDS = {"requested": 3, "succeeded": 0, "failed": 3,
+                 "unit": "alpaca_screener_feed"}
     try:
         from tools import alpaca_data
         if not alpaca_data.has_keys():
-            return {**out, "status": "skipped", "reason": "no_alpaca_keys"}
+            return {**out, "status": "skipped", "reason": "no_alpaca_keys",
+                    "coverage": {**_NO_FEEDS,
+                                 "sources": {k: "skipped: no_alpaca_keys"
+                                             for k in ("movers", "actives", "news")}}}
     except Exception as e:
-        return {**out, "status": "error", "error": str(e)[:200]}
+        return {**out, "status": "error", "error": str(e)[:200],
+                "coverage": {**_NO_FEEDS,
+                             "sources": {k: f"error: {str(e)[:100]}"
+                                         for k in ("movers", "actives", "news")}}}
 
     # THREE INDEPENDENT SUB-FEEDS, fetched independently. They used to share one
     # try-block, which had two failure modes the caller could not see: a raise in
