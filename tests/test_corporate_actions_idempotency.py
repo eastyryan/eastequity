@@ -228,4 +228,10 @@ def test_marker_still_written_for_reporting(book, monkeypatch):
     install(monkeypatch, FakeTicker(dividends=[(et_today_timestamp(), 1.0)]))
     ca.apply_corporate_actions()
     pos = read(book)["positions"][0]
-    assert pos["actions_processed_through"] == datetime.now(timezone.utc).date().isoformat()
+    # ET, not UTC. corporate_actions routes every date through _et_date on purpose
+    # ("the only calendar in play" — yfinance reports action timestamps in ET), and
+    # this assertion compared against the UTC date, so it only held while the two
+    # happened to agree. After 20:00 ET the UTC date rolls first and it failed nightly.
+    # Mixing the two calendars here is the exact defect the module was built to avoid.
+    assert pos["actions_processed_through"] == ca._et_date(
+        datetime.now(timezone.utc)).isoformat()

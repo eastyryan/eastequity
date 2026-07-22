@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import json
 import re
-from datetime import datetime, timezone, timedelta
+from datetime import date, datetime, timezone, timedelta
 from pathlib import Path
 
 import validator
@@ -51,6 +51,26 @@ def _to_et_hour(iso_ts: str | None) -> float | None:
         return None
 
 
+def _journal_dates_for_today_et() -> list[str]:
+    """The UTC-named journal files that can hold TODAY's (ET) records.
+
+    An ET calendar day D starts at 04:00/05:00 UTC on D and ends inside UTC day D+1,
+    so exactly two files can carry it: D and D+1.
+
+    DERIVED FROM et_date(), DELIBERATELY, not from the wall clock. This used to read
+    `now_utc` and `now_utc - 1day` while the record filter below compared against
+    et_date() — two different notions of "today" that agree only by luck. They diverge
+    every evening once UTC rolls past ET (2026-07-22 00:00Z = 2026-07-21 20:00 ET), and
+    they made the slot-report tests non-hermetic: the fixtures pin et_date to
+    2026-07-20 and write 2026-07-20.jsonl, so the whole suite went red the moment real
+    UTC left that date, reporting every slot as missed. Reading one seam keeps the
+    discovery and the filter in agreement, and a permanently-red watchdog suite is how
+    a real outage gets mistaken for noise.
+    """
+    d = date.fromisoformat(et_date())
+    return [d.isoformat(), (d + timedelta(days=1)).isoformat()]
+
+
 def completed_runs_today() -> list[dict]:
     """Scheduled runs journaled for TODAY (ET), newest last.
 
@@ -59,9 +79,8 @@ def completed_runs_today() -> list[dict]:
     missed and turn the alarm green. See scripts/manual_run.sh.
     """
     out = []
-    for delta in (0, 1):  # journal files are named by UTC date; today ET spans two
-        f = ROOT / "journal" / "runs" / (
-            f"{(datetime.now(timezone.utc) - timedelta(days=delta)).date().isoformat()}.jsonl")
+    for day in _journal_dates_for_today_et():
+        f = ROOT / "journal" / "runs" / f"{day}.jsonl"
         if not f.exists():
             continue
         for line in f.read_text().splitlines():
@@ -92,9 +111,8 @@ def run_starts_today() -> list[dict]:
     (slot is None) are ignored: they cannot certify a scheduled slot.
     """
     out = []
-    for delta in (0, 1):
-        f = ROOT / "journal" / "run_starts" / (
-            f"{(datetime.now(timezone.utc) - timedelta(days=delta)).date().isoformat()}.jsonl")
+    for day in _journal_dates_for_today_et():
+        f = ROOT / "journal" / "run_starts" / f"{day}.jsonl"
         if not f.exists():
             continue
         for line in f.read_text().splitlines():
