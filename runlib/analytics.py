@@ -33,6 +33,15 @@ def expected_slots(weekday: bool) -> list[float]:
 # and a muted alarm is worse than no alarm.
 SLOT_EARLY_TOLERANCE_H = 0.25
 SLOT_GRACE_H = 1.0
+# A self-heal recovery run (scripts/find_missed_slot.py) re-runs the earliest still-open
+# missed/died slot up to this many hours late. Such a run legitimately lands AFTER the
+# slot's grace window closes but BEFORE the next slot, so the first-pass window (clamped
+# at slot+grace to stop one run satisfying two slots) never credits it. slot_report gives
+# it a second-pass credit so a slot that WAS successfully recovered stops reporting as
+# "missed" and paging all day. Kept equal to scripts.find_missed_slot.MAX_SLOT_AGE_H —
+# the two describe one window (first observed on the first real self-heal activation,
+# 2026-07-23: 06:00 recovered at 07:19 ET yet paged "missed" until end of day).
+RECOVERY_MAX_AGE_H = 3.0
 
 
 def _to_et_hour(iso_ts: str | None) -> float | None:
@@ -180,6 +189,38 @@ def slot_report(now_h: float | None = None, weekday: bool | None = None) -> dict
             died = any(lo <= s["et_hour"] < hi for s in starts)
             report.append({"slot": slot, "label": label,
                            "status": "died" if died else "missed"})
+
+    # SECOND PASS — credit a self-heal RECOVERY run to the slot it recovered.
+    #
+    # The watchdog (scripts/find_missed_slot.py) re-runs a still-open missed/died slot up
+    # to RECOVERY_MAX_AGE_H late, so a legitimate run can land PAST a slot's grace window
+    # but before the next slot — a region the first pass leaves unmatched because its
+    # window clamps at slot+grace to stop one run covering two adjacent slots. Without
+    # this, a slot that was SUCCESSFULLY recovered stays "missed" the rest of the day and
+    # pages on every heartbeat. The recovery window is [slot+grace, next_slot_early),
+    # capped at RECOVERY_MAX_AGE_H after the slot — exactly the window the watchdog is
+    # allowed to act in. Adjacent slots (9/10, 16/17.5) leave no room and get no recovery
+    # credit, which is correct: the watchdog does not resurrect a slot its successor has
+    # already reached.
+    for i, entry in enumerate(report):
+        if entry["status"] not in ("missed", "died"):
+            continue
+        slot = entry["slot"]
+        nxt = slots[i + 1] if i + 1 < len(slots) else float("inf")
+        lo = min(slot + SLOT_GRACE_H, nxt)
+        hi = min(nxt - SLOT_EARLY_TOLERANCE_H, slot + RECOVERY_MAX_AGE_H)
+        rec = next((j for j, r in enumerate(runs)
+                    if j not in used and lo <= r["et_hour"] < hi), None)
+        if rec is not None:
+            used.add(rec)
+            # A late recovery IS a covered slot — mark it "hit" so no status-based
+            # consumer regresses, but flag it `recovered` so the lateness stays visible
+            # on the dashboard and in the journal.
+            entry["status"] = "hit"
+            entry["recovered"] = True
+            entry["run_id"] = runs[rec]["run_id"]
+            entry["node"] = runs[rec]["node"]
+
     # A died slot is still a slot that produced no run — count it as missed for paging,
     # but surface it separately so the alert can say "fired and died" vs "never fired".
     missed = [s["label"] for s in report if s["status"] in ("missed", "died")]
