@@ -490,6 +490,39 @@ def main() -> int:
             context["data_quality"] = {"source": "live_partial", "note": note}
             print(f"  (partial degradation - {note[:80]}; labeled)")
 
+        # OVERLAY LIVE PRICES INTO THE BUNDLE THE BRAIN ACTUALLY READS (2026-07-23).
+        #
+        # This branch writes the context the cloud brain reasons from, and it was the
+        # ONE path that never overlaid live prices. apply_live_prices() was called only
+        # in the --act-on branch (and the local full-run branch) — and --act-on runs
+        # AFTER the brain has already decided. So the overlay protected stop
+        # enforcement while the brain itself was handed daily bars.
+        #
+        # In cloud mode that is every decision the system makes: the routine runs
+        # gather -> brain -> act, so the brain read the previous session's closes all
+        # day. The 2026-07-23 19:51 UTC bundle, built at 3:51pm ET mid-session, carried
+        # all 186 tickers at price_as_of 2026-07-22. Given yesterday's price beside
+        # today's news the brain reconciles the gap by inventing one: on 07-22 the risk
+        # desk vetoed all three BUYs for exactly that, including a fabricated $311 JMP
+        # target for DDOG that appears nowhere in the bundle.
+        #
+        # Placed AFTER the relay-bundle fallback on purpose: when live feeds are
+        # blocked and `context = cached` is adopted, that bundle's prices are precisely
+        # the ones most in need of refreshing. Fail-soft by construction —
+        # apply_live_prices never raises, and it declines the overlay when the snapshot
+        # is older than schedule.live_prices.max_age_min rather than clobbering a good
+        # daily bar with a broken feed.
+        try:
+            _lp = apply_live_prices(context, cfg)
+            if _lp.get("applied"):
+                print(f"  (gather: live prices overlaid onto "
+                      f"{len(_lp['applied'])} names, age {_lp.get('age_min')}m)")
+            else:
+                print(f"  (gather: NO live-price overlay - {_lp.get('status')}, "
+                      f"age {_lp.get('age_min')}m; bundle ships daily bars)")
+        except Exception as e:
+            print(f"  (gather live-price overlay skipped: {e})")
+
         try:
             positions = (context.get("portfolio") or {}).get("positions", [])
             pcs = build_position_charts(positions)
