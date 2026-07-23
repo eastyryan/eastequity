@@ -50,6 +50,37 @@ def apply_live_prices(context: dict, cfg: dict) -> dict:
                                           max_age_min=max_age)
     if applied:
         scan["prices"] = merged
+        # TELL THE TRUTH ABOUT FRESHNESS, not just the price.
+        #
+        # CLAUDE.md instructs the brain to read universe_scan.prices_meta[T].price_as_of
+        # to decide whether a price is current ("Use universe_scan.prices_meta[T]
+        # .price_as_of for freshness"). But the overlay only ever rewrote
+        # universe_scan.prices, so an intraday quote kept wearing the daily bar's
+        # provenance: source "daily_bar", price_as_of = the PREVIOUS session. The
+        # bundle then disagreed with itself — a fresh number labelled stale.
+        #
+        # That is not cosmetic. On 2026-07-22 all three BUY proposals died at the risk
+        # desk for exactly this: each tried to reconcile a stale-looking price against
+        # same-bundle intraday news, and DDOG's fabricated a $311 JMP target that
+        # appears nowhere in the bundle to explain the gap. A brain shown a current
+        # price and told it is yesterday's close will either distrust a good price or
+        # invent a story for the discrepancy. Both cost trades.
+        #
+        # The daily bar is preserved under daily_bar_close so nothing is lost.
+        # Fail-soft: provenance bookkeeping must never be able to break a run.
+        try:
+            meta = scan.setdefault("prices_meta", {})
+            live_asof = (blob or {}).get("as_of")
+            live_src = (blob or {}).get("source") or "live_intraday"
+            for t in applied:
+                row = meta.setdefault(t, {})
+                if row.get("source") == "daily_bar" and "daily_bar_close" not in row:
+                    row["daily_bar_close"] = row.get("last_close")
+                row["last_close"] = merged[t]
+                row["price_as_of"] = live_asof
+                row["source"] = live_src
+        except Exception as e:
+            print(f"  (prices_meta provenance update failed: {e})")
         print(f"  • live-price overlay applied to {applied} "
               f"(age {freshness_report(blob, applied, max_age_min=max_age).get('age_min')}m)")
         # Re-mark so market values + the safety layer use the freshest price.

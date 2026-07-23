@@ -87,6 +87,34 @@ jobs:
           python-version: "3.11"
           cache: pip
       - run: pip install -r requirements.txt
+      # THE BUNDLE MUST CARRY ITS OWN FRESH PRICES (added 2026-07-23).
+      #
+      # orchestrator.py --gather-only already calls brain_io.apply_live_prices(), but
+      # that function only READS state/live_prices.json — it never fetches. The file is
+      # written by live-prices.yml on a "*/5" cron, and GitHub throttles that schedule
+      # hard: on 2026-07-23 it fired FOUR times all day, median gap 97 minutes. The
+      # overlay refuses any snapshot older than schedule.live_prices.max_age_min (30),
+      # so the overlay was silently skipped on essentially every gather and the bundle
+      # shipped daily bars. The 19:51 UTC bundle that day — built at 3:51pm ET, mid
+      # session — carried all 186 tickers at price_as_of 2026-07-22, i.e. YESTERDAY.
+      #
+      # A swing trader reasoning on yesterday's close against today's news is how the
+      # 07-22 proposals ended up fabricating catalysts to explain the mismatch (see
+      # runlib/brain_io.apply_live_prices). So fetch the quotes HERE, in the job that
+      # already holds the Alpaca keys and already runs ~20 min before every slot,
+      # instead of depending on a sibling cron that GitHub will not run on time.
+      # Fail-soft: refresh_from_book never raises, and a failure here just leaves the
+      # daily bars the gather would have used anyway.
+      - name: Refresh intraday quotes so the gather has something fresh to overlay
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+        run: |
+          python -c "
+          from tools.live_prices import refresh_from_book
+          r = refresh_from_book()
+          print('live prices:', r.get('source'), r.get('n'), 'of', len(r.get('requested', [])))
+          " || echo "live-price refresh failed; gather will fall back to daily bars"
       - name: Gather context bundle
         env:
           # Alpaca market data: the gather's live-price overlay + the broker
@@ -117,6 +145,12 @@ jobs:
           # this checkout's copy is stale relative to the cloud trader, and
           # committing it here would overwrite the authoritative ledger. The
           # ledger is owned exclusively by the trade path.
+          #
+          # state/live_prices.json is deliberately NOT staged either: the quotes we
+          # just fetched are already baked into data/cloud_context.json, and that file
+          # is owned by live-prices.yml on the orphan 'live-data' branch. Committing it
+          # to main would reintroduce the mid-run price push that made the trader
+          # abandon on a non-fast-forward (2026-07-15).
           git add data/cloud_context.json data/charts dashboard/data/position_charts.json
           # Momentum-ETF close cache: committed so blocked-network cloud runs can
           # still compute the momentum_health external layer (5-day staleness cap).
@@ -124,9 +158,9 @@ jobs:
           git diff --cached --quiet && { echo "no data changes"; exit 0; }
           git commit -m "Refresh market data bundle for cloud runs [vercel skip]"
           # The gather also dirties tracked files we deliberately DON'T commit
-          # (concept memory, fundamental screen). They block `pull --rebase`
-          # ("You have unstaged changes") whenever a push races us — discard
-          # them; this runner is ephemeral and they're regenerated every run.
+          # (concept memory, fundamental screen, live_prices). They block
+          # `pull --rebase` ("You have unstaged changes") whenever a push races us —
+          # discard them; this runner is ephemeral and they're regenerated every run.
           git checkout -- .
           # Rebase-and-retry so we replay on top of any concurrent trade-path
           # push instead of fighting it (our commit touches only data/, so it
