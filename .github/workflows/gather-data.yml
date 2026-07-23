@@ -16,22 +16,65 @@ on:
                                                   # while the market is open
     - cron: "40 3 * * *"                          # before the midnight-ET and weekend runs
   workflow_dispatch:
+  # EVENT-DRIVEN BACKSTOP (added 2026-07-23). GitHub delays or DROPS scheduled (cron)
+  # workflows under load: on 2026-07-23 every scheduled gather stopped firing for
+  # hours and the bundle went stale mid-session, while push/PR-triggered Actions kept
+  # running fine. The cloud trader pushes to main on EVERY run (run-marker, lease,
+  # dashboard update) — a reliable event stream — so a push-triggered gather keeps the
+  # bundle fresh even when cron is congested. The `decide` job guards it: it skips the
+  # gather's own bundle commits (no loop) and only escalates to a full gather when the
+  # committed bundle is actually stale, so ordinary trade-path pushes don't each kick
+  # off a gather.
+  push:
+    branches: [main]
 
 permissions:
   contents: write
 
-concurrency:
-  # SHARED across every workflow that writes main. Per-workflow groups only
-  # serialize a workflow against ITSELF, so gather-data, execute-orders and
-  # stop-watch could all push simultaneously — which is what produced the
-  # rejected-push / rebase churn. They now queue instead of colliding.
-  group: main-writer
-  cancel-in-progress: false
-
 jobs:
+  # Cheap gate: decide whether this trigger should actually gather. Carries NO
+  # concurrency group on purpose — it takes no lock and never pushes, so the frequent
+  # trade-path pushes that now trigger this workflow can't back up the shared
+  # main-writer queue that stop-watch / execute-orders depend on for stop enforcement.
+  decide:
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.check.outputs.go }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          # schedule + manual dispatch ALWAYS gather — unchanged behaviour.
+          if [ "${{ github.event_name }}" != "push" ]; then
+            echo "trigger=${{ github.event_name }} -> gather"
+            echo "go=true" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # push: never re-trigger on our own bundle-refresh commit (loop guard).
+          if git log -1 --pretty=%s | grep -qiE "Refresh market data bundle"; then
+            echo "own data commit -> skip"
+            echo "go=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # push: gather only if the committed bundle is actually stale, so ordinary
+          # trade-path pushes (several per run) don't each kick off a full gather.
+          AGE_MIN=$(python3 -c "import json,datetime; d=json.load(open('data/cloud_context.json')); rd=datetime.datetime.fromisoformat(d['run_date']); print(int((datetime.datetime.now(datetime.timezone.utc)-rd).total_seconds()/60))" 2>/dev/null || echo 9999)
+          echo "bundle age: ${AGE_MIN} min (threshold 45)"
+          if [ "$AGE_MIN" -ge 45 ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=false" >> "$GITHUB_OUTPUT"
+          fi
+
   gather:
+    needs: decide
+    if: needs.decide.outputs.go == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    # main-writer moved here from the workflow level: only the job that actually
+    # PUSHES needs to serialize against stop-watch / execute-orders. Leaving it at
+    # workflow level would drag the cheap `decide` gate into the same shared queue.
+    concurrency:
+      group: main-writer
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
         with:

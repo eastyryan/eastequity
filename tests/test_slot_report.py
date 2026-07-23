@@ -30,11 +30,18 @@ def _journal(tmp_path, hours, node="vm"):
     runs = tmp_path / "journal" / "runs"
     runs.mkdir(parents=True)
     # ET is UTC-4 in July; the loader converts, so write UTC and let it do the work.
+    # An ET hour >= 20 pushes UTC past midnight, so roll the date rather than emit an
+    # invalid "24:00" (which parses to None and silently drops the run) — recovery of the
+    # last 17:30 slot lands there.
     lines = []
     for i, h in enumerate(hours):
         utc_h = h + 4
+        day = 20
+        if utc_h >= 24:
+            utc_h -= 24
+            day = 21
         lines.append(json.dumps({
-            "ts": f"2026-07-20T{int(utc_h):02d}:{int(round((utc_h % 1) * 60)):02d}:00+00:00",
+            "ts": f"2026-07-{day:02d}T{int(utc_h):02d}:{int(round((utc_h % 1) * 60)):02d}:00+00:00",
             "run_id": f"20260720-{i:04d}", "node": node, "manual": False}))
     (runs / "2026-07-20.jsonl").write_text("\n".join(lines) + "\n")
     return tmp_path
@@ -211,3 +218,55 @@ def test_a_breadcrumb_followed_by_a_summary_is_just_a_hit(monkeypatch, tmp_path)
     statuses = {s["label"]: s["status"] for s in r["slots"]}
     assert statuses["14:00"] == "hit"
     assert r["died_slots"] == []
+
+
+# --- self-heal recovery: a late recovery run credits the slot it recovered -----
+# 2026-07-23 was the first real activation of the watchdog (scripts/find_missed_slot.py):
+# the 06:00 slot never fired, and the watchdog re-ran it at 07:19 ET. But that run landed
+# past the 06:00 grace window, so slot_report left 06:00 "missed" and the heartbeat paged
+# all day — "1 missed [06:00] (expected 1, completed 2)". A recovered slot is not a missed
+# slot.
+
+def test_a_recovery_run_credits_the_slot_it_recovered(monkeypatch, tmp_path):
+    """THE REGRESSION. 06:00 never fired; the watchdog re-ran it at 07:19 ET — past the
+    grace window but well inside the recovery window. That slot is covered, not missed."""
+    r = _report(monkeypatch, tmp_path, [7.32], now_h=7.75)
+    statuses = {s["label"]: s["status"] for s in r["slots"]}
+    assert statuses["06:00"] == "hit"
+    assert r["missed_count"] == 0
+    assert "06:00" not in r["missed_slots"]
+
+
+def test_a_recovered_slot_is_flagged_recovered(monkeypatch, tmp_path):
+    """The lateness must stay visible — a recovery is a hit, but a hit that had to be
+    rescued, so the dashboard and journal can say so rather than hiding the gap."""
+    r = _report(monkeypatch, tmp_path, [7.32], now_h=7.75)
+    six = next(s for s in r["slots"] if s["label"] == "06:00")
+    assert six.get("recovered") is True
+    assert six["run_id"] == "20260720-0000"  # the recovery run, credited to the slot
+
+
+def test_a_run_too_late_does_not_recover_the_slot(monkeypatch, tmp_path):
+    """The recovery window is bounded by RECOVERY_MAX_AGE_H — the same age the watchdog
+    itself will not resurrect past. A run 3.5h after the last slot is not its recovery."""
+    r = _report(monkeypatch, tmp_path, [21.0], now_h=21.5)  # 17:30 slot + 3.5h
+    statuses = {s["label"]: s["status"] for s in r["slots"]}
+    assert statuses["17:30"] == "missed"
+
+
+def test_a_run_within_the_recovery_age_recovers_the_last_slot(monkeypatch, tmp_path):
+    """The mirror of the age-cap test — a run 2.5h after the last slot IS its recovery,
+    so 'always missed when late' cannot pass."""
+    r = _report(monkeypatch, tmp_path, [20.0], now_h=20.5)  # 17:30 slot + 2.5h
+    statuses = {s["label"]: s["status"] for s in r["slots"]}
+    assert statuses["17:30"] == "hit"
+    assert "17:30" not in r["missed_slots"]
+
+
+def test_recovery_never_steals_the_next_slots_own_run(monkeypatch, tmp_path):
+    """A run at 8:54 is the 09:00 slot firing early — it must credit 09:00, never reach
+    back to 'recover' 06:00. The recovery window stops at the next slot's early edge."""
+    r = _report(monkeypatch, tmp_path, [8.9], now_h=9.5)
+    statuses = {s["label"]: s["status"] for s in r["slots"]}
+    assert statuses["09:00"] == "hit"
+    assert statuses["06:00"] == "missed"
