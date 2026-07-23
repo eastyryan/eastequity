@@ -1185,30 +1185,22 @@ export default function Arena({
             passed on across recent runs; tap a ticker to expand its reasoning. */}
         {passedOn.length > 0 && (
           <div style={{ marginTop: 64, borderTop: "1px solid var(--ee-hair14)", paddingTop: 40 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-                flexWrap: "wrap",
-                gap: 8,
-                marginBottom: 8,
-              }}
-            >
-              <span className="ee-serif" style={{ fontSize: 26 }}>
-                Recently passed on
-              </span>
-              <span style={{ fontSize: 10, letterSpacing: "0.2em", color: "var(--ee-muted)" }}>
+            {/* Blue mono eyebrow, matching the section subtitles; centered header. */}
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: 12, letterSpacing: "0.42em", color: "var(--ee-accent)", marginBottom: 14 }}>
+                RECENTLY PASSED ON
+              </div>
+              <p style={{ fontSize: 13, color: "var(--ee-muted)", lineHeight: 1.7, margin: "0 auto", maxWidth: 720 }}>
+                Names the agent researched in recent runs and consciously decided not to buy. An empty
+                book is the strategy waiting for a fat pitch — this is the work behind the wait.
+              </p>
+              <div style={{ fontSize: 10, letterSpacing: "0.2em", color: "var(--ee-muted)", marginTop: 12 }}>
                 {passedOn.length} NAMES · TAP TO SEE WHY
-              </span>
+              </div>
             </div>
-            <p style={{ fontSize: 12, color: "var(--ee-muted)", lineHeight: 1.6, marginBottom: 20, maxWidth: 640 }}>
-              Names the agent researched in recent runs and consciously decided not to buy. An empty
-              book is the strategy waiting for a fat pitch — this is the work behind the wait.
-            </p>
 
-            {/* Horizontal list of ticker pills */}
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
+            {/* Horizontal list of ticker pills, centered across the full width */}
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "center", marginTop: 28 }}>
               {passedOn.map((r) => {
                 const open = openReject === r.ticker;
                 return (
@@ -1249,8 +1241,8 @@ export default function Arena({
               const sel = passedOn.find((r) => r.ticker === openReject);
               if (!sel) return null;
               return (
-                <div style={{ marginTop: 22, borderLeft: "2px solid var(--ee-accent)", paddingLeft: 18 }}>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                <div style={{ marginTop: 26, maxWidth: 760, marginLeft: "auto", marginRight: "auto", textAlign: "center" }}>
+                  <div style={{ display: "flex", alignItems: "baseline", justifyContent: "center", gap: 10, flexWrap: "wrap" }}>
                     <span style={{ fontSize: 16, fontWeight: 700 }}>{sel.ticker}</span>
                     <span style={{ fontSize: 10, letterSpacing: "0.16em", color: "var(--ee-muted)" }}>
                       PASSED ON{sel.count > 1 ? ` · ${sel.count} RECENT RUNS` : ""}
@@ -1262,7 +1254,6 @@ export default function Arena({
                       color: "var(--ee-bodytx)",
                       lineHeight: 1.7,
                       marginTop: 10,
-                      maxWidth: 760,
                       textWrap: "pretty",
                     }}
                   >
