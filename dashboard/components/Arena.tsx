@@ -338,6 +338,13 @@ export default function Arena({
     };
   });
 
+  // "Why it didn't buy": names the agent researched and passed on across recent runs,
+  // one freshest row per ticker. On an empty book this is the real content of most runs —
+  // the formal proposals list is blank, but the agent still worked through and skipped names.
+  const passedOn = (d.rejected_recent ?? [])
+    .filter((r) => r && r.ticker)
+    .map((r) => ({ ticker: r.ticker, reason: strip(r.reason), count: r.count ?? 1 }));
+
   const feed = (d.trade_events ?? [])
     .slice()
     .reverse()
@@ -920,6 +927,67 @@ export default function Arena({
             ))}
           </div>
         </div>
+
+        {/* Why it didn't buy — names researched and passed on across recent runs */}
+        {passedOn.length > 0 && (
+          <div style={{ marginTop: 52 }}>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                flexWrap: "wrap",
+                gap: 8,
+                marginBottom: 6,
+              }}
+            >
+              <span className="ee-serif" style={{ fontSize: 26 }}>
+                Recently passed on
+              </span>
+              <span style={{ fontSize: 10, letterSpacing: "0.2em", color: "var(--ee-muted)" }}>
+                {passedOn.length} NAMES · WHY IT DIDN&apos;T BUY
+              </span>
+            </div>
+            <p style={{ fontSize: 12, color: "var(--ee-muted)", lineHeight: 1.6, marginBottom: 18, maxWidth: 620 }}>
+              Names the agent researched in recent runs and consciously decided not to buy. An empty
+              book is the strategy waiting for a fat pitch — this is the work behind the wait.
+            </p>
+            <div className="ee-reject-grid">
+              {passedOn.map((r) => (
+                <div
+                  key={r.ticker}
+                  style={{
+                    borderTop: "1px solid var(--ee-hair08)",
+                    paddingTop: 12,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                  }}
+                >
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
+                    <span style={{ fontSize: 15, fontWeight: 700 }}>{r.ticker}</span>
+                    <span style={{ flex: 1 }} />
+                    {r.count > 1 && (
+                      <span
+                        style={{
+                          fontSize: 10,
+                          letterSpacing: "0.14em",
+                          color: "var(--ee-muted)",
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        {r.count}× RUNS
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ fontSize: 12.5, color: "var(--ee-bodytx)", lineHeight: 1.6, textWrap: "pretty" }}>
+                    {r.reason}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* ---------------- The Floor ---------------- */}

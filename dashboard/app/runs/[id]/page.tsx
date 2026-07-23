@@ -30,6 +30,8 @@ type ClosedTrade = {
   gap_modeled?: boolean;
 };
 
+type RejectedIdea = { ticker: string; reason: string };
+
 type RunFile = {
   generated_at: string;
   run_id: string;
@@ -38,6 +40,7 @@ type RunFile = {
   no_trade_reason?: string | null;
   latest_reasoning?: string | null;
   proposals?: Proposal[];
+  rejected_ideas?: RejectedIdea[];
   fills?: Fill[];
   closed_trades?: ClosedTrade[];
 };
@@ -214,6 +217,9 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
   const proposals = run.proposals ?? [];
   const approved = proposals.filter((p) => p.approved);
   const rejected = proposals.filter((p) => !p.approved);
+  // Names the agent researched and passed on this run — the "why it didn't buy" record.
+  // These never reached the validator, so they are separate from rejected proposals.
+  const passedOn = (run.rejected_ideas ?? []).filter((r) => r && r.ticker);
   const fills = run.fills ?? [];
   const closed = run.closed_trades ?? [];
   const reasoning = run.latest_reasoning;
@@ -311,6 +317,32 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
               </div>
             </div>
           )}
+        </section>
+      )}
+
+      {/* Ideas considered but not bought — the "why it didn't buy" record */}
+      {passedOn.length > 0 && (
+        <section className="ds-card mt-5 p-5 sm:p-7">
+          <h2 className="text-lg font-semibold tracking-tight">Passed on this run</h2>
+          <p className="mt-1 text-sm text-ink-2">
+            Names the agent researched and consciously decided not to buy, with the reason. These
+            never reached the validator — the agent skipped them itself.
+          </p>
+          <div className="mt-6 space-y-3">
+            {passedOn.map((r, i) => (
+              <div key={`${r.ticker}-${i}`} className="ds-card p-4">
+                <div className="flex items-baseline justify-between gap-x-4">
+                  <span className="font-medium font-[family-name:var(--font-mono)]">{r.ticker}</span>
+                  <span className="rounded-full border border-neg/30 bg-neg-soft px-2 py-0.5 text-[10px] font-medium uppercase text-neg font-[family-name:var(--font-mono)]">
+                    Passed
+                  </span>
+                </div>
+                {r.reason && (
+                  <p className="mt-2 text-sm text-ink-2 leading-relaxed">{clean(r.reason)}</p>
+                )}
+              </div>
+            ))}
+          </div>
         </section>
       )}
 

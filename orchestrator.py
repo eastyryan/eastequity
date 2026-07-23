@@ -993,7 +993,8 @@ def main() -> int:
             print(f"  (mark-to-market failed: {e})")
     context["portfolio"] = get_portfolio_state()
     refresh_dashboard(context, response, results, fills, run_id, no_trade_reason,
-                      parsed["commentary"], parsed["watchlist"])
+                      parsed["commentary"], parsed["watchlist"],
+                      parsed.get("rejected_ideas"))
     draft_x_summary(fills, results, context, run_id, parsed.get("x_post"))
     journal.log_run_summary({
         "manual": args.manual,

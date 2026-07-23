@@ -305,6 +305,14 @@ html.dark .ee-layer-night {
   min-width: 0;
 }
 
+/* "Recently passed on" — the rejected-buys grid. Auto-fills as many ~300px columns
+   as fit, collapsing to one on narrow screens without a media query of its own. */
+.ee-reject-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+  gap: 24px 40px;
+}
+
 /* Calibration: square plot beside its readout. Collapses to a single column on
    narrow screens — without this the fixed two-column grid overflows the viewport. */
 .ee-calib-grid {

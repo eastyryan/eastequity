@@ -82,6 +82,16 @@ export type TradeEvent = {
   verdict?: string | null;
 };
 
+// An idea the agent researched and consciously passed on — the "why it didn't buy"
+// record. Distinct from a rejected Proposal: these never reached the validator.
+export type RejectedIdea = {
+  ticker: string;
+  reason: string;
+  /** Aggregated rows (rejected_recent) carry how many recent runs passed on it and when. */
+  count?: number;
+  last_seen?: string | null;
+};
+
 export type WatchlistItem = {
   ticker: string;
   one_line: string;
@@ -153,6 +163,10 @@ export type Latest = {
     note?: string;
   } | null;
   proposals: { proposal: Record<string, unknown>; approved: boolean; reasons: string[] }[];
+  /** Names researched and passed on this run (ticker + reason). */
+  rejected_ideas?: RejectedIdea[];
+  /** Same, aggregated across recent runs (one freshest row per ticker) for the front page. */
+  rejected_recent?: RejectedIdea[];
   fills: { ticker: string; action: string; fill_price: number; quantity: number }[];
   closed_trades?: ClosedTrade[];
   performance?: {

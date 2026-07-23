@@ -9,6 +9,7 @@ type RunIndexEntry = {
   mode: string;
   n_fills: number;
   tickers_traded: string[];
+  rejected_tickers?: string[];
   headline: string;
 };
 
@@ -111,6 +112,7 @@ export default function RunsIndex() {
           <ul className="divide-y divide-line/60">
             {runs.map((r) => {
               const tickers = r.tickers_traded ?? [];
+              const passedOn = r.rejected_tickers ?? [];
               const isPaper = (r.mode ?? "").toLowerCase() === "paper";
               return (
                 <li key={r.run_id}>
@@ -141,6 +143,11 @@ export default function RunsIndex() {
                       <p className="mt-1 text-[13px] text-ink-3 font-[family-name:var(--font-mono)]">
                         {tickers.length > 0 ? `Traded ${tickers.join(", ")}` : "No trade"}
                       </p>
+                      {passedOn.length > 0 && (
+                        <p className="mt-1 text-[13px] text-ink-3 font-[family-name:var(--font-mono)]">
+                          Passed on {passedOn.join(", ")}
+                        </p>
+                      )}
                     </div>
                     <span
                       className="hidden shrink-0 text-ink-3 transition-transform group-hover:translate-x-0.5 sm:block"

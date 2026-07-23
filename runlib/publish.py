@@ -16,6 +16,7 @@ from runlib.analytics import (
     build_trade_events, build_position_charts,
     update_watchlist_outcomes, append_runs_index, recent_improvements,
     build_health, proposal_ev, sector_exposure, sector_map, benchmark_close,
+    recent_rejected_ideas,
 )
 
 def _target_calibration(closed: list) -> dict:
@@ -35,7 +36,8 @@ def _target_calibration(closed: list) -> dict:
 def refresh_dashboard(context: dict, response: str, results: list, fills: list,
                       run_id: str, no_trade_reason: str | None = None,
                       commentary: str | None = None,
-                      watchlist: list | None = None) -> None:
+                      watchlist: list | None = None,
+                      rejected_ideas: list | None = None) -> None:
     dash = ROOT / "dashboard" / "data"
     dash.mkdir(parents=True, exist_ok=True)
 
@@ -56,6 +58,31 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
     hist_file.write_text(json.dumps(hist, indent=2))
 
     closed = compute_closed_trades()
+    # "Why it didn't buy" surface. On an empty book the formal proposals list is blank
+    # almost every run, so the real signal is rejected_ideas: names the agent researched
+    # and consciously passed on, with reasons. rejected_recent aggregates them across the
+    # last ~25 runs, one freshest row per ticker, for the front page. The CURRENT run is
+    # not journaled until AFTER this function runs, so fold it in by hand here so the page
+    # reflects the run that just finished, not only the prior history.
+    _rej_by_tkr: dict = {r["ticker"]: dict(r) for r in recent_rejected_ideas()}
+    _today_et = et_date()
+    for _idea in (rejected_ideas or []):
+        _tk = str((_idea or {}).get("ticker", "")).upper().strip()
+        if not _tk:
+            continue
+        _reason = str((_idea or {}).get("reason", "")).strip()
+        _prev = _rej_by_tkr.get(_tk)
+        if _prev is None:
+            _rej_by_tkr[_tk] = {"ticker": _tk, "reason": _reason,
+                                "last_seen": _today_et, "count": 1}
+        else:
+            _prev["reason"] = _reason  # current run's reason is the freshest
+            _prev["last_seen"] = _today_et
+            _prev["count"] = _prev.get("count", 0) + 1
+    rejected_recent = sorted(
+        _rej_by_tkr.values(),
+        key=lambda r: (r.get("last_seen") or "", r.get("count", 0)),
+        reverse=True)[:12]
     out = {
         "no_trade_reason": no_trade_reason,
         "commentary": commentary,
@@ -83,6 +110,11 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
         "proposals": [{"proposal": r.proposal, "approved": r.approved,
                        "reasons": r.reasons,
                        "scenario_ev": proposal_ev(r.proposal)} for r in results],
+        # Ideas the agent researched and passed on THIS run (ticker + reason). Distinct
+        # from proposals: these never reached the validator - the agent skipped them.
+        "rejected_ideas": rejected_ideas or [],
+        # Same, aggregated across recent runs for the front page (one row per ticker).
+        "rejected_recent": rejected_recent,
         "fills": fills,
         "closed_trades": closed[::-1],
         "performance": compute_performance_stats(closed, hist),
@@ -139,7 +171,8 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
         out["watchlist_outcomes"] = update_watchlist_outcomes(watchlist or [], prices, positions)
     except Exception as e:
         print(f"  (watchlist outcomes failed: {e})")
-    append_runs_index(run_id, context.get("trading_mode", "paper"), fills, commentary, no_trade_reason)
+    append_runs_index(run_id, context.get("trading_mode", "paper"), fills, commentary,
+                      no_trade_reason, rejected_ideas)
 
     # Full response lives in the per-run archive; latest.json stays slim for the site.
     # The archive's closed_trades holds ONLY closes executed THIS run - the run

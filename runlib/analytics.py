@@ -888,6 +888,55 @@ def build_trade_events() -> list[dict]:
     return events
 
 
+def recent_rejected_ideas(scan_runs: int = 25, limit: int = 12) -> list[dict]:
+    """The names the agent LOOKED AT and passed on across the most recent runs, deduped
+    to one row per ticker. This is the "why it didn't buy" surface: on an empty book the
+    formal proposals list is blank every run, but rejected_ideas is where the real work is
+    - each is a ticker the agent researched and consciously skipped, with the reason.
+
+    Sources journal/runs/*.jsonl (each run summary carries a rejected_ideas list of
+    {ticker, reason}). Scans the most recent `scan_runs` run records newest-first, keeps
+    the MOST RECENT reason per ticker, counts how many recent runs rejected it, and stamps
+    the ET date it was last passed on. Returns at most `limit` rows, freshest first."""
+    d = ROOT / "journal" / "runs"
+    if not d.exists():
+        return []
+    records: list[dict] = []
+    for f in sorted(d.glob("*.jsonl")):
+        try:
+            for line in f.read_text().splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    records.append(json.loads(line))
+                except Exception:
+                    continue
+        except Exception:
+            continue
+    # Newest first; a missing ts sorts oldest so a malformed row can't hide a fresh one.
+    records.sort(key=lambda r: r.get("ts") or "", reverse=True)
+    seen: dict[str, dict] = {}
+    for rec in records[:scan_runs]:
+        when = to_et_date(rec.get("ts"))
+        for idea in (rec.get("rejected_ideas") or []):
+            tk = str((idea or {}).get("ticker", "")).upper().strip()
+            reason = str((idea or {}).get("reason", "")).strip()
+            if not tk:
+                continue
+            row = seen.get(tk)
+            if row is None:
+                # First (newest) sighting sets the displayed reason and date.
+                seen[tk] = {"ticker": tk, "reason": reason,
+                            "last_seen": when, "count": 1}
+            else:
+                row["count"] += 1
+    rows = list(seen.values())
+    # Freshest last_seen first, then the most-repeatedly-rejected.
+    rows.sort(key=lambda r: (r.get("last_seen") or "", r.get("count", 0)), reverse=True)
+    return rows[:limit]
+
+
 def build_position_charts(positions: list[dict]) -> dict:
     """~90 daily OHLC bars per open holding plus its plan levels, for the per-position
     charts (entry/stop/target drawn on the tape). Fail-soft: a blocked fetch just omits
@@ -992,18 +1041,26 @@ def update_watchlist_outcomes(watchlist: list, prices: dict, positions: list) ->
 
 
 def append_runs_index(run_id: str, mode: str, fills: list, commentary: str | None,
-                      no_trade_reason: str | None) -> None:
+                      no_trade_reason: str | None,
+                      rejected_ideas: list | None = None) -> None:
     """A compact index of every published run so the site can offer a browsable archive
-    linking each run's full reasoning (dashboard/data/run_<id>.json)."""
+    linking each run's full reasoning (dashboard/data/run_<id>.json). Carries the tickers
+    the agent passed on this run (rejected_tickers) so the archive can show "why it didn't
+    buy" at a glance without opening each run - on an empty book that is the only content
+    most runs have."""
     f = ROOT / "dashboard" / "data" / "runs_index.json"
     try:
         idx = json.loads(f.read_text()) if f.exists() else []
     except Exception:
         idx = []
     headline = (commentary or no_trade_reason or "").strip().split(". ")[0][:180]
+    rejected_tickers = sorted({str((r or {}).get("ticker", "")).upper().strip()
+                               for r in (rejected_ideas or [])
+                               if str((r or {}).get("ticker", "")).strip()})
     entry = {"run_id": run_id, "date": et_date(), "mode": mode,
              "n_fills": len(fills or []),
              "tickers_traded": sorted({str(x.get("ticker", "")).upper() for x in (fills or [])}),
+             "rejected_tickers": rejected_tickers,
              "headline": headline}
     idx = [e for e in idx if e.get("run_id") != run_id]
     idx.append(entry)
