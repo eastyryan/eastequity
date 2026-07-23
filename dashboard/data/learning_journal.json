@@ -1,16 +1,42 @@
 {
-  "updated_at": "2026-07-22T10:12:55.571936+00:00",
+  "updated_at": "2026-07-23T10:05:57.278690+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 1,
     "fundamental_analysis": 1,
     "risk_management": 1,
     "strategy_playbooks": 1,
-    "market_microstructure": 0,
+    "market_microstructure": 1,
     "trading_psychology": 1,
     "macro_regimes": 0
   },
   "entries": [
+    {
+      "id": "KB-8308262054",
+      "discipline": "market_microstructure",
+      "topic": "The options-implied expected move and earnings IV crush: reading options_signals to time swing entries around binary prints, and why the implied move is a market-priced noise band",
+      "summary": "Options price a stock's expected move as Price \u00d7 IV \u00d7 \u221a(DTE/365) \u2248 one standard deviation; a fast earnings shortcut is ~0.85 \u00d7 the ATM front-month straddle (tastytrade uses a weighted straddle+strangle version). Empirically the stock stays inside that \u00b11\u03c3 band ~68-70% of the time, so the implied move is a genuine, horizon-scaled noise band \u2014 not a forecast of direction. Crucially it is priced too WIDE on average: implied vol exceeds realized vol by roughly 3-5 percentage points annualized (the volatility risk premium), and a CBOE study of ~10 years of S&P 500 earnings found the actual post-print move was SMALLER than the straddle-implied move in ~72% of cases. But the distribution has fat tails \u2014 the ~30% of moves that break the band include the outliers that gap through any stop (the SMCI ~20% preliminary-print pop is exactly this tail). Before a known binary event, front-month IV inflates and the term structure goes into BACKWARDATION (near-term IV > far-term); the moment the event resolves, IV crushes 30-50% (40-55% on high-IV names like NVDA/TSLA) within hours and the term structure normalizes. For a directional trader, holding a swing stop THROUGH a print means betting on a coin-flip gap you are not paid to take: the pre-print premium is a cost to option holders, but to an equity holder the print is just an un-stoppable jump on top of the normal diffusion. The cleaner trade is around it \u2014 enter 1-2 days after the print once the gap settles, IV has crushed, and the direct",
+      "key_points": [
+        "Expected move = Price \u00d7 IV \u00d7 \u221a(DTE/365) \u2248 1\u03c3 \u2248 0.85 \u00d7 ATM straddle; stock stays inside it ~68-70% of the time \u2014 it's a horizon-scaled NOISE band, never a direction call.",
+        "The band is priced wide: IV > RV by ~3-5pp/yr (volatility risk premium); a CBOE 10-yr study found the real earnings move was smaller than implied ~72% of the time. But fat tails mean the ~30% of breaks contain the account-denting gaps.",
+        "Term-structure backwardation (front IV > back IV) + elevated iv_rank = an event premium is priced into the front month; this is the detector that a binary is coming even without a clean calendar date.",
+        "IV crush: front-month IV peaks the session before the print and drops 30-50% (40-55% on high-IV names) within hours; the term structure then normalizes.",
+        "A single-day earnings expected move is a DISCRETE jump layered on top of the diffusion noise band \u2014 no valid swing stop inside the 15% cap survives it, so the honest move is to trade AROUND the print, not through it.",
+        "Post-print entry (1-2 days later) lets the gap settle and IV crush, giving a fairer price with the binary removed \u2014 the same window where post_earnings_drift / gap_held_revisions_up pays.",
+        "Chasing the gap on the print bar is buying the fat-tail move with no clean stop; the disciplined re-entry is the light-volume retest (per KB-6241168493), not the climax bar."
+      ],
+      "how_to_apply": "Before any BUY, read options_signals.expected_move_pct and term_structure together with days_to_earnings: if a print (or a backwardation + high-iv_rank event premium) falls inside holding_horizon_days, default to trading AROUND it \u2014 either enter after the print once IV crushes and the gap settles, or shorten the horizon so the stop never has to survive the binary, because the earnings expected move is a discrete jump no ATR-floored stop inside the 15% cap can cover (this refines KB-2388376284: the implied move is a market-priced noise band, superior to ATR\u00d7\u221aN, and stop_engineering already floors the stop at \u00bd the expected move \u2014 treat that as a one-day floor, not horizon-adequate through an event). Only hold through a print when the binary itself is the thesis (a stated drift/gap_held_revisions_up setup per KB-2596574918), and then size on gap-adjusted risk. Use term-structure backwardation and iv_rank as the detector that fired wrong on AMD \u2014 an elevated front-month event premium 5 days out means the setup is NOT live yet, so suppress the trigger until the event passes. When a name gaps hard on a print (SMCI-style fat tail), do not chase the climax bar: put it on the watchlist and",
+      "sources": [
+        "https://menthorq.com/guide/from-straddle-price-to-expected-move/",
+        "https://volatilitybox.com/research/expected-move-options/ (expected move = Price\u00d7IV\u00d7\u221a(DTE/365); ~0.85\u00d7straddle; ~70% inside 1\u03c3)",
+        "https://orats.com/blog/earnings-crush-implied-volatility (IV crush, term-structure backwardation, earnings-effect extraction)",
+        "https://spotgamma.com/what-is-iv-crush-options/ (IV crush 30-50%, high-IV names 40-55%, backwardation normalizes)",
+        "https://www.predictingalpha.com/implied-vs-realized-volatility/ (IV>RV volatility risk premium ~3-5pp)",
+        "https://volradar.com/learn/implied-vs-realized-volatility (CBOE ~72% of earnings moves smaller than implied over 10 yrs S&P 500)"
+      ],
+      "learned_at": "2026-07-23T10:05:57.274512+00:00",
+      "run_id": "20260723-d87fb5"
+    },
     {
       "id": "KB-2596574918",
       "discipline": "fundamental_analysis",
@@ -36,7 +62,9 @@
         "Guerard, 'Earnings Forecasts and Revisions, Price Momentum, and Fundamental Data' \u2014 https://go.factset.com/hubfs/Symposium%20Images/Guerard_EARNINGS%20FORECASTS%20AND%20REVISIONS,%20PRICE%20MOMENTUM,%20AND%20FUNDAMENTAL%20DATA.pdf"
       ],
       "learned_at": "2026-07-22T10:12:55.570932+00:00",
-      "run_id": "20260722-2d9d1d"
+      "run_id": "20260722-2d9d1d",
+      "times_cited": 2,
+      "last_cited": "2026-07-23T04:24:44.727992+00:00"
     },
     {
       "id": "KB-4213529672",
@@ -60,7 +88,9 @@
         "Action bias and omission bias in trading (effectiviology.com/action-bias/; en.wikipedia.org/wiki/Omission_bias) - real-money accounts trade more and underperform; inaction is the mirror error"
       ],
       "learned_at": "2026-07-22T10:05:36.729458+00:00",
-      "run_id": "20260722-599470"
+      "run_id": "20260722-599470",
+      "times_cited": 1,
+      "last_cited": "2026-07-23T04:24:44.727958+00:00"
     },
     {
       "id": "KB-6241168493",
@@ -88,8 +118,8 @@
       ],
       "learned_at": "2026-07-21T10:13:22.231538+00:00",
       "run_id": "20260721-b723ee",
-      "times_cited": 3,
-      "last_cited": "2026-07-22T04:22:23.046064+00:00"
+      "times_cited": 5,
+      "last_cited": "2026-07-22T22:05:24.912796+00:00"
     },
     {
       "id": "KB-1223831607",
@@ -115,8 +145,8 @@
       ],
       "learned_at": "2026-07-20T23:57:11.414654+00:00",
       "run_id": "20260720-a8b14c",
-      "times_cited": 2,
-      "last_cited": "2026-07-22T04:22:23.046053+00:00"
+      "times_cited": 3,
+      "last_cited": "2026-07-22T18:17:10.424987+00:00"
     },
     {
       "id": "KB-2388376284",

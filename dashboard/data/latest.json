@@ -520,6 +520,10 @@
   "forced_exits": [],
   "improvements": [
     {
+      "date": "2026-07-23",
+      "note": "Daily study (market_microstructure): The options-implied expected move and earnings IV crush: reading options_signals to time swing entries around binary prints, and why the implied move is a market-priced noise band - Options price a stock's expected move as Price \u00d7 IV \u00d7 \u221a(DTE/365) \u2248 one standard deviation; a fast earnings shortcut is ~0.85 \u00d7 the ATM front-month straddle (tastytrade uses a weighted straddle+strangl"
+    },
+    {
       "date": "2026-07-22",
       "note": "Process failure 2026-07-22 10am run: proposed a BUY in MU citing a same-day (2026-07-22) earnings reaction ('+12% today') sourced from a WebSearch AI-summary sentence, without cross-checking the actual event date against other dated sources in the same search batch or against repo data. data/earnings_calendar.json (already in the repo, last updated 2026-07-19) shows MU's last earnings was 2026-06-24 - nearly a month earlier - so the entire catalyst-timing narrative was wrong; the risk desk vetoed the trade on the resulting price-freshness inconsistency but for a narrower stated reason than the real root cause. RULE: before writing ANY 'today/yesterday/this week' framing about an event (earnings, guidance, 8-K, upgrade, analyst action) for ANY ticker - not just this run's deep-research focus names - check data/earnings_calendar.json (or the bundle's days_to_earnings/days_since_earnings for focus names) FIRST as the deterministic source of truth, and only then treat a WebSearch summary's date framing as corroboration, never as the primary source of when something happened. SEPARATE FINDING: my own 'Improvement note' from this same run was silently dropped from journal/improvements - I wrote it as a markdown '## Improvement note' header with prose on following lines, but orchestrator.py's capture regex is Improvement note:(.+) which only matches text on the SAME line. Any future improvement note must be a single line starting exactly with 'Improvement note: ' or it vanishes with no error - the same class of silent-parse failure LP-2555191189 already flagged for the study pipeline."
     },
@@ -634,10 +638,6 @@
     {
       "date": "2026-07-13",
       "note": "Weekly universe review: added ['MELI', 'NU', 'PSTG', 'RBRK'], removed ['INTC', 'IREN', 'IRM', 'MDB', 'NXPI', 'ON'] (108 names). Web research was unavailable this run (network tools were not authorized), so I curated conservatively from the bundle's July-2026 momentum, valuation, and estimate signals plus durable fundamentals rather than chase unverifiable new names. I trimmed six names whose relevance to the AI/data-center thesis has faded: Intel (chronic share loss and foundry cash burn), NXP and ON Semi (auto-cycle analog with soft demand), Iron Mountain (a records-storage REIT with only a minority data-center business), MongoDB (multi-year growth deceleration and derating), and IREN (a former bitcoin miner with the thinnest fundamentals in the weakest sector). I added four durable leaders that filled genuine gaps: Pure Storage for AI storage systems, MercadoLibre as a proven LatAm platform compounder, Nu Holdings to deepen the leading fintech sector, and Rubrik in the strongest-momentum cybersecurity group. The universe goes from ~110 to 108 names, stays roughly 88% AI/technology, and protected tickers were untouched."
-    },
-    {
-      "date": "2026-07-12",
-      "note": "** This run's news feed surfaced a materially market-moving geopolitical headline (U.S.-Iran attacks) only as a raw ticker-attached article title with no severity or freshness weighting \u2014 I had to infer its Monday impact manually. A lightweight `macro_news` or `market_wide_events` bucket in the bundle (headlines not tied to a single ticker, flagged for risk-off potential and recency) would let me lead the review with the regime-changing item instead of finding it buried in HOOD's per-ticker list."
     }
   ],
   "trade_events": [
