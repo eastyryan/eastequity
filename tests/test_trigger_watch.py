@@ -40,13 +40,33 @@ def test_single_wick_does_not_confirm():
 
 def test_too_soon_and_stale_pending():
     s1, _ = decide({}, [_alert("MU")], [], NOW, DAY)
-    # 1 minute later: same print, not a confirmation.
+    # 1 minute later: same print, not a confirmation. (CONFIRM_MIN_MINUTES)
     s2, run2 = decide(s1, [_alert("MU")], [], NOW + timedelta(minutes=1), DAY)
     assert run2 == []
-    # 30 minutes later (feeder gap / Mac asleep): confirmation restarts.
+    # 30 minutes later: CONFIRMS. This assertion is inverted from what it was, and the
+    # inversion is the point. It used to assert that a 30-minute gap RESTARTS
+    # confirmation, which was right for the 5-minute launchd feeder this module was
+    # written against — but that feeder is unloaded and the cloud tick source is the
+    # gather Action, landing ~60-97 min apart because GitHub rations scheduled runs.
+    # Under the old 20-minute ceiling every real second sighting arrived late and reset,
+    # so confirmation was structurally unreachable and this module never fired once
+    # (runs_by_day: {} through 2026-07-23). The two-tick sanity property is kept; it
+    # just gets the real cadence to happen in.
     s3, run3 = decide(s2, [_alert("MU")], [], NOW + timedelta(minutes=30), DAY)
-    assert run3 == []
-    assert "MU" in s3["pending"]
+    assert run3 == ["MU"]
+
+
+def test_pending_past_the_window_still_restarts():
+    """The outer bound still exists — it just moved to CONFIRM_MAX_MINUTES (120).
+
+    Without this, raising the ceiling would silently become "no ceiling", and a level
+    tagged at the open could confirm against an unrelated touch hours later on a
+    completely different tape.
+    """
+    s1, _ = decide({}, [_alert("MU")], [], NOW, DAY)
+    s2, run2 = decide(s1, [_alert("MU")], [], NOW + timedelta(minutes=121), DAY)
+    assert run2 == []
+    assert "MU" in s2["pending"]        # re-marked as a FIRST sighting, not confirmed
 
 
 def test_held_ticker_skipped():

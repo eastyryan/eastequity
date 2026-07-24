@@ -115,6 +115,27 @@ jobs:
           r = refresh_from_book()
           print('live prices:', r.get('source'), r.get('n'), 'of', len(r.get('requested', [])))
           " || echo "live-price refresh failed; gather will fall back to daily bars"
+      # WAKE THE BRAIN BETWEEN SLOTS (added 2026-07-23).
+      #
+      # The brain only thinks at its 6 scheduled slots, so a watchlist level hit at
+      # 10:20 waited until noon. tools/trigger_watch.py was built for exactly this and
+      # has NEVER fired once (runs_by_day: {}) because its only caller was the unloaded
+      # Mac feeder. Run it here, right after the fetch above, where prices are under a
+      # minute old — the freshness guard it needs.
+      #
+      # --dry decides and records but never spawns: this runner cannot host a brain.
+      # A confirmation is written to state/trigger_pending.json, which the hourly
+      # watchdog routine consumes and clears by running that cycle for real.
+      - name: Check watchlist triggers
+        run: |
+          OUT=$(python -m tools.trigger_watch --dry 2>/dev/null || true)
+          if [ -n "$OUT" ] && echo "$OUT" | grep -q '"confirmed"'; then
+            echo "$OUT" > state/trigger_pending.json
+            echo "TRIGGER CONFIRMED -> state/trigger_pending.json: $OUT"
+          else
+            echo "trigger_watch: no confirmation this tick"
+          fi
+
       - name: Gather context bundle
         env:
           # Alpaca market data: the gather's live-price overlay + the broker
@@ -152,6 +173,10 @@ jobs:
           # to main would reintroduce the mid-run price push that made the trader
           # abandon on a non-fast-forward (2026-07-15).
           git add data/cloud_context.json data/charts dashboard/data/position_charts.json
+          # Trigger state: the pending-confirmation handoff to the watchdog routine,
+          # plus trigger_watch's own pending/cooldown bookkeeping (which must persist
+          # across runners or two-tick confirmation can never accumulate).
+          git add -f state/trigger_watch.json state/trigger_pending.json 2>/dev/null || true
           # Momentum-ETF close cache: committed so blocked-network cloud runs can
           # still compute the momentum_health external layer (5-day staleness cap).
           git add -f data/cache/momentum_etfs.json 2>/dev/null || true

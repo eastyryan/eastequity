@@ -43,7 +43,28 @@ if str(ROOT) not in sys.path:
 STATE_FILE = ROOT / "state" / "trigger_watch.json"
 
 CONFIRM_MIN_MINUTES = 4.0     # two ticks closer than this = same print, not confirmation
-CONFIRM_MAX_MINUTES = 20.0    # pending older than this = feeder gap; restart confirmation
+# Pending older than this = feed gap; restart confirmation.
+#
+# WAS 20.0, WHICH IS WHY THIS MODULE HAS NEVER FIRED A SINGLE RUN (state/
+# trigger_watch.json still reads runs_by_day: {} as of 2026-07-23, with pending marks
+# frozen at 07-16). 20 minutes was correct for the 5-minute launchd feeder this was
+# built against — but that feeder is unloaded, and the cloud tick source is now the
+# gather Action, which lands ~60-97 min apart because GitHub rations scheduled
+# workflows to ~7-11 runs/day whatever interval you ask for (measured 2026-07-23).
+# Every second sighting therefore arrived past the 20-minute ceiling, reset to "first
+# sighting", and confirmation was structurally unreachable.
+#
+# 120 spans two consecutive gathers, so the two-tick sanity property is PRESERVED
+# rather than dropped: a level still has to hold across two independent fetches, it
+# just gets the real cadence to do it in. The tighter guards below are untouched and
+# are what actually prevent run spam (4h per-ticker cooldown, 2 runs/day, 45-min gap,
+# 9:35-15:45 ET only, held names skipped). And note what this gates: waking the brain,
+# NOT buying. A false wake costs one cloud session; the validator, risk desk and
+# fat-pitch bar still stand between a trigger and a fill.
+CONFIRM_MAX_MINUTES = 120.0
+# Unchanged at 15: the gather now calls refresh_from_book() immediately before this
+# runs, so the snapshot really is minutes old. This stays a genuine freshness guard
+# rather than a formality — if the fetch failed, we must not confirm on a stale mark.
 SNAPSHOT_MAX_AGE_MIN = 15.0
 COOLDOWN_HOURS = 4.0
 MAX_RUNS_PER_DAY = 2
