@@ -1,16 +1,42 @@
 {
-  "updated_at": "2026-07-23T10:05:57.278690+00:00",
+  "updated_at": "2026-07-24T23:05:13.584151+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 1,
     "fundamental_analysis": 1,
-    "risk_management": 1,
+    "risk_management": 2,
     "strategy_playbooks": 1,
     "market_microstructure": 1,
     "trading_psychology": 1,
     "macro_regimes": 0
   },
   "entries": [
+    {
+      "id": "KB-0013366930",
+      "discipline": "risk_management",
+      "topic": "Kelly-fraction intuition for the 1% risk budget: why deep-fractional Kelly is correct under parameter uncertainty, and how it explains the 2:1 RR floor and the conviction tier",
+      "summary": "The Kelly criterion f* = W - (1-W)/R maximizes long-run geometric growth (E[log wealth]) and outputs the fraction of capital to RISK - which maps exactly onto this system's 1%-of-equity, entry-to-stop budget. Running it on my own realistic parameters (2:1 RR floor so R is about 2, swing win rates 40-55% per CLAUDE.md) gives full-Kelly risk fractions of 10% (at 40% wins), 17.5% (45%), 25% (50%), and 32.5% (55%). So the 1% budget is roughly 1/10 to 1/30 of full Kelly - deeper than even quarter-Kelly - and that is correct, not timid, for three compounding reasons the literature is unanimous on. First, parameter uncertainty: MacLean-Thorp-Ziemba showed a 10% overestimate of edge causes about 50% overbetting at full Kelly, the penalty for overbetting FAR exceeds the cost of underbetting, and Thorp always ran fractional Kelly in practice; with only 2 closed trades my true edge is essentially unknown, and Kelly with unknown edge says bet near zero. Second, the growth-rate curve is a downward parabola g(c*f*) approximately (2c - c^2)*g_max: half-Kelly captures about 75% of maximum growth at half the position size, quarter-Kelly about 44%, growth hits ZERO at 2x Kelly, and beyond 2x it goes negative into near-certain ruin - so the over side has a cliff the under side does not, making underbetting strictly the safer error. Third, Kelly assumes independent bets; correlated simultaneous positions share ONE Kelly budget (the multivariate form is f* = inverse-covariance times excess return",
+      "key_points": [
+        "Kelly f* = W - (1-W)/R outputs the fraction of capital to RISK, directly comparable to the 1% entry-to-stop budget; at R=2 and 40-55% win rates full Kelly is 10-32%, so 1% is ~1/10 to 1/30 of full Kelly - deep-fractional by design, not timidity.",
+        "Growth curve is a parabola: g(c*f*) approx (2c-c^2)*g_max. Half-Kelly = ~75% of max growth at half size; ZERO growth at 2x Kelly; negative beyond. Overbetting is strictly dominated - 1.5x Kelly gives the same growth as 0.5x with far more drawdown.",
+        "The overbetting penalty dwarfs the underbetting cost (MacLean-Thorp-Ziemba: a 10% edge overestimate -> ~50% overbet at full Kelly). Under uncertainty, fractional Kelly is roughly optimal and Thorp always used it - err LOW.",
+        "With only 2 closed trades my edge is unmeasured; Kelly with unknown edge says bet minimally. The 5/15-trade calibration thresholds are how the edge estimate sharpens enough to justify moving UP the fraction.",
+        "The 2:1 RR floor is Kelly-consistent: at R=1, f*=2W-1<=0 for W<=50%, so a 1:1 book has no Kelly edge - the floor exists so that even 40-45% win rates keep f* positive.",
+        "The conviction tier (1%->1.5%, gated on 15 trades AND a proven 55%+ win rate in the 0.70+ bucket) is a small, evidence-gated step up the Kelly fraction - Bayesian shrinkage that raises size on DATA, never on narrative.",
+        "Kelly assumes independent bets; correlated simultaneous positions share one budget (multivariate f* = Sigma^-1 (mu-r)). The 8% heat cap and 2% theme-risk cap ARE the portfolio-Kelly constraint - the quantitative reason co-moving names scale down (ties KB-1223831607).",
+        "Position size is fully determined by two levers: size = risk_budget / stop_distance. Kelly sets the numerator (how much edge justifies risking); the sqrt-t noise band (KB-2388376284) sets the denominator (where the stop sits). Neither alone sizes a trade."
+      ],
+      "how_to_apply": "Keep sizing every BUY at the 1% risk budget and read it as intentional deep-fractional Kelly, not caution to apologize for: with 2 closed trades my edge is unmeasured, so betting small IS the mathematically correct response to unknown edge, and I should stop treating the 1% floor as a bar that makes setups feel too small to bother taking. When tempted to argue for the conviction tier (1.5%), require what Kelly requires: a genuinely higher, PROVEN edge (the validator's 15 trades + 55% win rate in the 0.70+ bucket, confidence >=0.75, zero risk-desk haircut, corroborating evidence) - never step up the fraction on a narrative, because the overbetting penalty is asymmetric and a wrong edge estimate over-allocates hard. Treat the 2:1 RR floor as non-negotiable expectancy geometry, not paperwork: below it there is no positive Kelly fraction to size, so never widen a stop or inflate a target to scrape past it. On correlated adds, remember co-moving names share one Kelly budget - the 8% heat and 2% theme-risk caps are that constraint, so size the pair as one bet (KB-1223831607) rather than two independent 1% risks. Finally, because my stops gap (DELL filled 4.5% through), realized loser R i",
+      "sources": [
+        "https://ryanoconnellfinance.com/kelly-criterion/",
+        "https://blog.enkr1.com/kelly-criterion/",
+        "https://www.quantt.co.uk/resources/kelly-criterion-explained",
+        "https://medium.com/@tmapendembe_28659/the-dangers-of-full-kelly-criterion-why-most-traders-should-use-fractional-kelly-criterion-instead-0338e3bcc705",
+        "MacLean, Thorp & Ziemba (2011), 'The Kelly Capital Growth Investment Criterion: Theory and Practice' (World Scientific) - overbetting-vs-underbetting asymmetry and estimation-error results"
+      ],
+      "learned_at": "2026-07-24T23:05:13.582806+00:00",
+      "run_id": "20260724-a685c4"
+    },
     {
       "id": "KB-8308262054",
       "discipline": "market_microstructure",
@@ -35,7 +61,9 @@
         "https://volradar.com/learn/implied-vs-realized-volatility (CBOE ~72% of earnings moves smaller than implied over 10 yrs S&P 500)"
       ],
       "learned_at": "2026-07-23T10:05:57.274512+00:00",
-      "run_id": "20260723-d87fb5"
+      "run_id": "20260723-d87fb5",
+      "times_cited": 1,
+      "last_cited": "2026-07-24T16:15:51.578459+00:00"
     },
     {
       "id": "KB-2596574918",
@@ -63,8 +91,8 @@
       ],
       "learned_at": "2026-07-22T10:12:55.570932+00:00",
       "run_id": "20260722-2d9d1d",
-      "times_cited": 2,
-      "last_cited": "2026-07-23T04:24:44.727992+00:00"
+      "times_cited": 11,
+      "last_cited": "2026-07-24T20:23:25.912803+00:00"
     },
     {
       "id": "KB-4213529672",
@@ -89,8 +117,8 @@
       ],
       "learned_at": "2026-07-22T10:05:36.729458+00:00",
       "run_id": "20260722-599470",
-      "times_cited": 1,
-      "last_cited": "2026-07-23T04:24:44.727958+00:00"
+      "times_cited": 3,
+      "last_cited": "2026-07-24T16:15:51.578454+00:00"
     },
     {
       "id": "KB-6241168493",
@@ -118,8 +146,8 @@
       ],
       "learned_at": "2026-07-21T10:13:22.231538+00:00",
       "run_id": "20260721-b723ee",
-      "times_cited": 5,
-      "last_cited": "2026-07-22T22:05:24.912796+00:00"
+      "times_cited": 9,
+      "last_cited": "2026-07-24T15:27:34.804929+00:00"
     },
     {
       "id": "KB-1223831607",
@@ -145,8 +173,8 @@
       ],
       "learned_at": "2026-07-20T23:57:11.414654+00:00",
       "run_id": "20260720-a8b14c",
-      "times_cited": 3,
-      "last_cited": "2026-07-22T18:17:10.424987+00:00"
+      "times_cited": 8,
+      "last_cited": "2026-07-24T20:23:25.912791+00:00"
     },
     {
       "id": "KB-2388376284",
