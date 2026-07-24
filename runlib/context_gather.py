@@ -270,6 +270,24 @@ def deep_research_bundle(focus: list[str]) -> tuple[dict, dict, dict]:
     return filings, deep_fundamentals, filing_texts
 
 
+def _earnings_week_block(days: int = 7) -> dict:
+    """Universe-wide earnings schedule for the coming week. Fail-soft.
+
+    Read-only over the committed calendar artifact — never builds, never fetches,
+    so it cannot slow or break a gather at any depth. On any error it returns a
+    block that says the timing is UNKNOWN rather than one that reads as "nobody
+    reports", which is the inverse-of-the-truth failure mode this whole area keeps
+    producing (see tools/earnings_calendar.py's incident note).
+    """
+    try:
+        from tools.earnings_calendar import earnings_week_from_cache
+        return earnings_week_from_cache(days=days)
+    except Exception as e:
+        return {"count": 0, "by_date": {}, "today": [], "error": str(e)[:160],
+                "note": "earnings calendar unavailable this run — treat every name's "
+                        "earnings timing as UNKNOWN, not as absent."}
+
+
 def _earnings_next(ticker: str) -> str | None:
     """The NEXT earnings date for a ticker from data/earnings_calendar.json.
 
@@ -941,6 +959,22 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
             {"reporters": [], "note": "No universe earnings reporter forced a deep "
                                       "dive this slot."}
         ),
+        # THE EARNINGS WEEK, FOR THE WHOLE UNIVERSE (added 2026-07-23, owner request).
+        #
+        # data/earnings_calendar.json has carried `next` + bmo/amc for all ~184 names
+        # since 07-19, but nothing ever surfaced it as a schedule. Earnings reached the
+        # brain only via the scanner's per-ticker enrichment, which is rate-limit-capped
+        # at ~30 names a run — so ~157 names arrived with NO earnings clock at all, and
+        # a proposal on one of them had nothing in the bundle to check a claimed print
+        # against. That is the shape of the MU miss on 07-22.
+        #
+        # Cheap by construction: earnings are QUARTERLY, so the calendar refreshes
+        # incrementally (the last real sweep fetched 5 names and carried 179 forward)
+        # and this is a pure dict read over the committed artifact — no network, no
+        # rate limit, safe at every depth. Measured on the 07-23 calendar: 58 reporters
+        # across the coming week, including MSFT/META/AAPL/AMZN, none of which the
+        # focus-set enrichment would have covered.
+        "earnings_week": _earnings_week_block(),
         "reasoning_process": brain_reasoning_bundle(portfolio, depth, scan=scan),
         "stack_cards": stack_cards_for_focus(focus),
         "financial_checklists": financial_checklists_for_focus(focus),

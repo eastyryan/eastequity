@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import json
 import time
-from datetime import datetime, timedelta
+from datetime import date as date_cls, datetime, timedelta
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -486,6 +486,104 @@ def build_earnings_calendar(tickers: Iterable[str], *, now_et: datetime | None =
         except Exception:
             pass
     return out
+
+
+def earnings_week(by_ticker: dict, *, today: date_cls, days: int = 7,
+                  universe: Iterable[str] | None = None) -> dict:
+    """WHO REPORTS THIS WEEK, grouped by date. Pure (no clock, no IO, no network).
+
+    The calendar already holds `next` + `next_when` for the WHOLE universe (184
+    names as of 2026-07-23), but nothing ever surfaced it that way. Earnings data
+    reached the brain only through the scanner's per-ticker enrichment, which is
+    rate-limit-capped at ~30 names a run — so ~157 names carried NO earnings clock,
+    and a proposal on one of them had nothing in the bundle to corroborate a claimed
+    print against. That is the gap behind MU on 2026-07-22: the name was outside the
+    focus set, so the brain reached for a web search the code cannot verify.
+
+    This costs nothing extra. Earnings are QUARTERLY, so the calendar is refreshed
+    incrementally (entries are re-fetched only once past _ENTRY_MAX_AGE_DAYS — the
+    last real sweep requested 5 names and carried 179 forward). Reading it is a dict
+    lookup; there is no reason every name should not have its date visible.
+
+    Returns dates as ISO strings and `when` as bmo/amc/unknown. `days=7` gives the
+    trading week ahead; today is included (a print happening today is the single
+    most decision-relevant one there is).
+    """
+    horizon = today + timedelta(days=int(days))
+    allow = {str(t).upper() for t in universe} if universe else None
+    by_date: dict[str, list] = {}
+    for tkr, rec in (by_ticker or {}).items():
+        t = str(tkr).upper()
+        if allow is not None and t not in allow:
+            continue
+        nxt = (rec or {}).get("next")
+        if not nxt:
+            continue
+        day_s = str(nxt)[:10]
+        try:
+            day = date_cls.fromisoformat(day_s)
+        except Exception:
+            continue
+        if not (today <= day <= horizon):
+            continue
+        by_date.setdefault(day_s, []).append(
+            {"ticker": t, "when": (rec or {}).get("next_when") or "unknown"})
+    for d in by_date:
+        # bmo before amc before unknown, then alphabetical — a stable, readable order.
+        by_date[d].sort(key=lambda r: ({"bmo": 0, "amc": 1}.get(r["when"], 2), r["ticker"]))
+    total = sum(len(v) for v in by_date.values())
+    return {
+        "as_of": today.isoformat(),
+        "window_days": int(days),
+        "through": horizon.isoformat(),
+        "count": total,
+        "by_date": {d: by_date[d] for d in sorted(by_date)},
+        "today": by_date.get(today.isoformat(), []),
+        "note": (
+            "Every universe name reporting in this window, from the committed "
+            "earnings calendar — NOT limited to this run's ~30 deep-research focus "
+            "names. `when` is bmo (before open) / amc (after close) / unknown. Use it "
+            "for the earnings-path rule: trade THROUGH a binary or AROUND it. A name "
+            "listed here reports inside your swing window even if it carries no other "
+            "earnings field on its scan row. If a name is NOT listed, that means the "
+            "calendar has no scheduled print for it in this window — it does NOT mean "
+            "the name is safe to assume has no print; check calendar_age_days below."
+        ),
+    }
+
+
+def earnings_week_from_cache(*, now_et: datetime | None = None, days: int = 7,
+                             universe: Iterable[str] | None = None) -> dict:
+    """earnings_week() over the committed calendar, with staleness disclosed.
+
+    Read-only and fail-soft: never builds, never fetches, never raises. The whole
+    point is that this is free to call on every gather at any depth.
+    """
+    try:
+        cached = _load_cache() or {}
+        now = now_et or _et_now()
+        out = earnings_week(cached.get("by_ticker") or {}, today=now.date(),
+                            days=days, universe=universe)
+        built = _parse_et(cached.get("built_at"))
+        age_days = (now - built).days if built else None
+        out["calendar_built_at"] = cached.get("built_at")
+        out["calendar_age_days"] = age_days
+        out["calendar_status"] = cached.get("status")
+        out["names_in_calendar"] = len(cached.get("by_ticker") or {})
+        # A stale calendar is still useful (dates are quarterly) but the brain must
+        # know: a name that reported since the last sweep may show a PAST-quarter
+        # date, and a newly scheduled print may be missing entirely.
+        out["stale"] = bool(age_days is not None and age_days > 7)
+        if out["stale"]:
+            out["stale_note"] = (
+                f"Earnings calendar was last rebuilt {age_days} days ago. Dates are "
+                f"quarterly so most remain correct, but treat a missing name as "
+                f"UNKNOWN rather than as 'no print scheduled'.")
+        return out
+    except Exception as e:
+        return {"count": 0, "by_date": {}, "today": [], "error": str(e)[:160],
+                "note": "earnings calendar unavailable this run — treat every "
+                        "name's earnings timing as UNKNOWN, not as absent."}
 
 
 def earnings_reporters_for_slot(session: str, *, now_et: datetime | None = None,

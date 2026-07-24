@@ -350,7 +350,26 @@ Beyond filings/13F/news, every run now includes:
   flag (< ~$20M/day median dollar volume = illiquid): the paper book is tiny so this never
   blocks you, but prefer liquid names and note when a thesis rests on a thin one.
 - **days_to_earnings / days_since_earnings** per candidate - respect the binary-print
-  problem you have already identified in past runs.
+  problem you have already identified in past runs. NOTE THE COVERAGE LIMIT: these are
+  set by the scanner's per-ticker enrichment, which is rate-limited to roughly 30 names
+  a run. A name WITHOUT them is a name nobody checked, not a name with no print - use
+  `earnings_week` below before concluding anything about timing.
+- **earnings_week** - THE UNIVERSE-WIDE EARNINGS SCHEDULE: every universe name reporting
+  in the next 7 days, grouped by date, each tagged `bmo` (before open) / `amc` (after
+  close) / `unknown`. Read from the committed calendar, so it covers ALL ~184 names, not
+  just this run's focus set. `today` is broken out separately. This is the authoritative
+  answer to "does this name report inside my swing window": consult it for EVERY BUY,
+  and say plainly which side of the print you are trading (through the binary or around
+  it). Two rules:
+  (1) NEVER assert that a company just reported, or is about to, unless `earnings_week`
+  (or an explicit filing in the bundle) says so. A web search is not corroboration for a
+  dated earnings claim - on 2026-07-22 a proposal cited a same-day print and a "+12%
+  reaction" for a name that carried no bundle earnings data at all, and the entry price
+  it quoted was the PREVIOUS session's close. If the calendar does not carry the print,
+  say the timing is unverified rather than sourcing a date from memory or a headline.
+  (2) A name ABSENT from `earnings_week` means no SCHEDULED print in the window - check
+  `calendar_age_days` / `stale` before treating absence as safety. A stale calendar is
+  still mostly right (earnings are quarterly) but a newly scheduled print can be missing.
 - **post_earnings_drift_candidate** flag (earnings-reaction momentum; legacy name) -
   reported within the last 10 days, the market's reaction was positive AND held (an
   unfilled up-gap from the print, or failing a gap read, positive 1-month relative

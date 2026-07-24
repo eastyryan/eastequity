@@ -177,6 +177,17 @@ jobs:
           # plus trigger_watch's own pending/cooldown bookkeeping (which must persist
           # across runners or two-tick confirmation can never accumulate).
           git add -f state/trigger_watch.json state/trigger_pending.json 2>/dev/null || true
+          # EARNINGS CALENDAR: committed so a refresh SURVIVES the runner.
+          # This artifact is rebuilt on the 9am/5:30pm slots, but nothing ever staged
+          # it — publish.py names it explicitly as a tracked file deliberately left out
+          # of the trade path's add-list, and this workflow did not add it either. So
+          # every ephemeral runner rebuilt it into a throwaway checkout and discarded
+          # the result; the committed copy only advanced when someone hand-synced local
+          # artifacts, which is why it sat 4 days stale on 2026-07-23 while reading
+          # status "ok". Earnings are quarterly and the sweep is incremental (the last
+          # real one fetched 5 names and carried 179 forward), so persisting it is cheap
+          # and it is what the new bundle-level earnings_week block reads.
+          git add -f data/earnings_calendar.json 2>/dev/null || true
           # Momentum-ETF close cache: committed so blocked-network cloud runs can
           # still compute the momentum_health external layer (5-day staleness cap).
           git add -f data/cache/momentum_etfs.json 2>/dev/null || true
