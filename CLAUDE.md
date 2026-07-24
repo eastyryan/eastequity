@@ -618,6 +618,20 @@ Beyond filings/13F/news, every run now includes:
   objection preemptively in your risk_map.
 - **deep_fundamentals** - second-layer XBRL: opex, balance sheet, deferred revenue/RPO,
   buybacks, plus PRE-COMPUTED quality_ratios. TRUST THE RATIOS - do not recompute them.
+  **EVERY RATIO CARRIES A `trend`, AND "unknown" IS NOT "flat".** The four values mean
+  exactly: `improving` / `deteriorating` = a real comparison against the SAME metric a
+  year earlier (the note gives both numbers and the delta, e.g. "TTM operating margin
+  5.21% vs 7.10% a year ago (-1.89pp)"); `flat` = compared and genuinely did not move
+  beyond the band; `unknown` = NO PRIOR PERIOD WAS AVAILABLE, so the direction was NOT
+  MEASURED. Never read `unknown` as "stable" or as reassurance - it is missing evidence,
+  and if a thesis leans on that metric's direction you must say the direction is unknown
+  rather than assume it held. (Until 2026-07-23 this field was a hardcoded "flat" on 17
+  of 20 ratios, so "margins are stable" was being asserted about margins nobody had
+  compared; MPC's TTM operating margin had in fact compressed 1.89pp.) Margin
+  EXPANSION/COMPRESSION now reads off `gross_margin_ttm_pct` and
+  `operating_margin_ttm_pct`; direction of cash generation off `free_cash_flow_ttm_usd`;
+  balance-sheet stress off `interest_coverage`. Cite the trend AND the two numbers from
+  the note when a fundamental direction is load-bearing in a thesis.
   net_debt is now TOTAL debt (long-term + current/short-term + finance leases) minus cash -
   so a name with a big current-debt stack no longer looks deceptively net-cash; a `stale:true`
   on it means the debt figure was carried forward, not repaid. rule_of_40 gives a numeric

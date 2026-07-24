@@ -373,10 +373,64 @@ def _year_ago(rows) -> dict:
 
 
 def _trend(delta, flat_band: float, higher_is_better: bool = True) -> str:
-    if delta is None or abs(delta) <= flat_band:
+    """improving / deteriorating / flat / unknown.
+
+    "unknown" IS NOT "flat", AND THAT DISTINCTION IS THE WHOLE POINT (2026-07-23).
+    This returned "flat" when delta was None — i.e. when no prior period existed to
+    compare against — so a metric nobody measured was indistinguishable from one that
+    genuinely did not move. Combined with ~26 hardcoded `"trend": "flat"` literals at
+    the call sites, 17 of 20 ratios on a live name reported "flat" having compared
+    nothing at all. A brain reading `operating_margin_ttm_pct: {value: 5.21, trend:
+    "flat"}` concludes margins are stable; the truth was that margins were never
+    checked. That is the same inverse-of-the-truth failure as an absent
+    days_to_earnings reading as "no print imminent".
+
+    Callers must treat "unknown" as "not measured" and say so, never as "no change".
+    """
+    if delta is None:
+        return "unknown"
+    if abs(delta) <= flat_band:
         return "flat"
     good = delta > 0 if higher_is_better else delta < 0
     return "improving" if good else "deteriorating"
+
+
+def _margin_trend(ttm_num, ttm_den, prior_num, prior_den, *, flat_band: float = 0.5,
+                  label: str = "margin") -> tuple:
+    """(trend, note_suffix) for a TTM margin vs the SAME margin a year earlier.
+
+    The prior-year TTM was already being computed by _ttm() and thrown away at every
+    call site, which is why margin EXPANSION — the thing a multi-week swing thesis
+    actually turns on — was never visible. Both legs must be present; a margin
+    compared against a partial year is worse than no comparison.
+    """
+    try:
+        if None in (ttm_num, prior_num) or not ttm_den or not prior_den:
+            return "unknown", " (no prior-year TTM available — trend NOT measured)"
+        now = 100.0 * ttm_num / ttm_den
+        was = 100.0 * prior_num / prior_den
+        delta = now - was
+        return _trend(delta, flat_band), (
+            f"; {label} {now:.2f}% vs {was:.2f}% a year ago ({delta:+.2f}pp)")
+    except Exception:
+        return "unknown", " (trend NOT measured)"
+
+
+def _level_trend(now_v, prior_v, *, flat_band_pct: float = 5.0,
+                 higher_is_better: bool = True, label: str = "") -> tuple:
+    """(trend, note_suffix) for a TTM LEVEL (dollars, coverage x) vs a year earlier.
+
+    flat_band is a PERCENT of the prior value, not an absolute — $50m of FCF drift
+    means something very different on a $200m base than a $6bn one.
+    """
+    try:
+        if now_v is None or prior_v in (None, 0):
+            return "unknown", " (no prior-year TTM available — trend NOT measured)"
+        pct = 100.0 * (now_v - prior_v) / abs(prior_v)
+        return _trend(pct, flat_band_pct, higher_is_better), (
+            f"; {label or 'level'} {pct:+.1f}% vs the prior TTM")
+    except Exception:
+        return "unknown", " (trend NOT measured)"
 
 
 def _pct(a, b):
@@ -544,7 +598,7 @@ def get_deep_fundamentals(ticker: str) -> dict:
                 n_q = max(1, round(days / 91.0))
                 v = _pct(latest_sbc["value"] / n_q, rev_l["value"])
                 ratios["sbc_pct_of_revenue"] = {
-                    "value": v, "trend": "flat",
+                    "value": v, "trend": "unknown",
                     "xbrl_tag": sbc_tag, "period_days": days,
                     "note": "SBC ~%s%% of revenue, DERIVED from a %s-day YTD figure "
                             "(tag %s) divided to a per-quarter estimate - approximate"
@@ -583,7 +637,7 @@ def get_deep_fundamentals(ticker: str) -> dict:
         debt = _compute_total_debt(gaap)
         if debt is None and cash_val is not None:
             ratios["net_debt_usd"] = {
-                "value": -cash_val, "trend": "flat",
+                "value": -cash_val, "trend": "unknown",
                 "note": "no debt reported in XBRL - treated as debt-free; value is "
                         "negative cash as of %s" % c_l.get("period_end"),
                 "components": {"long_term_debt": 0.0, "current_debt": 0.0,
@@ -615,10 +669,10 @@ def get_deep_fundamentals(ticker: str) -> dict:
                 comp["stale"] = True
                 note += (" (STALE: debt last reported %s, older than cash %s - carried "
                          "forward, NOT zeroed)" % (debt["as_of"], c_l.get("period_end")))
-            ratios["net_debt_usd"] = {"value": nd, "trend": "flat",
+            ratios["net_debt_usd"] = {"value": nd, "trend": "unknown",
                                       "note": note, "components": comp}
             ratios["total_debt_usd"] = {
-                "value": total, "trend": "flat",
+                "value": total, "trend": "unknown",
                 "note": "long-term %s + current %s (finance leases in, operating "
                         "leases out); LT tags %s, current tags %s" % (
                             debt["long_term_debt"], debt["current_debt"],
@@ -637,7 +691,7 @@ def get_deep_fundamentals(ticker: str) -> dict:
         parts = [x for x in (ol_nc, ol_c) if x is not None]
         if parts:
             ratios["operating_lease_liability_usd"] = {
-                "value": sum(parts), "trend": "flat",
+                "value": sum(parts), "trend": "unknown",
                 "xbrl_tag": "OperatingLeaseLiabilityCurrent + Noncurrent",
                 "note": "operating lease liabilities, NOT in total_debt (a debt-like "
                         "commitment for asset-light/retail names) as of %s"
@@ -653,7 +707,7 @@ def get_deep_fundamentals(ticker: str) -> dict:
         if ca.get("value") and cl.get("value"):
             cr = round(ca["value"] / cl["value"], 2)
             ratios["current_ratio"] = {
-                "value": cr, "trend": "flat",
+                "value": cr, "trend": "unknown",
                 "xbrl_tag": "AssetsCurrent / LiabilitiesCurrent",
                 "note": "current assets / current liabilities = %sx as of %s%s" % (
                     cr, ca.get("period_end"),
@@ -698,7 +752,7 @@ def get_deep_fundamentals(ticker: str) -> dict:
             ytd = (fcf_days or 0) > 100
             ratios["free_cash_flow_usd"] = {
                 "value": fcf_val,
-                "trend": "flat",
+                "trend": "unknown",
                 "note": "OCF minus capex, period ending %s spanning %s days%s" % (
                     o_l.get("period_end"), fcf_days,
                     " (YTD-cumulative, NOT a single quarter)" if ytd else ""),
@@ -713,17 +767,25 @@ def get_deep_fundamentals(ticker: str) -> dict:
     # over/under-states seasonal names; TTM removes seasonality on both legs.
     ttm_rev, ttm_rev_end, ttm_rev_prior = _ttm(revenue)
     ttm_gross, _, ttm_gross_prior = _ttm(gross)
-    ttm_op, _, _ = _ttm(op_inc_q)
+    # Keep the prior-year TTM operating income: it is what turns
+    # operating_margin_ttm_pct from a bare level into an EXPANSION/COMPRESSION read.
+    # _ttm() has always returned it; every call site discarded it.
+    ttm_op, _, ttm_op_prior = _ttm(op_inc_q)
     ocf_q = _quarterize_flow(ocf)
     capex_q = _quarterize_flow(capex)
     ttm_fcf, ttm_fcf_end = _ttm_fcf(ocf_q, capex_q)
+    # Prior-year TTM FCF from the four quarters BEFORE the current four, computed the
+    # same way (capex matched to OCF by period_end, never a partial year).
+    ttm_fcf_prior, _ = _ttm_fcf(ocf_q[:-4], capex_q) if len(ocf_q) >= 8 else (None, None)
 
     # TTM FCF (proper 4-quarter, de-YTD'd) alongside the single-period FCF above.
     if ttm_fcf is not None:
+        _fcf_tr, _fcf_sfx = _level_trend(ttm_fcf, ttm_fcf_prior, flat_band_pct=10.0,
+                                         label="TTM FCF")
         ratios["free_cash_flow_ttm_usd"] = {
-            "value": ttm_fcf, "trend": "flat",
+            "value": ttm_fcf, "trend": _fcf_tr,
             "note": "trailing-twelve-month FCF = OCF - capex over 4 de-YTD'd "
-                    "quarters ending %s" % ttm_fcf_end,
+                    "quarters ending %s%s" % (ttm_fcf_end, _fcf_sfx),
         }
 
     # Rule of 40: TTM revenue growth % + TTM FCF margin % (a level, not a "trend").
@@ -760,13 +822,18 @@ def get_deep_fundamentals(ticker: str) -> dict:
     except Exception as e:
         omitted["gross_margin_ttm_pct"] = str(e)
 
-    # TTM operating margin (durable operating-leverage read).
+    # TTM operating margin (durable operating-leverage read) + EXPANSION/COMPRESSION.
+    # The trend was the literal string "flat" here, which read as "margins are stable"
+    # when nothing had been compared. Operating leverage is the single most useful
+    # fundamental direction for a 3-90 day swing, so it gets a real year-ago margin.
     try:
         if ttm_op is not None and ttm_rev:
+            tr, suffix = _margin_trend(ttm_op, ttm_rev, ttm_op_prior, ttm_rev_prior,
+                                       label="TTM operating margin")
             ratios["operating_margin_ttm_pct"] = {
-                "value": round(100.0 * ttm_op / ttm_rev, 2), "trend": "flat",
+                "value": round(100.0 * ttm_op / ttm_rev, 2), "trend": tr,
                 "xbrl_tag": "OperatingIncomeLoss / revenue", "period_days": 365,
-                "note": "TTM operating margin, ending %s" % ttm_rev_end,
+                "note": "TTM operating margin, ending %s%s" % (ttm_rev_end, suffix),
             }
     except Exception as e:
         omitted["operating_margin_ttm_pct"] = str(e)
@@ -775,14 +842,20 @@ def get_deep_fundamentals(ticker: str) -> dict:
     try:
         int_q = _quarterize_flow(_series(gaap, CONCEPT_TAGS["interest_expense"],
                                          instant=False, keep=12))
-        ttm_int, _, _ = _ttm(int_q)
+        ttm_int, _, ttm_int_prior = _ttm(int_q)
         if ttm_op is not None and ttm_int:
             cov = round(ttm_op / abs(ttm_int), 2)
+            # Coverage DIRECTION matters as much as the level: 3.2x falling from 6x is
+            # a different company than 3.2x rising from 2x, and "flat" hid both.
+            cov_prior = (ttm_op_prior / abs(ttm_int_prior)
+                         if ttm_op_prior is not None and ttm_int_prior else None)
+            _cov_tr, _cov_sfx = _level_trend(cov, cov_prior, flat_band_pct=10.0,
+                                             label="coverage")
             ratios["interest_coverage"] = {
-                "value": cov, "trend": "flat",
+                "value": cov, "trend": _cov_tr,
                 "xbrl_tag": "OperatingIncomeLoss / InterestExpense", "period_days": 365,
-                "note": "TTM EBIT covers interest %sx%s" % (
-                    cov, " - THIN (<3x)" if cov < 3 else ""),
+                "note": "TTM EBIT covers interest %sx%s%s" % (
+                    cov, " - THIN (<3x)" if cov < 3 else "", _cov_sfx),
             }
         else:
             omitted["interest_coverage"] = "no TTM interest expense reported (may be debt-free)"
@@ -796,7 +869,7 @@ def get_deep_fundamentals(ticker: str) -> dict:
         ttm_bb, bb_end, _ = _ttm(bb_q)
         if ttm_bb is not None:
             ratios["buyback_ttm_usd"] = {
-                "value": ttm_bb, "trend": "flat",
+                "value": ttm_bb, "trend": "unknown",
                 "xbrl_tag": "PaymentsForRepurchaseOfCommonStock", "period_days": 365,
                 "note": "TTM common-stock repurchases ending %s; buyback yield = this "
                         "/ market cap (divide by the market cap in your bundle)" % bb_end,
@@ -821,14 +894,14 @@ def get_deep_fundamentals(ticker: str) -> dict:
         ttm_da, ttm_da_end, _ = _ttm(_quarterize_flow(da_rows))
         if ttm_op is None:
             ratios["ebitda_ttm_usd"] = {
-                "value": None, "trend": "flat",
+                "value": None, "trend": "unknown",
                 "reason": "operating_income_ttm_unavailable",
                 "note": "EBITDA needs a TTM operating income (OperatingIncomeLoss); "
                         "fewer than 4 clean quarters were available",
             }
         elif ttm_da is None:
             ratios["ebitda_ttm_usd"] = {
-                "value": None, "trend": "flat", "reason": "d_and_a_unavailable",
+                "value": None, "trend": "unknown", "reason": "d_and_a_unavailable",
                 "note": "EBITDA not computed: no trailing-twelve-month D&A add-back "
                         "found (tried %s); TTM EBIT (operating income) was %s" % (
                             "/".join(DA_TAGS), ttm_op),
@@ -838,7 +911,7 @@ def get_deep_fundamentals(ticker: str) -> dict:
             da_src = ("%s (depreciation-only — understates EBITDA by the "
                       "amortization it omits)" % da_tag) if da_tag == "Depreciation" else da_tag
             ratios["ebitda_ttm_usd"] = {
-                "value": ebitda_ttm, "trend": "flat",
+                "value": ebitda_ttm, "trend": "unknown",
                 "xbrl_tags": "OperatingIncomeLoss + %s" % da_tag, "period_days": 365,
                 "components": {"ttm_operating_income_usd": ttm_op,
                                "ttm_d_and_a_usd": ttm_da, "d_and_a_tag": da_tag},
@@ -847,7 +920,7 @@ def get_deep_fundamentals(ticker: str) -> dict:
                                              ttm_da_end or ttm_rev_end),
             }
     except Exception as e:
-        ratios["ebitda_ttm_usd"] = {"value": None, "trend": "flat",
+        ratios["ebitda_ttm_usd"] = {"value": None, "trend": "unknown",
                                     "reason": "error", "note": str(e)}
 
     # -- total debt / cash / net debt (all XBRL, NO price needed) ---------------
@@ -867,13 +940,13 @@ def get_deep_fundamentals(ticker: str) -> dict:
                 note += (" — net debt against a non-positive EBITDA cannot be "
                          "de-levered from operations; treat as HIGH leverage risk, "
                          "NOT zero")
-            ratios["net_debt_to_ebitda"] = {"value": None, "trend": "flat",
+            ratios["net_debt_to_ebitda"] = {"value": None, "trend": "unknown",
                                             "reason": reason, "note": note}
         else:
             shown = ("%sx" % ratio if ratio is not None
                      else "n/m (net cash, EBITDA non-positive)")
             ratios["net_debt_to_ebitda"] = {
-                "value": ratio, "trend": "flat", "leverage_read": label,
+                "value": ratio, "trend": "unknown", "leverage_read": label,
                 "xbrl_tags": "(total_debt - cash) / (OperatingIncomeLoss + D&A) TTM",
                 "period_days": 365,
                 "note": "net debt (total debt %s - cash %s = %s) / TTM EBITDA %s = %s "
@@ -882,7 +955,7 @@ def get_deep_fundamentals(ticker: str) -> dict:
                                                  net_debt_val, ebitda_ttm, shown, label),
             }
     except Exception as e:
-        ratios["net_debt_to_ebitda"] = {"value": None, "trend": "flat",
+        ratios["net_debt_to_ebitda"] = {"value": None, "trend": "unknown",
                                         "reason": "error", "note": str(e)}
 
     # -- price-dependent: market cap, EV, EV/EBITDA, buyback yield --------------
@@ -909,13 +982,13 @@ def get_deep_fundamentals(ticker: str) -> dict:
             why = "price_unavailable" if latest_shares else "diluted_shares_unavailable"
             for k in _mc_keys:
                 ratios[k] = {
-                    "value": None, "trend": "flat", "reason": why,
+                    "value": None, "trend": "unknown", "reason": why,
                     "note": "needs price x diluted shares; %s (the price-free "
                             "net_debt_to_ebitda above is unaffected)" % why,
                 }
         else:
             ratios["market_cap_usd"] = {
-                "value": market_cap, "trend": "flat",
+                "value": market_cap, "trend": "unknown",
                 "xbrl_tags": "yfinance close x "
                              "WeightedAverageNumberOfDilutedSharesOutstanding",
                 "note": "market cap (USD) = %s close %s (%s) x %s weighted-avg diluted "
@@ -924,7 +997,7 @@ def get_deep_fundamentals(ticker: str) -> dict:
             }
             ev = _enterprise_value(market_cap, total_debt_val, cash_now)
             ratios["enterprise_value_usd"] = {
-                "value": ev, "trend": "flat",
+                "value": ev, "trend": "unknown",
                 "xbrl_tags": "market_cap + total_debt - cash",
                 "note": "EV (USD) = market cap %s + total debt %s - cash %s" % (
                     round(market_cap, 2), total_debt_val, cash_now),
@@ -932,7 +1005,7 @@ def get_deep_fundamentals(ticker: str) -> dict:
             if ebitda_ttm is not None and ebitda_ttm > 0:
                 ev_ebitda = round(ev / ebitda_ttm, 2)
                 ratios["ev_to_ebitda"] = {
-                    "value": ev_ebitda, "trend": "flat",
+                    "value": ev_ebitda, "trend": "unknown",
                     "xbrl_tags": "enterprise_value / (OperatingIncomeLoss + D&A) TTM",
                     "period_days": 365,
                     "note": "EV/EBITDA = %sx (EV %s / TTM EBITDA %s)" % (
@@ -942,7 +1015,7 @@ def get_deep_fundamentals(ticker: str) -> dict:
                 why = ("ebitda_non_positive" if ebitda_ttm is not None
                        else "ebitda_unavailable")
                 ratios["ev_to_ebitda"] = {
-                    "value": None, "trend": "flat", "reason": why,
+                    "value": None, "trend": "unknown", "reason": why,
                     "note": "EV/EBITDA not computable: TTM EBITDA is %s" % (
                         "non-positive" if ebitda_ttm is not None else "unavailable"),
                 }
@@ -950,7 +1023,7 @@ def get_deep_fundamentals(ticker: str) -> dict:
             if bb is not None:
                 by = round(100.0 * bb / market_cap, 2)
                 ratios["buyback_yield_pct"] = {
-                    "value": by, "trend": "flat",
+                    "value": by, "trend": "unknown",
                     "xbrl_tags": "PaymentsForRepurchaseOfCommonStock TTM "
                                  "/ market_cap x 100",
                     "note": "buyback yield = TTM repurchases %s / market cap %s = %s%% "
@@ -959,12 +1032,12 @@ def get_deep_fundamentals(ticker: str) -> dict:
                 }
             else:
                 ratios["buyback_yield_pct"] = {
-                    "value": None, "trend": "flat", "reason": "no_buyback_ttm",
+                    "value": None, "trend": "unknown", "reason": "no_buyback_ttm",
                     "note": "no TTM repurchase cash flow reported (no active buyback)",
                 }
     except Exception as e:
         for k in _mc_keys:
-            ratios.setdefault(k, {"value": None, "trend": "flat",
+            ratios.setdefault(k, {"value": None, "trend": "unknown",
                                   "reason": "error", "note": str(e)})
 
     quality = {"ratios": ratios}
