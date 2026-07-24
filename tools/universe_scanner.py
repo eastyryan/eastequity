@@ -1246,8 +1246,25 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
                         nxt = pd.Timestamp(cal_rec["next"])
                         if nxt.tzinfo is None:
                             nxt = nxt.tz_localize("America/New_York")
-                        if nxt > now_cal:
-                            r["days_to_earnings"] = (nxt - now_cal).days
+                        # COMPARE CALENDAR DAYS, NOT TIMESTAMPS (fixed 2026-07-23).
+                        #
+                        # This guard was `nxt > now_cal`, and a calendar date parses to
+                        # MIDNIGHT that day. So a print happening TODAY was already
+                        # "past" by 00:01 and the fallback declined to set the field —
+                        # leaving days_to_earnings null on the one day it matters most,
+                        # which is exactly the "reads as no print imminent, the exact
+                        # inverse of the truth" failure the comment above warns about.
+                        # Measured on the live 2026-07-23 bundle: DLR, FIX, NEM, RTX and
+                        # UNP all carried next_earnings 2026-07-23 with days_to_earnings
+                        # None, while earnings_deep_dive simultaneously knew three of
+                        # them were reporting `amc` that session. Two parts of one bundle
+                        # disagreeing about whether a name reports today.
+                        #
+                        # Day-granularity comparison makes today 0 (report is TODAY) and
+                        # keeps future dates positive. An earnings DATE has no meaningful
+                        # time-of-day anyway — bmo/amc timing lives in earnings_deep_dive.
+                        if nxt.date() >= now_cal.date():
+                            r["days_to_earnings"] = (nxt.date() - now_cal.date()).days
                             used = True
                     if "days_since_earnings" not in r and cal_rec.get("last"):
                         lst = pd.Timestamp(cal_rec["last"])
