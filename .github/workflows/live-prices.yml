@@ -1,18 +1,30 @@
 name: Live prices for holdings + watchlist
 
-# The heavy full-bundle gather (gather-data.yml) uses DAILY BARS and runs
-# sparsely (GitHub throttles scheduled crons), so between gathers a holding's
-# price is frozen and an intraday stop breach goes unseen. This lightweight
-# feed fetches INTRADAY quotes for JUST the holdings + published watchlist and
-# commits state/live_prices.json, which the orchestrator overlays onto the
-# bundle's prices before stops are enforced. It writes ONE dedicated file and
-# never touches state/portfolio.json (owned by the trade path), so it cannot
-# clobber the ledger. Note: GitHub coalesces */5 schedules under load — real
-# cadence is typically ~10-20 min, not 5.
+# Intraday quotes for holdings + published watchlist -> state/live_prices.json on
+# the orphan live-data branch. Never touches state/portfolio.json (owned by the
+# trade path), so it cannot clobber the ledger.
+#
+# DEMOTED TO A BACKSTOP 2026-07-23. This used to be the ONLY thing fetching
+# intraday prices, and both the gather and the stop watch inherited whatever it
+# last published. That made them hostages of a schedule GitHub does not honour:
+# measured 2026-07-23, this workflow delivered 7 of 96 requested fires (7%), a
+# median gap of 97 minutes, against a 30-minute overlay freshness guard. The
+# result was a trading brain reading YESTERDAY's closes mid-session for nine days.
+#
+# gather-data.yml and stop-watch.yml now each call refresh_from_book() themselves,
+# so neither depends on this file being fresh. What still reads the live-data
+# branch: the dashboard's /api/live-prices quote strip, tools/trigger_watch.py, and
+# stop-watch's fallback when its own fetch fails. Those all degrade gracefully, so
+# a rationed schedule here is now merely suboptimal rather than load-bearing.
 
 on:
   schedule:
-    - cron: "*/5 13-21 * * 1-5"   # ~every 5 min, ~9:00am-5:00pm ET (approx; throttled)
+    # HONEST INTERVAL. GitHub hands this repo a FIXED budget of ~7 scheduled runs
+    # per workflow per day regardless of the interval requested — same-day measured
+    # delivery was */5 -> 7/96, */10 -> 7/48, */15 -> 7/32, all landing on exactly 7.
+    # So "*/5" and "*/20" produce identical real coverage; the short interval only
+    # made the schedule a fiction to debug against. Ask for what we receive.
+    - cron: "*/20 13-21 * * 1-5"   # ~9:00am-5:00pm ET; expect ~7 actual fires/day
   workflow_dispatch:
 
 permissions:

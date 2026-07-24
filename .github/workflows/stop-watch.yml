@@ -25,28 +25,76 @@ name: Stop watch
 
 on:
   schedule:
-    # Every 10 minutes through the session. GitHub coalesces */5 under load anyway
-    # (observed ~hourly on 2026-07-15), so asking for */5 buys nothing but queue
-    # contention with the price feed this job depends on.
-    - cron: "*/10 13-21 * * 1-5"
+    # HONEST CRON (corrected 2026-07-23). This said "*/10" and the comment claimed
+    # GitHub coalesced it to ~hourly. Measured on 2026-07-23, the truth is worse and
+    # differently shaped: GitHub hands this repo a FIXED budget of ~7 scheduled runs
+    # per workflow per day regardless of the interval asked for. Same-day delivery —
+    #     */5  -> 7 of 96 fires (7%)      */10 -> 7 of 48 (15%)
+    #     */15 -> 7 of 32 (22%)           hourly -> 9 of 14 (64%)
+    # Every high-frequency workflow landed on exactly 7. So "*/10" and "*/30" produce
+    # IDENTICAL real coverage (~68-97 min apart); the short interval bought nothing
+    # and made the schedule a fiction to debug against. Asking for what we actually
+    # receive keeps this file honest. Real coverage now comes from the push trigger
+    # below, which is NOT rationed.
+    - cron: "*/30 13-21 * * 1-5"
   workflow_dispatch:
+  # EVENT-DRIVEN ENFORCEMENT (added 2026-07-23) — the actual fix.
+  #
+  # Scheduled runs are rationed; push events are not. Stop enforcement was landing ~7
+  # times across an 8-hour session (once an hour) instead of the intended every-10-
+  # minutes, which is an hour of unenforced stop on a real position. main is pushed
+  # far more often than that by the trade path, the gather's bundle refresh and the
+  # order executor, and every one of those pushes is a moment worth re-checking stops.
+  # The `decide` gate keeps this cheap: it skips its own commits (no loop) and skips
+  # entirely when the book is empty, so an idle book costs nothing.
+  push:
+    branches: [main]
 
 permissions:
   contents: write
 
-concurrency:
-  # SHARED with every other workflow that writes main. Per-workflow groups only
-  # serialize a workflow against ITSELF; they did nothing about gather-data,
-  # execute-orders and this job pushing simultaneously, which is what produced the
-  # rejected-push / rebase churn. cancel-in-progress stays false: a stop check must
-  # queue, never be cancelled.
-  group: main-writer
-  cancel-in-progress: false
-
 jobs:
+  # Cheap gate. Carries NO concurrency group on purpose: it takes no lock and never
+  # pushes, so the frequent pushes that now trigger this workflow cannot back up the
+  # shared main-writer queue that the enforcing job itself depends on.
+  decide:
+    runs-on: ubuntu-latest
+    outputs:
+      go: ${{ steps.check.outputs.go }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        run: |
+          # Never re-trigger on our own ledger commit (loop guard).
+          if [ "${{ github.event_name }}" = "push" ] && \
+             git log -1 --pretty=%s | grep -qiE "^Stop watch:"; then
+            echo "own stop-watch commit -> skip"
+            echo "go=false" >> "$GITHUB_OUTPUT"; exit 0
+          fi
+          # Nothing to protect: an empty book has no stop to enforce and no
+          # protective order to re-arm. This is what makes push-triggering free —
+          # while the book is flat (as it has been since 2026-07-14) this gate is
+          # the entire cost of the workflow.
+          N=$(python3 -c "import json; print(len(json.load(open('state/portfolio.json')).get('positions') or []))" 2>/dev/null || echo 0)
+          echo "open positions: $N"
+          if [ "$N" -gt 0 ]; then
+            echo "go=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "go=false" >> "$GITHUB_OUTPUT"
+          fi
+
   watch:
+    needs: decide
+    if: needs.decide.outputs.go == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    # main-writer moved here from the workflow level: only the job that actually
+    # PUSHES needs to serialize against gather-data / execute-orders. At workflow
+    # level it would drag the cheap `decide` gate into the same shared queue.
+    # cancel-in-progress stays false: a stop check must queue, never be cancelled.
+    concurrency:
+      group: main-writer
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
         with:
@@ -59,13 +107,34 @@ jobs:
 
       - run: pip install -r requirements.txt
 
-      - name: Pull the latest live prices
-        # Published by live-prices.yml to the orphan live-data branch. Without this
-        # the runner's checkout carries whatever price was committed to main last,
-        # which the trade-age gate would reject anyway — correctly, but pointlessly.
+      - name: Fetch our own intraday quotes
+        # WAS: pull state/live_prices.json off the orphan live-data branch and hope
+        # it was fresh. That made stop enforcement a hostage of live-prices.yml, whose
+        # "*/5" cron actually delivers ~7 runs a day (see the cron note above) — so the
+        # prices this job checked stops against were routinely over an hour old, and
+        # the trade-age gate would reject them. Correct, but useless: a stop cannot
+        # fire on a price nobody fetched.
+        #
+        # This runner has the Alpaca keys and full egress, exactly like the gather.
+        # Fetch here rather than inherit a sibling's throttled output. Fail-soft: on
+        # any error we fall back to the live-data branch copy below, which is the old
+        # behaviour and no worse than before.
+        env:
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
         run: |
-          git fetch origin live-data --depth=1 || exit 0
-          git checkout origin/live-data -- state/live_prices.json || true
+          python -c "
+          from tools.live_prices import refresh_from_book
+          r = refresh_from_book()
+          print('live prices:', r.get('source'), r.get('n'), 'of', len(r.get('requested', [])))
+          " || echo "own fetch failed; falling back to the live-data branch snapshot"
+
+      - name: Fall back to the published snapshot if our fetch produced nothing
+        run: |
+          if [ ! -s state/live_prices.json ]; then
+            git fetch origin live-data --depth=1 || exit 0
+            git checkout origin/live-data -- state/live_prices.json || true
+          fi
 
       - name: Enforce stops and re-arm protective orders
         env:
@@ -77,6 +146,9 @@ jobs:
         run: |
           git config user.name "ee-stopwatch"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # state/live_prices.json is deliberately NOT staged: the live-data branch
+          # owns that file, and pushing it to main is what made the trader abandon on
+          # a non-fast-forward on 2026-07-15.
           git add -A state/portfolio.json journal data/cache/market_calendar.json 2>/dev/null || true
           git diff --cached --quiet && { echo "no ledger change"; exit 0; }
           git commit -m "Stop watch: enforce stops and re-arm protective orders [vercel skip]"
