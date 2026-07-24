@@ -532,13 +532,22 @@ def earnings_week(by_ticker: dict, *, today: date_cls, days: int = 7,
         # bmo before amc before unknown, then alphabetical — a stable, readable order.
         by_date[d].sort(key=lambda r: ({"bmo": 0, "amc": 1}.get(r["when"], 2), r["ticker"]))
     total = sum(len(v) for v in by_date.values())
+
+    # RENDER COMPACT, ONE LINE PER DATE. As a list of {ticker, when} dicts this block
+    # measured 302 lines in the real bundle, which is why context_tiers stubbed it out
+    # of the brain's read window entirely on its first run. "RTX(bmo), DLR(amc)" carries
+    # the identical information in ~10 lines total and reads better in prose.
+    def _render(rows):
+        return ", ".join(f"{r['ticker']}({r['when']})" for r in rows)
+
     return {
         "as_of": today.isoformat(),
         "window_days": int(days),
         "through": horizon.isoformat(),
         "count": total,
-        "by_date": {d: by_date[d] for d in sorted(by_date)},
-        "today": by_date.get(today.isoformat(), []),
+        "by_date": {d: _render(by_date[d]) for d in sorted(by_date)},
+        "today": _render(by_date.get(today.isoformat(), [])),
+        "today_tickers": [r["ticker"] for r in by_date.get(today.isoformat(), [])],
         "note": (
             "Every universe name reporting in this window, from the committed "
             "earnings calendar — NOT limited to this run's ~30 deep-research focus "

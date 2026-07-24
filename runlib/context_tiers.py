@@ -122,7 +122,7 @@ DECISION_CONTEXT = (
     "portfolio_risk",
     "track_record",
     "ownership_flow",
-    "earnings_deep_dive", "trigger_run_note", "operator_note",
+    "earnings_deep_dive", "earnings_week", "trigger_run_note", "operator_note",
     "lessons_learned",
 )
 
@@ -158,6 +158,13 @@ ALWAYS_KEYS = (
     "risk_halts", "forced_exits", "corporate_actions", "lessons_learned",
     "track_record",  # compact closed trades already truncated in gather
     "earnings_deep_dive",     # why a full run was forced (earnings reporter)
+    # WHO REPORTS THIS WEEK, universe-wide. Registered 2026-07-23: on its first run it
+    # was unregistered, so this module correctly stubbed it out of the read window with
+    # an "_unregistered_stub" note — the block existed and the brain could not see it.
+    # It is DECISION_CONTEXT because the earnings path ("through the binary or around
+    # it") is a step-4 gate on every BUY, and because a name's print date is exactly the
+    # kind of fact a model will otherwise supply from memory.
+    "earnings_week",
     "price_freshness_live",   # holdings/watchlist live-price staleness guard
     "trigger_run_note",       # why an event-driven run was spawned
     "operator_note",          # ad-hoc note passed in via --note

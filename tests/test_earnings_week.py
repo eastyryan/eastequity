@@ -34,7 +34,11 @@ CAL = {
 
 
 def _tickers(block, day):
-    return [r["ticker"] for r in block["by_date"].get(day, [])]
+    """by_date renders one COMPACT STRING per date ("RTX(bmo), DLR(amc)") — as a list
+    of dicts the real block measured 302 lines and context_tiers stubbed it out of the
+    brain's read window. Parse it back for assertions."""
+    line = block["by_date"].get(day, "")
+    return [p.split("(")[0] for p in line.split(", ") if p]
 
 
 def test_today_is_included():
@@ -46,22 +50,23 @@ def test_today_is_included():
     """
     w = earnings_week(CAL, today=TODAY, days=7)
     assert _tickers(w, "2026-07-23") == ["RTX", "DLR"]      # bmo before amc
-    assert [r["ticker"] for r in w["today"]] == ["RTX", "DLR"]
+    assert w["today"] == "RTX(bmo), DLR(amc)"
+    assert w["today_tickers"] == ["RTX", "DLR"]
 
 
 def test_window_bounds_are_inclusive_and_exclude_outside():
     w = earnings_week(CAL, today=TODAY, days=7)
     assert w["through"] == "2026-07-30"
     assert "EDGE" in _tickers(w, "2026-07-30")             # horizon edge included
-    assert "LATER" not in {r["ticker"] for d in w["by_date"].values() for r in d}
-    assert "PAST" not in {r["ticker"] for d in w["by_date"].values() for r in d}
+    allnames = {t for d in w["by_date"] for t in _tickers(w, d)}
+    assert "LATER" not in allnames and "PAST" not in allnames
 
 
 def test_bad_and_missing_dates_are_skipped_not_fatal():
     """A malformed row must not take the schedule down — losing the whole block
     would put us back to 'no earnings data', the failure this replaces."""
     w = earnings_week(CAL, today=TODAY, days=7)
-    names = {r["ticker"] for d in w["by_date"].values() for r in d}
+    names = {t for d in w["by_date"] for t in _tickers(w, d)}
     assert "JUNK" not in names and "NONE" not in names
     assert w["count"] == 5                                  # RTX DLR MSFT AAPL EDGE
 
@@ -69,12 +74,12 @@ def test_bad_and_missing_dates_are_skipped_not_fatal():
 def test_covers_every_name_not_just_a_focus_subset():
     """The point of the block: it is NOT limited to the ~30 enriched names."""
     w = earnings_week(CAL, today=TODAY, days=7)
-    assert {"MSFT", "AAPL"} <= {r["ticker"] for d in w["by_date"].values() for r in d}
+    assert {"MSFT", "AAPL"} <= {t for d in w["by_date"] for t in _tickers(w, d)}
 
 
 def test_universe_filter_applies_when_given():
     w = earnings_week(CAL, today=TODAY, days=7, universe=["RTX", "MSFT"])
-    names = {r["ticker"] for d in w["by_date"].values() for r in d}
+    names = {t for d in w["by_date"] for t in _tickers(w, d)}
     assert names == {"RTX", "MSFT"}
 
 
@@ -88,4 +93,4 @@ def test_sessions_ordered_bmo_then_amc_then_unknown():
 
 def test_empty_calendar_reports_zero_not_an_exception():
     w = earnings_week({}, today=TODAY, days=7)
-    assert w["count"] == 0 and w["by_date"] == {} and w["today"] == []
+    assert w["count"] == 0 and w["by_date"] == {} and w["today"] == ""
