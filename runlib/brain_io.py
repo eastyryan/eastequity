@@ -470,6 +470,39 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
 
     if shutil.which("claude") is None:
         return _no_desk("risk desk unavailable in this environment")
+
+    # PRECOMPUTED SOURCING CHECK (2026-07-25). The desk has been doing this grep
+    # by hand and getting it right — the 07-22 DDOG veto reads "this string, and
+    # any variant of 'JMP', appears ZERO times anywhere in the full context
+    # bundle" — but by hand means it depends on the desk thinking to look, on a
+    # 1MB bundle, under a token budget. validator.unsourced_claims does the same
+    # search deterministically. It is handed over as EVIDENCE, not a verdict:
+    # CLAUDE.md step 5 requires WebSearch before every BUY, so an entity missing
+    # from the bundle may be a genuine WebSearch finding rather than a
+    # fabrication, and only the desk can read the thesis and tell which.
+    # Fail-soft throughout: the desk runs unchanged if any of this breaks.
+    unsourced_block = ""
+    try:
+        _mc = {"_bundle": json.loads(Path(context_file).read_text())}
+        found = {}
+        for _p in buys:
+            claims = validator.unsourced_claims(_p, _mc)
+            if claims:
+                found[_p.get("ticker")] = claims
+        if found:
+            unsourced_block = (
+                "\nPRECOMPUTED SOURCING CHECK — these entities are cited by the "
+                f"proposal but appear NOWHERE in the context bundle: {json.dumps(found)}. "
+                "Treat each as UNVERIFIED, not automatically false: WebSearch is a "
+                "required step before a BUY, so a real finding can legitimately be "
+                "absent from the bundle. For every one, decide which it is. If the "
+                "thesis leans on an entity that is neither in the bundle nor backed "
+                "by a citation the proposer gives, that is a fabricated catalyst — "
+                "veto it and say so explicitly.\n")
+            print(f"  (risk desk: unsourced entities flagged {found})")
+    except Exception as e:
+        print(f"  (unsourced-claim precheck skipped: {str(e)[:100]})")
+
     prompt = (
         "You are the RISK DESK for a paper-trading fund. Your ONLY job is to try to KILL "
         "each BUY. Another analyst proposed: "
@@ -486,6 +519,7 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
         "5) FRESHNESS: if data_quality/stale_data_notice or price_freshness says stale "
         "on a catalyst day, haircut or veto chasing.\n"
         "6) CHARTS: if charts missing for the ticker, haircut confidence.\n"
+        f"{unsourced_block}"
         # REMOVED 2026-07-19: "Be a skeptic, not a contrarian for sport - approve
         # genuinely sound trades." That is an approval-bias instruction inside the
         # one component whose entire job is refusal, and it was the only sentence

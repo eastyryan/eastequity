@@ -19,8 +19,11 @@ def test_slot_label_matches_a_real_slot(monkeypatch):
     """At 14:05 ET the marker must claim the 14:00 slot — the SAME slot list the
     heartbeat grades against, so a marker cannot certify a slot the heartbeat ignores."""
     monkeypatch.setattr(mk, "_et_now_hour", lambda: (14.08, "14:05"))
-    # weekday() is read off a real datetime inside _current_slot_label; 2026-07-20 is a
-    # Monday in the test journal, and any weekday keeps the weekday slot list.
+    # BOTH halves of "when is it" must be pinned. This used to patch only the hour
+    # and let the weekday fall through to the real clock, so the assertion below
+    # was false every Saturday and Sunday (the weekend slot list is [0, 23.98])
+    # and the suite went red on schedule twice a week.
+    monkeypatch.setattr(mk, "_et_is_weekday", lambda: True)
     assert mk._current_slot_label() == "14:00"
 
 
@@ -28,6 +31,7 @@ def test_off_slot_time_gets_no_slot(monkeypatch):
     """A run fired at 3:30pm — more than an hour past the 2pm slot and before 4pm — is
     off-slot and must not falsely certify either neighbour."""
     monkeypatch.setattr(mk, "_et_now_hour", lambda: (15.5, "15:30"))
+    monkeypatch.setattr(mk, "_et_is_weekday", lambda: True)
     assert mk._current_slot_label() is None
 
 
@@ -36,6 +40,7 @@ def test_marker_is_written_with_slot_and_stage(monkeypatch, tmp_path):
     import journal
     monkeypatch.setattr(journal, "JOURNAL", tmp_path / "journal")
     monkeypatch.setattr(mk, "_et_now_hour", lambda: (14.08, "14:05"))
+    monkeypatch.setattr(mk, "_et_is_weekday", lambda: True)
 
     rc = mk.main_for_test(no_push=True)
     assert rc == 0

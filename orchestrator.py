@@ -978,6 +978,11 @@ def main() -> int:
                 mcap = None
         if mcap:
             market_context.setdefault(t, {})["market_cap_usd"] = float(mcap)
+    # The bundle rides along under a reserved key (same convention as _regime /
+    # _data_quality / _book above) so _check_claim_grounding can verify that the
+    # facts a thesis cites actually appear in the evidence the brain was handed.
+    # market_context is otherwise a per-ticker volatility map and carries no news.
+    market_context["_bundle"] = context
     results = validator.validate_proposals(proposals, live_portfolio, market_context)
     # Risk-desk vetoes never reached the validator, but they belong on the
     # public site: the brain's commentary may reference the killed trade, so

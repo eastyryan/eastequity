@@ -54,6 +54,24 @@ def _et_now_hour() -> tuple[float, str]:
     return now.hour + now.minute / 60, now.strftime("%H:%M")
 
 
+def _et_is_weekday() -> bool:
+    """Whether TODAY is a weekday in ET, as its own seam.
+
+    Split out from _current_slot_label (2026-07-25) because the hour and the date
+    were being read from two different places: tests inject the hour through
+    _et_now_hour but the weekday was computed off the real clock, so the whole
+    slot-labelling suite went red every Saturday and Sunday — asserting "14:05
+    means the 14:00 slot" while the weekend slot list ([0, 23.98]) was in force.
+    Production behaviour is unchanged; the date now has a seam the hour already
+    had, so a test can pin both halves of "when is it"."""
+    try:
+        from zoneinfo import ZoneInfo
+        now = datetime.now(ZoneInfo("America/New_York"))
+    except Exception:
+        now = datetime.now(timezone.utc) - timedelta(hours=4)
+    return now.weekday() < 5
+
+
 def _current_slot_label() -> str | None:
     """The scheduled slot this run belongs to, or None if fired well off-slot.
 
@@ -62,8 +80,7 @@ def _current_slot_label() -> str | None:
     try:
         from runlib.analytics import expected_slots
         now_h, _ = _et_now_hour()
-        weekday = (datetime.now(timezone.utc) - timedelta(hours=4)).weekday() < 5
-        slots = expected_slots(weekday)
+        slots = expected_slots(_et_is_weekday())
         # Nearest slot at or before now (a run fires AT or just after its slot).
         candidates = [s for s in slots if s <= now_h + 0.25]
         if not candidates:

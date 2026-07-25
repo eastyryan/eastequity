@@ -109,7 +109,13 @@ def test_one_missed_slot_now_pages(monkeypatch):
 
 
 def test_a_stale_relay_bundle_trips_the_alarm(monkeypatch):
+    # Pin the calendar for the same reason _force_trading_day exists: the stale
+    # threshold is now a BAND (3h in market hours / 6h weekday off-hours / 26h on
+    # a non-trading day, added 2026-07-25 because a flat 6h paged every weekend
+    # for a pipeline with nothing to do). Without pinning, a 12h bundle is
+    # correctly healthy on a Saturday and this assertion flips with the calendar.
     _no_capability_noise(monkeypatch)
+    _force_trading_day(monkeypatch)
     monkeypatch.setattr("runlib.analytics.build_health",
                         lambda: {"missed": 0, "expected_runs_so_far": 7,
                                  "completed_scheduled_runs": 7,
@@ -151,3 +157,35 @@ def test_a_healthy_pipeline_is_silent(monkeypatch):
 def test_webhook_failure_never_raises():
     """An alarm that crashes on a bad webhook URL reports nothing at all."""
     assert hb.post_webhook("http://127.0.0.1:9/nope", {"text": "x"}) is False
+
+
+def test_the_alarm_reports_slots_against_slots(monkeypatch):
+    """THE REGRESSION (2026-07-25). The alarm paged with arithmetic that cannot
+    be true, because `expected`/`missed` counted SLOTS while `completed` counted
+    RUNS:
+
+        "1 scheduled run(s) missed today [10:00 ET] (expected 3, completed 3)"
+        "1 scheduled run(s) missed today [16:00 ET] (expected 7, completed 9)"
+
+    Both were right underneath and both read as broken, which is how a real
+    signal (a specific slot never ran) trains an operator to ignore the alarm.
+    The message must now compare like with like and keep the raw run count as a
+    separate, labelled number.
+    """
+    _no_capability_noise(monkeypatch)
+    _force_trading_day(monkeypatch)
+    monkeypatch.setattr("runlib.analytics.build_health",
+                        lambda: {"missed": 1, "expected_runs_so_far": 7,
+                                 "slots_covered": 6, "runs_journaled": 9,
+                                 "completed_scheduled_runs": 9,
+                                 "max_drift_min": 29,
+                                 "missed_slots": ["16:00"],
+                                 "bundle_age_hours": 0.5})
+    monkeypatch.setattr(hb, "ROOT", Path("/nonexistent"))
+    out = hb.assess()
+    assert out["healthy"] is False
+    reason = next(r for r in out["reasons"] if "16:00" in r)
+    assert "6/7" in reason, "slots covered must be reported against elapsed SLOTS"
+    assert "9 journaled run(s)" in reason, "the raw run count must stay, but labelled"
+    assert "expected 7, completed 9" not in reason, "the contradictory pairing is back"
+    assert "+29min" in reason, "drift is the diagnosis for a slot eaten by its neighbour"

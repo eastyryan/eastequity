@@ -175,7 +175,15 @@ def slot_report(now_h: float | None = None, weekday: bool | None = None) -> dict
         label = f"{int(slot):02d}:{int(round((slot % 1) * 60)):02d}"
         if hit is not None:
             used.add(hit)
+            # DRIFT: how late (or early) the run that covered this slot actually
+            # landed. Recorded because "covered" and "on time" are different facts
+            # and only one of them was ever visible. Measured over 2026-07-20..24,
+            # NO run landed on time — median +19 min, worst +43 — which is what
+            # makes 10:00 the most-missed slot on the board: it sits 60 min after
+            # 09:00, so a 09:00 run drifting past +30 walks into its neighbour's
+            # window and the two slots collide.
             report.append({"slot": slot, "label": label, "status": "hit",
+                           "drift_min": round((runs[hit]["et_hour"] - slot) * 60),
                            "run_id": runs[hit]["run_id"], "node": runs[hit]["node"]})
         elif now_h < hi:
             # Still inside its window — not late yet, so not a miss.
@@ -218,6 +226,7 @@ def slot_report(now_h: float | None = None, weekday: bool | None = None) -> dict
             # on the dashboard and in the journal.
             entry["status"] = "hit"
             entry["recovered"] = True
+            entry["drift_min"] = round((runs[rec]["et_hour"] - slot) * 60)
             entry["run_id"] = runs[rec]["run_id"]
             entry["node"] = runs[rec]["node"]
 
@@ -226,8 +235,14 @@ def slot_report(now_h: float | None = None, weekday: bool | None = None) -> dict
     missed = [s["label"] for s in report if s["status"] in ("missed", "died")]
     died_slots = [s["label"] for s in report if s["status"] == "died"]
     nodes = sorted({runs[j]["node"] for j in used}) if used else []
+    drifts = [s["drift_min"] for s in report if isinstance(s.get("drift_min"), int)]
     return {"slots": report, "missed_slots": missed, "died_slots": died_slots,
             "hit": len(used), "missed_count": len(missed),
+            # Worst lateness among slots that DID land. A slot list whose drift
+            # approaches the gap to the next slot is a schedule that will start
+            # eating its own slots, which is a different problem from a dead node
+            # and needs a different fix (move the slot, not restart the runner).
+            "max_drift_min": max(drifts) if drifts else None,
             "elapsed": sum(1 for s in report if s["status"] != "pending"),
             "nodes_seen": nodes,
             "unmatched_runs": [r["run_id"] for j, r in enumerate(runs) if j not in used]}
@@ -289,6 +304,19 @@ def build_health() -> dict:
         "as_of_et": now.isoformat(timespec="minutes"),
         "expected_runs_so_far": expected,
         "completed_scheduled_runs": completed,
+        # TWO DIFFERENT FACTS, AND CONFLATING THEM IS WHY THE ALARM READ AS
+        # NONSENSE. `completed_scheduled_runs` is a RAW COUNT of runs journaled
+        # today — it includes recovery runs, manual runs, and a slot that fired
+        # twice. `slots_covered` is how many scheduled slots actually produced a
+        # run. Only the second is comparable to expected_runs_so_far/missed, which
+        # are per-slot. Reporting the raw count against a per-slot expectation is
+        # what produced heartbeat pages like "1 scheduled run(s) missed today
+        # [10:00 ET] (expected 3, completed 3)" and "(expected 7, completed 9)" —
+        # arithmetic that looks broken, trains you to ignore the alarm, and hides
+        # the real signal (a specific slot never ran).
+        "slots_covered": report["hit"],
+        "runs_journaled": completed,
+        "max_drift_min": report.get("max_drift_min"),
         "missed": missed,
         # WHICH slots, not just how many — "missed 14:00" is actionable, "missed 1" is
         # a number you have to go investigate before you can do anything with it.

@@ -270,3 +270,49 @@ def test_recovery_never_steals_the_next_slots_own_run(monkeypatch, tmp_path):
     statuses = {s["label"]: s["status"] for s in r["slots"]}
     assert statuses["09:00"] == "hit"
     assert statuses["06:00"] == "missed"
+
+
+# --------------------------------------------------------------------------- #
+# Drift + one-basis reporting (2026-07-25)
+#
+# The alarm was paging with arithmetic that cannot be true:
+#   "1 scheduled run(s) missed today [10:00 ET] (expected 3, completed 3)"
+#   "1 scheduled run(s) missed today [16:00 ET] (expected 7, completed 9)"
+# Both were CORRECT underneath — `expected`/`missed` counted SLOTS while
+# `completed` counted RUNS — but an operator cannot parse that, and an alarm
+# nobody can parse is an alarm nobody reads. The fix reports slots against slots
+# and keeps the raw run count as a separate labelled number.
+# --------------------------------------------------------------------------- #
+def test_slots_covered_is_not_the_raw_run_count(monkeypatch, tmp_path):
+    """THE REGRESSION, in the shape logged on 2026-07-23: nine runs journaled,
+    seven slots elapsed, and one slot nonetheless uncovered. `hit` must count
+    SLOTS so the alarm can compare like with like."""
+    # 06:00 and 09:00 each fire twice; 16:00 never fires.
+    hours = [6.1, 6.4, 9.3, 9.8, 10.3, 12.3, 14.3, 17.6, 17.9]
+    r = _report(monkeypatch, tmp_path, hours, now_h=23.0)
+    assert "16:00" in r["missed_slots"]
+    assert r["hit"] < len(hours), "slots covered must not equal the raw run count"
+    assert r["hit"] + r["missed_count"] == r["elapsed"], (
+        "slots covered + slots missed must reconcile to elapsed slots — this is "
+        "the identity the old 'expected N, completed M' message violated")
+
+
+def test_drift_is_recorded_for_covered_slots(monkeypatch, tmp_path):
+    """Covered and on-time are different facts. Measured 07-20..24, NO run landed
+    on time (median +19min), which is the real reason 10:00 keeps getting eaten."""
+    r = _report(monkeypatch, tmp_path, [6.0, 9.5], now_h=11.5)
+    by = {s["label"]: s for s in r["slots"]}
+    assert by["06:00"]["drift_min"] == 0
+    assert by["09:00"]["drift_min"] == 30
+    assert r["max_drift_min"] == 30
+
+
+def test_a_late_run_eats_the_next_slot(monkeypatch, tmp_path):
+    """WHY 10:00 IS THE MOST-MISSED SLOT ON THE BOARD. 09:00 and 10:00 sit 60min
+    apart while observed drift runs +15..30min. A single run at 09:55 must be
+    credited to 09:00 only — never allowed to satisfy both — leaving 10:00
+    honestly uncovered rather than silently absorbed."""
+    r = _report(monkeypatch, tmp_path, [9.92], now_h=12.5)
+    by = {s["label"]: s for s in r["slots"]}
+    assert by["09:00"]["status"] == "hit"
+    assert by["10:00"]["status"] in ("missed", "died")

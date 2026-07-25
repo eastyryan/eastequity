@@ -11,6 +11,29 @@ Deliberately shallow: it surfaces raw headlines with links; Claude judges
 swing relevance and tone. A paid news API can slot in behind the same
 interface later.
 
+EVERY HEADLINE CARRIES source / tier / subject (added 2026-07-25).
+
+  * source — the publisher. All three feeds return one (yfinance
+    content.provider.displayName, Finnhub `source`, Alpaca `source`) and this
+    module used to drop all three on the floor, building {title, published, url}
+    only. A measurement of the live 07-25 bundle found 0 of 96 headlines carried
+    a publisher, so the brain could not tell a Reuters scoop from a Zacks
+    template. Falls back to the URL's domain so nothing is ever unattributed.
+  * tier — "primary" (wires/major papers/PR) vs "commentary" (content mills).
+    Reported, NEVER filtered: a hard block would drop legitimate breaking news
+    from an untiered outlet. The brain and risk desk weight it.
+  * subject — "direct" (about this company), "peer_or_market" (about someone
+    else), "roundup" (a multi-name list piece). THE reason this module changed:
+    49% of per-ticker headlines in the live 07-25 bundle were about a DIFFERENT
+    company — Yahoo's per-ticker feed splices in "related" peer articles, so MPC
+    was served "Will UK interest rates fall in 2026?" and a Chevron re-rate
+    piece, SNOW got Palantir articles, and TRV got five straight headlines about
+    OTHER insurers' earnings. Handed a peer's news under this ticker's name, the
+    brain reconciles it into a catalyst that does not exist; the risk desk then
+    vetoes the fabrication and nothing trades. Off-subject rows are TAGGED, not
+    dropped — peer news is genuinely useful context — but "direct" rows sort
+    first so they win the limited max_headlines budget.
+
 Optional upgrade: when FINNHUB_API_KEY is set (free tier, 60 calls/min —
 https://finnhub.io) each ticker also pulls Finnhub company-news for the last
 week, mapped to the same headline shape, deduped by title, and merged ahead
@@ -32,6 +55,95 @@ import re
 from datetime import datetime, timedelta, timezone
 
 NEWS_MAX_AGE_DAYS = 7
+
+# A row tagging more than this many symbols is a market roundup ("12 Tech Stocks
+# Moving In Friday's Session"), not a single-name catalyst. Alpaca distributes
+# every row to EVERY symbol it tags, so without this one list piece became the
+# headline catalyst for a dozen unrelated names.
+MAX_SYMBOLS_BEFORE_ROUNDUP = 3
+
+# Publisher -> tier. Substring match against a casefolded source/domain, so
+# "reuters.com", "Reuters" and "alpaca_reuters" all land on the same tier.
+# Deliberately partial: an outlet absent from both lists gets tier=None, which
+# means "unrated", NOT "bad" — see the module docstring on why this never filters.
+_PRIMARY_SOURCES = (
+    "reuters", "bloomberg", "wsj", "wall street journal", "dow jones",
+    "associated press", "apnews", "financial times", "ft.com", "cnbc",
+    "barrons", "barron's", "businesswire", "business wire", "prnewswire",
+    "pr newswire", "globenewswire", "globe newswire", "sec.gov", "nasdaq.com",
+    "axios", "the information", "marketwatch",
+)
+_COMMENTARY_SOURCES = (
+    "zacks", "fool.com", "motley fool", "247wallst", "24/7 wall", "trefis",
+    "marketbeat", "insider monkey", "insidermonkey", "simply wall st",
+    "simplywall", "benzinga", "investorplace", "stocktwits", "gurufocus",
+    "seeking alpha", "seekingalpha", "talkmarkets", "moneyweek", "barchart",
+)
+
+# Corporate-form noise that carries no identifying signal: matching on these
+# would make "Delek US Holdings" look like news about any other holdings company.
+_NAME_STOPWORDS = frozenset({
+    "inc", "corp", "corporation", "ltd", "limited", "holdings", "holding",
+    "co", "company", "the", "plc", "group", "sa", "nv", "ag", "lp", "llc",
+    "class", "common", "stock", "enterprise", "enterprises", "international",
+    "technologies", "technology", "systems", "solutions",
+})
+
+
+def _source_from_url(url) -> str | None:
+    """Registered domain of a headline URL, minus 'www.'. Used only as the
+    fallback when a feed gave us no publisher. Pure; None on garbage."""
+    if not url:
+        return None
+    m = re.match(r"^https?://([^/:?#]+)", str(url).strip(), re.I)
+    if not m:
+        return None
+    host = m.group(1).lower()
+    return host[4:] if host.startswith("www.") else host or None
+
+
+def _tier_for(source) -> str | None:
+    """'primary' | 'commentary' | None (unrated). Pure.
+
+    Never a filter — a hard block on 'commentary' would kill a real scoop the
+    moment an unrated outlet broke it first."""
+    s = str(source or "").casefold()
+    if not s:
+        return None
+    if any(k in s for k in _PRIMARY_SOURCES):
+        return "primary"
+    if any(k in s for k in _COMMENTARY_SOURCES):
+        return "commentary"
+    return None
+
+
+def _company_tokens(company_name) -> set[str]:
+    """Identifying lowercase tokens of a company name, corporate-form words and
+    1-2 char fragments removed. 'Marathon Petroleum Corp' -> {marathon,
+    petroleum}. Pure; empty set when nothing identifying survives."""
+    words = re.split(r"[^A-Za-z]+", str(company_name or "").lower())
+    return {w for w in words if w and len(w) > 2 and w not in _NAME_STOPWORDS}
+
+
+def _headline_subject(ticker: str, name_tokens: set[str], headline: dict) -> str:
+    """'direct' | 'roundup' | 'peer_or_market' for one headline. Pure.
+
+    direct         — the title names this ticker or this company.
+    roundup        — a multi-name list piece (see MAX_SYMBOLS_BEFORE_ROUNDUP);
+                     checked BEFORE 'direct' because a roundup that happens to
+                     name the company is still a list piece, not a catalyst.
+    peer_or_market — everything else: a competitor's earnings, a macro story,
+                     a sector note. Real context, but never this name's news.
+    """
+    title = str(headline.get("title") or "")
+    if len(headline.get("symbols") or []) > MAX_SYMBOLS_BEFORE_ROUNDUP:
+        return "roundup"
+    if re.search(r"\b" + re.escape(str(ticker).upper()) + r"\b", title.upper()):
+        return "direct"
+    low = title.lower()
+    if name_tokens and any(tok in low for tok in name_tokens):
+        return "direct"
+    return "peer_or_market"
 
 
 def _parse_pubdate(value):
@@ -69,7 +181,10 @@ def _filter_recent(items: list, now: datetime, max_age_days: float = NEWS_MAX_AG
 
 def _headlines_from_finnhub(payload) -> list[dict]:
     """Finnhub /company-news rows -> our headline shape
-    [{title, published (iso|None), url}]. Non-list/garbage -> []. Pure."""
+    [{title, published (iso|None), url, source}]. Non-list/garbage -> []. Pure.
+
+    Finnhub's `source` was previously discarded here; it is the publisher the
+    brain needs to weight the headline at all."""
     if not isinstance(payload, list):
         return []
     out = []
@@ -84,7 +199,8 @@ def _headlines_from_finnhub(payload) -> list[dict]:
             except (OverflowError, OSError, ValueError):
                 pass
         out.append({"title": str(row["headline"]).strip(),
-                    "published": published, "url": row.get("url")})
+                    "published": published, "url": row.get("url"),
+                    "source": row.get("source") or _source_from_url(row.get("url"))})
     return out
 
 
@@ -127,7 +243,17 @@ def _fetch_finnhub_company_news(ticker: str, api_key: str, now: datetime) -> lis
 
 def _fetch_alpaca_news_by_symbol(tickers: list[str], max_age_days: float) -> dict:
     """One batched Alpaca News call for all tickers, distributed per symbol in
-    headline shape [{title, published, url}]. Fail-soft: {} on any error."""
+    headline shape [{title, published, url, source, symbols}].
+    Fail-soft: {} on any error.
+
+    CARRIES `source` AND `symbols` THROUGH (2026-07-25). alpaca_data.get_news
+    already returns both and this function used to keep neither, which cost two
+    things: the publisher (see module docstring) and any way to tell a
+    single-name story from a roundup. Alpaca distributes one row to EVERY symbol
+    it tags, so a 12-ticker "stocks moving today" piece was landing as a
+    first-class catalyst under all twelve names. Keeping `symbols` lets
+    _headline_subject label those rows 'roundup' so they can never anchor a
+    thesis."""
     try:
         from tools import alpaca_data
         if not alpaca_data.has_keys():
@@ -138,9 +264,12 @@ def _fetch_alpaca_news_by_symbol(tickers: list[str], max_age_days: float) -> dic
     out: dict = {}
     wanted = {str(t).upper() for t in tickers}
     for row in rows:
+        syms = [str(s).upper() for s in (row.get("symbols") or [])]
         h = {"title": row.get("title"), "published": row.get("published"),
-             "url": row.get("url")}
-        for sym in row.get("symbols") or []:
+             "url": row.get("url"),
+             "source": row.get("source") or _source_from_url(row.get("url")),
+             "symbols": syms}
+        for sym in syms:
             if sym in wanted:
                 out.setdefault(sym, []).append(h)
     return out
@@ -190,8 +319,14 @@ def _ratings_from_info(info: dict):
 
 
 def get_news_and_catalysts(tickers: list[str], max_headlines: int = 6,
-                           max_age_days: float = NEWS_MAX_AGE_DAYS) -> dict:
+                           max_age_days: float = NEWS_MAX_AGE_DAYS,
+                           company_names: dict | None = None) -> dict:
     """Per-focus-name headlines, earnings date, ratings and beat history.
+
+    company_names: optional {TICKER: "Legal Name"} so subject tagging can tell a
+    headline about THIS company from one about a peer. The bundle already
+    resolves these (sec_filings[TICKER].company); omitted -> fall back to
+    yfinance longName, then to ticker-symbol matching alone.
 
     STATUS CONTRACT (tools/freshness_audit.feed_status): this function used to
     hardcode {"status": "ok"} at line 199 and NEVER downgrade it, no matter how
@@ -223,16 +358,27 @@ def get_news_and_catalysts(tickers: list[str], max_headlines: int = 6,
             raw = []
             for item in (tk.news or []):
                 content = item.get("content", item)
+                url = (content.get("canonicalUrl") or {}).get("url") or content.get("link")
+                # provider.displayName is where modern yfinance puts the publisher;
+                # older payloads used a flat "publisher". Domain is the last resort
+                # so a headline is never handed to the brain unattributed.
+                provider = content.get("provider")
+                pub = (provider.get("displayName") if isinstance(provider, dict) else None) \
+                    or content.get("publisher") or _source_from_url(url)
                 raw.append({
                     "title": content.get("title"),
                     "published": content.get("pubDate") or content.get("providerPublishTime"),
-                    "url": (content.get("canonicalUrl") or {}).get("url") or content.get("link"),
+                    "url": url,
+                    "source": pub,
                 })
             if alpaca_by_symbol.get(t.upper()):  # optional merge; no keys -> unchanged
                 raw = _merge_headlines(raw, alpaca_by_symbol[t.upper()])
             if finnhub_key:  # optional merge; no key -> byte-identical behavior
                 raw = _merge_headlines(raw, _fetch_finnhub_company_news(t, finnhub_key, now))
-            entry["headlines"] = _filter_recent(raw, now, max_age_days)[:max_headlines]
+            # NOT sliced to max_headlines yet: subject tagging below decides which
+            # rows deserve the budget, and slicing here would let three peer
+            # articles crowd out the one headline actually about this company.
+            recent = _filter_recent(raw, now, max_age_days)
             try:
                 cal = tk.calendar
                 dates = cal.get("Earnings Date") if isinstance(cal, dict) else None
@@ -255,10 +401,36 @@ def get_news_and_catalysts(tickers: list[str], max_headlines: int = 6,
                     break
             except Exception:
                 pass
+            info = None
             try:  # analyst consensus: tk.info is flaky — degrade to None, never fail the entry
-                entry["analyst_ratings"] = _ratings_from_info(tk.info)
+                info = tk.info
+                entry["analyst_ratings"] = _ratings_from_info(info)
             except Exception:
                 entry["analyst_ratings"] = None
+
+            # SUBJECT TAGGING. Caller-supplied name wins (the bundle already knows
+            # it from sec_filings[TICKER].company); yfinance's longName is the
+            # fallback. With NEITHER, name_tokens is empty and _headline_subject
+            # degrades to ticker-symbol matching only — it can then under-call
+            # 'direct', so a missing name must never be allowed to DROP a row.
+            # That is precisely why off-subject rows are demoted, not deleted.
+            company = (company_names or {}).get(t.upper()) or (
+                (info or {}).get("longName") or (info or {}).get("shortName")
+                if isinstance(info, dict) else None)
+            entry["company"] = company
+            name_tokens = _company_tokens(company)
+            for h in recent:
+                h["subject"] = _headline_subject(t, name_tokens, h)
+                h["tier"] = _tier_for(h.get("source"))
+                h.pop("symbols", None)   # bookkeeping for the roundup test only
+            rank = {"direct": 0, "peer_or_market": 1, "roundup": 2}
+            # Stable sort: within a subject class the feed's own recency order
+            # survives, so this re-prioritizes without reshuffling fresh news.
+            entry["headlines"] = sorted(
+                recent, key=lambda h: rank.get(h.get("subject"), 1))[:max_headlines]
+            entry["headline_mix"] = {
+                k: sum(1 for h in recent if h.get("subject") == k)
+                for k in ("direct", "peer_or_market", "roundup")}
             try:  # sell-side scoreboard: did management beat the number, quarter by quarter
                 eh = tk.earnings_history
                 quarters = []
@@ -293,7 +465,19 @@ def get_news_and_catalysts(tickers: list[str], max_headlines: int = 6,
         "call failed (absence of headlines is NOT a quiet tape - do not read it "
         "as 'no news'); 'degraded' = some names unfetched, listed in "
         "coverage.failures; 'empty' = every name reachable, none had a headline "
-        "inside news_max_age_days.")
+        "inside news_max_age_days. "
+        "EVERY headline carries subject/source/tier. subject='direct' is about "
+        "THIS company; 'peer_or_market' is about someone else (a competitor's "
+        "print, a macro story) and must NEVER be cited as this ticker's catalyst "
+        "- it is context only; 'roundup' is a multi-name list piece and cannot "
+        "support a thesis at all. Rows are sorted direct-first. headline_mix "
+        "counts each class BEFORE the max_headlines cut, so a name showing "
+        "direct:0 genuinely has no company-specific news - say that rather than "
+        "reaching for a peer headline. tier='primary' is a wire/major outlet, "
+        "'commentary' is a content mill (Zacks/Fool/247wallst/trefis and the "
+        "like) whose 'analysis' is not reporting, null is simply unrated - "
+        "weight accordingly, and never treat a commentary headline as a "
+        "sourced fact.")
     return stamp_feed(out, len(tickers), fetched, len(tickers) - fetched,
                       found=with_headlines,
                       failures=dict(list(failures.items())[:10]),

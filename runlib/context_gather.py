@@ -227,6 +227,20 @@ def tape_and_8k_promotions(focus: list[str], market_news: dict | None,
         return [], []
 
 
+def _company_names_from_filings(filings) -> dict:
+    """{TICKER: "Legal Name"} out of an SEC filing-brief map, for news subject
+    tagging. EDGAR's company name is authoritative and already fetched, so this
+    costs no network. Pure; {} on anything unexpected (light runs stub `filings`
+    out entirely, and news_catalysts falls back to yfinance longName there)."""
+    out = {}
+    if not isinstance(filings, dict):
+        return out
+    for t, br in filings.items():
+        if isinstance(br, dict) and br.get("company"):
+            out[str(t).upper()] = br["company"]
+    return out
+
+
 def deep_research_bundle(focus: list[str]) -> tuple[dict, dict, dict]:
     """Filings + deep fundamentals + filing prose for focus names (quarterly-cached)."""
     filings = {t: get_filing_brief(t) for t in focus}
@@ -420,7 +434,9 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
         smart_money = {"status": "skipped_light_run"}
         insiders = {"status": "skipped_light_run"}
         partnerships = {"status": "skipped_light_run"}
-        news = get_news_and_catalysts(focus) if focus else {"status": "skipped"}
+        news = (get_news_and_catalysts(
+            focus, company_names=_company_names_from_filings(filings))
+            if focus else {"status": "skipped"})
         deep_fundamentals = {t: {"status": "skipped_light_run"} for t in focus}
         filing_texts = {}
         guidance = get_ledger_summary(held)
@@ -496,7 +512,9 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
                 print(f"    (auto_grade {t} failed: {e})")
         guidance = get_ledger_summary(focus)
         smart_money = get_smart_money(focus) if focus else {"status": "skipped"}
-        news = get_news_and_catalysts(focus) if focus else {"status": "skipped"}
+        news = (get_news_and_catalysts(
+            focus, company_names=_company_names_from_filings(filings))
+            if focus else {"status": "skipped"})
         insiders = get_insider_activity(focus) if focus else {"status": "skipped"}
         try:
             from tools.partnerships import get_partnerships
@@ -618,7 +636,9 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
                 print(f"    (auto_grade {t} failed: {e})")
         guidance = get_ledger_summary(focus)
         smart_money = get_smart_money(focus) if focus else {"status": "skipped"}
-        news = get_news_and_catalysts(focus) if focus else {"status": "skipped"}
+        news = (get_news_and_catalysts(
+            focus, company_names=_company_names_from_filings(filings))
+            if focus else {"status": "skipped"})
         insiders = get_insider_activity(focus) if focus else {"status": "skipped"}
         print("  • strategic partnerships / material deals...")
         try:

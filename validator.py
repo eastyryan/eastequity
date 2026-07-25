@@ -1018,6 +1018,245 @@ _DATEISH = re.compile(
 _NUMBERISH = re.compile(r"\d")
 
 
+# --- Claim grounding -------------------------------------------------------
+#
+# WHY THIS EXISTS. Until 2026-07-25 nothing in this file checked whether a
+# thesis's FACTS were real. _check_variant_perception asks only that SOME number
+# and SOME date appear in the string, so the 2026-07-22 DDOG proposal cleared it
+# with "JMP Securities raised its target to $311 from $225" — a firm, a target
+# and a date that appear NOWHERE in the bundle. The only thing that caught it was
+# the LLM risk desk, whose veto reads "this string, and any variant of 'JMP',
+# appears ZERO times anywhere in the full context bundle". Same story on 07-24
+# with MELI's "Loggi acquisition" and UNP's "binding MOU signed one day earlier".
+#
+# That check is mechanical, so it should not cost an LLM call and should not be
+# allowed to vary run to run. This gate does exactly what the desk did by hand.
+#
+# PRECISION OVER RECALL, DELIBERATELY. A false rejection blocks a good trade, so
+# this only flags claims ATTRIBUTED TO A THIRD PARTY ("<Firm> raised/said/...")
+# and named proper nouns. It never touches the brain's own derived figures — its
+# target, its RR, its sizing — because those are supposed to be absent from the
+# bundle. It is the sourcing that is checkable, not the reasoning.
+
+_ATTRIBUTION_VERBS = (
+    r"raised|lowered|cut|boosted|slashed|set|sets|initiated|upgraded|downgraded"
+    r"|reiterated|maintains|maintained|assumed|resumed|started|launched|published"
+    r"|reported|announced|said|says|guided|noted|flagged|warned|estimates"
+    r"|estimated|forecasts|forecast|projects|projected|acquired|acquires"
+)
+# "JMP Securities raised", "Morgan Stanley said", "Citi cut". Captures the
+# capitalized run immediately before an attribution verb.
+_ATTRIBUTED_CLAIM = re.compile(
+    r"\b((?:[A-Z][A-Za-z&.'\-]{1,}\s+){0,3}[A-Z][A-Za-z&.'\-]{1,})\s+"
+    r"(?:" + _ATTRIBUTION_VERBS + r")\b")
+# Capitalized proper-noun runs anywhere in the claim text ("Loggi", "Rogo AI").
+_PROPER_NOUN = re.compile(r"\b(?:[A-Z][A-Za-z&.'\-]{2,})(?:\s+[A-Z][A-Za-z&.'\-]{2,}){0,2}\b")
+
+# Capitalized words that carry no sourcing signal: sentence openers, calendar
+# words, finance boilerplate, and the vocabulary of the prompt itself. Matching
+# on these would flag ordinary prose as a fabricated entity.
+_CLAIM_STOPWORDS = frozenset({
+    "the", "this", "that", "these", "those", "there", "then", "they", "their",
+    "and", "but", "for", "with", "without", "from", "into", "over", "under",
+    "while", "when", "where", "what", "which", "who", "why", "how", "not",
+    "consensus", "street", "wall", "market", "markets", "management", "company",
+    "guidance", "revenue", "revenues", "earnings", "margin", "margins", "growth",
+    "risk", "risks", "target", "targets", "price", "prices", "stock", "stocks",
+    "share", "shares", "quarter", "quarterly", "annual", "fiscal", "year",
+    "january", "february", "march", "april", "may", "june", "july", "august",
+    "september", "october", "november", "december", "monday", "tuesday",
+    "wednesday", "thursday", "friday", "saturday", "sunday",
+    "however", "although", "because", "since", "despite", "given", "versus",
+    "analysts", "analyst", "investors", "sell", "buy", "hold", "long", "short",
+    "bull", "bear", "bullish", "bearish", "upside", "downside", "catalyst",
+    "mechanism", "resolution", "view", "thesis", "setup", "entry", "exit",
+    "stop", "support", "resistance", "breakout", "trend", "momentum", "volume",
+    "eps", "fcf", "ebitda", "gaap", "roic", "tam", "yoy", "qoq", "ttm", "capex",
+    "opex", "usd", "ceo", "cfo", "coo", "cto", "sec", "fed", "fomc", "cpi",
+    "gdp", "etf", "ipo", "mou", "llc", "inc", "corp", "ltd", "plc",
+    "its", "his", "her", "our", "your", "was", "were", "has", "have", "had",
+    "will", "would", "could", "should", "may", "might", "must", "can",
+    "one", "two", "three", "four", "five", "next", "last", "prior", "recent",
+    "new", "old", "high", "low", "above", "below", "near", "off", "per",
+    "ai", "it", "if", "as", "at", "by", "in", "on", "of", "to", "or", "is",
+    # Observed as bare capitalized tokens in the real 07-17..07-24 proposals.
+    # Each is ordinary prose that happened to start a sentence or a clause.
+    "sell-side", "buy-side", "continued", "strong", "expected", "raise",
+    "raised", "definitive", "minimum", "contracted", "cash", "deposits",
+    "case", "agreement", "agreements", "strengthens", "deal", "deals",
+    "medical", "devices", "strategic", "customer", "customers", "aug", "sep",
+})
+
+
+# EVIDENCE sections only — an explicit allowlist, and the allowlist is the point.
+#
+# The first cut of this hashed the WHOLE bundle, which quietly defeated itself.
+# The bundle carries `hard_limits` (a dump of autonomy_config.json), and the
+# config note documenting this very feature quotes the incident it was built
+# from: "JMP Securities raised its target to $311". So the fabricated claim
+# grounded itself against the documentation of its own fabrication, and the DDOG
+# case went from CAUGHT to clean the moment the note shipped.
+#
+# The general failure is worse than that one embarrassment: any section carrying
+# OUR OWN prose — config, prompt scaffolding, prior theses, the digest — lets the
+# brain ground a claim against something it or we wrote, rather than against
+# something the world reported. Evidence has to come from outside.
+#
+# Allowlist rather than denylist so a future config-shaped section cannot silently
+# reopen the hole; the cost is that a genuinely new EVIDENCE section must be added
+# here, which fails toward flagging (safe) rather than toward passing (not).
+_EVIDENCE_SECTIONS = (
+    "news_and_catalysts", "market_news", "market_radar", "partnerships",
+    "sec_filings", "filing_texts", "todays_8ks", "insider_activity",
+    "smart_money_13f", "ownership_flow", "guidance_ledger", "earnings_week",
+    "deep_fundamentals", "fundamental_screen", "financial_checklists",
+    "quarterly_facts", "quality_ratios", "universe_scan", "discovery_screen",
+    "options_signals", "macro_regime", "market_events", "market_breadth",
+    "momentum_health", "stack_cards", "factor_map", "earnings_calendar",
+)
+
+
+def _bundle_haystack(market_context) -> str | None:
+    """Casefolded text of the bundle's EVIDENCE sections, for grounding.
+
+    None when no bundle was supplied — which MUST fail the check open. The
+    validator is called from tests and tools with a bare {} context, and
+    rejecting every BUY because the evidence was not handed to us would be a far
+    worse failure than the fabrication this gate exists to catch."""
+    if not isinstance(market_context, dict):
+        return None
+    bundle = market_context.get("_bundle")
+    if not isinstance(bundle, dict) or not bundle:
+        return None
+    cached = market_context.get("_bundle_haystack")
+    if isinstance(cached, str):
+        return cached
+    present = {k: bundle[k] for k in _EVIDENCE_SECTIONS if k in bundle}
+    if not present:
+        return None  # nothing citable was handed over — fail open, as above
+    try:
+        hay = json.dumps(present, default=str).casefold()
+    except (TypeError, ValueError):
+        return None
+    market_context["_bundle_haystack"] = hay
+    return hay
+
+
+def _claim_text(p: dict) -> str:
+    """variant_perception + catalysts as one string. catalysts is a list in the
+    schema but tolerate a bare string. Pure."""
+    parts = [str(p.get("variant_perception") or "")]
+    cats = p.get("catalysts")
+    if isinstance(cats, (list, tuple)):
+        parts.extend(str(c) for c in cats)
+    elif cats:
+        parts.append(str(cats))
+    return " ".join(parts)
+
+
+def _grounding_candidates(text: str, exempt: set[str]) -> list[str]:
+    """Third-party-attributed entities and proper nouns worth grounding. Pure.
+
+    `exempt` holds tokens that are trivially the subject of the proposal (its own
+    ticker and company name) — those are never evidence of fabrication.
+
+    MULTI-WORD CANDIDATES COME ONLY FROM THE ATTRIBUTION PATTERN. Run against the
+    real 07-17..07-24 proposals, the bare proper-noun regex produced phrases like
+    "MINIMUM CONTRACTED", "Case After Strong" and "Agreement Strengthens Deal" —
+    prose and headline fragments that will not appear verbatim in the bundle even
+    when the underlying thesis is impeccable. A single token ("Loggi", "Citi",
+    "KeyBanc") is a checkable entity; a capitalized word-run generally is not."""
+    out, seen = [], set()
+    cands = [(m.group(1), True) for m in _ATTRIBUTED_CLAIM.finditer(text)]
+    cands += [(m.group(0), False) for m in _PROPER_NOUN.finditer(text)]
+    for phrase, attributed in cands:
+        phrase = phrase.strip(" .,;:'\"-")
+        words = [w for w in re.split(r"\s+", phrase) if w]
+        if not attributed and len(words) > 1:
+            continue  # see docstring: unattributed word-runs are prose, not entities
+        # Drop leading words that are pure prose ("The Citi note" -> "Citi note").
+        while words and words[0].casefold() in _CLAIM_STOPWORDS:
+            words.pop(0)
+        while words and words[-1].casefold() in _CLAIM_STOPWORDS:
+            words.pop()
+        if not words:
+            continue
+        phrase = " ".join(words)
+        key = phrase.casefold()
+        if key in seen or key in _CLAIM_STOPWORDS or key in exempt:
+            continue
+        # Every token generic -> prose, not an entity.
+        if all(w.casefold() in _CLAIM_STOPWORDS or w.casefold() in exempt for w in words):
+            continue
+        if len(key) < 3:
+            continue
+        seen.add(key)
+        out.append(phrase)
+    return out
+
+
+def unsourced_claims(p: dict, market_context: dict) -> list[str]:
+    """Entities a BUY cites that appear NOWHERE in the context bundle.
+
+    Public because the risk desk consumes it too (runlib.brain_io): the desk was
+    already doing this grep by hand in prose, and handing it a precomputed list
+    makes the check deterministic without making it blocking. [] whenever the
+    answer is unknowable (no bundle, no claim text) — never a guess."""
+    if str(p.get("action", "")).upper() != "BUY":
+        return []
+    hay = _bundle_haystack(market_context)
+    if not hay:
+        return []
+    text = _claim_text(p)
+    if not text.strip():
+        return []
+    ticker = str(p.get("ticker", "")).upper()
+    exempt = {ticker.casefold()}
+    company = (((market_context.get("_bundle") or {}).get("sec_filings")
+                or {}).get(ticker) or {}).get("company")
+    for w in re.split(r"[^A-Za-z]+", str(company or "")):
+        if len(w) > 2:
+            exempt.add(w.casefold())
+    out = []
+    for cand in _grounding_candidates(text, exempt):
+        # Word-boundary, not substring: a plain `in` test says "Citi" is sourced
+        # because the bundle contains the word "citing". Boundaries are stricter
+        # in the direction that matters and no looser in the other — a real
+        # entity mentioned in the evidence appears there as a word.
+        if not re.search(r"(?<![a-z0-9])" + re.escape(cand.casefold())
+                         + r"(?![a-z0-9])", hay):
+            out.append(cand)
+    return out
+
+
+def _check_claim_grounding(p: dict, cfg: dict, market_context: dict,
+                           reasons: list[str]) -> None:
+    """Reject BUYs whose sourced claims cite entities absent from the bundle.
+
+    DEFAULT OFF (enforce_claim_grounding), and that is not timidity — it is the
+    same staged rollout autonomy_config._tradeability_note describes for the
+    volatility/market-cap floors: build the enforcement, prove the false-positive
+    rate on live runs, then flip one flag.
+
+    The specific reason it cannot ship blocking on day one: CLAUDE.md step 5
+    makes WebSearch MANDATORY before any BUY, so the brain is REQUIRED to bring
+    in facts that are legitimately absent from the bundle. Blocking on
+    "not in the bundle" would therefore reject true findings alongside invented
+    ones, and a false rejection costs a real trade. Until proposals carry
+    per-claim sources, the signal goes to the risk desk (which can weigh the
+    WebSearch context) via unsourced_claims() instead of hard-failing here.
+
+    Fails OPEN in every ambiguous case: no bundle, no claim text, flag off."""
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    q = cfg.get("trade_quality_requirements") or {}
+    if not q.get("enforce_claim_grounding", False):
+        return
+    max_report = int(q.get("max_unsourced_claims_reported") or 3)
+    for cand in unsourced_claims(p, market_context)[:max_report]:
+        reasons.append(f"unsourced_claim:'{cand}' appears nowhere in the context bundle")
+
+
 def _check_variant_perception(p: dict, cfg: dict, reasons: list[str]) -> None:
     """variant_perception must actually contain a variant perception.
 
@@ -1413,6 +1652,9 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
         # Falsifiability, structurally. Both fields were presence-checked only
         # while CLAUDE.md twice called variant_perception "validator-enforced".
         _check_variant_perception(p, cfg, reasons)
+        # ...and factually. A well-STRUCTURED variant perception can still be
+        # built on a sell-side note nobody published (DDOG 07-22, MELI 07-24).
+        _check_claim_grounding(p, cfg, market_context or {}, reasons)
         _check_scenarios(p, cfg, reasons)
         _check_demand_driver_field(p, reasons)
         _check_theme_concentration(p, cfg, portfolio, reasons)
