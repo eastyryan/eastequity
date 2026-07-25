@@ -70,7 +70,7 @@ def test_heartbeat_slots():
     wk = orchestrator.expected_slots(True)
     we = orchestrator.expected_slots(False)
     check("7 weekday slots", len(wk) == 7, f"got {len(wk)}: {wk}")
-    check("the seven: 6,9,10,12,2,4,5:30", wk == [6, 9, 10, 12, 14, 16, 17.5], str(wk))
+    check("the seven: 6,8:45,10:30,12,2,4,5:30", wk == [6, 8.75, 10.5, 12, 14, 16, 17.5], str(wk))
     check("2 weekend slots (midnight + 11:59pm)", len(we) == 2 and 0 in we, f"got {we}")
 
 

@@ -5,13 +5,13 @@ WHY THIS EXISTS
 Stops in this system are numbers in state/portfolio.json, not resting orders at the
 broker: every order body in execution/ is `type: "market"`. Enforcement therefore
 only happened when a full trading cycle ran, and the configured slots are
-06:00/09:00/10:00/12:00/14:00/16:00/17:30 ET. Measured exposure:
+06:00/08:45/10:30/12:00/14:00/16:00/17:30 ET. Measured exposure:
 
-    10:00 -> 12:00, 12:00 -> 14:00, 14:00 -> 16:00   ~2 hours each
+    10:30 -> 12:00, 12:00 -> 14:00, 14:00 -> 16:00   ~1.5-2 hours each
     16:00 -> next actionable session                 ~17.5 hours
     Friday close -> Monday open                      ~65.5 hours
 
-A stop breached at 10:05 was not acted on until 12:00. This closes the INTRADAY
+A stop breached at 10:35 was not acted on until 12:00. This closes the INTRADAY
 half of that gap by reusing the existing, fully-integrated exit_guard path on the
 5-minute live-price tick that already runs (scripts/push_live_prices.sh +
 .github/workflows/live-prices.yml), which until now refreshed quotes and called

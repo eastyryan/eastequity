@@ -46,8 +46,8 @@ DEPTHS = (
 # one evening review. KEEP IN SYNC with scripts/run_cycle.sh comments.
 DEFAULT_SLOT_DEPTHS: dict[str, str] = {
     "0600": "light",
-    "0900": "holdings_watchlist",
-    "1000": "holdings_watchlist",
+    "0845": "holdings_watchlist",
+    "1030": "holdings_watchlist",
     "1200": "holdings_watchlist",
     "1400": "holdings_watchlist",
     "1600": "full",
@@ -55,11 +55,11 @@ DEFAULT_SLOT_DEPTHS: dict[str, str] = {
 }
 
 # Slots that force a FULL deep dive when a universe name reports earnings.
-# morning (9am ET) catches overnight + pre-market (BMO) prints; evening
+# morning (8:45am ET) catches overnight + pre-market (BMO) prints; evening
 # (5:30pm ET) catches that afternoon's after-hours (AMC) prints — 5:30 rather
 # than 4:00 because after-hours releases are often not out by the 4pm slot.
 DEFAULT_EARNINGS_SLOTS: dict[str, str] = {
-    "0900": "morning",
+    "0845": "morning",
     "1730": "evening",
 }
 

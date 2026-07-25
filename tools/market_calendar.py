@@ -6,7 +6,7 @@ WHAT THIS REPLACES. Every session boundary in the system was hardcoded:
   * .github/workflows/live-prices.yml on `*/5 13-21 * * 1-5` -- UTC hours, so the ET
     window silently shifts by an hour across both DST transitions
   * runlib/preflight.py on `strftime("%a") in run_days`
-  * autonomy_config slot depths on fixed 0600/0900/1000/1200/1400/1600/1730
+  * autonomy_config slot depths on fixed 0600/0845/1030/1200/1400/1600/1730
 
 None of them knew about holidays or half-days. On Thanksgiving the feeder ran all day
 against the prior session's prints; on 2026-11-27 and 2026-12-24 the market closes at

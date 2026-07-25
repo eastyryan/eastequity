@@ -90,8 +90,8 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "run_id": run_id,
         "mode": context["trading_mode"],
-        "schedule_note": "Runs at 6am, 9am, 10am, 12pm, 2pm and 4pm ET, a 5:30pm "
-                         "research review, plus overnight and weekend news checks",
+        "schedule_note": "Runs at 6am, 8:45am, 10:30am, 12pm, 2pm and 4pm ET, a "
+                         "5:30pm research review, plus overnight and weekend news checks",
         "portfolio": {
             "cash_usd": context["portfolio"].get("cash_usd"),
             "total_equity_usd": context["portfolio"].get("total_equity_usd"),

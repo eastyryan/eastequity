@@ -13,8 +13,8 @@
 #
 # RUN DEPTHS (2026-07-14 redesign — full runs were too slow on every slot):
 #   0600  light                 holdings/watchlist prices + exits only
-#   0900  holdings_watchlist    four fast trading cycles (holdings + watchlist deep)
-#   1000  holdings_watchlist
+#   0845  holdings_watchlist    four fast trading cycles (holdings + watchlist deep)
+#   1030  holdings_watchlist
 #   1200  holdings_watchlist
 #   1400  holdings_watchlist
 #   1600  full                  one full-universe deep dive per day
@@ -43,9 +43,9 @@ if [ "$1" = "--scheduled" ]; then
       *) exit 0 ;;
     esac
   elif [ "$DOW" -le 5 ]; then
-    # Weekdays: SEVEN slots — 6am, 9am, 10am, 12pm, 2pm, 4pm, 5:30pm
+    # Weekdays: SEVEN slots — 6am, 8:45am, 10:30am, 12pm, 2pm, 4pm, 5:30pm
     case "$HHMM" in
-      0600|0900|1000|1200|1400|1600|1730) ;;
+      0600|0845|1030|1200|1400|1600|1730) ;;
       *) exit 0 ;;
     esac
   else
@@ -67,7 +67,7 @@ fi
 # Slot-aware depth: four holdings/watchlist cycles, one full deep dive, light pre-market.
 case "$HHMM" in
   0600) EXTRA="--depth light" ;;
-  0900|1000|1200|1400) EXTRA="--depth holdings_watchlist" ;;
+  0845|1030|1200|1400) EXTRA="--depth holdings_watchlist" ;;
   1600) EXTRA="--depth full" ;;
   1730) EXTRA="--news-only" ;;
   *)    EXTRA="--depth full" ;;

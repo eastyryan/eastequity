@@ -8,9 +8,22 @@ name: Gather market data for cloud runs
 
 on:
   schedule:
-    - cron: "40 9,12,13,15,17,19,21 * * 1-5"     # 20 min before weekday run slots (UTC);
+    - cron: "40 9,15,17,19,21 * * 1-5"           # 20 min before weekday run slots (UTC):
+                                                  # 05:40/11:40/13:40/15:40 ET feed the
+                                                  # 06:00/12:00/14:00/16:00 slots, and
                                                   # 21:40 feeds the 5:30pm ET full review
                                                   # (7:30pm slot removed 2026-07-13)
+    - cron: "25 12 * * 1-5"                       # 08:25 ET, 20 min before the 08:45 slot.
+                                                  # Its own line because the slot moved off
+                                                  # the hour (09:00 -> 08:45, 2026-07-25) and
+                                                  # the shared ":40" pattern no longer fits:
+                                                  # the old 12:40 UTC gather would have
+                                                  # started FIVE minutes before an 08:45 run
+                                                  # while taking 4-8 min to complete, so the
+                                                  # run would have read the previous bundle.
+                                                  # The 10:30 slot needs no line here — the
+                                                  # hourly ":10" schedule below already fires
+                                                  # at 14:10 UTC (10:10 ET), 20 min ahead.
     - cron: "10 14-20 * * 1-5"                    # +every market hour at :10 (9:30-4 ET) so
                                                   # the bundle is never more than ~30min old
                                                   # while the market is open

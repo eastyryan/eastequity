@@ -38,16 +38,16 @@ def _find(monkeypatch, tmp_path, hours, now_h):
 
 
 def test_names_the_missed_slot_and_its_depth(monkeypatch, tmp_path):
-    """10am missed. Checked at 11:30 — past its 1h grace (so it is genuinely missed,
-    not just late) and before the 12pm slot (so still recoverable)."""
-    r = _find(monkeypatch, tmp_path, [9.0], now_h=11.5)
-    assert r["slot"] == "10:00"
+    """10:30 missed. Checked at 11:45 — past its 1h grace (so it is genuinely
+    missed, not just late) and before the 12pm slot (so still recoverable)."""
+    r = _find(monkeypatch, tmp_path, [8.75], now_h=11.75)
+    assert r["slot"] == "10:30"
     assert r["depth"] == "holdings_watchlist"
-    assert r["hhmm"] == "1000"
+    assert r["hhmm"] == "1030"
 
 
 def test_silent_when_every_elapsed_slot_ran(monkeypatch, tmp_path):
-    r = _find(monkeypatch, tmp_path, [6.0, 9.0, 10.0], now_h=11.5)
+    r = _find(monkeypatch, tmp_path, [6.0, 8.75, 10.5], now_h=11.75)
     assert r["slot"] is None
 
 

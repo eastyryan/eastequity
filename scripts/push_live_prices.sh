@@ -31,7 +31,7 @@ print('refreshed', r.get('n'), 'quotes as of', r.get('as_of'))" || exit 0
   [ -s state/live_prices.json ] || { echo "no snapshot produced"; exit 0; }
   # BETWEEN-CYCLE STOP ENFORCEMENT. Stops are numbers in state/portfolio.json, not
   # resting broker orders, so they were only honored when a full cycle ran — leaving
-  # ~2h intraday windows (10:00->12:00, 12:00->14:00, 14:00->16:00). This tick
+  # ~2h intraday windows (10:30->12:00, 12:00->14:00, 14:00->16:00). This tick
   # already had the fresh quotes; it just never looked at the stops (trigger_watch
   # is a WATCHLIST tool and explicitly skips held tickers). Runs BEFORE the push:
   # honoring a stop is more urgent than publishing a snapshot.

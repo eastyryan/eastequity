@@ -19,12 +19,22 @@ MIN_BUCKET_TRADES = 5
 def expected_slots(weekday: bool) -> list[float]:
     """Scheduled run slots (ET hours) for a weekday vs a weekend day.
     KEEP IN SYNC with the slot gate in scripts/run_cycle.sh and the cloud
-    routines: weekdays run SEVEN slots (user policy 2026-07-13) — 6am, 9am,
-    10am, 12pm, 2pm, 4pm, 5:30pm (5:30 is a research review, no trading, but
+    routines: weekdays run SEVEN slots (user policy 2026-07-13) — 6am, 8:45am,
+    10:30am, 12pm, 2pm, 4pm, 5:30pm (5:30 is a research review, no trading, but
     still journals a run summary); weekends run news-only at midnight and
     11:59pm. The nightly cloud midnight news run may journal an extra completed
-    run — the heartbeat only alarms on MISSING runs, so that is harmless."""
-    return [6, 9, 10, 12, 14, 16, 17.5] if weekday else [0, 23.98]
+    run — the heartbeat only alarms on MISSING runs, so that is harmless.
+
+    09:00/10:00 -> 08:45/10:30 (user policy 2026-07-25). Two reasons:
+      * SPACING. Sixty minutes apart was the tightest pair on the board while
+        measured drift ran +15..30min, so their grace windows overlapped and one
+        run could be credited to either. 105 minutes apart, each slot gets its
+        full hour of grace with no ambiguity.
+      * TIMING. 10:00 sits 30 minutes after the open, inside the opening range;
+        10:30 is a full hour in, by which point the range has settled. For a
+        swing book that is a better place to act, independent of the plumbing.
+    """
+    return [6, 8.75, 10.5, 12, 14, 16, 17.5] if weekday else [0, 23.98]
 
 
 # A run may fire slightly early (cron jitter) and still belong to its slot; and a slot

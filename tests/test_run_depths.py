@@ -40,12 +40,12 @@ def test_resolve_precedence():
 
 def test_slot_map():
     print("slot_depths:")
-    check("0900 focused", slot_depth_from_hhmm("0900") == "holdings_watchlist")
+    check("0845 focused", slot_depth_from_hhmm("0845") == "holdings_watchlist")
     check("1600 full", slot_depth_from_hhmm("1600") == "full")
     check("0600 light", slot_depth_from_hhmm("0600") == "light")
-    cfg = {"schedule": {"slot_depths": {"1000": "full"}}}
-    check("config override", slot_depth_from_hhmm("1000", cfg) == "full")
-    check("default keys cover weekday slots", set(DEFAULT_SLOT_DEPTHS) >= {"0900", "1000", "1200", "1400", "1600"})
+    cfg = {"schedule": {"slot_depths": {"1030": "full"}}}
+    check("config override", slot_depth_from_hhmm("1030", cfg) == "full")
+    check("default keys cover weekday slots", set(DEFAULT_SLOT_DEPTHS) >= {"0845", "1030", "1200", "1400", "1600"})
 
 
 def test_nearest_slot_matching():
@@ -60,7 +60,7 @@ def test_nearest_slot_matching():
     check("0007 midnight outside tolerance -> full", slot_depth_from_hhmm("0007") == "full")
     check("2340 late night -> full", slot_depth_from_hhmm("2340") == "full")
     check("garbage hhmm -> full", slot_depth_from_hhmm("noon") == "full")
-    noisy = {"schedule": {"slot_depths": {"0900": "holdings_watchlist",
+    noisy = {"schedule": {"slot_depths": {"0845": "holdings_watchlist",
                                           "_note": "annotation", "bad": "light",
                                           "1300": "not_a_depth"}}}
     check("_note/malformed keys ignored", slot_depth_from_hhmm("0905", noisy) == "holdings_watchlist")

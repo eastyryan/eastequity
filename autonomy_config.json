@@ -308,21 +308,21 @@
     "max_completed_runs_per_day": 12,
     "slot_depths": {
       "0600": "light",
-      "0900": "holdings_watchlist",
-      "1000": "holdings_watchlist",
+      "0845": "holdings_watchlist",
+      "1030": "holdings_watchlist",
       "1200": "holdings_watchlist",
       "1400": "holdings_watchlist",
       "1600": "full",
       "1730": "evening_review",
-      "_note": "Four intraday slots are holdings+watchlist only (fast). One full universe deep dive at 4pm ET. Light pre-market at 6am. Evening review is news-only. Weekly market breadth is a separate Sunday --weekly-market run."
+      "_note": "Four intraday slots are holdings+watchlist only (fast). One full universe deep dive at 4pm ET. Light pre-market at 6am. 09:00/10:00 moved to 08:45/10:30 on 2026-07-25: they were the tightest pair on the board (60min) against measured drift of +15..30min, and 10:30 clears the opening range where 10:00 sat inside it. Evening review is news-only. Weekly market breadth is a separate Sunday --weekly-market run."
     },
     "earnings_deep_dive": {
       "enabled": true,
       "slots": {
-        "0900": "morning",
+        "0845": "morning",
         "1730": "evening"
       },
-      "_note": "When ANY universe company reports earnings, force a FULL deep dive and promote the reporter(s) into deep-research focus. The 9am slot (morning) catches overnight + pre-market reporters; the 5:30pm slot (evening) catches that afternoon's after-hours reporters \u2014 5:30 rather than 4:00 because after-hours prints are often not out by 4pm. Applies to scheduled (--auto-depth) runs; escalates that slot's depth to full only when a reporter is detected, otherwise the slot keeps its normal light/holdings_watchlist/evening_review depth."
+      "_note": "When ANY universe company reports earnings, force a FULL deep dive and promote the reporter(s) into deep-research focus. The 8:45am slot (morning) catches overnight + pre-market reporters; the 5:30pm slot (evening) catches that afternoon's after-hours reporters \u2014 5:30 rather than 4:00 because after-hours prints are often not out by 4pm. Applies to scheduled (--auto-depth) runs; escalates that slot's depth to full only when a reporter is detected, otherwise the slot keeps its normal light/holdings_watchlist/evening_review depth."
     },
     "live_prices": {
       "enabled": true,
