@@ -194,7 +194,40 @@
       ],
       "learned_at": "2026-07-24T23:05:13.582806+00:00",
       "run_id": "20260724-a685c4"
+    },
+    {
+      "id": "KB-9692173165",
+      "discipline": "technical_analysis",
+      "topic": "Reading the consolidation base to define a precise, auditable pivot trigger \u2014 and why the throwback to the level, not the breakout through it, is the higher-expectancy swing entry",
+      "summary": "The base-and-pivot framework (O'Neil's cup-with-handle, Minervini's VCP) exists to convert a fuzzy 'wait for confirmation' into ONE auditable price level: the pivot \u2014 the base's prior peak / handle high, the last ceiling of overhead supply. A valid VCP base shows 2-3 successive contractions where BOTH price range AND volume tighten, each smaller than the last, signaling sellers drying up; the classic entry then buys as price clears the pivot on volume ~40-50% above average. But the empirical record undercuts the 'chase the volume breakout' half. Bulkowski's pattern database (reported ~40,000+ trades on thepatternsite.com; I could not fetch the primary page directly and cite these figures as reported by secondary summaries) finds throwbacks occur ~50-60% of the time overall and ~74% when the breakout comes on ABOVE-average volume, and that ~97% of upward-breakout pattern TYPES perform BETTER when no throwback occurs \u2014 the strongest breakouts run away and never offer a second chance, while high-volume 'confirmed' breakouts are precisely the ones that throw back most. My own 12-year ablation says the same from the entry side: confirmed_breakout (new 20d high on >=1.5x volume) scored -0.32pp ATR-matched at 21d and ADX>25 breakouts were negative in 10 of 12 years, while the low-volume no_supply_pullback was the ONE positive read (+0.22/+0.25pp). Practitioner consensus reconciles this: buying the throwback/retest to the pivot (now acting as support) on drying volume gives a better ",
+      "key_points": [
+        "The pivot is a precise, auditable level (base's prior peak / handle high, cross-checked vs anchored_vwap) \u2014 write THAT into would_buy_at, never a vague 'after confirmation'.",
+        "A valid VCP base = 2-3 successive contractions each tighter in range AND volume; the volume dry-up is the setup, clearing the pivot is only the trigger.",
+        "Bulkowski (reported): throwbacks ~50-60% overall, ~74% on above-average-volume breakouts; ~97% of upward pattern types perform better WITHOUT a throwback \u2014 high-volume 'confirmed' breakouts throw back most.",
+        "My own ablation agrees from the entry side: confirmed_breakout -0.32pp, ADX>25 breakouts negative 10/12 yrs; no_supply_pullback +0.22/+0.25pp is the only positive read among ~25 indicators.",
+        "Highest-expectancy entry here is the throwback/retest to the pivot on drying volume (better fill, tighter stop under the base, higher RR) \u2014 i.e. KB-6241168493, not the breakout chase.",
+        "The cost is real and must be sized around: the strongest ~26-40% of breakouts never retest, so waiting means missing some big winners; a 50-70% starter on the breakout + add on the retest is the compromise when a catalyst forces urgency.",
+        "Do NOT treat a light-volume ('unconfirmed') breakout as a veto \u2014 breakout volume carries no positive information either way in my data, and CLAUDE.md forbids using it to reject a thesis that stands on its own."
+      ],
+      "how_to_apply": "For every watchlist name, read its base and write the PIVOT \u2014 the prior peak / handle high, cross-checked against anchored_vwap \u2014 as the would_buy_at level, plus an explicit event-date gate when a catalyst window applies, which fixes the AMD compound-trigger-fired-5-days-early defect (LP-0693555695). Prefer the entry my own data rewards: the throwback to that pivot on drying, no_supply_pullback volume (KB-6241168493), with the stop just below the base low so it sits beyond the sqrt(t) noise band (KB-2388376284) and the 2:1 RR floor clears honestly because I am buying AT the level, not extended above it. Do not make the volume breakout my primary entry and do not reject a setup because its breakout was unconfirmed \u2014 confirmed_breakout scored -0.32pp and breakout volume is descriptive-only. When a genuine fat pitch is running away in a supportive tape with a catalyst forcing urgency, take a 50-70% starter on the breakout and add on the retest rather than chasing full size or missing it. Accept that some of the strongest breakouts never come back: that is the priced cost of the higher-RR retest entry, not a process failure \u2014 consistent with ~30% of my regret_misses being market-wide m",
+      "sources": [
+        "https://www.tradingsim.com/blog/volatility-contraction-pattern",
+        "https://trendspider.com/learning-center/volatility-contraction-pattern-vcp/",
+        "https://www.forbes.com/sites/randywatts/2023/02/23/using-breakouts-in-the-william-oneil-methodology/",
+        "https://thepatternsite.com/studystudy.html (Bulkowski throwback/pullback statistics, cited via secondary summaries \u2014 direct fetch failed on socket error)",
+        "https://www.oreilly.com/library/view/trading-price-action/9781118172339/OEBPS/9781118172339_epub_c_05.htm",
+        "https://tradefundrr.com/breakout-pullback-entry-method/"
+      ],
+      "learned_at": "2026-07-27T23:06:54.841279+00:00",
+      "run_id": "20260727-98fab0",
+      "tensions": [
+        {
+          "with": "KB-6241168493",
+          "why": "No contradiction \u2014 division of labor. KB-6241168493 (pullback-continuation / buy the no-supply dip) is the ENTRY-timing rule; this lesson supplies the base/pivot STRUCTURE that defines the precise level the pullback should target and reconciles why chasing the breakout through that level is negative",
+          "noted_at": "2026-07-27"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-07-27T18:16:52.324816+00:00"
+  "updated_at": "2026-07-27T23:06:54.843723+00:00"
 }

@@ -574,6 +574,10 @@
   "improvements": [
     {
       "date": "2026-07-27",
+      "note": "Daily study (technical_analysis): Reading the consolidation base to define a precise, auditable pivot trigger \u2014 and why the throwback to the level, not the breakout through it, is the higher-expectancy swing entry - The base-and-pivot framework (O'Neil's cup-with-handle, Minervini's VCP) exists to convert a fuzzy 'wait for confirmation' into ONE auditable price level: the pivot \u2014 the base's prior peak / handle hi"
+    },
+    {
+      "date": "2026-07-27",
       "note": "The daily-bar price feed and the live intraday quote feed disagree by a full session this run (bars dated 2026-07-23 vs live Alpaca quotes at 17:21 UTC today) with no flag in the bundle calling this out explicitly \u2014 I had to cross-reference price_freshness.prices_meta_sample against universe_scan.indicators_by_ticker by hand to notice MU had already moved ~12% intraday on real news that the RSI/ADX/MACD fields in the bundle do not reflect. A deterministic check that compares indicators_by_ticker[T].price_as_of against the live overlay date and stamps a per-ticker `stale_technicals` flag when they diverge by more than one session would save this cross-referencing every time the yfinance feed is blocked."
     },
     {
@@ -687,10 +691,6 @@
     {
       "date": "2026-07-17",
       "note": "** Two concrete data defects cost me real research time and nearly cost me a bad trade."
-    },
-    {
-      "date": "2026-07-17",
-      "note": "`gap_analysis` reports a gap's size, direction, and whether it later filled, but not how the session actually closed relative to its open \u2014 so UNH shows an unfilled +7.4% gap while `pct_change_1d` is only +1.16%, meaning most of the pop was sold intraday, and I had to infer that from two fields that don't reconcile on their face. A `close_vs_open_pct` (or an `intraday_fade` flag) on the gap object would let an evening review distinguish a *held* gap from a *faded* one, which is the entire difference between a real drift setup and a failed print \u2014 precisely the call I had to hedge on UNH tonight. Secondary: `momentum_health` was absent from this bundle entirely (not even `unknown`), and `position_histories` was `skipped`, so two documented inputs to the regime read were silently missing rather than explicitly null."
     }
   ],
   "trade_events": [
