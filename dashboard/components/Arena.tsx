@@ -24,6 +24,20 @@ const money = (n: number) =>
 
 const pct = (n: number) => (n >= 0 ? "+" : "") + Number(n).toFixed(2) + "%";
 
+// Fractional-share-aware: whole lots read as "10 sh", fractional positions
+// (this book runs on notional sizing, so most are) keep enough precision to
+// be meaningfully non-zero, e.g. "0.9954 sh".
+const shares = (n: number) => {
+  const abs = Math.abs(n);
+  const decimals = abs >= 100 ? 0 : abs >= 1 ? 2 : 4;
+  return (
+    Number(n).toLocaleString("en-US", {
+      minimumFractionDigits: decimals,
+      maximumFractionDigits: decimals,
+    }) + " sh"
+  );
+};
+
 const col = (n: number) => (n >= 0 ? GREEN : RED);
 
 // For CPI, yields, VIX and credit spreads, "rising" is the hostile direction —
@@ -215,6 +229,9 @@ export default function Arena({
   journal?: LearningJournal;
 }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
+  // Separate from `expanded` (which keys the watchlist) so a ticker that is
+  // both an open position and still watch-listed doesn't share one toggle.
+  const [expandedPositions, setExpandedPositions] = useState<Record<string, boolean>>({});
   // Which "recently passed on" ticker is expanded to show its reasoning (single-open).
   const [openReject, setOpenReject] = useState<string | null>(null);
 
@@ -776,7 +793,7 @@ export default function Arena({
                   <div
                     style={{
                       display: "grid",
-                      gridTemplateColumns: "1fr 1fr 1fr 1fr",
+                      gridTemplateColumns: "1fr 1fr 1fr 1fr auto",
                       fontSize: 10,
                       letterSpacing: "0.14em",
                       color: "var(--ee-muted)",
@@ -787,32 +804,154 @@ export default function Arena({
                     <span>ENTRY</span>
                     <span>SIZE</span>
                     <span>UNREALIZED</span>
+                    <span />
                   </div>
-                  {positions.map((p) => (
-                    <div
-                      key={p.ticker}
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "1fr 1fr 1fr 1fr",
-                        fontSize: 13.5,
-                        padding: "10px 0",
-                        borderTop: "1px solid var(--ee-hair06)",
-                      }}
-                    >
-                      <b>{p.ticker}</b>
-                      <span>{p.avg_cost ? money(p.avg_cost) : "—"}</span>
-                      <span>
-                        {p.notional_usd
-                          ? money(p.notional_usd)
-                          : p.market_value_usd
-                            ? money(p.market_value_usd)
-                            : "—"}
-                      </span>
-                      <span style={{ color: col(p.unrealized_pct ?? 0) }}>
-                        {p.unrealized_pct != null ? pct(p.unrealized_pct) : "—"}
-                      </span>
-                    </div>
-                  ))}
+                  {positions.map((p) => {
+                    const open = !!expandedPositions[p.ticker];
+                    const pctOfBook = eqNow > 0 && p.market_value_usd != null ? (p.market_value_usd / eqNow) * 100 : null;
+                    const plan = p.original_plan;
+                    return (
+                      <div key={p.ticker} style={{ borderTop: "1px solid var(--ee-hair06)" }}>
+                        <button
+                          onClick={() => setExpandedPositions((s) => ({ ...s, [p.ticker]: !s[p.ticker] }))}
+                          aria-expanded={open}
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: "1fr 1fr 1fr 1fr auto",
+                            alignItems: "center",
+                            fontSize: 13.5,
+                            padding: "10px 0",
+                            width: "100%",
+                            background: "none",
+                            border: "none",
+                            color: "inherit",
+                            font: "inherit",
+                            textAlign: "left",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <b>{p.ticker}</b>
+                          <span>{p.avg_cost ? money(p.avg_cost) : "—"}</span>
+                          <span>
+                            <span>{p.quantity != null ? shares(p.quantity) : "—"}</span>
+                            {pctOfBook != null && (
+                              <span style={{ display: "block", fontSize: 11, color: "var(--ee-muted)" }}>
+                                {pctOfBook.toFixed(1)}% of book
+                              </span>
+                            )}
+                          </span>
+                          <span style={{ color: col(p.unrealized_pct ?? 0) }}>
+                            {p.unrealized_pct != null ? pct(p.unrealized_pct) : "—"}
+                          </span>
+                          <span style={{ color: "var(--ee-muted)", fontSize: 12 }}>{open ? "▲" : "▼"}</span>
+                        </button>
+                        {open && (
+                          <div style={{ padding: "2px 2px 22px 2px" }}>
+                            {plan?.thesis && (
+                              <p
+                                style={{
+                                  fontSize: 12.5,
+                                  color: "var(--ee-bodytx)",
+                                  lineHeight: 1.65,
+                                  textWrap: "pretty",
+                                }}
+                              >
+                                {strip(plan.thesis)}
+                              </p>
+                            )}
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))",
+                                gap: 12,
+                                marginTop: 14,
+                              }}
+                            >
+                              {[
+                                { label: "STOP", value: plan?.stop_loss != null ? money(plan.stop_loss) : null },
+                                { label: "TARGET", value: plan?.target_price != null ? money(plan.target_price) : null },
+                                {
+                                  label: "R:R",
+                                  value: plan?.risk_reward_ratio != null ? plan.risk_reward_ratio.toFixed(1) : null,
+                                },
+                                {
+                                  label: "HORIZON",
+                                  value: plan?.holding_horizon_days != null ? `${plan.holding_horizon_days}d` : null,
+                                },
+                                {
+                                  label: "CONFIDENCE",
+                                  value: plan?.confidence != null ? `${Math.round(plan.confidence * 100)}%` : null,
+                                },
+                              ]
+                                .filter((f) => f.value)
+                                .map((f) => (
+                                  <div key={f.label}>
+                                    <div style={{ fontSize: 10, letterSpacing: "0.14em", color: "var(--ee-muted)" }}>
+                                      {f.label}
+                                    </div>
+                                    <div style={{ fontSize: 13.5, marginTop: 3 }}>{f.value}</div>
+                                  </div>
+                                ))}
+                            </div>
+                            {plan?.catalysts && plan.catalysts.length > 0 && (
+                              <>
+                                <div
+                                  style={{
+                                    marginTop: 14,
+                                    fontSize: 10,
+                                    letterSpacing: "0.16em",
+                                    color: "var(--ee-muted)",
+                                  }}
+                                >
+                                  CATALYSTS
+                                </div>
+                                <ul style={{ margin: "6px 0 0 0", padding: "0 0 0 16px" }}>
+                                  {plan.catalysts.map((c, i) => (
+                                    <li
+                                      key={i}
+                                      style={{
+                                        fontSize: 12.5,
+                                        color: "var(--ee-accent)",
+                                        lineHeight: 1.55,
+                                        marginTop: i > 0 ? 4 : 0,
+                                      }}
+                                    >
+                                      {strip(c)}
+                                    </li>
+                                  ))}
+                                </ul>
+                              </>
+                            )}
+                            {plan?.risk_map && (
+                              <>
+                                <div
+                                  style={{
+                                    marginTop: 14,
+                                    fontSize: 10,
+                                    letterSpacing: "0.16em",
+                                    color: "var(--ee-muted)",
+                                  }}
+                                >
+                                  WHAT KILLS THIS TRADE
+                                </div>
+                                <p
+                                  style={{
+                                    fontSize: 12.5,
+                                    color: "var(--ee-bodytx)",
+                                    lineHeight: 1.6,
+                                    marginTop: 4,
+                                    textWrap: "pretty",
+                                  }}
+                                >
+                                  {strip(plan.risk_map)}
+                                </p>
+                              </>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </>
               ) : (
                 <div style={{ display: "flex", gap: 16, alignItems: "center", flexWrap: "wrap" }}>
