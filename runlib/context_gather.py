@@ -705,8 +705,16 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
     print("  • portfolio correlation/beta...")
     try:
         from tools.correlation import get_portfolio_risk
-        _cand = [r.get("ticker") for r in (scan.get("top_setups") or [])[:5]
-                 if r.get("ticker") and r.get("ticker") not in held]
+        # Use the run's actual focus set (held+watch+alerts+tape/8-K promotions,
+        # or the full scan selection on full/weekly depth) rather than only the
+        # top 5 scan.top_setups rows -- a top_setups[:5] slice silently dropped
+        # names ranked #6+ (e.g. BKR at #6/10) out of the correlation feed, which
+        # then made validator._check_portfolio_beta reject any BUY on that name
+        # as portfolio_beta_unverifiable even though it was fully researched.
+        # Capped at 30 as a backstop for large full/weekly focus sets -- the cost
+        # is one batched yf.download() call regardless of symbol count, so this
+        # is not a real throttle for holdings_watchlist-sized runs (~10-15 names).
+        _cand = [t for t in focus if t and t not in held][:30]
         portfolio_risk = get_portfolio_risk(
             [{"ticker": p["ticker"], "market_value_usd": p.get("market_value_usd", 0)}
              for p in portfolio.get("positions", [])],
