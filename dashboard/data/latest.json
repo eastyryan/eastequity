@@ -630,6 +630,10 @@
   "improvements": [
     {
       "date": "2026-07-29",
+      "note": "Daily study (macro_regimes): Market breadth as the regime aggression dial: participation, the divergence/thrust asymmetry, and why breadth is a CONDITION not a timing signal - Breadth measures how many stocks are PARTICIPATING, which no index level can reveal - an index at new highs on narrowing participation and one on broadening participation look identical in SPY but are"
+    },
+    {
+      "date": "2026-07-29",
       "note": "Process gate: rejected_ideas_need_2_got_0; full_run_no_trade_missing_structured_rejections; seat_reviews_missing_need_1_got_0"
     },
     {
@@ -743,10 +747,6 @@
     {
       "date": "2026-07-19",
       "note": "** `momentum_health` came back **null** this run \u2014 the factor-unwind detector produced no reading in precisely the week it mattered most, with hyperscaler enablers \u221234.3%, design IP \u221220.6% and servers \u221218.7% over one month while SPY held flat. That is the textbook momentum-unwind signature the module exists to catch, and its silence means the validator's automatic risk-budget halving would *not* have fired had this been a trading depth. It should fail *loud* (log the reason and surface `status: unavailable` in the bundle) rather than fail silently to null. Secondary: `market_radar` gainers and losers came back as four all-null rows \u2014 expected on a Sunday with no session, but they should be omitted or labeled `no_session_data` rather than served as empty objects that look like a populated sweep. Third: the earnings calendar has no `next` date for CNC, HUM or MOH while their options price 10\u201315% expected moves \u2014 a cheap cross-check (\"IV rank high + expected move >8% + no scheduled earnings date \u2192 flag `earnings_date_suspect`\") would have surfaced that gap automatically instead of my having to infer it."
-    },
-    {
-      "date": "2026-07-19",
-      "note": "Dynamic universe add: ['CNC', 'HUM'] (184 names). Proposed from the market-wide radar; tradeable from the next run."
     }
   ],
   "trade_events": [
