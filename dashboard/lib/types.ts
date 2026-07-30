@@ -8,6 +8,7 @@ export type Position = {
   market_value_usd: number;
   last_price?: number;
   unrealized_pct?: number | null;
+  unrealized_usd?: number | null;
   notional_usd?: number | null;
   opened_at: string;
   days_held?: number;

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import type { HistoryPoint, Latest } from "@/lib/types";
+import type { HistoryPoint, Latest, Position } from "@/lib/types";
 import { formatEtStamp } from "@/lib/format";
 import ArenaCalibration from "./ArenaCalibration";
 import ArenaStudyHall, { type LearningJournal } from "./ArenaStudyHall";
@@ -39,6 +39,34 @@ const shares = (n: number) => {
 };
 
 const col = (n: number) => (n >= 0 ? GREEN : RED);
+
+const signedMoney = (n: number) => (n >= 0 ? "+" : "-") + money(Math.abs(n));
+
+// Live P/L on an open position. The publisher now writes unrealized_pct /
+// unrealized_usd, but archived runs predate that, so derive from the mark when
+// the fields are absent rather than falling back to a dash — cost basis and
+// last price are both right there on the row.
+function unrealized(p: Position): { pct: number; usd: number | null; mark: number | null } | null {
+  const qty = Number(p.quantity);
+  const cost = Number(p.avg_cost);
+  const mark =
+    p.last_price != null
+      ? Number(p.last_price)
+      : p.market_value_usd != null && Number.isFinite(qty) && qty !== 0
+        ? Number(p.market_value_usd) / qty
+        : null;
+  const derivable = Number.isFinite(cost) && cost > 0 && mark != null && Number.isFinite(mark);
+  const pctVal = p.unrealized_pct ?? (derivable ? (mark! / cost - 1) * 100 : null);
+  if (pctVal == null || !Number.isFinite(pctVal)) return null;
+  const usdVal =
+    p.unrealized_usd ??
+    (derivable && Number.isFinite(qty) ? (mark! - cost) * qty : null);
+  return {
+    pct: pctVal,
+    usd: usdVal != null && Number.isFinite(usdVal) ? usdVal : null,
+    mark: mark != null && Number.isFinite(mark) ? mark : null,
+  };
+}
 
 // For CPI, yields, VIX and credit spreads, "rising" is the hostile direction —
 // hence red up / green down, the inverse of a price.
@@ -312,15 +340,16 @@ export default function Arena({
 
   type Tick = { kind: string; ticker: string; price: string; chg: string; chgColor: string };
   const tickerItems: Tick[] = [];
-  positions.forEach((p) =>
+  positions.forEach((p) => {
+    const u = unrealized(p);
     tickerItems.push({
       kind: "OPEN",
       ticker: p.ticker,
-      price: p.last_price ? money(p.last_price) : "",
-      chg: p.unrealized_pct != null ? pct(p.unrealized_pct) : "",
-      chgColor: col(p.unrealized_pct ?? 0),
-    }),
-  );
+      price: u?.mark != null ? money(u.mark) : p.last_price ? money(p.last_price) : "",
+      chg: u ? pct(u.pct) : "",
+      chgColor: col(u?.pct ?? 0),
+    });
+  });
   if (!positions.length) {
     tickerItems.push({
       kind: "BOOK",
@@ -810,6 +839,7 @@ export default function Arena({
                     const open = !!expandedPositions[p.ticker];
                     const pctOfBook = eqNow > 0 && p.market_value_usd != null ? (p.market_value_usd / eqNow) * 100 : null;
                     const plan = p.original_plan;
+                    const u = unrealized(p);
                     return (
                       <div key={p.ticker} style={{ borderTop: "1px solid var(--ee-hair06)" }}>
                         <button
@@ -831,7 +861,14 @@ export default function Arena({
                           }}
                         >
                           <b>{p.ticker}</b>
-                          <span>{p.avg_cost ? money(p.avg_cost) : "—"}</span>
+                          <span>
+                            <span>{p.avg_cost ? money(p.avg_cost) : "—"}</span>
+                            {u?.mark != null && (
+                              <span style={{ display: "block", fontSize: 11, color: "var(--ee-muted)" }}>
+                                mark {money(u.mark)}
+                              </span>
+                            )}
+                          </span>
                           <span>
                             <span>{p.quantity != null ? shares(p.quantity) : "—"}</span>
                             {pctOfBook != null && (
@@ -840,8 +877,11 @@ export default function Arena({
                               </span>
                             )}
                           </span>
-                          <span style={{ color: col(p.unrealized_pct ?? 0) }}>
-                            {p.unrealized_pct != null ? pct(p.unrealized_pct) : "—"}
+                          <span style={{ color: col(u?.pct ?? 0) }}>
+                            <span>{u ? pct(u.pct) : "—"}</span>
+                            {u?.usd != null && (
+                              <span style={{ display: "block", fontSize: 11 }}>{signedMoney(u.usd)}</span>
+                            )}
                           </span>
                           <span style={{ color: "var(--ee-muted)", fontSize: 12 }}>{open ? "▲" : "▼"}</span>
                         </button>

@@ -33,6 +33,34 @@ def _target_calibration(closed: list) -> dict:
                 "n_gradeable": 0, "rr_inflation": None}
 
 
+def _with_unrealized(pos: dict) -> dict:
+    """Attach mark-to-market P/L to an open position for the dashboard.
+
+    The site has always rendered an UNREALIZED column off `unrealized_pct`, but
+    broker state carries only avg_cost / last_price / market_value_usd, so the
+    field was never written and every open position displayed a dash. Derive it
+    here from the same mark the equity curve uses. Price-only: dividends are
+    realized cash and are reported separately as total_dividends_usd.
+    """
+    out = dict(pos)
+    try:
+        qty = float(pos.get("quantity") or 0.0)
+        cost = float(pos.get("avg_cost") or 0.0)
+        last = pos.get("last_price")
+        if last in (None, "") and qty:
+            mv = pos.get("market_value_usd")
+            last = (float(mv) / qty) if mv not in (None, "") else None
+        last = float(last) if last not in (None, "") else None
+    except (TypeError, ValueError, ZeroDivisionError):
+        return out
+    if last is None or cost <= 0 or qty <= 0:
+        return out
+    out["last_price"] = round(last, 4)
+    out["unrealized_pct"] = round((last / cost - 1) * 100, 2)
+    out["unrealized_usd"] = round((last - cost) * qty, 2)
+    return out
+
+
 def refresh_dashboard(context: dict, response: str, results: list, fills: list,
                       run_id: str, no_trade_reason: str | None = None,
                       commentary: str | None = None,
@@ -95,8 +123,11 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
         "portfolio": {
             "cash_usd": context["portfolio"].get("cash_usd"),
             "total_equity_usd": context["portfolio"].get("total_equity_usd"),
-            # Attach sector to each position for the dashboard exposure view.
-            "positions": [{**p, "sector": sector_map().get(p.get("ticker", "").upper())}
+            # Attach sector (exposure view) and live P/L (positions table) to each
+            # position. Both are display-only derivations - broker state stays the
+            # source of truth for quantity, cost and mark.
+            "positions": [_with_unrealized(
+                              {**p, "sector": sector_map().get(p.get("ticker", "").upper())})
                           for p in context["portfolio"].get("positions", [])],
         },
         "as_of_et": et_date(),
