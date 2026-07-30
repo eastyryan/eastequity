@@ -639,6 +639,8 @@ def parse_proposals(response: str) -> dict:
                     "x_post": data.get("x_post"),
                     "guidance_entries": _dicts(data.get("guidance_entries"), 20),
                     "universe_candidates": _dicts(data.get("universe_candidates"), 5),
+                    "seat_reviews": data.get("seat_reviews"),
+                    "factor_response": data.get("factor_response"),
                 }
         except json.JSONDecodeError:
             continue
@@ -647,7 +649,8 @@ def parse_proposals(response: str) -> dict:
             "no_trade_reason": "No trade this run; the agent's written review did not include a "
                                "machine-readable order block, so no orders were placed.",
             "commentary": None, "watchlist": [], "rejected_ideas": [],
-            "x_post": None, "guidance_entries": [], "universe_candidates": []}
+            "x_post": None, "guidance_entries": [], "universe_candidates": [],
+            "seat_reviews": None, "factor_response": None}
 
 
 # ---------------------------------------------------------------------------
