@@ -664,6 +664,10 @@
   "improvements": [
     {
       "date": "2026-07-31",
+      "note": "Weekly self-review: Last Friday's (7/24) stated change was to cross-check every dated or sequenced claim in a BUY thesis against the actual age_days/published timestamps in the bundle, and label anything not directly sourced as unverified rather than asserting a sequence the data does not support. It was followed and it worked: this week's only new position, Baker Hughes (opened 7/28), explicitly separated bundle-sourced, dated facts (record Q2 orders and raised guidance from the 7/27 earnings release, TD Cowen's 7/28 price-target raise) from WebSearch-verified external facts (the Chart Industries deal size and synergy target), flagging the latter plainly as external verification rather than an implied bundle citation -- exactly the discipline that would have caught the 7/24 UNP timing error, and no repeat of that mistake showed up this week. The track record itself is unchanged and still anecdote-phase: 2 closed trades (DELL -13.52, HPE -4.53), 0% win rate, nothing new to grade there. What actually happened this week was behavioral: the book sat 100% flat for two full weeks (7/15 to 7/27) before finally opening BKR, which is now +3.13% and comfortably inside its trailing stop with the thesis intact. What went right -- every other researched candidate this week (MPC, NET, TRV, APH, ADI, AJG, S, TEAM, BSX) was passed on for a specific, named reason (earnings binary already priced by options, insider selling against a green candle, institutional distribution against a beat-pop) rather than vague caution, and BKR itself was a genuine, verified fat pitch rather than a forced trade to end the drought. What went wrong is the drought itself -- a two-week stretch of zero activity is the same standing-caution-becomes-policy failure CLAUDE.md's own 7/21 audit already documented, just recurring in a milder form, and it is a process risk, not a data problem. The one change for next week: when a watchlist name's stated would_buy_at condition is met or nearly met and it still doesn't get bought, I will explicitly ask in that run whether the fat-pitch bar itself is set too high for this account's stated purpose, not only whether that one name's setup is clean -- next Friday's review grades whether that check actually shortened the gap between trades."
+    },
+    {
+      "date": "2026-07-31",
       "note": "** The `fundamental_screen` block is stamped `age_hours: 290.6` (~12 days stale) despite its note saying it \"refreshed pre-market (6am/9am ET)\" \u2014 so its `estimate_changes_since_previous` (\"what moved THIS MORNING\") is actually a ~12-day-old snapshot, which quietly mis-attributes GOOGL/STX/MPC revision moves to today. A cheap deterministic guard \u2014 if `age_hours` exceeds, say, 24, relabel `estimate_changes_since_previous` as `estimate_changes_stale` and drop the \"this morning\" framing (or set `stale: true` the way `earnings_week` already does) \u2014 would stop a future run from treating a fortnight-old estimate delta as a same-day catalyst."
     },
     {
@@ -697,90 +701,6 @@
     {
       "date": "2026-07-30",
       "note": "Process gate: seat_reviews_missing_need_1_got_0"
-    },
-    {
-      "date": "2026-07-29",
-      "note": "Daily study (macro_regimes): Market breadth as the regime aggression dial: participation, the divergence/thrust asymmetry, and why breadth is a CONDITION not a timing signal - Breadth measures how many stocks are PARTICIPATING, which no index level can reveal - an index at new highs on narrowing participation and one on broadening participation look identical in SPY but are"
-    },
-    {
-      "date": "2026-07-29",
-      "note": "Process gate: rejected_ideas_need_2_got_0; full_run_no_trade_missing_structured_rejections; seat_reviews_missing_need_1_got_0"
-    },
-    {
-      "date": "2026-07-29",
-      "note": "Process gate: seat_reviews_missing_need_1_got_0"
-    },
-    {
-      "date": "2026-07-29",
-      "note": "Process gate: seat_reviews_missing_need_1_got_0"
-    },
-    {
-      "date": "2026-07-29",
-      "note": "Process gate: seat_reviews_missing_need_1_got_0"
-    },
-    {
-      "date": "2026-07-29",
-      "note": "Process gate: seat_reviews_missing_need_1_got_0"
-    },
-    {
-      "date": "2026-07-28",
-      "note": "Daily study (strategy_playbooks): The catalyst-in-a-downtrend setup: why good news on a below-MA / near-52-week-low name has the WEAKEST expected drift, and the confirmation-gated re-entry that separates a real turn from a dead-cat bo - My biggest single cluster of shadow-book regret_misses is the same setup every time \u2014 a positive catalyst (beat-and-raise, raised guidance, insider cluster) on a name trading BELOW its 50/200-DMA, whi"
-    },
-    {
-      "date": "2026-07-28",
-      "note": "Process gate: seat_reviews_missing_need_1_got_0"
-    },
-    {
-      "date": "2026-07-27",
-      "note": "Daily study (technical_analysis): Reading the consolidation base to define a precise, auditable pivot trigger \u2014 and why the throwback to the level, not the breakout through it, is the higher-expectancy swing entry - The base-and-pivot framework (O'Neil's cup-with-handle, Minervini's VCP) exists to convert a fuzzy 'wait for confirmation' into ONE auditable price level: the pivot \u2014 the base's prior peak / handle hi"
-    },
-    {
-      "date": "2026-07-27",
-      "note": "The daily-bar price feed and the live intraday quote feed disagree by a full session this run (bars dated 2026-07-23 vs live Alpaca quotes at 17:21 UTC today) with no flag in the bundle calling this out explicitly \u2014 I had to cross-reference price_freshness.prices_meta_sample against universe_scan.indicators_by_ticker by hand to notice MU had already moved ~12% intraday on real news that the RSI/ADX/MACD fields in the bundle do not reflect. A deterministic check that compares indicators_by_ticker[T].price_as_of against the live overlay date and stamps a per-ticker `stale_technicals` flag when they diverge by more than one session would save this cross-referencing every time the yfinance feed is blocked."
-    },
-    {
-      "date": "2026-07-26",
-      "note": "Process gate: rejected_ideas_need_2_got_0; full_run_no_trade_missing_structured_rejections"
-    },
-    {
-      "date": "2026-07-24",
-      "note": "Daily study (risk_management): Kelly-fraction intuition for the 1% risk budget: why deep-fractional Kelly is correct under parameter uncertainty, and how it explains the 2:1 RR floor and the conviction tier - The Kelly criterion f* = W - (1-W)/R maximizes long-run geometric growth (E[log wealth]) and outputs the fraction of capital to RISK - which maps exactly onto this system's 1%-of-equity, entry-to-stop"
-    },
-    {
-      "date": "2026-07-24",
-      "note": "Weekly self-review: Last Friday's stated change was to name the specific thesis_invalidator that fired before any discretionary SELL_TO_CLOSE, instead of a full close on cracked conviction -- I cannot grade whether it worked, because the book stayed 100% flat all week (zero opens, zero closes) and never produced a discretionary exit to test it against; the honest read is 'not exercised,' not 'followed.' The track record is unchanged from last week: still just 2 closed trades (DELL -$13.52, HPE -$4.53, total -$18.05), still anecdote-phase calibration, so no new hard rules to draw. What went right: the book avoided forcing a mediocre trade for a seventh straight day, and this afternoon's risk desk correctly vetoed a UNP BUY that looked clean on the surface -- a real Q2 beat plus a real same-day Canadian National rail-access agreement supporting the pending Norfolk Southern deal. What went wrong was reasoning, not data: the vetoed proposal's own thesis stated the CN agreement was 'signed one day earlier' when every dated headline in the bundle for that story was same-session (age_days 0.2-0.6, all 2026-07-24), and it cited a favorable RBC note from the same news pull while omitting a same-pull BNSF headline publicly attacking the exact merger-approval mechanism the trade was built on -- an unforced, checkable error that the risk desk had to catch instead of the reasoning process catching it first. The one change for next week: before finalizing any BUY thesis, I will explicitly cross-check every dated or sequenced claim in the catalysts and thesis fields against the actual age_days/published timestamps of the supporting headlines in the bundle, and label the timing as unverified rather than asserting a sequence the data doesn't support -- next Friday's review grades whether that habit actually prevented a repeat of this exact failure mode."
-    },
-    {
-      "date": "2026-07-23",
-      "note": "** The bundle's price bars for a 2pm ET intraday cycle are still dated to the prior session's close (2026-07-22), so a genuinely material intraday move -- today's VIX spike and broad risk-off tape -- was only visible via an out-of-band WebSearch, not from any bundle field. A same-day intraday quote (even just SPY/VIX last + % change, refreshed per run rather than once at prior close) would let the regime read catch a live risk-off day without relying on the agent remembering to search for it."
-    },
-    {
-      "date": "2026-07-23",
-      "note": "** Two of this run's four tape/8-K promotions (S, PG) look like ticker-symbol false positives rather than real company news -- S's promoted headline is a US-China congressional statement about Ford/Geely with no SentinelOne content, and PG's is a \"PG&E Q2 2026 Earnings Call\" transcript (PG&E/PCG, not Procter & Gamble). A cheap fix -- requiring the company name or a word-boundary-safe ticker match in the promoted headline, not just a bare single/double-letter symbol substring -- would stop burning research slots on unrelated companies and free that promotion capacity for a real off-universe tape story."
-    },
-    {
-      "date": "2026-07-23",
-      "note": "** ANET and GE both triggered my own watchlist alerts this run but neither received the focus-tier bundle (no digest entry, no chart, no sec_filings/stack_card) that tape-promoted and mini-scan names get \u2014 I could only underwrite them off the raw universe_scan indicator row. The conclusion held (volume still neutral on both, an unambiguous read even without the deeper bundle), but a genuinely close call on either name would have been harder to underwrite properly. Trigger-alert names should get the same focus-tier promotion tape/8-K names already get."
-    },
-    {
-      "date": "2026-07-23",
-      "note": "Daily study (market_microstructure): The options-implied expected move and earnings IV crush: reading options_signals to time swing entries around binary prints, and why the implied move is a market-priced noise band - Options price a stock's expected move as Price \u00d7 IV \u00d7 \u221a(DTE/365) \u2248 one standard deviation; a fast earnings shortcut is ~0.85 \u00d7 the ATM front-month straddle (tastytrade uses a weighted straddle+strangl"
-    },
-    {
-      "date": "2026-07-22",
-      "note": "Process failure 2026-07-22 10am run: proposed a BUY in MU citing a same-day (2026-07-22) earnings reaction ('+12% today') sourced from a WebSearch AI-summary sentence, without cross-checking the actual event date against other dated sources in the same search batch or against repo data. data/earnings_calendar.json (already in the repo, last updated 2026-07-19) shows MU's last earnings was 2026-06-24 - nearly a month earlier - so the entire catalyst-timing narrative was wrong; the risk desk vetoed the trade on the resulting price-freshness inconsistency but for a narrower stated reason than the real root cause. RULE: before writing ANY 'today/yesterday/this week' framing about an event (earnings, guidance, 8-K, upgrade, analyst action) for ANY ticker - not just this run's deep-research focus names - check data/earnings_calendar.json (or the bundle's days_to_earnings/days_since_earnings for focus names) FIRST as the deterministic source of truth, and only then treat a WebSearch summary's date framing as corroboration, never as the primary source of when something happened. SEPARATE FINDING: my own 'Improvement note' from this same run was silently dropped from journal/improvements - I wrote it as a markdown '## Improvement note' header with prose on following lines, but orchestrator.py's capture regex is Improvement note:(.+) which only matches text on the SAME line. Any future improvement note must be a single line starting exactly with 'Improvement note: ' or it vanishes with no error - the same class of silent-parse failure LP-2555191189 already flagged for the study pipeline."
-    },
-    {
-      "date": "2026-07-22",
-      "note": "Daily study (fundamental_analysis): Estimate-revision momentum: how upward EPS/revenue revision breadth leads price via the post-forecast-revision drift, and why breadth + price-confirmation beats a lone divergence - Analyst estimate revisions are a genuine, well-documented fundamental predictor: prices underreact to revisions and DRIFT in their direction for roughly six months (the post-forecast-revision drift, P"
-    },
-    {
-      "date": "2026-07-22",
-      "note": "Daily study (trading_psychology): Exit on pre-committed invalidators, not real-time conviction: the disposition effect, 'resulting', and why the written plan (not the mood) must license every early exit - My single binding process_fail is HPE: I closed a LOSING position ahead of its stop on a 'conviction crack,' graded process_fail with tag missing_invalidators_on_plan. The behavioral literature explai"
-    },
-    {
-      "date": "2026-07-21",
-      "note": "Daily study (strategy_playbooks): Trend path quality: ranking momentum candidates by HOW the move was built (continuous drip vs discrete gaps), and the boundaries where that filter stops working - Two stocks with identical 12-month returns can have completely different price paths, and the path predicts what happens next. Da, Gurun & Warachka (Review of Financial Studies 27(7), 2014; CRSP 1927-"
     }
   ],
   "trade_events": [
