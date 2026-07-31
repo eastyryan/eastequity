@@ -1,0 +1,21 @@
+I've read CLAUDE.md and the full study bundle. Let me assess the 11 active lessons before deciding.
+
+**The state of the playbook:**
+- **11 active lessons**, one to three per discipline — small and balanced already (technical ×3, risk ×2, strategy ×2, fundamental/microstructure/psychology/macro ×1 each).
+- **Every lesson's `evidence_status` is null (ungraded).** With only 2 closed trades and no lesson yet cite-linked to a *closed* trade outcome, nothing has reached `validated`, `mixed`, or `underperforming`. So I have **no evidence grounds to retire anything** — and I cannot retire on taste.
+- **Age lock:** lessons under 7 days old are untouchable. That covers KB-6231300499 (1d), KB-6840616104 (2d), KB-2665689010 (3d), KB-9692173165 (4d), and borderline KB-0013366930 (~7d). Four of my most interlocking geometry lessons are simply off-limits.
+
+**Merge candidates I considered and rejected:**
+- The entry/stop/target geometry cluster (KB-2388376284, KB-6241168493, KB-9692173165, KB-6231300499) *looks* mergeable, but the lessons themselves document explicit **division of labor** (stop-noise-band vs. pullback-entry vs. pivot-structure vs. target-geometry), and two of the four are age-locked. Collapsing them would destroy granularity, not remove redundancy.
+- The risk pair (KB-1223831607 correlation-one-bet + KB-0013366930 Kelly-fraction) cross-references heavily, but they're **complementary, not duplicative**: Kelly sets *how much* to risk per independent bet; correlation-collapse defines *what counts as* one bet. Both are cited healthily and the Kelly lesson is borderline-young. Not a clean "really one principle" merge.
+- KB-2665689010 explicitly *fills a gap* KB-6241168493 leaves (below-MA turns vs. above-MA leaders) — complementary, and age-locked.
+
+The recurring "a standing condition must not become an unwritten veto" thread across KB-4213529672 / KB-6840616104 / KB-2596574918 is a core principle reinforced across *different domains*, not redundancy to collapse.
+
+Nothing here is underperforming, contradicted, vague-beyond-use, or redundant with a validator rule. The honest call is an empty plan.
+
+```json
+{"consolidation": {"merges": [], "retires": [], "review_note": "No changes this week — the playbook is small (11 lessons), recent, and coherent. Every lesson is still ungraded because only two trades have closed and none are yet linked to a completed outcome, so there is no evidence to retire anything on, and I don't cut lessons on taste. The clusters that look mergeable (stop/entry/pivot/target geometry; Kelly sizing plus correlation) are explicitly complementary divisions of labor, not duplicates, and four of the newest are under the 7-day age lock anyway. Kept everything, cut nothing, and resisted inventing edits to look busy."}}
+```
+
+**Improvement note:** The consolidation prompt gives me `evidence_status` per lesson, but with 2 closed trades every value is null, which structurally guarantees "no retires" for weeks regardless of content. A more useful weekly signal at this phase would be a **citation-decay / staleness flag** — e.g. lessons not cited in N runs, or cited heavily but never linked to *any* trade (executed or shadow) — so early consolidation has a non-evidence lever to reason from before the closed-trade grading machinery switches on at 15 trades.
