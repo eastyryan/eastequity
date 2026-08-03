@@ -42,9 +42,13 @@ def test_slot_map():
     print("slot_depths:")
     check("0845 focused", slot_depth_from_hhmm("0845") == "holdings_watchlist")
     check("1600 full", slot_depth_from_hhmm("1600") == "full")
+    # 10:30 promoted to a full universe scan on 2026-08-03: before that the ONLY
+    # full scan was 16:00 (the closing bell), so a genuinely new name could
+    # surface once a day at the one time the book could not act on it.
+    check("1030 full", slot_depth_from_hhmm("1030") == "full")
     check("0600 light", slot_depth_from_hhmm("0600") == "light")
-    cfg = {"schedule": {"slot_depths": {"1030": "full"}}}
-    check("config override", slot_depth_from_hhmm("1030", cfg) == "full")
+    cfg = {"schedule": {"slot_depths": {"1030": "holdings_watchlist"}}}
+    check("config override", slot_depth_from_hhmm("1030", cfg) == "holdings_watchlist")
     check("default keys cover weekday slots", set(DEFAULT_SLOT_DEPTHS) >= {"0845", "1030", "1200", "1400", "1600"})
 
 
@@ -53,7 +57,10 @@ def test_nearest_slot_matching():
     print("nearest-slot matching:")
     check("0607 routine lag -> light", slot_depth_from_hhmm("0607") == "light")
     check("0912 -> holdings_watchlist", slot_depth_from_hhmm("0912") == "holdings_watchlist")
-    check("1110 between hw slots -> hw", slot_depth_from_hhmm("1110") == "holdings_watchlist")
+    # 1110 is 40min from the 10:30 slot and 50min from 12:00, so it resolves to
+    # 10:30 — which is now a full scan.
+    check("1110 nearest 1030 -> full", slot_depth_from_hhmm("1110") == "full")
+    check("1145 nearest 1200 -> hw", slot_depth_from_hhmm("1145") == "holdings_watchlist")
     check("1540 pre-4pm gather -> full", slot_depth_from_hhmm("1540") == "full")
     check("1610 -> full", slot_depth_from_hhmm("1610") == "full")
     check("1740 -> evening_review", slot_depth_from_hhmm("1740") == "evening_review")

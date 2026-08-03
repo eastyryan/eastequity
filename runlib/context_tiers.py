@@ -98,6 +98,19 @@ BLOCKING_KEYS = (
     "portfolio",
     "stop_engineering",         # min stop distance — rejects stop_inside_noise_band
     "position_stop_cushion",
+    # BLOCKING: drives earnings_blackout, and — the part that actually needed
+    # saying — names every reporter OUTSIDE the 3-day window that is therefore
+    # tradeable, plus the post-print drift lane. Pinned rather than left to
+    # DECISION_CONTEXT because a gate the brain cannot see is a gate it will
+    # over-apply from memory, which is precisely how "avoid the binary" grew into
+    # a blanket earnings-season stand-down.
+    "earnings_lanes",
+    # BLOCKING-adjacent: the obligations a run incurs by NOT acting — outstanding
+    # trigger resolutions, watchlist decay, and the dated commitment owed once the
+    # book has been flat. Pinned because an obligation the brain cannot see is one
+    # it will not discharge, which is exactly how a fired trigger came to cost
+    # nothing across four consecutive runs.
+    "engagement",
     "risk_halts", "forced_exits", "corporate_actions",
     "data_quality", "stale_data_notice", "price_freshness_live",
     "fundamentals_freshness",   # HARD RULE; drives fundamentals_stale:<TICKER>
@@ -165,6 +178,8 @@ ALWAYS_KEYS = (
     # it") is a step-4 gate on every BUY, and because a name's print date is exactly the
     # kind of fact a model will otherwise supply from memory.
     "earnings_week",
+    "earnings_lanes",         # the coded blackout + the post-print drift lane
+    "engagement",             # cash drag + outstanding trigger obligations
     "price_freshness_live",   # holdings/watchlist live-price staleness guard
     "trigger_run_note",       # why an event-driven run was spawned
     "operator_note",          # ad-hoc note passed in via --note
@@ -371,6 +386,22 @@ def compact_learning_pack(full: dict, *, n: int = 5) -> dict:
             "open_winners_still_running": _top(
                 runner.get("open_winners_still_running") or [], n),
             "hold_winners_playbook": runner.get("hold_winners_playbook"),
+            # THIS DICT IS AN ALLOWLIST — anything not named here is dropped
+            # silently. Registered 2026-08-03 with the exit-grading work: without
+            # these two lines the grades reach the brain only via a digest
+            # smuggled through `stats`, which passes through wholesale. Same
+            # class of bug as parse_proposals' whitelist dropping seat_reviews.
+            #
+            # study_health matters on its own: the runner study rendered
+            # "Warming up" for three weeks while it was actually EMPTY, which
+            # reads identically to an honestly-new study. It was seeded once on
+            # 07-15 and then destroyed three times (a stale local copy committed
+            # over it, then a cleanup that emptied it), and because seeding was
+            # close-time-only nothing ever compared the store against the ledger
+            # in the ADD direction — a study that can only lose observations
+            # converges on zero.
+            "study_health": runner.get("study_health"),
+            "exit_execution_grades": runner.get("exit_execution_grades"),
         },
         "adopted_lessons": {
             "lessons": _top(adopted.get("lessons") or [], n),

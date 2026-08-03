@@ -77,6 +77,39 @@ MAX_BUNDLE_AGE_H_MARKET = 3.0     # weekday, 9:30-16:00 ET — a stale bundle he
 MAX_BUNDLE_AGE_H_CLOSED = 26.0    # weekend/holiday — one daily gather + headroom
 
 
+def _in_band_orphans() -> list[str]:
+    """ET clock times of today's runs that were credited to no slot, IN BAND.
+
+    "In band" = between the first and last scheduled slot. The nightly cloud news run
+    fires around 00:15 ET every single day and is an orphan by design (expected_slots'
+    own docstring says so), so counting it would put a permanent orphan on the board and
+    train the operator to ignore the number. Only orphans inside the scheduled day are
+    evidence of a slot being mislabelled.
+
+    Fail-soft: any error returns [] — this is extra diagnosis hung off an alarm that
+    must keep working without it.
+    """
+    try:
+        from runlib.analytics import (completed_runs_today, expected_slots, et_now,
+                                      slot_report)
+        now = et_now()
+        weekday = now.weekday() < 5
+        rep = slot_report(now_h=now.hour + now.minute / 60, weekday=weekday)
+        unmatched = set(rep.get("unmatched_runs") or [])
+        if not unmatched:
+            return []
+        slots = expected_slots(weekday)
+        lo, hi = slots[0], slots[-1]
+        out = []
+        for r in completed_runs_today():
+            if r.get("run_id") in unmatched and lo <= r["et_hour"] <= hi + 2:
+                h = r["et_hour"]
+                out.append(f"{int(h):02d}:{int(round((h % 1) * 60)):02d}")
+        return sorted(out)
+    except Exception:
+        return []
+
+
 def assess() -> dict:
     """(healthy, reasons, health) — pure over on-disk state."""
     from runlib.analytics import build_health
@@ -121,6 +154,28 @@ def assess() -> dict:
             f"{missed} scheduled slot(s) missed today{detail} "
             f"({covered}/{elapsed} elapsed slots covered by "
             f"{health.get('runs_journaled')} journaled run(s)){drift_note}{died_note}")
+        orphan = _in_band_orphans()
+        if orphan:
+            # A MISSED SLOT NEXT TO AN ORPHAN RUN IS A DIFFERENT DIAGNOSIS, and it was
+            # invisible: slot_report has always returned `unmatched_runs`, nothing ever
+            # read it, and build_health does not even forward it. A run that landed
+            # inside the trading day and was credited to NO slot means the fleet is
+            # alive and the LABELLING is wrong - some drifted or recovery run took a
+            # window that belonged to another slot and pushed the real one out. That
+            # calls for moving a slot or fixing the recovery window, not restarting a
+            # dead node.
+            #
+            # MEASURED 2026-08-03 over 2026-07-20..08-03: 23 orphan runs in 11
+            # weekdays. On 07-29 and 08-03 the watchdog's 08:45 recovery landed 10:29
+            # and took the 10:30 slot, orphaning the real 10:30 run at 10:44; on
+            # 07-23/27/28/29/31 a 16:00 recovery landed 17:29-17:35 and took 17:30,
+            # orphaning the evening review. Every one of those days paged as "slot
+            # missed" with no hint that a run for it had actually happened.
+            reasons.append(
+                f"{len(orphan)} run(s) landed inside the scheduled day but matched no "
+                f"slot ({', '.join(orphan)} ET) - a drifted or recovery run may have "
+                f"taken another slot's window; check the recovery landing bound in "
+                f"scripts/find_missed_slot.py before blaming a dead node")
 
     age = health.get("bundle_age_hours")
     # Pick the band that matches what the pipeline is supposed to be doing right

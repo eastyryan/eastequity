@@ -634,6 +634,26 @@ def main() -> int:
         if run_safety:
             forced_exit_fills = apply_safety_layer(context, cfg, run_id)
         response = Path(args.act_on).read_text()
+        # THE CLOUD ROUTINE *IS* THE BRAIN, and it never touches run_claude.
+        # MEASURED 2026-08-03: 0 of 82 cloud runs recorded the brain call they
+        # were built around, while risk_desk and daily_study on those same runs
+        # logged fine — because those are Python subprocesses that DO go through
+        # run_claude, and this path just reads a response the routine reasoned in
+        # its own session. That is the whole 82% telemetry gap, and it hid the
+        # single most expensive call of every cloud run.
+        # log_run_summary reconciles this at end-of-run regardless; recording it
+        # here adds the response size and source file, which the reconciler
+        # cannot see. Double-counting is impossible: the reconciler skips any run
+        # that already carries a brain:* record. Fail-soft — telemetry must never
+        # be able to break a trading run.
+        try:
+            from runlib.brain_io import record_brain_call
+            record_brain_call(f"brain:{run_depth}", run_id,
+                              transport="cloud_routine",
+                              response_chars=len(response),
+                              brain_response_file=str(args.act_on))
+        except Exception as e:
+            print(f"  (cloud brain-call telemetry skipped: {str(e)[:100]})")
     else:
         print(f"[1/5] Gathering context (depth={run_depth})...")
         context = gather_context(cfg, light=args.light, depth=run_depth,
@@ -693,6 +713,20 @@ def main() -> int:
                 for x in ((context.get("portfolio") or {}).get("positions") or [])
                 if x.get("ticker")]
         fmap = context.get("factor_map") or {}
+        # Names that reached their OWN stated buy level this run, and how many
+        # distinct days each has done so without being bought.
+        _fired_triggers = [
+            str((a or {}).get("ticker") or "").upper()
+            for a in ((context.get("watchlist_trigger_alerts") or {}).get("alerts") or [])
+            if isinstance(a, dict) and a.get("ticker")]
+        _unbought_hits = {}
+        try:
+            from tools.engagement import count_unbought_hits
+            _wo = ROOT / "dashboard" / "data" / "watchlist_outcomes.json"
+            if _wo.exists():
+                _unbought_hits = count_unbought_hits(json.loads(_wo.read_text()))
+        except Exception as e:
+            print(f"      (unbought-hit count skipped: {str(e)[:100]})")
         trading_depth = run_depth in ("full", "holdings_watchlist")
         audit = audit_brain_process(
             parsed, depth=run_depth, proposals=proposals,
@@ -700,7 +734,18 @@ def main() -> int:
             held_tickers=held,
             require_seat_reviews=bool(trading_depth and held),
             require_factor_response=bool(fmap.get("requires_factor_response")),
-            factor_concentration_level=fmap.get("concentration_level"))
+            factor_concentration_level=fmap.get("concentration_level"),
+            # Lets the audit catch an unwind being used as a trading halt rather
+            # than the 0.5x size haircut the config actually applies.
+            momentum_status=(context.get("momentum_health") or {}).get("status"),
+            # ENGAGEMENT. A fired trigger owes a resolution, a name that keeps
+            # reaching its level unbought decays off the list, and a book that has
+            # been flat for days owes a dated commitment.
+            fired_triggers=_fired_triggers, unbought_hits=_unbought_hits,
+            requires_commitment=bool(
+                (context.get("engagement") or {}).get("requires_commitment")),
+            max_unbought_hits=int(
+                ((cfg.get("swing_rules") or {}).get("max_unbought_trigger_hits")) or 3))
         parsed["watchlist"] = audit.get("watchlist") or parsed.get("watchlist") or []
         parsed["rejected_ideas"] = audit.get("rejected_ideas") or []
         parsed["seat_reviews"] = audit.get("seat_reviews") or []
@@ -711,7 +756,32 @@ def main() -> int:
             "issues": audit.get("issues") or [],
             "blocking_issues": audit.get("blocking_issues") or [],
             "blocks_new_buys": bool(audit.get("blocks_new_buys")),
+            # Feeds forward into the next bundle's reasoning_process so a
+            # dead-indicator veto or an unwind-as-halt is visible to the run that
+            # comes after it, not just to a human reading the journal.
+            "signal_discipline": audit.get("signal_discipline") or {},
+            "engagement": audit.get("engagement") or {},
         }
+        _eng = audit.get("engagement") or {}
+        parsed["trigger_reviews"] = _eng.get("trigger_reviews") or []
+        if _eng.get("waiting_for"):
+            parsed["waiting_for"] = _eng["waiting_for"]
+        for _d in (_eng.get("force_dropped") or [])[:5]:
+            print(f"      watchlist FORCE-DROPPED {_d.get('ticker')}: reached its "
+                  f"level on {_d.get('unbought_hits')} days unbought")
+        if _fired_triggers:
+            print(f"      triggers fired: {_fired_triggers} "
+                  f"(resolutions: {len(_eng.get('trigger_reviews') or [])})")
+        _sd = audit.get("signal_discipline") or {}
+        if _sd.get("unwind_used_as_halt"):
+            print("      SIGNAL DISCIPLINE: unwind cited as a halt on a no-trade "
+                  "run — it is a 0.5x size haircut, not a gate")
+        for _fix in (_sd.get("trigger_fixes") or [])[:5]:
+            print(f"      trigger rewritten {_fix.get('ticker')}: "
+                  f"{_fix.get('original')!r} -> {_fix.get('rewritten')!r}")
+        for _dv in (_sd.get("dead_indicator_vetoes") or [])[:5]:
+            print(f"      dead-indicator veto {_dv.get('ticker')}: "
+                  f"{_dv.get('signals')}")
         if audit.get("issues"):
             print(f"      process gates: {audit['issues'][:6]}")
             journal.log_improvement(
@@ -978,6 +1048,44 @@ def main() -> int:
                 mcap = None
         if mcap:
             market_context.setdefault(t, {})["market_cap_usd"] = float(mcap)
+    # EARNINGS FEED for the coded blackout gate (2026-08-03). Until now there was
+    # NO earnings rule in the validator at all — `days_to_earnings` appeared zero
+    # times in validator.py — so "trade around the binary" was pure LLM judgment
+    # applied against a 45-day default horizon. In earnings season that excludes
+    # essentially the whole universe: the 08-03 runs rejected MPC and AMGN (report
+    # 08-04) and then NET and TEAM (08-06) and traded nothing. Replacing the vague
+    # judgment with a narrow, checkable window is the point — the brain is told the
+    # gate is 3 days and that anything outside it is explicitly tradeable, so it
+    # stops inventing a wider exclusion than the risk actually warrants.
+    #
+    # earnings_week is authoritative (committed calendar, all ~184 names); scan-row
+    # days_to_earnings covers only the ~30 rate-limited enrichment names and is used
+    # only as a fallback. Absent ticker -> no assertion, gate stands down.
+    try:
+        from tools.earnings_window import build_earnings_map
+        # data/earnings_calendar.json carries `last` AND `next` per name, so it
+        # is the only source that can populate days_since_earnings — earnings_week
+        # is a 7-day FORWARD window and structurally cannot see a print that has
+        # already happened. Without it the post-print drift lane, which is the
+        # preferred way to trade a reporter, would be undetectable.
+        _cal = None
+        try:
+            _cal = (json.loads((ROOT / "data" / "earnings_calendar.json")
+                               .read_text()) or {}).get("by_ticker")
+        except Exception:
+            _cal = None
+        em = build_earnings_map(context, calendar=_cal,
+                                today=to_et_date(datetime.now(timezone.utc).isoformat()))
+        if em:
+            market_context["_earnings"] = em
+            soon = {t: v["days_to_earnings"] for t, v in em.items()
+                    if isinstance(v.get("days_to_earnings"), int)
+                    and v["days_to_earnings"] <= 3}
+            if soon:
+                print(f"  EARNINGS GATE: {len(em)} names dated, "
+                      f"{len(soon)} inside the pre-print blackout {soon}")
+    except Exception as e:
+        print(f"  (earnings context skipped: {str(e)[:120]})")
     # The bundle rides along under a reserved key (same convention as _regime /
     # _data_quality / _book above) so _check_claim_grounding can verify that the
     # facts a thesis cites actually appear in the evidence the brain was handed.
@@ -1004,7 +1112,16 @@ def main() -> int:
 
     try:  # link KB lessons cited in an executed BUY's proposal to that trade,
         # so the eventual closed-trade outcome grades the lesson (system 6).
-        from tools.knowledge_base import CITATION_RE, link_lessons_to_trade
+        # citations_for_trade, NOT CITATION_RE over the proposal JSON. MEASURED
+        # 2026-08-03: `times_cited` works (65 citations across 11 lessons) because
+        # record_citations scans the WHOLE brain response, but this path scanned
+        # only the proposal object — and ZERO of the 19 proposals in
+        # journal/proposals/ contains a KB- id. Every citation lands in prose
+        # (latest_reasoning, watchlist[].thoughts, no_trade_reason,
+        # rejected_ideas[].reason). So linked_trades stayed [] on all 11 lessons,
+        # update_lesson_outcomes never had an input, and no lesson ever earned an
+        # evidence_status. The grading half of the loop was reading the wrong text.
+        from tools.knowledge_base import citations_for_trade, link_lessons_to_trade
         by_ticker = {str(p.get("ticker", "")).upper(): p
                      for r in results if r.approved
                      for p in [r.proposal]
@@ -1016,8 +1133,14 @@ def main() -> int:
             prop = by_ticker.get(t)
             if not prop:
                 continue
-            ids = sorted(set(CITATION_RE.findall(json.dumps(prop))))
-            if ids and link_lessons_to_trade(t, ids, run_id, linked_on=et_date()):
+            ids = citations_for_trade(prop, response)
+            # trade_ref makes the link idempotent on (ticker, run_id, trade_ref):
+            # blind appending double-counted on manual re-runs and on scale-in adds
+            # (the validator permits 2 per position), which could push a lesson past
+            # the 3-linked-trade grading threshold on the strength of ONE real trade.
+            if ids and link_lessons_to_trade(
+                    t, ids, run_id, linked_on=et_date(),
+                    trade_ref=f.get("order_id") or f.get("proposal_id")):
                 print(f"      kb: linked {ids} to {t} entry for outcome grading")
     except Exception as e:
         print(f"      (kb trade-link failed: {e})")

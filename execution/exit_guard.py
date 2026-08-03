@@ -166,6 +166,27 @@ def check_forced_exits(portfolio: dict, prices: dict, atr_by_ticker: dict | None
                 "trailing_stop": trailing,
                 "atr_pct": atr_by_ticker.get(ticker),
                 "days_held": days_held, "horizon": horizon,
+                # THE PLAN THIS EXIT IS BEING JUDGED AGAINST, carried on the exit
+                # itself (added 2026-08-03). Audited that day: the HPE close of
+                # 2026-07-15 sits in the ledger with `stop_loss: None` and
+                # `forced_exit_reason: None`, so nothing on that row could say what
+                # it was measured against or whether a rule or a judgement closed
+                # it — while the DELL row two entries above carries both. An exit
+                # whose plan did not survive it cannot be graded at all, and an
+                # ungradeable exit is a decision the system takes for free.
+                # target_price and holding_horizon_days ride along because the
+                # claimed risk/reward that cleared the 2:1 gate is computed from
+                # them, and grading that claim is impossible once the lot is gone.
+                "plan_target_price": plan.get("target_price"),
+                "plan_holding_horizon_days": horizon,
+                "entry_plan_snapshot": {
+                    "stop_loss": plan.get("stop_loss"),
+                    "target_price": plan.get("target_price"),
+                    "holding_horizon_days": plan.get("holding_horizon_days"),
+                    "entry_price_max": plan.get("entry_price_max"),
+                    "confidence": plan.get("confidence"),
+                },
+                "avg_cost": pos.get("avg_cost"),
             })
     if trail_updates:
         try:  # broker owns all ledger writes; a failed persist never blocks exits
@@ -212,6 +233,17 @@ def execute_forced_exits(exits: list, prices: dict, run_id: str,
             "stop_loss": ex.get("stop_loss"),
             "atr_pct": ex.get("atr_pct") if ex.get("atr_pct") is not None
                        else atr_by_ticker.get(ex["ticker"]),
+            # PERSIST THE PLAN ONTO THE LEDGER ROW. Both brokers build the stored
+            # fill as {**order, ...}, so anything put here survives on the trade
+            # record forever — which is the only place a grader can find it once
+            # the position is gone. These keys never reach a broker API (alpaca's
+            # request body is constructed field by field), so they are free.
+            "plan_stop_loss": ex.get("plan_stop_loss"),
+            "plan_target_price": ex.get("plan_target_price"),
+            "plan_holding_horizon_days": ex.get("plan_holding_horizon_days"),
+            "trailing_stop": ex.get("trailing_stop"),
+            "exit_plan_snapshot": ex.get("entry_plan_snapshot"),
+            "days_held_at_exit": ex.get("days_held"),
         })
         fill = broker.readback(order["order_id"])  # mandatory readback
         status = (fill or {}).get("status")
@@ -233,9 +265,57 @@ def execute_forced_exits(exits: list, prices: dict, run_id: str,
             )
             rec = build_exit_autopsy_from_fill(
                 fill, order, pos_before, forced=True, reason=ex.get("reason"))
-            grade_and_persist_autopsy(rec)
+            graded = grade_and_persist_autopsy(rec)
         except Exception as e:
+            graded = None
             print(f"  (exit autopsy skipped: {e})")
+        _grade_exit_execution(fill, order, ex, graded)
         print(f"  FORCED EXIT {fill['ticker']} {fill['quantity']} "
               f"@ {fill['fill_price']} ({ex['reason']})")
     return fills
+
+
+def _grade_exit_execution(fill: dict, order: dict, ex: dict,
+                          autopsy: dict | None) -> None:
+    """Measure this exit against its own plan and against the gap model.
+
+    THE UNMEASURED ASSUMPTION (DELL, 2026-07-15). Plan stop 408.00, filled at
+    389.7542 — 4.47% of the stop level, 0.55 ATR THROUGH the line the position was
+    sized against, turning a 1%-risk trade into a realized -13.5% (1.43x planned
+    risk). autonomy_config models exactly this via
+    `execution_costs.stop_gap_atr_fraction` (0.5) and book_risk spends heat budget
+    on the number, but NOTHING had ever compared a realized fill against it. An
+    assumption that is never confronted with a fill is a guess wearing a config
+    key's clothes.
+
+    Inline here so a forced exit is graded the moment it happens; the ledger sweep
+    in post_exit_runners.sweep_exit_grades is the safety net that catches this
+    exit anyway if this call fails, plus every exit placed by another path.
+
+    Fail-soft to the point of silence about its own failure only in the
+    unreachable case: a grading error prints and moves on. EXITS REDUCE RISK AND
+    ARE SACRED — measurement never gets to interfere with one.
+    """
+    try:
+        from tools.exit_grade import grade_exit
+        from tools.post_exit_runners import record_exit_grade
+        row = dict(fill or {})
+        # The order dict carries the plan; the fill is built as {**order, ...} by
+        # both brokers, but readback() is the only thing that guarantees it, so
+        # merge defensively rather than assume.
+        for k in ("plan_stop_loss", "plan_target_price", "plan_holding_horizon_days",
+                  "trailing_stop", "exit_plan_snapshot", "forced_exit_reason",
+                  "stop_loss", "atr_pct", "reference_price"):
+            if row.get(k) is None and (order or {}).get(k) is not None:
+                row[k] = order[k]
+        if not isinstance(row.get("entry_plan"), dict) and \
+                isinstance(row.get("exit_plan_snapshot"), dict):
+            row["entry_plan"] = row["exit_plan_snapshot"]
+        row.setdefault("forced", True)
+        row.setdefault("days_held", ex.get("days_held"))
+        g = grade_exit(row, autopsy=autopsy, atr_pct=ex.get("atr_pct"))
+        record_exit_grade(g)
+        if g.get("headline"):
+            print(f"  EXIT GRADE {g['headline']}")
+    except Exception as e:
+        print(f"  (exit grade skipped: {e})")

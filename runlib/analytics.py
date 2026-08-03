@@ -7,6 +7,7 @@ from datetime import date, datetime, timezone, timedelta
 from pathlib import Path
 
 import validator
+from tools.trigger_conditions import evaluate_trigger
 from tools.watchlist_triggers import TRIGGER_TOLERANCE_PCT, parse_price_level
 from runlib.core import ROOT, et_date, et_now, to_et_date, json_safe, light_prices
 
@@ -146,6 +147,11 @@ def run_starts_today() -> list[dict]:
                 continue
             out.append({"et_hour": round(hour, 2), "ts": rec.get("ts"),
                         "slot": rec.get("slot"), "stage": rec.get("stage") or "start",
+                        # Which slot a WATCHDOG RECOVERY is answering for. Stamped
+                        # by scripts/mark_run_start.py --slot / $EE_RECOVERY_SLOT.
+                        # Without it a recovery is matched purely on timestamp and
+                        # steals the next slot's identity — see slot_report.
+                        "recovery_for": rec.get("recovery_for"),
                         "node": rec.get("node") or "unknown"})
     return sorted(out, key=lambda r: r["et_hour"])
 
@@ -176,6 +182,34 @@ def slot_report(now_h: float | None = None, weekday: bool | None = None) -> dict
     runs = [r for r in completed_runs_today() if r["et_hour"] <= now_h]
     starts = [s for s in run_starts_today() if s["et_hour"] <= now_h]
     used: set[int] = set()
+    # PRE-PASS — honour a run that DECLARED which slot it answers for.
+    #
+    # A watchdog recovery of the 08:45 slot that lands at 10:29 is NOT the 10:30
+    # run, and timestamp matching alone cannot tell the difference. This happened
+    # verbatim on 2026-07-29 and 2026-08-03: 08:45 never fired, the recovery
+    # landed 10:29 — one minute inside the 10:30 window — so 10:30 was marked hit,
+    # 08:45 read MISSED all day, and the REAL 10:30 run at 10:44 was orphaned.
+    # The same shape closes the day: a 16:00 recovery landing 17:29-17:35 takes
+    # the 17:30 slot and orphans the real evening review. 15 in-band orphan runs
+    # across 11 weekdays, all invisible because nothing ever read unmatched_runs.
+    #
+    # scripts/mark_run_start.py stamps `recovery_for`; the summary that follows
+    # within the measured p90 run length (25 min) is that recovery's own run.
+    declared: dict[float, int] = {}
+    for st in starts:
+        want = st.get("recovery_for")
+        if not want:
+            continue
+        sv = next((s for s in slots
+                   if f"{int(s):02d}:{int(round((s % 1) * 60)):02d}" == want), None)
+        if sv is None or sv in declared:
+            continue
+        j = next((k for k, r in enumerate(runs)
+                  if k not in used and st["et_hour"] <= r["et_hour"]
+                  <= st["et_hour"] + 25 / 60), None)
+        if j is not None:
+            used.add(j)
+            declared[sv] = j
     report = []
     for i, slot in enumerate(slots):
         nxt = slots[i + 1] if i + 1 < len(slots) else float("inf")
@@ -183,6 +217,13 @@ def slot_report(now_h: float | None = None, weekday: bool | None = None) -> dict
         hit = next((j for j, r in enumerate(runs)
                     if j not in used and lo <= r["et_hour"] < hi), None)
         label = f"{int(slot):02d}:{int(round((slot % 1) * 60)):02d}"
+        if slot in declared:
+            j = declared[slot]
+            report.append({"slot": slot, "label": label, "status": "hit",
+                           "recovered": True,
+                           "drift_min": round((runs[j]["et_hour"] - slot) * 60),
+                           "run_id": runs[j]["run_id"], "node": runs[j]["node"]})
+            continue
         if hit is not None:
             used.add(hit)
             # DRIFT: how late (or early) the run that covered this slot actually
@@ -334,6 +375,12 @@ def build_health() -> dict:
         # Slots that fired and DIED (a start breadcrumb but no summary) — these have a
         # session to read; a plain "missed" slot means the fire never happened.
         "died_slots": report["died_slots"],
+        # Runs that landed inside the scheduled day and matched NO slot. slot_report
+        # has always computed this and nothing ever forwarded it, so 15 orphan runs
+        # across 11 weekdays were invisible — including the recovery runs that took
+        # a later slot's window and left the real run for that slot unaccounted.
+        # An orphan is the signature of a slot collision, so it belongs in health.
+        "unmatched_runs": report["unmatched_runs"],
         "slots": report["slots"],
         # Which node(s) actually ran today. Run records carried no node identity until
         # 2026-07-20, so a live cloud trader masked a completely dead local one and the
@@ -1093,9 +1140,62 @@ def update_watchlist_outcomes(watchlist: list, prices: dict, positions: list) ->
             rec["parsed_level"] = lvl
             rec["hit_buy_level"] = False
             rec.pop("hit_date", None)
-        if lvl and px is not None and abs(px / lvl - 1) <= TRIGGER_TOLERANCE_PCT:
+            # The unbought-hit count is decay evidence against THIS level, so it
+            # resets with it. A genuine requalification (a new, honestly argued
+            # level) therefore earns a clean slate; re-typing the same number
+            # does not, because the parsed level is unchanged.
+            rec.pop("unbought_hit_days", None)
+        at_level = bool(lvl) and px is not None \
+            and abs(px / lvl - 1) <= TRIGGER_TOLERANCE_PCT
+        # THE EVENT/DATE GATE (2026-08-03, lesson LP-0693555695 from run
+        # 20260717-e6c993). parse_price_level reads ONE number out of the
+        # sentence and this function then graded the whole compound condition as
+        # met the moment price came within 2% of it. On 07-17 that scored AMD as
+        # having reached "a confirmed positive reaction to the 7/22-23 Advancing
+        # AI event ... basing $500-520 -- not a bounce off today's low alone" —
+        # five days BEFORE the event the sentence is entirely about, against a
+        # clause that rules out the pre-event dip in plain words.
+        #
+        # A false hit is no longer just a wrong foresight grade. It feeds
+        # tools/engagement.count_unbought_hits -> decay_watchlist, so three of
+        # them FORCE-DROP the name off the stored watchlist for misses that never
+        # happened (the setup was not live, so there was nothing to miss), and
+        # each one obliges the run to file a trigger_reviews row about it.
+        #
+        # tools/trigger_conditions fails open by construction: only a hard gate
+        # with a resolved date, present in EVERY "or" branch, holds a hit back.
+        # `would_buy_at_original` is passed because signal_discipline's dead-leg
+        # excision takes the rest of the clause with it and can carry the event
+        # gate away ("close above $175 with volume confirmation after the 8/4
+        # print" is stored as "close above $175"), so the pre-sanitize text is
+        # where the gate still lives.
+        gate = evaluate_trigger(w.get("would_buy_at"), as_of=today,
+                                original=w.get("would_buy_at_original")) \
+            if at_level else {"suppress": False}
+        rec.pop("trigger_gate", None)
+        if at_level and gate.get("suppress"):
+            # Recorded, never silent: an invisible filter is how a REAL miss
+            # would go unnoticed, which is the more expensive failure now.
+            rec["trigger_gate"] = {"held_on": today, "reason": gate.get("reason"),
+                                   "note": gate.get("note"),
+                                   "gates": gate.get("blocking") or []}
+        elif at_level:
             rec["hit_buy_level"], rec["hit_date"] = True, rec.get("hit_date") or today
+            # DISTINCT DAYS at the stated level without a buy. hit_buy_level is
+            # sticky (one flag, set once), which is right for foresight grading
+            # but cannot answer "how many times has this name reached my level
+            # while I did nothing" — the ANET/GE question. Seven runs in one day
+            # is one miss, so days are the unit. Reset with parsed_level above,
+            # because a hit graded against an old level is stale evidence.
+            if tk not in ever_bought:
+                days = rec.get("unbought_hit_days")
+                days = days if isinstance(days, list) else []
+                if today not in days:
+                    days.append(today)
+                rec["unbought_hit_days"] = days[-20:]
         rec["acted"] = tk in ever_bought
+        if rec["acted"]:
+            rec.pop("unbought_hit_days", None)
         tracked[tk] = rec
 
     for tk, rec in tracked.items():

@@ -19,6 +19,39 @@ Storage: data/post_exit_runners.json
 Mark windows: 15, 30, 60 days after exit_date.
 
 Fail-soft; public APIs never raise.
+
+WHY THE STUDY WAS EMPTY FOR NINETEEN DAYS (root-caused 2026-08-03)
+------------------------------------------------------------------
+As of 2026-08-03 this store read `{"tracking": [], "completed": []}` against two
+closed trades. It was NOT that seeding never fired — git shows it firing exactly
+once and then being destroyed three times over:
+
+  1. 2026-07-15 16:32  DELL and HPE both close. register_from_exit runs and the
+     store commits at 1,814 bytes with two tracks. The HPE one is the FABRICATED
+     test record (exit 40.00 / pnl -50.00), which had already squatted the
+     (HPE, 2026-07-15) dedupe key, so the REAL HPE exit was silently dropped by
+     the dedupe check — register_from_exit returns None and says nothing.
+  2. 2026-07-16 01:00  commit f02af98 ("Research-backed risk overhaul") commits a
+     stale local copy of this file. The real DELL track is gone. No code did this
+     and no code could have noticed it.
+  3. 2026-07-19 02:12  commit 80f2e63 empties the file to clean up the fabricated
+     HPE record found that day. Correct cleanup, except it took the schema back to
+     zero and there has been no close since to re-seed it.
+
+The root cause under all three is one design fact: SEEDING WAS CLOSE-TIME-ONLY.
+`register_from_exit` is reachable exclusively from
+`exit_autopsy.grade_and_persist_autopsy`, in the same instant the position closes.
+Nothing ever compared the store against the ledger in the ADD direction, so any
+loss — a bad commit, a crash before _save, a dedupe collision, an exit that took
+the queued/resting path and never reached the autopsy — was permanent and silent.
+The quarantine loop added on 2026-07-19 only ever REMOVES records. A study that
+can only lose observations converges on zero, which is exactly what it did.
+
+The fix is `backfill_from_ledger`, run at the top of every mark cycle: the ledger
+is the authority for which exits happened, and this store is reconciled to it in
+BOTH directions. A wiped file now heals on the next run instead of staying empty
+forever, and `brain_facing_runner_learning().study_health` reports unseeded exits
+so an empty study is loud rather than invisible.
 """
 
 from __future__ import annotations
@@ -32,6 +65,14 @@ ROOT = Path(__file__).resolve().parent.parent
 RUNNERS_FILE = ROOT / "data" / "post_exit_runners.json"
 
 MARK_DAYS = (15, 30, 60)
+# A mark window that closed BEFORE the record existed cannot be observed with
+# today's price. Inside this grace a late mark is honest enough to keep; past it
+# the window is recorded as MISSED rather than stamped with a price from the
+# wrong day. Fabricating an observation is worse than admitting a hole — the
+# 2026-07-16 incident is this system's own proof of that.
+MARK_LATE_GRACE_DAYS = 3
+# Cap on graded exit records kept in the store (newest wins).
+MAX_EXIT_GRADES = 120
 # How much further upside after exit counts as "left on the table"
 LEFT_ON_TABLE_PCT = 8.0
 # How much further downside after a winning exit counts as "good lock-in"
@@ -77,18 +118,130 @@ def _parse_day(s) -> datetime | None:
         return None
 
 
+def _empty_state() -> dict:
+    return {"version": 1, "tracking": [], "completed": [], "exit_grades": [],
+            "updated_at": None}
+
+
 def _load() -> dict:
     if not RUNNERS_FILE.exists():
-        return {"version": 1, "tracking": [], "completed": [], "updated_at": None}
+        return _empty_state()
     try:
         d = json.loads(RUNNERS_FILE.read_text())
         if not isinstance(d, dict):
-            return {"version": 1, "tracking": [], "completed": [], "updated_at": None}
+            return _empty_state()
         d.setdefault("tracking", [])
         d.setdefault("completed", [])
+        # Added 2026-08-03. Old stores lack it; defaulting here rather than
+        # migrating means a file written by the previous version loads clean.
+        d.setdefault("exit_grades", [])
         return d
     except Exception:
-        return {"version": 1, "tracking": [], "completed": [], "updated_at": None}
+        return _empty_state()
+
+
+# --------------------------------------------------------------------------- #
+# Ledger + autopsy readers
+#
+# Resolved from ROOT at CALL time, not bound at import. Every existing test that
+# isolates this module monkeypatches ROOT to a tmp_path; a module-level constant
+# would keep pointing at the real repo and the backfill would inject live DELL/HPE
+# tracks into isolated test stores — the same cross-contamination class that
+# conftest's _no_writes_to_real_learning_stores guard exists to catch, only
+# running in the opposite direction.
+# --------------------------------------------------------------------------- #
+def _ledger_file() -> Path:
+    return ROOT / "state" / "portfolio.json"
+
+
+def _autopsy_dir() -> Path:
+    return ROOT / "journal" / "exit_autopsies"
+
+
+def ledger_exits() -> list[dict]:
+    """Every FILLED SELL_TO_CLOSE row in the ledger, oldest first.
+
+    This is the authority for "which exits actually happened" — the same source
+    reconciles_with_ledger checks against, read directly so the backfill and the
+    quarantine cannot disagree about what is real. Both brokers write this file
+    (alpaca_broker.STATE_FILE IS simulated_broker.STATE_FILE), so the backend in
+    use never changes the answer.
+    """
+    try:
+        f = _ledger_file()
+        if not f.exists():
+            return []
+        hist = json.loads(f.read_text()).get("history") or []
+        out = []
+        for row in hist:
+            if not isinstance(row, dict):
+                continue
+            if str(row.get("action", "")).upper() != "SELL_TO_CLOSE":
+                continue
+            if row.get("status") != "filled":
+                continue
+            if not row.get("ticker") or row.get("fill_price") is None:
+                continue
+            out.append(row)
+        return out
+    except Exception:
+        return []
+
+
+def _autopsy_records() -> list[dict]:
+    """All exit autopsies, newest file last. Supplies the discretionary narrative
+    and the entry plan for rows whose broker never stamped one."""
+    rows: list[dict] = []
+    try:
+        d = _autopsy_dir()
+        if not d.exists():
+            return []
+        for f in sorted(d.glob("*.jsonl")):
+            try:
+                lines = f.read_text().splitlines()
+            except OSError:
+                continue
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(rec, dict) and rec.get("ticker"):
+                    rows.append(rec)
+    except Exception:
+        return rows
+    return rows
+
+
+def _autopsy_for(row: dict, autopsies: list[dict]) -> dict | None:
+    """Best autopsy match for a ledger exit: same ticker, same day, and prefer the
+    GRADED copy (grade_and_persist_autopsy appends a graded record alongside the
+    stub, so the same close appears twice)."""
+    try:
+        tkr = str(row.get("ticker") or "").upper()
+        day = str(row.get("filled_at") or "")[:10]
+        px = row.get("fill_price")
+        best = None
+        for a in autopsies:
+            if str(a.get("ticker") or "").upper() != tkr:
+                continue
+            a_day = str(a.get("filled_at") or a.get("ts") or "")[:10]
+            if day and a_day and a_day != day:
+                continue
+            if px is not None and a.get("fill_price") is not None:
+                try:
+                    if abs(float(a["fill_price"]) - float(px)) > 0.01:
+                        continue
+                except (TypeError, ValueError):
+                    pass
+            if best is None or (a.get("brain_grade") and not best.get("brain_grade")):
+                best = a
+        return best
+    except Exception:
+        return None
 
 
 def _save(state: dict) -> None:
@@ -149,6 +302,28 @@ def reconciles_with_ledger(record: dict, closed_trades: list[dict] | None = None
         return True  # never let a reconciliation bug delete real tracking
 
 
+def _seed_key(ticker, exit_date) -> str:
+    return f"{str(ticker or '').upper()}|{str(exit_date or '')[:10]}"
+
+
+def known_seed_keys(state: dict) -> set:
+    """Every (ticker, exit_date) this store has EVER seen — tracking, completed
+    AND quarantined.
+
+    register_from_exit used to check `tracking` only. That is how a completed
+    track could be re-seeded from scratch by any later sweep, and — worse — how a
+    quarantined fabrication could be resurrected by the very loop that removed it.
+    Membership is about identity, not about which bucket a record currently sits
+    in.
+    """
+    keys = set()
+    for bucket in ("tracking", "completed", "quarantined"):
+        for rec in (state.get(bucket) or []):
+            if isinstance(rec, dict):
+                keys.add(_seed_key(rec.get("ticker"), rec.get("exit_date")))
+    return keys
+
+
 def register_from_exit(autopsy: dict) -> dict | None:
     """Start post-exit tracking from a graded exit autopsy.
 
@@ -188,33 +363,21 @@ def register_from_exit(autopsy: dict) -> dict | None:
             track_kind = "loser"
 
         state = _load()
-        # Dedupe same ticker+exit_date
-        for t in state["tracking"]:
-            if t.get("ticker") == ticker and t.get("exit_date") == exit_date:
-                return None
+        # Dedupe across EVERY bucket, not just tracking — see known_seed_keys.
+        if _seed_key(ticker, exit_date) in known_seed_keys(state):
+            return None
 
-        rec = {
-            "id": f"PX-{uuid.uuid4().hex[:10]}",
-            "ticker": ticker,
-            "exit_date": exit_date,
-            "exit_price": round(exit_px, 4),
-            "avg_cost": round(avg, 4) if avg else None,
-            "gain_at_exit_pct": gain_at_exit_pct,
-            "realized_pnl_usd": autopsy.get("realized_pnl_usd"),
-            "track_kind": track_kind,
-            "forced": bool(autopsy.get("forced")),
-            "forced_reason": autopsy.get("forced_reason"),
-            "process_grade": (autopsy.get("brain_grade") or {}).get("process"),
-            "days_held": autopsy.get("days_held"),
-            "entry_plan": autopsy.get("entry_plan"),
-            "high_after_exit": round(exit_px, 4),
-            "low_after_exit": round(exit_px, 4),
-            "last_price": round(exit_px, 4),
-            "marks": {},  # "15" -> {date, price, leftover_pct, ...}
-            "status": "tracking",
-            "runner_verdict": None,
-            "hold_lesson": None,
-        }
+        rec = _build_track(
+            ticker=ticker, exit_date=exit_date, exit_px=exit_px, avg=avg,
+            gain_at_exit_pct=gain_at_exit_pct, track_kind=track_kind,
+            realized_pnl_usd=autopsy.get("realized_pnl_usd"),
+            forced=bool(autopsy.get("forced")),
+            forced_reason=autopsy.get("forced_reason"),
+            process_grade=(autopsy.get("brain_grade") or {}).get("process"),
+            days_held=autopsy.get("days_held"),
+            entry_plan=autopsy.get("entry_plan"),
+            source="exit_time",
+        )
         state["tracking"].append(rec)
         if len(state["tracking"]) > MAX_OPEN:
             state["tracking"] = state["tracking"][-MAX_OPEN:]
@@ -224,12 +387,352 @@ def register_from_exit(autopsy: dict) -> dict | None:
         return None
 
 
+def _build_track(*, ticker, exit_date, exit_px, avg, gain_at_exit_pct, track_kind,
+                 realized_pnl_usd, forced, forced_reason, process_grade,
+                 days_held, entry_plan, source: str) -> dict:
+    """One tracking record. Shared by live seeding and ledger backfill so the two
+    paths cannot drift into producing different shapes for the same event."""
+    age = _age_days(exit_date)
+    return {
+        "id": f"PX-{uuid.uuid4().hex[:10]}",
+        "ticker": ticker,
+        "exit_date": exit_date,
+        "exit_price": round(float(exit_px), 4),
+        "avg_cost": round(float(avg), 4) if avg else None,
+        "gain_at_exit_pct": gain_at_exit_pct,
+        "realized_pnl_usd": realized_pnl_usd,
+        "track_kind": track_kind,
+        "forced": bool(forced),
+        "forced_reason": forced_reason,
+        "process_grade": process_grade,
+        "days_held": days_held,
+        "entry_plan": entry_plan if isinstance(entry_plan, dict) else None,
+        "high_after_exit": round(float(exit_px), 4),
+        "low_after_exit": round(float(exit_px), 4),
+        "last_price": round(float(exit_px), 4),
+        "marks": {},  # "15" -> {date, price, leftover_pct, ...}
+        "status": "tracking",
+        "runner_verdict": None,
+        "hold_lesson": None,
+        # Provenance. `seed_source` distinguishes a track opened the instant the
+        # position closed from one recovered later off the ledger; `seed_age_days`
+        # is how stale the exit already was when we started watching, which is what
+        # decides whether a mark window can be honestly observed at all.
+        "seed_source": source,
+        "seeded_at": _today(),
+        "seed_age_days": age,
+    }
+
+
 def _age_days(exit_date: str) -> int | None:
     ed = _parse_day(exit_date)
     if not ed:
         return None
     d0 = ed.date() if hasattr(ed, "date") else ed
     return max(0, (_now().date() - d0).days)
+
+
+# --------------------------------------------------------------------------- #
+# BACKFILL — the fix for the empty study
+# --------------------------------------------------------------------------- #
+def _bar_on_or_before(bars: dict, day: str, *, after: str) -> tuple[str, dict] | None:
+    """Latest bar in (after, day]. Weekends and holidays mean the Nth calendar day
+    after an exit frequently has no bar; walking back is how a 15-day mark lands on
+    the last session that actually traded instead of being recorded as missing."""
+    best = None
+    for d, bar in (bars or {}).items():
+        d10 = str(d)[:10]
+        if d10 <= str(after)[:10] or d10 > str(day)[:10]:
+            continue
+        if not isinstance(bar, dict) or bar.get("close") is None:
+            continue
+        if best is None or d10 > best[0]:
+            best = (d10, bar)
+    return best
+
+
+def _replay_path_from_bars(rec: dict, bars: dict) -> dict:
+    """Reconstruct the post-exit path from REAL daily bars.
+
+    A track recovered nineteen days after the exit cannot honestly mark its 15-day
+    window with today's close — that would record a price from the wrong day as an
+    observation. Daily bars make the window observable for real, so a recovered
+    track carries the same evidence a live one would have. Marks written here are
+    tagged `daily_bars_backfill` so nothing downstream mistakes a reconstruction
+    for a live mark.
+
+    Fail-soft: no bars means no marks, and the window is later recorded as MISSED.
+    Missing data must never become manufactured data.
+    """
+    try:
+        exit_px = float(rec["exit_price"])
+        exit_date = str(rec.get("exit_date") or "")[:10]
+        if not bars or exit_px <= 0 or not exit_date:
+            return rec
+        today = _today()
+        highs, lows = [], []
+        for d, bar in bars.items():
+            d10 = str(d)[:10]
+            if d10 <= exit_date or d10 > today:
+                continue
+            try:
+                if bar.get("high") is not None:
+                    highs.append(float(bar["high"]))
+                if bar.get("low") is not None:
+                    lows.append(float(bar["low"]))
+            except (TypeError, ValueError):
+                continue
+        if not highs and not lows:
+            return rec
+        if highs:
+            rec["high_after_exit"] = round(
+                max(float(rec.get("high_after_exit") or exit_px), max(highs)), 4)
+        if lows:
+            rec["low_after_exit"] = round(
+                min(float(rec.get("low_after_exit") or exit_px), min(lows)), 4)
+
+        ed = _parse_day(exit_date)
+        marks = rec.setdefault("marks", {})
+        for w in MARK_DAYS:
+            key = str(w)
+            if key in marks:
+                continue
+            target = (ed + timedelta(days=w)).date().isoformat()
+            if target > today:
+                continue  # window has not closed yet — nothing to reconstruct
+            hit = _bar_on_or_before(bars, target, after=exit_date)
+            if not hit:
+                continue
+            day, bar = hit
+            px = float(bar["close"])
+            # High/low TO THAT WINDOW, not to today: a 15-day mark that quotes the
+            # 60-day peak is not a 15-day observation.
+            w_highs = [float(b["high"]) for d, b in bars.items()
+                       if exit_date < str(d)[:10] <= day
+                       and isinstance(b, dict) and b.get("high") is not None]
+            w_lows = [float(b["low"]) for d, b in bars.items()
+                      if exit_date < str(d)[:10] <= day
+                      and isinstance(b, dict) and b.get("low") is not None]
+            marks[key] = {
+                "window_days": w,
+                "marked_at": today,
+                "mark_date": day,
+                "price": round(px, 4),
+                "leftover_pct": round((px / exit_px - 1) * 100, 2),
+                "high_to_date_pct": (round((max(w_highs) / exit_px - 1) * 100, 2)
+                                     if w_highs else None),
+                "low_to_date_pct": (round((min(w_lows) / exit_px - 1) * 100, 2)
+                                    if w_lows else None),
+                "mark_source": "daily_bars_backfill",
+            }
+        last = _bar_on_or_before(bars, today, after=exit_date)
+        if last:
+            rec["last_price"] = round(float(last[1]["close"]), 4)
+            rec["last_mark_at"] = today
+            rec["current_leftover_pct"] = round(
+                (float(last[1]["close"]) / exit_px - 1) * 100, 2)
+        rec["bars_backfilled"] = True
+    except Exception as e:
+        rec["bars_backfill_error"] = str(e)[:120]
+    return rec
+
+
+def _fetch_bars(tickers: list, start: str, end: str) -> dict:
+    """Daily OHLC for the backfill. Cached in tools.benchmark; fail-soft to {}."""
+    try:
+        from tools.benchmark import daily_ohlc_batch
+        return daily_ohlc_batch(tickers, start, end) or {}
+    except Exception:
+        return {}
+
+
+def backfill_from_ledger(*, closed_exits: list | None = None,
+                         autopsies: list | None = None,
+                         fetch_bars: bool = True,
+                         bars_by_ticker: dict | None = None) -> dict:
+    """Seed a track for every FILLED exit in the ledger that this store is missing.
+
+    THIS IS THE FIX FOR THE NINETEEN-DAY EMPTY STUDY (see the module docstring).
+    Seeding used to happen exactly once, at close time, from
+    exit_autopsy.grade_and_persist_autopsy. Every way that call could be missed —
+    a dedupe collision with a fabricated record, a hand-committed stale copy of
+    this file, an exit that took the queued/resting path, a crash before _save —
+    lost the observation permanently and silently, and the quarantine loop added
+    afterwards only ever removed records. A study that can only lose observations
+    converges on zero, and it did.
+
+    Reconciliation now runs in BOTH directions against the same authority: the
+    ledger says which exits happened, the quarantine removes tracks with no trade
+    behind them, and this adds tracks for trades with no record behind them.
+
+    Three deliberate choices:
+      * realized_pnl_usd is taken from the LEDGER ROW, not the autopsy. The
+        original DELL seed carried -135.19 against a real -13.52 and would have
+        failed its own reconciliation check on the next run; sourcing the number
+        from the thing it is reconciled against makes that impossible.
+      * The autopsy supplies only what the ledger cannot: the entry plan when the
+        broker did not stamp one, days_held, and the process grade.
+      * Recovered tracks get their marks replayed from real daily bars where
+        possible, so a late recovery is a real observation rather than a placeholder.
+    """
+    try:
+        exits = closed_exits if closed_exits is not None else ledger_exits()
+        if not exits:
+            return {"seeded": 0, "already_tracked": 0, "skipped": 0,
+                    "reason": "no closed exits in the ledger"}
+        aps = autopsies if autopsies is not None else _autopsy_records()
+
+        state = _load()
+        known = known_seed_keys(state)
+        seeded, already, skipped = [], 0, []
+        new_recs = []
+        for row in exits:
+            ticker = str(row.get("ticker") or "").upper()
+            exit_date = str(row.get("filled_at") or "")[:10]
+            if not ticker or not exit_date:
+                skipped.append({"ticker": ticker, "why": "no ticker or fill date"})
+                continue
+            key = _seed_key(ticker, exit_date)
+            if key in known:
+                already += 1
+                continue
+            try:
+                exit_px = float(row.get("fill_price"))
+            except (TypeError, ValueError):
+                skipped.append({"ticker": ticker, "why": "unparseable fill price"})
+                continue
+            if exit_px <= 0:
+                skipped.append({"ticker": ticker, "why": "non-positive fill price"})
+                continue
+
+            ap = _autopsy_for(row, aps) or {}
+            avg = row.get("avg_cost")
+            if avg is None:
+                avg = ap.get("avg_cost")
+            try:
+                avg = float(avg) if avg is not None else None
+            except (TypeError, ValueError):
+                avg = None
+            gain = round((exit_px / avg - 1) * 100, 2) if avg and avg > 0 else None
+            kind = ("winner" if (gain is not None and gain > 0)
+                    else "loser" if (gain is not None and gain < 0)
+                    else "unknown_basis")
+            plan = row.get("entry_plan") or ap.get("entry_plan") or row.get("plan")
+            rec = _build_track(
+                ticker=ticker, exit_date=exit_date, exit_px=exit_px, avg=avg,
+                gain_at_exit_pct=gain, track_kind=kind,
+                realized_pnl_usd=row.get("realized_pnl_usd"),
+                forced=bool(row.get("forced_exit_reason") or ap.get("forced")),
+                forced_reason=row.get("forced_exit_reason") or ap.get("forced_reason"),
+                process_grade=(ap.get("brain_grade") or {}).get("process"),
+                days_held=ap.get("days_held"),
+                entry_plan=plan if isinstance(plan, dict) else None,
+                source="ledger_backfill",
+            )
+            rec["order_id"] = row.get("order_id")
+            new_recs.append(rec)
+            known.add(key)
+
+        if not new_recs:
+            return {"seeded": 0, "already_tracked": already,
+                    "skipped": len(skipped), "skipped_detail": skipped[:5]}
+
+        bars = dict(bars_by_ticker or {})
+        need = [r["ticker"] for r in new_recs if r["ticker"] not in bars]
+        if need and fetch_bars:
+            oldest = min(str(r["exit_date"]) for r in new_recs)
+            bars.update(_fetch_bars(need, oldest, _today()))
+        for rec in new_recs:
+            b = bars.get(rec["ticker"])
+            if b:
+                _replay_path_from_bars(rec, b)
+            seeded.append({"ticker": rec["ticker"], "exit_date": rec["exit_date"],
+                           "seed_age_days": rec.get("seed_age_days"),
+                           "marks_recovered": len(rec.get("marks") or {})})
+
+        state["tracking"] = (state.get("tracking") or []) + new_recs
+        if len(state["tracking"]) > MAX_OPEN:
+            state["tracking"] = state["tracking"][-MAX_OPEN:]
+        _save(state)
+        return {"seeded": len(new_recs), "already_tracked": already,
+                "skipped": len(skipped), "skipped_detail": skipped[:5],
+                "seeded_detail": seeded}
+    except Exception as e:
+        return {"status": "error", "reason": str(e)[:200], "seeded": 0}
+
+
+# --------------------------------------------------------------------------- #
+# EXIT GRADES — persistence + ledger sweep for tools/exit_grade.py
+#
+# Kept in THIS store rather than a new file for three reasons that are all about
+# the grade actually being seen: this file is already in conftest's
+# _no_writes_to_real_learning_stores guard list, already published to the
+# dashboard by runlib/publish.py, and already reachable from the brain's context
+# through brain_facing_runner_learning. A learning artifact nothing reads is the
+# failure mode this whole area is being repaired for.
+# --------------------------------------------------------------------------- #
+def record_exit_grade(grade: dict) -> bool:
+    """Persist one graded exit, newest-wins on its exit_key. Fail-soft."""
+    try:
+        if not isinstance(grade, dict) or not grade.get("exit_key"):
+            return False
+        state = _load()
+        rows = [g for g in (state.get("exit_grades") or [])
+                if isinstance(g, dict) and g.get("exit_key") != grade["exit_key"]]
+        rows.append(grade)
+        rows.sort(key=lambda g: str(g.get("exit_ts") or g.get("graded_at") or ""))
+        state["exit_grades"] = rows[-MAX_EXIT_GRADES:]
+        _save(state)
+        return True
+    except Exception:
+        return False
+
+
+def load_exit_grades(limit: int | None = None) -> list[dict]:
+    """Graded exits, newest first."""
+    try:
+        rows = [g for g in (_load().get("exit_grades") or []) if isinstance(g, dict)]
+        rows = list(reversed(rows))
+        return rows[:limit] if limit else rows
+    except Exception:
+        return []
+
+
+def sweep_exit_grades(*, closed_exits: list | None = None,
+                      autopsies: list | None = None,
+                      regrade: bool = False) -> dict:
+    """Grade every exit in the ledger that has no grade yet.
+
+    Runs off the LEDGER rather than off a call site, which is the whole point:
+    execution/exit_guard.py grades forced exits inline, but discretionary closes
+    are placed by runlib/brain_io.py and queued/resting exits are completed by
+    execution/reconcile_runner.py. Wiring three call sites would leave a fourth
+    ungraded the day someone adds one. Sweeping the ledger grades every exit that
+    ever happened, including the two that closed on 2026-07-15 before this layer
+    existed, and it is idempotent — a grade is keyed on the broker order.
+    """
+    try:
+        from tools import exit_grade as EG
+    except Exception as e:
+        return {"status": "error", "reason": f"exit_grade unavailable: {e}"[:150]}
+    try:
+        exits = closed_exits if closed_exits is not None else ledger_exits()
+        if not exits:
+            return {"graded": 0, "already_graded": 0, "n_exits": 0}
+        aps = autopsies if autopsies is not None else _autopsy_records()
+        have = {g.get("exit_key") for g in load_exit_grades()}
+        model = EG.load_gap_model(root=ROOT)
+        graded = 0
+        for row in exits:
+            key = EG.exit_key(row)
+            if key in have and not regrade:
+                continue
+            g = EG.grade_exit(row, autopsy=_autopsy_for(row, aps), model=model)
+            if record_exit_grade(g):
+                graded += 1
+        return {"graded": graded, "already_graded": len(have), "n_exits": len(exits)}
+    except Exception as e:
+        return {"status": "error", "reason": str(e)[:200], "graded": 0}
 
 
 def classify_headline_for_attribution(title: str) -> str:
@@ -600,14 +1103,42 @@ def _score_runner(rec: dict, attribution: dict | None = None) -> dict:
     return out
 
 
-def mark_post_exit_runners(prices: dict, *, cache_news_on_marks: bool = True) -> dict:
+def mark_post_exit_runners(prices: dict, *, cache_news_on_marks: bool = True,
+                           backfill: bool = True) -> dict:
     """Mark open post-exit tracks; complete when 60d mark filled or horizon passed.
 
     When cache_news_on_marks is True (default), each NEW 15/30/60 mark stores a
     snapshot of company headlines so left-on-table attribution later is not
     hostage to recency-limited news feeds.
+
+    BACKFILL RUNS FIRST (added 2026-08-03). This function is the only thing that
+    touches the store on a schedule, so it is where reconciliation against the
+    ledger belongs — in both directions. Quarantine (below) removes tracks with no
+    trade behind them; backfill_from_ledger adds tracks for trades with no record
+    behind them. Before this, the store could only ever lose observations, and
+    across nineteen days and two closed trades it held exactly none. Fail-soft and
+    independently switchable, because marking existing tracks must keep working
+    even if recovery is broken.
     """
     try:
+        backfilled = {}
+        graded = {}
+        if backfill:
+            try:
+                backfilled = backfill_from_ledger()
+                if backfilled.get("seeded"):
+                    print(f"  (post-exit runners: recovered {backfilled['seeded']} "
+                          f"track(s) missing from the study: "
+                          f"{[s['ticker'] for s in backfilled.get('seeded_detail') or []]})")
+            except Exception as e:
+                print(f"  (post-exit runner backfill skipped: {e})")
+            try:
+                graded = sweep_exit_grades()
+                if graded.get("graded"):
+                    print(f"  (exit grades: graded {graded['graded']} exit(s))")
+            except Exception as e:
+                print(f"  (exit grade sweep skipped: {e})")
+
         state = _load()
         still = []
         completed = []
@@ -669,6 +1200,25 @@ def mark_post_exit_runners(prices: dict, *, cache_news_on_marks: bool = True) ->
                 for w in MARK_DAYS:
                     key = str(w)
                     if age >= w and key not in (rec.get("marks") or {}):
+                        # A window that closed before this track existed cannot be
+                        # observed with today's price. Say MISSED rather than stamp
+                        # the wrong day's number on it — the 2026-07-16 incident is
+                        # this store's own proof that a fabricated observation is
+                        # worse than an admitted hole, because every downstream
+                        # consumer treats the two identically.
+                        seed_age = rec.get("seed_age_days")
+                        if (isinstance(seed_age, (int, float))
+                                and seed_age - w > MARK_LATE_GRACE_DAYS):
+                            rec.setdefault("marks", {})[key] = {
+                                "window_days": w,
+                                "status": "missed",
+                                "marked_at": _today(),
+                                "reason": (
+                                    f"the {w}-day window closed {int(seed_age - w)} "
+                                    f"days before this track was recovered, and no "
+                                    f"daily bars were available to reconstruct it"),
+                            }
+                            continue
                         mark = {
                             "window_days": w,
                             "marked_at": _today(),
@@ -757,9 +1307,90 @@ def mark_post_exit_runners(prices: dict, *, cache_news_on_marks: bool = True) ->
             # records being caught, rather than it living only in a print().
             "quarantined_now": len(quarantined),
             "quarantined_tickers": [q.get("ticker") for q in quarantined],
+            # The ADD side of reconciliation, reported for the same reason: a
+            # study that silently recovers nothing looks identical to one with
+            # nothing to recover, and for nineteen days that ambiguity is exactly
+            # what hid an empty store.
+            "backfill": backfilled,
+            "exit_grades": graded,
         }
     except Exception as e:
         return {"status": "error", "reason": str(e)[:150]}
+
+
+def study_health() -> dict:
+    """Is the study actually observing the exits that happened?
+
+    THE FAILURE THIS MAKES LOUD (2026-08-03). data/post_exit_runners.json read
+    `{"tracking": [], "completed": []}` for nineteen days against two closed
+    trades, and every consumer rendered that as "warming up" — the same words an
+    honestly-new study would produce. An empty store and a broken store were
+    indistinguishable from the outside, so nothing could notice. This counts the
+    ledger's closed exits against what the store is watching and NAMES the gap.
+    """
+    try:
+        exits = ledger_exits()
+        state = _load()
+        keys = known_seed_keys(state)
+        unseeded = []
+        for row in exits:
+            k = _seed_key(row.get("ticker"), str(row.get("filled_at") or "")[:10])
+            if k not in keys:
+                unseeded.append({"ticker": str(row.get("ticker") or "").upper(),
+                                 "exit_date": str(row.get("filled_at") or "")[:10]})
+        n_tracked = len(state.get("tracking") or []) + len(state.get("completed") or [])
+        healthy = not unseeded
+        return {
+            "ledger_closed_exits": len(exits),
+            "tracked_or_completed": n_tracked,
+            "quarantined": len(state.get("quarantined") or []),
+            "unseeded_exits": unseeded[:10],
+            "n_unseeded": len(unseeded),
+            "healthy": healthy,
+            "note": (
+                "Every closed exit in the ledger is being tracked."
+                if healthy else
+                f"{len(unseeded)} closed exit(s) in the ledger have NO post-exit "
+                f"track. The study is under-observing; treat its stats as "
+                f"incomplete rather than as evidence of nothing to learn."
+            ),
+        }
+    except Exception as e:
+        return {"status": "error", "reason": str(e)[:150], "healthy": None}
+
+
+def brain_facing_exit_grades(limit: int = 8) -> dict:
+    """Compact per-exit grades for the brain: plan, reason, realized-vs-claimed R,
+    and how far through the stop the fill landed.
+
+    Exits were the only major decision in this system with no feedback surface. An
+    entry faces a validator, a risk desk, a stop floor and a 2:1 gate; the close
+    produced a process_win/fail tag and vanished. These rows are what turn a close
+    into something the next decision can learn from.
+    """
+    try:
+        from tools import exit_grade as EG
+        rows = load_exit_grades(limit)
+        return {
+            "note": (
+                "EXIT EXECUTION GRADES. Per close: the plan it was judged against, "
+                "whether it was forced (stop/trail/horizon) or discretionary, the "
+                "REALIZED R against the R you claimed at entry, and — on stop "
+                "exits — how far through the stop the fill actually landed, in $ "
+                "and in ATR, against execution_costs.stop_gap_atr_fraction. "
+                "stop_gap_source 'modelled' means the fill came out of the "
+                "simulator's own gap model: that is arithmetic, not evidence about "
+                "how stops fill in the market, and it never counts as either. "
+                "A large r_gap means the claimed risk/reward that cleared the 2:1 "
+                "gate did not survive contact; a repeated gap_worse_than_model "
+                "means positions are sized against a stop that does not hold."
+            ),
+            "recent": [EG.compact_exit_grade(g) for g in rows],
+            "headlines": [g.get("headline") for g in rows if g.get("headline")],
+            "stats": EG.summarize_exit_grades(load_exit_grades()),
+        }
+    except Exception as e:
+        return {"status": "error", "reason": str(e)[:150], "recent": []}
 
 
 def brain_facing_runner_learning(limit: int = 12) -> dict:
@@ -802,6 +1433,8 @@ def brain_facing_runner_learning(limit: int = 12) -> dict:
         n_left = len([c for c in (state.get("completed") or [])
                       if c.get("runner_verdict") == "left_on_table"])
         binding = n_done >= 5 and n_left >= 2
+        health = study_health()
+        grades = brain_facing_exit_grades(min(limit, 8))
 
         return {
             "note": (
@@ -815,6 +1448,11 @@ def brain_facing_runner_learning(limit: int = 12) -> dict:
                 + ("Binding: when similar winners print, consider scale-out / trail language."
                    if binding else
                    f"Warming up ({n_done} completed tracks, {n_left} left-on-table).")
+                # "Warming up" is what this block said for nineteen days while the
+                # store was EMPTY and two exits had gone untracked. A thin study
+                # and a broken one must never read the same.
+                + ("" if health.get("healthy", True) else
+                   f" WARNING: {health.get('note')}")
             ),
             "binding": binding,
             "mark_windows_days": list(MARK_DAYS),
@@ -857,10 +1495,17 @@ def brain_facing_runner_learning(limit: int = 12) -> dict:
                 for c in recovered
             ],
             "open_winners_still_running": open_interesting[:8],
+            "study_health": health,
+            "exit_execution_grades": grades,
             "stats": {
                 "left_on_table_rate_pct": round(
                     100 * n_left / max(1, n_done), 1) if n_done else None,
                 "completed": n_done,
+                # The `study_health` / `exit_execution_grades` digests that used to
+                # be smuggled through here are gone: both are now registered
+                # top-level keys in runlib/context_tiers.compact_learning_pack's
+                # `runners` allowlist (2026-08-03), so the full blocks reach the
+                # brain directly instead of a truncated copy riding on `stats`.
             },
             "hold_winners_playbook": {
                 "when_left_on_table_repeats": (

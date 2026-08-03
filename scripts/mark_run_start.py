@@ -25,10 +25,21 @@ and runlib.analytics.slot_report already matches records to slots by their times
 
   python3 scripts/mark_run_start.py                 # auto-detect the current slot
   python3 scripts/mark_run_start.py --stage gathered  # advance an existing run's marker
+  python3 scripts/mark_run_start.py --slot 08:45 --stage recovery   # watchdog re-run
+
+--slot EXISTS BECAUSE AUTO-DETECTION IS WRONG FOR A RECOVERY RUN (2026-08-03). The
+label below is derived from the WALL CLOCK, which is exactly the assumption a recovery
+breaks: a run re-doing the 08:45 slot at 10:29 is not the 10:30 run, but every
+timestamp-based consumer says it is. That is not hypothetical — on 2026-07-29 and
+2026-08-03 the watchdog's 08:45 recovery landed at 10:29, was credited to the 10:30
+slot by runlib.analytics.slot_report, and orphaned the real 10:30 run at 10:44. Passing
+--slot lets the recovery declare which slot it is answering for, so the breadcrumb tells
+the truth even when the clock does not.
 """
 from __future__ import annotations
 
 import argparse
+import os
 import subprocess
 import sys
 import uuid
@@ -93,6 +104,48 @@ def _current_slot_label() -> str | None:
         return None
 
 
+def _known_slot_labels() -> set[str]:
+    """Every label the heartbeat grades against, for BOTH day types.
+
+    A recovery may be marked from a watchdog whose own notion of "is it a weekday"
+    could differ from the trading node's, so both lists are accepted; what matters is
+    that an operator typo (`--slot 8:45`, `--slot 1030`) is rejected rather than
+    silently journaled as a slot nothing will ever match.
+    """
+    try:
+        from runlib.analytics import expected_slots
+        out = set()
+        for weekday in (True, False):
+            for s in expected_slots(weekday):
+                out.add(f"{int(s):02d}:{int(round((s % 1) * 60)):02d}")
+        return out
+    except Exception:
+        return set()
+
+
+def _validated_slot(explicit: str | None) -> tuple[str | None, str | None]:
+    """(slot_label, error). An unrecognised --slot is refused, not coerced.
+
+    Falls back to $EE_RECOVERY_SLOT when no flag is given, because the marker is not
+    always invoked by the watchdog directly: orchestrator.py re-invokes this script
+    itself under --gather-only, with no arguments (that gating is deliberate — only the
+    cloud routines mark). A recovery therefore has no way to pass a flag through, and an
+    environment variable travels the whole way down without touching the orchestrator.
+    Set it around the WHOLE recovery, both processes:
+
+        EE_RECOVERY_SLOT=08:45 python orchestrator.py --gather-only --auto-depth
+    """
+    if explicit is None:
+        explicit = os.environ.get("EE_RECOVERY_SLOT") or None
+    if explicit is None:
+        return _current_slot_label(), None
+    label = str(explicit).strip()
+    known = _known_slot_labels()
+    if known and label not in known:
+        return None, f"--slot {label!r} is not a scheduled slot ({sorted(known)})"
+    return label, None
+
+
 def _git(*args: str, timeout: int = 120) -> subprocess.CompletedProcess:
     return subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
                           text=True, timeout=timeout)
@@ -121,17 +174,28 @@ def _push_marker(marker_path: Path, slot: str | None, stage: str) -> bool:
         return False
 
 
-def run(stage: str = "start", no_push: bool = False) -> int:
+def run(stage: str = "start", no_push: bool = False,
+        slot: str | None = None) -> int:
     """Journal (and optionally push) the breadcrumb. Fail-OPEN: always returns 0."""
     try:
         import journal
-        slot = _current_slot_label()
+        claimed = slot or os.environ.get("EE_RECOVERY_SLOT") or None
+        label, err = _validated_slot(slot)
+        if err:
+            # Still fail-open — but say so loudly and fall back to the clock, rather
+            # than stamping a slot label no consumer recognises.
+            print(f"  (run-start marker: {err}; falling back to the clock)")
+            label = _current_slot_label()
         _, hhmm = _et_now_hour()
         run_id = f"{datetime.now(timezone.utc):%Y%m%d}-mk{uuid.uuid4().hex[:4]}"
-        path = journal.log_run_start(run_id, slot=slot, stage=stage,
-                                     extra={"marked_at_et": hhmm})
-        pushed = False if no_push else _push_marker(path, slot, stage)
-        print(f"run-start marker: slot={slot or 'off-slot'} stage={stage} "
+        extra = {"marked_at_et": hhmm}
+        if claimed is not None and not err:
+            # The explicit claim, kept separate from `slot` so a later audit can tell a
+            # recovery apart from a run that merely happened to land in that window.
+            extra["recovery_for"] = label
+        path = journal.log_run_start(run_id, slot=label, stage=stage, extra=extra)
+        pushed = False if no_push else _push_marker(path, label, stage)
+        print(f"run-start marker: slot={label or 'off-slot'} stage={stage} "
               f"pushed={pushed}")
         return 0
     except Exception as e:
@@ -147,11 +211,14 @@ main_for_test = run
 def main() -> int:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--stage", default="start",
-                    help="lifecycle stage: start | gathered | brain_done")
+                    help="lifecycle stage: start | gathered | brain_done | recovery")
     ap.add_argument("--no-push", action="store_true",
                     help="journal locally only (tests / local runs)")
+    ap.add_argument("--slot", default=None,
+                    help="the slot this run answers for, e.g. 08:45. Use on a WATCHDOG "
+                         "RECOVERY run, whose wall-clock time names the wrong slot.")
     args = ap.parse_args()
-    return run(stage=args.stage, no_push=args.no_push)
+    return run(stage=args.stage, no_push=args.no_push, slot=args.slot)
 
 
 if __name__ == "__main__":

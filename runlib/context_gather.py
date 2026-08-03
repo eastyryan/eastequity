@@ -12,6 +12,7 @@ from tools.macro_regime import get_macro_snapshot
 from tools.news_catalysts import get_news_and_catalysts
 from tools.portfolio_state import get_portfolio_state
 from tools.position_history import get_position_histories
+from tools.trigger_conditions import filter_trigger_alerts
 from tools.watchlist_triggers import (TRIGGER_TOLERANCE_PCT, check_watchlist_triggers,
                                       parse_price_level)
 from tools.insider_form4 import get_insider_activity
@@ -302,6 +303,154 @@ def _earnings_week_block(days: int = 7) -> dict:
                         "earnings timing as UNKNOWN, not as absent."}
 
 
+def _engagement_block(portfolio: dict, cfg: dict | None = None) -> dict:
+    """Cash-drag status + outstanding trigger obligations, for the DECIDING run.
+
+    ADDED 2026-08-03. The book was 100% cash from ~07-16 to 07-28 and no part of
+    the system noticed or cared: nothing tracked deployment, and a fired trigger's
+    only consequence was a shadow-book row graded weeks later. This block puts the
+    cost of inaction in front of the brain at decision time.
+
+    Persisted in state/engagement.json so the flat-day counter survives restarts.
+    Fail-soft: on any error the block says so rather than reading as "deployed".
+    """
+    try:
+        import json as _json
+        from tools.engagement import (
+            count_unbought_hits, deployment_status, stale_commitments)
+
+        sr = (cfg or {}).get("swing_rules") or {}
+        after = sr.get("commitment_after_flat_days")
+        after = after if isinstance(after, int) else 3
+        max_hits = sr.get("max_unbought_trigger_hits")
+        max_hits = max_hits if isinstance(max_hits, int) else 3
+
+        state_path = ROOT / "state" / "engagement.json"
+        prior = {}
+        try:
+            prior = _json.loads(state_path.read_text()) or {}
+        except Exception:
+            prior = {}
+
+        status = deployment_status(
+            (portfolio or {}).get("positions") or [],
+            (portfolio or {}).get("total_equity_usd"),
+            prior.get("deployment"), et_date(), commitment_after_days=after)
+
+        hits = {}
+        try:
+            wo = ROOT / "dashboard" / "data" / "watchlist_outcomes.json"
+            if wo.exists():
+                hits = count_unbought_hits(_json.loads(wo.read_text()))
+        except Exception:
+            hits = {}
+        at_risk = {t: n for t, n in hits.items() if n >= max(1, max_hits - 1)}
+
+        overdue = stale_commitments(prior.get("waiting_for"), et_date())
+
+        try:
+            state_path.parent.mkdir(parents=True, exist_ok=True)
+            state_path.write_text(_json.dumps(
+                {**prior, "deployment": status}, indent=2, default=str))
+        except Exception:
+            pass
+
+        return {
+            "status": "ok",
+            **status,
+            "unbought_trigger_hits": dict(sorted(hits.items(),
+                                                 key=lambda kv: -kv[1])),
+            "decay_at_risk": at_risk,
+            "max_unbought_trigger_hits": max_hits,
+            "expired_commitments": overdue,
+            "note": (
+                "TRIGGER ACCOUNTABILITY: every name in watchlist_trigger_alerts "
+                "that you do not BUY this run owes a `trigger_reviews` row — "
+                "action buy | drop | requalify, a reason >=25 chars, and for "
+                "requalify a NEW level. 'Hold, unchanged' is no longer an "
+                "available answer, because it is the answer that let ANET and GE "
+                "sit at their own stated levels across four runs. A name at "
+                f"{max_hits} unbought hit-days is FORCE-DROPPED from the stored "
+                "watchlist and must be re-underwritten from scratch. "
+                "decay_at_risk lists names one miss away from that. "
+                "requires_commitment true means a no-trade run owes a "
+                "`waiting_for` {ticker, condition, by_date} — a DATED condition, "
+                "because an undated one cannot be graded and becomes a renewable "
+                "excuse. None of this asks you to force a trade: a fabricated "
+                "setup teaches the loops garbage and is worse than silence."),
+        }
+    except Exception as e:
+        return {"status": "unavailable", "error": str(e)[:160],
+                "note": "engagement tracking unavailable this run — trigger and "
+                        "cash-drag obligations still stand as documented."}
+
+
+def _earnings_lanes(earnings_week: dict, cfg: dict | None = None) -> dict:
+    """Classify every dated universe name into blackout / post-print drift / clear.
+
+    ADDED 2026-08-03. The brain has always had `earnings_week`, but that is a
+    7-day FORWARD window: it can say "MPC reports Tuesday" and can never say
+    "AMZN reported four days ago". So the post-print drift lane — the CLEAN way to
+    trade a reporter, with the binary already resolved — was invisible, and the
+    brain filled the gap with a blanket "print anywhere in the horizon = pass"
+    that made it reject essentially every name through earnings season.
+
+    Reads `last` and `next` straight from the committed calendar. Fail-soft: any
+    error returns a block saying timing is unknown, never one that reads as "no
+    prints", which is the inverse-of-the-truth failure this area keeps producing.
+    """
+    try:
+        import json as _json
+        from tools.earnings_window import build_earnings_map, earnings_state
+
+        q = ((cfg or {}).get("trade_quality_requirements") or {})
+        ew_cfg = q.get("earnings_window") or {}
+        blackout = ew_cfg.get("pre_print_blackout_days")
+        drift = ew_cfg.get("post_print_drift_days")
+        blackout = blackout if isinstance(blackout, int) else 3
+        drift = drift if isinstance(drift, int) else 10
+
+        cal = None
+        try:
+            cal = (_json.loads((ROOT / "data" / "earnings_calendar.json")
+                               .read_text()) or {}).get("by_ticker")
+        except Exception:
+            cal = None
+
+        em = build_earnings_map({"earnings_week": earnings_week}, calendar=cal)
+        blocked, drifting = {}, {}
+        for t, row in em.items():
+            st = earnings_state(row, blackout_days=blackout, drift_days=drift)
+            if st["in_blackout"]:
+                blocked[t] = st["days_to_earnings"]
+            elif st["in_drift"]:
+                drifting[t] = st["days_since_earnings"]
+        return {
+            "status": "ok",
+            "pre_print_blackout_days": blackout,
+            "post_print_drift_days": drift,
+            "names_dated": len(em),
+            "blocked_by_gate": dict(sorted(blocked.items(), key=lambda kv: kv[1])),
+            "post_print_drift": dict(sorted(drifting.items(),
+                                            key=lambda kv: (kv[1] is None, kv[1]))),
+            "note": (
+                f"CODED GATE. A BUY is rejected as earnings_blackout ONLY for the "
+                f"{len(blocked)} names in blocked_by_gate (print within "
+                f"{blackout} days). Every other dated name is TRADEABLE — a print "
+                f"20 or 40 days out is not a disqualifier and must not be cited as "
+                f"one. post_print_drift lists names that ALREADY reported within "
+                f"{drift} days: the binary is resolved and the reaction is "
+                f"observable, so this is the PREFERRED lane, not a penalized one. "
+                f"To buy inside the blackout anyway, supply an `earnings_case` "
+                f">=80 chars. A ticker absent here is NOT MEASURED, never "
+                f"'no print'."),
+        }
+    except Exception as e:
+        return {"status": "unavailable", "error": str(e)[:160],
+                "note": "earnings lane classification unavailable — treat timing as "
+                        "UNKNOWN, not absent; the coded blackout still applies."}
+
+
 def _earnings_next(ticker: str) -> str | None:
     """The NEXT earnings date for a ticker from data/earnings_calendar.json.
 
@@ -470,7 +619,9 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
 
         # Prioritize watchlist trigger alerts into deep research.
         early_prices = scan.get("prices") or {}
-        alerts = check_watchlist_triggers(prior_watchlist, early_prices)
+        alerts, _held_early = filter_trigger_alerts(
+            check_watchlist_triggers(prior_watchlist, early_prices),
+            prior_watchlist, as_of=et_date())
         alert_tickers = [a["ticker"] for a in alerts if a.get("ticker")]
         focus = list(dict.fromkeys(held + watch + alert_tickers))
 
@@ -687,7 +838,21 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
     histories = get_position_histories(held) if held else {"status": "skipped"}
 
     print("  • watchlist triggers...")
-    watchlist_alerts = check_watchlist_triggers(prior_watchlist, scan.get("prices", {}))
+    # EVENT-GATED (2026-08-03). check_watchlist_triggers matches on PRICE ONLY, so
+    # a compound condition fired the moment price touched the parsed level even
+    # when the trigger said "after the 8/4 print" — the AMD incident recorded in
+    # data/adopted_lessons.json (LP-0693555695): a full event-driven run spun up
+    # five days before the setup's own catalyst. That is worse now than it was
+    # then: a fired trigger creates a `trigger_reviews` obligation and counts
+    # toward the 3-hit force-drop, so a spurious fire costs a forced resolution
+    # and can decay a name off the watchlist for a miss that never happened.
+    # filter_trigger_alerts fails OPEN on anything it cannot parse confidently.
+    watchlist_alerts, watchlist_alerts_held = filter_trigger_alerts(
+        check_watchlist_triggers(prior_watchlist, scan.get("prices", {})),
+        prior_watchlist, as_of=et_date())
+    if watchlist_alerts_held:
+        print(f"    ({len(watchlist_alerts_held)} alert(s) held by an event gate: "
+              f"{[h.get('ticker') for h in watchlist_alerts_held]})")
 
     # Market-wide tape + 8-K: often already fetched early for promotions.
     if market_news is None:
@@ -884,6 +1049,21 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
         except Exception as e:
             print(f"  (market_checkin publish failed: {e})")
 
+    # ENGAGEMENT: how long the book has been sitting in cash, which fired
+    # triggers are outstanding, and which watchlist names are decaying. The brain
+    # must see this BEFORE it decides, so it is built here rather than in the
+    # post-decision audit.
+    _engagement = _engagement_block(portfolio, cfg)
+
+    # Computed once here so both the raw week and the lane classification derived
+    # from it land in the bundle consistently.
+    _earnings_week = _earnings_week_block()
+    _lanes = _earnings_lanes(_earnings_week, cfg)
+    if _lanes.get("status") == "ok":
+        print(f"  • earnings lanes: {len(_lanes['blocked_by_gate'])} blocked "
+              f"(<= {_lanes['pre_print_blackout_days']}d), "
+              f"{len(_lanes['post_print_drift'])} in the post-print drift lane")
+
     return {
         "run_date": datetime.now(timezone.utc).isoformat(),
         "as_of_et": et_date(),  # today's US MARKET date - cite this, not the UTC run_date
@@ -960,9 +1140,15 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
                     "'would_buy_at' price levels against today's prices. Each alert "
                     "means a name you said you wanted cheaper is now at or within 2% "
                     "of your stated level - prioritize deep research on it this run "
-                    "and either propose or update the watchlist entry. Non-price "
-                    "triggers (earnings dates, conditions) are not checked here.",
+                    "and either propose or update the watchlist entry. Alerts are "
+                    "EVENT-GATED: a trigger whose text carries a dated condition "
+                    "('after the 8/4 print') does not fire until that date passes, "
+                    "so an alert here means the WHOLE stated condition is live, not "
+                    "just the price. held_by_event_gate lists names at their price "
+                    "level whose event has not happened yet - those owe no "
+                    "trigger_reviews row and do not count toward the force-drop.",
             "alerts": watchlist_alerts,
+            "held_by_event_gate": watchlist_alerts_held,
         },
         "tape_focus_promotions": {
             "note": "Universe tickers auto-promoted into THIS run's deep-research "
@@ -1002,8 +1188,16 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
         # rate limit, safe at every depth. Measured on the 07-23 calendar: 58 reporters
         # across the coming week, including MSFT/META/AAPL/AMZN, none of which the
         # focus-set enrichment would have covered.
-        "earnings_week": _earnings_week_block(),
+        "earnings_week": _earnings_week,
         "reasoning_process": brain_reasoning_bundle(portfolio, depth, scan=scan),
+        # Which names the coded blackout actually blocks, and — the half
+        # earnings_week structurally cannot show — which already reported and are
+        # therefore in the PREFERRED post-print drift lane.
+        "earnings_lanes": _lanes,
+        # Cash-drag + outstanding trigger obligations. The cost of NOT acting,
+        # placed in front of the brain at decision time rather than graded weeks
+        # later in the shadow book.
+        "engagement": _engagement,
         "stack_cards": stack_cards_for_focus(focus),
         "financial_checklists": financial_checklists_for_focus(focus),
         "concept_memory": concept_memory_for_focus(focus),

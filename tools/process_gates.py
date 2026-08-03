@@ -209,6 +209,11 @@ def audit_brain_process(
     require_seat_reviews: bool = False,
     require_factor_response: bool = False,
     factor_concentration_level: str | None = None,
+    momentum_status: str | None = None,
+    fired_triggers: list[str] | None = None,
+    unbought_hits: dict[str, int] | None = None,
+    requires_commitment: bool = False,
+    max_unbought_hits: int = 3,
 ) -> dict:
     """Full process audit for a parsed brain response.
 
@@ -282,6 +287,123 @@ def audit_brain_process(
         except Exception:
             pass  # pure module; never halt the audit on an import failure
 
+    # SIGNAL DISCIPLINE (2026-08-03). Two documented failures that prose in
+    # CLAUDE.md did not stop: writing watchlist triggers whose confirmation leg is
+    # a measured-dead indicator (then never being able to clear them), and citing a
+    # momentum unwind as grounds to stand down when it is a coded size haircut.
+    # Both are now mechanical. Triggers are REWRITTEN, not just complained about —
+    # the stripped version is what gets stored, so next cycle's alert fires on the
+    # condition that actually survives measurement. Fail-soft: a broken import
+    # leaves the audit exactly as it was.
+    signal_notes: dict = {}
+    try:
+        from tools.signal_discipline import (
+            sanitize_trigger, dead_indicator_veto, unwind_used_as_halt)
+
+        trigger_fixes = []
+        for w in watchlist:
+            res = sanitize_trigger(w.get("would_buy_at"))
+            if not res["changed"]:
+                continue
+            w["would_buy_at"] = res["trigger"]
+            if res.get("original"):
+                w["would_buy_at_original"] = res["original"]
+            trigger_fixes.append({
+                "ticker": w.get("ticker"),
+                "original": res["original"],
+                "rewritten": res["trigger"],
+                "stripped": res["stripped"],
+                "emptied": res["empty"],
+            })
+            issues.append(
+                f"trigger_dead_confirmation_leg_stripped:{w.get('ticker')}")
+        if trigger_fixes:
+            signal_notes["trigger_fixes"] = trigger_fixes
+
+        dead_vetoes = []
+        for item in rejected:
+            if not isinstance(item, dict):
+                continue
+            hit = dead_indicator_veto(item.get("reason"))
+            if hit:
+                hit["ticker"] = item.get("ticker")
+                dead_vetoes.append(hit)
+                issues.append(f"dead_indicator_veto:{item.get('ticker')}")
+        if dead_vetoes:
+            signal_notes["dead_indicator_vetoes"] = dead_vetoes
+
+        halt = unwind_used_as_halt(
+            parsed.get("no_trade_reason"), rejected,
+            momentum_status=momentum_status)
+        if halt and no_buys:
+            signal_notes["unwind_used_as_halt"] = halt
+            issues.append("unwind_used_as_halt")
+    except Exception:
+        pass  # pure module; never halt the audit on an import failure
+
+    # ENGAGEMENT DISCIPLINE (2026-08-03). Everything above is about the QUALITY of
+    # a decision; none of it costs anything to make no decision at all. A fired
+    # trigger used to produce exactly one consequence anywhere in the codebase — a
+    # shadow-book row for later grading — so ANET and GE could reach their own
+    # stated levels across four runs on 07-23/24 for free. These gates never force
+    # a trade; they force a resolution and, once the book has been flat for days, a
+    # dated commitment. Fail-soft on import.
+    engagement: dict = {}
+    try:
+        from tools.engagement import (
+            decay_watchlist, validate_trigger_reviews, validate_waiting_for)
+        from tools.signal_discipline import sanitize_trigger as _sanitize
+
+        bought = [str(p.get("ticker") or "").upper() for p in proposals
+                  if isinstance(p, dict)
+                  and str(p.get("action", "")).upper() == "BUY"]
+        t_reviews, t_issues = validate_trigger_reviews(
+            parsed.get("trigger_reviews"), fired_triggers, bought)
+        issues.extend(t_issues)
+
+        # A requalified level must survive the same dead-indicator sanitizer as
+        # any other trigger — otherwise "requalify" becomes the escape hatch that
+        # smuggles a MACD/volume confirmation leg back in.
+        for row in t_reviews:
+            if row.get("action") != "requalify" or not row.get("new_trigger"):
+                continue
+            res = _sanitize(row["new_trigger"])
+            if res["changed"]:
+                row["new_trigger_original"] = row["new_trigger"]
+                row["new_trigger"] = res["trigger"]
+                issues.append(
+                    f"trigger_requalify_dead_leg_stripped:{row.get('ticker')}")
+            if res["empty"]:
+                issues.append(
+                    f"trigger_requalify_not_testable:{row.get('ticker')}")
+        if t_reviews:
+            engagement["trigger_reviews"] = t_reviews
+
+        # Apply this run's own drop/requalify decisions before decay, so a name
+        # the model just resolved is not also force-dropped for the same miss.
+        resolved = {r["ticker"]: r for r in t_reviews}
+        watchlist = [w for w in watchlist
+                     if resolved.get(str(w.get("ticker") or "").upper(), {})
+                     .get("action") != "drop"]
+        for w in watchlist:
+            r = resolved.get(str(w.get("ticker") or "").upper())
+            if r and r.get("action") == "requalify" and r.get("new_trigger"):
+                w["would_buy_at"] = r["new_trigger"]
+
+        watchlist, decayed = decay_watchlist(
+            watchlist, unbought_hits, max_unbought_hits=max_unbought_hits)
+        if decayed:
+            engagement["force_dropped"] = decayed
+            issues.extend(f"watchlist_force_dropped:{d['ticker']}" for d in decayed)
+
+        waiting, w_issues = validate_waiting_for(
+            parsed.get("waiting_for"), required=bool(requires_commitment and no_buys))
+        issues.extend(w_issues)
+        if waiting:
+            engagement["waiting_for"] = waiting
+    except Exception:
+        pass  # pure module; never halt the audit on an import failure
+
     process_ok = not any(
         i.startswith("watchlist_status_") or i.startswith("full_run_no_trade")
         or i.startswith("rejected_ideas_need")
@@ -291,6 +413,15 @@ def audit_brain_process(
         or i.startswith("factor_response_missing")
         or i.startswith("factor_response_plan_weak")
         or i.startswith("factor_response_actions_empty")
+        # Engagement failures are process failures. They do NOT block a BUY —
+        # blocking on these would punish the run for trying to act, which is the
+        # opposite of the point — but a run that ignored its own fired trigger or
+        # owes a dated commitment is not process_ok.
+        or i.startswith("trigger_reviews_missing")
+        or i.startswith("trigger_reviews_action_invalid")
+        or i.startswith("trigger_reviews_reason_weak")
+        or i.startswith("trigger_reviews_requalify_without_new_trigger")
+        or i.startswith("waiting_for_")
         for i in issues
     )
     blocking = [i for i in issues if i.startswith(BLOCKING_ISSUE_PREFIXES)]
@@ -300,6 +431,8 @@ def audit_brain_process(
         "seat_reviews": seat_reviews,
         "factor_response": factor_response,
         "issues": issues,
+        "signal_discipline": signal_notes,
+        "engagement": engagement,
         "process_ok": process_ok,
         "blocking_issues": blocking,
         "blocks_new_buys": bool(blocking),

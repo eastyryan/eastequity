@@ -42,12 +42,18 @@ DEPTHS = (
     "evening_review",
 )
 
-# Default weekday map — four fast holdings/watchlist runs, one full, one light,
-# one evening review. KEEP IN SYNC with scripts/run_cycle.sh comments.
+# Default weekday map — three fast holdings/watchlist runs, TWO full scans, one
+# light, one evening review. KEEP IN SYNC with scripts/run_cycle.sh comments.
+#
+# 10:30 became full on 2026-08-03. A holdings_watchlist run mini-scans holdings
+# and the published watchlist only, so before this the single moment a genuinely
+# new name could surface was the 16:00 full scan — the closing bell — and with
+# measured slot drift of ~+19min it often landed after it. One look per day at
+# the universe, at the one time of day the book cannot act on what it finds.
 DEFAULT_SLOT_DEPTHS: dict[str, str] = {
     "0600": "light",
     "0845": "holdings_watchlist",
-    "1030": "holdings_watchlist",
+    "1030": "full",
     "1200": "holdings_watchlist",
     "1400": "holdings_watchlist",
     "1600": "full",

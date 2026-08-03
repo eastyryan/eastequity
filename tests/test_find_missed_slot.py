@@ -38,11 +38,25 @@ def _find(monkeypatch, tmp_path, hours, now_h):
 
 
 def test_names_the_missed_slot_and_its_depth(monkeypatch, tmp_path):
-    """10:30 missed. Checked at 11:45 — past its 1h grace (so it is genuinely
-    missed, not just late) and before the 12pm slot (so still recoverable)."""
-    r = _find(monkeypatch, tmp_path, [8.75], now_h=11.75)
+    """10:30 missed. Checked at 11:00 — no run and (in this fixture) no run-start
+    breadcrumb, so it demonstrably never fired, and there is still room to re-run it
+    before the 12:00 window opens at 11:45.
+
+    THE CHECK TIME MOVED 2026-08-03, from 11:45 to 11:00, because 11:45 encoded the
+    bug. A recovery decided at 11:45 lands ~11:58 (measured p90 run length 23 min) —
+    inside the 12:00 window — and runlib.analytics.slot_report credits it to 12:00,
+    leaving 10:30 reading MISSED and orphaning the real 12:00 run. That happened
+    verbatim at the other end of the day: the 08:45 recovery on 2026-07-29 and
+    2026-08-03 landed at 10:29 and took the 10:30 slot. The detector now refuses a
+    recovery that cannot FINISH before its successor's window opens, and it no longer
+    needs the full 1-hour grace to notice the miss in the first place — see
+    tests/test_slot_recovery_landing.py."""
+    r = _find(monkeypatch, tmp_path, [8.75], now_h=11.0)
     assert r["slot"] == "10:30"
-    assert r["depth"] == "holdings_watchlist"
+    # 10:30 became a full universe scan on 2026-08-03 — a missed 10:30 now costs
+    # the day's in-session look at the whole universe, which is exactly why it is
+    # worth recovering.
+    assert r["depth"] == "full"
     assert r["hhmm"] == "1030"
 
 

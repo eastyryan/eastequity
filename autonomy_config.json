@@ -70,7 +70,10 @@
     "max_holding_horizon_days": 90,
     "min_days_between_entries_same_ticker": 5,
     "max_new_positions_per_day": 2,
-    "reject_intraday_language": true
+    "reject_intraday_language": true,
+    "max_unbought_trigger_hits": 3,
+    "commitment_after_flat_days": 3,
+    "_engagement_note": "ADDED 2026-08-03. Every other fix this month was PERMISSIVE - it removed obstacles. None created a reason to ACT, and the record says obstacles were never the binding constraint: of 30 logged rejections ZERO failed on risk_reward_ratio or target upside and only 2 on confidence, while 165 runs produced 11 proposals. The real gap was that inaction was free. A fired watchlist trigger's only consequence anywhere in the codebase was a shadow-book row graded weeks later, so ANET and GE reached their own stated levels across four separate runs on 07-23/24 at no cost; and the shadow book has been BINDING for weeks (56 closed, 23 regret_miss vs 33 good_skip, threshold 8) with nothing downstream of it. max_unbought_trigger_hits: after this many DISTINCT DAYS at its own stated level without a buy, a watchlist name is force-dropped and must be re-underwritten from scratch rather than inherited. commitment_after_flat_days: once the book has been effectively all cash this many consecutive days, a no-trade run owes a `waiting_for` {ticker, condition, by_date} - a DATED condition, because an undated one cannot be graded and becomes a renewable excuse. NEITHER forces a trade: a fabricated setup teaches the learning loops garbage and is strictly worse than silence. They force a DECISION and a COMMITMENT."
   },
   "position_sizing": {
     "starting_capital_usd": 1000,
@@ -142,6 +145,14 @@
     "max_unsourced_claims_reported": 3,
     "_claim_grounding_note": "Added 2026-07-25, DEFAULT OFF pending evidence, same staged rollout as _tradeability_note below. WHAT IT DOES: validator._check_claim_grounding greps every entity a BUY's variant_perception/catalysts name against the FULL context bundle and rejects the ones that appear nowhere in it. Built from four real incidents the LLM risk desk caught by hand: DDOG 07-22 ('JMP Securities raised its target to $311' - the string 'JMP' appears ZERO times in that day's bundle), MELI 07-24 ('Loggi acquisition', a Citi fair-value cut, '14 new Brazil fulfillment centers'), IBKR 07-22 (an invented 'fourth consecutive beat' with an EMPTY guidance_ledger), UNP 07-24 (a 'binding MOU signed one day earlier' that inverts the actual sequence). WHY IT IS NOT ON YET: CLAUDE.md step 5 makes WebSearch MANDATORY before any BUY, so the brain is REQUIRED to bring in facts that legitimately are not in the bundle - blocking on 'absent from bundle' would reject true WebSearch findings alongside fabricated ones, and a false rejection costs a real trade on a book that has already gone days without one. Until proposals carry per-claim sources, the SAME computation is fed to the risk desk every run (validator.unsourced_claims -> runlib.brain_io), which can weigh the WebSearch context a regex cannot. TO ENABLE: watch the risk-desk prompt's UNSOURCED CLAIMS block for a week; if the entities it lists are consistently real fabrications rather than WebSearch-sourced truth, flip this to true. Precision was tuned against the 7 real BUY proposals in journal/proposals + journal/rejected: multi-word candidates are only taken from an explicit attribution pattern ('<Firm> raised/said/cut'), because the bare proper-noun pass produced prose fragments like 'MINIMUM CONTRACTED' and 'Case After Strong' that no bundle would ever contain verbatim.",
     "min_confidence": 0.6,
+    "earnings_window": {
+      "enabled": true,
+      "pre_print_blackout_days": 3,
+      "post_print_drift_days": 10,
+      "allow_trade_through_with_case": true,
+      "min_earnings_case_chars": 80,
+      "_note": "ADDED 2026-08-03. Until now there was NO coded earnings rule anywhere - `days_to_earnings` appeared ZERO times in validator.py - so 'trade around the binary' was entirely the brain's judgment applied against a 45-day default horizon. In earnings season that excludes essentially the whole universe, and it did: across 2026-07-13..08-03 run after run passed on every candidate for a print somewhere inside the swing window (08-03 alone rejected MPC and AMGN for an 08-04 print, then NET and TEAM for 08-06, and traded nothing). The gate is now NARROW and the narrowness is the point: only a print within pre_print_blackout_days blocks a BUY, everything outside it is explicitly tradeable, and a name that has ALREADY reported within post_print_drift_days is a PREFERRED lane (the binary is resolved and the geometry is clean). allow_trade_through_with_case lets the brain trade the print deliberately when the binary IS the thesis, by supplying an `earnings_case` of >= min_earnings_case_chars. Fail-open: a ticker the committed calendar does not carry is NOT MEASURED, never 'no print'."
+    },
     "min_risk_reward_ratio": 2.0,
     "_min_rr_note": "Raised 1.0 -> 2.0 (2026-07-16, user-approved after expectancy research): breakeven win rate at 2:1 is 33%, keeping the book profitable across the realistic 40-55% band; a 1:1 floor loses money below ~52% wins after costs (Minervini/O'Neil both demand ~2:1 at entry).",
     "min_target_upside_pct": 0.1,
@@ -178,6 +189,8 @@
     "gap_adjusted_heat": true,
     "gap_correlation_threshold": 0.7,
     "max_portfolio_beta": 1.6,
+    "unknown_beta_assumption": 1.6,
+    "_unknown_beta_note": "ADDED 2026-08-03. The beta ceiling used to reject outright whenever ANY name in the projected book lacked a beta in the correlation feed, and on 2026-07-28 that killed a BKR BUY whose only unknown name was BKR itself against a 100%-CASH book - a $49 position on a $984 book cannot make anything a leveraged index bet, and the same trade was re-proposed and filled hours later. Failing closed on an unmeasurable input is right when the input could hide real exposure; it is wrong when the worst case is computable. Unknown betas on the PROPOSED name are now assumed to be this value (deliberately pessimistic - the ceiling itself) and the cap is enforced against that. HELD positions missing a beta still fail closed: an exposure already carried cannot be bounded by sizing, and only the one being added can.",
     "max_stress_loss_pct": 0.12,
     "stress_scenarios": [
       {
@@ -309,12 +322,12 @@
     "slot_depths": {
       "0600": "light",
       "0845": "holdings_watchlist",
-      "1030": "holdings_watchlist",
+      "1030": "full",
       "1200": "holdings_watchlist",
       "1400": "holdings_watchlist",
       "1600": "full",
       "1730": "evening_review",
-      "_note": "Four intraday slots are holdings+watchlist only (fast). One full universe deep dive at 4pm ET. Light pre-market at 6am. 09:00/10:00 moved to 08:45/10:30 on 2026-07-25: they were the tightest pair on the board (60min) against measured drift of +15..30min, and 10:30 clears the opening range where 10:00 sat inside it. Evening review is news-only. Weekly market breadth is a separate Sunday --weekly-market run."
+      "_note": "Three intraday slots are holdings+watchlist only (fast); TWO full universe deep dives, at 10:30 and 16:00 ET. Light pre-market at 6am. Evening review is news-only. Weekly market breadth is a separate Sunday --weekly-market run. 09:00/10:00 moved to 08:45/10:30 on 2026-07-25: they were the tightest pair on the board (60min) against measured drift of +15..30min, and 10:30 clears the opening range where 10:00 sat inside it. 10:30 PROMOTED to full on 2026-08-03: a holdings_watchlist run mini-scans only holdings and the published watchlist, so the ONLY moment a genuinely new name could surface was the 16:00 full scan - which is the closing bell, and with measured slot drift of ~+19min it routinely landed after it. The book therefore got one look per day at the whole universe, at the worst possible time to act on it. 10:30 sits inside the session with five and a half hours of liquidity left, and 16:00 stays full so the after-close deep dive that sets up the next morning is unchanged."
     },
     "earnings_deep_dive": {
       "enabled": true,

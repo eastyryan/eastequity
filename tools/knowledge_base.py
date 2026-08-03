@@ -40,6 +40,16 @@ JOURNAL_LIMIT = 60        # entries published to the dashboard journal
 # judgment; only real evidence promotes or demotes) ---------------------------
 CITATION_RE = re.compile(r"KB-\d{10}")
 MIN_GRADED_TRADES = 3     # linked closed trades before any evidence verdict
+# Run ids look like 20260731-098397 (YYYYMMDD-hex). The date half is the only
+# honest source for a learned_at we never stamped — see _learned_at_from_run_id.
+RUN_ID_DATE_RE = re.compile(r"^(\d{4})(\d{2})(\d{2})-[0-9a-f]{4,}$")
+# The proposal fields a lesson citation can legitimately live in. Scanning the
+# WHOLE proposal dict (json.dumps) also works, but naming the fields keeps a
+# stray id in an unrelated key (a ticker, a price note) from creating a link.
+PROPOSAL_TEXT_FIELDS = (
+    "thesis", "variant_perception", "risk_map", "macro_context", "catalysts",
+    "thesis_invalidators", "earnings_case", "conviction_case", "scenarios",
+)
 VALIDATE_WIN_RATE = 0.60  # >= this over >= MIN trades -> "validated"
 UNDERPERFORM_WIN_RATE = 0.40  # < this over >= MIN trades -> "underperforming"
 MAX_LINKS_PER_LESSON = 20
@@ -62,6 +72,34 @@ DISCIPLINES = {
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _learned_at_from_run_id(run_id: str | None) -> str | None:
+    """The study run's DATE, recovered from its run_id (20260731-098397).
+
+    Why this exists: through 2026-07-19 the single lesson on disk carried
+    `learned_at: None` (tests/test_learning_loop_honesty.py pins that fact), and
+    a null there is not cosmetic — `apply_consolidation._too_fresh` compares
+    today against it, `_date_gap_days` returns its 999 sentinel, and the lesson
+    reads as ancient, so the 7-day untouchable window silently stops protecting
+    it. `_selection_rank` also sorts a null to the bottom of the brain-facing
+    pack, so the lesson stops being injected at all.
+
+    The run_id's date half is DERIVED, not invented: it is the day the study
+    session that wrote the lesson actually ran. Midnight UTC is used because the
+    id carries no time — a date we can source beats a timestamp we cannot.
+    Returns None when the id is not in the expected shape; callers must not
+    substitute _now(), which would date a July lesson to whenever the store was
+    last repaired.
+    """
+    m = RUN_ID_DATE_RE.match(str(run_id or "").strip())
+    if not m:
+        return None
+    try:
+        y, mo, d = (int(x) for x in m.groups())
+        return datetime(y, mo, d, tzinfo=timezone.utc).isoformat()
+    except Exception:
+        return None
 
 
 def _load_raw() -> dict:
@@ -153,7 +191,19 @@ def _normalize_published(entry: dict) -> dict:
     otherwise would fabricate evidence."""
     out = dict(entry)
     out.setdefault("discipline", "strategy_playbooks")
-    out.setdefault("learned_at", _now())
+    # setdefault does NOT replace an explicit null, and the journal carries
+    # `learned_at: null` on rows written before add_lesson stamped it (see
+    # tests/test_learning_loop_honesty.py, which pins that the real store's one
+    # lesson had learned_at: None). A null survives every recovery and then
+    # silently ages the lesson to "ancient" in _too_fresh and sorts it to the
+    # bottom of the brain-facing pack, so it is repaired here, in this order:
+    # the run_id's own date if we have it, else the store timestamp already on
+    # the row, else the recovery time — which is the honest last resort, since
+    # "when we found it" is the only date we can actually source for a row that
+    # never carried one.
+    if not out.get("learned_at"):
+        out["learned_at"] = (_learned_at_from_run_id(out.get("run_id"))
+                             or out.get("updated_at") or _now())
     out["recovered_from_published"] = True
     return out
 
@@ -304,6 +354,92 @@ def _evidence_status(outcome: dict | None) -> str | None:
     return "mixed"
 
 
+def _iter_strings(obj) -> list:
+    """Every string reachable in a nested dict/list. Used to read a proposal's
+    named text fields without caring whether a field is a str, a list of
+    catalysts, or the thesis_invalidators dict."""
+    out: list = []
+    if isinstance(obj, str):
+        out.append(obj)
+    elif isinstance(obj, dict):
+        for v in obj.values():
+            out.extend(_iter_strings(v))
+    elif isinstance(obj, (list, tuple)):
+        for v in obj:
+            out.extend(_iter_strings(v))
+    return out
+
+
+def citations_in_proposal(proposal: dict | None) -> list:
+    """Lesson ids cited inside a proposal's own reasoning fields, sorted.
+
+    This is the STRICT half of the link: an id here was written into the trade's
+    own thesis, so the lesson demonstrably drove that decision.
+    """
+    try:
+        if not isinstance(proposal, dict):
+            return []
+        blob = "\n".join(_iter_strings(
+            {k: proposal.get(k) for k in PROPOSAL_TEXT_FIELDS if k in proposal}))
+        return sorted(set(CITATION_RE.findall(blob)))
+    except Exception:
+        return []
+
+
+def citations_near_ticker(text: str, ticker: str) -> list:
+    """Lesson ids cited in a PARAGRAPH of the run's prose that names `ticker`.
+
+    THIS IS THE FIX FOR THE DEAD GRADING LOOP, and the measurement that forced
+    it (audited 2026-08-03): across 165 runs the brain cited lessons 64 times and
+    `linked_trades` stayed empty on all 11 lessons, because the two halves of the
+    loop read different text. `record_citations` scans the whole brain response
+    (so times_cited works, 1-14 per lesson), while the trade link only ever
+    scanned the proposal object — and NOT ONE of the 19 logged proposals in the
+    entire journal contains a KB- id. Every citation landed in prose:
+    latest_reasoning, watchlist[].thoughts, no_trade_reason, rejected_ideas[].
+    A lesson could therefore be cited every run and never be graded.
+
+    Paragraph scoping is what keeps this honest rather than a guess. Crediting a
+    trade with every lesson mentioned anywhere in the run would link lessons the
+    brain cited while REJECTING a different name — CLAUDE.md is explicit that
+    "citing a lesson that did not actually drive the decision corrupts your own
+    grading loop", and a fabricated link is worse than a missing one because the
+    win rate it feeds looks identical to a real one. So an id counts only when
+    the ticker is named in the same paragraph. A paragraph naming several
+    tickers credits each, but only tickers that actually FILLED are ever linked.
+    """
+    try:
+        t = str(ticker or "").upper().strip()
+        if not t or not str(text or ""):
+            return []
+        tick_re = re.compile(r"(?<![A-Za-z0-9])\$?" + re.escape(t)
+                             + r"(?![A-Za-z0-9])")
+        found: set = set()
+        for para in re.split(r"\n\s*\n", str(text)):
+            if tick_re.search(para):
+                found.update(CITATION_RE.findall(para))
+        return sorted(found)
+    except Exception:
+        return []
+
+
+def citations_for_trade(proposal: dict | None, response_text: str | None = None) -> list:
+    """The ids to link to an executed BUY: cited in the proposal itself, PLUS
+    cited in run prose that names the ticker. Union, sorted. Never raises.
+
+    Orchestrator-facing entry point — it replaces the bare
+    `CITATION_RE.findall(json.dumps(prop))` that produced zero links in 165 runs.
+    """
+    try:
+        ids = set(citations_in_proposal(proposal))
+        ticker = str((proposal or {}).get("ticker") or "")
+        if response_text and ticker:
+            ids.update(citations_near_ticker(response_text, ticker))
+        return sorted(ids)
+    except Exception:
+        return []
+
+
 def record_citations(text: str, run_id: str | None = None) -> int:
     """Scan brain output for KB-id citations and bump times_cited/last_cited on
     the cited active lessons. Returns how many lessons matched. Never raises."""
@@ -326,9 +462,23 @@ def record_citations(text: str, run_id: str | None = None) -> int:
 
 
 def link_lessons_to_trade(ticker: str, lesson_ids: list, run_id: str | None = None,
-                          linked_on: str | None = None) -> int:
+                          linked_on: str | None = None,
+                          trade_ref: str | None = None) -> int:
     """A BUY was executed whose proposal cited these lessons: remember the link
-    so the eventual closed-trade outcome can grade them. Never raises."""
+    so the eventual closed-trade outcome can grade them. Never raises.
+
+    `trade_ref` is the order/proposal id of the fill this link belongs to, kept
+    so a grade is auditable back to a specific trade rather than to a ticker and
+    a date.
+
+    IDEMPOTENT on (ticker, run_id, trade_ref). Appending blindly double-counted
+    in two live situations: a re-run of the same run_id (manual reruns are a
+    documented workflow, scripts/manual_run.sh), and scale-in adds, which the
+    validator explicitly permits up to 2 per position — each add is a separate
+    fill on the same ticker in the same run. Both inflate `outcome.n` with
+    duplicate rows that the grader then matches against DIFFERENT closed trades,
+    so a lesson could cross the 3-trade evidence threshold on one real trade.
+    """
     try:
         t = str(ticker or "").upper()
         ids = {i for i in (lesson_ids or []) if CITATION_RE.fullmatch(str(i))}
@@ -336,12 +486,21 @@ def link_lessons_to_trade(ticker: str, lesson_ids: list, run_id: str | None = No
             return 0
         doc = _load()
         n = 0
-        for e in _active(doc["entries"]):
-            if e.get("id") not in ids:
+        for e in doc.get("entries") or []:
+            if not isinstance(e, dict) or e.get("id") not in ids:
+                continue
+            if e.get("superseded_by") or e.get("retired"):
                 continue
             links = [L for L in (e.get("linked_trades") or []) if isinstance(L, dict)]
-            links.append({"ticker": t, "linked_on": linked_on or _now()[:10],
-                          "run_id": run_id})
+            key = (t, run_id, trade_ref)
+            if any((L.get("ticker"), L.get("run_id"), L.get("trade_ref")) == key
+                   for L in links):
+                continue
+            row = {"ticker": t, "linked_on": linked_on or _now()[:10],
+                   "run_id": run_id}
+            if trade_ref:
+                row["trade_ref"] = str(trade_ref)[:60]
+            links.append(row)
             e["linked_trades"] = links[-MAX_LINKS_PER_LESSON:]
             n += 1
         if n:
@@ -361,7 +520,16 @@ def update_lesson_outcomes(closed_trades: list) -> dict:
             return {"graded": 0}
         doc = _load()
         graded = 0
-        for e in _active(doc["entries"]):
+        # EVERY entry carrying links, not just the active ones. A lesson can be
+        # superseded or retired in the days between its trade opening and that
+        # trade closing (Friday consolidation runs weekly; swing horizons are
+        # 3-90 days), and grading only _active() froze that evidence forever —
+        # exactly the outcome that would have justified the retirement, or
+        # overturned it. Superseded lessons stay in history precisely so their
+        # record can be completed.
+        for e in doc.get("entries") or []:
+            if not isinstance(e, dict) or not e.get("linked_trades"):
+                continue
             links = [L for L in (e.get("linked_trades") or []) if isinstance(L, dict)]
             changed = False
             used: set[int] = set()  # a trade grades at most ONE link per lesson
@@ -483,8 +651,18 @@ def apply_consolidation(plan: dict, run_id: str | None = None) -> dict:
         actions = 0
 
         def _too_fresh(e) -> bool:
-            return _date_gap_days(_now()[:10], str(e.get("learned_at") or "")[:10]) \
-                < CONSOLIDATION_MIN_AGE_DAYS
+            # An UNKNOWN age counts as too fresh. _date_gap_days returns its 999
+            # sentinel for a missing/unparseable learned_at, and 999 < 7 is
+            # False — so a lesson with no date read as ancient and became
+            # instantly retirable, which inverts the guard on precisely the rows
+            # most likely to be missing one (journal-recovered lessons). Nothing
+            # here is ever deleted, so failing closed costs a week's delay;
+            # failing open costs the lesson.
+            learned = str(e.get("learned_at") or "")[:10]
+            if not learned:
+                return True
+            gap = _date_gap_days(_now()[:10], learned)
+            return gap >= 999 or gap < CONSOLIDATION_MIN_AGE_DAYS
 
         for m in (plan.get("merges") or []):
             if actions >= MAX_CONSOLIDATION_ACTIONS:
@@ -546,6 +724,43 @@ def apply_consolidation(plan: dict, run_id: str | None = None) -> dict:
     except Exception as e:
         out["error"] = str(e)[:150]
     return out
+
+
+def backfill_learned_at(persist: bool = True) -> dict:
+    """Stamp `learned_at` on stored lessons that never got one, DERIVING the date
+    from the lesson's own run_id (20260731-098397 -> 2026-07-31).
+
+    Deliberately narrow. A lesson whose run_id is missing or malformed is left
+    alone and reported under `unresolvable` — the recency logic being repaired
+    here (selection rank, the 7-day consolidation guard, learning_loop_freshness)
+    is only worth repairing with a date that is TRUE. Guessing _now() would date
+    a July lesson to whenever maintenance happened to run and would quietly make
+    a stale curriculum look freshly studied, which is the exact failure
+    health.learning_loop exists to catch.
+
+    Idempotent: entries that already carry a learned_at are never rewritten.
+    """
+    try:
+        doc = _load()
+        filled, unresolvable = [], []
+        for e in doc.get("entries") or []:
+            if not isinstance(e, dict) or e.get("learned_at"):
+                continue
+            derived = _learned_at_from_run_id(e.get("run_id"))
+            if derived:
+                e["learned_at"] = derived
+                e["learned_at_backfilled_from"] = "run_id"
+                filled.append({"id": e.get("id"), "learned_at": derived[:10]})
+            else:
+                unresolvable.append(e.get("id"))
+        if filled and persist:
+            _save(doc)
+            publish_learning_journal(doc)
+        return {"filled": len(filled), "entries": filled,
+                "unresolvable": unresolvable}
+    except Exception as e:
+        return {"status": "error", "reason": str(e)[:150], "filled": 0,
+                "entries": [], "unresolvable": []}
 
 
 def active_lessons() -> list:

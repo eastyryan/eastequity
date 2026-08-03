@@ -715,17 +715,54 @@ def _check_portfolio_beta(p: dict, cfg: dict, portfolio: dict, market_context: d
         from tools.book_risk import projected_portfolio_beta
     except Exception:
         return
+    # UNKNOWN BETA IS ASSUMED HOSTILE, NOT FATAL (2026-08-03). This used to reject
+    # outright on any missing beta, and on 2026-07-28 that killed a BKR BUY whose
+    # only "missing" name was BKR itself against a 100%-CASH book — a $49 position
+    # on a $984 book cannot make anything a leveraged index bet, and the trade was
+    # re-proposed and filled later the same day. Failing closed on an unmeasurable
+    # input is right when the input could hide real exposure; it is not right when
+    # the worst case is computable. So: substitute a deliberately pessimistic beta
+    # for names the correlation feed does not carry and enforce the ceiling against
+    # THAT. If the book still clears the cap under the worst assumption, the cap is
+    # genuinely not binding. Held positions missing beta still fail closed — an
+    # unknown already-carried exposure is a different animal from an unknown one we
+    # are choosing to add, and only the latter can be bounded by sizing.
+    unknown_beta = br.get("unknown_beta_assumption")
+    if not isinstance(unknown_beta, (int, float)) or unknown_beta <= 0:
+        unknown_beta = cap
+
+    def _beta_of(pos: dict) -> float | None:
+        return betas.get(str(pos.get("ticker") or "").upper())
+
     beta, missing = projected_portfolio_beta(
         portfolio.get("positions", []),
-        beta_of=lambda pos: betas.get(str(pos.get("ticker") or "").upper()),
+        beta_of=_beta_of,
         equity=equity, proposed_ticker=ticker,
         proposed_size_usd=size if isinstance(size, (int, float)) else 0.0,
         proposed_beta=betas.get(ticker))
     if missing:
-        reasons.append(
-            f"portfolio_beta_unverifiable:{','.join(sorted(set(missing)))} have no "
-            f"beta in the correlation feed — projected book beta cannot be checked "
-            f"against the {cap:.2f} ceiling")
+        held = {str(pos.get("ticker") or "").upper()
+                for pos in portfolio.get("positions", [])}
+        missing_held = sorted({m for m in missing if str(m).upper() in held})
+        if missing_held:
+            reasons.append(
+                f"portfolio_beta_unverifiable:{','.join(missing_held)} are HELD and "
+                f"have no beta in the correlation feed — an exposure already on the "
+                f"book cannot be bounded by sizing, so the {cap:.2f} ceiling cannot "
+                f"be checked")
+            return
+        # Only the proposed name is unknown: re-run assuming the worst.
+        beta, _ = projected_portfolio_beta(
+            portfolio.get("positions", []),
+            beta_of=_beta_of,
+            equity=equity, proposed_ticker=ticker,
+            proposed_size_usd=size if isinstance(size, (int, float)) else 0.0,
+            proposed_beta=unknown_beta)
+        if beta is not None and beta > cap + 1e-9:
+            reasons.append(
+                f"portfolio_beta_cap_exceeded:{ticker} has no beta in the correlation "
+                f"feed, and even at a conservative assumed beta of {unknown_beta:.2f} "
+                f"the projected book reads {beta:.2f} > {cap:.2f}")
         return
     if beta is not None and beta > cap + 1e-9:
         reasons.append(
@@ -846,6 +883,66 @@ def _check_data_quality(p: dict, cfg: dict, market_context: dict,
         reasons.append(
             f"fundamentals_stale:{ticker} — extracted fundamentals do not reach the "
             f"latest filed period, so any fundamental leg of this thesis is unverified")
+
+
+def _check_earnings_window(p: dict, cfg: dict, market_context: dict,
+                           reasons: list[str]) -> None:
+    """Pre-print blackout — the ONLY coded earnings rule, deliberately narrow.
+
+    ADDED 2026-08-03 after an audit found `days_to_earnings` appeared ZERO times
+    in this file: there was no earnings gate at all, and "trade around the binary"
+    was entirely the brain's own judgment against a 45-day default horizon. That
+    judgment metastasized. Over 2026-07-13..08-03 run after run rejected every
+    candidate for an earnings print somewhere inside the swing window — on 08-03
+    MPC and AMGN (reporting 08-04) and NET and TEAM (08-06) were all passed on and
+    the run traded nothing. In earnings season a "no print inside 45 days" rule
+    excludes essentially the entire universe.
+
+    So the rule is now narrow, coded, and STATED to the brain: only a print within
+    `pre_print_blackout_days` blocks a BUY, and it is overridable with an explicit
+    `earnings_case` when trading the binary IS the thesis. Everything outside that
+    window is explicitly tradeable, which is the half that actually needed saying.
+    Post-print names (see earnings_window.in_drift) are a PREFERRED lane, not a
+    penalized one — the binary is resolved and the geometry is clean.
+
+    Fail-open: a ticker absent from the calendar is NOT MEASURED, not "no print".
+    """
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    q = cfg.get("trade_quality_requirements") or {}
+    ew_cfg = q.get("earnings_window") or {}
+    if not ew_cfg.get("enabled"):
+        return
+    blackout = ew_cfg.get("pre_print_blackout_days")
+    if not isinstance(blackout, int) or blackout < 0:
+        return
+    feed = (market_context or {}).get("_earnings") or {}
+    ticker = str(p.get("ticker", "")).upper()
+    row = feed.get(ticker)
+    if not isinstance(row, dict):
+        return  # not measured — the gate asserts nothing
+    try:
+        from tools.earnings_window import earnings_state
+    except Exception:
+        return
+    drift = ew_cfg.get("post_print_drift_days")
+    state = earnings_state(row, blackout_days=blackout,
+                           drift_days=drift if isinstance(drift, int) else 10)
+    if not state["in_blackout"]:
+        return
+    case = str(p.get("earnings_case") or "").strip()
+    min_chars = ew_cfg.get("min_earnings_case_chars")
+    min_chars = min_chars if isinstance(min_chars, int) else 80
+    if ew_cfg.get("allow_trade_through_with_case", True) and len(case) >= min_chars:
+        return  # deliberately trading the print, and said so
+    dte = state["days_to_earnings"]
+    when = f" ({state['when']})" if state.get("when") else ""
+    dated = f" on {state['earnings_date']}" if state.get("earnings_date") else ""
+    reasons.append(
+        f"earnings_blackout:{ticker} reports in {dte} day(s){dated}{when} — inside "
+        f"the {blackout}-day pre-print window. Enter after the print (the "
+        f"post-print drift lane) or supply an `earnings_case` of >={min_chars} "
+        f"chars stating why trading THROUGH this binary is the thesis")
 
 
 def _check_regime_gate(p: dict, cfg: dict, market_context: dict,
@@ -1637,6 +1734,7 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
         _check_confidence(p, cfg, reasons)
         _check_calibration_gate(p, cfg, sector_map, reasons)
         _check_regime_gate(p, cfg, market_context or {}, reasons)
+        _check_earnings_window(p, cfg, market_context or {}, reasons)
         _check_data_quality(p, cfg, market_context or {}, reasons)
         # Risk-based sizing clamps position_size_usd BEFORE the notional checks
         # so every downstream cap sees the final size.

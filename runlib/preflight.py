@@ -146,6 +146,39 @@ def _read_remote_lease() -> dict | None:
     return None
 
 
+def _lease_conflict(lease: dict | None, run_id: str,
+                    now: datetime) -> str | None:
+    """A halt reason if `lease` is another node's live claim, else None.
+
+    LIFTED OUT OF acquire_cross_node_lease AND MADE TOTAL (2026-08-03). It used to be a
+    closure whose try/except covered only the `fromisoformat` call, so the very next
+    line - `exp > now` - raised TypeError on any lease whose `expires_at` parsed NAIVE
+    (an older-format file, a hand-edited one, a clock without an offset). That exception
+    propagated out of preflight() and killed the run before the lock, the safety layer
+    or stop enforcement, which is precisely the outcome autonomy_config forbids: "a lease
+    must never brick the trader". Every failure path now returns None, i.e. FAIL-OPEN.
+
+    A lease whose `released_at` is set is a lease its holder handed back early (see
+    release_cross_node_lease); the expiry it carries is the release time, so the normal
+    expiry test already lets it through - no special case needed.
+    """
+    if not lease:
+        return None
+    try:
+        exp = datetime.fromisoformat(str(lease["expires_at"]))
+        if exp.tzinfo is None:
+            # A naive stamp is UTC by construction everywhere we write one; assuming so
+            # keeps the comparison meaningful instead of throwing.
+            exp = exp.replace(tzinfo=timezone.utc)
+        if exp > now and lease.get("run_id") not in (None, run_id) \
+                and lease.get("holder") != _node_id():
+            return (f"cross-node lease held by {lease.get('holder')} "
+                    f"(run {lease.get('run_id')}) until {exp.isoformat()}")
+    except Exception as e:
+        print(f"  (unreadable lease, proceeding fail-open: {e})")
+    return None
+
+
 def acquire_cross_node_lease(run_id: str, cfg: dict, manual: bool = False) -> str | None:
     """Advisory cross-node lease over the shared ledger, arbitrated through git.
 
@@ -171,19 +204,7 @@ def acquire_cross_node_lease(run_id: str, cfg: dict, manual: bool = False) -> st
     now = datetime.now(timezone.utc)
     lease_path = ROOT / "state" / "RUN_LEASE.json"
 
-    def _conflict(lease: dict | None) -> str | None:
-        if not lease:
-            return None
-        try:
-            exp = datetime.fromisoformat(lease["expires_at"])
-        except Exception:
-            return None  # unparseable -> fail open
-        if exp > now and lease.get("run_id") not in (None, run_id) \
-                and lease.get("holder") != _node_id():
-            return (f"cross-node lease held by {lease.get('holder')} "
-                    f"(run {lease.get('run_id')}) until {exp.isoformat()}")
-
-    conflict = _conflict(_read_remote_lease())
+    conflict = _lease_conflict(_read_remote_lease(), run_id, now)
     if conflict:
         if manual:
             return (f"{conflict} - the scheduled trader holds the ledger; "
@@ -216,14 +237,110 @@ def acquire_cross_node_lease(run_id: str, cfg: dict, manual: bool = False) -> st
                     subprocess.run(["git", "rebase", "--abort"], cwd=ROOT, capture_output=True)
                     print("  (lease push race, rebase failed - proceeding fail-open)")
                     return None
-                conflict = _conflict(_read_remote_lease())
+                conflict = _lease_conflict(_read_remote_lease(), run_id, now)
                 if conflict:  # manual runs never reach here - they return above
                     return f"lost the lease race: {conflict} - standing down"
                 subprocess.run(["git", "push", "origin", "main"], cwd=ROOT,
                                capture_output=True, timeout=120)
     except Exception as e:
         print(f"  (cross-node lease claim failed, proceeding fail-open: {e})")
+    # HAND THE LEASE BACK WHEN THIS RUN ENDS (see release_cross_node_lease). Registered
+    # here, in the only branch that CLAIMS, so a manual run - which never claims - can
+    # never release the scheduled trader's lease.
+    import atexit
+    atexit.register(release_cross_node_lease, run_id)
     return None
+
+
+def release_cross_node_lease(run_id: str) -> bool:
+    """Expire OUR lease now that this run is finished. Returns whether it was released.
+
+    WHY THIS EXISTS (2026-08-03). Nothing ever released the lease: acquire wrote a
+    30-minute claim, pushed it, and the only way it ever cleared was the TTL running out.
+    So every run left the shared ledger marked "busy" for a flat 30 minutes regardless of
+    what it actually did - and the measured run length is 12.5 min at the median and 23.4
+    at p90 (n=52 breadcrumb->summary pairs, 2026-07-21..08-03). Every scheduled run
+    therefore spent roughly half its lease lying, and a run that DIED at minute one lied
+    for the full half hour.
+
+    Two concrete costs. A hand-fired local run inside that window is told "the scheduled
+    trader holds the ledger; re-run once it finishes" about a trader that finished ten
+    minutes ago. And a stale lease is a slot-eater waiting for a schedule change: the
+    live slot gaps are 90-105 minutes so nothing collides today, but the 08:45 recovery
+    that landed at 10:29 on 2026-07-29 and 2026-08-03 sat 15 minutes from the 10:30 run -
+    inside a stale 30-minute lease, on a node whose id happened to match. Release removes
+    the lie rather than relying on the gaps staying wide.
+
+    THE SAFETY PROPERTY IS PRESERVED, not weakened. Release only ever happens when the
+    lease still names THIS run (ownership-checked, exactly like release_run_lock), and it
+    marks the lease expired rather than deleting it, so the record of who ran stays
+    auditable. Releasing our own finished run's lease cannot admit two concurrent
+    traders; it admits the NEXT one, which is the whole point.
+
+    ONE DELIBERATE EXCEPTION: pending order intents. Orders are handed to an async
+    executor (journal.log_intent -> scripts/execute_order_intents.py) and can still be
+    working after this process exits, so while state/order_intents.json is non-empty the
+    lease is LEFT ALONE and the TTL does the work. That is the one case where the process
+    ending is not the same thing as the run being done.
+
+    Fail-OPEN in every branch, per autonomy_config: "a lease must never brick the
+    trader". A release that cannot commit or push is a lease that expires on TTL - the
+    behaviour we had before - never an error the caller sees.
+    """
+    lease_path = ROOT / "state" / "RUN_LEASE.json"
+    try:
+        lease = json.loads(lease_path.read_text())
+    except Exception:
+        return False
+    if lease.get("run_id") != run_id or lease.get("holder") != _node_id():
+        return False  # not ours any more - leave it alone
+    if lease.get("released_at"):
+        return False  # already released (atexit can fire once per process, but be safe)
+    # THE LOCAL FILE IS NOT AUTHORITATIVE, AND TRUSTING IT WOULD HAVE MADE THIS UNSAFE.
+    # The local copy still says "ours" forever; the shared truth is origin/main. If
+    # another node claimed the lease while this run was finishing, a release computed
+    # from the local file would commit OUR record on top of THEIRS - the rebase below
+    # replays it last - and wipe a live claim, admitting exactly the concurrent trader
+    # the lease exists to stop. So the remote must agree that the lease is still ours.
+    # A remote we cannot read is not agreement: we leave the lease alone and let the TTL
+    # expire it, which is precisely the behaviour that existed before release did.
+    remote = _read_remote_lease()
+    if not remote or remote.get("run_id") != run_id \
+            or remote.get("holder") != _node_id():
+        return False
+    try:
+        intents = json.loads((ROOT / "state" / "order_intents.json").read_text())
+        if intents.get("intents"):
+            print("  (lease kept: order intents still pending for the async executor)")
+            return False
+    except Exception:
+        pass  # no intents file / unreadable -> nothing pending to protect
+    try:
+        now = datetime.now(timezone.utc)
+        lease["expires_at"] = now.isoformat()
+        lease["released_at"] = now.isoformat()
+        lease_path.write_text(json.dumps(lease, indent=2))
+        subprocess.run(["git", "add", "state/RUN_LEASE.json"], cwd=ROOT,
+                       capture_output=True, timeout=30)
+        c = subprocess.run(["git", "commit", "-m", "Release run lease [vercel skip]"],
+                           cwd=ROOT, capture_output=True, text=True, timeout=60)
+        if c.returncode != 0:
+            return False
+        p = subprocess.run(["git", "push", "origin", "main"], cwd=ROOT,
+                           capture_output=True, text=True, timeout=120)
+        if p.returncode != 0:
+            rb = subprocess.run(["git", "pull", "--rebase", "origin", "main"], cwd=ROOT,
+                                capture_output=True, text=True, timeout=120)
+            if rb.returncode != 0:
+                subprocess.run(["git", "rebase", "--abort"], cwd=ROOT,
+                               capture_output=True, timeout=30)
+                return False
+            subprocess.run(["git", "push", "origin", "main"], cwd=ROOT,
+                           capture_output=True, timeout=120)
+        return True
+    except Exception as e:
+        print(f"  (cross-node lease release failed, TTL will expire it: {e})")
+        return False
 
 
 def preflight(cfg: dict, run_id: str, news_only: bool = False,

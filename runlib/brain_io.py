@@ -1,6 +1,7 @@
 """Brain invoke, risk desk, parse, execute."""
 from __future__ import annotations
 
+import itertools
 import json
 import re
 import subprocess
@@ -306,6 +307,12 @@ def unwrap_cli_json(stdout: str) -> tuple[str, dict]:
         "duration_ms": env.get("duration_ms"),
         "duration_api_ms": env.get("duration_api_ms"),
         "num_turns": env.get("num_turns"),
+        # NOTIONAL, NOT BILLED. The brain authenticates with a subscription (OAuth
+        # via ~/.claude/.credentials.json); there is no ANTHROPIC_API_KEY anywhere
+        # in this system. The CLI still reports what the same tokens would have
+        # cost on the API, which is the only comparable unit we have — so read this
+        # as QUOTA CONSUMED and as the relative weight of one call type against
+        # another (daily_study ~$1.6 vs a full brain call ~$5), never as money out.
         "total_cost_usd": env.get("total_cost_usd"),
         "session_id": env.get("session_id"),
         "is_error": env.get("is_error"),
@@ -339,7 +346,7 @@ def run_claude(prompt: str, model: str | None = None, *,
     made 15-30 Opus calls a day with no cost signal and no way to tell a run that
     thought hard from one that returned in four seconds.
 
-    Two behaviours worth knowing:
+    Three behaviours worth knowing:
       * Telemetry is best-effort. A CLI whose envelope we cannot parse costs us the
         metrics and nothing else - see unwrap_cli_json.
       * A TIMEOUT IS NOW A HANDLED FAILURE. subprocess.TimeoutExpired is not a
@@ -347,6 +354,16 @@ def run_claude(prompt: str, model: str | None = None, *,
         CLI propagated all the way out of main(): no run summary, no journal line,
         no dashboard update, just a traceback in cron.log. A 30-minute hang burned
         the slot and left no record of itself.
+      * EVERY LAUNCH FAILURE IS NOW RECORDED TOO (2026-08-03). Only TimeoutExpired
+        was caught, so anything else subprocess.run can raise before the child
+        answers - FileNotFoundError when the `claude` binary is not on PATH, an
+        OSError on a fork/pipe failure - escaped with ZERO telemetry. That is not
+        hypothetical: adversarial_review guards itself with shutil.which("claude"),
+        but ask_claude, reviews.self_review / daily_study / universe_review and
+        publish._brain_trade_memo do not, and each of those callers wraps the call
+        in a bare `except Exception` that prints and returns. On a node without the
+        CLI the system therefore failed silently AND recorded nothing about it. A
+        call that errors is the one you most want a record of.
     """
     import time
     last_err = ""
@@ -359,8 +376,11 @@ def run_claude(prompt: str, model: str | None = None, *,
     # block never appears and parsing falls back to a no-trade. The default headless
     # mode prints the full response (incl. the fenced ```json) to stdout, which is what
     # we parse - matching universe_review(), which already runs claude -p without plan mode.
+    seq = next(_CALL_SEQ)
     for attempt in (1, 2):  # one retry: overnight runs can hit transient/usage errors
         started = time.time()
+        uid = call_uid(call, run_id, attempt, seq)
+        _log_brain_call_start(call, run_id, model, attempt, timeout_s, uid=uid)
         try:
             result = subprocess.run(
                 claude_cmd(prompt, model, allowed_tools, output_format="json"),
@@ -370,8 +390,22 @@ def run_claude(prompt: str, model: str | None = None, *,
             last_err = f"timeout after {timeout_s}s"
             _log_brain_call(call, run_id, model, allowed_tools, attempt,
                             elapsed_s=round(time.time() - started, 1),
-                            ok=False, error=last_err)
+                            ok=False, error=last_err, uid=uid)
             print(f"  claude attempt {attempt} timed out after {timeout_s}s")
+            if attempt == 1:
+                time.sleep(90)
+            continue
+        except Exception as e:
+            # Deliberately broad, and deliberately NOT re-raised on attempt 1: a
+            # missing CLI is permanent and a fork failure is usually transient, and
+            # from here the two are the same 90-second retry. What matters is that
+            # both now leave a journal line instead of vanishing into a caller's
+            # `except Exception: print(...)`.
+            last_err = f"{type(e).__name__}: {str(e)[:400]}"
+            _log_brain_call(call, run_id, model, allowed_tools, attempt,
+                            elapsed_s=round(time.time() - started, 1),
+                            ok=False, error=f"launch_failed {last_err}", uid=uid)
+            print(f"  claude attempt {attempt} could not launch: {last_err[:300]}")
             if attempt == 1:
                 time.sleep(90)
             continue
@@ -380,26 +414,67 @@ def run_claude(prompt: str, model: str | None = None, *,
             text, meta = unwrap_cli_json(result.stdout)
             _log_brain_call(call, run_id, model, allowed_tools, attempt,
                             elapsed_s=elapsed, ok=True, meta=meta,
-                            response_chars=len(text or ""))
+                            response_chars=len(text or ""), uid=uid)
             return text
         last_err = (f"exit={result.returncode} stderr={result.stderr[:1000]} "
                     f"stdout={result.stdout[:1000]}")
         _log_brain_call(call, run_id, model, allowed_tools, attempt,
-                        elapsed_s=elapsed, ok=False, error=last_err[:500])
+                        elapsed_s=elapsed, ok=False, error=last_err[:500], uid=uid)
         print(f"  claude attempt {attempt} failed: {last_err[:300]}")
         if attempt == 1:
             time.sleep(90)
     raise RuntimeError(f"claude CLI failed after retry: {last_err}")
 
 
+# Per-process invocation counter. `call` alone does NOT identify an invocation:
+# adversarial_review runs the desk TWICE in one run when a repairable veto goes
+# through the repair round (2026-08-03), so two records would otherwise share the
+# same key and the start/outcome pairing below would silently mis-match them.
+_CALL_SEQ = itertools.count(1)
+
+
+def call_uid(call: str, run_id: str, attempt: int, seq: int) -> str:
+    """Correlation key joining a started breadcrumb to its outcome record.
+
+    Pure so the rollup can reason about it without importing process state: an
+    unpaired start is unambiguously a call that began and never returned - a
+    sandbox teardown, a SIGKILL, a Mac that slept mid-call - rather than a
+    bookkeeping mismatch."""
+    return f"{run_id or 'unknown'}:{call}:{seq}:{attempt}"
+
+
+def _log_brain_call_start(call: str, run_id: str, model, attempt: int,
+                          timeout_s: int, *, uid: str = "") -> None:
+    """Breadcrumb written BEFORE the CLI launches. Never raises.
+
+    See journal.log_brain_call_start for why this exists. Routed through its OWN
+    journal function rather than log_brain_call so that a started record can never
+    be counted as an invocation outcome by anything reading the stream."""
+    try:
+        import journal
+        journal.log_brain_call_start({
+            "call": call,
+            "call_uid": uid,
+            "model": model,
+            "attempt": attempt,
+            "timeout_s": timeout_s,
+        }, run_id or "unknown")
+    except Exception as e:  # pragma: no cover - telemetry is never load-bearing
+        print(f"  (brain-call start breadcrumb skipped: {e})")
+
+
 def _log_brain_call(call: str, run_id: str, model, allowed_tools, attempt: int,
                     *, elapsed_s: float, ok: bool, meta: dict | None = None,
-                    error: str = "", response_chars: int = 0) -> None:
+                    error: str = "", response_chars: int = 0,
+                    uid: str = "") -> None:
     """Journal one LLM invocation. Never raises - telemetry must not break a run."""
     try:
         import journal
         journal.log_brain_call({
             "call": call,
+            "call_uid": uid,
+            "transport": "cli_subprocess",
+            "instrumented": True,
             "model": model,
             "allowed_tools": allowed_tools,
             "attempt": attempt,
@@ -411,6 +486,33 @@ def _log_brain_call(call: str, run_id: str, model, allowed_tools, attempt: int,
         }, run_id or "unknown")
     except Exception as e:  # pragma: no cover - telemetry is never load-bearing
         print(f"  (brain-call telemetry skipped: {e})")
+
+
+def record_brain_call(call: str, run_id: str, **fields) -> None:
+    """Record a model invocation that did NOT go through the claude CLI subprocess.
+
+    The public seam for any transport run_claude cannot see - today that is the
+    scheduled cloud routine, which reasons in its own session and hands
+    orchestrator a response FILE via --act-on (see journal._reconcile_brain_call
+    for the measurement that found it). journal.log_run_summary already reconciles
+    that case automatically, so this exists for a caller that knows more than the
+    reconciler can infer (a real elapsed time, a slot label, a second model call
+    inside one run) and wants to say so at the moment it happens.
+
+    Stamps instrumented=false by default: never claim measurement you do not have.
+    Never raises - same contract as every other line of telemetry here."""
+    try:
+        import journal
+        journal.log_brain_call({
+            "call": call,
+            "transport": "external",
+            "instrumented": False,
+            "attempt": 1,
+            "ok": True,
+            **fields,
+        }, run_id or "unknown")
+    except Exception as e:  # pragma: no cover - telemetry is never load-bearing
+        print(f"  (external brain-call telemetry skipped: {e})")
 
 
 # ---------------------------------------------------------------------------
@@ -427,6 +529,96 @@ LAST_RISK_DESK_VETOES: list = []
 # in its own prompt. A desk that could cut arbitrarily deep would be a veto by
 # another name, routed around the veto's journaling and dashboard surfacing.
 MAX_RISK_DESK_HAIRCUT = -0.10
+
+
+REPAIRABLE_FIELDS = ("thesis", "catalysts", "variant_perception", "risk_map",
+                     "macro_context", "confidence")
+
+
+def _repair_proposals(queue: list[dict], reviews: dict, context_file: str,
+                      run_id: str) -> dict[str, dict]:
+    """Give the proposer one chance to correct a citation defect the desk named.
+
+    Returns {TICKER: {field: corrected_value}} limited to REPAIRABLE_FIELDS —
+    the narrative fields where a false claim lives. Prices, sizing, stops,
+    targets, horizon and demand_driver are deliberately NOT repairable here: a
+    proposal that needs its GEOMETRY changed to survive is a different trade and
+    belongs in a fresh proposal, not a patch. Runs on the brain model, because
+    the proposer owns the thesis and the desk must not repair its own veto.
+    """
+    asks = []
+    for p in queue:
+        t = str(p.get("ticker", "")).upper()
+        r = reviews.get(t) or {}
+        asks.append({
+            "ticker": t,
+            "repair_instruction": str(r.get("repair_instruction") or "")[:600],
+            "objection": str(r.get("objection") or "")[:1200],
+            "proposal": {k: p.get(k) for k in REPAIRABLE_FIELDS if k in p},
+        })
+    prompt = (
+        "You proposed these BUYs and the risk desk vetoed each one for a SPECIFIC "
+        "FACTUAL OR CITATION DEFECT that it judged correctable without changing the "
+        f"trade. Full context bundle: {context_file} — read it.\n\n"
+        f"{json.dumps(asks, indent=1)}\n\n"
+        "For each ticker, return the corrected narrative fields. RULES:\n"
+        "1) DELETE or CORRECT the specific claim the desk named. If you cannot "
+        "source a replacement fact in the bundle or verify one with WebSearch, "
+        "DELETE the claim — do not substitute a different unsourced number.\n"
+        "2) Do NOT invent a new catalyst to replace the removed one. If removing "
+        "the claim leaves the thesis without a dated resolution event, say so by "
+        "returning \"withdraw\": true for that ticker. Withdrawing is the honest "
+        "outcome and costs you nothing; a laundered thesis corrupts the record.\n"
+        "3) You may LOWER confidence. You may not raise it.\n"
+        "4) Do NOT touch price, stop, target, size, horizon or demand_driver — "
+        "those are not repairable here and any change to them is ignored.\n"
+        "5) Every number you keep must appear in the bundle or carry an explicit "
+        "WebSearch citation in the text.\n\n"
+        "Output ONLY a ```json block: {\"repairs\": [{\"ticker\": \"X\", "
+        "\"withdraw\": false, \"thesis\": \"...\", \"catalysts\": [...], "
+        "\"variant_perception\": \"...\", \"risk_map\": \"...\", "
+        "\"confidence\": 0.62}]} — include only the fields you actually changed."
+    )
+    out = run_claude(prompt, model=llm_settings().get("brain_model"),
+                     call="risk_desk_repair", run_id=run_id)
+    parsed = {}
+    for block in reversed(re.findall(r"```json\s*(.*?)```", out, re.DOTALL)):
+        try:
+            data = json.loads(block)
+            if "repairs" in data:
+                parsed = data
+                break
+        except (json.JSONDecodeError, TypeError):
+            continue
+    if not parsed:
+        return {}
+    original = {str(p.get("ticker", "")).upper(): p for p in queue}
+    fixed: dict[str, dict] = {}
+    for row in parsed.get("repairs") or []:
+        if not isinstance(row, dict):
+            continue
+        t = str(row.get("ticker") or "").upper()
+        if t not in original:
+            continue
+        if row.get("withdraw") is True:
+            print(f"  repair: {t} WITHDRAWN by the proposer — thesis does not "
+                  f"stand without the disputed claim")
+            continue
+        patch = {k: row[k] for k in REPAIRABLE_FIELDS
+                 if k in row and row[k] not in (None, "", [])}
+        if "confidence" in patch:
+            try:
+                # Confidence may only fall in a repair.
+                if float(patch["confidence"]) > float(
+                        original[t].get("confidence") or 0):
+                    patch.pop("confidence")
+            except (TypeError, ValueError):
+                patch.pop("confidence", None)
+        if patch:
+            patch["repaired_from_veto"] = str(
+                (reviews.get(t) or {}).get("repair_instruction") or "")[:300]
+            fixed[t] = patch
+    return fixed
 
 
 def adversarial_review(proposals: list[dict], context_file: str, run_id: str) -> list[dict]:
@@ -532,27 +724,109 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
         "trade fails, state it plainly, and veto when you find one. A trade that "
         "survives a genuine attempt to kill it is worth more than one that was "
         "never attacked. If the case is merely adequate, that is a veto.\n"
+        # REPAIRABILITY (2026-08-03). 12 of 17 vetoes in the first month were
+        # killed by ONE bad citation, not by a bad trade: BKR 07-28 said "Stifel
+        # raised its PT to $75" when the bundle carried "TD Cowen ... $78" three
+        # lines away — and BKR was re-proposed and filled later the same day, and
+        # is up. DDOG (invented "JMP $311"), MELI (Loggi), IBKR (invented beat
+        # streak) and UNP (inverted MOU date) are the same shape. The desk was
+        # right every time; the loop around it was wrong, because a veto was
+        # terminal and the run ended flat. Classifying the DEFECT lets the
+        # proposer correct a citation without lowering the bar: the trade still
+        # has to survive a fresh review afterwards, and the repaired thesis is
+        # judged on what remains once the false claim is gone.
+        "REPAIRABILITY: after deciding the verdict, classify the defect. Set "
+        "\"repairable\": true ONLY when the objection is a specific factual or "
+        "citation defect — a misattributed source, an unsourced figure, a stale "
+        "number, a wrong date — that could be fixed by CORRECTING OR DELETING the "
+        "claim while leaving the trade's geometry and core thesis standing. Set it "
+        "false when the thesis DEPENDS on the false claim, or when the objection is "
+        "about geometry, sizing, theme overlap, a straw-man variant perception, or "
+        "a setup that is merely adequate. When true, give \"repair_instruction\": "
+        "one sentence naming exactly which claim must go or be corrected, and to "
+        "what. A repaired proposal is reviewed again from scratch — repairable does "
+        "NOT mean approved.\n"
         "Output ONLY a ```json block: {\"reviews\": [{\"ticker\": \"X\", "
         "\"verdict\": \"approve\"|\"veto\", \"objection\": \"one paragraph covering the "
-        "checklist\", \"confidence_adjustment\": 0.0}]} where confidence_adjustment is "
+        "checklist\", \"confidence_adjustment\": 0.0, \"repairable\": false, "
+        "\"repair_instruction\": \"\"}]} where confidence_adjustment is "
         "0 or negative (max -0.10) for approved-with-reservations."
     )
-    try:
-        out = run_claude(prompt, model=llm_settings().get("risk_desk_model"),
-                         call="risk_desk", run_id=run_id)
-    except Exception as e:
-        return _no_desk(f"risk desk failed ({str(e)[:120]})")
-    reviews = {}
-    for block in reversed(re.findall(r"```json\s*(.*?)```", out, re.DOTALL)):
+    def _desk(desk_prompt: str, call: str = "risk_desk") -> dict | None:
+        """Run the desk and parse its reviews. None = unusable output.
+
+        `call` labels the telemetry only - the prompt, model and parsing are
+        identical either way. It exists because the repair round added on
+        2026-08-03 can make this the THIRD model invocation of a single run
+        (desk -> risk_desk_repair -> desk again), and a re-review that shares the
+        `risk_desk` label is invisible in the rollup: the repair loop's true cost
+        would read as one desk call that happened to be expensive. A repairable
+        veto now shows up as what it is - roughly triple the desk spend on that
+        run - so the loop can be judged on what it recovers versus what it burns.
+        """
         try:
-            data = json.loads(block)
-            if "reviews" in data:
-                reviews = {r["ticker"].upper(): r for r in data["reviews"]}
-                break
-        except (json.JSONDecodeError, KeyError, TypeError, AttributeError):
-            continue
-    if not reviews:
-        return _no_desk("risk desk output unparsable")
+            out = run_claude(desk_prompt,
+                             model=llm_settings().get("risk_desk_model"),
+                             call=call, run_id=run_id)
+        except Exception as exc:
+            print(f"  (risk desk call failed: {str(exc)[:120]})")
+            return None
+        for block in reversed(re.findall(r"```json\s*(.*?)```", out, re.DOTALL)):
+            try:
+                data = json.loads(block)
+                if "reviews" in data:
+                    return {r["ticker"].upper(): r for r in data["reviews"]}
+            except (json.JSONDecodeError, KeyError, TypeError, AttributeError):
+                continue
+        return None
+
+    reviews = _desk(prompt)
+    if reviews is None:
+        return _no_desk("risk desk failed or output unparsable")
+
+    # One repair round. A repairable veto is a citation defect, not a bad trade —
+    # the proposer gets exactly one chance to correct or delete the offending
+    # claim, and the corrected proposal is then reviewed AGAIN from scratch by the
+    # same adversarial desk. The bar does not move: a repaired thesis that no
+    # longer stands without its false claim gets vetoed on the re-review, which is
+    # the correct outcome. Capped at one round so a proposal cannot be laundered
+    # through repeated rewrites, and fail-soft throughout — any failure in the
+    # repair path leaves the original veto standing.
+    repair_queue = [
+        p for p in proposals
+        if str(p.get("action", "")).upper() == "BUY"
+        and (reviews.get(str(p.get("ticker", "")).upper()) or {}).get("verdict") == "veto"
+        and (reviews.get(str(p.get("ticker", "")).upper()) or {}).get("repairable") is True
+    ]
+    if repair_queue:
+        try:
+            repaired = _repair_proposals(repair_queue, reviews, context_file, run_id)
+        except Exception as exc:
+            print(f"  (repair round skipped: {str(exc)[:120]})")
+            repaired = {}
+        if repaired:
+            by_ticker = {str(p.get("ticker", "")).upper(): p for p in proposals}
+            for tkr, fixed in repaired.items():
+                if tkr in by_ticker:
+                    by_ticker[tkr].update(fixed)
+            re_prompt = prompt.replace(
+                json.dumps(buys),
+                json.dumps([by_ticker.get(str(p.get("ticker", "")).upper(), p)
+                            for p in buys]))
+            re_prompt += (
+                "\n\nRE-REVIEW: these proposals were vetoed once for a factual or "
+                "citation defect and have been corrected. Review them AGAIN from "
+                "scratch against the full checklist. Do not approve because a "
+                "correction was made — judge the thesis that remains now the "
+                "disputed claim is gone. If it no longer stands on its own, veto "
+                "it, and this time it is final.")
+            second = _desk(re_prompt, call="risk_desk_rereview")
+            if second:
+                print(f"  risk desk re-reviewed {sorted(repaired)} after repair")
+                for tkr, r in second.items():
+                    r["repairable"] = False  # one round only
+                    reviews[tkr] = r
+
     kept = []
     for p in proposals:
         r = reviews.get(str(p.get("ticker", "")).upper())
@@ -641,6 +915,14 @@ def parse_proposals(response: str) -> dict:
                     "universe_candidates": _dicts(data.get("universe_candidates"), 5),
                     "seat_reviews": data.get("seat_reviews"),
                     "factor_response": data.get("factor_response"),
+                    # This dict is a WHITELIST: a key absent here is silently
+                    # dropped no matter what the brain wrote. That is exactly how
+                    # seat_reviews/factor_response went missing until 2d0e46e on
+                    # 07-30, which killed the CRWD and ITW proposals that day as
+                    # process_gate_blocked. Any new structured field must be
+                    # registered here the moment it is added to the schema.
+                    "trigger_reviews": data.get("trigger_reviews"),
+                    "waiting_for": data.get("waiting_for"),
                 }
         except json.JSONDecodeError:
             continue
@@ -650,7 +932,8 @@ def parse_proposals(response: str) -> dict:
                                "machine-readable order block, so no orders were placed.",
             "commentary": None, "watchlist": [], "rejected_ideas": [],
             "x_post": None, "guidance_entries": [], "universe_candidates": [],
-            "seat_reviews": None, "factor_response": None}
+            "seat_reviews": None, "factor_response": None,
+            "trigger_reviews": None, "waiting_for": None}
 
 
 # ---------------------------------------------------------------------------
@@ -744,6 +1027,17 @@ def execute(approved: list[validator.ValidationResult], context: dict,
                 "stop_loss", "target_price", "holding_horizon_days",
                 "entry_price_max", "confidence", "demand_driver",
                 "thesis_invalidators")}
+        elif p["action"] == "SELL_TO_CLOSE" and isinstance(pos_before, dict):
+            # CARRY THE ENTRY PLAN ONTO A DISCRETIONARY EXIT (2026-08-03). This
+            # branch did not exist, so every discretionary sell placed with
+            # "plan": None — which is literally why the HPE close of 2026-07-15
+            # sits in the ledger with stop_loss None and forced_exit_reason None
+            # and cannot be graded at all. A forced exit records the plan it was
+            # judged against; a discretionary one recorded nothing, so the two
+            # closed trades in this book's history are not comparable. The exit
+            # is graded against the plan it is EXITING, so that is the plan to
+            # persist.
+            plan = pos_before.get("plan") or pos_before.get("original_plan")
         order = broker.place_order({
             "ticker": p["ticker"], "action": p["action"],
             "position_size_usd": p.get("position_size_usd"),
@@ -763,6 +1057,13 @@ def execute(approved: list[validator.ValidationResult], context: dict,
             # Numeric plan (+ theme/falsifiers) persisted ONTO the position at fill.
             "plan": plan,
             "demand_driver": p.get("demand_driver"),
+            # Make the ledger row self-describing rather than requiring a journal
+            # join to tell a deliberate rotation from a safety-layer stop. The
+            # exit-grade sweep can recover this from the fill, but a row that
+            # states its own reason is the one an audit can read.
+            **({"exit_reason_kind": "discretionary",
+                "exit_thesis": str(p.get("thesis") or "")[:300]}
+               if p["action"] == "SELL_TO_CLOSE" else {}),
         })
         # risk_controls.require_broker_readback_confirmation: readback is ALWAYS
         # performed and a non-filled readback is a rejection - the flag documents

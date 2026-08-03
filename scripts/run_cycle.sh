@@ -11,16 +11,25 @@
 # kill switch is honored (preflight aborts on state/KILL_SWITCH). Do not add a
 # second orchestrator invocation to this script.
 #
-# RUN DEPTHS (2026-07-14 redesign — full runs were too slow on every slot):
-#   0600  light                 holdings/watchlist prices + exits only
-#   0845  holdings_watchlist    four fast trading cycles (holdings + watchlist deep)
-#   1030  holdings_watchlist
-#   1200  holdings_watchlist
-#   1400  holdings_watchlist
-#   1600  full                  one full-universe deep dive per day
-#   1730  evening_review        news-only research review
-#   Sun 0000 weekly_market      all-sector market check-in (no trading)
-# KEEP IN SYNC with expected_slots() + autonomy_config schedule.slot_depths.
+# RUN DEPTHS come from autonomy_config.json -> schedule.slot_depths, resolved at run
+# time by orchestrator's --auto-depth. THEY ARE NO LONGER DUPLICATED HERE.
+#
+# WHY (2026-08-03): this script used to carry its own `case "$HHMM"` depth map, and the
+# comment above it told you to "KEEP IN SYNC" by hand. It drifted the same day the
+# instruction was written — 10:30 was promoted from holdings_watchlist to `full` in
+# autonomy_config.json AND runlib/depths.py, and this file still said
+# `0845|1030|1200|1400) --depth holdings_watchlist`. So the local trader would have run
+# a mini-scan at the one slot that was changed specifically to put a full universe scan
+# inside the session. --auto-depth reads the live config, which also picks up the
+# earnings deep-dive escalation (schedule.earnings_deep_dive) that a hardcoded --depth
+# silently bypassed.
+#
+# The SLOT GATE below stays hardcoded on purpose: it answers "should this launchd tick
+# do anything at all", which is a property of the launchd plist, not of the config.
+# KEEP IT IN SYNC with runlib.analytics.expected_slots() — tests/test_schedule_sources_agree.py
+# fails if it drifts.
+#   0600 / 0845 / 1030 / 1200 / 1400 / 1600 / 1730 weekdays
+#   Sun 0000 weekly_market (all-sector market check-in, no trading) + 2359 news
 export PATH="/Users/eastonryan/.local/bin:/Users/eastonryan/.npm-global/bin:/usr/local/bin:/usr/bin:/bin"
 cd /Users/eastonryan/east-equity-agent
 mkdir -p logs
@@ -64,15 +73,8 @@ if [ "$DOW" -ge 6 ]; then
   exit $?
 fi
 
-# Slot-aware depth: four holdings/watchlist cycles, one full deep dive, light pre-market.
-case "$HHMM" in
-  0600) EXTRA="--depth light" ;;
-  0845|1030|1200|1400) EXTRA="--depth holdings_watchlist" ;;
-  1600) EXTRA="--depth full" ;;
-  1730) EXTRA="--news-only" ;;
-  *)    EXTRA="--depth full" ;;
-esac
-.venv/bin/python -W ignore orchestrator.py $EXTRA "$@" >> logs/cron.log 2>&1
+# Slot-aware depth, resolved from schedule.slot_depths by the orchestrator itself.
+.venv/bin/python -W ignore orchestrator.py --auto-depth "$@" >> logs/cron.log 2>&1
 
 # Friday 5:30pm slot chains the weekly self-review after the evening review.
 if [ "$DOW" = "5" ] && [ "$HHMM" = "1730" ]; then
