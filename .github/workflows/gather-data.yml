@@ -49,6 +49,25 @@ on:
   # off a gather.
   push:
     branches: [main]
+    # PATHS-IGNORE IS THE ZERO-COST HALF OF THE LOOP GUARD (2026-08-03). The
+    # decide job below already skips bundle-refresh commits by message — but a
+    # skipped job still spins a runner, and on a private repo that bills a full
+    # rounded-up minute to conclude "nothing to do". A trigger-level path filter
+    # is evaluated by GitHub BEFORE any runner exists, so the gather's own bundle
+    # commits (and the cloud routine's, which use the same paths) now cost
+    # nothing at all. Measured 2026-07-27..08-03: 66 push-triggered gather spins
+    # in 7 days, roughly half of them bundle commits — ~30 billed minutes/week
+    # doing nothing.
+    #
+    # The 2026-07-23 backstop scenario is preserved: trade-path pushes
+    # (run-marker, lease, journal, dashboard, portfolio) touch none of these
+    # paths and still trigger the staleness check, so a congested cron is still
+    # covered by the event stream. A push that ONLY refreshes the bundle is by
+    # definition a push after which no gather is needed.
+    paths-ignore:
+      - "data/cloud_context.json"
+      - "data/charts/**"
+      - "data/cache/**"
 
 permissions:
   contents: write
