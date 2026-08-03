@@ -210,6 +210,11 @@ def commit_and_push() -> None:
                     "239281986+eastyryan@users.noreply.github.com"], cwd=ROOT)
     paths = ["state/portfolio.json", "state/order_intents.json",
              "journal", "dashboard/data/latest.json"]
+    # Trade-memo drafts promoted by record_fill (a fill the run itself never
+    # saw earns its `_trade` suffix here, at execution time) must reach origin
+    # or the cloud poster can never see them — the BKR 07-28 gap.
+    import glob as _glob
+    paths += _glob.glob(str(ROOT / "state" / "x_draft_*_trade.txt"))
     for p in paths:
         subprocess.run(["git", "add", "-A", p], cwd=ROOT, capture_output=True)
     r = subprocess.run(["git", "commit", "-m",

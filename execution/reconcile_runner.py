@@ -69,6 +69,15 @@ def record_fill(order: dict, fill: dict) -> None:
     run_id = str(order.get("proposal_id") or "async-executor")
     journal.log_trade(order, fill, run_id)
     action = str(fill.get("action", "")).upper()
+    # An executor fill is a TRADE the run itself never saw, so the run's plain
+    # X draft never earned its `_trade` suffix and the poster ignored it — the
+    # BKR 07-28 buy went unannounced for exactly this reason. Promote it here,
+    # at the moment the fill becomes real. Fail-soft inside the helper.
+    try:
+        from tools.x_poster import promote_draft_for_fill
+        promote_draft_for_fill(order.get("proposal_id"), order=order, fill=fill)
+    except Exception:
+        pass
     if action == "BUY":
         try:
             from tools.shadow_portfolio import close_shadow_if_bought

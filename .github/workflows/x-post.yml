@@ -1,0 +1,77 @@
+name: X poster
+
+# CLOUD X POSTING (2026-08-03). The poster used to run only from the Mac's
+# hourly relay launchd job — and every local launchd job has been dead since
+# ~Jul 21 (the relay's last log line is a stand-down). Result: every trade
+# since drafted but never posted, including the BKR buy on 07-28, the book's
+# first BUY in 18 days. Same failure shape stop-watch.yml documents for stop
+# enforcement: "a gap that depends on a lid being open." Same fix: move it to
+# a runner.
+#
+# The posting POLICY lives entirely in tools/x_poster.py and is unchanged:
+# at most ONE post per day, only in the 16:00-18:59 ET window, only if a trade
+# actually filled that day (a same-day x_draft_*_trade.txt), dedup via
+# journal/x_posts.jsonl. Stale drafts can never post late. This workflow just
+# gives that policy a machine that is reliably awake.
+#
+# Keys: X_API_* / X_ACCESS_* as Actions secrets — identical pattern to the
+# ALPACA_* keys execute-orders.yml already uses. tools/x_poster._keys() reads
+# os.environ, so injection Just Works; missing secrets = clean skip, never an
+# error.
+
+on:
+  schedule:
+    # 16:15 / 17:15 / 18:15 ET (EDT). Three asks because GitHub rations this
+    # repo's cron delivery (~7/day/workflow measured 2026-07-23); the poster is
+    # idempotent so extra fires are free no-ops. TZ below makes the poster's
+    # local-hour window read ET on the UTC runner.
+    - cron: "15 20,21,22 * * 1-5"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  # Shares the main-writer queue: this job pushes journal/x_posts.jsonl, and
+  # unserialized pushes are what produced the rejected-push churn the other
+  # writers already queue to avoid.
+  group: main-writer
+  cancel-in-progress: false
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      TZ: America/New_York
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Post the day's trade memo (if any)
+        env:
+          X_API_KEY: ${{ secrets.X_API_KEY }}
+          X_API_SECRET: ${{ secrets.X_API_SECRET }}
+          X_ACCESS_TOKEN: ${{ secrets.X_ACCESS_TOKEN }}
+          X_ACCESS_SECRET: ${{ secrets.X_ACCESS_SECRET }}
+        run: python -m tools.x_poster
+      - name: Commit the post log
+        run: |
+          git config user.name "ee-xposter"
+          git config user.email "239281986+eastyryan@users.noreply.github.com"
+          git add journal/x_posts.jsonl
+          if git diff --cached --quiet; then
+            echo "no post this tick — nothing to commit"
+            exit 0
+          fi
+          git commit -m "Record X post [vercel skip]"
+          for i in 1 2 3; do
+            git push origin HEAD:main && exit 0
+            git pull --rebase origin main || exit 1
+          done
+          echo "push failed after retries"; exit 1

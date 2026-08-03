@@ -118,6 +118,103 @@ def _posted_today(today: str) -> bool:
                for line in POST_LOG.read_text().splitlines())
 
 
+def promote_draft_for_fill(run_id: str | None, order: dict | None = None,
+                           fill: dict | None = None) -> str | None:
+    """Promote a run's plain draft to a `_trade` draft when its order FILLS.
+
+    WHY (2026-08-03, the BKR incident). publish.draft_x_summary writes the
+    `_trade` suffix only when the RUN ITSELF carries fills — but a cloud run
+    cannot reach Alpaca, so it QUEUES the order to state/order_intents.json and
+    its fills list is empty. The Actions executor filled BKR hours later and
+    wrote no draft at all. Net effect: every executor-filled trade left only a
+    plain draft, the poster posts only `x_draft_*_trade.txt`, and the system's
+    first real BUY in 18 days went unannounced. (Jul 15's DELL exit DID post —
+    that fill happened inside the run, which is why the gap was invisible.)
+
+    AND the plain draft's CONTENT is wrong for this purpose: the run wrote it
+    while the order was merely queued, so the BKR run's own draft literally
+    reads "No new trades today". A promoted copy of that text would announce a
+    trade with a memo denying one. So: keep the source draft only when it
+    already carries a fill line; otherwise COMPOSE the memo from the fill and
+    the original proposal's thesis (journal/proposals/, keyed by proposal_id).
+
+    Called from record_fill with the order+fill in hand. Idempotent, fail-soft:
+    a posting defect must never be able to break order reconciliation.
+    """
+    if not run_id:
+        return None
+    try:
+        src = ROOT / "state" / f"x_draft_{run_id}.txt"
+        dst = ROOT / "state" / f"x_draft_{run_id}_trade.txt"
+        if dst.exists():
+            return str(dst)
+        src_text = src.read_text().strip() if src.exists() else ""
+        if re.search(r"\b(Opened|Closed)\b", src_text):
+            dst.write_text(src_text + "\n")
+            print(f"  promoted draft to trade memo: {dst.name}")
+            return str(dst)
+        composed = _compose_trade_memo(run_id, order or {}, fill or {})
+        if not composed:
+            return None
+        dst.write_text(composed + "\n")
+        print(f"  composed trade memo from fill: {dst.name}")
+        return str(dst)
+    except Exception as e:
+        print(f"  (draft promotion skipped: {str(e)[:120]})")
+        return None
+
+
+def _find_proposal(run_id: str) -> dict | None:
+    """The original proposal record for a run id (YYYYMMDD-hex), if journaled."""
+    try:
+        day = f"{run_id[:4]}-{run_id[4:6]}-{run_id[6:8]}"
+        f = ROOT / "journal" / "proposals" / f"{day}.jsonl"
+        if not f.exists():
+            return None
+        for line in f.read_text().splitlines():
+            try:
+                rec = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if rec.get("run_id") == run_id:
+                return rec.get("proposal") or rec
+    except Exception:
+        pass
+    return None
+
+
+def _compose_trade_memo(run_id: str, order: dict, fill: dict) -> str | None:
+    """A factual trade memo from the fill + the proposal's own thesis.
+
+    Every number comes from the fill/order/proposal records — nothing invented.
+    Format matches the brain's house style (poster strips ** and de-cashes
+    extra tickers downstream).
+    """
+    ticker = str(fill.get("ticker") or order.get("ticker") or "").upper()
+    action = str(fill.get("action") or order.get("action") or "").upper()
+    price = fill.get("fill_price")
+    if not ticker or not price:
+        return None
+    notional = fill.get("notional_usd") or order.get("position_size_usd")
+    plan = order.get("plan") or {}
+    prop = _find_proposal(run_id) or {}
+    verb = "Opened" if action == "BUY" else "Closed"
+    lines = [f"{verb} **{ticker}** ${ticker} at ${float(price):,.2f}"
+             + (f" (${float(notional):,.0f} position)." if notional else ".")]
+    stop, tgt, hor = (plan.get("stop_loss"), plan.get("target_price"),
+                      plan.get("holding_horizon_days"))
+    if action == "BUY" and stop and tgt:
+        lines.append(f"Plan: stop ${float(stop):,.2f}, target ${float(tgt):,.2f}"
+                     + (f", horizon {int(hor)}d." if hor else "."))
+    thesis = str(prop.get("thesis") or order.get("exit_thesis") or "").strip()
+    if thesis:
+        # First two sentences of the brain's own thesis — its words, not a summary.
+        parts = re.split(r"(?<=[.!?])\s+", thesis)
+        lines.append(" ".join(parts[:2]))
+    lines.append("This is a paper-trading experiment running in public, not advice.")
+    return "\n\n".join(lines)
+
+
 def process_drafts(dry_run: bool = False) -> list[dict]:
     """User policy: at most ONE post per day, in the market-close window
     (4:00-6:59pm local), and ONLY if a trade was made that day. The post is the
