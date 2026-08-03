@@ -8,11 +8,20 @@ name: Gather market data for cloud runs
 
 on:
   schedule:
-    - cron: "40 9,15,17,19,21 * * 1-5"           # 20 min before weekday run slots (UTC):
-                                                  # 05:40/11:40/13:40/15:40 ET feed the
-                                                  # 06:00/12:00/14:00/16:00 slots, and
+    - cron: "40 9,15,17,21 * * 1-5"              # 20 min before weekday run slots (UTC):
+                                                  # 05:40/11:40/13:40 ET feed the
+                                                  # 06:00/12:00/14:00 slots, and
                                                   # 21:40 feeds the 5:30pm ET full review
-                                                  # (7:30pm slot removed 2026-07-13)
+                                                  # (7:30pm slot removed 2026-07-13).
+                                                  # 19:40 REMOVED 2026-08-03: it fed the
+                                                  # 16:00 slot, which moved to 15:30, so it
+                                                  # had become a gather firing TEN MINUTES
+                                                  # AFTER the run it was meant to feed —
+                                                  # pure waste, and the slot would have read
+                                                  # a staler bundle. The hourly ":10" rule
+                                                  # below already fires 19:10 UTC (15:10 ET),
+                                                  # exactly 20 min ahead of 15:30, so no
+                                                  # replacement line is needed.
     - cron: "25 12 * * 1-5"                       # 08:25 ET, 20 min before the 08:45 slot.
                                                   # Its own line because the slot moved off
                                                   # the hour (09:00 -> 08:45, 2026-07-25) and
