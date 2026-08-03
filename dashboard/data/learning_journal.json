@@ -1,16 +1,55 @@
 {
-  "updated_at": "2026-07-30T23:05:35.809489+00:00",
+  "updated_at": "2026-08-03T23:06:31.403587+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 3,
     "fundamental_analysis": 1,
-    "risk_management": 2,
+    "risk_management": 3,
     "strategy_playbooks": 2,
     "market_microstructure": 1,
     "trading_psychology": 1,
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-8928427464",
+      "discipline": "risk_management",
+      "topic": "Pyramiding into a winner: adding above blended cost while the trailed stop keeps total risk flat, and why the chandelier trail is what funds the second unit",
+      "summary": "My KB covers scaling OUT (KB-6231300499) but not scaling IN, though CLAUDE.md makes adds a core mechanic (max 2, above blended cost, never average down, and 'stops trailed above cost free their budget'). Pyramiding = adding to a position the market has confirmed, building the largest size at the base with smaller adds up the trend; it is the exact opposite of averaging down (adding to a loser hoping it recovers). The unifying risk rule across every source is one sentence: a new unit's risk may ONLY be funded by unrealized profit the earlier units have already banked, expressed as a trailed stop that has ratcheted up enough that combined risk-to-the-shared-stop stays at or below where it started. The Turtles operationalized this: add one unit every 0.5N (half an ATR) in your favor, cap at 4 units per market, and move the whole position's 2N stop up so it sits 2N below the most recent add \u2014 so as you pyramid, aggregate risk stays bounded and eventually goes to breakeven-or-better on the combined book (secondary summaries of the Original Turtle Rules; I could not fetch the primary PDF/theturtletrader page \u2014 socket errors \u2014 so I flag the Turtle specifics as reported-by-secondary). Two schools disagree on add SIZE and I keep the disagreement honest: the Turtles use EQUAL units and rely on the moving stop to cap risk, while most practitioners (TradersPost, heygotrade, QuantStrategy) insist each add be SMALLER than the last (e.g. 1.0 / 0.5 / 0.25) so the blended entry stays close to",
+      "key_points": [
+        "Pyramiding adds to WINNERS on confirmation; averaging down adds to LOSERS \u2014 the validator already enforces the distinction (adds only above blended cost, never below).",
+        "The only safe funding source for a new unit's risk is profit the earlier units have locked in via a trailed stop that has moved up; no trail lift = the add is just fresh full risk stacked on the book.",
+        "Turtle rule set (reported by secondary summaries): add every 0.5N in favor, max 4 units, move the shared 2N stop up to 2N below the latest entry; each unit sized so ~1N \u2248 1% of account.",
+        "Run ONE unified stop for the whole pyramid (the chandelier trail), never a separate stop per layer.",
+        "Never invert the pyramid \u2014 later adds bigger than the base spike blended cost and let a V-shaped reversal turn a confirmed winner into a loss (most-cited failure mode).",
+        "Practitioner consensus favors DECREASING add sizes so the blended entry stays near the first entry; Turtles used equal units + a rising stop. Both cap risk; the decreasing version also protects the RR-to-target.",
+        "Pyramiding is expectancy-positive because it concentrates capital into the few confirmed big winners that carry trend edge \u2014 'it's how you manage the position, not the win rate.'",
+        "'Total risk stays flat' is modelled: pyramids gap harder (largest at top), so verify against gap-adjusted heat, not the nominal stop (my DELL gapped 4.5% through)."
+      ],
+      "how_to_apply": "Only add to a holding once the chandelier trail (3xATR from the high-water mark) has ratcheted the EFFECTIVE stop up toward or above cost \u2014 read position_stop_cushion first; if the trail hasn't lifted, the add just stacks fresh full risk and breaches the 8% heat cap, so don't. Size each add SMALLER than the first entry (I already start at 50-70% of intended size, so an add of ~30-50% keeps the pyramid decreasing) and confirm the 2:1 RR to target still clears honestly from the new BLENDED cost, not from the original entry. Add only at fresh structure \u2014 a new higher-low / no_supply_pullback resumption (KB-6241168493) or a throwback to a new pivot (KB-9692173165) \u2014 never just because price is up; respect the hard cap of 2 adds and let the single chandelier trail run the whole stack (one unified stop, never per-layer). Because the added units share the holding's demand_driver, the 2% theme-risk cap binds harder than the per-name notional cap \u2014 recompute heat on the shared trailed stop after each add and treat the pyramid as ONE enlarged bet (KB-1223831607). Since stops gap and a top-heavy pyramid gaps worst (DELL filled 0.55 ATR through), lean to the lower end of add size and to gap-ad",
+      "sources": [
+        "https://blog.traderspost.io/article/pyramiding-trading-strategies-guide",
+        "https://www.heygotrade.com/en/blog/what-is-pyramiding-in-trading/",
+        "https://quantstrategy.io/blog/pyramiding-strategies-how-to-safely-add-to-winning-trades/",
+        "https://www.theturtletrader.com/turtle-trading-rules/ (Original Turtle Rules; accessed via search summary \u2014 primary PDF fetch failed)",
+        "https://margex.com/en/blog/turtle-trading/",
+        "https://curvedtrading.com/articles/en/how/adding-to-winners-pyramiding/"
+      ],
+      "learned_at": "2026-08-03T23:06:31.400068+00:00",
+      "run_id": "20260803-6fc091",
+      "tensions": [
+        {
+          "with": "KB-6231300499",
+          "why": "Scaling OUT (partials at >=2R, banking into strength) and scaling IN (pyramiding on confirmation) are opposite actions sharing the chandelier trail as their spine; they apply in different phases: pyramid EARLY in a confirmed trend with room to target and a rising trail, scale out LATE at/above targe",
+          "noted_at": "2026-08-03"
+        },
+        {
+          "with": "KB-2388376284",
+          "why": "That lesson introduced the chandelier trail as the stop mechanism that lets winners run; this lesson uses the same trail as the FUNDING source for adds \u2014 the trail lifting above cost is precisely what frees heat budget to pyramid without raising aggregate risk. Extension, not contradiction.",
+          "noted_at": "2026-08-03"
+        }
+      ]
+    },
     {
       "id": "KB-6231300499",
       "discipline": "technical_analysis",
@@ -48,7 +87,9 @@
           "why": "KB-2388376284 governs the STOP/entry side (noise band, entry location, chandelier to run winners). This lesson is the mirror on the TARGET/exit side - how the discounted measured move sets the base-case target and how the trail (which KB-2388376284 introduced for stops) doubles as the runner-capture",
           "noted_at": "2026-07-30"
         }
-      ]
+      ],
+      "times_cited": 2,
+      "last_cited": "2026-07-31T16:20:06.962681+00:00"
     },
     {
       "id": "KB-6840616104",
@@ -74,8 +115,8 @@
       ],
       "learned_at": "2026-07-29T23:05:43.016059+00:00",
       "run_id": "20260729-21bd37",
-      "times_cited": 1,
-      "last_cited": "2026-07-30T18:15:21.406982+00:00"
+      "times_cited": 2,
+      "last_cited": "2026-07-31T18:13:15.409401+00:00"
     },
     {
       "id": "KB-2665689010",
@@ -99,8 +140,8 @@
       ],
       "learned_at": "2026-07-28T23:06:11.432336+00:00",
       "run_id": "20260728-a97f3d",
-      "times_cited": 5,
-      "last_cited": "2026-07-30T21:53:17.787983+00:00"
+      "times_cited": 13,
+      "last_cited": "2026-08-03T21:52:49.296062+00:00"
     },
     {
       "id": "KB-9692173165",
