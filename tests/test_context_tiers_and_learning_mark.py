@@ -207,7 +207,8 @@ def test_orchestrator_reexports():
     check("claude_cmd alias", callable(orchestrator._claude_cmd))
     check("llm_settings alias", callable(orchestrator._llm_settings))
     check("sector_map alias", callable(orchestrator._sector_map))
-    check("expected_slots", orchestrator.expected_slots(True) == [6, 8.75, 10.5, 12, 14, 16, 17.5])
+    check("expected_slots",
+          orchestrator.expected_slots(True) == [6, 8.75, 10.5, 12, 14, 15.5, 17.5])
     check("compute_closed_trades", callable(orchestrator.compute_closed_trades))
     check("write_tiered_context", callable(orchestrator.write_tiered_context))
     check("gather_context", callable(orchestrator.gather_context))

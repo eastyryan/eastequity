@@ -22,7 +22,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import runlib.analytics as A  # noqa: E402
 
-SLOTS = [6, 8.75, 10.5, 12, 14, 16, 17.5]   # 09:00/10:00 -> 08:45/10:30, 2026-07-25
+SLOTS = [6, 8.75, 10.5, 12, 14, 15.5, 17.5]  # 09:00/10:00 -> 08:45/10:30 (07-25);
+                                             # 16:00 -> 15:30 (08-03): a full run
+                                             # takes 18-20 min, so a 16:00 slot
+                                             # COMPLETED after the closing bell.
 
 
 def _journal(tmp_path, hours, node="vm"):
@@ -86,7 +89,7 @@ def test_a_missed_slot_is_named_not_just_counted(monkeypatch, tmp_path):
     window and correctly reads pending, which is the behaviour the grace test pins.
     """
     r = _report(monkeypatch, tmp_path, [6.0, 8.75, 10.5, 12.0], now_h=17.1)
-    assert r["missed_slots"] == ["14:00", "16:00"]
+    assert r["missed_slots"] == ["14:00", "15:30"]
 
 
 def test_two_runs_in_one_slot_do_not_cover_a_different_slot(monkeypatch, tmp_path):
@@ -305,7 +308,7 @@ def test_slots_covered_is_not_the_raw_run_count(monkeypatch, tmp_path):
     # 06:00 and 09:00 each fire twice; 16:00 never fires.
     hours = [6.1, 6.4, 8.9, 9.3, 10.7, 12.3, 14.3, 17.6, 17.9]
     r = _report(monkeypatch, tmp_path, hours, now_h=23.0)
-    assert "16:00" in r["missed_slots"]
+    assert "15:30" in r["missed_slots"]
     assert r["hit"] < len(hours), "slots covered must not equal the raw run count"
     assert r["hit"] + r["missed_count"] == r["elapsed"], (
         "slots covered + slots missed must reconcile to elapsed slots — this is "

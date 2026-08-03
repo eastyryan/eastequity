@@ -28,9 +28,13 @@ def test_slot_label_matches_a_real_slot(monkeypatch):
 
 
 def test_off_slot_time_gets_no_slot(monkeypatch):
-    """A run fired at 3:30pm — more than an hour past the 2pm slot and before 4pm — is
-    off-slot and must not falsely certify either neighbour."""
-    monkeypatch.setattr(mk, "_et_now_hour", lambda: (15.5, "15:30"))
+    """A run fired at 4:45pm — more than an hour past the 3:30pm slot and before the
+    5:30pm one — is off-slot and must not falsely certify either neighbour.
+
+    THIS TIME MOVED 2026-08-03. The case used to be 3:30pm, which was off-slot when
+    the afternoon full scan sat at 16:00; 15:30 is now the slot itself, so the old
+    fixture was asserting that a real slot certifies nothing."""
+    monkeypatch.setattr(mk, "_et_now_hour", lambda: (16.75, "16:45"))
     monkeypatch.setattr(mk, "_et_is_weekday", lambda: True)
     assert mk._current_slot_label() is None
 

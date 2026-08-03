@@ -35,7 +35,7 @@ def expected_slots(weekday: bool) -> list[float]:
         10:30 is a full hour in, by which point the range has settled. For a
         swing book that is a better place to act, independent of the plumbing.
     """
-    return [6, 8.75, 10.5, 12, 14, 16, 17.5] if weekday else [0, 23.98]
+    return [6, 8.75, 10.5, 12, 14, 15.5, 17.5] if weekday else [0, 23.98]
 
 
 # A run may fire slightly early (cron jitter) and still belong to its slot; and a slot

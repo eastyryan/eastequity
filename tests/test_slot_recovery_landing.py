@@ -89,11 +89,17 @@ def test_the_same_slot_IS_recoverable_while_there_is_still_room(monkeypatch, tmp
 
 
 def test_a_late_afternoon_recovery_never_takes_the_evening_slot(monkeypatch, tmp_path):
-    """The 07-23/27/28/29/31 shape: 16:00 never fired, and by the time slot_report was
-    willing to call it missed (17:00) a recovery could only land on top of 17:30."""
+    """The 07-23/27/28/29/31 shape: the afternoon full scan never fired, and by the
+    time a recovery could be decided it could only land on top of 17:30.
+
+    The slot itself moved 16:00 -> 15:30 on 2026-08-03, which does not change the
+    shape — it buys headroom. At 17:00 a 15:30 recovery would still land ~17:25,
+    inside 17:30's window, so it stays blocked. What the move DOES change is that
+    the same miss is now recoverable earlier: 15:30 + NO_SHOW_H is 16:00, and a
+    recovery launched then lands ~16:25, comfortably clear of 17:30."""
     r = _find(monkeypatch, tmp_path, [6.0, 8.75, 10.5, 12.0, 14.0], now_h=17.0)
     assert r["slot"] is None
-    assert any(b["slot"] == "16:00" and b["why"] == "would_land_in_next_window"
+    assert any(b["slot"] == "15:30" and b["why"] == "would_land_in_next_window"
                for b in r["blocked"])
 
 

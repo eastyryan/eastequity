@@ -28,7 +28,9 @@
 # do anything at all", which is a property of the launchd plist, not of the config.
 # KEEP IT IN SYNC with runlib.analytics.expected_slots() — tests/test_schedule_sources_agree.py
 # fails if it drifts.
-#   0600 / 0845 / 1030 / 1200 / 1400 / 1600 / 1730 weekdays
+#   0600 / 0845 / 1030 / 1200 / 1400 / 1530 / 1730 weekdays
+#   (1600 -> 1530 on 2026-08-03: a full run takes 18-20 min, so a 16:00 slot
+#    completed AFTER the closing bell on every day it ran.)
 #   Sun 0000 weekly_market (all-sector market check-in, no trading) + 2359 news
 export PATH="/Users/eastonryan/.local/bin:/Users/eastonryan/.npm-global/bin:/usr/local/bin:/usr/bin:/bin"
 cd /Users/eastonryan/east-equity-agent
@@ -54,7 +56,7 @@ if [ "$1" = "--scheduled" ]; then
   elif [ "$DOW" -le 5 ]; then
     # Weekdays: SEVEN slots — 6am, 8:45am, 10:30am, 12pm, 2pm, 4pm, 5:30pm
     case "$HHMM" in
-      0600|0845|1030|1200|1400|1600|1730) ;;
+      0600|0845|1030|1200|1400|1530|1730) ;;
       *) exit 0 ;;
     esac
   else

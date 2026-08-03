@@ -45,18 +45,25 @@ DEPTHS = (
 # Default weekday map — three fast holdings/watchlist runs, TWO full scans, one
 # light, one evening review. KEEP IN SYNC with scripts/run_cycle.sh comments.
 #
-# 10:30 became full on 2026-08-03. A holdings_watchlist run mini-scans holdings
-# and the published watchlist only, so before this the single moment a genuinely
-# new name could surface was the 16:00 full scan — the closing bell — and with
-# measured slot drift of ~+19min it often landed after it. One look per day at
-# the universe, at the one time of day the book cannot act on what it finds.
+# BOTH full scans moved on 2026-08-03, and for the same underlying reason.
+#
+# 10:30 became full because a holdings_watchlist run mini-scans holdings and the
+# published watchlist only, so the single moment a genuinely new name could
+# surface was the afternoon scan — one look per day at the universe.
+#
+# 16:00 became 15:30 because that one look landed too late to use. Measured over
+# 11 weekdays: the cron fires punctually (+4 min) but a full run TAKES 18-20
+# minutes, so the 16:00 slot COMPLETED 16:17-16:27 — after the closing bell, on
+# every day it ran. The "+22 min drift" this was originally blamed on was never
+# lateness: journal.log_run_summary stamps a run when it FINISHES, so the figure
+# was the run's own duration. At 15:30 the same work decides ~15:52.
 DEFAULT_SLOT_DEPTHS: dict[str, str] = {
     "0600": "light",
     "0845": "holdings_watchlist",
     "1030": "full",
     "1200": "holdings_watchlist",
     "1400": "holdings_watchlist",
-    "1600": "full",
+    "1530": "full",
     "1730": "evening_review",
 }
 

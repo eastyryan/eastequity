@@ -41,15 +41,16 @@ def test_resolve_precedence():
 def test_slot_map():
     print("slot_depths:")
     check("0845 focused", slot_depth_from_hhmm("0845") == "holdings_watchlist")
-    check("1600 full", slot_depth_from_hhmm("1600") == "full")
-    # 10:30 promoted to a full universe scan on 2026-08-03: before that the ONLY
-    # full scan was 16:00 (the closing bell), so a genuinely new name could
-    # surface once a day at the one time the book could not act on it.
+    # BOTH full scans moved on 2026-08-03 and both are now INSIDE the session.
+    # 10:30 was promoted because it was the only chance for a new name to surface
+    # before the afternoon; 16:00 became 15:30 because a full run takes 18-20 min,
+    # so a 16:00 slot COMPLETED after the closing bell on every day it ran.
+    check("1530 full", slot_depth_from_hhmm("1530") == "full")
     check("1030 full", slot_depth_from_hhmm("1030") == "full")
     check("0600 light", slot_depth_from_hhmm("0600") == "light")
     cfg = {"schedule": {"slot_depths": {"1030": "holdings_watchlist"}}}
     check("config override", slot_depth_from_hhmm("1030", cfg) == "holdings_watchlist")
-    check("default keys cover weekday slots", set(DEFAULT_SLOT_DEPTHS) >= {"0845", "1030", "1200", "1400", "1600"})
+    check("default keys cover weekday slots", set(DEFAULT_SLOT_DEPTHS) >= {"0845", "1030", "1200", "1400", "1530"})
 
 
 def test_nearest_slot_matching():
@@ -61,8 +62,8 @@ def test_nearest_slot_matching():
     # 10:30 — which is now a full scan.
     check("1110 nearest 1030 -> full", slot_depth_from_hhmm("1110") == "full")
     check("1145 nearest 1200 -> hw", slot_depth_from_hhmm("1145") == "holdings_watchlist")
-    check("1540 pre-4pm gather -> full", slot_depth_from_hhmm("1540") == "full")
-    check("1610 -> full", slot_depth_from_hhmm("1610") == "full")
+    check("1510 pre-slot gather -> full", slot_depth_from_hhmm("1510") == "full")
+    check("1545 -> full", slot_depth_from_hhmm("1545") == "full")
     check("1740 -> evening_review", slot_depth_from_hhmm("1740") == "evening_review")
     check("0007 midnight outside tolerance -> full", slot_depth_from_hhmm("0007") == "full")
     check("2340 late night -> full", slot_depth_from_hhmm("2340") == "full")
