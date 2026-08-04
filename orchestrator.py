@@ -1153,9 +1153,35 @@ def main() -> int:
         except Exception as e:
             print(f"  (mark-to-market failed: {e})")
     context["portfolio"] = get_portfolio_state()
+    # COMMENTARY RECONCILIATION. The brain wrote its commentary in the same JSON
+    # block as the proposals - before the risk desk, the validator and the
+    # executor ran - so it can assert a trade that then died downstream. Folding
+    # the veto into the proposals list (LAST_RISK_DESK_VETOES, added for ABT
+    # 7/17) surfaced the kill in a different card but left the prose claiming a
+    # position the book does not hold. Six archived runs published exactly that
+    # contradiction (HPE x2, RBRK, DDOG, MU, IBKR) before DXCM on 08-04 made a
+    # reader ask why the digest said "bought" and open positions did not list it.
+    # This is the outcome-side check: it runs AFTER fills are known.
+    commentary_correction = None
+    try:
+        from tools.commentary_reconcile import reconcile as _reconcile_commentary
+        _cr = _reconcile_commentary(parsed["commentary"], results, fills)
+        commentary_correction = _cr.get("correction")
+        if commentary_correction:
+            print(f"      COMMENTARY CORRECTION: {_cr['issues']}")
+            journal.log_improvement(
+                "Commentary claimed a trade that did not execute: "
+                + "; ".join(_cr["issues"][:6]), run_id)
+            if isinstance(parsed.get("process_audit"), dict):
+                parsed["process_audit"]["issues"] = (
+                    list(parsed["process_audit"].get("issues") or [])
+                    + list(_cr["issues"]))
+    except Exception as e:
+        print(f"      (commentary reconciliation skipped: {str(e)[:120]})")
     refresh_dashboard(context, response, results, fills, run_id, no_trade_reason,
                       parsed["commentary"], parsed["watchlist"],
-                      parsed.get("rejected_ideas"))
+                      parsed.get("rejected_ideas"),
+                      commentary_correction=commentary_correction)
     draft_x_summary(fills, results, context, run_id, parsed.get("x_post"))
     journal.log_run_summary({
         "manual": args.manual,

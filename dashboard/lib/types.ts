@@ -150,6 +150,9 @@ export type Latest = {
   portfolio: { cash_usd: number; total_equity_usd: number; positions: Position[] };
   no_trade_reason?: string | null;
   commentary?: string | null;
+  // Set when the run's prose claimed a trade that never executed. Rendered
+  // above the commentary, never in place of it - the record keeps both.
+  commentary_correction?: string | null;
   macro_snapshot?: {
     cpi_yoy_pct: Indicator;
     ten_year_yield: Indicator;

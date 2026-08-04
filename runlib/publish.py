@@ -65,7 +65,8 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
                       run_id: str, no_trade_reason: str | None = None,
                       commentary: str | None = None,
                       watchlist: list | None = None,
-                      rejected_ideas: list | None = None) -> None:
+                      rejected_ideas: list | None = None,
+                      commentary_correction: str | None = None) -> None:
     dash = ROOT / "dashboard" / "data"
     dash.mkdir(parents=True, exist_ok=True)
 
@@ -114,6 +115,11 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
     out = {
         "no_trade_reason": no_trade_reason,
         "commentary": commentary,
+        # Set only when tools/commentary_reconcile found the prose claiming a
+        # trade the run did not execute. The site renders it ABOVE the
+        # commentary: the contradiction goes on the page rather than leaving a
+        # reader to notice the digest and the positions table disagree.
+        "commentary_correction": commentary_correction,
         "watchlist": watchlist or [],
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "run_id": run_id,
@@ -203,7 +209,7 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
     except Exception as e:
         print(f"  (watchlist outcomes failed: {e})")
     append_runs_index(run_id, context.get("trading_mode", "paper"), fills, commentary,
-                      no_trade_reason, rejected_ideas)
+                      no_trade_reason, rejected_ideas, commentary_correction)
 
     # Full response lives in the per-run archive; latest.json stays slim for the site.
     # The archive's closed_trades holds ONLY closes executed THIS run - the run

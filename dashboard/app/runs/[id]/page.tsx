@@ -37,6 +37,7 @@ type RunFile = {
   run_id: string;
   mode: string;
   commentary?: string | null;
+  commentary_correction?: string | null;
   no_trade_reason?: string | null;
   latest_reasoning?: string | null;
   proposals?: Proposal[];
@@ -265,10 +266,20 @@ export default async function RunPage({ params }: { params: Promise<{ id: string
         </p>
       </section>
 
-      {/* Commentary */}
+      {/* Commentary. The correction, when present, renders inside this card and
+          above the prose — the false sentence stays on the record, but nobody
+          reads it without the retraction. See tools/commentary_reconcile.py. */}
       {commentary && (
         <section className="ds-card mt-5 p-5 sm:p-7">
           <h2 className="text-lg font-semibold tracking-tight">What the agent said</h2>
+          {run.commentary_correction && (
+            <p
+              className="mt-4 border-l-2 pl-3 text-[14px] font-semibold leading-relaxed"
+              style={{ color: "var(--ee-down)", borderColor: "var(--ee-down)" }}
+            >
+              {clean(run.commentary_correction)}
+            </p>
+          )}
           <p className="mt-4 text-[15px] leading-relaxed text-ink-2">{clean(commentary)}</p>
         </section>
       )}

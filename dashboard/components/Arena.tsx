@@ -195,6 +195,13 @@ function alertsFor(d: Latest): Alert[] {
   const out: Alert[] = [];
   const dq = d.data_quality;
 
+  // The prose claimed a trade the run did not execute. This goes FIRST and it
+  // is toned "bad": every other alert here describes the machinery, this one
+  // says a published sentence is false. See tools/commentary_reconcile.py.
+  if (d.commentary_correction) {
+    out.push({ tone: "bad", label: "CORRECTION", text: strip(d.commentary_correction) });
+  }
+
   if (dq?.source === "degraded_empty") {
     out.push({
       tone: "bad",
@@ -418,11 +425,16 @@ export default function Arena({
     };
   });
 
-  const thoughts = [
+  // `correction` rides on the digest entry so the retraction renders INSIDE the
+  // card carrying the false sentence. A reader who only sees this card must not
+  // have to find the leaderboard alert to learn the trade never happened.
+  type Thought = { tag: string; time: string; text: string; correction?: string | null };
+  const thoughts: Thought[] = ([
     { tag: "EASTEQUITY · MARKET DIGEST",
       time: formatEtStamp(d.generated_at) || d.as_of_et || "",
-      text: strip(d.commentary) },
-  ].concat(
+      text: strip(d.commentary),
+      correction: d.commentary_correction ? strip(d.commentary_correction) : null },
+  ] as Thought[]).concat(
     (d.closed_trades ?? []).map((t) => ({
       tag:
         "EASTEQUITY · " +
@@ -1332,6 +1344,22 @@ export default function Arena({
                     </span>
                     <span style={{ fontSize: 11, color: "var(--ee-faint)" }}>{th.time}</span>
                   </div>
+                  {th.correction && (
+                    <p
+                      style={{
+                        fontSize: 12,
+                        color: "var(--ee-down)",
+                        lineHeight: 1.65,
+                        marginTop: 12,
+                        borderLeft: "2px solid var(--ee-down)",
+                        paddingLeft: 12,
+                        fontWeight: 600,
+                        textWrap: "pretty",
+                      }}
+                    >
+                      {th.correction}
+                    </p>
+                  )}
                   <p
                     style={{
                       fontSize: 13,

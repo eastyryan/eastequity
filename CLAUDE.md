@@ -909,7 +909,7 @@ Output proposals inside a fenced ```json block as a list under key `"proposals"`
     "plan": "AI-stack heat is elevated; no new cybersecurity add. Prefer cash or a different driver if buying.",
     "actions": ["no_same_theme_buy", "cash", "hold_plan"]
   },
-  "commentary": "REQUIRED every run: 3-6 plain-English sentences for the public dashboard. What you are watching, why you are holding or waiting, what would change your mind. Write for a smart non-trader. No jargon, no hedging boilerplate.",
+  "commentary": "REQUIRED every run: 3-6 plain-English sentences for the public dashboard. What you are watching, why you are holding or waiting, what would change your mind. Write for a smart non-trader. No jargon, no hedging boilerplate. NEVER WRITE THAT YOU EXECUTED A TRADE - you are writing BEFORE the risk desk, the validator and the executor have run, so you cannot know. Write 'I am proposing a small position in DXCM' or 'my best idea this run is DXCM', never 'I bought DXCM today'. Code reconciles this against actual fills and publishes a correction over your prose when it disagrees (see the commentary rule below).",
   "watchlist": [
     {
       "ticker": "ANET",
@@ -946,6 +946,20 @@ Output proposals inside a fenced ```json block as a list under key `"proposals"`
   whether the condition fired and you acted, or it did not and the name goes.
   This never asks you to force a trade - it asks you to commit to something checkable.
 - **BLOCKING** — when `factor_map.requires_factor_response` is true (concentration high or extreme): **`factor_response`** with a `concentration_level`, a concrete `plan` (>=20 chars) and non-empty `actions` from `trim | cash | no_same_theme_buy | rotate | hold_plan`, aligned to `factor_map.unwind_playbook`. **Missing or weak rejects EVERY BUY in the run.** You are being asked what you will do about the concentration you already carry, before you add more.
+- **COMMENTARY MAY NOT CLAIM AN EXECUTION** — your `commentary` is written in the
+  same block as your proposals, which is BEFORE the risk desk, the validator and
+  the executor have run. You do not know whether the trade happened, so you may
+  not say that it did. Write intent ("I am proposing", "my best idea this run
+  is", "if it clears the desk"), never a fill ("I bought", "we're adding", "I
+  started a position"). MEASURED 2026-08-04 over all 160 archived runs: **six**
+  published a commentary announcing a trade that never executed — HPE (twice,
+  size cap), RBRK (confidence floor), DDOG, MU, IBKR (risk-desk vetoes) and DXCM
+  on 08-04, where the digest opened "I bought a small position in DexCom (DXCM)
+  today" while the open-positions table showed only BKR and a reader asked which
+  was true. `tools/commentary_reconcile.py` now checks the prose against actual
+  fills and publishes a `commentary_correction` over it, journaled as
+  `commentary_claimed_unexecuted_trade:<TICKER>`. The correction is a backstop,
+  not a licence — a run that earns one has already misinformed the page.
 
 `demand_driver` must be snake_case from `reasoning_process.demand_driver_map` (e.g.
 `ai_compute_gpu`, `networking`, `hyperscaler_server_capex`). Validator rejects missing/weak

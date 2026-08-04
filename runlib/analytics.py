@@ -1221,12 +1221,19 @@ def update_watchlist_outcomes(watchlist: list, prices: dict, positions: list) ->
 
 def append_runs_index(run_id: str, mode: str, fills: list, commentary: str | None,
                       no_trade_reason: str | None,
-                      rejected_ideas: list | None = None) -> None:
+                      rejected_ideas: list | None = None,
+                      commentary_correction: str | None = None) -> None:
     """A compact index of every published run so the site can offer a browsable archive
     linking each run's full reasoning (dashboard/data/run_<id>.json). Carries the tickers
     the agent passed on this run (rejected_tickers) so the archive can show "why it didn't
     buy" at a glance without opening each run - on an empty book that is the only content
-    most runs have."""
+    most runs have.
+
+    The headline is the commentary's FIRST SENTENCE, which is exactly where an
+    unexecuted-trade claim lands ("I bought a small position in DexCom (DXCM)
+    today"), so the archive list repeats the claim at a glance. When the run
+    carries a commentary_correction the entry is stamped `corrected` and the
+    correction travels with it - the list must not out-live the fix."""
     f = ROOT / "dashboard" / "data" / "runs_index.json"
     try:
         idx = json.loads(f.read_text()) if f.exists() else []
@@ -1240,7 +1247,9 @@ def append_runs_index(run_id: str, mode: str, fills: list, commentary: str | Non
              "n_fills": len(fills or []),
              "tickers_traded": sorted({str(x.get("ticker", "")).upper() for x in (fills or [])}),
              "rejected_tickers": rejected_tickers,
-             "headline": headline}
+             "headline": headline,
+             "corrected": bool(commentary_correction),
+             "commentary_correction": commentary_correction or None}
     idx = [e for e in idx if e.get("run_id") != run_id]
     idx.append(entry)
     try:
