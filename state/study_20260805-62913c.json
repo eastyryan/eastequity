@@ -1,0 +1,919 @@
+{
+  "as_of_et": "2026-08-05",
+  "study_mode": "learn",
+  "curriculum": {
+    "technical_analysis": "chart structure, trend, volume, entry/exit timing, indicator craft",
+    "fundamental_analysis": "financial statements, valuation, estimate revisions, quality signals",
+    "risk_management": "position sizing, stop placement, portfolio heat, correlation, drawdown math",
+    "strategy_playbooks": "swing setups, earnings drift, momentum vs reversal, playbook design",
+    "market_microstructure": "liquidity, options positioning, flows, auctions, market mechanics",
+    "trading_psychology": "behavioral biases, discipline, process-over-outcome, decision hygiene",
+    "macro_regimes": "rates, inflation, cycles, sector rotation, regime identification"
+  },
+  "suggested_discipline": "technical_analysis",
+  "weakness_hints": [
+    "technical_analysis",
+    "risk_management",
+    "strategy_playbooks"
+  ],
+  "knowledge_base_so_far": {
+    "note": "KNOWLEDGE BASE from the daily study sessions (system 6). Durable craft lessons, EVIDENCE-RANKED: validated first (citing trades won), underperforming last (citing trades lost - weigh skeptically). Apply the how_to_apply lines when the situation matches; CITE the lesson id when one drives a decision - citations are how lessons get graded.",
+    "recent": [
+      {
+        "id": "KB-3704904010",
+        "discipline": "strategy_playbooks",
+        "topic": "The episodic pivot / power earnings gap: entering a fundamental gap-up on a LEADER that HOLDS, and why the day-after first-pullback with a stop under the gap-day low is the only version this EOD swing",
+        "summary": "The episodic pivot (Pradeep Bonde / Stockbee) or 'power earnings gap' (Qullamaggie) is the mirror image of my existing catalyst-in-a-downtrend lesson: instead of good news on a below-MA name (which drifts weakest, KB-2665689010), it is good news that makes a NEGLECTED-or-basing leader GAP UP hard and HOLD, marking the start of a new trend. Practitioner qualifying criteria converge: a gap of ~8-10%+ (Bonde/Qullamaggie), volume a large multiple of average (2-4x+) arriving EARLY (pre-market / first 30 min), a genuine fundamental catalyst (earnings surprise, raised guidance, FDA, major contract), and ideally the gap carries price to or through prior highs so there is NO overhead supply from trapped sellers \u2014 the drift path is clear (finermarketpoints, TradingSim). This rests on real academic PEAD: drift increases monotonically with the SUE surprise decile, the top decile drifts strongest for ~60-90 days, and the effect is sharpest when revenue AND EPS surprise the SAME direction and guidance is revised the SAME direction (multiple practitioner+academic summaries; I flag the specific decile/percentage figures as reported-by-secondary, could not fetch the primary papers \u2014 socket errors). HONEST CAVEAT that matches my own bundle: classic large-cap SUE drift has been largely arbitraged away; a 2025 study finds PEAD persists mainly in small/mid-caps and is measurement-dependent \u2014 so what still pays is the announcement REACTION plus revision follow-through (gap_held_revisions_up), not ",
+        "how_to_apply": "When a universe name gaps up hard on an earnings/guidance/deal catalyst (post_earnings_drift_candidate with earnings_reaction=gap_held_revisions_up, or a fresh 8-K/tape promotion) and the gap HOLDS \u2014 check retained_pct and that it closed near/above the open, not gap_faded \u2014 treat it as an episodic pivot candidate, NOT a name to reject for being 'extended' or for 'no stop floor.' Do not chase the pre-market/opening spike (the exact PLTR +16% mistake): wait for the day-after first pullback of ~30-50% of the gap-day range on drying, no_supply_pullback volume (KB-6241168493), enter on the resumption, and anchor the stop just BELOW the earnings-day low \u2014 a structural level that clears the ATR/expected-move floor (stop_engineering, KB-2388376284) and lets me underwrite a defensible stop even when the scanner gave me no precomputed floor, then confirm the 2:1 RR to a new-high target clears honestly from that entry. Weight the setup up when revenue AND EPS beat and guidance is raised the same direction and the gap prints into/through prior highs (no overhead supply); down-weight or pass a large-cap where drift is arbitraged unless revisions and price both confirm. Explicitly discriminate t",
+        "learned_at": "2026-08-04",
+        "times_cited": 2,
+        "tensions": [
+          {
+            "with": "KB-2665689010",
+            "why": "Mirror cases: KB-2665689010 governs good news on a BELOW-MA / near-52w-low name (weakest drift, dead-cat risk, confirmation-gated re-entry). This lesson governs good news on a LEADER whose gap HOLDS into/through highs (strongest drift, clean path). Same anchoring/PEAD literature, opposite location r",
+            "noted_at": "2026-08-04"
+          },
+          {
+            "with": "KB-2596574918",
+            "why": "Division of labor: KB-2596574918 is the fundamental SIGNAL (estimate-revision breadth / gap_held_revisions_up leads price). This lesson supplies the ENTRY and STOP GEOMETRY for that signal's price-confirmed case \u2014 the day-after first-pullback entry and stop-below-gap-day-low that KB-2596574918 assum",
+            "noted_at": "2026-08-04"
+          }
+        ]
+      },
+      {
+        "id": "KB-8928427464",
+        "discipline": "risk_management",
+        "topic": "Pyramiding into a winner: adding above blended cost while the trailed stop keeps total risk flat, and why the chandelier trail is what funds the second unit",
+        "summary": "My KB covers scaling OUT (KB-6231300499) but not scaling IN, though CLAUDE.md makes adds a core mechanic (max 2, above blended cost, never average down, and 'stops trailed above cost free their budget'). Pyramiding = adding to a position the market has confirmed, building the largest size at the base with smaller adds up the trend; it is the exact opposite of averaging down (adding to a loser hoping it recovers). The unifying risk rule across every source is one sentence: a new unit's risk may ONLY be funded by unrealized profit the earlier units have already banked, expressed as a trailed stop that has ratcheted up enough that combined risk-to-the-shared-stop stays at or below where it started. The Turtles operationalized this: add one unit every 0.5N (half an ATR) in your favor, cap at 4 units per market, and move the whole position's 2N stop up so it sits 2N below the most recent add \u2014 so as you pyramid, aggregate risk stays bounded and eventually goes to breakeven-or-better on the combined book (secondary summaries of the Original Turtle Rules; I could not fetch the primary PDF/theturtletrader page \u2014 socket errors \u2014 so I flag the Turtle specifics as reported-by-secondary). Two schools disagree on add SIZE and I keep the disagreement honest: the Turtles use EQUAL units and rely on the moving stop to cap risk, while most practitioners (TradersPost, heygotrade, QuantStrategy) insist each add be SMALLER than the last (e.g. 1.0 / 0.5 / 0.25) so the blended entry stays close to",
+        "how_to_apply": "Only add to a holding once the chandelier trail (3xATR from the high-water mark) has ratcheted the EFFECTIVE stop up toward or above cost \u2014 read position_stop_cushion first; if the trail hasn't lifted, the add just stacks fresh full risk and breaches the 8% heat cap, so don't. Size each add SMALLER than the first entry (I already start at 50-70% of intended size, so an add of ~30-50% keeps the pyramid decreasing) and confirm the 2:1 RR to target still clears honestly from the new BLENDED cost, not from the original entry. Add only at fresh structure \u2014 a new higher-low / no_supply_pullback resumption (KB-6241168493) or a throwback to a new pivot (KB-9692173165) \u2014 never just because price is up; respect the hard cap of 2 adds and let the single chandelier trail run the whole stack (one unified stop, never per-layer). Because the added units share the holding's demand_driver, the 2% theme-risk cap binds harder than the per-name notional cap \u2014 recompute heat on the shared trailed stop after each add and treat the pyramid as ONE enlarged bet (KB-1223831607). Since stops gap and a top-heavy pyramid gaps worst (DELL filled 0.55 ATR through), lean to the lower end of add size and to gap-ad",
+        "learned_at": "2026-08-03",
+        "tensions": [
+          {
+            "with": "KB-6231300499",
+            "why": "Scaling OUT (partials at >=2R, banking into strength) and scaling IN (pyramiding on confirmation) are opposite actions sharing the chandelier trail as their spine; they apply in different phases: pyramid EARLY in a confirmed trend with room to target and a rising trail, scale out LATE at/above targe",
+            "noted_at": "2026-08-03"
+          },
+          {
+            "with": "KB-2388376284",
+            "why": "That lesson introduced the chandelier trail as the stop mechanism that lets winners run; this lesson uses the same trail as the FUNDING source for adds \u2014 the trail lifting above cost is precisely what frees heat budget to pyramid without raising aggregate risk. Extension, not contradiction.",
+            "noted_at": "2026-08-03"
+          }
+        ]
+      },
+      {
+        "id": "KB-6231300499",
+        "discipline": "technical_analysis",
+        "topic": "Target geometry and scaling out: where the profit target goes (discounted measured move / just under overhead supply), why the first partial waits for >=2R, and how the fixed target and the chandelier",
+        "summary": "My existing craft covers entries (pivot/pullback) and stops (noise band), but I had no rigorous rule for the TARGET side, which is exactly where my two documented failures live: cutting winners early (HPE disposition, KB-4213529672) and leaving runners on the table (runner_learning). Three findings reconcile into one rule. (1) TARGET PLACEMENT: the measured-move / measure-rule target is the pattern (or prior swing) HEIGHT projected from the breakout, but the raw projection is optimistic - Bulkowski discounts it by a 'percentage meeting price target' and reports the full measured-move target is hit only some of the time (secondary summaries cite ~83% bull / ~93% bear for the specific measured-move pattern, higher than most patterns; I could not fetch the primary thepatternsite page and flag these as reported-by-secondary figures). The practitioner consensus is to set the target AT OR JUST BELOW the first real overhead supply (prior high, round number, measured-move projection, anchored VWAP anchored to a prior high) because supply absorbs buying there and price stalls before clean levels. (2) SCALING-OUT MATH: taking a partial and running the rest mathematically REDUCES mean expectancy versus holding the whole position to the higher target - a 50% bank at 1R plus 50% to 2R blends to 1.5R vs 2.0R held. Van Tharp's frame explains why that matters: a trend edge lives in a few large winners, so systematically shrinking winners removes the part that makes the money. (3) THE RECONCI",
+        "how_to_apply": "When setting target_price on any BUY, do not pick a round number that happens to clear 2:1 - anchor it to the first real overhead supply (prior swing high, measured-move projection discounted for optimism, or anchored_vwap from a prior high) and place it just BELOW that level, then check the 2:1 RR clears honestly from there; if it doesn't, the setup is a pass, not a target to inflate. Plan the exit as a two-part structure that matches CLAUDE.md's mechanics: carry a SELL_TO_CLOSE with sell_fraction ~0.4-0.6 to bank the first leg into strength at >=2R (never at 1R, which halves the geometry), and let the code-enforced chandelier trail run the remainder to capture the tail - this is the direct fix for BOTH my failure modes (HPE cut-too-early and the runner_learning left-on-table). Let the thesis pick the lean: a momentum/trend fat pitch treats target_price as a milestone and leans on the trail (target is not a tripwire, per CLAUDE.md), while a mean-reversion or into-resistance thesis takes most or all size at the level because supply will cap it. Because full targets fail 20%+ of the time and stops gap, still size on the 1% budget and gap-adjusted risk (KB-2388376284), and treat the ",
+        "learned_at": "2026-07-30",
+        "times_cited": 3,
+        "tensions": [
+          {
+            "with": "KB-4213529672",
+            "why": "Division of labor, not contradiction. KB-4213529672 is the PSYCHOLOGY/discipline side (exit only on written invalidators; bank sell_fraction 0.4-0.6 at >=2R and trail the rest). This lesson supplies the TARGET GEOMETRY that KB-4213529672 assumes: WHERE target_price and the partial level go (discount",
+            "noted_at": "2026-07-30"
+          },
+          {
+            "with": "KB-2388376284",
+            "why": "KB-2388376284 governs the STOP/entry side (noise band, entry location, chandelier to run winners). This lesson is the mirror on the TARGET/exit side - how the discounted measured move sets the base-case target and how the trail (which KB-2388376284 introduced for stops) doubles as the runner-capture",
+            "noted_at": "2026-07-30"
+          }
+        ]
+      },
+      {
+        "id": "KB-6840616104",
+        "discipline": "macro_regimes",
+        "topic": "Market breadth as the regime aggression dial: participation, the divergence/thrust asymmetry, and why breadth is a CONDITION not a timing signal",
+        "summary": "Breadth measures how many stocks are PARTICIPATING, which no index level can reveal - an index at new highs on narrowing participation and one on broadening participation look identical in SPY but are different regimes. The classic bearish read is a breadth DIVERGENCE: the index prints a new high while the advance-decline line makes a lower high and the share of stocks above their 200-DMA falls, meaning the advance is being carried by fewer, larger names. Documented cases precede 1987, 2000, 2007 and 2021 tops (the NYSE A-D line peaked nearly two years before the 2000 Nasdaq crash). BUT the honest empirical record on top-CALLING is weak: a divergence is a condition, not a timing signal - it can persist for weeks, months, or over a year, produces frequent false positives during ordinary corrections, and tops are inherently hard to time. Practitioner consensus is to treat divergence as a yellow flag and wait for a PRICE trigger (a 50-DMA or trendline break) before acting. The important asymmetry: bullish breadth THRUSTS off washout lows (Zweig-type surge from <40% to >61.5% of stocks advancing within ~10 days) are far more reliable than bearish divergences - they are rare (~18 since 1945) but historically preceded ~23% average 12-month S&P gains with a near-perfect record, because bottoms follow repeatable patterns and the market drifts up over time (fewer false positives than tops). On the level side, the share of stocks above the 200-DMA is the regime gauge: >70% = broad heal",
+        "how_to_apply": "In the regime step (step #1, the aggression dial), read market_breadth.universe FIRST for participation, starting with pct_beating_spy_1m: under ~40% treat the tape as neutral-to-fragile even when benchmark_trend reads supportive, and shift toward smaller size and a different KIND of setup (catalyst, value, diversifier) rather than more of the leadership - exactly the 'act cautious' response CLAUDE.md and momentum_health 'softening' already prescribe. Treat a breadth divergence (index near highs while pct_above_200dma is falling / advance_decline_ratio deteriorating) as a yellow flag that lowers aggression, NEVER as a reason to reject an otherwise-clean fat pitch and never as a stand-down - it is a condition not a timing signal and the only hard regime block is the SPY-below-200-DMA regime gate (this mirrors KB-4213529672: a standing condition must not become an unwritten veto). Conversely, weight bullish breadth EXPANSION as the higher-confidence asymmetric signal: when pct_above_200dma crosses back above 50% and pct_beating_spy_1m rises through 40-50% (a broadening/thrust regime), that is when to press hardest and take full-size fat pitches. Cross-check sector_rotation_30d (accel",
+        "learned_at": "2026-07-29",
+        "times_cited": 4
+      },
+      {
+        "id": "KB-2665689010",
+        "discipline": "strategy_playbooks",
+        "topic": "The catalyst-in-a-downtrend setup: why good news on a below-MA / near-52-week-low name has the WEAKEST expected drift, and the confirmation-gated re-entry that separates a real turn from a dead-cat bo",
+        "summary": "My biggest single cluster of shadow-book regret_misses is the same setup every time \u2014 a positive catalyst (beat-and-raise, raised guidance, insider cluster) on a name trading BELOW its 50/200-DMA, which I reject for 'lack of confirmation' and then never re-enter when confirmation arrives (CLS +10.5%, NOW +12%, IBM +11%, NOC, HCA, SMCI). The naive read is 'I was too cautious.' The evidence says the opposite about the SKIP and pinpoints my real error elsewhere. George, Hwang & Li (Anchoring, the 52-Week High and PEAD) find post-earnings drift is concentrated by nearness to the 52-week high: investors anchor on the high and underreact to GOOD news when a stock is NEAR its high (strong upward drift, the tradeable long), but that underreaction \u2014 and therefore the drift edge \u2014 is WEAKEST when the same good news lands on a name far from its high / near its low; the drift only re-ignites once the 52-week high (or the relevant overhead level) is reclaimed and 'the market wakes up.' So the best PEAD longs are good-news LEADERS, not good-news names in a downtrend. Bulkowski's dead-cat-bounce database says the same from the price side: large event declines (almost all company-specific bad-or-good-then-faded news) typically bounce ~50% of the drop on FADING volume, make a lower high, then resume the decline 'at a more leisurely rate.' Practitioner consensus (bear-market-rally and reversal writing, O'Neil's follow-through logic) converges on the tell: a dead-cat bounce fails at resistance ",
+        "how_to_apply": "When a positive catalyst lands on a name trading below its 50/200-DMA (CLS/NOW/IBM/NOC pattern), do NOT chase the gap and do NOT reject-and-forget: put it on the watchlist with a would_buy_at written as an explicit change-of-character structure \u2014 a reclaim of the declining 50-DMA held 2-3 sessions on above-average volume, PLUS a higher-low that survives a retest of the bounce low on lighter volume \u2014 and only promote to BUY when that prints (refining KB-2596574918's 'buy on price confirmation' with the concrete structure, and extending KB-6241168493 to below-MA names). Weight the George/Hwang anchoring prior: rank good-news LEADERS near their highs above good-news names near their lows, because the drift edge is where the anchor is being broken, not where the stock is still deep in supply. Use volume as the arbiter per KB-6241168493 \u2014 fading volume into the bounce and a lower high is a dead-cat, so pass; rising volume on the reclaim plus a no_supply_pullback retest is the tradeable turn. Anchor the stop just below the retest's higher low (which by construction sits beyond the \u221at noise band, KB-2388376284) so the 2:1 RR clears honestly from a level, not from an extended chase; if a p",
+        "learned_at": "2026-07-28",
+        "times_cited": 14
+      },
+      {
+        "id": "KB-9692173165",
+        "discipline": "technical_analysis",
+        "topic": "Reading the consolidation base to define a precise, auditable pivot trigger \u2014 and why the throwback to the level, not the breakout through it, is the higher-expectancy swing entry",
+        "summary": "The base-and-pivot framework (O'Neil's cup-with-handle, Minervini's VCP) exists to convert a fuzzy 'wait for confirmation' into ONE auditable price level: the pivot \u2014 the base's prior peak / handle high, the last ceiling of overhead supply. A valid VCP base shows 2-3 successive contractions where BOTH price range AND volume tighten, each smaller than the last, signaling sellers drying up; the classic entry then buys as price clears the pivot on volume ~40-50% above average. But the empirical record undercuts the 'chase the volume breakout' half. Bulkowski's pattern database (reported ~40,000+ trades on thepatternsite.com; I could not fetch the primary page directly and cite these figures as reported by secondary summaries) finds throwbacks occur ~50-60% of the time overall and ~74% when the breakout comes on ABOVE-average volume, and that ~97% of upward-breakout pattern TYPES perform BETTER when no throwback occurs \u2014 the strongest breakouts run away and never offer a second chance, while high-volume 'confirmed' breakouts are precisely the ones that throw back most. My own 12-year ablation says the same from the entry side: confirmed_breakout (new 20d high on >=1.5x volume) scored -0.32pp ATR-matched at 21d and ADX>25 breakouts were negative in 10 of 12 years, while the low-volume no_supply_pullback was the ONE positive read (+0.22/+0.25pp). Practitioner consensus reconciles this: buying the throwback/retest to the pivot (now acting as support) on drying volume gives a better ",
+        "how_to_apply": "For every watchlist name, read its base and write the PIVOT \u2014 the prior peak / handle high, cross-checked against anchored_vwap \u2014 as the would_buy_at level, plus an explicit event-date gate when a catalyst window applies, which fixes the AMD compound-trigger-fired-5-days-early defect (LP-0693555695). Prefer the entry my own data rewards: the throwback to that pivot on drying, no_supply_pullback volume (KB-6241168493), with the stop just below the base low so it sits beyond the sqrt(t) noise band (KB-2388376284) and the 2:1 RR floor clears honestly because I am buying AT the level, not extended above it. Do not make the volume breakout my primary entry and do not reject a setup because its breakout was unconfirmed \u2014 confirmed_breakout scored -0.32pp and breakout volume is descriptive-only. When a genuine fat pitch is running away in a supportive tape with a catalyst forcing urgency, take a 50-70% starter on the breakout and add on the retest rather than chasing full size or missing it. Accept that some of the strongest breakouts never come back: that is the priced cost of the higher-RR retest entry, not a process failure \u2014 consistent with ~30% of my regret_misses being market-wide m",
+        "learned_at": "2026-07-27",
+        "times_cited": 5,
+        "tensions": [
+          {
+            "with": "KB-6241168493",
+            "why": "No contradiction \u2014 division of labor. KB-6241168493 (pullback-continuation / buy the no-supply dip) is the ENTRY-timing rule; this lesson supplies the base/pivot STRUCTURE that defines the precise level the pullback should target and reconciles why chasing the breakout through that level is negative",
+            "noted_at": "2026-07-27"
+          }
+        ]
+      },
+      {
+        "id": "KB-0013366930",
+        "discipline": "risk_management",
+        "topic": "Kelly-fraction intuition for the 1% risk budget: why deep-fractional Kelly is correct under parameter uncertainty, and how it explains the 2:1 RR floor and the conviction tier",
+        "summary": "The Kelly criterion f* = W - (1-W)/R maximizes long-run geometric growth (E[log wealth]) and outputs the fraction of capital to RISK - which maps exactly onto this system's 1%-of-equity, entry-to-stop budget. Running it on my own realistic parameters (2:1 RR floor so R is about 2, swing win rates 40-55% per CLAUDE.md) gives full-Kelly risk fractions of 10% (at 40% wins), 17.5% (45%), 25% (50%), and 32.5% (55%). So the 1% budget is roughly 1/10 to 1/30 of full Kelly - deeper than even quarter-Kelly - and that is correct, not timid, for three compounding reasons the literature is unanimous on. First, parameter uncertainty: MacLean-Thorp-Ziemba showed a 10% overestimate of edge causes about 50% overbetting at full Kelly, the penalty for overbetting FAR exceeds the cost of underbetting, and Thorp always ran fractional Kelly in practice; with only 2 closed trades my true edge is essentially unknown, and Kelly with unknown edge says bet near zero. Second, the growth-rate curve is a downward parabola g(c*f*) approximately (2c - c^2)*g_max: half-Kelly captures about 75% of maximum growth at half the position size, quarter-Kelly about 44%, growth hits ZERO at 2x Kelly, and beyond 2x it goes negative into near-certain ruin - so the over side has a cliff the under side does not, making underbetting strictly the safer error. Third, Kelly assumes independent bets; correlated simultaneous positions share ONE Kelly budget (the multivariate form is f* = inverse-covariance times excess return",
+        "how_to_apply": "Keep sizing every BUY at the 1% risk budget and read it as intentional deep-fractional Kelly, not caution to apologize for: with 2 closed trades my edge is unmeasured, so betting small IS the mathematically correct response to unknown edge, and I should stop treating the 1% floor as a bar that makes setups feel too small to bother taking. When tempted to argue for the conviction tier (1.5%), require what Kelly requires: a genuinely higher, PROVEN edge (the validator's 15 trades + 55% win rate in the 0.70+ bucket, confidence >=0.75, zero risk-desk haircut, corroborating evidence) - never step up the fraction on a narrative, because the overbetting penalty is asymmetric and a wrong edge estimate over-allocates hard. Treat the 2:1 RR floor as non-negotiable expectancy geometry, not paperwork: below it there is no positive Kelly fraction to size, so never widen a stop or inflate a target to scrape past it. On correlated adds, remember co-moving names share one Kelly budget - the 8% heat and 2% theme-risk caps are that constraint, so size the pair as one bet (KB-1223831607) rather than two independent 1% risks. Finally, because my stops gap (DELL filled 4.5% through), realized loser R i",
+        "learned_at": "2026-07-24",
+        "times_cited": 1
+      },
+      {
+        "id": "KB-8308262054",
+        "discipline": "market_microstructure",
+        "topic": "The options-implied expected move and earnings IV crush: reading options_signals to time swing entries around binary prints, and why the implied move is a market-priced noise band",
+        "summary": "Options price a stock's expected move as Price \u00d7 IV \u00d7 \u221a(DTE/365) \u2248 one standard deviation; a fast earnings shortcut is ~0.85 \u00d7 the ATM front-month straddle (tastytrade uses a weighted straddle+strangle version). Empirically the stock stays inside that \u00b11\u03c3 band ~68-70% of the time, so the implied move is a genuine, horizon-scaled noise band \u2014 not a forecast of direction. Crucially it is priced too WIDE on average: implied vol exceeds realized vol by roughly 3-5 percentage points annualized (the volatility risk premium), and a CBOE study of ~10 years of S&P 500 earnings found the actual post-print move was SMALLER than the straddle-implied move in ~72% of cases. But the distribution has fat tails \u2014 the ~30% of moves that break the band include the outliers that gap through any stop (the SMCI ~20% preliminary-print pop is exactly this tail). Before a known binary event, front-month IV inflates and the term structure goes into BACKWARDATION (near-term IV > far-term); the moment the event resolves, IV crushes 30-50% (40-55% on high-IV names like NVDA/TSLA) within hours and the term structure normalizes. For a directional trader, holding a swing stop THROUGH a print means betting on a coin-flip gap you are not paid to take: the pre-print premium is a cost to option holders, but to an equity holder the print is just an un-stoppable jump on top of the normal diffusion. The cleaner trade is around it \u2014 enter 1-2 days after the print once the gap settles, IV has crushed, and the direct",
+        "how_to_apply": "Before any BUY, read options_signals.expected_move_pct and term_structure together with days_to_earnings: if a print (or a backwardation + high-iv_rank event premium) falls inside holding_horizon_days, default to trading AROUND it \u2014 either enter after the print once IV crushes and the gap settles, or shorten the horizon so the stop never has to survive the binary, because the earnings expected move is a discrete jump no ATR-floored stop inside the 15% cap can cover (this refines KB-2388376284: the implied move is a market-priced noise band, superior to ATR\u00d7\u221aN, and stop_engineering already floors the stop at \u00bd the expected move \u2014 treat that as a one-day floor, not horizon-adequate through an event). Only hold through a print when the binary itself is the thesis (a stated drift/gap_held_revisions_up setup per KB-2596574918), and then size on gap-adjusted risk. Use term-structure backwardation and iv_rank as the detector that fired wrong on AMD \u2014 an elevated front-month event premium 5 days out means the setup is NOT live yet, so suppress the trigger until the event passes. When a name gaps hard on a print (SMCI-style fat tail), do not chase the climax bar: put it on the watchlist and",
+        "learned_at": "2026-07-23",
+        "times_cited": 2
+      },
+      {
+        "id": "KB-2596574918",
+        "discipline": "fundamental_analysis",
+        "topic": "Estimate-revision momentum: how upward EPS/revenue revision breadth leads price via the post-forecast-revision drift, and why breadth + price-confirmation beats a lone divergence",
+        "summary": "Analyst estimate revisions are a genuine, well-documented fundamental predictor: prices underreact to revisions and DRIFT in their direction for roughly six months (the post-forecast-revision drift, PFRD). Old evidence (Givoly/Lakonishok-era) put the up-minus-down revision portfolio spread near ~3% annually, and later work finds aggregated revisions can predict post-earnings-announcement returns as well as or better than the earnings surprise itself. The mechanism is the reason it persists and is the key to trading it: the DIRECTION of revisions is far more persistent than the direction of returns because analysts themselves underreact \u2014 anchoring-and-adjustment and herding make them revise incrementally and insufficiently, so a first up-revision statistically predicts more up-revisions (Chen et al. 2020, JBFA). Signal quality is not uniform. A single revision is mostly noise, and noise/bias in analyst forecasts rises with the forecast horizon (Noise in Expectations, RFS 2024), so BREADTH \u2014 how many analysts are raising vs cutting over ~100 days \u2014 and NEAR-TERM (next-quarter/next-FY) revisions carry the real signal, not one far-out number. Consistency matters more than magnitude: high-innovation revisions that are CONSISTENT with the prior trend and with price action drive more drift than larger 'reversal' revisions that fight the tape (Chen 2025), and revisions that merely drift toward existing consensus ('low-innovation') carry little information. Practitioners (Mill Street",
+        "how_to_apply": "Treat fundamental_screen.top_upward_revisions and revision_direction=up / positive eps_growth_next_yr_pct as a real candidate lane, not background noise \u2014 this is the direct fix for repeatedly defaulting MU-type names to the watchlist and eating +15% regret_misses. When underwriting one, weight BREADTH of near-term (30-day EPS / next-Q) revisions over any single number, and require the revision trend to be consistent (up-revisions following up-revisions), because that persistence is where the edge lives. For the fat pitch, demand price CONFIRMATION of the fundamentals \u2014 positive rel_strength_1m/3m, no_supply_pullback or a reclaim \u2014 which is precisely the post_earnings_drift_candidate gap_held_revisions_up read; that revisions-and-price-AGREE case gets full weight and can clear the bar now. For the pure divergence (revisions up, price down, MU-style), do NOT buy estimates into a falling knife and do NOT reflexively skip: name in the thesis whether price weakness is temporary (cyclical/sector/tax/macro) or structural (ai_at_risk, cycle-peak earnings embedding the cycle continuing), put it on the watchlist with a specific price-reclaim trigger, and promote to BUY when price confirms \u2014",
+        "learned_at": "2026-07-22",
+        "times_cited": 14
+      },
+      {
+        "id": "KB-4213529672",
+        "discipline": "trading_psychology",
+        "topic": "Exit on pre-committed invalidators, not real-time conviction: the disposition effect, 'resulting', and why the written plan (not the mood) must license every early exit",
+        "summary": "My single binding process_fail is HPE: I closed a LOSING position ahead of its stop on a 'conviction crack,' graded process_fail with tag missing_invalidators_on_plan. The behavioral literature explains why that class of decision loses systematically. Odean's canonical study of 10,000 brokerage accounts (Journal of Finance 53:1775-1798, 1998) documents the disposition effect: investors are 1.5-2x more likely to sell a winner than a loser, and crucially this is NOT justified by subsequent returns - the losers they clung to did not go on to outperform, so the discretionary exit judgment was simply wrong on average. The practitioner consensus fix is pre-commitment: a 1991 study found the disposition effect weakens sharply when people sell at predetermined rules/intervals instead of discretionarily, and the reliable antidotes are predefined exit rules set BEFORE entry, mechanical stop/target execution, and documenting the rationale so the exit is a rule-check rather than a fresh emotional decision. Annie Duke's 'resulting' sharpens this: judging a decision by its outcome corrupts learning, so you must write the reasoning and the expected outcome distribution up front and grade the exit against THAT, not against the P&L - which is exactly why DELL (stop fired as planned, still a loss) is a process_win while HPE (discretionary, happened to save a few dollars) is a process_fail. The honest nuance: my HPE error was not the classic disposition effect (I cut a loser early, I didn't hol",
+        "how_to_apply": "Treat the validator-enforced thesis_invalidators (invalidating_print, invalidating_structure, time_box) as the ONLY licensed early-exit reasons: before closing any holding ahead of its stop, name which specific invalidator fired and cite the observable print or structure - if none did and it is only conviction wobble, HOLD and let the stop/chandelier trail do its job, because that is the exact HPE process_fail I must not repeat. Grade every exit against the entry plan, not the P&L (Duke's resulting): a stop firing as written is a process_win even at a loss, a discretionary save is a process_fail. For winners, beat the cut-them-early disposition reflex mechanically - bank with sell_fraction (~0.4-0.6) at >=2R and trail the rest under structure while invalidators stay clear, per KB-2388376284's chandelier point and the runner playbook. Apply the same rule to the paralysis mirror-error: an unwind is a code-applied half-size haircut, not a trading halt, so if a setup clears the fat-pitch bar and validator floors honestly I take it, and if it does not I pass on its own merits - I never let a standing condition (unwind, thin tape, last week's loss) become an unwritten veto, and I never f",
+        "learned_at": "2026-07-22",
+        "times_cited": 4
+      },
+      {
+        "id": "KB-6241168493",
+        "discipline": "strategy_playbooks",
+        "topic": "The pullback-continuation entry in a leading uptrend: buying the low-volume ('no-supply') dip to structural support instead of chasing the fresh high",
+        "summary": "The pullback-continuation setup buys a temporary dip inside an established uptrend rather than chasing a new high. It works because two well-documented return patterns run on different clocks: medium-term momentum persists over roughly 3-12 months while short-term returns (days to a few weeks) mean-revert (the short-term reversal effect, Blitz/Huij, Alpha Architect summaries). Buying the short-term dip in a medium-term leader therefore rides the durable trend while getting a better price and a tighter stop. The whole craft is separating a HEALTHY pullback -- shallow, orderly, on DRYING volume, the Wyckoff/VSA 'no supply' bar where professionals simply stop selling -- from a REVERSAL, which is sharp, wide-range, and comes on HIGH volume that breaks structure ('supply'). Volume is the tell, not price alone. Minervini's version: after a valid advance a healthy pullback retraces modestly (~8-10% max, or back to a rising 50-DMA), volume contracts into the dip and re-expands on the resumption; common support zones are the 20-EMA, 50-DMA, and the 38-62% Fibonacci band. Critically, the entry is the RESUMPTION, not the dip itself -- you wait for volume to dry up and then a confirming up-move, you do not catch the falling knife. This is the one thing my own 12-year ablation confirmed: no_supply_pullback scored +0.22pp (21d) / +0.25pp (63d), the only positive read among ~25 indicators tested, measured on names already above their 200-DMA. Reported win rates vary wildly and the high ones",
+        "how_to_apply": "When a universe leader (above a rising 50/200-DMA, positive rel_strength_1m and 3m vs SPY) pulls back, treat it as a BUY candidate only when the dip is orderly AND volume_signal reads no_supply_pullback -- my one ablation-confirmed tell; a high-volume, wide-range dip is supply, so pass. Do not buy the dip itself: wait for volume to dry up and a resumption bar (reclaim of a short-term level or a pocket-pivot-style up day), which is the concrete fix for my ANET regret_miss where I watched the pullback and never entered. Anchor the stop just below the pullback's swing low or the named anchored_vwap level so the same stop sits beyond the noise band per KB-2388376284, hold the 2:1 RR floor honestly, and let the chandelier trail run the winner rather than tightening early. Prefer pullbacks with a catalyst inside a short window so entry-to-event noise is small, and size the initial entry at 50-70% then scale in only on confirmed strength. In an already-extended, high-ADX leader this low-volume pullback -- not the fresh breakout my own data shows fails at ADX>25 -- is where the fat pitch lives.",
+        "learned_at": "2026-07-21",
+        "times_cited": 12
+      },
+      {
+        "id": "KB-1223831607",
+        "discipline": "risk_management",
+        "topic": "Correlation-adjusted position sizing: co-moving names are one bet (the effective-number-of-bets collapse), not many, and why that governs portfolio heat and the theme-risk cap",
+        "summary": "Diversification by COUNT is an illusion; only diversification by uncorrelated risk FACTORS reduces risk. For N equally-sized positions each with volatility sigma and pairwise correlation rho, portfolio volatility is sigma*sqrt([1+(N-1)*rho]/N): at rho=0 that is sigma/sqrt(N) (full benefit), but at rho->1 it goes to sigma, i.e. the N positions behave as ONE. The clean summary statistic is the effective number of independent bets, N_eff ~= N/[1+(N-1)*rho]; two names at rho~0.85 give N_eff~1.08 -- essentially a single bet. That is exactly my realized loss history: DELL and HPE were two tickers on ONE hyperscaler_server_capex driver, so a Meta-overbuild headline took both out at once, and my '2 positions' were 1 correlated bet the whole time. Attilio Meucci's Effective Number of Bets (exponential Shannon entropy of the diversification distribution) makes the same point formally: hidden correlation makes a book that LOOKS like N holdings act like ~1 exposure to one factor, and PCA can even hide this (minimum-torsion/factor framing is needed to see it). The Turtle system encoded the practitioner version as hard unit caps -- 4 units single market, 6 closely-correlated, 10 loosely, 12 in one direction -- precisely so a cluster of correlated trades could not become one oversized bet. Two cautions from the sources: (1) correlations RISE toward 1 in exactly the tail shock you are stopping for, so a benign-looking rho understates joint downside; (2) correlated stops fire and GAP together",
+        "how_to_apply": "Before any BUY, run the one-bet test using portfolio_risk and the demand_driver_map: if the candidate shares a holding's demand_driver OR shows corr_to_book > ~0.7, treat it as ADDING to an existing bet, not opening a new one -- size the pair against the THEME RISK <= 2% cap as a single position, never as two independent 1% risks (this is the DELL+HPE lesson made quantitative). When shared_left_tail is true, actively prefer a low/negative corr_to_book diversifier (diversifier=true) over a higher-conviction clone of what I already own, because at book level the clone adds almost no independent bet. Cite the actual number ('~0.85 correlated to DELL, N_eff ~1.1, so this is one hyperscaler_server_capex bet in two tickers'), not a vibe, and let the factor-stack cap / factor_response gate do its job rather than relabeling a name into a cheaper theme bucket. Because correlations rise and stops gap together in the exact shock I am stopped for, on a correlated add I size on realized (gap-adjusted) risk -- lean to ~1.3-1.5R of modelled slippage and toward the lower end of size -- rather than assuming the stop caps the loss. Net rule: diversify by demand_driver, not by ticker count; if I cann",
+        "learned_at": "2026-07-20",
+        "times_cited": 8
+      }
+    ],
+    "n_active": 13,
+    "discipline_counts": {
+      "technical_analysis": 3,
+      "fundamental_analysis": 1,
+      "risk_management": 3,
+      "strategy_playbooks": 3,
+      "market_microstructure": 1,
+      "trading_psychology": 1,
+      "macro_regimes": 1
+    },
+    "topics_index": [
+      {
+        "id": "KB-3704904010",
+        "discipline": "strategy_playbooks",
+        "topic": "The episodic pivot / power earnings gap: entering a fundamental gap-up on a LEADER that HOLDS, and why the day-after first-pullback with a stop under the gap-day low is the only version this EOD swing",
+        "evidence_status": null,
+        "times_cited": 2
+      },
+      {
+        "id": "KB-8928427464",
+        "discipline": "risk_management",
+        "topic": "Pyramiding into a winner: adding above blended cost while the trailed stop keeps total risk flat, and why the chandelier trail is what funds the second unit",
+        "evidence_status": null,
+        "times_cited": 0
+      },
+      {
+        "id": "KB-6231300499",
+        "discipline": "technical_analysis",
+        "topic": "Target geometry and scaling out: where the profit target goes (discounted measured move / just under overhead supply), why the first partial waits for >=2R, and how the fixed target and the chandelier",
+        "evidence_status": null,
+        "times_cited": 3
+      },
+      {
+        "id": "KB-6840616104",
+        "discipline": "macro_regimes",
+        "topic": "Market breadth as the regime aggression dial: participation, the divergence/thrust asymmetry, and why breadth is a CONDITION not a timing signal",
+        "evidence_status": null,
+        "times_cited": 4
+      },
+      {
+        "id": "KB-2665689010",
+        "discipline": "strategy_playbooks",
+        "topic": "The catalyst-in-a-downtrend setup: why good news on a below-MA / near-52-week-low name has the WEAKEST expected drift, and the confirmation-gated re-entry that separates a real turn from a dead-cat bo",
+        "evidence_status": null,
+        "times_cited": 14
+      },
+      {
+        "id": "KB-9692173165",
+        "discipline": "technical_analysis",
+        "topic": "Reading the consolidation base to define a precise, auditable pivot trigger \u2014 and why the throwback to the level, not the breakout through it, is the higher-expectancy swing entry",
+        "evidence_status": null,
+        "times_cited": 5
+      },
+      {
+        "id": "KB-0013366930",
+        "discipline": "risk_management",
+        "topic": "Kelly-fraction intuition for the 1% risk budget: why deep-fractional Kelly is correct under parameter uncertainty, and how it explains the 2:1 RR floor and the conviction tier",
+        "evidence_status": null,
+        "times_cited": 1
+      },
+      {
+        "id": "KB-8308262054",
+        "discipline": "market_microstructure",
+        "topic": "The options-implied expected move and earnings IV crush: reading options_signals to time swing entries around binary prints, and why the implied move is a market-priced noise band",
+        "evidence_status": null,
+        "times_cited": 2
+      },
+      {
+        "id": "KB-2596574918",
+        "discipline": "fundamental_analysis",
+        "topic": "Estimate-revision momentum: how upward EPS/revenue revision breadth leads price via the post-forecast-revision drift, and why breadth + price-confirmation beats a lone divergence",
+        "evidence_status": null,
+        "times_cited": 14
+      },
+      {
+        "id": "KB-4213529672",
+        "discipline": "trading_psychology",
+        "topic": "Exit on pre-committed invalidators, not real-time conviction: the disposition effect, 'resulting', and why the written plan (not the mood) must license every early exit",
+        "evidence_status": null,
+        "times_cited": 4
+      },
+      {
+        "id": "KB-6241168493",
+        "discipline": "strategy_playbooks",
+        "topic": "The pullback-continuation entry in a leading uptrend: buying the low-volume ('no-supply') dip to structural support instead of chasing the fresh high",
+        "evidence_status": null,
+        "times_cited": 12
+      },
+      {
+        "id": "KB-1223831607",
+        "discipline": "risk_management",
+        "topic": "Correlation-adjusted position sizing: co-moving names are one bet (the effective-number-of-bets collapse), not many, and why that governs portfolio heat and the theme-risk cap",
+        "evidence_status": null,
+        "times_cited": 8
+      },
+      {
+        "id": "KB-2388376284",
+        "discipline": "technical_analysis",
+        "topic": "Stop distance vs. holding horizon: the \u221at noise band, and why entry location (not stop width) is the binding lever on multi-week swings",
+        "evidence_status": null,
+        "times_cited": 3
+      }
+    ]
+  },
+  "calibration_status": {
+    "note": "Learning protocol phase from closed-trade sample size. binding = validator enforces confidence caps / losing-bucket exceptions. caution = shade confidence in CLAUDE only. anecdote = note only.",
+    "phase": "anecdote",
+    "total_closed_trades": 2,
+    "binding_at": 15,
+    "high_conf_inflated": false,
+    "high_conf_detail": "ok",
+    "losing_sectors": [],
+    "confidence_cap_when_inflated": 0.69
+  },
+  "performance_breakdowns": {
+    "total_trades": 2,
+    "note": "Your own results by category - weight your confidence using this evidence. Rates are WITHHELD (null) below the sample floor - counts are facts, a win rate off two trades is not.",
+    "sufficient_sample": false,
+    "sample_phase": "anecdote",
+    "min_trades_for_rate": 5,
+    "by_sector": [
+      {
+        "bucket": "servers_hardware",
+        "trades": 2,
+        "wins": 0,
+        "win_rate_pct": null,
+        "total_pnl_usd": -18.05,
+        "avg_r": null,
+        "sufficient_sample": false,
+        "min_trades_for_rate": 5
+      }
+    ],
+    "by_confidence": [
+      {
+        "bucket": "0.65-0.70",
+        "trades": 2,
+        "wins": 0,
+        "win_rate_pct": null,
+        "total_pnl_usd": -18.05,
+        "avg_r": null,
+        "sufficient_sample": false,
+        "min_trades_for_rate": 5
+      }
+    ],
+    "by_holding_period": [
+      {
+        "bucket": "0-7d",
+        "trades": 2,
+        "wins": 0,
+        "win_rate_pct": null,
+        "total_pnl_usd": -18.05,
+        "avg_r": null,
+        "sufficient_sample": false,
+        "min_trades_for_rate": 5
+      }
+    ],
+    "by_verdict": [
+      {
+        "bucket": "Stopped out",
+        "trades": 1,
+        "wins": 0,
+        "win_rate_pct": null,
+        "total_pnl_usd": -13.52,
+        "avg_r": null,
+        "sufficient_sample": false,
+        "min_trades_for_rate": 5
+      },
+      {
+        "bucket": "Thesis exit",
+        "trades": 1,
+        "wins": 0,
+        "win_rate_pct": null,
+        "total_pnl_usd": -4.53,
+        "avg_r": null,
+        "sufficient_sample": false,
+        "min_trades_for_rate": 5
+      }
+    ],
+    "by_exit_month": [
+      {
+        "bucket": "2026-07",
+        "trades": 2,
+        "wins": 0,
+        "win_rate_pct": null,
+        "total_pnl_usd": -18.05,
+        "avg_r": null,
+        "sufficient_sample": false,
+        "min_trades_for_rate": 5
+      }
+    ]
+  },
+  "exit_lessons": {
+    "note": "Recent position closes. Graded rows carry process_win/fail tags and lessons. BINDING lessons are process failures you must not repeat without an explicit exception. RUNNER LEARNING (post_exit): after winners, we mark the stock 15/30/60d \u2014 left_on_table means more upside after you sold (learn partials/trails); good_lock_in means price faded (banking was right). Process win and left_on_table can both be true.",
+    "recent": [
+      {
+        "ts": "2026-07-15T16:32:49.854049+00:00",
+        "ticker": "HPE",
+        "action": "SELL_TO_CLOSE",
+        "fill_price": 46.082,
+        "quantity": 1.63771,
+        "days_held": 4,
+        "realized_pnl_usd": -4.53,
+        "avg_cost": 48.8488,
+        "forced": false,
+        "forced_reason": "Closing ahead of the stop rather than waiting for it. HPE shares DELL's exact hyperscaler_server_capex demand driver, and that driver took a direct, sourced hit today: reports that Meta plans to lease surplus AI compute to enterprise customers are being read as evidence hyperscalers overbuilt AI inf",
+        "status": "graded",
+        "needs_brain_grade": false,
+        "entry_plan": {
+          "stop_loss": 43.75,
+          "target_price": 58.0,
+          "holding_horizon_days": 40,
+          "entry_price_max": 49.75,
+          "confidence": 0.64
+        },
+        "brain_grade": {
+          "process": "process_fail",
+          "tags": [
+            "discretionary_exit",
+            "discretionary_loss",
+            "missing_invalidators_on_plan"
+          ],
+          "graded_by": "deterministic_v1",
+          "graded_at": "2026-07-15T16:32:49.854042+00:00"
+        },
+        "lesson": "HPE: discretionary loss \u2014 was an invalidator hit, or did conviction crack without thesis break?",
+        "post_exit_track": null
+      },
+      {
+        "ts": "2026-07-15T16:32:49.844014+00:00",
+        "ticker": "DELL",
+        "action": "SELL_TO_CLOSE",
+        "fill_price": 389.7542,
+        "quantity": 0.22189,
+        "days_held": 6,
+        "realized_pnl_usd": -13.52,
+        "avg_cost": 450.6702,
+        "forced": true,
+        "forced_reason": "stop_loss_breached",
+        "status": "graded",
+        "needs_brain_grade": false,
+        "entry_plan": {
+          "stop_loss": 408.0,
+          "target_price": 525.0,
+          "holding_horizon_days": 45,
+          "entry_price_max": 458.0,
+          "confidence": 0.66
+        },
+        "brain_grade": {
+          "process": "process_win",
+          "tags": [
+            "stop_exit",
+            "missing_invalidators_on_plan"
+          ],
+          "graded_by": "deterministic_v1",
+          "graded_at": "2026-07-15T16:32:49.844003+00:00"
+        },
+        "lesson": "DELL: stop enforced as planned \u2014 risk management worked (loss $-135). Review if stop was inside noise band.",
+        "post_exit_track": null
+      }
+    ],
+    "ungraded_count": 0,
+    "binding_lessons": [
+      {
+        "ts": "2026-07-15T16:32:49.854331+00:00",
+        "ticker": "HPE",
+        "lesson": "HPE: discretionary loss \u2014 was an invalidator hit, or did conviction crack without thesis break?",
+        "process": "process_fail",
+        "tags": [
+          "discretionary_exit",
+          "discretionary_loss",
+          "missing_invalidators_on_plan"
+        ],
+        "realized_pnl_usd": -45.33
+      }
+    ],
+    "n_binding": 1,
+    "runner_learning": {
+      "note": "POST-EXIT RUNNER LEARNING (15/30/60d after every close). Even a correct exit can leave upside on the table \u2014 that is not always a mistake, but winners that keep running teach PARTIALS and trails: bank some, let the rest work while thesis invalidators are intact. left_on_table = price ran further after you sold a winner. good_lock_in = price faded after you sold \u2014 banking was right. stopped_then_recovered = loss exit then bounce (possible noise stop). Warming up (0 completed tracks, 0 left-on-table).",
+      "binding": false,
+      "mark_windows_days": [
+        15,
+        30,
+        60
+      ],
+      "n_tracking": 2,
+      "n_completed": 0,
+      "left_on_table": [],
+      "good_lock_ins": [],
+      "stopped_then_recovered": [],
+      "open_winners_still_running": [],
+      "study_health": {
+        "ledger_closed_exits": 2,
+        "tracked_or_completed": 2,
+        "quarantined": 0,
+        "unseeded_exits": [],
+        "n_unseeded": 0,
+        "healthy": true,
+        "note": "Every closed exit in the ledger is being tracked."
+      },
+      "exit_execution_grades": {
+        "note": "EXIT EXECUTION GRADES. Per close: the plan it was judged against, whether it was forced (stop/trail/horizon) or discretionary, the REALIZED R against the R you claimed at entry, and \u2014 on stop exits \u2014 how far through the stop the fill actually landed, in $ and in ATR, against execution_costs.stop_gap_atr_fraction. stop_gap_source 'modelled' means the fill came out of the simulator's own gap model: that is arithmetic, not evidence about how stops fill in the market, and it never counts as either. A large r_gap means the claimed risk/reward that cleared the 2:1 gate did not survive contact; a repeated gap_worse_than_model means positions are sized against a stop that does not hold.",
+        "recent": [
+          {
+            "ticker": "HPE",
+            "exit_date": "2026-07-15",
+            "exit_reason_kind": "discretionary",
+            "exit_reason": "Closing ahead of the stop rather than waiting for it. HPE shares DELL's exact hyperscaler_server_capex demand driver, and that driver took a direct, sourced hit",
+            "plan_stop": 43.75,
+            "plan_target": 58.0,
+            "horizon_days": 40,
+            "days_held": 4,
+            "realized_r": -0.54,
+            "claimed_rr": 1.79,
+            "r_gap": 2.33,
+            "risk_used_fraction": 0.543,
+            "realized_pnl_usd": -4.53,
+            "process_grade": "process_fail",
+            "stop_gap_pct_of_stop": null,
+            "stop_gap_in_atr": null,
+            "stop_gap_verdict": "not_applicable",
+            "stop_gap_source": null,
+            "plan_source": "fill_entry_plan",
+            "missing": [],
+            "headline": "HPE 2026-07-15 discretionary | realized -0.54R vs claimed +1.79R | spent 54% of planned risk"
+          },
+          {
+            "ticker": "DELL",
+            "exit_date": "2026-07-15",
+            "exit_reason_kind": "forced_stop",
+            "exit_reason": "stop_loss_breached",
+            "plan_stop": 408.0,
+            "plan_target": 525.0,
+            "horizon_days": 45,
+            "days_held": 6,
+            "realized_r": -1.43,
+            "claimed_rr": 1.74,
+            "r_gap": 3.17,
+            "risk_used_fraction": 1.428,
+            "realized_pnl_usd": -13.52,
+            "process_grade": "process_win",
+            "stop_gap_pct_of_stop": 4.472,
+            "stop_gap_in_atr": 0.5489,
+            "stop_gap_verdict": "gap_within_model",
+            "stop_gap_source": "modelled",
+            "plan_source": "fill_entry_plan",
+            "missing": [],
+            "headline": "DELL 2026-07-15 forced_stop | realized -1.43R vs claimed +1.74R | stop 408.0 filled 389.7542 (4.47% through, 0.55 ATR; gap_within_model) | gap MODELLED not measured"
+          }
+        ],
+        "headlines": [
+          "HPE 2026-07-15 discretionary | realized -0.54R vs claimed +1.79R | spent 54% of planned risk",
+          "DELL 2026-07-15 forced_stop | realized -1.43R vs claimed +1.74R | stop 408.0 filled 389.7542 (4.47% through, 0.55 ATR; gap_within_model) | gap MODELLED not measured"
+        ],
+        "stats": {
+          "n_exits": 2,
+          "n_r_gradeable": 2,
+          "n_ungradeable": 0,
+          "mean_realized_r": -0.985,
+          "mean_claimed_rr": 1.765,
+          "n_stop_exits": 1,
+          "n_stop_gaps_realized": 0,
+          "n_stop_gaps_modelled": 1,
+          "mean_gap_in_atr_realized": null,
+          "mean_gap_in_atr_modelled": 0.549,
+          "n_worse_than_model": 0,
+          "n_missing_plan": 0,
+          "n_unknown_reason": 0
+        }
+      },
+      "stats": {
+        "left_on_table_rate_pct": null,
+        "completed": 0
+      },
+      "hold_winners_playbook": {
+        "when_left_on_table_repeats": "Use sell_fraction (e.g. 0.4\u20130.6) to bank, trail rest with structure (raise stop under higher lows / 50-DMA) while invalidators clear.",
+        "when_why_is_catalyst": "Leftover gains were news/event-driven after exit \u2014 before full exits, check earnings/catalyst calendar; prefer partials into known events.",
+        "when_why_is_technical": "Leftover gains were trend continuation without a clear new catalyst \u2014 if structure + invalidators still clear, trail instead of full close.",
+        "when_good_lock_in_repeats": "Full exits into strength then fade are fine \u2014 do not force trails when leadership is rolling over.",
+        "never": "Never ignore stops or invalidators just to 'let it run' \u2014 that is hope. Running winners means planned partials, not deleting risk."
+      }
+    }
+  },
+  "shadow_learning": {
+    "note": "SHADOW BOOK: ideas you skipped or watched but did not buy, marked forward. regret_miss = would have hit +10% target before stop \u2014 learn from false negatives. good_skip = would have hit stop \u2014 process worked. ADVISORY caution (not code-enforced): cite regrets when skipping similar setups; no validator rule reads this book.",
+    "binding": true,
+    "enforcement": "advisory_only",
+    "enforcement_note": "No validator rule reads the shadow book. `binding` means the sample is large enough to reason from, NOT that code will reject anything.",
+    "verdict_distribution": {
+      "good_skip": 33,
+      "regret_miss": 44
+    },
+    "verdict_skew_warning": null,
+    "measurement_quality": {
+      "sampled_only": 55,
+      "market_wide_attribution": 0,
+      "note": "sampled_only verdicts were resolved on sampled marks, not bar-verified; market_wide ones were explained by the tape rather than the entry bar. Both are weaker evidence than the verdict label reads as."
+    },
+    "n_open": 69,
+    "n_closed": 77,
+    "regret_misses": [
+      {
+        "ticker": "MU",
+        "source": "watchlist_hold",
+        "max_upside_pct": 11.54,
+        "reason": "Memory supercycle with the group's biggest forward-revenue inflection, but it sits in the decelerating semi complex and is a cyclical near peak earnings.",
+        "lesson": "MU: skipped (watchlist_hold) but would have reached +11.54% before stop \u2014 review bar / trigger discipline. (resolved on sampled marks only \u2014 not bar-verified.)",
+        "opened_at": "2026-07-31",
+        "closed_at": "2026-08-05"
+      },
+      {
+        "ticker": "GE",
+        "source": "watchlist_hold",
+        "max_upside_pct": 10.87,
+        "reason": "Clean beat-and-raise on 7/16 (EPS $2.02 vs $1.86 est, FY guide raised twice) that the market sold anyway -- want the base before I pay for the news.",
+        "lesson": "GE: skipped (watchlist_hold) but would have reached +10.87% before stop \u2014 review bar / trigger discipline. (resolved on sampled marks only \u2014 not bar-verified.)",
+        "opened_at": "2026-07-20",
+        "closed_at": "2026-08-05"
+      },
+      {
+        "ticker": "HPE",
+        "source": "watchlist_hold",
+        "max_upside_pct": 10.34,
+        "reason": "Genuinely strong AI-infrastructure growth story (40% YoY revenue, raised guidance, ~$6B backlog) caught in yesterday's sector-wide selloff, not a company-specific break.",
+        "lesson": "HPE: skipped (watchlist_hold) but would have reached +10.34% before stop \u2014 review bar / trigger discipline. (resolved on sampled marks only \u2014 not bar-verified.)",
+        "opened_at": "2026-07-16",
+        "closed_at": "2026-08-05"
+      },
+      {
+        "ticker": "HPE",
+        "source": "rejected_idea",
+        "max_upside_pct": 10.34,
+        "reason": "Same sector selloff as DELL despite genuinely strong fundamentals (40% rev growth, raised guidance); worth watching for a confirmed reclaim, not buying the bounce blind the day after a stop-out.",
+        "lesson": "HPE: skipped (rejected_idea) but would have reached +10.34% before stop \u2014 review bar / trigger discipline. (resolved on sampled marks only \u2014 not bar-verified.)",
+        "opened_at": "2026-07-16",
+        "closed_at": "2026-08-05"
+      },
+      {
+        "ticker": "SHOP",
+        "source": "watchlist_hold",
+        "max_upside_pct": 16.87,
+        "reason": "32% off its high, cheap vs growth, benefiting from the DoorDash/Shopify delivery tie-up news today.",
+        "lesson": "SHOP: skipped (watchlist_hold) but would have reached +16.87% before stop \u2014 review bar / trigger discipline. (resolved on sampled marks only \u2014 not bar-verified.)",
+        "opened_at": "2026-07-15",
+        "closed_at": "2026-08-05"
+      },
+      {
+        "ticker": "IBM",
+        "source": "watchlist_hold",
+        "max_upside_pct": 10.54,
+        "reason": "Software/AI-infrastructure story with meaningful analyst upside, but earnings is now just 3 trading days away (7/22) -- an immediate binary.",
+        "lesson": "IBM: skipped (watchlist_hold) but would have reached +10.54% before stop \u2014 review bar / trigger discipline. (resolved on sampled marks only \u2014 not bar-verified.)",
+        "opened_at": "2026-07-17",
+        "closed_at": "2026-08-04"
+      },
+      {
+        "ticker": "ARES",
+        "source": "watchlist_hold",
+        "max_upside_pct": 11.3,
+        "reason": "Record $36B fundraise and a strong Q2 print, tape-promoted via today's 8-K -- needs a technical scan before it's actionable.",
+        "lesson": "ARES: skipped (watchlist_hold) but would have reached +11.3% before stop \u2014 review bar / trigger discipline. (resolved on sampled marks only \u2014 not bar-verified.)",
+        "opened_at": "2026-08-03",
+        "closed_at": "2026-08-04"
+      },
+      {
+        "ticker": "TEAM",
+        "source": "rejected_idea",
+        "max_upside_pct": 11.4,
+        "reason": "Cheapest-vs-growth name in the contrarian lane, but flagged ai_at_risk and I do not have bundle evidence strong enough to rebut the 'AI coding agents shrink developer seats' bear case this run; also reports in 6 days. Watchlist pending a real rebuttal or post-print confirmation.",
+        "lesson": "TEAM: skipped (rejected_idea) but would have reached +11.4% before stop \u2014 review bar / trigger discipline. (resolved on sampled marks only \u2014 not bar-verified.)",
+        "opened_at": "2026-07-31",
+        "closed_at": "2026-08-04"
+      },
+      {
+        "ticker": "ZS",
+        "source": "watchlist_hold",
+        "max_upside_pct": 10.41,
+        "reason": "The only cybersecurity name that is not crowded - 56% off its high while its sector trades above target.",
+        "lesson": "ZS: skipped (watchlist_hold) but would have reached +10.41% before stop \u2014 review bar / trigger discipline. (resolved on sampled marks only \u2014 not bar-verified.)",
+        "opened_at": "2026-07-17",
+        "closed_at": "2026-08-04"
+      },
+      {
+        "ticker": "AXON",
+        "source": "rejected_idea",
+        "max_upside_pct": 10.4,
+        "reason": "Bear-cross MACD, lean-bearish options tilt (puts bid over calls), and notable discretionary insider selling ($33.4M/30 sales, zero buys, 2 new Form 3 filers) this cycle - technical and insider signal both deteriorating, no offsetting catalyst.",
+        "lesson": "AXON: skipped (rejected_idea) but would have reached +10.4% before stop \u2014 review bar / trigger discipline. (resolved on sampled marks only \u2014 not bar-verified.)",
+        "opened_at": "2026-07-16",
+        "closed_at": "2026-08-04"
+      }
+    ],
+    "good_skips": [
+      {
+        "ticker": "MOH",
+        "source": "watchlist_hold",
+        "max_drawdown_pct": -17.45,
+        "lesson": "MOH: skip (watchlist_hold) looked right \u2014 price hit stop zone (-17.45%); process held.",
+        "opened_at": "2026-07-20",
+        "verdict_attribution": "idiosyncratic",
+        "touch_source": "daily_bars"
+      },
+      {
+        "ticker": "CNC",
+        "source": "watchlist_hold",
+        "max_drawdown_pct": -14.7,
+        "lesson": "CNC: skip (watchlist_hold) looked right \u2014 price hit stop zone (-14.7%); process held.",
+        "opened_at": "2026-07-19",
+        "verdict_attribution": "idiosyncratic",
+        "touch_source": "daily_bars"
+      },
+      {
+        "ticker": "OKTA",
+        "source": "watchlist_hold",
+        "max_drawdown_pct": -12.81,
+        "lesson": "OKTA: skip (watchlist_hold) looked right \u2014 price hit stop zone (-12.81%); process held.",
+        "opened_at": "2026-07-16",
+        "verdict_attribution": "idiosyncratic",
+        "touch_source": "daily_bars"
+      },
+      {
+        "ticker": "OKTA",
+        "source": "rejected_idea",
+        "max_drawdown_pct": -12.81,
+        "lesson": "OKTA: skip (rejected_idea) looked right \u2014 price hit stop zone (-12.81%); process held.",
+        "opened_at": "2026-07-16",
+        "verdict_attribution": "idiosyncratic",
+        "touch_source": "daily_bars"
+      },
+      {
+        "ticker": "FTNT",
+        "source": "rejected_idea",
+        "max_drawdown_pct": -12.5,
+        "lesson": "FTNT: skip (rejected_idea) looked right \u2014 price hit stop zone (-12.5%); process held.",
+        "opened_at": "2026-07-15",
+        "verdict_attribution": "idiosyncratic",
+        "touch_source": "daily_bars"
+      },
+      {
+        "ticker": "PANW",
+        "source": "rejected_idea",
+        "max_drawdown_pct": -12.57,
+        "lesson": "PANW: skip (rejected_idea) looked right \u2014 price hit stop zone (-12.57%); process held.",
+        "opened_at": "2026-07-15",
+        "verdict_attribution": "idiosyncratic",
+        "touch_source": "daily_bars"
+      },
+      {
+        "ticker": "PANW",
+        "source": "watchlist_hold",
+        "max_drawdown_pct": -12.57,
+        "lesson": "PANW: skip (watchlist_hold) looked right \u2014 price hit stop zone (-12.57%); process held.",
+        "opened_at": "2026-07-15",
+        "verdict_attribution": "idiosyncratic",
+        "touch_source": "daily_bars"
+      },
+      {
+        "ticker": "TXN",
+        "source": "watchlist_hold",
+        "max_drawdown_pct": -13.37,
+        "lesson": "TXN: skip (watchlist_hold) looked right \u2014 price hit stop zone (-13.37%); process held. (resolved on sampled marks only \u2014 not bar-verified.)",
+        "opened_at": "2026-07-16",
+        "verdict_attribution": "unknown",
+        "touch_source": "sampled_only"
+      },
+      {
+        "ticker": "TXN",
+        "source": "rejected_idea",
+        "max_drawdown_pct": -13.37,
+        "lesson": "TXN: skip (rejected_idea) looked right \u2014 price hit stop zone (-13.37%); process held. (resolved on sampled marks only \u2014 not bar-verified.)",
+        "opened_at": "2026-07-16",
+        "verdict_attribution": "unknown",
+        "touch_source": "sampled_only"
+      },
+      {
+        "ticker": "MU",
+        "source": "rejected_idea",
+        "max_drawdown_pct": -12.05,
+        "lesson": "MU: skip (rejected_idea) looked right \u2014 price hit stop zone (-12.05%); process held. (resolved on sampled marks only \u2014 not bar-verified.)",
+        "opened_at": "2026-07-27",
+        "verdict_attribution": "unknown",
+        "touch_source": "sampled_only"
+      }
+    ],
+    "open_running_best": [
+      {
+        "ticker": "DASH",
+        "unrealized_pct": 9.3,
+        "source": "rejected_idea",
+        "opened_at": "2026-07-15",
+        "reason": "Cheap vs growth (fwd PE/growth 0.86) and analyst target +30.5%, but 2 of last 4 quarters missed EPS estimates by ~18% an"
+      },
+      {
+        "ticker": "DASH",
+        "unrealized_pct": 9.3,
+        "source": "watchlist_hold",
+        "opened_at": "2026-07-15",
+        "reason": "34% off its high with a 30% analyst target premium, but a mixed earnings history and a live competitive-threat headline "
+      },
+      {
+        "ticker": "GE",
+        "unrealized_pct": 8.6,
+        "source": "watchlist_hold",
+        "opened_at": "2026-07-30",
+        "reason": "Still in an intact uptrend structurally, but relative strength has not turned positive yet."
+      },
+      {
+        "ticker": "DDOG",
+        "unrealized_pct": 8.01,
+        "source": "rejected_idea",
+        "opened_at": "2026-07-30",
+        "reason": "The book's other named momentum-unwind leader, 364% sector P/E premium, and reports in 7 days -- too binary and too corr"
+      },
+      {
+        "ticker": "APH",
+        "unrealized_pct": 7.92,
+        "source": "rejected_idea",
+        "opened_at": "2026-07-31",
+        "reason": "+6.3% pop on a real Q2 beat, but ownership_flow shows institutions_selling_price_weak (distribution), 1m relative streng"
+      },
+      {
+        "ticker": "GE",
+        "unrealized_pct": 7.69,
+        "source": "watchlist_hold",
+        "opened_at": "2026-07-25",
+        "reason": "Beat-and-raised Q2 but the market keeps fading the bounce -- relative strength still negative."
+      },
+      {
+        "ticker": "S",
+        "unrealized_pct": 7.0,
+        "source": "rejected_idea",
+        "opened_at": "2026-07-19",
+        "reason": "Top relative-strength read on the board (+30.9% 1m) but +30% in a month is extension, not a base to chase; no execution "
+      },
+      {
+        "ticker": "KKR",
+        "unrealized_pct": 6.83,
+        "source": "rejected_idea",
+        "opened_at": "2026-07-30",
+        "reason": "Genuine Q2 beat and record monetization quarter (WSJ/Bloomberg covered), but the 6-month chart is a directionless $85-10"
+      }
+    ],
+    "stats": {
+      "n_closed": 77,
+      "regret_rate_pct": 57.1,
+      "good_skip_rate_pct": 42.9,
+      "n_market_wide": 0,
+      "n_idiosyncratic": 30,
+      "n_unknown_attribution": 47,
+      "idiosyncratic_regret_rate_pct": 30.0,
+      "idiosyncratic_good_skip_rate_pct": 70.0,
+      "n_bar_verified": 22,
+      "note": "idiosyncratic_* strip out shadows whose excursion the benchmark already explains; those say nothing about where the entry bar is set."
+    }
+  },
+  "adopted_lessons": {
+    "note": "ADOPTED LESSONS from the weekly pipeline (improvement notes \u2192 durable text). Treat as standing process commitments until a later review supersedes them. hard_pending items need owner/code \u2014 do not invent validator changes yourself. Superseded lessons are omitted.",
+    "lessons": [
+      {
+        "id": "LP-4566902391",
+        "kind": "soft_process",
+        "text": "** Two process gaps cost research time today. First, candlestick charts did not render this run \u2014 `data/charts/` was empty even though the gather log said \"rendering candlestick charts...\"; the chart step appears to depend on the same blocked live yfinance feed rather than falling back to the relay bundle the way the rest of the pipeline does, so I judged entry geometry on numeric indicators alone with no visual confirmation of the actual price bars. Second, the watchlist-trigger-alert logic flagged AMD as \"price trigger reached\" when the price was actually 3.9% away from my stated $555 level ",
+        "adopted_at": "2026-07-19T05:26:56.324497+00:00"
+      },
+      {
+        "id": "LP-8200625986",
+        "kind": "soft_process",
+        "text": "** For non-focus scan names that surface as genuine top candidates (MU this run \u2014 #2 EPS revision, cheapest-in-group, strong-buy), the bundle gives me the numeric row but withholds the chart, filing texts, options-implied move, and deep fundamentals I need to actually underwrite an entry \u2014 so a legitimately compelling name gets defaulted to the watchlist partly for lack of data rather than lack of merit. The scanner should promote the top 1\u20132 non-focus setups (by swing_setup_score or upward-revision rank) into the focus set each run so they receive a chart + deep bundle, letting me deep-resear",
+        "adopted_at": "2026-07-19T05:26:56.324496+00:00"
+      },
+      {
+        "id": "LP-2555191189",
+        "kind": "soft_lesson",
+        "text": "Daily study session produced no machine-readable lesson - prompt/parse needs attention.",
+        "adopted_at": "2026-07-19T05:26:56.324494+00:00"
+      },
+      {
+        "id": "LP-1344551419",
+        "kind": "soft_lesson",
+        "text": "Daily study (technical_analysis): Stop distance vs. holding horizon: the \u221at noise band, and why entry location (not stop width) is the binding lever on multi-week swings - A stop has one job: fire on evidence the thesis broke, not on ordinary noise. Kaminski & Lo (SIFR RR 63, 2008; J. Financial Markets 18(C):234-254, 2014) prove that under a random walk, stop-loss rules",
+        "adopted_at": "2026-07-19T05:26:56.324493+00:00"
+      },
+      {
+        "id": "LP-2207714842",
+        "kind": "soft_process",
+        "text": "** The single highest-value fix this run is upstream of my judgment: the orchestrator handed me a portfolio reading `$0 equity / $0 cash / no positions` with no `data_quality` or `stale_data_notice` flag raised, even though the trade history mathematically implies ~$9,820 should exist. A cheap deterministic guard \u2014 \"if broker equity is ~$0 but closed-trade math implies non-trivial cash, flag `broker_sync_suspect` and set `allows_new_buys: false` with a reason\" \u2014 would prevent a future run from being invited to trade (this was even a trigger-driven run) against an account it cannot possibly fun",
+        "adopted_at": "2026-07-19T05:26:56.324492+00:00"
+      },
+      {
+        "id": "LP-0693555695",
+        "kind": "soft_lesson",
+        "text": "** The deterministic trigger check fired on AMD purely because the *price* touched the parsed $500 level, but my published `would_buy_at` was a compound condition \u2014 *post-event* confirmation plus a 50-DMA reclaim, explicitly excluding a pre-event dip. The result is a full event-driven run spun up for a setup that was never actually live, five days before its own catalyst. The trigger parser could be materially sharper if it also parsed an *event/date gate* from the trigger text (e.g. \"after 7/22-23\") and suppressed or down-weighted the alert until that date passes, rather than firing on the pr",
+        "adopted_at": "2026-07-19T05:26:56.324365+00:00"
+      }
+    ],
+    "hard_pending": [
+      {
+        "id": "LP-2559767068",
+        "kind": "hard_proposal",
+        "title": "Weekly self-review: Last Friday's stated change was to get the insider Form-4 feed pre-classified into sponsor/10b5-1 vs",
+        "target": "needs_owner_code_change"
+      },
+      {
+        "id": "LP-7114964019",
+        "kind": "data_engineering",
+        "title": "** Two concrete data defects cost me real research time and nearly cost me a bad trade.",
+        "target": "needs_owner_code_change"
+      },
+      {
+        "id": "LP-6888651111",
+        "kind": "data_engineering",
+        "title": "`gap_analysis` reports a gap's size, direction, and whether it later filled, but not how the session actually closed rel",
+        "target": "needs_owner_code_change"
+      },
+      {
+        "id": "LP-0947918636",
+        "kind": "hard_proposal",
+        "title": "Process gate: rejected_ideas_need_2_got_0; full_run_no_trade_missing_structured_rejections",
+        "target": "needs_owner_code_change"
+      },
+      {
+        "id": "LP-6847054261",
+        "kind": "data_engineering",
+        "title": "The relay bundle's intraday price for AMD (last_close $548.81, +2.7%) diverged meaningfully from independently-verified ",
+        "target": "needs_owner_code_change"
+      },
+      {
+        "id": "LP-9562851978",
+        "kind": "data_engineering",
+        "title": "** The digest surfaced pre-classified insider signals (e.g. HOOD `insider_buying`, DELL `notable_discretionary_selling`)",
+        "target": "needs_owner_code_change"
+      },
+      {
+        "id": "LP-2302703715",
+        "kind": "data_engineering",
+        "title": "Weekly universe review: added ['MELI', 'NU', 'PSTG', 'RBRK'], removed ['INTC', 'IREN', 'IRM', 'MDB', 'NXPI', 'ON'] (108 ",
+        "target": "needs_owner_code_change"
+      },
+      {
+        "id": "LP-9502015636",
+        "kind": "data_engineering",
+        "title": "** This run's news feed surfaced a materially market-moving geopolitical headline (U.S.-Iran attacks) only as a raw tick",
+        "target": "needs_owner_code_change"
+      }
+    ],
+    "n_adopted": 6
+  }
+}
