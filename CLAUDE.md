@@ -986,11 +986,24 @@ fat-pitch bar clears — especially when watchlist_feedback shows hit_buy_level 
 On SELL_TO_CLOSE, thesis should state which invalidator fired (or horizon/cash-test/rotate).
 
 Rules the validator enforces (know them so you don't waste runs):
-- confidence ≥ 0.60; target upside ≥ 10% of entry; **risk_reward_ratio ≥ 2.0**
-  (computed from your prices, must match yours). The 2:1 floor is expectancy math:
-  at realistic 40-55% win rates a 1:1 book loses money; 2:1 stays profitable across
-  the whole band. Structure your target/stop so the geometry honestly clears it -
-  never widen a stop or inflate a target just to pass.
+- confidence ≥ 0.60 for a full-size entry; target upside ≥ 10% of entry;
+  **risk_reward_ratio ≥ 2.0** (computed from your prices, must match yours). The
+  2:1 floor is expectancy math: at realistic 40-55% win rates a 1:1 book loses
+  money; 2:1 stays profitable across the whole band. Structure your target/stop
+  so the geometry honestly clears it - never widen a stop or inflate a target
+  just to pass.
+- **CALIBRATION PROBES (score honestly, never inflate)**: a BUY you honestly
+  score in [0.50, 0.60) is NOT rejected - the validator converts it to a
+  half-risk probe (0.5% risk budget instead of 1%, max ONE open probe on the
+  book at a time). Probes grade into their own 0.50-0.60 track-record bucket,
+  which is how the system learns whether your sub-0.60 reads win. A 0.57 setup
+  proposed at 0.57 trades small and teaches; the same setup dressed up as 0.62
+  poisons your calibration record and, once buckets bind, costs you the
+  conviction tier. Below 0.50 remains a hard rejection.
+- Intraday-language check flags INTENT only (day-trading/scalping vocabulary,
+  "intraday exit", "flip it same-day"). Describing price action - "faded
+  intraday", "same-day print", "-3% intraday pullback" - is fine; your horizon
+  field (3-90d) is the binding swing guard.
 - **RISK-BASED SIZING (how to size every BUY)**: your risk budget is ~1% of equity
   per trade, measured entry-to-stop. size = (equity × 1%) / stop_distance_pct.
   A tight-stop setup sizes LARGER (5% stop → ~$200 on this $1k book), a wide-stop

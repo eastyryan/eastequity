@@ -252,10 +252,22 @@ def _check_swing_rules(p: dict, cfg: dict, reasons: list[str]) -> None:
                 f"horizon_out_of_swing_range:{horizon}d "
                 f"(allowed {sw['min_holding_horizon_days']}-{sw['max_holding_horizon_days']}d)")
     if sw["reject_intraday_language"]:
+        # Bare "intraday"/"same-day" are how price action gets DESCRIBED —
+        # CLAUDE.md's own prose says "sold intraday" and "same-day print" — and
+        # on 2026-08-05 the substring match killed a validated 45-day DXCM entry
+        # (run 1d39ec) for the phrase "digesting -3.6% intraday today". The
+        # holding-horizon range above is the binding guard against intraday
+        # strategies; this check only rejects language that states intraday
+        # INTENT: day-trading/scalping vocabulary, or intraday/same-day welded
+        # to a trade/exit verb.
         text = str(p.get("thesis", "")).lower()
-        for term in ("day trade", "intraday", "scalp", "same-day"):
-            if term in text:
-                reasons.append(f"intraday_language_in_thesis:'{term}'")
+        intent = re.search(
+            r"\b(?:day[\s-]?trad(?:e|es|ing)|scalp(?:s|ed|ing)?\b"  # not "scalpel"
+            r"|(?:intraday|same[\s-]day)[\s-]+(?:trade|trades|trading|exit|entry-to-exit|flip|round[\s-]trip)"
+            r"|(?:trade|exit|flip|in[\s-]and[\s-]out)[\s-]+(?:it[\s-]+)?(?:intraday|same[\s-]day))",
+            text)
+        if intent:
+            reasons.append(f"intraday_language_in_thesis:'{intent.group(0)}'")
 
 
 def _check_prices_and_rr(p: dict, cfg: dict, reasons: list[str]) -> None:
@@ -376,8 +388,45 @@ def _check_confidence(p: dict, cfg: dict, reasons: list[str]) -> None:
         return
     if not isinstance(conf, (int, float)) or not 0 <= conf <= 1:
         reasons.append("confidence_not_in_0_1")
-    elif conf < cfg["trade_quality_requirements"]["min_confidence"]:
-        reasons.append(f"confidence_too_low:{conf} < {cfg['trade_quality_requirements']['min_confidence']}")
+        return
+    floor = cfg["trade_quality_requirements"]["min_confidence"]
+    if conf >= floor:
+        return
+    probe = cfg["trade_quality_requirements"].get("calibration_probe") or {}
+    if probe.get("enabled") and conf >= float(probe.get("min_confidence", 0.5)):
+        # Probe lane: an honestly-scored sub-floor BUY becomes a half-risk
+        # calibration probe instead of a rejection. The hard floor could never
+        # learn whether 0.50-0.60 setups win because it never let one trade
+        # (HPE 2026-08-05, 0.57 vs 0.60, is the motivating kill) — and its only
+        # lasting lesson to the proposer was that an honest score costs the
+        # trade while 0.62 sails through. Every other gate (RR>=2, geometry,
+        # heat, earnings, risk desk) still applies at full strength; the risk
+        # BUDGET is scaled down in _risk_budget_pct and the book-level probe
+        # cap is enforced in _check_probe_limits.
+        p["calibration_probe"] = True
+        return
+    reasons.append(f"confidence_too_low:{conf} < {floor}")
+
+
+def _check_probe_limits(p: dict, cfg: dict, portfolio: dict,
+                        probes_this_batch: int, reasons: list[str]) -> None:
+    """A probe is a measurement instrument, not a lower bar: the book carries at
+    most max_open_probes sub-floor positions at once (the calibration_probe
+    stamp is persisted onto the position's plan at fill — see brain_io's plan
+    construction), counting probes accepted earlier in this batch."""
+    if not p.get("calibration_probe"):
+        return
+    probe = cfg["trade_quality_requirements"].get("calibration_probe") or {}
+    cap = int(probe.get("max_open_probes", 1))
+    open_probes = sum(
+        1 for pos in portfolio.get("positions") or []
+        if isinstance(pos, dict) and isinstance(pos.get("plan"), dict)
+        and pos["plan"].get("calibration_probe"))
+    if open_probes + probes_this_batch >= cap:
+        reasons.append(
+            f"probe_cap_reached:{open_probes} open + {probes_this_batch} this "
+            f"batch >= {cap} — sub-{cfg['trade_quality_requirements']['min_confidence']} "
+            f"confidence entries wait until a probe closes")
 
 
 def _check_calibration_gate(p: dict, cfg: dict, sector_map: dict, reasons: list[str]) -> None:
@@ -519,6 +568,11 @@ def _risk_budget_pct(p: dict, cfg: dict) -> float:
     halves it (applied by the caller via market_context)."""
     rbs = cfg["position_sizing"].get("risk_based_sizing") or {}
     base = float(rbs.get("risk_per_trade_pct", 0.01))
+    if p.get("calibration_probe"):
+        # Sub-floor confidence trades half the budget; a probe can never reach
+        # the conviction tier (its confidence is below even the base floor).
+        probe = cfg["trade_quality_requirements"].get("calibration_probe") or {}
+        return base * float(probe.get("risk_scale", 0.5))
     tier = cfg["position_sizing"].get("conviction_tier") or {}
     tier_risk = tier.get("risk_per_trade_pct")
     if isinstance(tier_risk, (int, float)) and tier_risk > base:
@@ -1718,6 +1772,7 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
     # batches both stay under swing_rules.max_new_positions_per_day.
     already_today = _count_filled_buys_today(portfolio)
     buys_this_batch = 0
+    probes_this_batch = 0     # calibration probes accepted earlier in this batch
     batch_risk = 0.0          # committed risk accepted earlier in this batch
     batch_theme_risk: dict[str, float] = {}
     for p in proposals:
@@ -1732,6 +1787,7 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
         _check_sell_fraction(p, reasons)
         _check_sell_position(p, portfolio, reasons)
         _check_confidence(p, cfg, reasons)
+        _check_probe_limits(p, cfg, portfolio, probes_this_batch, reasons)
         _check_calibration_gate(p, cfg, sector_map, reasons)
         _check_regime_gate(p, cfg, market_context or {}, reasons)
         _check_earnings_window(p, cfg, market_context or {}, reasons)
@@ -1768,6 +1824,8 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
         approved = not reasons
         if approved and str(p.get("action", "")).upper() == "BUY":
             batch_risk += proposed_risk
+            if p.get("calibration_probe"):
+                probes_this_batch += 1
             d = str(p.get("demand_driver") or "").strip().lower()
             if d:
                 batch_theme_risk[d] = batch_theme_risk.get(d, 0.0) + proposed_risk

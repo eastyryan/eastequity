@@ -869,7 +869,11 @@ def compute_calibration(closed: list[dict]) -> dict | None:
     graded = [t for t in closed if isinstance(t.get("confidence"), (int, float))]
     if not graded:
         return None
-    buckets = {"0.60-0.69": (0.60, 0.70), "0.70-0.79": (0.70, 0.80), "0.80+": (0.80, 1.01)}
+    # 0.50-0.59 exists for calibration-probe fills (autonomy_config
+    # trade_quality_requirements.calibration_probe): the probes' whole purpose
+    # is to be measured, so they must not fall out of the published table.
+    buckets = {"0.50-0.59": (0.50, 0.60), "0.60-0.69": (0.60, 0.70),
+               "0.70-0.79": (0.70, 0.80), "0.80+": (0.80, 1.01)}
     out = {}
     for label, (lo, hi) in buckets.items():
         rows = [t for t in graded if lo <= t["confidence"] < hi]

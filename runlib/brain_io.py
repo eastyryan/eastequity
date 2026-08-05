@@ -724,6 +724,17 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
         "trade fails, state it plainly, and veto when you find one. A trade that "
         "survives a genuine attempt to kill it is worth more than one that was "
         "never attacked. If the case is merely adequate, that is a veto.\n"
+        # PROBE LANE (2026-08-05): stated confidence under 0.60 no longer dies at
+        # the validator — it executes as a half-risk calibration probe (max one
+        # open). Without this carve-out the desk's "merely adequate = veto" rule
+        # would kill every probe before the lane could gather a single fill.
+        "EXCEPTION — calibration probes: a BUY whose stated confidence is below "
+        "0.60 will execute as a HALF-RISK probe position (validator-enforced), "
+        "not a full entry. Apply the same kill checklist — fabricated or "
+        "unsourced claims, vague falsifiers, bad geometry, theme stacking are "
+        "vetoes at any confidence — but do NOT veto a probe merely because the "
+        "case is modest; modest conviction honestly stated is what the probe "
+        "lane exists to measure.\n"
         # REPAIRABILITY (2026-08-03). 12 of 17 vetoes in the first month were
         # killed by ONE bad citation, not by a bad trade: BKR 07-28 said "Stifel
         # raised its PT to $75" when the bundle carried "TD Cowen ... $78" three
@@ -1023,10 +1034,13 @@ def execute(approved: list[validator.ValidationResult], context: dict,
                 pos_before = None
         plan = None
         if p["action"] == "BUY":
+            # calibration_probe rides along so the position itself records it —
+            # validator._check_probe_limits counts open probes from plans, and
+            # the exit-grade sweep buckets the fill under 0.50-0.60.
             plan = {k: p.get(k) for k in (
                 "stop_loss", "target_price", "holding_horizon_days",
                 "entry_price_max", "confidence", "demand_driver",
-                "thesis_invalidators")}
+                "thesis_invalidators", "calibration_probe")}
         elif p["action"] == "SELL_TO_CLOSE" and isinstance(pos_before, dict):
             # CARRY THE ENTRY PLAN ONTO A DISCRETIONARY EXIT (2026-08-03). This
             # branch did not exist, so every discretionary sell placed with

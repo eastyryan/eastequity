@@ -106,6 +106,8 @@ def _confidence_bucket(conf: float | None) -> str:
         return "0.65-0.70"
     if conf >= 0.60:
         return "0.60-0.65"
+    if conf >= 0.50:
+        return "0.50-0.60"  # calibration-probe lane fills (see autonomy_config)
     return "unknown"
 
 
@@ -199,7 +201,8 @@ def build_performance_breakdown(closed_trades: list[dict]) -> dict:
         "min_trades_for_rate": MIN_BUCKET_TRADES,
         "by_sector": _summarize(by_sector),
         "by_confidence": _summarize(
-            by_confidence, ["0.60-0.65", "0.65-0.70", "0.70+", "unknown"]),
+            by_confidence,
+            ["0.50-0.60", "0.60-0.65", "0.65-0.70", "0.70+", "unknown"]),
         "by_holding_period": _summarize(
             by_holding, [b[0] for b in _HOLDING_BUCKETS]),
         "by_verdict": _summarize(by_verdict),
