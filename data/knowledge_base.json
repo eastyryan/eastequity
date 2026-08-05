@@ -402,7 +402,33 @@
       ],
       "times_cited": 2,
       "last_cited": "2026-08-05T17:28:21.225335+00:00"
+    },
+    {
+      "id": "KB-8891367109",
+      "discipline": "technical_analysis",
+      "topic": "Anchored VWAP as an auditable reaction level, not a directional signal: where to anchor (event/swing-high/swing-low), the trapped-buyer cost-basis mechanism, and using it for stop/target/entry geometr",
+      "summary": "Anchored VWAP (AVWAP, pioneered by Brian Shannon) is the volume-weighted average price since a CHOSEN event rather than since the session open, so it reads as the average cost basis of everyone who transacted from that anchor onward. The entire craft is anchor SELECTION: the good anchors are genuinely meaningful events \u2014 the earnings-gap candle, a major-volume/breakout day, a significant swing high, a significant swing low, an IPO or major-news bar \u2014 which is exactly what my bundle's anchored_vwap.anchor_reason already encodes deterministically (breakout_above_20d_high, else the highest-volume session). The reason a well-anchored line acts as support/resistance is participant psychology plus institutional benchmarking: when price sits below a post-earnings AVWAP the late buyers are underwater and become persistent overhead supply that sells into rallies to get back to flat, and when price returns to the AVWAP those same buyers reach breakeven \u2014 so the level is where the largest cohort's cost basis concentrates. The mechanism is self-reinforcing because institutions verifiably benchmark executions to VWAP (Biais, Glosten & Spatt 2005; VWAP is shown to be the optimal execution strategy for a risk-neutral trader in the volume-augmented Almgren-Chriss model, arxiv 1408.6118 \u2014 both reported via secondary summaries, I could not fetch the primaries due to socket errors). Crucially, every serious source agrees AVWAP is NOT predictive of DIRECTION \u2014 'it describes where value was estab",
+      "key_points": [
+        "AVWAP = average cost basis since a chosen event; the anchor IS the edge \u2014 anchor to earnings-gap candles, major-volume/breakout days, and significant swing highs/lows, not arbitrary dates.",
+        "It works via trapped-buyer psychology + verifiable institutional VWAP benchmarking: below a post-event AVWAP = underwater buyers = overhead supply; a reclaim/hold = breakeven relief and a change of character.",
+        "NOT a directional signal \u2014 literature ('describes value, not future price') and my own 12-year ablation (above -0.12pp / below +0.06pp) agree. Never cite 'above AVWAP = constructive' or reject a setup for being below it.",
+        "What survives is GEOMETRY: use the AVWAP as an auditable reaction level for entries (retest/hold of a rising swing-low AVWAP), stops (below the reversal candle low or a decisive close below the AVWAP), and targets (just below a declining swing-high AVWAP = overhead supply).",
+        "VWAP pinch = converging swing-high and swing-low AVWAPs = compression/decision zone; between two AVWAPs is 'no man's land' where the edge dissolves.",
+        "Confluence multiplies reliability: an event AVWAP stacking with a prior high and the daily/weekly VWAP is a much stronger level than any single line.",
+        "Limitations to respect: subjective anchor selection, unreliable on low-volume/illiquid names, whipsaws when flat, and thin public backtest evidence (30-trade samples)."
+      ],
+      "how_to_apply": "Read anchored_vwap.pct_vs_anchored_vwap and anchor_reason on every focus name and treat the AVWAP as a NAMED level for stop/target geometry \u2014 the same use the bundle already sanctions ('auditability is what survives') \u2014 never as a directional buy/avoid input, so do not credit 'above AVWAP' as constructive nor strike a setup for being below it. On an episodic-pivot / earnings-gap name (KB-3704904010), anchor mentally to the gap candle: price below that AVWAP means trapped buyers overhead, and a reclaim-and-hold is the change-of-character to promote on; use the gap-day low or the AVWAP as the structural stop reference that clears the ATR/expected-move floor. For a pullback-continuation entry (KB-6241168493), a rising swing-low AVWAP is a concrete support target for the no-supply dip \u2014 enter on the hold/reaction, stop just below it (or below the reversal candle low), which by construction sits beyond the \u221at noise band (KB-2388376284). For target placement (KB-6231300499), set target_price just below a declining swing-high AVWAP (overhead supply) and confirm 2:1 clears honestly from there; prefer setups where the AVWAP stacks in confluence with a prior high or the weekly VWAP, and down",
+      "sources": [
+        "https://trendspider.com/learning-center/anchored-vwap-trading-strategies/ (Anchored VWAP: What It Is, How It Works \u2014 anchor points, confluence, limitations)",
+        "https://www.tradingsim.com/blog/anchored-vwap-strategies (Anchored VWAP Strategies \u2014 Shannon method, swing anchors)",
+        "https://mastertrader.com/vwap-anchored-vwap-explained-removing-the-mystery/ (VWAP & Anchored VWAP Explained)",
+        "https://forextester.com/blog/anchored-vwap/ (AVWAP Complete Guide 2026 \u2014 trapped-buyer cost-basis mechanism)",
+        "https://orderflowlabs.com/blogs/theblog/what-is-vwap ('describes value not future price'; no-man's-land between AVWAPs)",
+        "Biais, Glosten & Spatt (2005) on VWAP as an observable/verifiable execution benchmark \u2014 reported via secondary summaries"
+      ],
+      "learned_at": "2026-08-05T23:05:27.435922+00:00",
+      "run_id": "20260805-62913c"
     }
   ],
-  "updated_at": "2026-08-05T20:37:46.623457+00:00"
+  "updated_at": "2026-08-05T23:05:27.435947+00:00"
 }
