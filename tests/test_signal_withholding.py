@@ -40,7 +40,10 @@ def test_the_gap_read_alone_no_longer_promotes_a_name():
     revision leg, which is the untested-but-theoretically-supported half.
     """
     import inspect
-    src = inspect.getsource(US.scan_universe)
+    # 2026-08-06: scan_universe was decomposed into stage functions; the flag
+    # logic moved verbatim into _enrich_focus_rows. Pin it there — the intent
+    # (no promotion without the revision leg) is unchanged.
+    src = inspect.getsource(US._enrich_focus_rows)
     assert 'r["post_earnings_drift_candidate"] = bool(ear_flag) and rev_dir == "up"' in src, \
         "the gap read can still promote a name on its own"
 
@@ -59,7 +62,9 @@ def test_the_reaction_read_is_still_produced_as_colour():
 def test_supplier_pullback_rows_carry_the_lookahead_caveat():
     """The lane keeps shipping as an attention router, with its record attached."""
     import inspect
-    src = inspect.getsource(US.scan_universe)
+    # 2026-08-06: the lane stamps moved verbatim into _select_lanes with the
+    # scan_universe decomposition; same guard, new home.
+    src = inspect.getsource(US._select_lanes)
     assert 'r["lane_validation"]' in src
     assert "lookahead" in src.lower()
     assert "ATTENTION ROUTER" in src

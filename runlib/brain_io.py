@@ -897,6 +897,49 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
 # ---------------------------------------------------------------------------
 # Step 4 — Parse structured proposals out of the brain's response
 # ---------------------------------------------------------------------------
+# Documented OPTIONAL proposal-level keys the deterministic layer reads off a
+# proposal without requiring them (grep evidence, 2026-08-05):
+#   calibration_exception  tools/calibration_gate.py — losing-bucket override text
+#   conviction_case        validator._risk_budget_pct / calibration gate — tier case
+#   earnings_case          validator._check_earnings_window — trade-the-print case
+#   exit_reason            brain_io.execute — discretionary-exit autopsy reason
+#   instrument             validator._check_long_only — defaults "EQUITY" if absent
+#   sell_fraction          validator._check_sell_fraction / execute — partial exits
+#
+# CONTRACT (2026-08-05): any field the validator layer reads off a proposal
+# MUST be listed either in autonomy_config's
+# trade_quality_requirements.required_proposal_fields / required_sell_fields
+# (when required) or in OPTIONAL_PROPOSAL_FIELDS here (when optional).
+# parse_proposals derives its pass-through whitelist from that UNION, so a
+# schema field registered in either place can never again silently vanish
+# between the brain's JSON block and the validator — the purely hand-maintained
+# whitelist is what dropped seat_reviews/factor_response until 2d0e46e and
+# caused the 07-30 process_gate_blocked incident.
+OPTIONAL_PROPOSAL_FIELDS = (
+    "calibration_exception",
+    "conviction_case",
+    "earnings_case",
+    "exit_reason",
+    "instrument",
+    "sell_fraction",
+)
+
+
+def _allowed_output_keys() -> set:
+    """Schema-derived whitelist: config's required proposal/sell fields UNION
+    OPTIONAL_PROPOSAL_FIELDS (contract above). Config is read via
+    validator.load_config() at call time — the same fail-soft pattern
+    llm_settings uses — so a config problem costs only the derived keys, never
+    the parse (the documented optional tuple still passes through)."""
+    try:
+        q = validator.load_config().get("trade_quality_requirements") or {}
+        required = (list(q.get("required_proposal_fields") or [])
+                    + list(q.get("required_sell_fields") or []))
+    except Exception:
+        required = []
+    return set(required) | set(OPTIONAL_PROPOSAL_FIELDS)
+
+
 def parse_proposals(response: str) -> dict:
     """Extract the structured output block: proposals, commentary, watchlist. Accepts a
     fenced ```json block or, as a fallback, a bare JSON object containing a 'proposals'
@@ -915,7 +958,7 @@ def parse_proposals(response: str) -> dict:
                 def _dicts(v, cap=None):
                     out = [x for x in v if isinstance(x, dict)] if isinstance(v, list) else []
                     return out[:cap] if cap else out
-                return {
+                out = {
                     "proposals": _dicts(data["proposals"]),
                     "no_trade_reason": data.get("no_trade_reason"),
                     "commentary": data.get("commentary"),
@@ -926,15 +969,29 @@ def parse_proposals(response: str) -> dict:
                     "universe_candidates": _dicts(data.get("universe_candidates"), 5),
                     "seat_reviews": data.get("seat_reviews"),
                     "factor_response": data.get("factor_response"),
-                    # This dict is a WHITELIST: a key absent here is silently
-                    # dropped no matter what the brain wrote. That is exactly how
-                    # seat_reviews/factor_response went missing until 2d0e46e on
-                    # 07-30, which killed the CRWD and ITW proposals that day as
-                    # process_gate_blocked. Any new structured field must be
-                    # registered here the moment it is added to the schema.
+                    # This dict is still a whitelist, but no longer the ONLY
+                    # one (2026-08-05): it hand-carries the documented
+                    # top-level output keys because each needs its own shape
+                    # guard or cap. Every OTHER key the validator layer reads
+                    # is derived from the schema by _allowed_output_keys()
+                    # (config required lists + OPTIONAL_PROPOSAL_FIELDS — see
+                    # the contract above) and passed through below, so the
+                    # silent-drop class that took out seat_reviews/
+                    # factor_response until 2d0e46e (07-30: CRWD and ITW died
+                    # as process_gate_blocked) cannot recur for a registered
+                    # field. A new top-level key with its own shape guard
+                    # still belongs HERE; a validator-read field belongs in
+                    # config's required lists or OPTIONAL_PROPOSAL_FIELDS.
                     "trigger_reviews": data.get("trigger_reviews"),
                     "waiting_for": data.get("waiting_for"),
                 }
+                # Schema-derived pass-through: keys the validator layer knows
+                # about survive parsing verbatim when the brain wrote them.
+                # Sorted so emitted key order is deterministic run to run.
+                for k in sorted(_allowed_output_keys() - set(out)):
+                    if k in data:
+                        out[k] = data[k]
+                return out
         except json.JSONDecodeError:
             continue
     # Graceful public-facing fallback (this text can surface on the dashboard).

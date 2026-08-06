@@ -765,7 +765,10 @@ Beyond filings/13F/news, every run now includes:
   or ignore FCF on mature compounders.
 - **stop_engineering** - the ENFORCED minimum stop distance per focus name
   (min_stop_distance_pct), precomputed from ATR and the options expected move. Place your
-  stop_loss AT LEAST this far below entry or the validator rejects the proposal. It is a
+  stop_loss AT LEAST this far below entry or the validator rejects the proposal — enforced
+  when the run has volatility data for the name; a name with no figure skips the coded
+  floor (fail-open, see the noise-band rule under validator rules), so engineer the stop
+  correctly regardless. It is a
   floor, not a target: for a swing hold aim wider so a normal week does not stop you out.
   `tradeable: false` = the name's noise exceeds the 15% stop cap; skip it.
 - **TRAILING STOPS (chandelier, code-enforced)** - every holding's stop now RATCHETS UP
@@ -1055,9 +1058,15 @@ Rules the validator enforces (know them so you don't waste runs):
   - **PORTFOLIO BETA + STRESS**: the projected book (including your proposal) is
     checked against a beta ceiling and named shock scenarios. Losses there are NOT
     floored at your stops, because a shock that big is one where stops gap. Rejections
-    read `portfolio_beta_cap_exceeded` / `stress_scenario_loss_exceeded`. Both fail
-    CLOSED when the correlation feed is missing a name, so cite `portfolio_risk`
-    numbers rather than assuming they are present.
+    read `portfolio_beta_cap_exceeded` / `stress_scenario_loss_exceeded`. Missing
+    data is handled per input, not uniformly failed closed (accuracy pass
+    2026-08-05): the beta cap fails CLOSED only for a HELD name with no beta
+    (`portfolio_beta_unverifiable`); an unknown beta on the name you are
+    PROPOSING is assumed at the 1.6 ceiling (see the beta bullet above); and an
+    entirely absent correlation feed skips the beta check. The stress check
+    substitutes beta 1.0 for a missing beta (driver shocks still apply) and
+    never rejects on missing data alone. Cite `portfolio_risk` numbers rather
+    than assuming they are present.
 - **PROCESS GATES NOW BLOCK**: `factor_response` (when factor_map sets
   requires_factor_response) and `seat_reviews` (when the book is non-empty on a
   trading depth) are no longer journaled-and-forgotten. Missing or weak ones REJECT
@@ -1073,14 +1082,22 @@ Rules the validator enforces (know them so you don't waste runs):
   `stop_engineering.floors[TICKER].min_stop_distance_pct` below entry - the larger of
   ~1×ATR and ½ the options expected move. A tighter stop is rejected as
   `stop_inside_noise_band`; it would exit you on an ordinary day's wiggle, not a broken
-  thesis. This floor is a MINIMUM - for a multi-week swing hold you should aim wider
+  thesis. ENFORCED WHEN VOLATILITY DATA IS PRESENT for the ticker:
+  `book_risk.require_volatility_data` is false (staged-rollout default), so a name
+  absent from the run's volatility map SKIPS this check silently (fail-open) - the
+  price-geometry and 15% max-stop rules still apply, but do not treat the noise-band
+  floor as a backstop that always fires. This floor is a MINIMUM - for a multi-week swing hold you should aim wider
   (~1.5-2×ATR, or clearly beyond the expected move). If a name's floor exceeds the 15%
   stop cap (`tradeable: false`) it is too volatile for a valid swing stop - do not propose it.
 - position_size_usd ≤ configured cap; max open positions and exposure caps
-- holding_horizon_days in [3, 90]; ticker must be in `data/universe.json`
-- **minimum $1B market cap** on any BUY - sub-billion names are rejected at validation,
-  blocked from entering the universe, and carry delisting/manipulation risk this system
-  does not price. Do not propose them.
+- holding_horizon_days in [3, 90]; ticker must be in `data/universe.json` (both are
+  BUY-only checks - a SELL on a holding later dropped from the universe is never blocked)
+- **minimum $1B market cap** on any BUY - sub-billion names carry delisting/manipulation
+  risk this system does not price, and are blocked from entering the universe. Do not
+  propose them. ENFORCED WHEN A MARKET-CAP FIGURE RESOLVES for the name:
+  `book_risk.require_market_cap_data` is false (staged-rollout default), so a BUY whose
+  cap cannot be resolved this run passes the floor silently (fail-open) - the weekly
+  universe review is the backstop there, not the validator.
 - the target is a milestone, not a tripwire: holding past it is allowed and encouraged
   while your re-research says the thesis has more to give
 

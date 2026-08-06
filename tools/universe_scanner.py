@@ -736,24 +736,25 @@ def earnings_reaction_read(days_since_earnings, gap_analysis,
     return bool(flag), "{}_revisions_{}".format(reaction, rev)
 
 
-def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
-                 weekly: bool = False) -> dict:
-    """Scan the trading universe (or a ticker subset) for swing setups.
+# ---------------------------------------------------------------------------
+# scan_universe stages (extracted 2026-08-05)
+# ---------------------------------------------------------------------------
+# WHY: scan_universe had grown to ~800 inline lines; every stage was invisible
+# to tests and unreadable in review. Each stage below is a module-level
+# function with an explicit signature, and scan_universe (further down) is now
+# the sequencing only. The extraction is BEHAVIOR-PRESERVING by construction:
+# stage bodies moved verbatim, fetch order unchanged (daily download -> weekly
+# download -> per-name enrich), emitted scan dict identical in structure and
+# key order, no new prints. Pure per-ticker computations (_volume_surge,
+# _in_uptrend, _swing_setup_score, and _compute_ticker_row over a prepared
+# frame) are fixture-testable offline - see tests/test_scanner_shape.py.
 
-    Args:
-        top_n: Number of top swing setups to surface.
-        tickers: Optional list/set of symbols to scan ONLY those (+ SPY for RS).
-                 Sector labels come from universe.json when known, else "unmapped".
-        enrich: If False, skip slow per-ticker yf.Ticker info / earnings_dates /
-                revenue_estimate calls. Price metrics, ATR, volume, fwd_pe_est
-                from screen cache, and contrarian/deep_value/supplier lanes still run.
-        weekly: If True, also return by_sector_leaders (top 3 per sector by
-                swing_setup_score with a slim field set). sector_relative_strength
-                is always included.
-    """
-    import pandas as pd
-    import yfinance as yf
 
+def _resolve_scan_tickers(tickers) -> tuple:
+    """(tickers, ticker_sector) for the scan. tickers=None -> whole universe;
+    a subset keeps universe sector labels where known, else "unmapped". SPY is
+    NOT added here - scan_universe appends it at download time so the
+    benchmark rides the same batched fetch."""
     sectors = load_universe()
     ticker_sector = {}
     for sector, ts in sectors.items():
@@ -761,7 +762,8 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
             ticker_sector.setdefault(t, sector)
 
     if tickers is not None:
-        # Subset mode: only the requested symbols (+ SPY for RS, added below).
+        # Subset mode: only the requested symbols (+ SPY for RS, added by
+        # scan_universe at download time).
         # Sector from universe map when known; otherwise "unmapped".
         wanted = sorted({str(t).upper() for t in tickers if t})
         for t in wanted:
@@ -769,26 +771,27 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
         tickers = wanted
     else:
         tickers = sorted(ticker_sector)
+    return tickers, ticker_sector
 
-    # 14mo (~294 sessions) so a true 200-DMA and a trailing-252-session 52-week high
-    # survive after rolling. SPY rides along in the same batched download to power
-    # relative strength without an extra network round-trip.
-    # ET clock for the partial-bar guard. Fail-soft: if the helper is
-    # unavailable, now_et stays None and _download_frames keeps every bar
-    # (a partial bar is better than no scan at all).
+
+def _scan_now_et():
+    """ET clock for the partial-bar guard. Fail-soft: if the helper is
+    unavailable, returns None and _download_frames keeps every bar
+    (a partial bar is better than no scan at all)."""
     try:
         from tools.fundamental_screen import _eastern_now
-        now_et = _eastern_now()
+        return _eastern_now()
     except Exception:
-        now_et = None
+        return None
 
-    # CHUNKED + THROTTLED (see CHUNK_SIZE / CHUNK_SLEEP_SEC); the still-forming
-    # session bar is dropped so volume math compares completed sessions only.
-    frames, daily_chunk_failures = _download_frames(
-        tickers + ["SPY"], "14mo", "1d", now_et=now_et)
 
-    # Benchmark returns over the SAME session windows used per-name, computed once.
-    # Also the market-ENVIRONMENT read: only press hard in a supportive tape.
+def _benchmark_context(frames) -> tuple:
+    """(spy_1m, spy_3m, benchmark_trend) from the batched daily frames.
+
+    Benchmark returns over the SAME session windows used per-name, computed
+    once. Also the market-ENVIRONMENT read: only press hard in a supportive
+    tape. Fail-soft to (None, None, {"read": "unknown"}) when SPY is missing
+    from the download."""
     spy_1m = spy_3m = None
     benchmark_trend = {"read": "unknown"}
     try:
@@ -809,10 +812,16 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
             }
     except Exception:
         spy_1m = spy_3m = None
+    return spy_1m, spy_3m, benchmark_trend
 
-    # 200-WEEK MA: separate batched WEEKLY download (~260 rows/name - lighter than the
-    # daily pull). Fail-soft: if the weekly fetch dies, the scan proceeds without the
-    # deep-value lane rather than failing the whole cycle.
+
+def _weekly_context(tickers, now_et) -> tuple:
+    """(w200, weekly_by_ticker, weekly_chunk_failures).
+
+    200-WEEK MA: separate batched WEEKLY download (~260 rows/name - lighter
+    than the daily pull), plus the weekly structure block per name. Fail-soft:
+    if the weekly fetch dies, the scan proceeds without the deep-value lane
+    rather than failing the whole cycle."""
     w200: dict[str, tuple] = {}  # ticker -> (ma, is_full, pct_vs_ma)
     weekly_by_ticker: dict[str, dict] = {}  # ticker -> weekly structure block
     weekly_chunk_failures = 0
@@ -851,217 +860,252 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
                 continue
     except Exception:
         w200 = {}
+    return w200, weekly_by_ticker, weekly_chunk_failures
 
-    # Estimate screen cache (whole universe, refreshed pre-market) powers the
-    # deep-value quality gate without any extra network. Fail-soft to empty.
+
+def _load_screen_rows() -> dict:
+    """Estimate screen cache (whole universe, refreshed pre-market) - powers
+    the deep-value quality gate and fwd_pe_est at zero extra network cost.
+    Fail-soft to empty."""
     try:
-        screen_rows = (json.loads((ROOT / "data" / "fundamental_screen.json").read_text())
-                       .get("current", {}).get("rows", {})) or {}
+        return (json.loads((ROOT / "data" / "fundamental_screen.json").read_text())
+                .get("current", {}).get("rows", {})) or {}
     except Exception:
-        screen_rows = {}
+        return {}
 
-    # Business-reality layer: per-name AI-exposure labels (see _load_ai_exposure).
-    ai_exposure = _load_ai_exposure()
 
-    rows = []
-    no_data = short_history = 0
-    for t in tickers:
-        try:
-            df = frames.get(t)
-            if df is None:
-                no_data += 1
-                continue
-            df = df.dropna()
-            n = len(df)
-            if n < MIN_BARS:
-                short_history += 1
-                continue
-            close, high, low, vol = df["Close"], df["High"], df["Low"], df["Volume"]
-            close_list = [float(x) for x in close.tolist()]
-            high_list = [float(x) for x in high.tolist()]
-            last = close_list[-1]
-            # Per-ticker bar date (the session this last_close belongs to) — first-class
-            # freshness so the brain does not treat a lagging close as live on catalyst days.
-            try:
-                bar_ts = df.index[-1]
-                if hasattr(bar_ts, "date") and callable(bar_ts.date):
-                    price_as_of = bar_ts.date().isoformat()
-                else:
-                    price_as_of = str(bar_ts)[:10]
-            except Exception:
-                price_as_of = None
-            pct_1d = last / close_list[-2] - 1
-            sma20 = float(close.rolling(20).mean().iloc[-1])
-            sma50 = float(close.rolling(50).mean().iloc[-1])
-            # 100/200-DMA only exist once enough sessions have rolled; None otherwise
-            # so short-history names never get a fabricated long-term trend read.
-            sma100 = float(close.rolling(100).mean().iloc[-1]) if n >= 100 else None
-            sma200 = float(close.rolling(200).mean().iloc[-1]) if n >= 200 else None
-            # True session-count momentum (21/63/126), NOT the full fetch window.
-            mom_1m = _return_over_sessions(close_list, SESS_1M)  # numeric (n >= MIN_BARS)
-            mom_3m = _return_over_sessions(close_list, SESS_3M)  # numeric (n >= MIN_BARS)
-            mom_6m = _return_over_sessions(close_list, SESS_6M)  # None until 127 bars
-            # True trailing-252-session high; is_full flags whether it is really 52 weeks.
-            hi_52w, full_52w = _trailing_high(high_list, SESS_52W)
-            pullback_20d = last / float(high.rolling(20).max().iloc[-1]) - 1
-            # VOLUME SURGE - the divide-by-one bug this replaces.
-            #
-            # The old expression was:
-            #     float(vol.iloc[-5:].mean()) / max(float(vol.iloc[-65:-5].mean()), 1)
-            # The max(..., 1) floor was there to avoid ZeroDivisionError, but it
-            # turned ABSENT volume history into a denominator of ONE SHARE. A name
-            # with a missing/zero baseline (halted, freshly listed, or a feed that
-            # returned zeros) therefore produced a surge in the MILLIONS - and
-            # vol_surge > 1.3 SCORES +0.5 on swing_setup_score, so a data hole
-            # promoted a name up the ranking on the strength of its own absence.
-            # It also fed volume_analysis's conviction read and the "buyers showing
-            # up" entry-quality test in CLAUDE.md. Absence of data must never render
-            # as a substantive market finding: no usable baseline -> None, no score.
-            base_vol = float(vol.iloc[-65:-5].mean()) if n >= 65 else None
-            recent_vol = float(vol.iloc[-5:].mean())
-            if (base_vol is None or base_vol <= 0 or base_vol != base_vol
-                    or recent_vol != recent_vol):
-                vol_surge = None
-            else:
-                vol_surge = recent_vol / base_vol
-            tr = pd.concat([high - low, (high - close.shift()).abs(),
-                            (low - close.shift()).abs()], axis=1).max(axis=1)
-            atr_pct = float(tr.rolling(14).mean().iloc[-1]) / last
+def _volume_surge(recent_vol, base_vol):
+    """5-day vs 3-month average-volume ratio; None when the baseline is
+    absent/zero or either side is NaN. Pure (floats in, float/None out).
 
-            # Relative strength vs SPY over the matching windows (cross-sectional signal).
-            rel_1m = _rel_strength(mom_1m, spy_1m)
-            rel_3m = _rel_strength(mom_3m, spy_3m)
+    This predicate IS the divide-by-one fix: the old inline expression floored
+    the denominator at max(..., 1), so a missing volume baseline became a
+    denominator of ONE SHARE and a data hole scored +0.5 on swing_setup_score.
+    Full incident story at the call site in _compute_ticker_row (extracted
+    2026-08-05 so the guard is unit-testable on its own)."""
+    if (base_vol is None or base_vol <= 0 or base_vol != base_vol
+            or recent_vol != recent_vol):
+        return None
+    return recent_vol / base_vol
 
-            # Liquidity: 20-session median dollar volume, and a FLAG (never a filter).
-            vol_list = [float(x) for x in vol.tolist()]
-            adv_usd = _median_dollar_volume(close_list, vol_list)
-            is_liquid = adv_usd is not None and adv_usd >= MIN_ADV_USD
 
-            # Volume read: effort-vs-result, climax, OBV divergence, CMF, breakout
-            # sponsorship - the conviction dimension of the price action.
-            from tools.volume_analysis import analyze_volume
-            low_list = [float(x) for x in low.tolist()]
-            open_list = [float(x) for x in df["Open"].tolist()]
-            volume_signal = analyze_volume(open_list, high_list, low_list,
-                                           close_list, vol_list)
+def _in_uptrend(last, sma50, sma100, sma200) -> bool:
+    """Primary uptrend gate on the TRUE 200-DMA (last > sma50 > sma200),
+    falling back to the 100-DMA and then the 50-DMA only for names without
+    enough sessions (sma100/sma200 are None until 100/200 bars). Pure."""
+    if sma200 is not None:
+        return last > sma50 > sma200
+    if sma100 is not None:
+        return last > sma50 > sma100
+    return last > sma50
 
-            # Entry-timing layer: oscillators + trend strength + gap map. These
-            # answer "is NOW the entry?" on top of the setup/trend/volume stack;
-            # deliberately NOT folded into swing_setup_score.
-            rsi = _rsi14(close_list)
-            macd = _macd_state(close_list)
-            adx, di_plus, di_minus = _adx14(high_list, low_list, close_list)
-            gap_analysis = _gap_events(open_list, close_list)
 
-            # Estimated forward P/E for EVERY scanned name at ZERO extra network
-            # cost: today's close over the cached pre-market screen's current-
-            # fiscal-year EPS estimate. The estimate snapshot refreshes 6am/9am
-            # ET, so it may be ~a day old relative to this close - an ESTIMATE,
-            # honestly labeled as such. None when the screen missed the name or
-            # the estimate is <= 0 (a negative-EPS "forward P/E" is meaningless).
-            eps_cy = (screen_rows.get(t) or {}).get("eps_estimate_current_yr")
-            fwd_pe_est = (round(last / eps_cy, 2)
-                          if isinstance(eps_cy, (int, float)) and eps_cy > 0 else None)
+def _swing_setup_score(in_uptrend, last, sma20, mom_1m, mom_3m,
+                       pullback_20d, vol_surge, rel_1m) -> float:
+    """Swing setup score: uptrend structure + medium-term momentum, rewarding
+    orderly pullbacks (buyable) over chases at the highs, with a small bounded
+    relative-strength tiebreaker. Pure; term ORDER preserved exactly from the
+    pre-extraction inline block so float accumulation is bit-identical
+    (2026-08-05). Caller rounds; this returns the raw sum."""
+    score = 0.0
+    score += 2.0 if in_uptrend else 0.0
+    score += 1.0 if last > sma20 else 0.0
+    score += max(min(mom_3m * 5, 2.0), -1.0)
+    score += max(min(mom_1m * 5, 1.0), -1.0)
+    score += 1.0 if -0.10 <= pullback_20d <= -0.02 else 0.0
+    score += 0.5 if (vol_surge is not None and vol_surge > 1.3) else 0.0
+    if rel_1m is not None:  # bounded [-0.2, +0.4]: refine, don't reorder
+        score += max(min(rel_1m * 4, 0.4), -0.2)
+    return score
 
-            # Derived trend booleans (None when the underlying SMA has too little history).
-            above_50 = last > sma50
-            above_200 = (last > sma200) if sma200 is not None else None
-            trend_50_100 = (sma50 > sma100) if sma100 is not None else None
-            trend_50_200 = (sma50 > sma200) if sma200 is not None else None
-            pct_from_hi = (last / hi_52w - 1) * 100 if hi_52w else None
 
-            # Swing setup score: uptrend structure + medium-term momentum, rewarding
-            # orderly pullbacks (buyable) over chases at the highs. SCORING CHANGE: the
-            # primary uptrend gate now uses the TRUE 200-DMA (last > sma50 > sma200),
-            # falling back to the 100-DMA and then the 50-DMA only for names without a
-            # full 200 sessions yet. A small, bounded relative-strength term nudges
-            # market-beaters up as a tiebreaker without overriding the momentum ranking.
-            if sma200 is not None:
-                in_uptrend = last > sma50 > sma200
-            elif sma100 is not None:
-                in_uptrend = last > sma50 > sma100
-            else:
-                in_uptrend = last > sma50
-            score = 0.0
-            score += 2.0 if in_uptrend else 0.0
-            score += 1.0 if last > sma20 else 0.0
-            score += max(min(mom_3m * 5, 2.0), -1.0)
-            score += max(min(mom_1m * 5, 1.0), -1.0)
-            score += 1.0 if -0.10 <= pullback_20d <= -0.02 else 0.0
-            score += 0.5 if (vol_surge is not None and vol_surge > 1.3) else 0.0
-            if rel_1m is not None:  # bounded [-0.2, +0.4]: refine, don't reorder
-                score += max(min(rel_1m * 4, 0.4), -0.2)
+def _compute_ticker_row(t, df, *, sector, spy_1m, spy_3m, screen_row,
+                        ai_info, w200_entry, weekly_block) -> dict:
+    """One scanned row from a COMPLETED-bars daily OHLCV frame.
 
-            # Weekly structure (already-downloaded bars) + anchored VWAP from the
-            # last breakout. The VWAP is the first NUMERIC support level this
-            # scanner has produced — until now "support at $345-352" came from the
-            # brain reading a PNG, which nothing could audit or backtest.
-            _weekly = weekly_by_ticker.get(t)
-            try:
-                from tools.technicals import anchored_vwap_block
-                _avwap = anchored_vwap_block(
-                    close_list, high_list,
-                    [float(x) for x in low.tolist()],
-                    [float(x) for x in vol.tolist()])
-            except Exception:
-                _avwap = None
+    Everything here is computed from already-fetched inputs - no network I/O.
+    The caller guarantees df is dropna()'d with at least MIN_BARS rows.
+    Raises on any surprise; scan_universe's per-ticker loop catches and counts
+    the name under no_data, exactly the contract the inline code had before
+    the 2026-08-05 extraction. Inputs beyond the frame are the per-name slices
+    of earlier stages: screen_row (fundamental_screen cache), ai_info
+    (ai_exposure label), w200_entry ((ma, is_full, pct_vs_ma) or None),
+    weekly_block (weekly structure or None)."""
+    import pandas as pd
 
-            rows.append({
-                "ticker": t, "sector": ticker_sector[t],
-                "weekly": _weekly,
-                "anchored_vwap": _avwap,
-                "last_close": round(last, 2),
-                "price_as_of": price_as_of,  # YYYY-MM-DD of the bar used for last_close
-                "pct_change_1d": round(pct_1d * 100, 2),
-                "momentum_1m_pct": round(mom_1m * 100, 1),
-                "momentum_3m_pct": round(mom_3m * 100, 1),
-                "momentum_6m_pct": round(mom_6m * 100, 1) if mom_6m is not None else None,
-                "above_50dma": above_50,
-                "above_200dma": above_200,
-                "trend_up_50_over_100": trend_50_100,
-                "trend_up_50_over_200": trend_50_200,
-                "pct_from_52w_high": round(pct_from_hi, 1) if pct_from_hi is not None else None,
-                "dist_from_52w_high_pct": round(-pct_from_hi, 1) if pct_from_hi is not None else None,
-                "is_full_52w_window": bool(full_52w),
-                "high_window_sessions": min(n, SESS_52W),
-                "pullback_from_20d_high_pct": round(pullback_20d * 100, 1),
-                "volume_surge_5d_vs_3m": (round(vol_surge, 2)
-                                          if vol_surge is not None else None),
-                "atr_pct": round(atr_pct * 100, 2),
-                "rsi_14": round(rsi, 1) if rsi is not None else None,
-                "macd": macd,
-                "adx_14": round(adx, 1) if adx is not None else None,
-                "di_plus": round(di_plus, 1) if di_plus is not None else None,
-                "di_minus": round(di_minus, 1) if di_minus is not None else None,
-                "gap_analysis": gap_analysis,
-                "rel_strength_1m_pct": round(rel_1m * 100, 1) if rel_1m is not None else None,
-                "rel_strength_3m_pct": round(rel_3m * 100, 1) if rel_3m is not None else None,
-                "avg_dollar_volume_20d_usd": round(adv_usd) if adv_usd is not None else None,
-                "liquid": is_liquid,
-                # 200-WEEK MA context (None when the weekly fetch missed this name).
-                "wma_200w": round(w200[t][0], 2) if t in w200 else None,
-                "pct_vs_200w_ma": round(w200[t][2], 1) if t in w200 else None,
-                "is_full_200w_window": bool(w200[t][1]) if t in w200 else False,
-                # DISCLOSURE (was missing at all 15 download call sites): every
-                # bar above is split/dividend ADJUSTED, so wma_200w is an
-                # adjusted-basis level, not the number on an unadjusted retail
-                # chart. See PRICE_BASIS_NOTE and the scan's price_basis_note.
-                "price_basis": "split_dividend_adjusted",
-                # Business-reality: what this company sells relative to the AI wave.
-                "ai_exposure": (ai_exposure.get(t) or {}).get("exposure"),
-                "ai_exposure_reason": (ai_exposure.get(t) or {}).get("reason"),
-                # Estimated fwd P/E (close / cached current-FY EPS estimate; the
-                # estimate snapshot may be ~a day old). None = no usable estimate.
-                "fwd_pe_est": fwd_pe_est,
-                "volume_signal": volume_signal,
-                "swing_setup_score": round(score, 2),
-            })
-        except Exception:
-            no_data += 1
-            continue
+    n = len(df)
+    close, high, low, vol = df["Close"], df["High"], df["Low"], df["Volume"]
+    close_list = [float(x) for x in close.tolist()]
+    high_list = [float(x) for x in high.tolist()]
+    last = close_list[-1]
+    # Per-ticker bar date (the session this last_close belongs to) — first-class
+    # freshness so the brain does not treat a lagging close as live on catalyst days.
+    try:
+        bar_ts = df.index[-1]
+        if hasattr(bar_ts, "date") and callable(bar_ts.date):
+            price_as_of = bar_ts.date().isoformat()
+        else:
+            price_as_of = str(bar_ts)[:10]
+    except Exception:
+        price_as_of = None
+    pct_1d = last / close_list[-2] - 1
+    sma20 = float(close.rolling(20).mean().iloc[-1])
+    sma50 = float(close.rolling(50).mean().iloc[-1])
+    # 100/200-DMA only exist once enough sessions have rolled; None otherwise
+    # so short-history names never get a fabricated long-term trend read.
+    sma100 = float(close.rolling(100).mean().iloc[-1]) if n >= 100 else None
+    sma200 = float(close.rolling(200).mean().iloc[-1]) if n >= 200 else None
+    # True session-count momentum (21/63/126), NOT the full fetch window.
+    mom_1m = _return_over_sessions(close_list, SESS_1M)  # numeric (n >= MIN_BARS)
+    mom_3m = _return_over_sessions(close_list, SESS_3M)  # numeric (n >= MIN_BARS)
+    mom_6m = _return_over_sessions(close_list, SESS_6M)  # None until 127 bars
+    # True trailing-252-session high; is_full flags whether it is really 52 weeks.
+    hi_52w, full_52w = _trailing_high(high_list, SESS_52W)
+    pullback_20d = last / float(high.rolling(20).max().iloc[-1]) - 1
+    # VOLUME SURGE - the divide-by-one bug this replaces.
+    #
+    # The old expression was:
+    #     float(vol.iloc[-5:].mean()) / max(float(vol.iloc[-65:-5].mean()), 1)
+    # The max(..., 1) floor was there to avoid ZeroDivisionError, but it
+    # turned ABSENT volume history into a denominator of ONE SHARE. A name
+    # with a missing/zero baseline (halted, freshly listed, or a feed that
+    # returned zeros) therefore produced a surge in the MILLIONS - and
+    # vol_surge > 1.3 SCORES +0.5 on swing_setup_score, so a data hole
+    # promoted a name up the ranking on the strength of its own absence.
+    # It also fed volume_analysis's conviction read and the "buyers showing
+    # up" entry-quality test in CLAUDE.md. Absence of data must never render
+    # as a substantive market finding: no usable baseline -> None, no score.
+    base_vol = float(vol.iloc[-65:-5].mean()) if n >= 65 else None
+    recent_vol = float(vol.iloc[-5:].mean())
+    vol_surge = _volume_surge(recent_vol, base_vol)
+    tr = pd.concat([high - low, (high - close.shift()).abs(),
+                    (low - close.shift()).abs()], axis=1).max(axis=1)
+    atr_pct = float(tr.rolling(14).mean().iloc[-1]) / last
 
-    rows.sort(key=lambda r: r["swing_setup_score"], reverse=True)
+    # Relative strength vs SPY over the matching windows (cross-sectional signal).
+    rel_1m = _rel_strength(mom_1m, spy_1m)
+    rel_3m = _rel_strength(mom_3m, spy_3m)
 
+    # Liquidity: 20-session median dollar volume, and a FLAG (never a filter).
+    vol_list = [float(x) for x in vol.tolist()]
+    adv_usd = _median_dollar_volume(close_list, vol_list)
+    is_liquid = adv_usd is not None and adv_usd >= MIN_ADV_USD
+
+    # Volume read: effort-vs-result, climax, OBV divergence, CMF, breakout
+    # sponsorship - the conviction dimension of the price action.
+    from tools.volume_analysis import analyze_volume
+    low_list = [float(x) for x in low.tolist()]
+    open_list = [float(x) for x in df["Open"].tolist()]
+    volume_signal = analyze_volume(open_list, high_list, low_list,
+                                   close_list, vol_list)
+
+    # Entry-timing layer: oscillators + trend strength + gap map. These
+    # answer "is NOW the entry?" on top of the setup/trend/volume stack;
+    # deliberately NOT folded into swing_setup_score.
+    rsi = _rsi14(close_list)
+    macd = _macd_state(close_list)
+    adx, di_plus, di_minus = _adx14(high_list, low_list, close_list)
+    gap_analysis = _gap_events(open_list, close_list)
+
+    # Estimated forward P/E for EVERY scanned name at ZERO extra network
+    # cost: today's close over the cached pre-market screen's current-
+    # fiscal-year EPS estimate. The estimate snapshot refreshes 6am/9am
+    # ET, so it may be ~a day old relative to this close - an ESTIMATE,
+    # honestly labeled as such. None when the screen missed the name or
+    # the estimate is <= 0 (a negative-EPS "forward P/E" is meaningless).
+    eps_cy = (screen_row or {}).get("eps_estimate_current_yr")
+    fwd_pe_est = (round(last / eps_cy, 2)
+                  if isinstance(eps_cy, (int, float)) and eps_cy > 0 else None)
+
+    # Derived trend booleans (None when the underlying SMA has too little history).
+    above_50 = last > sma50
+    above_200 = (last > sma200) if sma200 is not None else None
+    trend_50_100 = (sma50 > sma100) if sma100 is not None else None
+    trend_50_200 = (sma50 > sma200) if sma200 is not None else None
+    pct_from_hi = (last / hi_52w - 1) * 100 if hi_52w else None
+
+    # Swing setup score: uptrend structure + medium-term momentum, rewarding
+    # orderly pullbacks (buyable) over chases at the highs. SCORING CHANGE: the
+    # primary uptrend gate now uses the TRUE 200-DMA (last > sma50 > sma200),
+    # falling back to the 100-DMA and then the 50-DMA only for names without a
+    # full 200 sessions yet. A small, bounded relative-strength term nudges
+    # market-beaters up as a tiebreaker without overriding the momentum ranking.
+    in_uptrend = _in_uptrend(last, sma50, sma100, sma200)
+    score = _swing_setup_score(in_uptrend, last, sma20, mom_1m, mom_3m,
+                               pullback_20d, vol_surge, rel_1m)
+
+    # Weekly structure (already-downloaded bars) + anchored VWAP from the
+    # last breakout. The VWAP is the first NUMERIC support level this
+    # scanner has produced — until now "support at $345-352" came from the
+    # brain reading a PNG, which nothing could audit or backtest.
+    _weekly = weekly_block
+    try:
+        from tools.technicals import anchored_vwap_block
+        _avwap = anchored_vwap_block(
+            close_list, high_list,
+            [float(x) for x in low.tolist()],
+            [float(x) for x in vol.tolist()])
+    except Exception:
+        _avwap = None
+
+    return {
+        "ticker": t, "sector": sector,
+        "weekly": _weekly,
+        "anchored_vwap": _avwap,
+        "last_close": round(last, 2),
+        "price_as_of": price_as_of,  # YYYY-MM-DD of the bar used for last_close
+        "pct_change_1d": round(pct_1d * 100, 2),
+        "momentum_1m_pct": round(mom_1m * 100, 1),
+        "momentum_3m_pct": round(mom_3m * 100, 1),
+        "momentum_6m_pct": round(mom_6m * 100, 1) if mom_6m is not None else None,
+        "above_50dma": above_50,
+        "above_200dma": above_200,
+        "trend_up_50_over_100": trend_50_100,
+        "trend_up_50_over_200": trend_50_200,
+        "pct_from_52w_high": round(pct_from_hi, 1) if pct_from_hi is not None else None,
+        "dist_from_52w_high_pct": round(-pct_from_hi, 1) if pct_from_hi is not None else None,
+        "is_full_52w_window": bool(full_52w),
+        "high_window_sessions": min(n, SESS_52W),
+        "pullback_from_20d_high_pct": round(pullback_20d * 100, 1),
+        "volume_surge_5d_vs_3m": (round(vol_surge, 2)
+                                  if vol_surge is not None else None),
+        "atr_pct": round(atr_pct * 100, 2),
+        "rsi_14": round(rsi, 1) if rsi is not None else None,
+        "macd": macd,
+        "adx_14": round(adx, 1) if adx is not None else None,
+        "di_plus": round(di_plus, 1) if di_plus is not None else None,
+        "di_minus": round(di_minus, 1) if di_minus is not None else None,
+        "gap_analysis": gap_analysis,
+        "rel_strength_1m_pct": round(rel_1m * 100, 1) if rel_1m is not None else None,
+        "rel_strength_3m_pct": round(rel_3m * 100, 1) if rel_3m is not None else None,
+        "avg_dollar_volume_20d_usd": round(adv_usd) if adv_usd is not None else None,
+        "liquid": is_liquid,
+        # 200-WEEK MA context (None when the weekly fetch missed this name).
+        "wma_200w": round(w200_entry[0], 2) if w200_entry else None,
+        "pct_vs_200w_ma": round(w200_entry[2], 1) if w200_entry else None,
+        "is_full_200w_window": bool(w200_entry[1]) if w200_entry else False,
+        # DISCLOSURE (was missing at all 15 download call sites): every
+        # bar above is split/dividend ADJUSTED, so wma_200w is an
+        # adjusted-basis level, not the number on an unadjusted retail
+        # chart. See PRICE_BASIS_NOTE and the scan's price_basis_note.
+        "price_basis": "split_dividend_adjusted",
+        # Business-reality: what this company sells relative to the AI wave.
+        "ai_exposure": (ai_info or {}).get("exposure"),
+        "ai_exposure_reason": (ai_info or {}).get("reason"),
+        # Estimated fwd P/E (close / cached current-FY EPS estimate; the
+        # estimate snapshot may be ~a day old). None = no usable estimate.
+        "fwd_pe_est": fwd_pe_est,
+        "volume_signal": volume_signal,
+        "swing_setup_score": round(score, 2),
+    }
+
+
+def _select_lanes(rows, top_n, screen_rows) -> tuple:
+    """(contrarian, deep_value, supplier_pullbacks) over the ranked rows.
+
+    Mutates the selected rows in place (lane / lane_validation stamps) - the
+    same side effect the inline blocks had before the 2026-08-05 extraction.
+    screen_rows feeds only the deep-value quality gate."""
     # Contrarian/value-reversal lane: quality names knocked well off their highs
     # that are turning up. A momentum-only funnel never shows these to the brain.
     # Only names with a genuine trailing-52-week window qualify, so the "20% off the
@@ -1138,6 +1182,18 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
             "demand; that requirement is now the ONLY thing carrying this lane."
         )
 
+    return contrarian, deep_value, supplier_pullbacks
+
+
+def _enrich_focus_rows(enrich_rows, screen_rows) -> dict:
+    """Slow per-name enrichment over the SURFACED rows only; returns the
+    coverage dict. Mutates rows in place (valuation, market_cap_usd, earnings
+    clock, analyst estimates, EAR read...). Comment block below is the
+    pre-extraction WHY, kept verbatim (2026-08-05).
+    """
+    import pandas as pd
+    import yfinance as yf
+
     # Valuation + analyst-estimate context for top setups, contrarian, deep-value
     # AND supplier-pullback picks (per-ticker calls are slow, so not the whole universe).
     # enrich=False skips this entire block for shallow/fast scans; price metrics and
@@ -1161,190 +1217,193 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
         "aborted_after_consecutive_failures": False,
         "skipped_after_abort": 0,
     }
-    if enrich:
-        # Fallback source for the earnings clock when the live per-name call is
-        # blocked: the calendar artifact built by tools/earnings_calendar.py.
-        # days_to_earnings being ABSENT reads as "no print imminent" - the exact
-        # inverse of the truth - so a cached date beats no date, clearly labeled.
-        cal_by_ticker: dict = {}
+    # Fallback source for the earnings clock when the live per-name call is
+    # blocked: the calendar artifact built by tools/earnings_calendar.py.
+    # days_to_earnings being ABSENT reads as "no print imminent" - the exact
+    # inverse of the truth - so a cached date beats no date, clearly labeled.
+    cal_by_ticker: dict = {}
+    try:
+        cal_blob = json.loads((ROOT / "data" / "earnings_calendar.json").read_text())
+        if isinstance(cal_blob, dict) and cal_blob.get("status") != "error":
+            cal_by_ticker = cal_blob.get("by_ticker") or {}
+    except Exception:
+        cal_by_ticker = {}
+
+    consecutive_failures = 0
+    aborted = False
+    for idx, r in enumerate(enrich_rows):
+        if aborted:
+            enrich_cov["skipped_after_abort"] += 1
+            continue
+        if idx:
+            time.sleep(ENRICH_SLEEP_SEC)  # throttle: 4 scraped calls per name
+        enrich_cov["attempted"] += 1
+        # The CONSTRUCTOR is inside the guard too. It used to sit bare above
+        # the try, so a yf.Ticker() that raised (which it does under a hard
+        # rate limit) escaped scan_universe entirely and took down the WHOLE
+        # scan - price rows, lanes, benchmark and all - over one enrich call
+        # on one name. An enrichment failure must never cost the price data.
+        tk = None
         try:
-            cal_blob = json.loads((ROOT / "data" / "earnings_calendar.json").read_text())
-            if isinstance(cal_blob, dict) and cal_blob.get("status") != "error":
-                cal_by_ticker = cal_blob.get("by_ticker") or {}
+            tk = yf.Ticker(r["ticker"])
+            info = tk.info
+            r["valuation"] = {
+                "trailing_pe": info.get("trailingPE"),
+                "forward_pe": info.get("forwardPE"),
+                "price_to_sales_ttm": info.get("priceToSalesTrailing12Months"),
+                "ev_to_ebitda": info.get("enterpriseToEbitda"),
+            }
+            r["market_cap_usd"] = info.get("marketCap")  # feeds the $1B floor
+            # Analyst consensus + short interest ride along at zero extra network
+            # cost (info is already fetched). Sentiment context, not signals.
+            from tools.news_catalysts import _ratings_from_info
+            r["analyst_ratings"] = _ratings_from_info(info)
+            r["short_interest"] = _short_interest_from_info(info)
+            enrich_cov["info_ok"] += 1
+            consecutive_failures = 0
         except Exception:
-            cal_by_ticker = {}
+            r["valuation"] = None
+            # An unfetched .info means market_cap_usd is ABSENT, and the $1B
+            # floor's input silently vanishing must be VISIBLE, not inferred.
+            r["enrich_error"] = "info_unavailable"
+            enrich_cov["info_failed"] += 1
+            consecutive_failures += 1
+            if consecutive_failures >= ENRICH_ABORT_AFTER_CONSECUTIVE_FAILURES:
+                aborted = True
+                enrich_cov["aborted_after_consecutive_failures"] = True
+        # Earnings clock: swing entries and binary prints interact constantly.
+        try:
+            from datetime import datetime, timezone
+            now = pd.Timestamp.now(tz="America/New_York")
+            ed = tk.earnings_dates if tk is not None else None
+            if ed is not None and len(ed.index):
+                past = [d for d in ed.index if d <= now]
+                future = [d for d in ed.index if d > now]
+                if future:
+                    r["days_to_earnings"] = (min(future) - now).days
+                if past:
+                    r["days_since_earnings"] = (now - max(past)).days
+            enrich_cov["earnings_ok"] += 1
+        except Exception:
+            enrich_cov["earnings_failed"] += 1
+        # FALLBACK: an ABSENT days_to_earnings reads as "no print imminent",
+        # the exact inverse of the truth, and CLAUDE.md's earnings-path rule
+        # ("through binary vs around it") depends on it. When the live call
+        # gave us nothing, use the calendar artifact and LABEL the source so
+        # a cached date is never mistaken for a live one.
+        if "days_to_earnings" not in r or "days_since_earnings" not in r:
+            cal_rec = cal_by_ticker.get(r["ticker"]) or {}
+            try:
+                now_cal = pd.Timestamp.now(tz="America/New_York")
+                used = False
+                if "days_to_earnings" not in r and cal_rec.get("next"):
+                    nxt = pd.Timestamp(cal_rec["next"])
+                    if nxt.tzinfo is None:
+                        nxt = nxt.tz_localize("America/New_York")
+                    # COMPARE CALENDAR DAYS, NOT TIMESTAMPS (fixed 2026-07-23).
+                    #
+                    # This guard was `nxt > now_cal`, and a calendar date parses to
+                    # MIDNIGHT that day. So a print happening TODAY was already
+                    # "past" by 00:01 and the fallback declined to set the field —
+                    # leaving days_to_earnings null on the one day it matters most,
+                    # which is exactly the "reads as no print imminent, the exact
+                    # inverse of the truth" failure the comment above warns about.
+                    # Measured on the live 2026-07-23 bundle: DLR, FIX, NEM, RTX and
+                    # UNP all carried next_earnings 2026-07-23 with days_to_earnings
+                    # None, while earnings_deep_dive simultaneously knew three of
+                    # them were reporting `amc` that session. Two parts of one bundle
+                    # disagreeing about whether a name reports today.
+                    #
+                    # Day-granularity comparison makes today 0 (report is TODAY) and
+                    # keeps future dates positive. An earnings DATE has no meaningful
+                    # time-of-day anyway — bmo/amc timing lives in earnings_deep_dive.
+                    if nxt.date() >= now_cal.date():
+                        r["days_to_earnings"] = (nxt.date() - now_cal.date()).days
+                        used = True
+                if "days_since_earnings" not in r and cal_rec.get("last"):
+                    lst = pd.Timestamp(cal_rec["last"])
+                    if lst.tzinfo is None:
+                        lst = lst.tz_localize("America/New_York")
+                    if lst <= now_cal:
+                        r["days_since_earnings"] = (now_cal - lst).days
+                        used = True
+                if used:
+                    r["earnings_clock_source"] = "earnings_calendar_cache"
+                    enrich_cov["recovered_from_calendar_cache"] += 1
+            except Exception:
+                pass
+        if r.get("days_to_earnings") is not None:
+            enrich_cov["days_to_earnings_present"] += 1
+        # Is the multiple deserved? Forward growth + which way analysts are revising.
+        try:
+            est: dict = {}
+            if tk is None:
+                raise RuntimeError("ticker handle unavailable")
+            rev = tk.revenue_estimate
+            if rev is not None and "growth" in rev and "0y" in rev.index:
+                est["fwd_revenue_growth_pct"] = round(float(rev.loc["0y", "growth"]) * 100, 1)
+                if "+1y" in rev.index:
+                    est["next_yr_revenue_growth_pct"] = round(float(rev.loc["+1y", "growth"]) * 100, 1)
+            trend = tk.eps_trend
+            if trend is not None and "0y" in trend.index:
+                cur, m30 = float(trend.loc["0y", "current"]), float(trend.loc["0y", "30daysAgo"])
+                if m30:
+                    est["eps_revision_30d_pct"] = round((cur - m30) / abs(m30) * 100, 2)
+                    est["eps_revision_direction"] = ("up" if cur > m30 else
+                                                     "down" if cur < m30 else "flat")
+            r["analyst_estimates"] = est or None
+            enrich_cov["estimates_ok"] += 1
+        except Exception:
+            r["analyst_estimates"] = None
+            enrich_cov["estimates_failed"] += 1
+        # Earnings Announcement Reaction (EAR) momentum — evidence note
+        # above earnings_reaction_read. Criteria: reported within
+        # EAR_MAX_DAYS_SINCE_EARNINGS calendar days AND the reaction was
+        # positive and HELD (unfilled up-gap in the window, else positive
+        # 1m relative strength) AND estimates being revised UP. The old
+        # "price not yet rewarded" test (momentum_1m < 15%) is
+        # deliberately GONE: under the reaction framing a rewarded print
+        # IS the signal, not a missed train. Field name kept for
+        # downstream compatibility.
+        rev_dir = (r.get("analyst_estimates") or {}).get("eps_revision_direction")
+        if rev_dir is None:  # live eps_trend missing -> cached pre-market screen
+            rev_dir = (screen_rows.get(r["ticker"]) or {}).get("revision_direction")
+        ear_flag, ear_read = earnings_reaction_read(
+            r.get("days_since_earnings"), r.get("gap_analysis"),
+            r.get("rel_strength_1m_pct"), rev_dir)
+        # WITHHELD (2026-07-19): the flag now requires the REVISION leg, which
+        # is the untested-but-theoretically-supported half. The gap read alone
+        # measured at -0.07pp ATR-matched over 12 years and must not promote a
+        # name by itself. See EAR_VALIDATION_NOTE.
+        r["post_earnings_drift_candidate"] = bool(ear_flag) and rev_dir == "up"
+        r["earnings_reaction"] = ear_read  # DESCRIPTIVE ONLY - see the note
+        r["earnings_reaction_validation"] = EAR_VALIDATION_NOTE
+        # Coverage boost, never a filter: revision follow-through is
+        # strongest under thin coverage (Gleason & Lee 2003). Stamped only
+        # on flagged rows where coverage data exists.
+        n_an = (r.get("analyst_ratings") or {}).get("n_analysts")
+        if (ear_flag and isinstance(n_an, (int, float))
+                and not isinstance(n_an, bool) and n_an > 0):
+            r["ear_low_coverage"] = bool(n_an <= EAR_LOW_COVERAGE_MAX_ANALYSTS)
+        # Fwd-multiple vs growth: which extended AI suppliers are CHEAP relative to
+        # their growth (memory names often print the lowest fwd multiples late-cycle -
+        # the brain must judge cycle-peak vs value; this just makes it visible).
+        fpe = (r.get("valuation") or {}).get("forward_pe")
+        g = (r.get("analyst_estimates") or {}).get("fwd_revenue_growth_pct")
+        r["fwd_pe_to_growth"] = (round(fpe / g, 2)
+                                 if isinstance(fpe, (int, float)) and isinstance(g, (int, float))
+                                 and fpe > 0 and g > 0 else None)
+        # Compact forward-valuation context (no extra network): pe vs growth read
+        # + zero-cost screen fields. Only when valuation was successfully set.
+        if r.get("valuation"):
+            r["valuation_context"] = build_valuation_context(
+                r, screen_rows.get(r["ticker"]))
+    return enrich_cov
 
-        enrich_rows = rows[:top_n] + contrarian + deep_value + supplier_pullbacks
-        consecutive_failures = 0
-        aborted = False
-        for idx, r in enumerate(enrich_rows):
-            if aborted:
-                enrich_cov["skipped_after_abort"] += 1
-                continue
-            if idx:
-                time.sleep(ENRICH_SLEEP_SEC)  # throttle: 4 scraped calls per name
-            enrich_cov["attempted"] += 1
-            # The CONSTRUCTOR is inside the guard too. It used to sit bare above
-            # the try, so a yf.Ticker() that raised (which it does under a hard
-            # rate limit) escaped scan_universe entirely and took down the WHOLE
-            # scan - price rows, lanes, benchmark and all - over one enrich call
-            # on one name. An enrichment failure must never cost the price data.
-            tk = None
-            try:
-                tk = yf.Ticker(r["ticker"])
-                info = tk.info
-                r["valuation"] = {
-                    "trailing_pe": info.get("trailingPE"),
-                    "forward_pe": info.get("forwardPE"),
-                    "price_to_sales_ttm": info.get("priceToSalesTrailing12Months"),
-                    "ev_to_ebitda": info.get("enterpriseToEbitda"),
-                }
-                r["market_cap_usd"] = info.get("marketCap")  # feeds the $1B floor
-                # Analyst consensus + short interest ride along at zero extra network
-                # cost (info is already fetched). Sentiment context, not signals.
-                from tools.news_catalysts import _ratings_from_info
-                r["analyst_ratings"] = _ratings_from_info(info)
-                r["short_interest"] = _short_interest_from_info(info)
-                enrich_cov["info_ok"] += 1
-                consecutive_failures = 0
-            except Exception:
-                r["valuation"] = None
-                # An unfetched .info means market_cap_usd is ABSENT, and the $1B
-                # floor's input silently vanishing must be VISIBLE, not inferred.
-                r["enrich_error"] = "info_unavailable"
-                enrich_cov["info_failed"] += 1
-                consecutive_failures += 1
-                if consecutive_failures >= ENRICH_ABORT_AFTER_CONSECUTIVE_FAILURES:
-                    aborted = True
-                    enrich_cov["aborted_after_consecutive_failures"] = True
-            # Earnings clock: swing entries and binary prints interact constantly.
-            try:
-                from datetime import datetime, timezone
-                now = pd.Timestamp.now(tz="America/New_York")
-                ed = tk.earnings_dates if tk is not None else None
-                if ed is not None and len(ed.index):
-                    past = [d for d in ed.index if d <= now]
-                    future = [d for d in ed.index if d > now]
-                    if future:
-                        r["days_to_earnings"] = (min(future) - now).days
-                    if past:
-                        r["days_since_earnings"] = (now - max(past)).days
-                enrich_cov["earnings_ok"] += 1
-            except Exception:
-                enrich_cov["earnings_failed"] += 1
-            # FALLBACK: an ABSENT days_to_earnings reads as "no print imminent",
-            # the exact inverse of the truth, and CLAUDE.md's earnings-path rule
-            # ("through binary vs around it") depends on it. When the live call
-            # gave us nothing, use the calendar artifact and LABEL the source so
-            # a cached date is never mistaken for a live one.
-            if "days_to_earnings" not in r or "days_since_earnings" not in r:
-                cal_rec = cal_by_ticker.get(r["ticker"]) or {}
-                try:
-                    now_cal = pd.Timestamp.now(tz="America/New_York")
-                    used = False
-                    if "days_to_earnings" not in r and cal_rec.get("next"):
-                        nxt = pd.Timestamp(cal_rec["next"])
-                        if nxt.tzinfo is None:
-                            nxt = nxt.tz_localize("America/New_York")
-                        # COMPARE CALENDAR DAYS, NOT TIMESTAMPS (fixed 2026-07-23).
-                        #
-                        # This guard was `nxt > now_cal`, and a calendar date parses to
-                        # MIDNIGHT that day. So a print happening TODAY was already
-                        # "past" by 00:01 and the fallback declined to set the field —
-                        # leaving days_to_earnings null on the one day it matters most,
-                        # which is exactly the "reads as no print imminent, the exact
-                        # inverse of the truth" failure the comment above warns about.
-                        # Measured on the live 2026-07-23 bundle: DLR, FIX, NEM, RTX and
-                        # UNP all carried next_earnings 2026-07-23 with days_to_earnings
-                        # None, while earnings_deep_dive simultaneously knew three of
-                        # them were reporting `amc` that session. Two parts of one bundle
-                        # disagreeing about whether a name reports today.
-                        #
-                        # Day-granularity comparison makes today 0 (report is TODAY) and
-                        # keeps future dates positive. An earnings DATE has no meaningful
-                        # time-of-day anyway — bmo/amc timing lives in earnings_deep_dive.
-                        if nxt.date() >= now_cal.date():
-                            r["days_to_earnings"] = (nxt.date() - now_cal.date()).days
-                            used = True
-                    if "days_since_earnings" not in r and cal_rec.get("last"):
-                        lst = pd.Timestamp(cal_rec["last"])
-                        if lst.tzinfo is None:
-                            lst = lst.tz_localize("America/New_York")
-                        if lst <= now_cal:
-                            r["days_since_earnings"] = (now_cal - lst).days
-                            used = True
-                    if used:
-                        r["earnings_clock_source"] = "earnings_calendar_cache"
-                        enrich_cov["recovered_from_calendar_cache"] += 1
-                except Exception:
-                    pass
-            if r.get("days_to_earnings") is not None:
-                enrich_cov["days_to_earnings_present"] += 1
-            # Is the multiple deserved? Forward growth + which way analysts are revising.
-            try:
-                est: dict = {}
-                if tk is None:
-                    raise RuntimeError("ticker handle unavailable")
-                rev = tk.revenue_estimate
-                if rev is not None and "growth" in rev and "0y" in rev.index:
-                    est["fwd_revenue_growth_pct"] = round(float(rev.loc["0y", "growth"]) * 100, 1)
-                    if "+1y" in rev.index:
-                        est["next_yr_revenue_growth_pct"] = round(float(rev.loc["+1y", "growth"]) * 100, 1)
-                trend = tk.eps_trend
-                if trend is not None and "0y" in trend.index:
-                    cur, m30 = float(trend.loc["0y", "current"]), float(trend.loc["0y", "30daysAgo"])
-                    if m30:
-                        est["eps_revision_30d_pct"] = round((cur - m30) / abs(m30) * 100, 2)
-                        est["eps_revision_direction"] = ("up" if cur > m30 else
-                                                         "down" if cur < m30 else "flat")
-                r["analyst_estimates"] = est or None
-                enrich_cov["estimates_ok"] += 1
-            except Exception:
-                r["analyst_estimates"] = None
-                enrich_cov["estimates_failed"] += 1
-            # Earnings Announcement Reaction (EAR) momentum — evidence note
-            # above earnings_reaction_read. Criteria: reported within
-            # EAR_MAX_DAYS_SINCE_EARNINGS calendar days AND the reaction was
-            # positive and HELD (unfilled up-gap in the window, else positive
-            # 1m relative strength) AND estimates being revised UP. The old
-            # "price not yet rewarded" test (momentum_1m < 15%) is
-            # deliberately GONE: under the reaction framing a rewarded print
-            # IS the signal, not a missed train. Field name kept for
-            # downstream compatibility.
-            rev_dir = (r.get("analyst_estimates") or {}).get("eps_revision_direction")
-            if rev_dir is None:  # live eps_trend missing -> cached pre-market screen
-                rev_dir = (screen_rows.get(r["ticker"]) or {}).get("revision_direction")
-            ear_flag, ear_read = earnings_reaction_read(
-                r.get("days_since_earnings"), r.get("gap_analysis"),
-                r.get("rel_strength_1m_pct"), rev_dir)
-            # WITHHELD (2026-07-19): the flag now requires the REVISION leg, which
-            # is the untested-but-theoretically-supported half. The gap read alone
-            # measured at -0.07pp ATR-matched over 12 years and must not promote a
-            # name by itself. See EAR_VALIDATION_NOTE.
-            r["post_earnings_drift_candidate"] = bool(ear_flag) and rev_dir == "up"
-            r["earnings_reaction"] = ear_read  # DESCRIPTIVE ONLY - see the note
-            r["earnings_reaction_validation"] = EAR_VALIDATION_NOTE
-            # Coverage boost, never a filter: revision follow-through is
-            # strongest under thin coverage (Gleason & Lee 2003). Stamped only
-            # on flagged rows where coverage data exists.
-            n_an = (r.get("analyst_ratings") or {}).get("n_analysts")
-            if (ear_flag and isinstance(n_an, (int, float))
-                    and not isinstance(n_an, bool) and n_an > 0):
-                r["ear_low_coverage"] = bool(n_an <= EAR_LOW_COVERAGE_MAX_ANALYSTS)
-            # Fwd-multiple vs growth: which extended AI suppliers are CHEAP relative to
-            # their growth (memory names often print the lowest fwd multiples late-cycle -
-            # the brain must judge cycle-peak vs value; this just makes it visible).
-            fpe = (r.get("valuation") or {}).get("forward_pe")
-            g = (r.get("analyst_estimates") or {}).get("fwd_revenue_growth_pct")
-            r["fwd_pe_to_growth"] = (round(fpe / g, 2)
-                                     if isinstance(fpe, (int, float)) and isinstance(g, (int, float))
-                                     and fpe > 0 and g > 0 else None)
-            # Compact forward-valuation context (no extra network): pe vs growth read
-            # + zero-cost screen fields. Only when valuation was successfully set.
-            if r.get("valuation"):
-                r["valuation_context"] = build_valuation_context(
-                    r, screen_rows.get(r["ticker"]))
 
+def _attach_sector_comps(rows, surfaced, screen_rows) -> None:
+    """Peer-relative valuation, computed over ALL rows, attached to the
+    surfaced ones (mutating them in place)."""
     # Sector comps: peer-relative valuation computed over ALL scanned rows (so
     # the medians rest on the full universe - not the dishonestly-thin ~25
     # surfaced names), attached ONLY to surfaced rows to keep the bundle slim.
@@ -1356,11 +1415,17 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
          "fwd_pe_est": r.get("fwd_pe_est"),
          "fwd_growth_pct": (screen_rows.get(r["ticker"]) or {}).get("fwd_revenue_growth_pct")}
         for r in rows])
-    for r in rows[:top_n] + contrarian + deep_value + supplier_pullbacks:
+    for r in surfaced:
         sc = comps.get(r["ticker"])
         if sc:
             r["sector_comps"] = sc
 
+
+def _sector_breadth_context(rows, benchmark_trend) -> tuple:
+    """(by_sector, sector_rs, sector_rs_meta, indicator_map, breadth) plus the
+    persisted sector-momentum snapshot (record_sector_momentum never raises).
+    attach_sector_relative_strength mutates rows in place - it must run before
+    output assembly, same order as the pre-extraction inline code."""
     # Sector relative strength: which parts of the AI stack money is rotating
     # into or out of. Computed over the whole universe, not just top setups.
     by_sector: dict[str, list[dict]] = {}
@@ -1416,7 +1481,18 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
             benchmark_1m_pct=(benchmark_trend or {}).get("spy_momentum_1m_pct"))
     except Exception:
         pass
+    return by_sector, sector_rs, sector_rs_meta, indicator_map, breadth
 
+
+def _assemble_scan_output(*, rows, top_n, tickers, contrarian, deep_value,
+                          supplier_pullbacks, benchmark_trend, sector_rs,
+                          breadth, indicator_map, sector_rs_meta, no_data,
+                          short_history, daily_chunk_failures,
+                          weekly_chunk_failures, w200, enrich,
+                          enrich_cov) -> dict:
+    """The emitted scan dict. Key ORDER and structure are part of the contract
+    (downstream diffs/relays and the dashboard read this shape) - the literal
+    below is the pre-extraction one, moved verbatim (2026-08-05)."""
     from datetime import datetime, timezone
     scan_fetched_at = datetime.now(timezone.utc).isoformat()
     prices_meta = {
@@ -1497,7 +1573,12 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
         # cloud runs, which read this straight from the relayed data bundle.
         "atr_by_ticker": {r["ticker"]: r["atr_pct"] for r in rows},
     }
+    return out
 
+
+def _apply_scan_status(out, tickers, rows, daily_chunk_failures, enrich,
+                       enrich_cov) -> None:
+    """Stamp status (+ error / enrich_error) onto the assembled output."""
     # STATUS (uniform contract - tools/freshness_audit.feed_status). This used to
     # be a hardcoded "status": "ok" that no failure could ever change: a scan in
     # which every yf.download chunk was rate-limited returned zero rows AND
@@ -1519,21 +1600,118 @@ def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
             "short_interest are ABSENT on all surfaced rows. Missing market cap "
             "is missing data, NOT a sub-$1B name.")
 
-    # Weekly depth: per-sector leaders (top 3 by swing_setup_score) with a slim
-    # field set so the weekly pack can show rotation without shipping full rows.
+
+def _weekly_leaders(by_sector) -> dict:
+    """Weekly depth: per-sector leaders (top 3 by swing_setup_score) with a
+    slim field set so the weekly pack can show rotation without shipping
+    full rows."""
+    leader_fields = (
+        "ticker", "last_close", "momentum_1m_pct", "rel_strength_1m_pct",
+        "pct_from_52w_high", "swing_setup_score", "liquid",
+    )
+    by_sector_leaders: dict[str, list[dict]] = {}
+    for s, xs in by_sector.items():
+        ranked = sorted(xs, key=lambda r: r.get("swing_setup_score") or 0,
+                        reverse=True)[:3]
+        by_sector_leaders[s] = [
+            {k: r.get(k) for k in leader_fields} for r in ranked
+        ]
+    return by_sector_leaders
+
+
+def scan_universe(top_n: int = 15, tickers=None, enrich: bool = True,
+                 weekly: bool = False) -> dict:
+    """Scan the trading universe (or a ticker subset) for swing setups.
+
+    Args:
+        top_n: Number of top swing setups to surface.
+        tickers: Optional list/set of symbols to scan ONLY those (+ SPY for RS).
+                 Sector labels come from universe.json when known, else "unmapped".
+        enrich: If False, skip slow per-ticker yf.Ticker info / earnings_dates /
+                revenue_estimate calls. Price metrics, ATR, volume, fwd_pe_est
+                from screen cache, and contrarian/deep_value/supplier lanes still run.
+        weekly: If True, also return by_sector_leaders (top 3 per sector by
+                swing_setup_score with a slim field set). sector_relative_strength
+                is always included.
+
+    Decomposed 2026-08-05: this function is now pure SEQUENCING over the stage
+    functions above (see the extraction note there) - fetch order, emitted
+    structure and key order are unchanged.
+    """
+    tickers, ticker_sector = _resolve_scan_tickers(tickers)
+
+    # 14mo (~294 sessions) so a true 200-DMA and a trailing-252-session 52-week high
+    # survive after rolling. SPY rides along in the same batched download to power
+    # relative strength without an extra network round-trip.
+    now_et = _scan_now_et()
+
+    # CHUNKED + THROTTLED (see CHUNK_SIZE / CHUNK_SLEEP_SEC); the still-forming
+    # session bar is dropped so volume math compares completed sessions only.
+    frames, daily_chunk_failures = _download_frames(
+        tickers + ["SPY"], "14mo", "1d", now_et=now_et)
+
+    spy_1m, spy_3m, benchmark_trend = _benchmark_context(frames)
+
+    w200, weekly_by_ticker, weekly_chunk_failures = _weekly_context(tickers, now_et)
+
+    screen_rows = _load_screen_rows()
+
+    # Business-reality layer: per-name AI-exposure labels (see _load_ai_exposure).
+    ai_exposure = _load_ai_exposure()
+
+    rows = []
+    no_data = short_history = 0
+    for t in tickers:
+        try:
+            df = frames.get(t)
+            if df is None:
+                no_data += 1
+                continue
+            df = df.dropna()
+            if len(df) < MIN_BARS:
+                short_history += 1
+                continue
+            rows.append(_compute_ticker_row(
+                t, df, sector=ticker_sector[t], spy_1m=spy_1m, spy_3m=spy_3m,
+                screen_row=screen_rows.get(t), ai_info=ai_exposure.get(t),
+                w200_entry=w200.get(t), weekly_block=weekly_by_ticker.get(t)))
+        except Exception:
+            # Any per-name surprise (bad frame, indicator error, import
+            # failure) costs that name only, never the scan - the same
+            # contract as when this try wrapped the inline row code.
+            no_data += 1
+            continue
+
+    rows.sort(key=lambda r: r["swing_setup_score"], reverse=True)
+
+    contrarian, deep_value, supplier_pullbacks = _select_lanes(
+        rows, top_n, screen_rows)
+
+    # Slow per-name enrichment for SURFACED rows only; enrich=False skips it
+    # entirely and enrich_coverage discloses which (see _assemble_scan_output).
+    surfaced = rows[:top_n] + contrarian + deep_value + supplier_pullbacks
+    enrich_cov = _enrich_focus_rows(surfaced, screen_rows) if enrich else None
+
+    _attach_sector_comps(rows, surfaced, screen_rows)
+
+    (by_sector, sector_rs, sector_rs_meta,
+     indicator_map, breadth) = _sector_breadth_context(rows, benchmark_trend)
+
+    out = _assemble_scan_output(
+        rows=rows, top_n=top_n, tickers=tickers, contrarian=contrarian,
+        deep_value=deep_value, supplier_pullbacks=supplier_pullbacks,
+        benchmark_trend=benchmark_trend, sector_rs=sector_rs, breadth=breadth,
+        indicator_map=indicator_map, sector_rs_meta=sector_rs_meta,
+        no_data=no_data, short_history=short_history,
+        daily_chunk_failures=daily_chunk_failures,
+        weekly_chunk_failures=weekly_chunk_failures, w200=w200,
+        enrich=enrich, enrich_cov=enrich_cov)
+
+    _apply_scan_status(out, tickers, rows, daily_chunk_failures, enrich,
+                       enrich_cov)
+
     if weekly:
-        leader_fields = (
-            "ticker", "last_close", "momentum_1m_pct", "rel_strength_1m_pct",
-            "pct_from_52w_high", "swing_setup_score", "liquid",
-        )
-        by_sector_leaders: dict[str, list[dict]] = {}
-        for s, xs in by_sector.items():
-            ranked = sorted(xs, key=lambda r: r.get("swing_setup_score") or 0,
-                            reverse=True)[:3]
-            by_sector_leaders[s] = [
-                {k: r.get(k) for k in leader_fields} for r in ranked
-            ]
-        out["by_sector_leaders"] = by_sector_leaders
+        out["by_sector_leaders"] = _weekly_leaders(by_sector)
 
     return out
 
