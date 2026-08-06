@@ -145,10 +145,19 @@ def test_releases_the_lock_even_if_execution_raises(tmp_path, monkeypatch):
     for LOCK_STALE_SECONDS."""
     write_snapshot(tmp_path, monkeypatch, {"AAA": 90.0})
     monkeypatch.setattr(stop_watch, "get_portfolio_state", lambda: book(stop=95.0))
-    monkeypatch.setattr(stop_watch.preflight, "acquire_run_lock", lambda rid: True)
+    # release_run_lock now takes the owning run_id (ownership-checked release,
+    # 2026-08-05) and the maintenance pass takes its own lock before the exec
+    # lock — so assert acquire/release PAIRING rather than a fixed count.
+    acquired = {"n": 0}
+
+    def fake_acquire(rid):
+        acquired.update(n=acquired["n"] + 1)
+        return True
+
+    monkeypatch.setattr(stop_watch.preflight, "acquire_run_lock", fake_acquire)
     released = {"n": 0}
     monkeypatch.setattr(stop_watch.preflight, "release_run_lock",
-                        lambda: released.update(n=released["n"] + 1))
+                        lambda *a, **k: released.update(n=released["n"] + 1))
 
     def boom(*a, **k):
         raise RuntimeError("broker down")
@@ -157,7 +166,7 @@ def test_releases_the_lock_even_if_execution_raises(tmp_path, monkeypatch):
 
     with pytest.raises(RuntimeError):
         stop_watch.run(dry_run=False)
-    assert released["n"] == 1
+    assert released["n"] == acquired["n"] >= 1
 
 
 def test_dry_run_never_places_an_order(tmp_path, monkeypatch):

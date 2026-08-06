@@ -35,8 +35,16 @@ DESIGN CONSTRAINTS, each load-bearing
   enforcement. scripts/execute_order_intents.py already got this right ("protective
   exits must never be blocked by a halt") and this mirrors it. A kill switch should
   stop the system OPENING risk, not stop it CLOSING risk.
-* TAKES THE RUN LOCK. A trading cycle mutating the ledger concurrently would race.
-  If a cycle holds the lock this exits quietly — the cycle enforces stops itself.
+* TAKES THE RUN LOCK — for BOTH ledger-writing phases, briefly each (fixed
+  2026-08-05: this bullet used to be claimed but only half true — broker
+  maintenance ran with NO lock while a trading cycle's apply_corporate_actions
+  read-modify-write could silently overwrite a tick-ingested fill or a fresh
+  protective_stop record). Maintenance (fill ingestion + stop re-arming) locks
+  first and is DEFERRED when a cycle holds the lock — the next tick is five
+  minutes away, and reconciling is never urgent enough to race a live cycle for
+  the file. Forced-exit execution locks again only once there is something to
+  fire. The price read and breach check between the two stay lock-free, so a
+  tick almost never blocks a scheduled cycle from starting.
 * REFUSES TO ACT ON STALE PRICES. Enforcing a stop against a stale prior close is
   worse than waiting; the next tick is minutes away.
 
@@ -52,6 +60,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import subprocess
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -176,6 +185,47 @@ def _load_atr_map() -> dict:
     return {}
 
 
+def _sync_repo_ff(out: dict) -> None:
+    """Best-effort fetch + fast-forward from origin BEFORE reconciling fills.
+
+    CROSS-NODE DOUBLE-APPLY MITIGATION (audited 2026-08-05). Every idempotency
+    layer around fill ingestion is per-checkout — history ids, the persisted
+    ingested_broker_orders memo, and the journal are shared only "after git
+    syncs" (execution/alpaca_broker.py, the ALREADY-APPLIED GUARD). The Actions
+    executor runs on a fresh origin clone; this watchdog runs on the persistent
+    local checkout. Both can see the same overnight stop fill before either
+    pushes, and a double-applied realization corrupts the permanent track
+    record and can trip broker_sync_suspect. Pulling origin first means fills
+    the executor already applied and pushed are visible to THIS node's dedupe
+    layers before it reconciles — narrowing the window (full closure would need
+    a shared store, which this repo deliberately does not have).
+
+    Strictly fail-open: this is a SAFETY tick, and a sync failure (offline,
+    diverged history, dirty tree) must never brick the stop check that follows.
+    --ff-only guarantees no merge commits and no rewriting of local work; when
+    the fast-forward refuses, we print why and proceed on local state exactly
+    as before this existed."""
+    try:
+        r = subprocess.run(["git", "-C", str(ROOT), "fetch", "--quiet", "origin"],
+                           capture_output=True, text=True, timeout=45)
+        if r.returncode != 0:
+            out["git_sync"] = f"fetch_failed: {(r.stderr or '').strip()[:160]}"
+            print(f"  (git fetch failed — reconciling on local state: "
+                  f"{(r.stderr or '').strip()[:120]})")
+            return
+        r = subprocess.run(["git", "-C", str(ROOT), "merge", "--ff-only", "@{u}"],
+                           capture_output=True, text=True, timeout=45)
+        if r.returncode != 0:
+            out["git_sync"] = f"ff_refused: {(r.stderr or '').strip()[:160]}"
+            print(f"  (fast-forward refused — reconciling on local state: "
+                  f"{(r.stderr or '').strip()[:120]})")
+        else:
+            out["git_sync"] = "ok"
+    except Exception as e:
+        out["git_sync"] = f"error: {str(e)[:160]}"
+        print(f"  (git sync skipped: {e})")
+
+
 def _broker_maintenance(out: dict) -> None:
     """Absorb broker-side fills and keep the resting stops armed.
 
@@ -190,6 +240,9 @@ def _broker_maintenance(out: dict) -> None:
     broker hiccup must never stop the stop check that follows."""
     if broker.backend_name() != "alpaca_paper":
         return  # simulation has no broker-side lifecycle
+    # See fills the OTHER node already applied and pushed before reconciling,
+    # so the per-checkout dedupe layers actually cover them (F3 mitigation).
+    _sync_repo_ff(out)
     try:
         ingested = run_reconcile()
         if ingested:
@@ -224,8 +277,25 @@ def run(dry_run: bool = False) -> dict:
 
     # Runs BEFORE the book is read (and even on a flat book): a fired stop is
     # exactly what makes the book flat, and that fill still needs recording.
+    # UNDER THE RUN LOCK (fixed 2026-08-05): maintenance WRITES the ledger —
+    # run_reconcile ingests broker fills into state/portfolio.json and
+    # ensure_protective_stop stamps protective_stop records — while a trading
+    # cycle's own read-modify-write (apply_corporate_actions loads the state,
+    # mutates, saves ~140 lines later) could load BEFORE this wrote and save
+    # AFTER, silently reverting a tick-ingested fill or a fresh stop record.
+    # The docstring claimed the lock was taken; the code did not take it here.
+    # If a cycle holds the lock, defer: the next tick is five minutes away.
     if not dry_run:
-        _broker_maintenance(out)
+        maint_id = (f"stopwatch-maint-"
+                    f"{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')}-"
+                    f"{uuid.uuid4().hex[:4]}")
+        if preflight.acquire_run_lock(maint_id):
+            try:
+                _broker_maintenance(out)
+            finally:
+                preflight.release_run_lock(maint_id)
+        else:
+            out["maintenance"] = "deferred_run_lock_held"
 
     portfolio = get_portfolio_state()
     positions = portfolio.get("positions") or []
@@ -261,8 +331,10 @@ def run(dry_run: bool = False) -> dict:
         out.update(status="dry_run", note=f"{len(forced)} exit(s) would fire")
         return out
 
-    # The lock is taken ONLY once there is something to execute: a read-only tick
-    # must never block a scheduled trading cycle from starting.
+    # Second, separate lock acquisition: the price read and breach check above
+    # are lock-free so a tick rarely blocks a scheduled trading cycle from
+    # starting — only the two ledger-WRITING phases (maintenance above,
+    # execution here) ever hold the lock, each briefly.
     run_id = f"stopwatch-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')}-{uuid.uuid4().hex[:4]}"
     if not preflight.acquire_run_lock(run_id):
         out.update(status="deferred",
@@ -272,7 +344,9 @@ def run(dry_run: bool = False) -> dict:
         out["fills"] = exit_guard.execute_forced_exits(forced, prices, run_id, atr_map)
         out["run_id"] = run_id
     finally:
-        preflight.release_run_lock()
+        # Ownership-checked release (pass the run id): an unconditional unlink
+        # here could delete a lock another process legitimately reclaimed.
+        preflight.release_run_lock(run_id)
     return out
 
 

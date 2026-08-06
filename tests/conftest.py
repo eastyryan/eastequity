@@ -15,6 +15,16 @@ from pathlib import Path
 
 import pytest
 
+# The exec-audit regression scripts (2026-08-05) are the same hazard class the
+# docstring above records from 2026-07-14, but by DESIGN: they redirect
+# simulated_broker.STATE_FILE / alpaca_broker.INTENTS_FILE / journal.JOURNAL
+# and stub time.sleep at module level, which is only safe with one pristine
+# interpreter per script. In-process collection of several of them poisoned
+# pytest's setup/teardown state for unrelated tests. They are excluded here and
+# executed as subprocesses by tests/test_execution_audit_subprocesses.py, so
+# the suite still runs every check.
+collect_ignore_glob = ["test_exec_audit_*.py"]
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import validator as _validator  # noqa: E402

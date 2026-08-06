@@ -119,6 +119,18 @@ _DEFAULTS = {
 _STOP_WORKING = ("new", "accepted", "held", "partially_filled", "pending_new",
                  "accepted_for_bidding", "calculated")
 
+# Statuses that mean an order is DEAD at the broker with nothing to show for it.
+# Used by the duplicate-client_order_id path: Alpaca client ids are unique
+# FOREVER per account, including for orders that died unfilled, so a terminally
+# rejected order squats on its id — resolving to it is not idempotency, it is a
+# permanently wedged retry (see _resolve_duplicate_submit, audited 2026-08-05).
+_TERMINAL_DEAD = ("rejected", "canceled", "expired")
+# Bounded retry-suffix walk: -r2 .. -r9. Eight extra attempts per base id are
+# plenty for transient rejections; a name the broker rejects every time (halted
+# all day) ends the day dead either way, and forced-exit ids reset with the ET
+# day so the walk starts fresh tomorrow.
+_MAX_DUP_RETRY_SUFFIX = 9
+
 _probe_cache: dict = {}        # process-lifetime reachability memo
 
 
@@ -237,29 +249,49 @@ def _starting_capital() -> float:
 
 
 def ledger_expected_equity() -> float | None:
-    """Account equity implied by our OWN permanent record: starting capital plus
-    every realization we have ever booked (plus dividends still attributed to
-    open positions, which were credited to cash when the event was processed).
-    None when the baseline is unknown — the cross-check then stays off rather
-    than inventing a comparison."""
+    """Account equity implied by our OWN permanent record: starting capital,
+    plus every price realization we have ever booked, plus only those dividends
+    the event trail says were actually CREDITED to cash. None when the baseline
+    is unknown — the cross-check then stays off rather than inventing a
+    comparison.
+
+    DIVIDENDS ARE COUNTED FROM THE EVENT TRAIL, NOT ASSUMED (fixed 2026-08-05).
+    corporate_actions.apply_corporate_actions makes dividends METADATA-ONLY on
+    the alpaca backend — Alpaca paper never credits the cash — and records that
+    decision on every dividend history row as `cash_credited`. The old
+    reconstruction added open-position dividend metadata and preferred the
+    dividend-inclusive total_realized_pnl_usd on closed rows, so on this
+    backend every dividend pushed `expected` ABOVE broker equity by exactly the
+    amount the broker never paid: a systematic bias that walks the cross-check
+    toward a false broker_sync_suspect (which then refuses every new BUY).
+    Summing per-row PRICE-ONLY P&L plus only cash_credited dividend events
+    matches what each backend actually did to cash, on any mixed history."""
     start = _starting_capital()
     if start <= 0:
         return None
     state = simulated_broker._load()
     total = start
     for h in state.get("history", []) or []:
+        if h.get("type") == "dividend":
+            # A row with no cash_credited flag predates the backend split —
+            # written when the simulation owned cash and always credited, so
+            # the absent-flag default is True.
+            if h.get("cash_credited", True):
+                total += _f(h.get("amount_usd"))
+            continue
         if str(h.get("action", "")).upper() != "SELL_TO_CLOSE":
             continue
         if str(h.get("status", "")) != "filled":
             continue
-        v = h.get("total_realized_pnl_usd")
+        v = h.get("realized_pnl_usd")            # price-only, net of fees
         if v is None:
-            v = h.get("realized_pnl_usd")
-        if v is None:
-            continue
+            # Legacy fallback: strip the dividend component out of the
+            # dividend-inclusive total — dividends are the event trail's job.
+            t = h.get("total_realized_pnl_usd")
+            if t is None:
+                continue
+            v = _f(t) - _f(h.get("dividends_received_usd"))
         total += _f(v)
-    for p in state.get("positions", []) or []:
-        total += _f(p.get("dividends_received_usd"))
     return round(total, 2)
 
 
@@ -524,6 +556,76 @@ def clear_intents(consumed_ids: list[str]) -> None:
 # --------------------------------------------------------------------------- #
 # contract: place_order / readback
 # --------------------------------------------------------------------------- #
+def _resolve_duplicate_submit(pending: dict, body: dict, action: str) -> dict | None:
+    """Resolve a 409/422 duplicate-client_order_id submit. Mutates and returns
+    `pending` on success; None when the duplicate cannot be resolved (the
+    caller records the dead order).
+
+    THE HOLE THIS CLOSES (audited 2026-08-05). forced_exit_client_order_id keys
+    a protective sell on ticker+ET-day+reason so two nodes reacting to the same
+    breach collide here instead of both selling. But Alpaca client ids are
+    unique FOREVER per account — including for orders that died unfilled — so
+    when the broker TERMINALLY rejected the first attempt (halted name,
+    wash-trade block, a DAY sell that expired at the close), every later tick
+    resolved to that same dead order, place_order reported "submitted",
+    readback parked it as resting, and the position sat STOPLESS for the rest
+    of the trading day. Retrying under a DETERMINISTIC suffix (-r2, -r3, ...)
+    preserves the cross-node collision per attempt — both nodes walk the same
+    sequence and meet at the same next id — while a live or (partially) filled
+    order still short-circuits exactly as before.
+
+    Retries are RISK-REDUCING ONLY: a BUY keeps the old resolve-as-submitted
+    behaviour even when its duplicate is dead, because re-submitting a stale
+    BUY hours after its first attempt died would be OPENING risk the run never
+    re-priced (readback then reports the honest terminal status, e.g.
+    rejected_unfilled_canceled)."""
+    base = str(pending["client_order_id"])
+
+    def _dead_unfilled(o: dict) -> bool:
+        return (str(o.get("status") or "") in _TERMINAL_DEAD
+                and _f(o.get("filled_qty")) <= 0)
+
+    existing = _get_order_by_client_id(base)
+    if existing is None:
+        return None
+    if action != "SELL_TO_CLOSE" or not _dead_unfilled(existing):
+        # True idempotency: a live, filled or partially-filled duplicate IS the
+        # order this submit meant — resolve to it, never sell a second time.
+        pending["alpaca_order_id"] = existing.get("id")
+        pending["status"] = "submitted"
+        return pending
+
+    for n in range(2, _MAX_DUP_RETRY_SUFFIX + 1):
+        cand = f"{base}-r{n}"
+        prior = _get_order_by_client_id(cand)
+        if prior is None:
+            code, resp = _req("POST", "/v2/orders",
+                              body={**body, "client_order_id": cand}, timeout=15)
+            if code == 200 and isinstance(resp, dict) and resp.get("id"):
+                pending["order_id"] = cand
+                pending["client_order_id"] = cand
+                pending["alpaca_order_id"] = resp["id"]
+                pending["retry_of_client_order_id"] = base
+                pending["status"] = "submitted"
+                print(f"  (dead duplicate {base} — re-submitted as {cand})")
+                return pending
+            if code in (409, 422) and "client_order_id" in json.dumps(resp or {}):
+                # Another node won the race onto this suffix between our GET
+                # and POST — inspect what it placed instead of skipping it.
+                prior = _get_order_by_client_id(cand)
+            else:
+                return None  # the broker rejected the retry itself — go loud
+        if prior is not None and not _dead_unfilled(prior):
+            pending["order_id"] = cand
+            pending["client_order_id"] = cand
+            pending["alpaca_order_id"] = prior.get("id")
+            pending["retry_of_client_order_id"] = base
+            pending["status"] = "submitted"
+            return pending
+        # this retry attempt died at the broker too — keep walking
+    return None
+
+
 def place_order(order: dict) -> dict:
     """Submit (or queue) an order. Returns the pending order dict; all fill
     interpretation happens in readback(), same as the simulator."""
@@ -597,12 +699,13 @@ def place_order(order: dict) -> dict:
         pending["alpaca_order_id"] = resp["id"]
         pending["status"] = "submitted"
     elif code in (409, 422) and "client_order_id" in json.dumps(resp or {}):
-        # duplicate client_order_id -> an identical submit already exists (idempotent retry)
-        existing = _get_order_by_client_id(order_id)
-        if existing:
-            pending["alpaca_order_id"] = existing.get("id")
-            pending["status"] = "submitted"
-        else:
+        # duplicate client_order_id -> a submit under this id already exists.
+        # Live/filled duplicates short-circuit (idempotent retry); a terminally
+        # DEAD unfilled duplicate on a protective sell re-submits under a
+        # deterministic -rN suffix — see _resolve_duplicate_submit for the
+        # stopless-position failure that made "any duplicate == submitted"
+        # unacceptable on the exit path.
+        if _resolve_duplicate_submit(pending, body, action) is None:
             pending["status"] = f"rejected_submit_{code}"
             pending["broker_response"] = resp
             return _record_dead_order(pending)
@@ -611,9 +714,12 @@ def place_order(order: dict) -> dict:
         pending["broker_response"] = resp
         return _record_dead_order(pending)
 
-    # stash for readback (and for reconcile() if the poll window expires)
+    # stash for readback (and for reconcile() if the poll window expires) —
+    # keyed on pending["order_id"], which the duplicate-retry path may have
+    # moved to a -rN suffix; readback() polls whatever id it is handed, so the
+    # stash key and the id at the broker must be the same string.
     state = simulated_broker._load()
-    state.setdefault("pending_orders", {})[order_id] = pending
+    state.setdefault("pending_orders", {})[pending["order_id"]] = pending
     simulated_broker._save(state)
     return pending
 
@@ -780,7 +886,7 @@ def _desired_stop_level(pos: dict) -> float | None:
     return round(max(levels), 4) if levels else None
 
 
-def _stop_shape(qty: float, existing_tif: str | None) -> tuple[float, str, float]:
+def _stop_shape(qty: float) -> tuple[float, str, float]:
     """(order qty, time_in_force, uncovered qty) for a position of `qty` shares.
 
     Alpaca accepts fractional quantities ONLY with time_in_force=day, and every
@@ -789,9 +895,18 @@ def _stop_shape(qty: float, existing_tif: str | None) -> tuple[float, str, float
     WHOLE-SHARE portion GTC (what genuinely survives overnight and the weekend)
     and DISCLOSE the sub-share remainder rather than assume it is safe. Under
     one share there is no whole-share leg, so DAY is the only order the broker
-    will take: session-only protection, re-armed each stop_watch tick."""
-    if str(existing_tif or "").lower() == "day":
-        return round(qty, 6), "day", 0.0
+    will take: session-only protection, re-armed each stop_watch tick.
+
+    Derived from the CURRENT quantity ALONE (fixed 2026-08-05). This used to
+    take the existing order's tif and pin "day" forever, so a position opened
+    under one share (the live book's BKR, 0.995 sh, carries exactly this DAY
+    stop) that later scaled past a whole share would have kept session-only
+    protection for life: ensure_protective_stop's cancel-and-rewrite path only
+    fires when the wanted tif differs from the current one, and the wanted tif
+    was computed AS the current one. The desired stop shape is a function of
+    what we hold now, never of what the last order happened to be — a DAY stop
+    on a position that now has a whole-share leg upgrades to GTC on the next
+    ensure call."""
     whole = float(int(qty))
     if whole >= 1.0:
         return whole, "gtc", round(qty - whole, 6)
@@ -944,7 +1059,7 @@ def ensure_protective_stop(ticker: str, *, reason: str = "") -> dict | None:
         cur_qty = round(_f(existing.get("qty")), 6)
         cur_tif = str(existing.get("time_in_force") or "").lower()
         level = max(desired, cur_price)          # <- the ratchet
-        want_qty, want_tif, uncovered = _stop_shape(qty, cur_tif)
+        want_qty, want_tif, uncovered = _stop_shape(qty)
         if want_tif == cur_tif:
             if abs(level - cur_price) < 5e-5 and abs(want_qty - cur_qty) < 1e-6:
                 return _record_protective_stop(ticker, existing, want_qty,
@@ -960,7 +1075,7 @@ def ensure_protective_stop(ticker: str, *, reason: str = "") -> dict | None:
         _req("DELETE", f"/v2/orders/{existing['id']}")
         desired = level
 
-    want_qty, want_tif, uncovered = _stop_shape(qty, None)
+    want_qty, want_tif, uncovered = _stop_shape(qty)
     o = _submit_stop(ticker, want_qty, desired, want_tif)
     if o is None and want_tif == "gtc":
         # GTC refused (the fractional rule, or anything else): a DAY stop on the
@@ -1035,7 +1150,14 @@ def ingest_out_of_band_fills() -> list[tuple[dict, dict]]:
         for k in ("client_order_id", "order_id", "alpaca_order_id"):
             if h.get(k):
                 known.add(str(h[k]))
-    seen = set(str(x) for x in (state.get("ingested_broker_orders") or []))
+    # Insertion-ordered dedupe memo (fixed 2026-08-05). Kept as a LIST + set
+    # pair because the trim below must evict the OLDEST ingested ids first: the
+    # previous `sorted(seen)[-500:]` trimmed lexicographically, so once the memo
+    # overflowed it could evict the most RECENT ids (exactly the ones still
+    # inside the lookback window that the next sweep will see again) while
+    # keeping ancient high-sorting ids forever.
+    seen_list = [str(x) for x in (state.get("ingested_broker_orders") or [])]
+    seen = set(seen_list)
 
     done: list[tuple[dict, dict]] = []
     flagged: list[tuple[str, str]] = []
@@ -1066,6 +1188,7 @@ def ingest_out_of_band_fills() -> list[tuple[dict, dict]]:
         if side == "buy":
             flagged.append((symbol, key))
             seen.add(key)
+            seen_list.append(key)
             touched = True
             continue
         if side != "sell" or not symbol:
@@ -1088,6 +1211,7 @@ def ingest_out_of_band_fills() -> list[tuple[dict, dict]]:
                              or ao.get("filled_at")),
         }
         seen.add(key)
+        seen_list.append(key)
         touched = True
         try:
             fill = _apply_fill(pending, ao)
@@ -1114,7 +1238,7 @@ def ingest_out_of_band_fills() -> list[tuple[dict, dict]]:
 
     if touched:
         st = simulated_broker._load()
-        st["ingested_broker_orders"] = sorted(seen)[-500:]
+        st["ingested_broker_orders"] = seen_list[-500:]   # oldest dropped first
         simulated_broker._save(st)
     return done
 
@@ -1182,20 +1306,27 @@ MIN_WHOLE_SHARES_FOR_LIMIT = 4
 
 
 def _buy_body(ticker: str, notional: float, order: dict, order_id: str) -> dict:
-    """Entry order body — a resting GTC limit with an attached stop when possible.
+    """Entry order body — a whole-share limit with an attached stop when possible.
 
     WHY TWO SHAPES. Alpaca's fractional/notional orders are time_in_force=DAY ONLY
-    and accept no order_class, so a notional entry can neither rest overnight nor
-    carry a broker-managed stop. A WHOLE-SHARE qty order can do both. That single
-    difference decides four things at once:
+    and accept no order_class, so a notional entry can neither carry a
+    broker-managed stop nor be limit-priced by whole shares. A WHOLE-SHARE qty
+    order can. What the limit+OTO shape actually buys us:
 
-      * the entry executes when price reaches the level, with NO run in progress,
-        no local watcher and no polling latency — the broker does it;
+      * this is NOT a resting entry, despite the GTC tif (doc corrected
+        2026-08-05 — an earlier version of this comment claimed the entry
+        "executes when price reaches the level with no run in progress", which
+        readback() has never allowed): the BUY branch of readback() CANCELS any
+        unfilled remainder when the ~90s poll window expires, so in practice the
+        entry is marketable-within-the-window-or-canceled. The GTC tif exists to
+        satisfy the order_class/qty rules and to make the attached stop leg
+        durable, not to leave a working entry behind after the run ends;
       * `order_class: "oto"` attaches the protective stop AT ENTRY, armed by the
-        exchange, so there is no arming race and no window where a filled position
-        is unprotected;
-      * GTC means that stop survives overnight and weekends for the ENTIRE position,
-        with no fractional remainder left uncovered;
+        exchange — but only a fill INSIDE the poll window enjoys it; an entry
+        canceled unfilled leaves nothing behind, stop leg included;
+      * for a fill inside the window, GTC means the attached stop survives
+        overnight and weekends for the ENTIRE position, with no fractional
+        remainder left uncovered and no arming race;
       * entry_price_max is enforced by the exchange rather than by our own guard —
         which is worth noting, because that guard read a key nobody set and had
         never once fired.
@@ -1334,6 +1465,32 @@ def _apply_fill(pending: dict, ao: dict) -> dict:
                 "alpaca_status": ao.get("status")}
     else:  # SELL_TO_CLOSE
         avg_cost = float((pre_pos or {}).get("avg_cost") or 0.0)
+        avg_cost_source = None
+        if avg_cost <= 0:
+            # MIRROR-MISSING POSITION (audited 2026-08-05). An out-of-band sell
+            # of a position the mirror lost used to book avg_cost 0 and
+            # realized_pnl_usd None — a row ledger_expected_equity can only
+            # skip, so the realization went permanently missing from the
+            # reconstruction and the expected-vs-broker gap drifted toward a
+            # false broker_sync_suspect. The entry usually survives in history
+            # even when the position record did not: the most recent filled BUY
+            # row carries position_avg_cost_after (blended across scale-ins).
+            # Recover the basis from there, LABEL the row so nobody mistakes it
+            # for first-class data, and only fall back to None when the entry
+            # genuinely never touched this ledger. (A split between that BUY
+            # and now would leave the backfilled basis unscaled — accepted:
+            # this path only runs on an already-degraded mirror, and a labeled
+            # approximate basis beats an invisible realization.)
+            for h in reversed(state.get("history") or []):
+                if str(h.get("ticker", "")).upper() == ticker \
+                        and str(h.get("action", "")).upper() == "BUY" \
+                        and h.get("status") == "filled":
+                    backfill = _f(h.get("position_avg_cost_after")) \
+                        or _f(h.get("fill_price"))
+                    if backfill > 0:
+                        avg_cost = backfill
+                        avg_cost_source = "history_backfill"
+                    break
         pre_qty = float((pre_pos or {}).get("quantity") or 0.0)
         frac = round(min(max(qty / pre_qty, 0.0), 1.0), 4) if pre_qty > 0 else 1.0
         total_divs = float((pre_pos or {}).get("dividends_received_usd", 0.0) or 0.0)
@@ -1351,6 +1508,8 @@ def _apply_fill(pending: dict, ao: dict) -> dict:
                                            if price_pnl is not None else None),
                 "dividends_received_usd": divs,
                 "fees_usd": zero_fees, "alpaca_status": ao.get("status")}
+        if avg_cost_source:
+            fill["avg_cost_source"] = avg_cost_source
 
     fill["filled_at"] = ao.get("filled_at") or datetime.now(timezone.utc).isoformat()
 

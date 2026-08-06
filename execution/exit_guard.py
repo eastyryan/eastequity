@@ -117,16 +117,39 @@ def check_forced_exits(portfolio: dict, prices: dict, atr_by_ticker: dict | None
                   f"cannot stop it; new BUYs are blocked while it is open")
             continue
         ticker = pos["ticker"].upper()
+        # Parse the stop DEFENSIVELY, and shout when a plan cannot yield one.
+        # Same failure as "no plan", wearing a plan's clothes (audited
+        # 2026-08-05): a plan with stop_loss: None used to sail through here in
+        # SILENCE — no stop check can ever fire, ensure_protective_stop finds no
+        # level to arm and returns quietly, so the position is exactly as
+        # unstoppable as one with no plan at all, minus the shout. Worse, an
+        # unparseable string stop crashed the whole guard at float(stop) below,
+        # taking stop enforcement down for every OTHER position in the book.
+        # Horizon enforcement still applies (it needs only the plan), so this
+        # does NOT `continue` — reducing enforcement is not how you report a
+        # missing stop. Shouted before the price gate so a stale feed cannot
+        # hide it.
+        raw_stop = plan.get("stop_loss")
+        try:
+            stop = float(raw_stop) if raw_stop is not None else None
+        except (TypeError, ValueError):
+            stop = None
+        if stop is not None and stop <= 0:
+            stop = None
+        if stop is None:
+            print(f"  UNSTOPPABLE POSITION {ticker}: plan present but stop_loss "
+                  f"({raw_stop!r}) is missing/unparseable — this layer cannot "
+                  f"stop it and no resting broker stop can be armed from it; "
+                  f"only the holding horizon (if any) still protects this name")
         last = prices.get(ticker)
         if last is None:
             continue  # no fresh price — leave for the brain
-        stop = plan.get("stop_loss")
         horizon = plan.get("holding_horizon_days")
         days_held = pos.get("days_held")
 
         # --- Chandelier trail (only meaningful alongside a plan stop) ---
         trailing = None
-        if stop:
+        if stop is not None:
             try:
                 trailing = float(pos.get("trailing_stop") or 0.0) or None
             except (TypeError, ValueError):
@@ -135,7 +158,7 @@ def check_forced_exits(portfolio: dict, prices: dict, atr_by_ticker: dict | None
                 pos.get("high_water"), atr_by_ticker.get(ticker), last, multiple)
             # Activation gate: the trail exists only once the chandelier has
             # climbed ABOVE the plan stop; ratchet: it can only ever rise.
-            if chandelier is not None and chandelier > float(stop) \
+            if chandelier is not None and chandelier > stop \
                     and chandelier > (trailing or 0.0):
                 trailing = round(chandelier, 4)
                 trail_updates[ticker] = trailing
@@ -144,8 +167,8 @@ def check_forced_exits(portfolio: dict, prices: dict, atr_by_ticker: dict | None
         # Effective stop for the breach check: the trail never lowers it.
         effective_stop = None
         trail_binding = False
-        if stop:
-            effective_stop = float(stop)
+        if stop is not None:
+            effective_stop = stop
             if trailing is not None and trailing > effective_stop:
                 effective_stop = trailing
                 trail_binding = True
@@ -162,7 +185,7 @@ def check_forced_exits(portfolio: dict, prices: dict, atr_by_ticker: dict | None
                 # stop_loss carries the BINDING level so the broker's gap-through
                 # fill models the level that actually fired (trail or plan stop).
                 "stop_loss": effective_stop,
-                "plan_stop_loss": float(stop) if stop else None,
+                "plan_stop_loss": stop,   # already float-or-None (parsed above)
                 "trailing_stop": trailing,
                 "atr_pct": atr_by_ticker.get(ticker),
                 "days_held": days_held, "horizon": horizon,
