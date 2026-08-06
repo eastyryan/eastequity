@@ -57,15 +57,14 @@
   "mode": "paper",
   "schedule_note": "Runs at 6am, 8:45am, 10:30am, 12pm, 2pm and 4pm ET, a 5:30pm research review, plus overnight and weekend news checks",
   "portfolio": {
-    "cash_usd": 924.01,
-    "total_equity_usd": 985.39,
+    "cash_usd": 746.22,
     "positions": [
       {
         "ticker": "BKR",
         "quantity": 0.995395,
         "avg_cost": 58.198,
-        "market_value_usd": 61.38,
-        "last_price": 61.66,
+        "market_value_usd": 62.51,
+        "last_price": 62.8,
         "opened_at": "2026-07-28T17:54:27.847621+00:00",
         "proposal_id": "20260728-b66630",
         "plan": {
@@ -81,7 +80,7 @@
             "time_box": "If BKR has not sustained a daily close above $65 within 30 trading days of entry, exit and rotate -- the earnings-driven breakout needs volume-confirmed follow-through, not just a one-day pop."
           }
         },
-        "high_water": 61.72,
+        "high_water": 62.81,
         "trailing_stop": 55.7053,
         "adds_count": 0,
         "buy_commission_usd": 0.0,
@@ -120,12 +119,72 @@
             "time_box": "If BKR has not sustained a daily close above $65 within 30 trading days of entry, exit and rotate -- the earnings-driven breakout needs volume-confirmed follow-through, not just a one-day pop."
           }
         },
-        "days_held": 8,
-        "sector": "energy_power",
-        "unrealized_pct": 5.95,
-        "unrealized_usd": 3.45
+        "days_held": 8
+      },
+      {
+        "ticker": "DXCM",
+        "quantity": 2.144115,
+        "avg_cost": 82.92,
+        "market_value_usd": 177.81,
+        "last_price": 82.93,
+        "opened_at": "2026-08-06T15:05:47.791467+00:00",
+        "proposal_id": "20260806-8f3821",
+        "plan": {
+          "stop_loss": 78.4,
+          "target_price": 92.5,
+          "holding_horizon_days": 45,
+          "entry_price_max": 83.0,
+          "confidence": 0.61,
+          "demand_driver": "healthcare",
+          "thesis_invalidators": {
+            "invalidating_print": "Q3 FY2026 results (~2026-10-29) showing reported revenue growth below the ~11% low end of the just-raised $5.18-5.25B FY26 guide, or non-GAAP operating margin missing the guided 23.5-24% range.",
+            "invalidating_structure": "A daily close below $78.00 on above-average volume, breaking the noise-band stop and confirming the pullback is not just digestion.",
+            "time_box": "If DXCM has not reclaimed and held above $87 (near its 52-week high) within 25 trading days of entry (by ~2026-09-11), the post-earnings-drift thesis isn't playing out -- reassess."
+          },
+          "calibration_probe": null
+        },
+        "high_water": 82.93,
+        "adds_count": 0,
+        "buy_commission_usd": 0.0,
+        "demand_driver": "healthcare",
+        "protective_stop": {
+          "status": "resting",
+          "stop_price": 78.4,
+          "qty": 2.0,
+          "uncovered_qty": 0.144115,
+          "session_only": false,
+          "time_in_force": "gtc",
+          "client_order_id": "EESTOP-DXCM-c1c88205c1",
+          "alpaca_order_id": "46bbbf81-5aa0-4cc9-878e-1e783a5d8418",
+          "armed_at": "2026-08-06T15:05:47.948694+00:00"
+        },
+        "original_plan": {
+          "thesis": "DexCom reported Q2 FY2026 revenue of $1.308B (+13% YoY reported, +12% organic, per the 2026-07-30 earnings release), beat EPS estimates by 15.1% (fourth straight beat), and raised full-year revenue guidance to $5.18-5.25B while lifting non-GAAP operating margin guidance to 23.5-24% -- GAAP operating margin already expanded 590bps YoY to 24.3% this quarter. Note: the bundle's digest field states 26.3% YoY revenue growth for DXCM, which conflicts with the source earnings release's own stated 13%/12% organic figure -- I am citing the sourced, lower number as the reliable one and flagging the discrepancy rather than using the more flattering figure. The balance sheet is net cash (-0.81x net debt/EBITDA, $1.95B cash, minimal debt), TTM free cash flow more than doubled to $1.405B, and the company is returning capital (3.88% TTM buyback yield, diluted shares down 4.4% YoY). Ownership_flow shows institutional accumulation aligned with the rising price, and sell-side has been raising targets all week (BTIG to $90, Stifel to $95, Truist to $93, WebSearch-verified, not bundle-sourced) following the print. The stock pulled back 4.92% in its most recent session after tagging a 52-week high three sessions earlier -- I could not confirm a specific negative catalyst for that single-session drop through today's degraded news feed, so I am treating it as digestion after a strong run (RSI 61.5, not overbought; still above both the 50- and 200-day averages) rather than a broken thesis, and sizing/stopping so that I am proven wrong cheaply if it is more than that.",
+          "stop_loss": 78.4,
+          "target_price": 92.5,
+          "entry_price_max": 83.0,
+          "holding_horizon_days": 45,
+          "confidence": 0.61,
+          "risk_reward_ratio": 2.07,
+          "catalysts": [
+            "Q2 FY2026 earnings beat + raised FY26 revenue guidance to $5.18-5.25B (~11-13% growth), reported 2026-07-30",
+            "Sell-side price target increases this week: BTIG to $90, Stifel to $95, Truist to $93 (WebSearch-verified, not in bundle)",
+            "Stelo OTC CGM relaunch (new AI-driven insights app, expanded Type 2 non-insulin access) widening the addressable market beyond core insulin users"
+          ],
+          "risk_map": "This fails if: (1) the Aug-5 ~5% one-day drop turns out to reflect a real negative catalyst I could not identify through today's degraded news feeds -- early tell is a further close below $78 on rising volume; (2) inventory-to-revenue is deteriorating (55.5% vs 49.3% a year ago per quality_ratios) -- if that shows up as a Q3 sell-through miss rather than a capacity-ramp build, the growth story cracks; (3) options positioning already shows a mild put lean (P/C vol 1.17, +3.3pp put skew, low confidence given free-chain data) -- a modest signal some money is hedging further downside; (4) medtech/growth multiples are duration-sensitive and the 10-year yield is rising (4.63%, up from 4.36% three months ago) -- a continued back-up in rates would compress growth multiples broadly, DXCM included, independent of company execution.",
+          "macro_context": "SPY is above both its 50-DMA ($745.72) and 200-DMA ($699.04), up 3.0% over the past month, and the regime hint scores 4/5 'supportive.' Momentum health is 'healthy' (no factor unwind) and breadth within my tracked universe is broad (100% of names above their 200-DMA, 88.9% beating SPY over 1 month, n=9, small sample). One geopolitical flag is active (Ukraine drone strike on a Russian refinery) but it hasn't moved oil materially and doesn't bear on DXCM. DXCM itself sits outside my AI-stack theme entirely (ai_neutral, demand_driver=healthcare) with low correlation to my only holding (0.09 corr_to_book, beta 0.59 vs BKR's 0.54) -- a genuine diversifier rather than another AI-adjacent bet, which fits a supportive-but-selective tape where I would rather not stack a single factor.",
+          "proposed_at": "2026-08-06T15:04:00.849369+00:00",
+          "demand_driver": "healthcare",
+          "thesis_invalidators": {
+            "invalidating_print": "Q3 FY2026 results (~2026-10-29) showing reported revenue growth below the ~11% low end of the just-raised $5.18-5.25B FY26 guide, or non-GAAP operating margin missing the guided 23.5-24% range.",
+            "invalidating_structure": "A daily close below $78.00 on above-average volume, breaking the noise-band stop and confirming the pullback is not just digestion.",
+            "time_box": "If DXCM has not reclaimed and held above $87 (near its 52-week high) within 25 trading days of entry (by ~2026-09-11), the post-earnings-drift thesis isn't playing out -- reassess."
+          }
+        },
+        "days_held": 0
       }
-    ]
+    ],
+    "total_equity_usd": 986.54
   },
   "as_of_et": "2026-08-06",
   "macro_snapshot": {
@@ -1690,5 +1749,11 @@
       "parsed_level": 130.0,
       "dropped_date": "2026-08-04"
     }
-  ]
+  ],
+  "executor_update": {
+    "executor_updated_at": "2026-08-06T15:05:48.122311+00:00",
+    "executed": [
+      "BUY DXCM 2.144115 @ 82.92"
+    ]
+  }
 }

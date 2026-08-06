@@ -1,13 +1,13 @@
 {
-  "cash_usd": 924.01,
-  "total_equity_usd": 985.39,
+  "cash_usd": 746.22,
+  "total_equity_usd": 986.54,
   "positions": [
     {
       "ticker": "BKR",
       "quantity": 0.995395,
       "avg_cost": 58.198,
-      "market_value_usd": 61.38,
-      "last_price": 61.66,
+      "market_value_usd": 62.51,
+      "last_price": 62.8,
       "opened_at": "2026-07-28T17:54:27.847621+00:00",
       "proposal_id": "20260728-b66630",
       "plan": {
@@ -23,7 +23,7 @@
           "time_box": "If BKR has not sustained a daily close above $65 within 30 trading days of entry, exit and rotate -- the earnings-driven breakout needs volume-confirmed follow-through, not just a one-day pop."
         }
       },
-      "high_water": 61.72,
+      "high_water": 62.81,
       "trailing_stop": 55.7053,
       "adds_count": 0,
       "buy_commission_usd": 0.0,
@@ -38,6 +38,44 @@
         "client_order_id": "EESTOP-BKR-b3ac34e13a",
         "alpaca_order_id": "17f6a795-928d-4fdf-a118-026c527547ee",
         "armed_at": "2026-07-28T17:54:28.527852+00:00"
+      }
+    },
+    {
+      "ticker": "DXCM",
+      "quantity": 2.144115,
+      "avg_cost": 82.92,
+      "market_value_usd": 177.81,
+      "last_price": 82.93,
+      "opened_at": "2026-08-06T15:05:47.791467+00:00",
+      "proposal_id": "20260806-8f3821",
+      "plan": {
+        "stop_loss": 78.4,
+        "target_price": 92.5,
+        "holding_horizon_days": 45,
+        "entry_price_max": 83.0,
+        "confidence": 0.61,
+        "demand_driver": "healthcare",
+        "thesis_invalidators": {
+          "invalidating_print": "Q3 FY2026 results (~2026-10-29) showing reported revenue growth below the ~11% low end of the just-raised $5.18-5.25B FY26 guide, or non-GAAP operating margin missing the guided 23.5-24% range.",
+          "invalidating_structure": "A daily close below $78.00 on above-average volume, breaking the noise-band stop and confirming the pullback is not just digestion.",
+          "time_box": "If DXCM has not reclaimed and held above $87 (near its 52-week high) within 25 trading days of entry (by ~2026-09-11), the post-earnings-drift thesis isn't playing out -- reassess."
+        },
+        "calibration_probe": null
+      },
+      "high_water": 82.93,
+      "adds_count": 0,
+      "buy_commission_usd": 0.0,
+      "demand_driver": "healthcare",
+      "protective_stop": {
+        "status": "resting",
+        "stop_price": 78.4,
+        "qty": 2.0,
+        "uncovered_qty": 0.144115,
+        "session_only": false,
+        "time_in_force": "gtc",
+        "client_order_id": "EESTOP-DXCM-c1c88205c1",
+        "alpaca_order_id": "46bbbf81-5aa0-4cc9-878e-1e783a5d8418",
+        "armed_at": "2026-08-06T15:05:47.948694+00:00"
       }
     }
   ],
@@ -220,8 +258,54 @@
       "alpaca_status": "filled",
       "filled_at": "2026-07-28T17:54:26.380755261Z",
       "position_avg_cost_after": 58.198
+    },
+    {
+      "ticker": "DXCM",
+      "action": "BUY",
+      "position_size_usd": 177.8,
+      "reference_price": 82.66,
+      "proposal_id": "20260806-8f3821",
+      "sell_fraction": null,
+      "atr_pct": 3.89,
+      "entry_price_max": 83.0,
+      "plan": {
+        "stop_loss": 78.4,
+        "target_price": 92.5,
+        "holding_horizon_days": 45,
+        "entry_price_max": 83.0,
+        "confidence": 0.61,
+        "demand_driver": "healthcare",
+        "thesis_invalidators": {
+          "invalidating_print": "Q3 FY2026 results (~2026-10-29) showing reported revenue growth below the ~11% low end of the just-raised $5.18-5.25B FY26 guide, or non-GAAP operating margin missing the guided 23.5-24% range.",
+          "invalidating_structure": "A daily close below $78.00 on above-average volume, breaking the noise-band stop and confirming the pullback is not just digestion.",
+          "time_box": "If DXCM has not reclaimed and held above $87 (near its 52-week high) within 25 trading days of entry (by ~2026-09-11), the post-earnings-drift thesis isn't playing out -- reassess."
+        },
+        "calibration_probe": null
+      },
+      "demand_driver": "healthcare",
+      "client_order_id": "EE-f5dfdb77d718",
+      "order_id": "EE-f5dfdb77d718",
+      "status": "filled",
+      "submitted_at": "2026-08-06T15:05:44.304048+00:00",
+      "alpaca_order_id": "e6c5d25a-f52a-47cb-9003-8123acee55c0",
+      "fill_price": 82.92,
+      "quantity": 2.144115,
+      "notional_usd": 177.79,
+      "is_add": false,
+      "total_cost_usd": 177.79,
+      "entry_gap_usd": 0.0,
+      "fees_usd": {
+        "commission": 0.0,
+        "sec_fee": 0.0,
+        "taf": 0.0,
+        "slippage_bps": 0.0,
+        "effective_slippage_pct": 0.0
+      },
+      "alpaca_status": "filled",
+      "filled_at": "2026-08-06T15:05:45.294888723Z",
+      "position_avg_cost_after": 82.92
     }
   ],
-  "broker_synced_at": "2026-08-03T21:14:40.998793+00:00",
+  "broker_synced_at": "2026-08-06T15:05:48.120096+00:00",
   "broker_backend": "alpaca_paper"
 }
