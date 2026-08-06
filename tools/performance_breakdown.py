@@ -173,7 +173,7 @@ def _sample_phase(n: int) -> str:
 # Public API
 # ---------------------------------------------------------------------------
 def build_performance_breakdown(closed_trades: list[dict]) -> dict:
-    """Slice closed trades (from orchestrator.compute_closed_trades) into
+    """Slice closed trades (from runlib.analytics.compute_closed_trades) into
     per-category performance buckets the brain can learn from."""
     if not closed_trades:
         return {"total_trades": 0, "note": _NOTE, "sufficient_sample": False,
@@ -252,7 +252,15 @@ def render_breakdown_markdown(breakdown: dict) -> str:
 if __name__ == "__main__":
     import sys
     sys.path.insert(0, str(ROOT))
-    import orchestrator
-    b = build_performance_breakdown(orchestrator.compute_closed_trades())
+    # LAYERING FIX (2026-08-05): this used to `import orchestrator` — a tools/
+    # module reaching UP to the app's entrypoint, dragging the entire runtime
+    # import graph (broker, journal, publish, brain_io) into a read-only CLI
+    # report. compute_closed_trades has lived in runlib.analytics since the
+    # runlib extraction; import it from its real home. Function-local ON
+    # PURPOSE: runlib.analytics imports THIS module at module level for
+    # MIN_BUCKET_TRADES (the authoritative sample floor), so a module-level
+    # import here would be a circular import.
+    from runlib.analytics import compute_closed_trades
+    b = build_performance_breakdown(compute_closed_trades())
     print(json.dumps(b, indent=2))
     print(render_breakdown_markdown(b))

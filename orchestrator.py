@@ -1,9 +1,35 @@
-"""East Equity Agent — Orchestrator (thin entrypoint).
+"""East Equity Agent — Orchestrator (entrypoint + run sequencer).
 
 Deterministic scaffolding around a single Claude invocation. Heavy logic lives
-in runlib/ so this file stays a stable import surface for tests, tools, and
-scripts:
+in runlib/; this file keeps a stable import surface for tests, tools and
+scripts. HONESTY NOTE (2026-08-05): main() had grown into a ~900-line block
+while this header still said "thin entrypoint". It is now a sequencer over
+module-level phase functions, each unit-invocable with dict fixtures:
 
+    _parse_args              CLI surface (flags unchanged)
+    _earnings_escalation     scheduled-slot escalation to a full deep dive
+    _dispatch_special_modes  learning-mark / study / reviews / freshness audit
+    _run_gather_only         cloud step 1: write the context bundle and exit
+    _depth_gates             (no_brain_orders, run_safety) for a depth
+    _halt_and_sweep          preflight halt + protective-exit sweep
+    _load_act_on_bundle      cloud step 2: saved context + brain response
+    _gather_and_wake         local path: gather context + wake the brain
+    _process_gate_inputs     assemble what the process-gate audit needs
+    _apply_process_audit     apply the audit's verdicts to the parsed output
+    _mark_shadow_book        shadow book, post-exit runners, lesson prune
+    _journal_side_outputs    improvement notes, KB citations, guidance, universe
+    _equity_risk_halts       account circuit breakers (fail CLOSED)
+    _build_market_context    validator feeds (_regime/_data_quality/_book/...)
+    _execute_and_publish     validate -> execute -> journal/dashboard/X draft
+
+Two call sites deliberately remain INLINE in main(): the process-gate audit
+call (runlib/capabilities._probe_process_gate_flags and tests/
+test_process_gates.py source-inspect main() for its literal keyword arguments)
+and the capability audit + tests gate (tests/test_capability_audit.py pins
+their presence in main()). Extracting those would flip a live production probe
+to DEAD and block trading.
+
+Pipeline (unchanged):
     1. Safety preflight (kill switch, mode, market day)
     2. Gather context (runlib.context_gather)
     3. Wake Claude once with a SLIM tiered context pack
@@ -123,6 +149,13 @@ _trade_plans = trade_plans
 # Feed statuses that mean "this feed did not deliver", regardless of shape.
 DEAD_FEED_STATUSES = ("error", "unavailable", "degraded_all_feeds_empty")
 
+# One threshold, three call sites (2026-08-05): the age past which a bundle's
+# DATA is treated as STALE. Previously the same 4 hours lived as a default
+# parameter on label_data_quality AND as two bare literals in the gather-only
+# relay branch, free to drift apart. Live prices are overlaid separately; this
+# governs the freshness of fundamentals, news, filings and scan setups.
+STALE_BUNDLE_AGE_HOURS = 4.0
+
 
 def feed_is_alive(feed) -> bool:
     """Is this research feed actually alive?
@@ -213,8 +246,25 @@ def bundle_age_hours(context: dict) -> float | None:
     return round((datetime.now(timezone.utc) - gathered).total_seconds() / 3600.0, 2)
 
 
+def _partial_quality_note(health: dict) -> str:
+    """The live_partial data-quality note, worded ONCE.
+
+    2026-08-05: label_data_quality and the --gather-only branch each carried
+    their own copy of this text, and they had already drifted — the gather copy
+    said "one or more research feeds (news/filings/insiders) failed" without
+    naming which. One function so the two paths cannot diverge again; the
+    dead-feeds wording keeps the variant that names the actual feeds.
+    """
+    if health["low_coverage"]:
+        return ("universe scan covered only "
+                f"{health['scanned']}/{health['requested']} names - missing names "
+                "have no fresh prices; treat absent setups as unscanned, not "
+                "unattractive")
+    return f"price scan OK but research feed(s) failed: {health['dead_feeds']}"
+
+
 def label_data_quality(context: dict, run_depth: str, *,
-                       max_age_hours: float = 4.0) -> dict:
+                       max_age_hours: float = STALE_BUNDLE_AGE_HOURS) -> dict:
     """Stamp context['data_quality'] for a bundle we are about to ACT on.
 
     Covers two holes found 2026-07-19:
@@ -247,12 +297,7 @@ def label_data_quality(context: dict, run_depth: str, *,
             "Live feeds failed and this context is largely EMPTY. Treat scan/macro "
             "data as missing; do not open new positions on absent data.")
     elif health["partial"]:
-        note = ("universe scan covered only "
-                f"{health['scanned']}/{health['requested']} names - missing names "
-                "have no fresh prices; treat absent setups as unscanned, not "
-                "unattractive"
-                if health["low_coverage"] else
-                f"price scan OK but research feed(s) failed: {health['dead_feeds']}")
+        note = _partial_quality_note(health)
         label = {"source": "live_partial", "note": note}
     elif stale_by_age:
         label = {"source": "aged_bundle"}
@@ -272,7 +317,17 @@ def label_data_quality(context: dict, run_depth: str, *,
     return label
 
 
-def main() -> int:
+# ---------------------------------------------------------------------------
+# Run phases (extracted from main() 2026-08-05; bodies verbatim from the old
+# inline blocks — dated comments inside them predate the extraction)
+# ---------------------------------------------------------------------------
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    """The CLI surface, verbatim from the pre-2026-08-05 inline block.
+
+    Takes argv so tests can exercise flag parsing without touching sys.argv;
+    main() passes nothing, which argparse treats identically to the old
+    in-main ap.parse_args().
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--research-only", action="store_true",
                     help="run steps 1-4 only; skip validation/execution")
@@ -321,28 +376,18 @@ def main() -> int:
                     help="daily study session: research ONE curriculum topic "
                          "(web search) and write a durable lesson into the "
                          "knowledge base + dashboard learning journal; no trading")
-    args = ap.parse_args()
+    return ap.parse_args(argv)
 
-    cfg = validator.load_config()
-    run_id = f"{datetime.now():%Y%m%d}-{uuid.uuid4().hex[:6]}"
-    try:
-        run_depth = resolve_depth(
-            explicit=args.depth,
-            light_flag=args.light,
-            news_only=args.news_only,
-            weekly_market=args.weekly_market,
-            hhmm=f"{et_now():%H%M}" if args.auto_depth else None,
-            cfg=cfg,
-        )
-    except ValueError as e:
-        print(f"HALT: {e}")
-        return 2
 
-    # Earnings-driven full deep dive: when a universe name reports, escalate the
-    # 9am (overnight/pre-market) and 5:30pm (afternoon after-hours) slots to a
-    # full cycle and force the reporter(s) into deep research. Scheduled
-    # (--auto-depth) runs only; explicit --depth full/weekly and act-on runs
-    # (which read run_depth from a pre-gathered bundle) are untouched here.
+def _earnings_escalation(args, run_depth: str, cfg: dict) -> tuple[str, dict | None]:
+    """Earnings-driven full deep dive: when a universe name reports, escalate the
+    9am (overnight/pre-market) and 5:30pm (afternoon after-hours) slots to a
+    full cycle and force the reporter(s) into deep research. Scheduled
+    (--auto-depth) runs only; explicit --depth full/weekly and act-on runs
+    (which read run_depth from a pre-gathered bundle) are untouched here.
+
+    Returns (possibly escalated run_depth, earnings_trigger or None).
+    """
     earnings_trigger: dict | None = None
     if args.auto_depth and run_depth not in ("full", "weekly_market"):
         try:
@@ -358,7 +403,12 @@ def main() -> int:
                     earnings_trigger = trig
         except Exception as e:
             print(f"  (earnings deep-dive check skipped: {e})")
+    return run_depth, earnings_trigger
 
+
+def _dispatch_special_modes(args, run_id: str) -> int | None:
+    """Single-purpose no-trading modes. Returns an exit code when one ran,
+    None when this is a normal trading/gather cycle."""
     if args.learning_mark:
         print(f"=== East Equity Agent learning-mark {run_id} ===")
         from tools.learning_mark import run_learning_mark
@@ -379,482 +429,504 @@ def main() -> int:
     if args.freshness_audit:
         print(f"=== East Equity Agent universe freshness audit {run_id} ===")
         return run_freshness_audit(run_id)
-    print(f"=== East Equity Agent run {run_id} (mode: {cfg['mode']['trading_mode']}, "
-          f"depth: {run_depth}) ===")
+    return None
 
-    # Idempotent migration: positions opened before plan persistence get their
-    # journal-derived stop/target/horizon written onto the position record.
+
+def _run_gather_only(args, cfg: dict, run_id: str, run_depth: str,
+                     earnings_trigger: dict | None) -> int:
+    """Cloud mode step 1: gather, label, overlay, write the tiered bundle, exit."""
+    # Breadcrumb: mark that a trading-ROUTINE run has begun, BEFORE the heavy work.
+    # A run recorded nothing durable until log_run_summary at the very end, so a
+    # cloud session that died mid-run (context death, gather failure) left zero
+    # trace and looked identical to a fire that never happened (2026-07-20). This
+    # marks and pushes a run_started record so a death is visible and the watchdog
+    # can re-run the slot. GATED so ONLY the cloud routines mark, not the hourly
+    # GitHub bundle-refresh Action which also runs `--gather-only --auto-depth`:
+    # GitHub always sets GITHUB_ACTIONS, the CCR routine sandbox does not. Entirely
+    # fail-open — a breadcrumb must never be the reason a run does not run.
+    if _should_mark_run_start(args.auto_depth):
+        try:
+            import subprocess as _sp
+            _sp.run([sys.executable, str(ROOT / "scripts" / "mark_run_start.py")],
+                    cwd=str(ROOT), capture_output=True, timeout=180)
+        except Exception as e:
+            print(f"  (run-start marker skipped: {e})")
+
+    # Pure data collection (used by the relay/Action): no preflight gates,
+    # no lock, no budget - it must work on weekends and holidays too.
+    if cfg["mode"]["trading_mode"] != "dry_run":
+        try:
+            ca = corporate_actions.apply_corporate_actions()
+            if ca.get("events"):
+                print(f"  corporate actions on gather node: {len(ca['events'])} "
+                      f"event(s), dividends ${ca.get('dividends_credited_usd', 0)}, "
+                      f"splits {ca.get('splits_applied', 0)}")
+                print("CORPORATE_ACTIONS_CHANGED=1")
+            if ca.get("errors"):
+                print(f"  (corporate-actions errors on gather: {len(ca['errors'])})")
+        except Exception as e:
+            print(f"  (gather corporate actions skipped: {e})")
+    context = gather_context(cfg, light=args.light, depth=run_depth,
+                             earnings_trigger=earnings_trigger)
+    # Same assessment the live/act-on paths now use — one implementation so the
+    # two cannot drift. Coverage is checked on EVERY depth that scans, not only
+    # full runs: the four holdings_watchlist slots are the PRIMARY trading slots.
+    _health = assess_bundle_health(context, run_depth)
+    scan_empty = _health["scan_empty"]
+    degraded = _health["degraded"]
+    low_coverage = _health["low_coverage"]
+    dead_feeds = _health["dead_feeds"]
+    partial = _health["partial"]
+    scan_ctx = context.get("universe_scan") or {}
+    requested = _health["requested"]
+    if dead_feeds:
+        print(f"  DATA QUALITY: dead feed(s) {dead_feeds} - run marked partial")
+    if low_coverage:
+        print(f"  DATA QUALITY: low coverage "
+              f"{scan_ctx.get('scanned', 0)}/{requested} - run marked partial")
+
+    relay = ROOT / "data" / "cloud_context.json"
+    if degraded and relay.exists():
+        cached = json.loads(relay.read_text())
+        try:
+            age_h = (datetime.now(timezone.utc)
+                     - datetime.fromisoformat(cached["run_date"])).total_seconds() / 3600
+        except Exception:
+            age_h = 999.0
+        cached["portfolio"] = context["portfolio"]
+        cached["hard_limits"] = context["hard_limits"]
+        # THIS RUN's slot depth governs gating and the brain's job — never
+        # the depth the bundle happened to be gathered at. A bundle gathered
+        # off-slot (throttled crons fire late) came stamped e.g. "light" and
+        # was turning 9am/10am TRADING slots into no-BUY light runs; it also
+        # erased the earnings-escalation depth. Keep the bundle's own depth
+        # visible for the data_quality note only.
+        bundle_depth = cached.get("run_depth")
+        cached["run_depth"] = run_depth
+        cached["run_depth_note"] = depth_description(run_depth)
+        severity = "still fresh" if age_h < STALE_BUNDLE_AGE_HOURS else "STALE"
+        cached["stale_data_notice"] = (
+            f"Live data feeds unreachable here; using the relay bundle gathered "
+            f"{age_h:.1f}h ago ({severity}). Prices and news may be up to that old - "
+            f"lower confidence and avoid time-sensitive entries accordingly.")
+        cached["data_quality"] = {"source": "relay_bundle", "age_hours": round(age_h, 1),
+                                  "stale": age_h >= STALE_BUNDLE_AGE_HOURS,
+                                  "bundle_gathered_at_depth": bundle_depth}
+        context = cached
+        print(f"  (live feeds blocked - using relay bundle, {age_h:.1f}h old)")
+    elif degraded:
+        context["stale_data_notice"] = (
+            "Live feeds failed AND no relay bundle is available - this context is "
+            "largely EMPTY. Treat scan/macro data as missing; do not open new "
+            "positions on absent data, and say so in commentary.")
+        context["data_quality"] = {"source": "degraded_empty", "stale": True}
+        print("  (degraded and no relay bundle - handing a labeled empty context)")
+    elif partial:
+        # 2026-08-05: note text now comes from _partial_quality_note — the same
+        # function label_data_quality uses — so the two paths cannot drift.
+        note = _partial_quality_note(_health)
+        context["data_quality"] = {"source": "live_partial", "note": note}
+        print(f"  (partial degradation - {note[:80]}; labeled)")
+
+    # OVERLAY LIVE PRICES INTO THE BUNDLE THE BRAIN ACTUALLY READS (2026-07-23).
+    #
+    # This branch writes the context the cloud brain reasons from, and it was the
+    # ONE path that never overlaid live prices. apply_live_prices() was called only
+    # in the --act-on branch (and the local full-run branch) — and --act-on runs
+    # AFTER the brain has already decided. So the overlay protected stop
+    # enforcement while the brain itself was handed daily bars.
+    #
+    # In cloud mode that is every decision the system makes: the routine runs
+    # gather -> brain -> act, so the brain read the previous session's closes all
+    # day. The 2026-07-23 19:51 UTC bundle, built at 3:51pm ET mid-session, carried
+    # all 186 tickers at price_as_of 2026-07-22. Given yesterday's price beside
+    # today's news the brain reconciles the gap by inventing one: on 07-22 the risk
+    # desk vetoed all three BUYs for exactly that, including a fabricated $311 JMP
+    # target for DDOG that appears nowhere in the bundle.
+    #
+    # Placed AFTER the relay-bundle fallback on purpose: when live feeds are
+    # blocked and `context = cached` is adopted, that bundle's prices are precisely
+    # the ones most in need of refreshing. Fail-soft by construction —
+    # apply_live_prices never raises, and it declines the overlay when the snapshot
+    # is older than schedule.live_prices.max_age_min rather than clobbering a good
+    # daily bar with a broken feed.
     try:
-        from tools.portfolio_state import backfill_position_plans
-        n = backfill_position_plans()
-        if n:
-            print(f"  (backfilled persisted plans onto {n} position(s))")
+        _lp = apply_live_prices(context, cfg)
+        if _lp.get("applied"):
+            print(f"  (gather: live prices overlaid onto "
+                  f"{len(_lp['applied'])} names, age {_lp.get('age_min')}m)")
+        else:
+            print(f"  (gather: NO live-price overlay - {_lp.get('status')}, "
+                  f"age {_lp.get('age_min')}m; bundle ships daily bars)")
     except Exception as e:
-        print(f"  (plan backfill skipped: {e})")
+        print(f"  (gather live-price overlay skipped: {e})")
 
-    if args.gather_only:
-        # Breadcrumb: mark that a trading-ROUTINE run has begun, BEFORE the heavy work.
-        # A run recorded nothing durable until log_run_summary at the very end, so a
-        # cloud session that died mid-run (context death, gather failure) left zero
-        # trace and looked identical to a fire that never happened (2026-07-20). This
-        # marks and pushes a run_started record so a death is visible and the watchdog
-        # can re-run the slot. GATED so ONLY the cloud routines mark, not the hourly
-        # GitHub bundle-refresh Action which also runs `--gather-only --auto-depth`:
-        # GitHub always sets GITHUB_ACTIONS, the CCR routine sandbox does not. Entirely
-        # fail-open — a breadcrumb must never be the reason a run does not run.
-        if _should_mark_run_start(args.auto_depth):
-            try:
-                import subprocess as _sp
-                _sp.run([sys.executable, str(ROOT / "scripts" / "mark_run_start.py")],
-                        cwd=str(ROOT), capture_output=True, timeout=180)
-            except Exception as e:
-                print(f"  (run-start marker skipped: {e})")
+    try:
+        positions = (context.get("portfolio") or {}).get("positions", [])
+        pcs = build_position_charts(positions)
+        pc_file = ROOT / "dashboard" / "data" / "position_charts.json"
+        pc_file.parent.mkdir(parents=True, exist_ok=True)
+        if pcs or not positions:
+            pc_file.write_text(json.dumps(json_safe(pcs), indent=2))
+            print(f"  (gather: position_charts for {list(pcs.keys()) or 'no positions'})")
+        else:
+            print("  (gather: position_charts feed empty - keeping last-good file)")
+    except Exception as e:
+        print(f"  (gather position_charts skipped: {e})")
 
-        # Pure data collection (used by the relay/Action): no preflight gates,
-        # no lock, no budget - it must work on weekends and holidays too.
-        if cfg["mode"]["trading_mode"] != "dry_run":
-            try:
-                ca = corporate_actions.apply_corporate_actions()
-                if ca.get("events"):
-                    print(f"  corporate actions on gather node: {len(ca['events'])} "
-                          f"event(s), dividends ${ca.get('dividends_credited_usd', 0)}, "
-                          f"splits {ca.get('splits_applied', 0)}")
-                    print("CORPORATE_ACTIONS_CHANGED=1")
-                if ca.get("errors"):
-                    print(f"  (corporate-actions errors on gather: {len(ca['errors'])})")
-            except Exception as e:
-                print(f"  (gather corporate actions skipped: {e})")
-        context = gather_context(cfg, light=args.light, depth=run_depth,
-                                 earnings_trigger=earnings_trigger)
-        # Same assessment the live/act-on paths now use — one implementation so the
-        # two cannot drift. Coverage is checked on EVERY depth that scans, not only
-        # full runs: the four holdings_watchlist slots are the PRIMARY trading slots.
-        _health = assess_bundle_health(context, run_depth)
-        scan_empty = _health["scan_empty"]
-        degraded = _health["degraded"]
-        low_coverage = _health["low_coverage"]
-        dead_feeds = _health["dead_feeds"]
-        partial = _health["partial"]
-        scan_ctx = context.get("universe_scan") or {}
-        requested = _health["requested"]
-        if dead_feeds:
-            print(f"  DATA QUALITY: dead feed(s) {dead_feeds} - run marked partial")
-        if low_coverage:
-            print(f"  DATA QUALITY: low coverage "
-                  f"{scan_ctx.get('scanned', 0)}/{requested} - run marked partial")
+    out = ROOT / "state" / f"context_{run_id}.json"
+    full_out = ROOT / "state" / f"context_full_{run_id}.json"
+    try:
+        write_tiered_context(context, out, full_out)
+        print(f"CONTEXT_FILE={out}")
+        print(f"CONTEXT_FULL_FILE={full_out}")
+    except Exception as e:
+        print(f"  (tiered gather write failed: {e}; writing full only)")
+        out.write_text(json.dumps(json_safe(context), indent=2, default=str))
+        print(f"CONTEXT_FILE={out}")
+    return 0
 
-        relay = ROOT / "data" / "cloud_context.json"
-        if degraded and relay.exists():
-            cached = json.loads(relay.read_text())
-            try:
-                age_h = (datetime.now(timezone.utc)
-                         - datetime.fromisoformat(cached["run_date"])).total_seconds() / 3600
-            except Exception:
-                age_h = 999.0
-            cached["portfolio"] = context["portfolio"]
-            cached["hard_limits"] = context["hard_limits"]
-            # THIS RUN's slot depth governs gating and the brain's job — never
-            # the depth the bundle happened to be gathered at. A bundle gathered
-            # off-slot (throttled crons fire late) came stamped e.g. "light" and
-            # was turning 9am/10am TRADING slots into no-BUY light runs; it also
-            # erased the earnings-escalation depth. Keep the bundle's own depth
-            # visible for the data_quality note only.
-            bundle_depth = cached.get("run_depth")
-            cached["run_depth"] = run_depth
-            cached["run_depth_note"] = depth_description(run_depth)
-            severity = "still fresh" if age_h < 4 else "STALE"
-            cached["stale_data_notice"] = (
-                f"Live data feeds unreachable here; using the relay bundle gathered "
-                f"{age_h:.1f}h ago ({severity}). Prices and news may be up to that old - "
-                f"lower confidence and avoid time-sensitive entries accordingly.")
-            cached["data_quality"] = {"source": "relay_bundle", "age_hours": round(age_h, 1),
-                                      "stale": age_h >= 4,
-                                      "bundle_gathered_at_depth": bundle_depth}
-            context = cached
-            print(f"  (live feeds blocked - using relay bundle, {age_h:.1f}h old)")
-        elif degraded:
-            context["stale_data_notice"] = (
-                "Live feeds failed AND no relay bundle is available - this context is "
-                "largely EMPTY. Treat scan/macro data as missing; do not open new "
-                "positions on absent data, and say so in commentary.")
-            context["data_quality"] = {"source": "degraded_empty", "stale": True}
-            print("  (degraded and no relay bundle - handing a labeled empty context)")
-        elif partial:
-            note = ("universe scan covered only "
-                    f"{scan_ctx.get('scanned')}/{scan_ctx.get('requested')} names - "
-                    "missing names have no fresh prices; treat absent setups as "
-                    "unscanned, not unattractive"
-                    if low_coverage else
-                    "price scan OK but one or more research feeds "
-                    "(news/filings/insiders) failed")
-            context["data_quality"] = {"source": "live_partial", "note": note}
-            print(f"  (partial degradation - {note[:80]}; labeled)")
 
-        # OVERLAY LIVE PRICES INTO THE BUNDLE THE BRAIN ACTUALLY READS (2026-07-23).
-        #
-        # This branch writes the context the cloud brain reasons from, and it was the
-        # ONE path that never overlaid live prices. apply_live_prices() was called only
-        # in the --act-on branch (and the local full-run branch) — and --act-on runs
-        # AFTER the brain has already decided. So the overlay protected stop
-        # enforcement while the brain itself was handed daily bars.
-        #
-        # In cloud mode that is every decision the system makes: the routine runs
-        # gather -> brain -> act, so the brain read the previous session's closes all
-        # day. The 2026-07-23 19:51 UTC bundle, built at 3:51pm ET mid-session, carried
-        # all 186 tickers at price_as_of 2026-07-22. Given yesterday's price beside
-        # today's news the brain reconciles the gap by inventing one: on 07-22 the risk
-        # desk vetoed all three BUYs for exactly that, including a fabricated $311 JMP
-        # target for DDOG that appears nowhere in the bundle.
-        #
-        # Placed AFTER the relay-bundle fallback on purpose: when live feeds are
-        # blocked and `context = cached` is adopted, that bundle's prices are precisely
-        # the ones most in need of refreshing. Fail-soft by construction —
-        # apply_live_prices never raises, and it declines the overlay when the snapshot
-        # is older than schedule.live_prices.max_age_min rather than clobbering a good
-        # daily bar with a broken feed.
-        try:
-            _lp = apply_live_prices(context, cfg)
-            if _lp.get("applied"):
-                print(f"  (gather: live prices overlaid onto "
-                      f"{len(_lp['applied'])} names, age {_lp.get('age_min')}m)")
-            else:
-                print(f"  (gather: NO live-price overlay - {_lp.get('status')}, "
-                      f"age {_lp.get('age_min')}m; bundle ships daily bars)")
-        except Exception as e:
-            print(f"  (gather live-price overlay skipped: {e})")
+def _depth_gates(args, run_depth: str) -> tuple[bool, bool]:
+    """(no_brain_orders, run_safety) for this depth + flags.
 
-        try:
-            positions = (context.get("portfolio") or {}).get("positions", [])
-            pcs = build_position_charts(positions)
-            pc_file = ROOT / "dashboard" / "data" / "position_charts.json"
-            pc_file.parent.mkdir(parents=True, exist_ok=True)
-            if pcs or not positions:
-                pc_file.write_text(json.dumps(json_safe(pcs), indent=2))
-                print(f"  (gather: position_charts for {list(pcs.keys()) or 'no positions'})")
-            else:
-                print("  (gather: position_charts feed empty - keeping last-good file)")
-        except Exception as e:
-            print(f"  (gather position_charts skipped: {e})")
+    no_brain_orders: brain BUY proposals are discarded this cycle.
+    run_safety: the deterministic safety layer (stops/horizons) still runs on
+    weekly_market and focused depths; only evening_review/news-only skip it.
 
-        out = ROOT / "state" / f"context_{run_id}.json"
-        full_out = ROOT / "state" / f"context_full_{run_id}.json"
-        try:
-            write_tiered_context(context, out, full_out)
-            print(f"CONTEXT_FILE={out}")
-            print(f"CONTEXT_FULL_FILE={full_out}")
-        except Exception as e:
-            print(f"  (tiered gather write failed: {e}; writing full only)")
-            out.write_text(json.dumps(json_safe(context), indent=2, default=str))
-            print(f"CONTEXT_FILE={out}")
-        return 0
-
-    # Preflight weekend/lease: treat non-trading depths like news-only so Sunday
-    # weekly check-ins are allowed. Brain proposals are suppressed separately.
+    Called twice on purpose (2026-08-05): once before preflight, and again after
+    --act-on re-reads run_depth from the bundle — one implementation so the two
+    derivations cannot drift.
+    """
     no_brain_orders = (
         args.news_only
         or run_depth in ("evening_review", "weekly_market")
         or not depth_allows_new_buys(run_depth)
     )
-    # Safety layer (stops/horizons) still runs on weekly_market and focused depths.
     run_safety = run_depth not in ("evening_review",) and not args.news_only
-    halt = preflight(
-        cfg, run_id,
-        news_only=args.news_only or run_depth in ("evening_review", "weekly_market"),
-        manual=args.manual,
-    )
-    if halt:
-        print(f"HALT: {halt}")
-        # A halt must stop the system OPENING risk, never stop it CLOSING risk.
-        # This returned before apply_safety_layer ran, so flipping the kill switch —
-        # or merely exhausting the daily run budget — silently disabled stop
-        # enforcement on an open book. scripts/execute_order_intents.py already had
-        # this right ("protective exits must never be blocked by a halt"); the main
-        # path contradicted it. Protective exits are SELL_TO_CLOSE only and cannot
-        # increase exposure, so running them under a halt is strictly risk-reducing.
-        try:
-            from scripts.stop_watch import run as stop_watch_run
-            sw = stop_watch_run()
-            if sw.get("fills"):
-                print(f"  protective exits honored despite halt: "
-                      f"{[f.get('ticker') for f in sw['fills']]}")
-            journal.log_run_summary(
-                {"halted": halt, "run_depth": run_depth,
-                 "protective_exits_under_halt": sw.get("fills") or [],
-                 "stop_watch_status": sw.get("status")}, run_id)
-        except Exception as e:
-            print(f"  (protective-exit sweep failed under halt: {e})")
-            journal.log_run_summary(
-                {"halted": halt, "run_depth": run_depth,
-                 "protective_exit_sweep_error": str(e)}, run_id)
-        return 1
+    return no_brain_orders, run_safety
 
-    forced_exit_fills = []
-    if args.act_on:
-        print("[1-2/5] Loading saved context + brain response (cloud mode)...")
-        # Prefer full archive when act-on was given a slim path (same run_id).
-        ctx_path = Path(args.context)
-        full_sibling = ctx_path.with_name(ctx_path.name.replace("context_", "context_full_"))
-        load_path = full_sibling if full_sibling.exists() else ctx_path
-        if load_path != ctx_path:
-            print(f"  (using full archive {load_path.name} for act-on)")
-        context = json.loads(load_path.read_text())
-        run_depth = context.get("run_depth") or run_depth
-        # Age this bundle BEFORE anything acts on it. --act-on used to perform no
-        # age check at all: a healthy gather wrote no data_quality label, so the
-        # validator's staleness gate asserted nothing and a cloud routine could
-        # trade a 10-hour-old bundle with every freshness gate green.
-        _age = bundle_age_hours(context)
-        if _age is not None:
-            print(f"  bundle data gathered {_age:.1f}h ago")
-        # Re-derive the trading gates from the bundle's ACTUAL depth: acting on
-        # a light/evening context without a matching --depth flag must not run
-        # with full-depth gating (BUYs would survive a no-BUY slot).
-        no_brain_orders = (
-            args.news_only
-            or run_depth in ("evening_review", "weekly_market")
-            or not depth_allows_new_buys(run_depth)
-        )
-        run_safety = run_depth not in ("evening_review",) and not args.news_only
-        # Overlay the frequent holdings/watchlist live feed onto the bundle's
-        # daily-bar prices so an intraday stop breach is caught this run, not at
-        # the next sparse full gather.
-        apply_live_prices(context, cfg)
-        bundle_prices = (context.get("universe_scan") or {}).get("prices") or {}
-        if bundle_prices:
-            try:
-                broker.mark_to_market(bundle_prices)
-            except Exception as e:
-                print(f"  (mark-to-market from bundle failed: {e})")
-        context["portfolio"] = get_portfolio_state()
-        _dq = label_data_quality(context, run_depth)
-        if _dq.get("stale") or _dq.get("source") not in (None, "live"):
-            print(f"  DATA QUALITY: {_dq.get('source')} "
-                  f"stale={bool(_dq.get('stale'))} age={_dq.get('age_hours')}h "
-                  f"- new BUYs restricted")
-        if run_safety:
-            forced_exit_fills = apply_safety_layer(context, cfg, run_id)
-        response = Path(args.act_on).read_text()
-        # THE CLOUD ROUTINE *IS* THE BRAIN, and it never touches run_claude.
-        # MEASURED 2026-08-03: 0 of 82 cloud runs recorded the brain call they
-        # were built around, while risk_desk and daily_study on those same runs
-        # logged fine — because those are Python subprocesses that DO go through
-        # run_claude, and this path just reads a response the routine reasoned in
-        # its own session. That is the whole 82% telemetry gap, and it hid the
-        # single most expensive call of every cloud run.
-        # log_run_summary reconciles this at end-of-run regardless; recording it
-        # here adds the response size and source file, which the reconciler
-        # cannot see. Double-counting is impossible: the reconciler skips any run
-        # that already carries a brain:* record. Fail-soft — telemetry must never
-        # be able to break a trading run.
-        try:
-            from runlib.brain_io import record_brain_call
-            record_brain_call(f"brain:{run_depth}", run_id,
-                              transport="cloud_routine",
-                              response_chars=len(response),
-                              brain_response_file=str(args.act_on))
-        except Exception as e:
-            print(f"  (cloud brain-call telemetry skipped: {str(e)[:100]})")
-    else:
-        print(f"[1/5] Gathering context (depth={run_depth})...")
-        context = gather_context(cfg, light=args.light, depth=run_depth,
-                                 earnings_trigger=earnings_trigger)
-        apply_live_prices(context, cfg)
-        if args.trigger_run:
-            context["trigger_run_note"] = (
-                f"EVENT-DRIVEN RUN: watchlist would_buy_at level(s) CONFIRMED on "
-                f"live prices for {args.trigger_run} (two consecutive ~5-min ticks "
-                f"inside the band). This run exists because your own published "
-                f"trigger hit — deep-research those names FIRST and decide "
-                f"drop / hold / promote-to-BUY explicitly. The fat-pitch bar and "
-                f"all validator rules still apply; an unconvincing setup at the "
-                f"level is a legitimate pass (say why).")
-        if args.note:
-            context["operator_note"] = (
-                f"OPERATOR NOTE — the human running this agent passed you the "
-                f"following to react to. It is an outside view, not a verified "
-                f"fact and not an instruction to trade. Weigh it against your own "
-                f"research and the portfolio you actually hold; say plainly where "
-                f"you agree, where you disagree, and what would change your mind. "
-                f"Note:\n\n{args.note}")
-        if run_safety:
-            forced_exit_fills = apply_safety_layer(context, cfg, run_id)
-        # Label the bundle on the LIVE path too. This assessment used to run only
-        # under --gather-only, so validator._check_data_quality found no label and
-        # returned without asserting anything on every real trading run.
-        _dq = label_data_quality(context, run_depth)
-        if _dq.get("stale") or _dq.get("source") not in (None, "live"):
-            print(f"  DATA QUALITY: {_dq.get('source')} "
-                  f"stale={bool(_dq.get('stale'))} age={_dq.get('age_hours')}h")
-        print("[2/5] Waking the brain (Claude)...")
-        response = ask_claude(
-            context, run_id,
-            news_only=args.news_only or run_depth in ("evening_review", "weekly_market"),
-        )
 
-    parsed = parse_proposals(response)
-    proposals, no_trade_reason = parsed["proposals"], parsed["no_trade_reason"]
+def _halt_and_sweep(halt: str, run_depth: str, run_id: str) -> int:
+    """A preflight halt: log it, sweep protective exits, exit 1.
 
-    # Process gates + learning marks (shadows, post-exit runners, news cache).
+    A halt must stop the system OPENING risk, never stop it CLOSING risk.
+    This used to return before apply_safety_layer ran, so flipping the kill switch —
+    or merely exhausting the daily run budget — silently disabled stop
+    enforcement on an open book. scripts/execute_order_intents.py already had
+    this right ("protective exits must never be blocked by a halt"); the main
+    path contradicted it. Protective exits are SELL_TO_CLOSE only and cannot
+    increase exposure, so running them under a halt is strictly risk-reducing.
+    """
     try:
-        from tools.process_gates import audit_brain_process
-        top_scan = [
-            r.get("ticker") for r in
-            ((context.get("universe_scan") or {}).get("top_setups") or [])[:8]
-            if r.get("ticker")
-        ]
-        # Seat reviews are owed on a trading depth whenever the book is non-empty;
-        # factor_response is owed whenever factor_map says concentration is high or
-        # extreme. Without these four arguments the gates default OFF and the teeth
-        # added to process_gates have nothing to bite on — the audit would report
-        # process_ok on a run that reviewed no seats and answered no concentration
-        # warning. That is precisely the "wired but never invoked" shape this rework
-        # exists to remove, so they are passed explicitly.
-        held = [str(x.get("ticker") or "").upper()
-                for x in ((context.get("portfolio") or {}).get("positions") or [])
-                if x.get("ticker")]
-        fmap = context.get("factor_map") or {}
-        # Names that reached their OWN stated buy level this run, and how many
-        # distinct days each has done so without being bought.
-        _fired_triggers = [
-            str((a or {}).get("ticker") or "").upper()
-            for a in ((context.get("watchlist_trigger_alerts") or {}).get("alerts") or [])
-            if isinstance(a, dict) and a.get("ticker")]
-        _unbought_hits = {}
-        try:
-            from tools.engagement import count_unbought_hits
-            _wo = ROOT / "dashboard" / "data" / "watchlist_outcomes.json"
-            if _wo.exists():
-                _unbought_hits = count_unbought_hits(json.loads(_wo.read_text()))
-        except Exception as e:
-            print(f"      (unbought-hit count skipped: {str(e)[:100]})")
-        trading_depth = run_depth in ("full", "holdings_watchlist")
-        audit = audit_brain_process(
-            parsed, depth=run_depth, proposals=proposals,
-            top_scan_tickers=top_scan, universe=validator.load_universe(),
-            held_tickers=held,
-            require_seat_reviews=bool(trading_depth and held),
-            require_factor_response=bool(fmap.get("requires_factor_response")),
-            factor_concentration_level=fmap.get("concentration_level"),
-            # Lets the audit catch an unwind being used as a trading halt rather
-            # than the 0.5x size haircut the config actually applies.
-            momentum_status=(context.get("momentum_health") or {}).get("status"),
-            # ENGAGEMENT. A fired trigger owes a resolution, a name that keeps
-            # reaching its level unbought decays off the list, and a book that has
-            # been flat for days owes a dated commitment.
-            fired_triggers=_fired_triggers, unbought_hits=_unbought_hits,
-            requires_commitment=bool(
-                (context.get("engagement") or {}).get("requires_commitment")),
-            max_unbought_hits=int(
-                ((cfg.get("swing_rules") or {}).get("max_unbought_trigger_hits")) or 3))
-        parsed["watchlist"] = audit.get("watchlist") or parsed.get("watchlist") or []
-        parsed["rejected_ideas"] = audit.get("rejected_ideas") or []
-        parsed["seat_reviews"] = audit.get("seat_reviews") or []
-        parsed["factor_response"] = audit.get("factor_response")
-        parsed["process_audit"] = {
-            "process_ok": audit.get("process_ok"),
-            "full_run_no_trade_ok": audit.get("full_run_no_trade_ok"),
-            "issues": audit.get("issues") or [],
-            "blocking_issues": audit.get("blocking_issues") or [],
-            "blocks_new_buys": bool(audit.get("blocks_new_buys")),
-            # Feeds forward into the next bundle's reasoning_process so a
-            # dead-indicator veto or an unwind-as-halt is visible to the run that
-            # comes after it, not just to a human reading the journal.
-            "signal_discipline": audit.get("signal_discipline") or {},
-            "engagement": audit.get("engagement") or {},
-        }
-        _eng = audit.get("engagement") or {}
-        parsed["trigger_reviews"] = _eng.get("trigger_reviews") or []
-        if _eng.get("waiting_for"):
-            parsed["waiting_for"] = _eng["waiting_for"]
-        for _d in (_eng.get("force_dropped") or [])[:5]:
-            print(f"      watchlist FORCE-DROPPED {_d.get('ticker')}: reached its "
-                  f"level on {_d.get('unbought_hits')} days unbought")
-        if _fired_triggers:
-            print(f"      triggers fired: {_fired_triggers} "
-                  f"(resolutions: {len(_eng.get('trigger_reviews') or [])})")
-        _sd = audit.get("signal_discipline") or {}
-        if _sd.get("unwind_used_as_halt"):
-            print("      SIGNAL DISCIPLINE: unwind cited as a halt on a no-trade "
-                  "run — it is a 0.5x size haircut, not a gate")
-        for _fix in (_sd.get("trigger_fixes") or [])[:5]:
-            print(f"      trigger rewritten {_fix.get('ticker')}: "
-                  f"{_fix.get('original')!r} -> {_fix.get('rewritten')!r}")
-        for _dv in (_sd.get("dead_indicator_vetoes") or [])[:5]:
-            print(f"      dead-indicator veto {_dv.get('ticker')}: "
-                  f"{_dv.get('signals')}")
-        if audit.get("issues"):
-            print(f"      process gates: {audit['issues'][:6]}")
-            journal.log_improvement(
-                "Process gate: " + "; ".join(audit["issues"][:12]), run_id)
-        # TEETH. Risk-relevant gates now BLOCK new BUYs instead of being journaled
-        # and forgotten. factor_response is owed when factor_map flags high/extreme
-        # concentration; seat_reviews are owed before capital opens a new seat. A
-        # run that skips either does not get to add risk this cycle. Exits, holds
-        # and trims are never blocked — the asymmetry the whole system runs on.
-        if audit.get("blocks_new_buys"):
-            blocking = audit.get("blocking_issues") or []
-            dropped = [p for p in proposals
-                       if str(p.get("action", "")).upper() == "BUY"]
-            if dropped:
-                print(f"      PROCESS GATE BLOCKS {len(dropped)} BUY(s): {blocking[:4]}")
-                for p in dropped:
-                    journal.log_rejection(
-                        p, [f"process_gate_blocked:{'; '.join(blocking[:6])}"], run_id)
-                proposals = [p for p in proposals
-                             if str(p.get("action", "")).upper() != "BUY"]
-                parsed["proposals"] = proposals
-        if (run_depth == "full" and not proposals
-                and audit.get("full_run_no_trade_ok") is False):
-            tag = (" [process: full-run no-trade needs rejected_ideas "
-                   "with >=2 {ticker, reason}]")
-            if no_trade_reason and tag.strip() not in str(no_trade_reason):
-                no_trade_reason = str(no_trade_reason) + tag
-                parsed["no_trade_reason"] = no_trade_reason
-        try:
-            from tools.shadow_portfolio import (
-                mark_shadows, record_from_rejected_ideas, record_from_watchlist,
-            )
-            prices = (context.get("universe_scan") or {}).get("prices") or {}
-            n_rej = record_from_rejected_ideas(
-                parsed.get("rejected_ideas") or [], prices, run_id=run_id)
-            alerts = ((context.get("watchlist_trigger_alerts") or {}).get("alerts")
-                      or [])
-            n_wl = record_from_watchlist(
-                parsed.get("watchlist") or [], prices, alerts, run_id=run_id)
-            mark_shadows(prices)
-            if n_rej or n_wl:
-                print(f"      shadow book: +{n_rej} rejects, +{n_wl} watch entries")
-            try:
-                from tools.post_exit_runners import mark_post_exit_runners
-                pr = mark_post_exit_runners(prices, cache_news_on_marks=True)
-                if pr.get("completed_now"):
-                    print(f"      post-exit runners completed: {pr['completed_now']}")
-                if pr.get("news_cached"):
-                    print(f"      post-exit news cached on marks: {pr['news_cached']}")
-            except Exception as e:
-                print(f"      (post-exit runners skipped: {e})")
-            # Opportunistic lesson prune (cheap, fail-soft)
-            try:
-                from tools.learning_adopt import prune_adopted_lessons
-                pruned = prune_adopted_lessons()
-                if pruned.get("pruned"):
-                    print(f"      lessons pruned: {pruned['pruned']}")
-            except Exception as e:
-                print(f"      (lesson prune skipped: {e})")
-        except Exception as e:
-            print(f"      (shadow portfolio skipped: {e})")
+        from scripts.stop_watch import run as stop_watch_run
+        sw = stop_watch_run()
+        if sw.get("fills"):
+            print(f"  protective exits honored despite halt: "
+                  f"{[f.get('ticker') for f in sw['fills']]}")
+        journal.log_run_summary(
+            {"halted": halt, "run_depth": run_depth,
+             "protective_exits_under_halt": sw.get("fills") or [],
+             "stop_watch_status": sw.get("status")}, run_id)
     except Exception as e:
-        print(f"      (process gates skipped: {e})")
+        print(f"  (protective-exit sweep failed under halt: {e})")
+        journal.log_run_summary(
+            {"halted": halt, "run_depth": run_depth,
+             "protective_exit_sweep_error": str(e)}, run_id)
+    return 1
 
-    if args.news_only or run_depth in ("evening_review", "weekly_market"):
-        proposals = []  # commentary-only depths never trade
-    elif no_brain_orders:
-        dropped = [p for p in proposals if str(p.get("action", "")).upper() == "BUY"]
-        for p in dropped:
-            journal.log_rejection(p, [f"{run_depth}_run_no_new_buys"], run_id)
-        proposals = [p for p in proposals if str(p.get("action", "")).upper() != "BUY"]
-    print(f"      {len(proposals)} proposal(s). {no_trade_reason or ''}")
 
+def _load_act_on_bundle(args, cfg: dict, run_id: str, run_depth: str,
+                        ) -> tuple[dict, str, bool, list, str]:
+    """Cloud mode step 2: load the saved bundle + brain response, re-derive
+    gates from the bundle's depth, age/label it, run the safety layer.
+
+    Returns (context, run_depth, no_brain_orders, forced_exit_fills, response).
+    """
+    forced_exit_fills: list = []
+    print("[1-2/5] Loading saved context + brain response (cloud mode)...")
+    # Prefer full archive when act-on was given a slim path (same run_id).
+    ctx_path = Path(args.context)
+    full_sibling = ctx_path.with_name(ctx_path.name.replace("context_", "context_full_"))
+    load_path = full_sibling if full_sibling.exists() else ctx_path
+    if load_path != ctx_path:
+        print(f"  (using full archive {load_path.name} for act-on)")
+    context = json.loads(load_path.read_text())
+    run_depth = context.get("run_depth") or run_depth
+    # Age this bundle BEFORE anything acts on it. --act-on used to perform no
+    # age check at all: a healthy gather wrote no data_quality label, so the
+    # validator's staleness gate asserted nothing and a cloud routine could
+    # trade a 10-hour-old bundle with every freshness gate green.
+    _age = bundle_age_hours(context)
+    if _age is not None:
+        print(f"  bundle data gathered {_age:.1f}h ago")
+    # Re-derive the trading gates from the bundle's ACTUAL depth: acting on
+    # a light/evening context without a matching --depth flag must not run
+    # with full-depth gating (BUYs would survive a no-BUY slot).
+    no_brain_orders, run_safety = _depth_gates(args, run_depth)
+    # Overlay the frequent holdings/watchlist live feed onto the bundle's
+    # daily-bar prices so an intraday stop breach is caught this run, not at
+    # the next sparse full gather.
+    apply_live_prices(context, cfg)
+    bundle_prices = (context.get("universe_scan") or {}).get("prices") or {}
+    if bundle_prices:
+        try:
+            broker.mark_to_market(bundle_prices)
+        except Exception as e:
+            print(f"  (mark-to-market from bundle failed: {e})")
+    context["portfolio"] = get_portfolio_state()
+    _dq = label_data_quality(context, run_depth)
+    if _dq.get("stale") or _dq.get("source") not in (None, "live"):
+        print(f"  DATA QUALITY: {_dq.get('source')} "
+              f"stale={bool(_dq.get('stale'))} age={_dq.get('age_hours')}h "
+              f"- new BUYs restricted")
+    if run_safety:
+        forced_exit_fills = apply_safety_layer(context, cfg, run_id)
+    response = Path(args.act_on).read_text()
+    # THE CLOUD ROUTINE *IS* THE BRAIN, and it never touches run_claude.
+    # MEASURED 2026-08-03: 0 of 82 cloud runs recorded the brain call they
+    # were built around, while risk_desk and daily_study on those same runs
+    # logged fine — because those are Python subprocesses that DO go through
+    # run_claude, and this path just reads a response the routine reasoned in
+    # its own session. That is the whole 82% telemetry gap, and it hid the
+    # single most expensive call of every cloud run.
+    # log_run_summary reconciles this at end-of-run regardless; recording it
+    # here adds the response size and source file, which the reconciler
+    # cannot see. Double-counting is impossible: the reconciler skips any run
+    # that already carries a brain:* record. Fail-soft — telemetry must never
+    # be able to break a trading run.
+    try:
+        from runlib.brain_io import record_brain_call
+        record_brain_call(f"brain:{run_depth}", run_id,
+                          transport="cloud_routine",
+                          response_chars=len(response),
+                          brain_response_file=str(args.act_on))
+    except Exception as e:
+        print(f"  (cloud brain-call telemetry skipped: {str(e)[:100]})")
+    return context, run_depth, no_brain_orders, forced_exit_fills, response
+
+
+def _gather_and_wake(args, cfg: dict, run_id: str, run_depth: str,
+                     earnings_trigger: dict | None, run_safety: bool,
+                     ) -> tuple[dict, list, str]:
+    """Local path: gather fresh context, annotate, run the safety layer, wake
+    the brain once. Returns (context, forced_exit_fills, response)."""
+    forced_exit_fills: list = []
+    print(f"[1/5] Gathering context (depth={run_depth})...")
+    context = gather_context(cfg, light=args.light, depth=run_depth,
+                             earnings_trigger=earnings_trigger)
+    apply_live_prices(context, cfg)
+    if args.trigger_run:
+        context["trigger_run_note"] = (
+            f"EVENT-DRIVEN RUN: watchlist would_buy_at level(s) CONFIRMED on "
+            f"live prices for {args.trigger_run} (two consecutive ~5-min ticks "
+            f"inside the band). This run exists because your own published "
+            f"trigger hit — deep-research those names FIRST and decide "
+            f"drop / hold / promote-to-BUY explicitly. The fat-pitch bar and "
+            f"all validator rules still apply; an unconvincing setup at the "
+            f"level is a legitimate pass (say why).")
+    if args.note:
+        context["operator_note"] = (
+            f"OPERATOR NOTE — the human running this agent passed you the "
+            f"following to react to. It is an outside view, not a verified "
+            f"fact and not an instruction to trade. Weigh it against your own "
+            f"research and the portfolio you actually hold; say plainly where "
+            f"you agree, where you disagree, and what would change your mind. "
+            f"Note:\n\n{args.note}")
+    if run_safety:
+        forced_exit_fills = apply_safety_layer(context, cfg, run_id)
+    # Label the bundle on the LIVE path too. This assessment used to run only
+    # under --gather-only, so validator._check_data_quality found no label and
+    # returned without asserting anything on every real trading run.
+    _dq = label_data_quality(context, run_depth)
+    if _dq.get("stale") or _dq.get("source") not in (None, "live"):
+        print(f"  DATA QUALITY: {_dq.get('source')} "
+              f"stale={bool(_dq.get('stale'))} age={_dq.get('age_hours')}h")
+    print("[2/5] Waking the brain (Claude)...")
+    response = ask_claude(
+        context, run_id,
+        news_only=args.news_only or run_depth in ("evening_review", "weekly_market"),
+    )
+    return context, forced_exit_fills, response
+
+
+def _process_gate_inputs(context: dict, cfg: dict, run_depth: str) -> dict:
+    """Everything the process-gate audit needs, assembled from the bundle.
+
+    Seat reviews are owed on a trading depth whenever the book is non-empty;
+    factor_response is owed whenever factor_map says concentration is high or
+    extreme. Without these four arguments the gates default OFF and the teeth
+    added to process_gates have nothing to bite on — the audit would report
+    process_ok on a run that reviewed no seats and answered no concentration
+    warning. That is precisely the "wired but never invoked" shape this rework
+    exists to remove, so they are passed explicitly.
+
+    NOTE (2026-08-05): only this INPUT ASSEMBLY lives behind a seam. The audit
+    call itself stays inline in main(), because runlib/capabilities.
+    _probe_process_gate_flags and tests/test_process_gates.py source-inspect
+    main() for the call site's literal keyword arguments.
+    """
+    top_scan = [
+        r.get("ticker") for r in
+        ((context.get("universe_scan") or {}).get("top_setups") or [])[:8]
+        if r.get("ticker")
+    ]
+    held = [str(x.get("ticker") or "").upper()
+            for x in ((context.get("portfolio") or {}).get("positions") or [])
+            if x.get("ticker")]
+    fmap = context.get("factor_map") or {}
+    # Names that reached their OWN stated buy level this run, and how many
+    # distinct days each has done so without being bought.
+    _fired_triggers = [
+        str((a or {}).get("ticker") or "").upper()
+        for a in ((context.get("watchlist_trigger_alerts") or {}).get("alerts") or [])
+        if isinstance(a, dict) and a.get("ticker")]
+    _unbought_hits = {}
+    try:
+        from tools.engagement import count_unbought_hits
+        _wo = ROOT / "dashboard" / "data" / "watchlist_outcomes.json"
+        if _wo.exists():
+            _unbought_hits = count_unbought_hits(json.loads(_wo.read_text()))
+    except Exception as e:
+        print(f"      (unbought-hit count skipped: {str(e)[:100]})")
+    trading_depth = run_depth in ("full", "holdings_watchlist")
+    return {
+        "top_scan_tickers": top_scan,
+        "held_tickers": held,
+        "require_seat_reviews": bool(trading_depth and held),
+        "require_factor_response": bool(fmap.get("requires_factor_response")),
+        "factor_concentration_level": fmap.get("concentration_level"),
+        # Lets the audit catch an unwind being used as a trading halt rather
+        # than the 0.5x size haircut the config actually applies.
+        "momentum_status": (context.get("momentum_health") or {}).get("status"),
+        # ENGAGEMENT. A fired trigger owes a resolution, a name that keeps
+        # reaching its level unbought decays off the list, and a book that has
+        # been flat for days owes a dated commitment.
+        "fired_triggers": _fired_triggers,
+        "unbought_hits": _unbought_hits,
+        "requires_commitment": bool(
+            (context.get("engagement") or {}).get("requires_commitment")),
+        "max_unbought_hits": int(
+            ((cfg.get("swing_rules") or {}).get("max_unbought_trigger_hits")) or 3),
+    }
+
+
+def _apply_process_audit(audit: dict, parsed: dict, proposals: list,
+                         no_trade_reason, fired_triggers: list,
+                         run_depth: str, run_id: str):
+    """Apply the audit's verdicts: fold outputs into `parsed`, print/journal the
+    findings, drop blocked BUYs, tag a weak full-run no-trade.
+
+    Mutates `parsed` in place; returns (proposals, no_trade_reason).
+    """
+    parsed["watchlist"] = audit.get("watchlist") or parsed.get("watchlist") or []
+    parsed["rejected_ideas"] = audit.get("rejected_ideas") or []
+    parsed["seat_reviews"] = audit.get("seat_reviews") or []
+    parsed["factor_response"] = audit.get("factor_response")
+    parsed["process_audit"] = {
+        "process_ok": audit.get("process_ok"),
+        "full_run_no_trade_ok": audit.get("full_run_no_trade_ok"),
+        "issues": audit.get("issues") or [],
+        "blocking_issues": audit.get("blocking_issues") or [],
+        "blocks_new_buys": bool(audit.get("blocks_new_buys")),
+        # Feeds forward into the next bundle's reasoning_process so a
+        # dead-indicator veto or an unwind-as-halt is visible to the run that
+        # comes after it, not just to a human reading the journal.
+        "signal_discipline": audit.get("signal_discipline") or {},
+        "engagement": audit.get("engagement") or {},
+    }
+    _eng = audit.get("engagement") or {}
+    parsed["trigger_reviews"] = _eng.get("trigger_reviews") or []
+    if _eng.get("waiting_for"):
+        parsed["waiting_for"] = _eng["waiting_for"]
+    for _d in (_eng.get("force_dropped") or [])[:5]:
+        print(f"      watchlist FORCE-DROPPED {_d.get('ticker')}: reached its "
+              f"level on {_d.get('unbought_hits')} days unbought")
+    if fired_triggers:
+        print(f"      triggers fired: {fired_triggers} "
+              f"(resolutions: {len(_eng.get('trigger_reviews') or [])})")
+    _sd = audit.get("signal_discipline") or {}
+    if _sd.get("unwind_used_as_halt"):
+        print("      SIGNAL DISCIPLINE: unwind cited as a halt on a no-trade "
+              "run — it is a 0.5x size haircut, not a gate")
+    for _fix in (_sd.get("trigger_fixes") or [])[:5]:
+        print(f"      trigger rewritten {_fix.get('ticker')}: "
+              f"{_fix.get('original')!r} -> {_fix.get('rewritten')!r}")
+    for _dv in (_sd.get("dead_indicator_vetoes") or [])[:5]:
+        print(f"      dead-indicator veto {_dv.get('ticker')}: "
+              f"{_dv.get('signals')}")
+    if audit.get("issues"):
+        print(f"      process gates: {audit['issues'][:6]}")
+        journal.log_improvement(
+            "Process gate: " + "; ".join(audit["issues"][:12]), run_id)
+    # TEETH. Risk-relevant gates now BLOCK new BUYs instead of being journaled
+    # and forgotten. factor_response is owed when factor_map flags high/extreme
+    # concentration; seat_reviews are owed before capital opens a new seat. A
+    # run that skips either does not get to add risk this cycle. Exits, holds
+    # and trims are never blocked — the asymmetry the whole system runs on.
+    if audit.get("blocks_new_buys"):
+        blocking = audit.get("blocking_issues") or []
+        dropped = [p for p in proposals
+                   if str(p.get("action", "")).upper() == "BUY"]
+        if dropped:
+            print(f"      PROCESS GATE BLOCKS {len(dropped)} BUY(s): {blocking[:4]}")
+            for p in dropped:
+                journal.log_rejection(
+                    p, [f"process_gate_blocked:{'; '.join(blocking[:6])}"], run_id)
+            proposals = [p for p in proposals
+                         if str(p.get("action", "")).upper() != "BUY"]
+            parsed["proposals"] = proposals
+    if (run_depth == "full" and not proposals
+            and audit.get("full_run_no_trade_ok") is False):
+        tag = (" [process: full-run no-trade needs rejected_ideas "
+               "with >=2 {ticker, reason}]")
+        if no_trade_reason and tag.strip() not in str(no_trade_reason):
+            no_trade_reason = str(no_trade_reason) + tag
+            parsed["no_trade_reason"] = no_trade_reason
+    return proposals, no_trade_reason
+
+
+def _mark_shadow_book(parsed: dict, context: dict, run_id: str) -> None:
+    """Learning marks: shadow book entries, post-exit runners, lesson prune.
+    Entirely fail-soft — its own except mirrors the old inline block."""
+    try:
+        from tools.shadow_portfolio import (
+            mark_shadows, record_from_rejected_ideas, record_from_watchlist,
+        )
+        prices = (context.get("universe_scan") or {}).get("prices") or {}
+        n_rej = record_from_rejected_ideas(
+            parsed.get("rejected_ideas") or [], prices, run_id=run_id)
+        alerts = ((context.get("watchlist_trigger_alerts") or {}).get("alerts")
+                  or [])
+        n_wl = record_from_watchlist(
+            parsed.get("watchlist") or [], prices, alerts, run_id=run_id)
+        mark_shadows(prices)
+        if n_rej or n_wl:
+            print(f"      shadow book: +{n_rej} rejects, +{n_wl} watch entries")
+        try:
+            from tools.post_exit_runners import mark_post_exit_runners
+            pr = mark_post_exit_runners(prices, cache_news_on_marks=True)
+            if pr.get("completed_now"):
+                print(f"      post-exit runners completed: {pr['completed_now']}")
+            if pr.get("news_cached"):
+                print(f"      post-exit news cached on marks: {pr['news_cached']}")
+        except Exception as e:
+            print(f"      (post-exit runners skipped: {e})")
+        # Opportunistic lesson prune (cheap, fail-soft)
+        try:
+            from tools.learning_adopt import prune_adopted_lessons
+            pruned = prune_adopted_lessons()
+            if pruned.get("pruned"):
+                print(f"      lessons pruned: {pruned['pruned']}")
+        except Exception as e:
+            print(f"      (lesson prune skipped: {e})")
+    except Exception as e:
+        print(f"      (shadow portfolio skipped: {e})")
+
+
+def _journal_side_outputs(parsed: dict, response: str, run_id: str) -> None:
+    """Non-trading side outputs of the brain response: improvement notes, KB
+    citations, guidance-ledger entries, universe candidates. All fail-soft."""
     for m in re.findall(r"Improvement note:(.+)", response):
         journal.log_improvement(m.strip(), run_id)
 
@@ -885,24 +957,11 @@ def main() -> int:
         except Exception as e:
             print(f"      (universe candidates failed: {e})")
 
-    if args.research_only:
-        print(json.dumps(proposals, indent=2))
-        return 0
 
-    if proposals and not (args.news_only or run_depth in ("evening_review", "weekly_market")):
-        print("[2.5/5] Risk desk review...")
-        ctx_path = args.context if args.act_on else str(ROOT / "state" / f"context_{run_id}.json")
-        # Risk desk benefits from full archive if present
-        full_p = Path(str(ctx_path).replace("context_", "context_full_"))
-        if full_p.exists():
-            ctx_path = str(full_p)
-        proposals = adversarial_review(proposals, ctx_path, run_id)
-
-    print("[3/5] Validating (pure Python)...")
-    live_portfolio = get_portfolio_state()
-    context["portfolio"] = live_portfolio
-
-    risk_halts = []
+def _equity_risk_halts(live_portfolio: dict, cfg: dict) -> list[str]:
+    """Account circuit breakers (-3% daily / -15% drawdown) from the published
+    equity history. FAIL CLOSED — see the except below."""
+    risk_halts: list[str] = []
     try:
         hist_file = ROOT / "dashboard" / "data" / "equity_history.json"
         equity_hist = json.loads(hist_file.read_text()) if hist_file.exists() else []
@@ -916,41 +975,13 @@ def main() -> int:
         # file is not an error (fresh book) — that path yields [] above.
         risk_halts = [f"risk_halt_check_unverifiable:{e}"]
         print(f"  RISK-HALT CHECK FAILED CLOSED: {e} - new BUYs blocked this run")
-    # CAPABILITY AUDIT. Proves every load-bearing guard is wired AND fed on the
-    # production path before this run is allowed to open risk. Three days of
-    # hardening found the same shape of defect five separate times — code present,
-    # unit tests green, production either never invoking it or feeding it an empty
-    # map. Unit tests structurally cannot see that; they supply the inputs
-    # themselves. A dead capability blocks new BUYs only: exits, holds and stop
-    # enforcement are never blocked, because refusing to reduce risk is always the
-    # wrong direction.
-    try:
-        from runlib.capabilities import audit_capabilities
-        caps = audit_capabilities()
-        context["capabilities"] = caps
-        if not caps["ok"]:
-            for name in caps["dead"]:
-                print(f"  CAPABILITY DEAD: {name} — "
-                      f"{caps['results'][name]['detail']}")
-            journal.log_improvement(
-                "Capability audit FAILED: " + "; ".join(
-                    f"{n}: {caps['results'][n]['detail'][:160]}" for n in caps["dead"]),
-                run_id)
-            risk_halts = list(risk_halts) + [
-                f"capability_dead:{','.join(caps['dead'])}"]
-            print("  new BUYs blocked until every capability is live again")
-    except Exception as e:
-        # The audit failing IS a failure. An unverifiable guard and an absent one
-        # are the same thing to the position it was meant to protect.
-        risk_halts = list(risk_halts) + [f"capability_audit_unavailable:{e}"]
-        print(f"  CAPABILITY AUDIT FAILED TO RUN: {e} - new BUYs blocked")
-    context["risk_halts"] = risk_halts
-    if risk_halts:
-        print(f"  RISK HALT ACTIVE: {risk_halts} - new BUYs blocked this run")
-        for p in proposals:
-            if str(p.get("action", "")).upper() == "BUY":
-                journal.log_rejection(p, risk_halts, run_id)
-        proposals = [p for p in proposals if str(p.get("action", "")).upper() != "BUY"]
+    return risk_halts
+
+
+def _build_market_context(context: dict, proposals: list) -> dict:
+    """The validator's market_context: per-ticker volatility map plus the
+    reserved feeds (_regime, _data_quality, _book, _earnings, _bundle) that let
+    the coded gates actually bind. Every feed fails open on absent keys."""
     market_context = build_volatility_context(
         context.get("universe_scan") or {}, context.get("options_signals") or {})
     # Regime signal for the validator's coded gate: SPY-vs-200DMA from the
@@ -1091,6 +1122,16 @@ def main() -> int:
     # facts a thesis cites actually appear in the evidence the brain was handed.
     # market_context is otherwise a per-ticker volatility map and carries no news.
     market_context["_bundle"] = context
+    return market_context
+
+
+def _execute_and_publish(args, cfg: dict, run_id: str, run_depth: str,
+                         context: dict, response: str, parsed: dict,
+                         proposals: list, no_trade_reason,
+                         forced_exit_fills: list, live_portfolio: dict,
+                         market_context: dict) -> int:
+    """Validate -> execute -> journal/dashboard/X draft. The tail of every
+    trading run; returns the process exit code (always 0 when it completes)."""
     results = validator.validate_proposals(proposals, live_portfolio, market_context)
     # Risk-desk vetoes never reached the validator, but they belong on the
     # public site: the brain's commentary may reference the killed trade, so
@@ -1170,6 +1211,197 @@ def main() -> int:
     redeploy_dashboard()
     print("Done.")
     return 0
+
+
+def main() -> int:
+    args = _parse_args()
+
+    cfg = validator.load_config()
+    run_id = f"{datetime.now():%Y%m%d}-{uuid.uuid4().hex[:6]}"
+    try:
+        run_depth = resolve_depth(
+            explicit=args.depth,
+            light_flag=args.light,
+            news_only=args.news_only,
+            weekly_market=args.weekly_market,
+            hhmm=f"{et_now():%H%M}" if args.auto_depth else None,
+            cfg=cfg,
+        )
+    except ValueError as e:
+        print(f"HALT: {e}")
+        return 2
+
+    run_depth, earnings_trigger = _earnings_escalation(args, run_depth, cfg)
+
+    rc = _dispatch_special_modes(args, run_id)
+    if rc is not None:
+        return rc
+    print(f"=== East Equity Agent run {run_id} (mode: {cfg['mode']['trading_mode']}, "
+          f"depth: {run_depth}) ===")
+
+    # Idempotent migration: positions opened before plan persistence get their
+    # journal-derived stop/target/horizon written onto the position record.
+    try:
+        from tools.portfolio_state import backfill_position_plans
+        n = backfill_position_plans()
+        if n:
+            print(f"  (backfilled persisted plans onto {n} position(s))")
+    except Exception as e:
+        print(f"  (plan backfill skipped: {e})")
+
+    if args.gather_only:
+        return _run_gather_only(args, cfg, run_id, run_depth, earnings_trigger)
+
+    # Preflight weekend/lease: treat non-trading depths like news-only so Sunday
+    # weekly check-ins are allowed. Brain proposals are suppressed separately;
+    # the safety layer (stops/horizons) still runs on weekly_market and focused
+    # depths (run_safety).
+    no_brain_orders, run_safety = _depth_gates(args, run_depth)
+    halt = preflight(
+        cfg, run_id,
+        news_only=args.news_only or run_depth in ("evening_review", "weekly_market"),
+        manual=args.manual,
+    )
+    if halt:
+        print(f"HALT: {halt}")
+        return _halt_and_sweep(halt, run_depth, run_id)
+
+    if args.act_on:
+        (context, run_depth, no_brain_orders,
+         forced_exit_fills, response) = _load_act_on_bundle(args, cfg, run_id, run_depth)
+    else:
+        context, forced_exit_fills, response = _gather_and_wake(
+            args, cfg, run_id, run_depth, earnings_trigger, run_safety)
+
+    parsed = parse_proposals(response)
+    proposals, no_trade_reason = parsed["proposals"], parsed["no_trade_reason"]
+
+    # Process gates + learning marks (shadows, post-exit runners, news cache).
+    # The audit call site stays INLINE here on purpose (2026-08-05):
+    # runlib/capabilities._probe_process_gate_flags and tests/test_process_gates
+    # source-inspect main() for its literal keyword arguments, so only the input
+    # assembly and the result application live behind seams.
+    try:
+        from tools.process_gates import audit_brain_process
+        gi = _process_gate_inputs(context, cfg, run_depth)
+        audit = audit_brain_process(
+            parsed, depth=run_depth, proposals=proposals,
+            top_scan_tickers=gi["top_scan_tickers"],
+            universe=validator.load_universe(),
+            held_tickers=gi["held_tickers"],
+            require_seat_reviews=gi["require_seat_reviews"],
+            require_factor_response=gi["require_factor_response"],
+            factor_concentration_level=gi["factor_concentration_level"],
+            momentum_status=gi["momentum_status"],
+            fired_triggers=gi["fired_triggers"],
+            unbought_hits=gi["unbought_hits"],
+            requires_commitment=gi["requires_commitment"],
+            max_unbought_hits=gi["max_unbought_hits"])
+        proposals, no_trade_reason = _apply_process_audit(
+            audit, parsed, proposals, no_trade_reason,
+            gi["fired_triggers"], run_depth, run_id)
+        _mark_shadow_book(parsed, context, run_id)
+    except Exception as e:
+        print(f"      (process gates skipped: {e})")
+
+    if args.news_only or run_depth in ("evening_review", "weekly_market"):
+        proposals = []  # commentary-only depths never trade
+    elif no_brain_orders:
+        dropped = [p for p in proposals if str(p.get("action", "")).upper() == "BUY"]
+        for p in dropped:
+            journal.log_rejection(p, [f"{run_depth}_run_no_new_buys"], run_id)
+        proposals = [p for p in proposals if str(p.get("action", "")).upper() != "BUY"]
+    print(f"      {len(proposals)} proposal(s). {no_trade_reason or ''}")
+
+    _journal_side_outputs(parsed, response, run_id)
+
+    if args.research_only:
+        print(json.dumps(proposals, indent=2))
+        return 0
+
+    if proposals and not (args.news_only or run_depth in ("evening_review", "weekly_market")):
+        print("[2.5/5] Risk desk review...")
+        ctx_path = args.context if args.act_on else str(ROOT / "state" / f"context_{run_id}.json")
+        # Risk desk benefits from full archive if present
+        full_p = Path(str(ctx_path).replace("context_", "context_full_"))
+        if full_p.exists():
+            ctx_path = str(full_p)
+        proposals = adversarial_review(proposals, ctx_path, run_id)
+
+    print("[3/5] Validating (pure Python)...")
+    live_portfolio = get_portfolio_state()
+    context["portfolio"] = live_portfolio
+
+    risk_halts = _equity_risk_halts(live_portfolio, cfg)
+    # CAPABILITY AUDIT. Proves every load-bearing guard is wired AND fed on the
+    # production path before this run is allowed to open risk. Three days of
+    # hardening found the same shape of defect five separate times — code present,
+    # unit tests green, production either never invoking it or feeding it an empty
+    # map. Unit tests structurally cannot see that; they supply the inputs
+    # themselves. A dead capability blocks new BUYs only: exits, holds and stop
+    # enforcement are never blocked, because refusing to reduce risk is always the
+    # wrong direction. (Stays inline in main(): tests/test_capability_audit.py
+    # pins this call site here — 2026-08-05.)
+    try:
+        from runlib.capabilities import audit_capabilities
+        caps = audit_capabilities()
+        context["capabilities"] = caps
+        if not caps["ok"]:
+            for name in caps["dead"]:
+                print(f"  CAPABILITY DEAD: {name} — "
+                      f"{caps['results'][name]['detail']}")
+            journal.log_improvement(
+                "Capability audit FAILED: " + "; ".join(
+                    f"{n}: {caps['results'][n]['detail'][:160]}" for n in caps["dead"]),
+                run_id)
+            risk_halts = list(risk_halts) + [
+                f"capability_dead:{','.join(caps['dead'])}"]
+            print("  new BUYs blocked until every capability is live again")
+    except Exception as e:
+        # The audit failing IS a failure. An unverifiable guard and an absent one
+        # are the same thing to the position it was meant to protect.
+        risk_halts = list(risk_halts) + [f"capability_audit_unavailable:{e}"]
+        print(f"  CAPABILITY AUDIT FAILED TO RUN: {e} - new BUYs blocked")
+    # TESTS GATE (2026-08-05). Wired exactly like the capability audit above: a
+    # RED test suite on this checkout adds a risk-halt reason, which drops new
+    # BUYs only — SELLs, forced exits and stop enforcement are never blocked.
+    # Unlike the capability audit it FAILS OPEN whenever the gate itself cannot
+    # run (pytest missing / subprocess error / wall-clock timeout — tests_gate
+    # prints its own loud note in each case): its job is to stop new risk on a
+    # known-broken checkout, never to brick trading. The subprocess suite swaps
+    # live state via tests/conftest.py, which is SAFE in a fresh subprocess (it
+    # restores on exit) but must never run CONCURRENTLY with another suite run —
+    # this call is serial, in-cycle, under the run lock, and nothing else in the
+    # system invokes the suite automatically.
+    # Ops off-switch: risk_controls.tests_gate_enabled (autonomy_config.json).
+    try:
+        from runlib.preflight import tests_gate
+        tg = tests_gate(enabled=bool((cfg.get("risk_controls") or {})
+                                     .get("tests_gate_enabled", True)))
+        context["tests_gate"] = {k: tg.get(k) for k in
+                                 ("status", "blocks_new_buys",
+                                  "first_failing_test", "duration_s")}
+        if tg.get("blocks_new_buys"):
+            first = tg.get("first_failing_test") or "unknown_test"
+            print(f"  TESTS GATE RED: {first} — new BUYs blocked this run")
+            journal.log_improvement(
+                f"Tests gate RED: suite fails at {first} — new BUYs blocked "
+                f"until this checkout is green", run_id)
+            risk_halts = list(risk_halts) + [f"tests_red:{first}"]
+    except Exception as e:
+        print(f"  (tests gate unavailable - failing OPEN, BUYs ungated: {e})")
+    context["risk_halts"] = risk_halts
+    if risk_halts:
+        print(f"  RISK HALT ACTIVE: {risk_halts} - new BUYs blocked this run")
+        for p in proposals:
+            if str(p.get("action", "")).upper() == "BUY":
+                journal.log_rejection(p, risk_halts, run_id)
+        proposals = [p for p in proposals if str(p.get("action", "")).upper() != "BUY"]
+
+    market_context = _build_market_context(context, proposals)
+    return _execute_and_publish(args, cfg, run_id, run_depth, context, response,
+                                parsed, proposals, no_trade_reason,
+                                forced_exit_fills, live_portfolio, market_context)
 
 
 if __name__ == "__main__":

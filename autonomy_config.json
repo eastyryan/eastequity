@@ -275,7 +275,9 @@
     "market_hours_only": true,
     "cross_node_lease_enabled": true,
     "cross_node_lease_ttl_minutes": 30,
-    "_cross_node_lease_note": "Advisory lease over the shared ledger, arbitrated through git so the cloud routine and a local run never trade the same portfolio.json concurrently. A scheduled run stands down if another node holds an unexpired lease; manual runs only warn (the user is deliberately driving). Fail-open on any git error - a lease must never brick the trader."
+    "_cross_node_lease_note": "Advisory lease over the shared ledger, arbitrated through git so the cloud routine and a local run never trade the same portfolio.json concurrently. A scheduled run stands down if another node holds an unexpired lease; manual runs only warn (the user is deliberately driving). Fail-open on any git error - a lease must never brick the trader.",
+    "tests_gate_enabled": true,
+    "_tests_gate_note": "2026-08-05: runlib/preflight.tests_gate runs the repo's own test suite in a subprocess each trading cycle, wired like the capability audit: a RED suite blocks NEW BUYs for that run only (journaled as tests_red:<first failing test>); SELLs, forced exits and stop enforcement are never blocked. Fails OPEN with a loud printed note when pytest is missing or the run errors/times out (~240s wall cap) - the gate stops new risk on a known-broken checkout, it must never brick trading. Set false to disable without a code change."
   },
   "execution_costs": {
     "slippage_bps": 10,

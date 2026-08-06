@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import sys
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -396,6 +397,120 @@ def preflight(cfg: dict, run_id: str, news_only: bool = False,
         if lease_halt:
             return lease_halt
     return None
+
+
+# ---------------------------------------------------------------------------
+# Tests gate — a red suite blocks NEW BUYs, never exits (2026-08-05)
+# ---------------------------------------------------------------------------
+TESTS_GATE_WALL_CLOCK_S = 240
+
+
+def tests_gate(repo_root=None, tests_path: str = "tests/",
+               timeout_s: int = TESTS_GATE_WALL_CLOCK_S,
+               enabled: bool = True) -> dict:
+    """Run the repo's own test suite; a RED suite blocks new BUYs for one cycle.
+
+    WHY (2026-08-05). Until now a red test suite gated nothing: the orchestrator
+    would open NEW risk on a checkout whose own tests prove it broken. This
+    follows the capability-audit pattern (runlib/capabilities.audit_capabilities):
+    the result never exits the run — the orchestrator turns a red suite into a
+    risk-halt reason that drops BUY proposals only. SELLs, forced exits and stop
+    enforcement are never blocked, because refusing to reduce risk is always the
+    wrong direction.
+
+    FAILS OPEN, loudly, whenever the gate itself cannot deliver a verdict
+    (pytest not importable, subprocess error, wall-clock timeout, pytest usage /
+    collection errors): its job is to stop new risk on a KNOWN-broken checkout,
+    never to brick trading on an infra hiccup. Only pytest exit code 1 — tests
+    ran and at least one failed — blocks.
+
+    CONCURRENCY. The subprocess suite swaps live state (kill-switch path,
+    journal dir, broker backend, sizing config) via tests/conftest.py. That is
+    SAFE in a fresh subprocess — everything is monkeypatched in that process's
+    memory and restored when it exits, and the caller blocks on the subprocess
+    for the duration — but two suite runs must never overlap. The orchestrator
+    invokes this serially, in-cycle, under the run lock; nothing else in the
+    system runs the suite automatically.
+
+    Config off-switch: risk_controls.tests_gate_enabled (autonomy_config.json,
+    default true) — the orchestrator reads it and passes `enabled` here, so ops
+    can disable the gate without a code change.
+
+    Returns {"status": green|red|disabled|no_pytest|timeout|error,
+    "blocks_new_buys", "first_failing_test", "detail", "duration_s",
+    "returncode"}. blocks_new_buys is True ONLY on status "red".
+    """
+    root = Path(repo_root) if repo_root else ROOT
+    out = {"status": "green", "blocks_new_buys": False,
+           "first_failing_test": None, "detail": "", "duration_s": 0.0,
+           "returncode": None}
+    if not enabled:
+        out.update(status="disabled",
+                   detail="risk_controls.tests_gate_enabled is false")
+        print("  (tests gate disabled by config - not asserted)")
+        return out
+    import importlib.util
+    if importlib.util.find_spec("pytest") is None:
+        out.update(status="no_pytest",
+                   detail="pytest not importable on this interpreter")
+        print("  TESTS GATE CANNOT RUN (pytest missing) - FAILING OPEN: the "
+              "suite was NOT verified green; trading proceeds ungated")
+        return out
+    # -p no:cacheprovider: the repo auto-commits and pushes from cloud runs, and
+    # .pytest_cache is not gitignored — a cache written on every cycle would leak
+    # into the public ledger history (2026-08-05).
+    cmd = [sys.executable, "-m", "pytest", tests_path, "-q", "-x",
+           "-p", "no:cacheprovider"]
+    # Per-test timeout only when the plugin exists: pytest-timeout is not
+    # installed everywhere (absent from the 2026-08-05 local venv), and passing
+    # --timeout without it is a usage error (exit 4) that would permanently fail
+    # this gate open. The subprocess wall clock below is the real cap either way.
+    if importlib.util.find_spec("pytest_timeout") is not None:
+        cmd.append("--timeout=300")
+    started = datetime.now(timezone.utc)
+    try:
+        r = subprocess.run(cmd, cwd=str(root), capture_output=True, text=True,
+                           timeout=timeout_s)
+    except subprocess.TimeoutExpired:
+        out.update(status="timeout",
+                   duration_s=round((datetime.now(timezone.utc)
+                                     - started).total_seconds(), 1),
+                   detail=f"suite exceeded the {timeout_s}s wall clock")
+        print(f"  TESTS GATE TIMED OUT after {timeout_s}s - FAILING OPEN: the "
+              f"suite was NOT verified green; trading proceeds ungated")
+        return out
+    except Exception as e:
+        out.update(status="error", detail=f"{type(e).__name__}: {e}")
+        print(f"  TESTS GATE ERRORED ({type(e).__name__}: {e}) - FAILING OPEN: "
+              f"the suite was NOT verified green; trading proceeds ungated")
+        return out
+    out["duration_s"] = round(
+        (datetime.now(timezone.utc) - started).total_seconds(), 1)
+    out["returncode"] = r.returncode
+    text = (r.stdout or "") + "\n" + (r.stderr or "")
+    tail = (text.strip().splitlines() or [""])[-1][:200]
+    if r.returncode == 0:
+        out["detail"] = tail
+        print(f"  (tests gate: suite green in {out['duration_s']}s)")
+        return out
+    if r.returncode == 1:
+        # Exit code 1 is pytest's "tests were collected and some failed" — the
+        # one outcome that PROVES this checkout broken. -x stops at the first
+        # failure, so the first FAILED/ERROR summary line names the culprit,
+        # which the orchestrator journals as the BUY-block reason.
+        import re
+        m = re.search(r"^(?:FAILED|ERROR)\s+(\S+)", text, re.MULTILINE)
+        first = m.group(1) if m else "unknown_test"
+        out.update(status="red", blocks_new_buys=True,
+                   first_failing_test=first, detail=tail)
+        return out
+    # 2/3/4/5 = interrupted / internal error / usage error / nothing collected:
+    # the gate could not deliver a verdict. That is an infra failure, not a
+    # proven-broken checkout — FAIL OPEN, loudly.
+    out.update(status="error", detail=f"pytest exit {r.returncode}: {tail}")
+    print(f"  TESTS GATE INCONCLUSIVE (pytest exit {r.returncode}) - FAILING "
+          f"OPEN: the suite was NOT verified green; trading proceeds ungated")
+    return out
 
 
 # ---------------------------------------------------------------------------
