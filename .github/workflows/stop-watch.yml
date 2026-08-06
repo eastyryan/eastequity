@@ -98,7 +98,16 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          # WAS 0 (2026-08-05 audit). History consumers in this job: the
+          # `pull --rebase --autostash` retry in the ledger-commit step below
+          # (needs only the merge-base across a minutes-long push race) and the
+          # live-data fallback, which already does its own `fetch --depth=1`.
+          # scripts/stop_watch.py reads state files, never git history. Peak
+          # measured main traffic is 52 commits/day, so 300 is ~a week of
+          # headroom vs. a 210MB full clone on a job that must start FAST —
+          # this is the stop-enforcement path, and clone time is time a
+          # breached stop sits unenforced.
+          fetch-depth: 300
 
       - uses: actions/setup-python@v5
         with:

@@ -3,11 +3,18 @@ python-dotenv>=1.0
 pandas>=2.0
 yfinance>=0.2.50
 fredapi>=0.5.2
-sec-edgar-downloader>=5.0
+# sec-edgar-downloader REMOVED 2026-08-05: imported nowhere (EDGAR access is
+# hand-rolled keyless requests in tools/), it was pure install weight in every
+# CI/workflow pip install.
+# lxml has no direct import but is LOAD-BEARING transitively: pandas.read_html
+# (tools/discovery_pool.py:128) needs an html parser backend and raises
+# ImportError without one.
 lxml>=5.0
 requests-oauthlib>=1.3
 matplotlib>=3.7
 pillow>=10.0
 alpaca-py>=0.43
 
+# Test runner — the same install CI uses (tests.yml, Python 3.11), so a local
+# `.venv311` built from this file can run the suite without a separate step.
 pytest>=8.0

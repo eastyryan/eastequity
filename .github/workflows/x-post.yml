@@ -47,7 +47,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          # WAS 0 (2026-08-05 audit). tools/x_poster.py reads state/ files and
+          # journal/x_posts.jsonl from the working tree, never git history; the
+          # only history consumer is this workflow's own `pull --rebase` push
+          # retry below, which needs just the merge-base across a minutes-long
+          # race. 300 ≈ a week of main's peak traffic (52 commits/day measured
+          # 2026-07-23) vs. a forever-growing 210MB full clone.
+          fetch-depth: 300
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

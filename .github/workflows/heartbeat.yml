@@ -36,6 +36,9 @@ on:
 
 permissions:
   contents: read
+  # issues: write exists for exactly one step — the create-or-update alert
+  # issue below. Everything else in this workflow is read-only.
+  issues: write
 
 concurrency:
   group: heartbeat
@@ -61,7 +64,55 @@ jobs:
         run: python scripts/heartbeat_check.py --json
 
       # Separate step so the JSON above is always in the log even when this fails.
+      # tee captures the UNHEALTHY summary for the issue step below without a
+      # second heartbeat run (which could assess a different moment and diverge
+      # from what actually failed); pipefail preserves the non-zero exit the
+      # whole alerting design hangs on.
       - name: Fail if unhealthy
         env:
           EE_ALERT_WEBHOOK: ${{ secrets.EE_ALERT_WEBHOOK }}
-        run: python scripts/heartbeat_check.py
+        run: |
+          set -o pipefail
+          python scripts/heartbeat_check.py 2>&1 | tee /tmp/heartbeat_output.txt
+
+      # ALERT-FATIGUE FIX (2026-08-05 audit). GitHub emails only on the
+      # TRANSITION to failure, so once this hourly job is red it goes silent:
+      # a pipeline that dies Monday morning sends one email and then nothing,
+      # and EE_ALERT_WEBHOOK is optional so there may be no other egress at
+      # all. A single fixed-title issue closes that gap — created on the first
+      # failure, commented (with timestamp + the captured UNHEALTHY summary)
+      # on every subsequent one, reopened if someone closed it while the
+      # pipeline is still failing. The issue thread doubles as the outage
+      # timeline. The webhook step above is unchanged; this is an additional
+      # channel, not a replacement.
+      - name: Create or update the alert issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          TITLE="Heartbeat: trading pipeline unhealthy"
+          {
+            echo "Heartbeat failure at $(date -u +'%Y-%m-%dT%H:%M:%SZ')."
+            echo
+            echo "Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+            echo
+            echo '```'
+            tail -c 4000 /tmp/heartbeat_output.txt 2>/dev/null || echo "(no captured output)"
+            echo '```'
+          } > /tmp/issue_body.md
+          # Exact-title match, not just search relevance: --search alone ranks,
+          # and acting on a fuzzy hit could hijack an unrelated issue.
+          MATCH=$(gh issue list --state all --limit 50 --search "\"$TITLE\" in:title" \
+                    --json number,title,state \
+                    --jq "[.[] | select(.title == \"$TITLE\")][0]")
+          if [ -z "$MATCH" ] || [ "$MATCH" = "null" ]; then
+            gh issue create --title "$TITLE" --body-file /tmp/issue_body.md
+          else
+            NUM=$(echo "$MATCH" | jq -r .number)
+            STATE=$(echo "$MATCH" | jq -r .state)
+            if [ "$STATE" = "CLOSED" ]; then
+              gh issue reopen "$NUM"
+            fi
+            gh issue comment "$NUM" --body-file /tmp/issue_body.md
+          fi

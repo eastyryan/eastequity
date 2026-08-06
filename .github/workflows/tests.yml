@@ -11,7 +11,16 @@ on:
       - "**.py"
       - "requirements.txt"
       - "autonomy_config.json"
-      - ".github/workflows/tests.yml"
+      # ALL workflow YAML, not just this file (2026-08-05 audit). The trading
+      # pipeline IS these workflows — gather, execute, stop-watch, x-post — and
+      # an edit to any of them previously triggered NO check at all: a workflow
+      # push shipped straight into the path that moves (paper) money with zero
+      # gate. Running the suite here doesn't parse the YAML itself, but it does
+      # re-verify every script those workflows invoke (heartbeat_check,
+      # execute_order_intents, stop_watch, the secrets-hygiene pins) against the
+      # same tree the edited workflow will run on — which is the check that was
+      # silently skipped before.
+      - ".github/workflows/**"
   pull_request:
   workflow_dispatch:
 

@@ -73,6 +73,45 @@ python -m tools.universe_scanner --top 10   # test a tool
 scripts/manual_run.sh                       # a real run, marked manual
 ```
 
+## Repo visibility
+
+This repository is **public** (verified `gh repo view` 2026-08-05 — some older
+comments claimed otherwise and have been corrected). What that means in practice:
+
+- **World-readable:** the live paper portfolio (`state/portfolio.json`), queued
+  order intents *before* the executor picks them up (`state/order_intents.json`),
+  the full append-only journal (`journal/`), research bundles (`data/`), and the
+  dashboard's committed data. That is by design — the experiment runs in public
+  and the dashboard is built from this data.
+- **No credentials live in the repo.** Keys stay in local `.env` / GitHub Actions
+  secrets / Vercel env vars, and `tests/test_secrets_hygiene.py` pins this in CI:
+  it fails the suite if a secrets file or value-shaped secret lands in the tree.
+- **Making it private is a product decision, not a hygiene fix** — nothing here
+  is secret, and flipping visibility would need re-checking every unauthenticated
+  read path first: the dashboard's GitHub reads (`dashboard/app/api/live-prices/
+  route.ts` already sends a token so it survives either way, but audit for other
+  raw reads), Vercel's repo access for builds, and the free-tier Actions minutes
+  that public repos get.
+
+## Running the tests
+
+CI runs the suite on **Python 3.11** (`tests.yml`); the local system python is
+3.9, which is why a dedicated venv exists. Run it like this:
+
+```bash
+EE_BROKER=simulation .venv311/bin/python -m pytest tests/ -q
+```
+
+Two things to know before running it:
+
+- **Never run two suites concurrently** (or a suite while a trading run is
+  active): `tests/conftest.py` swaps the LIVE `state/portfolio.json` aside for
+  the duration of the run and restores it afterwards. Two overlapping runs can
+  restore the wrong ledger over the real one.
+- **One known local-only failure:** `test_claude_md_paths_exist` can fail
+  locally against a stale local fixture; it passes in CI, which is the
+  authoritative environment.
+
 ## Safety model
 
 - `autonomy_config.json` — every hard rule lives here; the validator reads it fresh each run

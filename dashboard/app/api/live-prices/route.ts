@@ -3,7 +3,12 @@ import { NextResponse } from "next/server";
 // Near-live quotes for the site. Two layers:
 //   1. state/live_prices.json from the 'live-data' branch (feeders push every
 //      ~5 min during market hours) — symbol list + fallback prices. The repo
-//      is private, so a server-side token does the read; cached 60s.
+//      is PUBLIC (this comment said "private" until the 2026-08-05 audit —
+//      `gh repo view` says otherwise), so the token is not what makes the
+//      read possible; it keeps the read on authenticated API rate limits
+//      (5,000/h vs 60/h per shared egress IP — Vercel functions share IPs,
+//      so the anonymous limit is the one that actually bites) and the code
+//      keeps working unchanged if the repo ever does go private. Cached 60s.
 //   2. When ALPACA_API_KEY/SECRET are set in the Vercel env, those symbols
 //      are re-priced through Alpaca's batched snapshots (IEX real-time), so
 //      the site shows live marks even when both feeders are asleep.

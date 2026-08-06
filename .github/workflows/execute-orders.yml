@@ -40,7 +40,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          # WAS 0 (2026-08-05 audit). The only history consumer here is
+          # scripts/execute_order_intents.py's push retry (`git pull --rebase
+          # origin main`, execute_order_intents.py:234), which needs just the
+          # merge-base across the seconds-to-minutes window between checkout
+          # and push. Peak measured main traffic is 52 commits/day, so 300 is
+          # ~a week of headroom; a full clone paid the whole 210MB pack on the
+          # latency-sensitive path between a committed intent and its fill.
+          fetch-depth: 300
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"

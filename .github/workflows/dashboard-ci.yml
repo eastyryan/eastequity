@@ -1,0 +1,51 @@
+name: Dashboard CI
+
+# The public site had NO check anywhere (2026-08-05 audit): tests.yml filters on
+# "**.py", so a TypeScript edit that broke the build shipped to main unchecked
+# and was first discovered by Vercel failing the deploy — after the push, on the
+# branch the cloud trader also uses. This workflow gives dashboard/ the same
+# push-time gate the Python side already has: typecheck + production build.
+#
+# DELIBERATELY ISOLATED from the trading pipeline: read-only permissions, no
+# main-writer concurrency group (it never pushes, so it must never queue behind
+# — or delay — gather/stop-watch/execute-orders), and a paths filter so data
+# refresh commits don't spin it.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "dashboard/**"
+      - ".github/workflows/dashboard-ci.yml"
+  pull_request:
+    paths:
+      - "dashboard/**"
+      - ".github/workflows/dashboard-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dashboard
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # Next 15 requires Node >=18.18; 22 is the current LTS Vercel also
+          # defaults to, so CI and the deploy build the same way.
+          node-version: 22
+          cache: npm
+          cache-dependency-path: dashboard/package-lock.json
+      - run: npm ci
+      # package.json has no lint/typecheck script — dev/build/start only — so
+      # use the compiler directly. tsc --noEmit catches type errors in files
+      # `next build` might tree-shake away; the build catches everything else
+      # (bad imports, route conflicts, RSC violations).
+      - run: npx tsc --noEmit
+      - run: npm run build

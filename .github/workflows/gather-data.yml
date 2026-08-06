@@ -49,15 +49,19 @@ on:
   # off a gather.
   push:
     branches: [main]
-    # PATHS-IGNORE IS THE ZERO-COST HALF OF THE LOOP GUARD (2026-08-03). The
-    # decide job below already skips bundle-refresh commits by message — but a
-    # skipped job still spins a runner, and on a private repo that bills a full
-    # rounded-up minute to conclude "nothing to do". A trigger-level path filter
-    # is evaluated by GitHub BEFORE any runner exists, so the gather's own bundle
-    # commits (and the cloud routine's, which use the same paths) now cost
-    # nothing at all. Measured 2026-07-27..08-03: 66 push-triggered gather spins
-    # in 7 days, roughly half of them bundle commits — ~30 billed minutes/week
-    # doing nothing.
+    # PATHS-IGNORE IS THE ZERO-COST HALF OF THE LOOP GUARD (2026-08-03; billing
+    # claim corrected 2026-08-05). The decide job below already skips
+    # bundle-refresh commits by message — but a skipped job still spins a
+    # runner to conclude "nothing to do". This repo is PUBLIC (verified via
+    # `gh repo view` 2026-08-05), so Actions minutes are free and the original
+    # "bills a rounded-up minute" reasoning here was wrong — but the filter
+    # still earns its keep: a trigger-level path filter is evaluated by GitHub
+    # BEFORE any runner exists, so bundle commits (the gather's own and the
+    # cloud routine's, which use the same paths) burn no runner-queue capacity
+    # the real trading workflows are waiting on, and don't bury genuine runs
+    # in Actions history. Measured 2026-07-27..08-03: 66 push-triggered gather
+    # spins in 7 days, roughly half of them bundle commits — ~30 runner-minutes
+    # a week doing nothing.
     #
     # The 2026-07-23 backstop scenario is preserved: trade-path pushes
     # (run-marker, lease, journal, dashboard, portfolio) touch none of these
@@ -119,10 +123,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          # Full history so the `git pull --rebase` below can cleanly replay our
-          # data commit on top of trade-path commits (a shallow clone can make
-          # rebase against an advanced remote fail).
-          fetch-depth: 0
+          # WAS fetch-depth: 0 "so the pull --rebase can cleanly replay". That
+          # reasoning was right that SOME history is needed and wrong about how
+          # much: a rebase only needs the merge-base with the advanced remote,
+          # i.e. the commits pushed between this checkout and our push attempt —
+          # a race window of minutes. The only history consumer in this job is
+          # the pull --rebase retry loop in the commit step below; nothing here
+          # reads `git log` beyond -1. Measured 2026-08-05: main peaks at 52
+          # commits/DAY (2026-07-23), so 300 covers ~a week of peak traffic —
+          # thousands of times the race window — while a full clone paid the
+          # entire 210MB pack (~166MB of it dead bundle/chart history) on every
+          # run, forever growing.
+          fetch-depth: 300
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
@@ -245,5 +257,40 @@ jobs:
           for i in 1 2 3; do
             git push origin main && exit 0
             git pull --rebase origin main || exit 1
+          done
+          exit 1
+
+      # WEEKLY ARTIFACT PRUNE (2026-08-05 audit). Run artifacts were committed
+      # forever with no pruning path anywhere: 172 x_draft files and 24 study
+      # artifacts at audit time, each riding along in every checkout. The prune
+      # lives HERE because this is the one scheduled job that already fires on
+      # Sundays (the 03:40 UTC weekly_market gather), already serializes on the
+      # main-writer lock, and already owns the rebase-retry push pattern —
+      # gating on Sunday makes it weekly, out of market hours, in a job whose
+      # failure can never block a trading slot. The script's own safety rules
+      # (never an unposted trade draft; age from filename dates) are documented
+      # and dry-runnable in scripts/prune_artifacts.py.
+      - name: Prune expired run artifacts (Sundays only)
+        run: |
+          if [ "$(date -u +%u)" != "7" ]; then
+            echo "not Sunday — prune runs weekly"; exit 0
+          fi
+          python scripts/prune_artifacts.py --apply
+          # Stage ONLY deletions under state/. This runner dirties tracked
+          # files the trade path owns (portfolio.json is stale here — see the
+          # commit step above), so `git add -A state` could commit a stale
+          # ledger over the authoritative one; `ls-files --deleted` can only
+          # ever stage removals the prune just made.
+          git ls-files --deleted -z -- state | xargs -0 -r git add --
+          git diff --cached --quiet && { echo "nothing pruned"; exit 0; }
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Prune expired run artifacts [vercel skip]"
+          # --autostash: the gather leaves regenerated tracked files dirty when
+          # the step above exited at "no data changes", and a plain rebase
+          # refuses on a dirty tree (same lesson as stop-watch.yml).
+          for i in 1 2 3; do
+            git push origin main && exit 0
+            git pull --rebase --autostash origin main || exit 1
           done
           exit 1

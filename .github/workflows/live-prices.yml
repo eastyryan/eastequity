@@ -39,9 +39,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 6
     steps:
+      # No fetch-depth override (2026-08-05 audit; was 0). This job commits to
+      # an ORPHAN branch — `git checkout --orphan` needs no parent history at
+      # all — and force-pushes, so there is no rebase and no merge-base to
+      # find. The default depth-1 checkout is exactly sufficient, on the one
+      # workflow that used to pay a full 210MB clone up to 7x/day for a
+      # single-file publish.
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
