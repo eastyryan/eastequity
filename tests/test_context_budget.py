@@ -45,6 +45,7 @@ from runlib.context_tiers import (
     MAX_PACK_LINES,
     READ_WINDOW_LINES,
     UNREGISTERED_INLINE_MAX_LINES,
+    _PORTFOLIO_HISTORY_KEEP,
     key_start_lines,
     pack_line_count,
     slim_context_for_brain,
@@ -91,7 +92,23 @@ def _synthetic_bundle() -> dict:
         "reasoning_process": {"process_checklist": [{"id": f"s{i}"} for i in range(8)],
                               "price_freshness": {"prices_meta_sample": {
                                   t: {"price_as_of": "2026-07-18"} for t in tickers}}},
-        "portfolio": {"positions": [{"ticker": t, "mv": 100} for t in tickers[:5]]},
+        "portfolio": {
+            "positions": [{"ticker": t, "mv": 100} for t in tickers[:5]],
+            # A lifetime order log: ~30 lines per fill in production, growing
+            # forever. Bulky here so the ordering tests exercise the cap.
+            "history": [
+                {"ticker": tickers[i % 5], "action": "BUY", "status": "filled",
+                 "position_size_usd": 100.0, "fill_price": 10.0 + i,
+                 "quantity": 1.0, "proposal_id": f"prop-{i:03d}",
+                 "filled_at": f"2026-07-{(i % 28) + 1:02d}T15:00:00+00:00",
+                 "plan": {"stop_loss": 9.0, "target_price": 14.0,
+                          "holding_horizon_days": 30,
+                          "thesis_invalidators": {"invalidating_print": "x" * 60,
+                                                  "invalidating_structure": "y" * 60,
+                                                  "time_box": "z" * 60}}}
+                for i in range(30)
+            ],
+        },
         "stop_engineering": {"floors": {t: {"min_stop_distance_pct": 0.05}
                                         for t in tickers}},
         "position_stop_cushion": {"by_ticker": {}},
@@ -178,6 +195,36 @@ def test_learning_pack_is_readable(packs):
             f"every learning loop feeds it, and past the window they are all dead text.")
         lp = pack["reasoning_process"]["learning_pack"]
         assert isinstance(lp, dict) and lp, "learning_pack must survive slimming"
+
+
+def test_gate_flags_precede_the_growing_blocks(packs):
+    """The margin IS the order (2026-08-06 incident).
+
+    The cheap hard-gate flags used to be emitted LAST in the blocking set,
+    behind the learning pack, the book and the order log — blocks that grow a
+    little every week. The margin eroded from ~850 lines on 07-17 to 21 lines
+    on 07-31, and the 08-06 14:00 bundle crossed the window, tripping the
+    tests_red gate and blocking every BUY on a supportive day. Nothing was
+    misordered per the old contract; linear growth simply spent an unmeasured
+    margin. Pinning flags-before-growth means a revert fails HERE, on every
+    run of the suite, not on whichever future production bundle happens to be
+    fat enough.
+    """
+    growing = ("factor_map", "portfolio_competition", "portfolio",
+               "stop_engineering", "position_stop_cushion", "reasoning_process")
+    flags = ("data_quality", "stale_data_notice", "price_freshness_live",
+             "fundamentals_freshness", "risk_halts", "forced_exits",
+             "corporate_actions", "engagement", "earnings_lanes")
+    for label, pack in packs:
+        starts = key_start_lines(pack)
+        first_growing = min(starts[k] for k in growing if k in pack)
+        for f in flags:
+            if f in pack:
+                assert starts[f] < first_growing, (
+                    f"[{label}] gate flag {f} (line {starts[f]}) is emitted after "
+                    f"a growing block (first at line {first_growing}). Growth in "
+                    f"the learning pack or the book would push this flag toward "
+                    f"the window edge again — the 2026-08-06 failure shape.")
 
 
 def test_decision_critical_keys_precede_research(packs):
@@ -332,6 +379,28 @@ def test_fundamentals_freshness_never_drops_a_stale_name():
     assert "UNKNOWN" in kept, "unknown staleness must fail safe and be kept"
     assert "WARNED" in kept, "row carrying a stale-fundamentals warning was dropped"
     assert "FRESH" not in kept, "provably fresh row should have been trimmed"
+
+
+def test_portfolio_history_keeps_the_newest_fills_and_discloses():
+    """The order log grows forever inside a BLOCKING key, so it is capped —
+    but the NEWEST records are the only ones with same-day relevance (the
+    daily-buy-cap counts today's fills), so the cap must keep the tail, strip
+    the nested plans, and say so both in place and in the trim log. The
+    validator's own count reads the FULL bundle, never this pack; this pins
+    the pack-side behavior anyway so the two can never silently diverge."""
+    bundle = _synthetic_bundle()
+    total = len(bundle["portfolio"]["history"])
+    pack = slim_context_for_brain(bundle)
+    hist = pack["portfolio"]["history"]
+    assert len(hist) == _PORTFOLIO_HISTORY_KEEP < total
+    assert hist[-1]["proposal_id"] == f"prop-{total - 1:03d}", (
+        "the newest fill was dropped — the cap must keep the TAIL of the log")
+    assert all("plan" not in r for r in hist), "nested plans must not ride along"
+    assert "_trimmed" in pack["portfolio"]
+    assert "history" in json.dumps(pack["portfolio"]["_trimmed"])
+    assert any("portfolio.history" in t for t in pack["_pack_budget"]["trimmed"])
+    assert len(bundle["portfolio"]["history"]) == total, (
+        "the cap mutated the full bundle's order log")
 
 
 def test_sec_filings_keeps_freshness_fields():

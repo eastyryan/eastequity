@@ -86,18 +86,37 @@ MAX_PACK_LINES = 48000
 # becomes unanswerable by construction, which is precisely the bug measured on
 # 2026-07-19. tests/test_context_budget.py pins every one of them under
 # READ_WINDOW_LINES; that assertion is the whole point of this module.
+#
+# ORDER IS THE SAFETY MARGIN (reordered 2026-08-06). The invariant is that
+# every key here STARTS before READ_WINDOW_LINES, and the start of key N is the
+# summed size of keys 1..N-1 — so the cheap-but-hard gate flags go first and the
+# bulky narrative blocks go last. The prior order interleaved them, and the
+# margin eroded ~50 lines/week as the learning pack, book and engagement blocks
+# grew (fundamentals_freshness@1149 on 07-17, @1979 on 07-31) until the
+# 2026-08-06 14:00 bundle crossed the window and the tests_red gate blocked
+# every BUY. Nothing in that failure was a misordered tier — it was linear
+# growth spending a margin nobody was measuring. Emitting reasoning_process
+# (the fattest block here) last means growth in ANY of these blocks now eats
+# the ~800-line slack ABOVE the last start instead of pushing a 13-line
+# freshness flag out of the window.
 BLOCKING_KEYS = (
     "_context_tier", "_tier_note", "_pack_budget",
     "run_date", "as_of_et", "trading_mode", "run_depth", "run_depth_note",
     "allows_new_buys", "full_context_path",
     "hard_limits",              # live validator floors
     "digest",                   # "READ FIRST" per its own note
-    "factor_map",               # BLOCKING: requires_factor_response
-    "portfolio_competition",    # BLOCKING: drives seat_reviews
-    "reasoning_process",        # process_checklist + the whole learning_pack
-    "portfolio",
-    "stop_engineering",         # min stop distance — rejects stop_inside_noise_band
-    "position_stop_cushion",
+    # Small hard-gate flags: single-digit-to-~50-line blocks whose absence
+    # rejects BUYs outright (data_quality_stale / fundamentals_stale:<TICKER>)
+    # or forcibly closes positions. Emitted before any block that grows.
+    "data_quality", "stale_data_notice", "price_freshness_live",
+    "fundamentals_freshness",   # HARD RULE; drives fundamentals_stale:<TICKER>
+    "risk_halts", "forced_exits", "corporate_actions",
+    # BLOCKING-adjacent: the obligations a run incurs by NOT acting — outstanding
+    # trigger resolutions, watchlist decay, and the dated commitment owed once the
+    # book has been flat. Pinned because an obligation the brain cannot see is one
+    # it will not discharge, which is exactly how a fired trigger came to cost
+    # nothing across four consecutive runs.
+    "engagement",
     # BLOCKING: drives earnings_blackout, and — the part that actually needed
     # saying — names every reporter OUTSIDE the 3-day window that is therefore
     # tradeable, plus the post-print drift lane. Pinned rather than left to
@@ -105,15 +124,14 @@ BLOCKING_KEYS = (
     # over-apply from memory, which is precisely how "avoid the binary" grew into
     # a blanket earnings-season stand-down.
     "earnings_lanes",
-    # BLOCKING-adjacent: the obligations a run incurs by NOT acting — outstanding
-    # trigger resolutions, watchlist decay, and the dated commitment owed once the
-    # book has been flat. Pinned because an obligation the brain cannot see is one
-    # it will not discharge, which is exactly how a fired trigger came to cost
-    # nothing across four consecutive runs.
-    "engagement",
-    "risk_halts", "forced_exits", "corporate_actions",
-    "data_quality", "stale_data_notice", "price_freshness_live",
-    "fundamentals_freshness",   # HARD RULE; drives fundamentals_stale:<TICKER>
+    "factor_map",               # BLOCKING: requires_factor_response
+    "portfolio_competition",    # BLOCKING: drives seat_reviews
+    "portfolio",                # history capped in the pack — see _cap_portfolio_history
+    "stop_engineering",         # min stop distance — rejects stop_inside_noise_band
+    "position_stop_cushion",
+    "reasoning_process",        # process_checklist + the whole learning_pack;
+                                # the fattest blocking block, so it goes LAST —
+                                # its start line is the binding constraint
 )
 
 # TIER 2 — the regime read and book context. Step 1 of the Required Process
@@ -763,6 +781,57 @@ def _cap_price_freshness(block: Any, log: list, *, keep: int = 5) -> Any:
     return block
 
 
+_PORTFOLIO_HISTORY_KEEP = 5
+_PORTFOLIO_HISTORY_FIELDS = (
+    "ticker", "action", "status", "position_size_usd", "fill_price",
+    "quantity", "sell_fraction", "filled_at", "submitted_at", "proposal_id",
+)
+
+
+def _cap_portfolio_history(block: dict, log: list) -> dict:
+    """Compact the broker order log inside the portfolio block.
+
+    `portfolio.history` is every order ever submitted, each carrying its full
+    nested plan — ~30 lines per fill, growing with every trade for the life of
+    the book, inside a BLOCKING key. The brain does not decide from it: open
+    positions carry their plan on portfolio.positions[].original_plan, and
+    closed-trade study lives in track_record.closed_trades. The validator's
+    daily-buy-cap count reads the FULL bundle the orchestrator holds in memory,
+    never this pack, so nothing coded can miss a same-day fill because of this
+    cap. Keep the newest rows (the only ones with any same-day relevance),
+    flattened to the fields that identify the order.
+    """
+    if not isinstance(block, dict):
+        return block
+    hist = block.get("history")
+    if not isinstance(hist, list) or not hist:
+        return block
+    total = len(hist)
+    block = dict(block)
+    compact = []
+    for rec in hist[-_PORTFOLIO_HISTORY_KEEP:]:
+        if not isinstance(rec, dict):
+            compact.append(rec)
+            continue
+        row = {k: rec[k] for k in _PORTFOLIO_HISTORY_FIELDS
+               if rec.get(k) is not None}
+        if "plan" in rec:
+            row["plan_omitted"] = "full order record in the archive"
+        compact.append(row)
+    block["history"] = compact
+    block["_trimmed"] = {
+        "history": (
+            f"order log compacted to the newest {len(compact)} of {total} "
+            f"records, nested plans omitted. Open positions carry their plan on "
+            f"positions[].original_plan; closed-trade history is "
+            f"track_record.closed_trades; the full log is in the archive at "
+            f"full_context_path.")
+    }
+    log.append(f"portfolio.history: kept newest {len(compact)} of {total} order "
+               f"records as flat rows (plans omitted)")
+    return block
+
+
 def pack_line_count(pack: dict) -> int:
     """Lines the brain's Read tool will see. The budget unit for this module."""
     return len(json.dumps(pack, indent=2, default=str).split("\n"))
@@ -802,6 +871,9 @@ def slim_context_for_brain(full: dict, *, learning_n: int = 5) -> dict:
     for k in ALWAYS_KEYS:
         if k in full:
             built[k] = full[k]
+    # Portfolio rides in ALWAYS_KEYS verbatim except its ever-growing order log.
+    if isinstance(built.get("portfolio"), dict):
+        built["portfolio"] = _cap_portfolio_history(built["portfolio"], trim_log)
     # Reasoning process: replace bulk with learning pack + essentials.
     #
     # compact_learning_pack() re-emits several keys the parent already carries
@@ -918,10 +990,13 @@ def slim_context_for_brain(full: dict, *, learning_n: int = 5) -> dict:
         "_tier_note": (
             "SLIM brain pack, ordered so everything BINDING is inside the first "
             f"~{READ_WINDOW_LINES} lines — the default Read window. Keys appear in "
-            "decision order: limits, digest, factor_map, portfolio_competition, "
-            "reasoning_process (learning_pack), book, then research detail. "
-            "Research maps below are structurally capped; every cap stamps a "
-            "`_trimmed` note naming what it dropped. Full archive: full_context_path."
+            "decision order: limits, digest, then the hard gate flags (data "
+            "quality, freshness, halts, engagement, earnings lanes), factor_map, "
+            "portfolio_competition, the book (portfolio, stop_engineering, "
+            "cushion), then reasoning_process (learning_pack), then research "
+            "detail. Research maps below are structurally capped; every cap "
+            "stamps a `_trimmed` note naming what it dropped. Full archive: "
+            "full_context_path."
         ),
         "_pack_budget": {},  # placeholder, filled once the pack is measurable
     }

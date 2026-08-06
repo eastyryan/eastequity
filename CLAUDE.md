@@ -1138,9 +1138,10 @@ good skips, exit lessons, left-on-table with WHY, adopted lessons, calibration p
 Prefer the pack over fishing for raw dumps.
 
 **Your Read tool returns ~2,000 lines.** The pack is deliberately ordered so that
-everything that can BLOCK a proposal is inside that window — limits, digest,
-`factor_map`, `portfolio_competition`, `reasoning_process`, the book,
-`stop_engineering`, freshness — followed by the regime read. A single default Read
+everything that can BLOCK a proposal is inside that window — limits, digest, the
+hard gate flags (data quality, freshness, halts, engagement, earnings lanes),
+`factor_map`, `portfolio_competition`, the book, `stop_engineering`, then
+`reasoning_process` — followed by the regime read. A single default Read
 is enough to answer every gate. Per-ticker research detail sits *below* the window
 on purpose; page to it with `Read(offset=N)` when you are drilling into a name.
 
