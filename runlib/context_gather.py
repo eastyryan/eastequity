@@ -1,4 +1,19 @@
-"""Context gathering for East Equity runs."""
+"""Context gathering for East Equity runs.
+
+Shape (2026-08-05 decomposition — behavior-preserving): gather_context() is a
+thin sequencer + assembler. Per-depth research is dispatched to one of three
+research functions with a shared signature and return contract
+(_gather_light_research / _gather_holdings_watchlist_research /
+_gather_full_research, the last covering full | weekly_market |
+evening_review); every other bundle block lives in a module-level
+_gather_<block>() / _build_<block>() helper with explicit inputs and outputs.
+Pure transforms that only shape already-fetched data (_build_digest,
+_fundamentals_freshness, _market_checkin_payload, _company_names_from_filings,
+_held_and_watch, _reporters_in_universe) are exercised with dict fixtures by
+tests/test_context_gather_shape.py. The emitted bundle's keys, values and
+ordering, the printed progress lines, and the network-call sequence are
+unchanged from the pre-decomposition monolith.
+"""
 from __future__ import annotations
 
 import json
@@ -516,288 +531,374 @@ def _market_breadth_block(scan: dict, discovery: dict | None) -> dict:
     return out
 
 
-def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
-                   earnings_trigger: dict | None = None) -> dict:
-    """Build the brain's context bundle.
+# ---------------------------------------------------------------------------
+# gather_context decomposition (2026-08-05).
+#
+# WHY: gather_context had grown into a 777-line depth-switch monolith — three
+# interleaved research branches plus ~15 post-branch blocks plus a 230-line
+# assembly, and every change risked the whole gather. The blocks below are
+# VERBATIM moves of that code into named functions with explicit inputs and
+# outputs; no fetch was added, removed, or reordered, and every fail-soft
+# try/except envelope kept its exact scope (the audit flagged those as
+# deliberate). gather_context itself is now sequencing + the bundle assembly.
+# ---------------------------------------------------------------------------
 
-    depth (preferred) selects how much work to do:
-      light | holdings_watchlist | full | weekly_market | evening_review
-    `light=True` is kept for backward compatibility (== depth light).
 
-    earnings_trigger (optional): when a universe name reported earnings this
-    slot, the orchestrator escalates depth to full and passes the trigger here;
-    its reporters are force-promoted into deep-research focus and surfaced in the
-    bundle so the brain prioritizes them.
+def _reporters_in_universe(earnings_trigger: dict | None, universe_set) -> list[str]:
+    """Reporters that forced this deep dive, filtered to the universe.
+
+    Pure transform (2026-08-05, extracted from gather_context's preamble):
+    upper-cases, de-dupes preserving order, and keeps only universe members.
     """
-    if depth is None:
-        depth = "light" if light else "full"
-    budget = focus_ticker_budget(depth)
-    print(f"  • run depth: {depth} — {depth_description(depth)}")
-
-    # Reporters that forced this deep dive (filtered to the universe).
-    universe_set = validator.load_universe()
-    earnings_reporters = [
+    return [
         t for t in
         dict.fromkeys(str(x).upper() for x in ((earnings_trigger or {}).get("reporters") or []) if x)
         if t in universe_set
     ]
-    if earnings_reporters:
-        print(f"  • earnings deep-dive reporters forced into focus: {earnings_reporters}")
 
-    print("  • macro regime...")
-    macro = get_macro_snapshot()
-    print("  • portfolio state...")
-    portfolio = get_portfolio_state()
 
+def _held_and_watch(portfolio: dict, prior_watchlist: list) -> tuple[list, list]:
+    """Held tickers + previous watchlist tickers. Pure (2026-08-05 extraction)."""
     held = [p["ticker"] for p in portfolio.get("positions", [])]
-    prior_watchlist = prev_watchlist()
     watch = [w.get("ticker") for w in prior_watchlist if w.get("ticker")]
     watch = [t for t in watch if t]
+    return held, watch
 
-    # Market-wide events (oil/VIX + geopolitical headline flags) — cheap, every depth.
+
+def _gather_market_events() -> dict:
+    """Market-wide events (oil/VIX + geopolitical headline flags) — cheap, every depth."""
     print("  • market events (commodities + geo flags)...")
     try:
         from tools.market_events import get_market_events
-        market_events = get_market_events()
+        return get_market_events()
     except Exception as e:
-        market_events = {"status": "error", "reason": str(e)[:150],
-                         "note": "market_events module unavailable"}
+        return {"status": "error", "reason": str(e)[:150],
+                "note": "market_events module unavailable"}
 
-    discovery_block: dict = {"status": "skipped", "note": f"not run at depth={depth}"}
-    market_radar_block: dict = {"status": "skipped", "note": f"not run at depth={depth}"}
-    # Fetched early on trading depths so tape/8-K names can join the deep set
-    # before expensive research. Reused later when building the context bundle.
+
+def _skipped_block(depth: str) -> dict:
+    """Placeholder for a per-depth block (discovery / market radar) that did not run."""
+    return {"status": "skipped", "note": f"not run at depth={depth}"}
+
+
+# Per-depth research functions. All three share one keyword-only signature (so
+# gather_context can dispatch on depth) and return the same contract — a dict
+# with exactly these keys:
+#   scan, focus, filings, deep_fundamentals, filing_texts, smart_money,
+#   insiders, partnerships, news, guidance, options_signals,
+#   fundamental_screen, market_news, todays_8ks, tape_promotions,
+#   discovery_block, market_radar_block
+# market_news/todays_8ks stay None when a depth did not fetch them early;
+# _gather_late_tape fills them afterwards exactly as the monolith did.
+
+
+def _gather_light_research(*, held: list, watch: list, prior_watchlist: list,
+                           budget: dict, market_events: dict,
+                           earnings_reporters: list, depth: str) -> dict:
+    """Depth `light`: holdings prices + holdings news only; everything else stubbed.
+
+    prior_watchlist / budget / market_events / earnings_reporters are unused at
+    this depth; they are accepted so the three research functions share one
+    dispatchable signature (2026-08-05 decomposition).
+    """
+    tickers = list(dict.fromkeys(held + watch))
+    print(f"  • light price check on {tickers}...")
+    scan = {"status": "light", "note": "light run - no universe scan this cycle",
+            "top_setups": [], "prices": light_prices(tickers),
+            "atr_by_ticker": {}}
+    focus = list(dict.fromkeys(held))
+    print(f"  • news for holdings {focus}...")
+    filings = {t: {"status": "skipped_light_run"} for t in focus}
+    smart_money = {"status": "skipped_light_run"}
+    insiders = {"status": "skipped_light_run"}
+    partnerships = {"status": "skipped_light_run"}
+    news = (get_news_and_catalysts(
+        focus, company_names=_company_names_from_filings(filings))
+        if focus else {"status": "skipped"})
+    deep_fundamentals = {t: {"status": "skipped_light_run"} for t in focus}
+    filing_texts = {}
+    guidance = get_ledger_summary(held)
+    options_signals = get_options_signals(held) if held else {"status": "skipped"}
+    from tools.fundamental_screen import get_screen
+    fundamental_screen = get_screen(None)
+    return {
+        "scan": scan, "focus": focus, "filings": filings,
+        "deep_fundamentals": deep_fundamentals, "filing_texts": filing_texts,
+        "smart_money": smart_money, "insiders": insiders,
+        "partnerships": partnerships, "news": news, "guidance": guidance,
+        "options_signals": options_signals,
+        "fundamental_screen": fundamental_screen,
+        "market_news": None, "todays_8ks": None, "tape_promotions": [],
+        "discovery_block": _skipped_block(depth),
+        "market_radar_block": _skipped_block(depth),
+    }
+
+
+def _gather_holdings_watchlist_research(*, held: list, watch: list,
+                                        prior_watchlist: list, budget: dict,
+                                        market_events: dict,
+                                        earnings_reporters: list,
+                                        depth: str) -> dict:
+    """Depth `holdings_watchlist`: mini-scan + deep research on held/watch/alerts.
+
+    earnings_reporters is unused at this depth (the orchestrator escalates
+    earnings slots to full); accepted for the shared dispatch signature
+    (2026-08-05 decomposition).
+    """
     market_news: dict | None = None
     todays_8ks: dict | None = None
-    tape_promotions: list[dict] = []
+    # Fast path: mini-scan holdings + watchlist only (no 180-name download).
+    focus_seed = list(dict.fromkeys(held + watch))
+    print(f"  • mini-scan holdings+watchlist ({len(focus_seed)} names)...")
+    try:
+        # Always pass an explicit list (even empty) so we never fall through
+        # to a full-universe download on a focused depth.
+        scan = scan_universe(top_n=max(len(focus_seed), 5),
+                             tickers=list(focus_seed),
+                             enrich=False)
+        scan["status"] = scan.get("status") or "ok"
+        scan["note"] = (
+            "holdings_watchlist depth: scanned only held + watchlist names "
+            "(not the full universe). New BUYs must still be in data/universe.json."
+        )
+    except TypeError:
+        # Older scanner without tickers=/enrich= — fall back to light prices.
+        scan = {"status": "holdings_watchlist", "top_setups": [],
+                "prices": light_prices(focus_seed), "atr_by_ticker": {},
+                "note": "scanner lacks mini-scan API; used last closes only"}
+    except Exception as e:
+        scan = {"status": "error", "top_setups": [],
+                "prices": light_prices(focus_seed), "atr_by_ticker": {},
+                "note": f"mini-scan failed ({e}); used last closes only"}
 
-    if depth == "light":
-        tickers = list(dict.fromkeys(held + watch))
-        print(f"  • light price check on {tickers}...")
-        scan = {"status": "light", "note": "light run - no universe scan this cycle",
-                "top_setups": [], "prices": light_prices(tickers),
-                "atr_by_ticker": {}}
-        focus = list(dict.fromkeys(held))
-        print(f"  • news for holdings {focus}...")
-        filings = {t: {"status": "skipped_light_run"} for t in focus}
-        smart_money = {"status": "skipped_light_run"}
-        insiders = {"status": "skipped_light_run"}
-        partnerships = {"status": "skipped_light_run"}
-        news = (get_news_and_catalysts(
-            focus, company_names=_company_names_from_filings(filings))
-            if focus else {"status": "skipped"})
-        deep_fundamentals = {t: {"status": "skipped_light_run"} for t in focus}
-        filing_texts = {}
-        guidance = get_ledger_summary(held)
-        options_signals = get_options_signals(held) if held else {"status": "skipped"}
+    # Prioritize watchlist trigger alerts into deep research.
+    early_prices = scan.get("prices") or {}
+    alerts, _held_early = filter_trigger_alerts(
+        check_watchlist_triggers(prior_watchlist, early_prices),
+        prior_watchlist, as_of=et_date())
+    alert_tickers = [a["ticker"] for a in alerts if a.get("ticker")]
+    focus = list(dict.fromkeys(held + watch + alert_tickers))
+
+    # Balance: cheap universe radar (tape headlines + 8-K index) BEFORE deep
+    # research so a mid-day catalyst on a non-watch name can still be underwritten.
+    print("  • market-wide news (early, for tape promote)...")
+    market_news = fetch_market_news()
+    if budget.get("filings_sweep"):
+        print("  • universe 8-K sweep (early, for promote)...")
+        todays_8ks = fetch_universe_8ks()
+    add, tape_promotions = tape_and_8k_promotions(
+        focus, market_news, todays_8ks,
+        int(budget.get("tape_promote_max") or 5),
+        market_events=market_events)
+    if add:
+        print(f"  • tape/8-K promoted into deep focus: {add}")
+        focus = list(dict.fromkeys(focus + add))
+        # Price promoted names so marks/triggers/validator have a reference.
+        for t, px in light_prices(add).items():
+            scan.setdefault("prices", {})[t] = px
+
+    print(f"  • deep research on holdings+watchlist+tape {focus}...")
+    try:
+        from tools.price_chart import render_charts
+        render_charts(focus)
+    except Exception as e:
+        print(f"    (chart rendering failed: {e})")
+    filings, deep_fundamentals, filing_texts = deep_research_bundle(focus)
+    try:
         from tools.fundamental_screen import get_screen
         fundamental_screen = get_screen(None)
-    elif depth == "holdings_watchlist":
-        # Fast path: mini-scan holdings + watchlist only (no 180-name download).
-        focus_seed = list(dict.fromkeys(held + watch))
-        print(f"  • mini-scan holdings+watchlist ({len(focus_seed)} names)...")
+    except Exception as e:
+        fundamental_screen = {"status": "error", "reason": str(e)[:200]}
+    options_signals = get_options_signals(focus) if focus else {"status": "skipped"}
+    for t in focus:
         try:
-            # Always pass an explicit list (even empty) so we never fall through
-            # to a full-universe download on a focused depth.
-            scan = scan_universe(top_n=max(len(focus_seed), 5),
-                                 tickers=list(focus_seed),
-                                 enrich=False)
-            scan["status"] = scan.get("status") or "ok"
-            scan["note"] = (
-                "holdings_watchlist depth: scanned only held + watchlist names "
-                "(not the full universe). New BUYs must still be in data/universe.json."
-            )
-        except TypeError:
-            # Older scanner without tickers=/enrich= — fall back to light prices.
-            scan = {"status": "holdings_watchlist", "top_setups": [],
-                    "prices": light_prices(focus_seed), "atr_by_ticker": {},
-                    "note": "scanner lacks mini-scan API; used last closes only"}
+            auto_grade(t)
         except Exception as e:
-            scan = {"status": "error", "top_setups": [],
-                    "prices": light_prices(focus_seed), "atr_by_ticker": {},
-                    "note": f"mini-scan failed ({e}); used last closes only"}
+            print(f"    (auto_grade {t} failed: {e})")
+    guidance = get_ledger_summary(focus)
+    smart_money = get_smart_money(focus) if focus else {"status": "skipped"}
+    news = (get_news_and_catalysts(
+        focus, company_names=_company_names_from_filings(filings))
+        if focus else {"status": "skipped"})
+    insiders = get_insider_activity(focus) if focus else {"status": "skipped"}
+    try:
+        from tools.partnerships import get_partnerships
+        partnerships = get_partnerships(focus) if focus else {"status": "skipped"}
+    except Exception as e:
+        partnerships = {"status": "error", "reason": str(e)[:150]}
+    return {
+        "scan": scan, "focus": focus, "filings": filings,
+        "deep_fundamentals": deep_fundamentals, "filing_texts": filing_texts,
+        "smart_money": smart_money, "insiders": insiders,
+        "partnerships": partnerships, "news": news, "guidance": guidance,
+        "options_signals": options_signals,
+        "fundamental_screen": fundamental_screen,
+        "market_news": market_news, "todays_8ks": todays_8ks,
+        "tape_promotions": tape_promotions,
+        "discovery_block": _skipped_block(depth),
+        "market_radar_block": _skipped_block(depth),
+    }
 
-        # Prioritize watchlist trigger alerts into deep research.
-        early_prices = scan.get("prices") or {}
-        alerts, _held_early = filter_trigger_alerts(
-            check_watchlist_triggers(prior_watchlist, early_prices),
-            prior_watchlist, as_of=et_date())
-        alert_tickers = [a["ticker"] for a in alerts if a.get("ticker")]
-        focus = list(dict.fromkeys(held + watch + alert_tickers))
 
-        # Balance: cheap universe radar (tape headlines + 8-K index) BEFORE deep
-        # research so a mid-day catalyst on a non-watch name can still be underwritten.
-        print("  • market-wide news (early, for tape promote)...")
-        market_news = fetch_market_news()
-        if budget.get("filings_sweep"):
-            print("  • universe 8-K sweep (early, for promote)...")
-            todays_8ks = fetch_universe_8ks()
-        add, tape_promotions = tape_and_8k_promotions(
-            focus, market_news, todays_8ks,
-            int(budget.get("tape_promote_max") or 5),
-            market_events=market_events)
-        if add:
-            print(f"  • tape/8-K promoted into deep focus: {add}")
-            focus = list(dict.fromkeys(focus + add))
-            # Price promoted names so marks/triggers/validator have a reference.
-            for t, px in light_prices(add).items():
-                scan.setdefault("prices", {})[t] = px
+def _gather_full_research(*, held: list, watch: list, prior_watchlist: list,
+                          budget: dict, market_events: dict,
+                          earnings_reporters: list, depth: str) -> dict:
+    """Depths full | weekly_market | evening_review (evening still gets full context).
 
-        print(f"  • deep research on holdings+watchlist+tape {focus}...")
+    Full multi-lane scan, promotions (fat-pitch / tape / 8-K / earnings
+    reporters), weekly discovery sweep, and the deep-research pipeline.
+    prior_watchlist is unused here (trigger alerts are computed post-branch for
+    every depth); accepted for the shared dispatch signature (2026-08-05
+    decomposition, code moved verbatim from the monolith's else-branch).
+    """
+    discovery_block: dict = _skipped_block(depth)
+    market_radar_block: dict = _skipped_block(depth)
+    market_news: dict | None = None
+    todays_8ks: dict | None = None
+
+    weekly = bool(budget.get("weekly"))
+    print("  • universe scan" + (" (weekly breadth)..." if weekly else "..."))
+    try:
+        scan = scan_universe(
+            top_n=15 if not weekly else 20,
+            enrich=bool(budget.get("enrich_scan", True)),
+            weekly=weekly,
+        )
+    except TypeError:
+        scan = scan_universe(top_n=15 if not weekly else 20)
+
+    candidates = [r["ticker"] for r in scan.get("top_setups", [])[: budget["top_setups"]]]
+    focus = list(dict.fromkeys(held + candidates))
+
+    contrarian_picks = [r["ticker"] for r in scan.get("contrarian_setups", [])[: budget["contrarian"]]]
+    focus = list(dict.fromkeys(focus + contrarian_picks))
+    deep_value_picks = [r["ticker"] for r in scan.get("deep_value_200w", [])[: budget["deep_value"]]]
+    focus = list(dict.fromkeys(focus + deep_value_picks))
+    if budget.get("supplier_pullbacks"):
+        sp = [r["ticker"] for r in scan.get("supplier_pullbacks", [])[: budget["supplier_pullbacks"]]]
+        focus = list(dict.fromkeys(focus + sp))
+
+    # Promote non-focus fat pitches (post-earnings drift, strong revisions, etc.).
+    promote_n = int(budget.get("promote_extra") or 0)
+    if promote_n > 0:
         try:
-            from tools.price_chart import render_charts
-            render_charts(focus)
+            from tools.universe_scanner import promote_focus_candidates
+            extra = promote_focus_candidates(scan, focus, max_extra=promote_n)
+        except Exception:
+            extra = []
+        if extra:
+            print(f"  • promoted fat-pitch names into deep bundle: {extra}")
+            focus = list(dict.fromkeys(focus + extra))
+
+    # Weekly: discovery sweep + a few standout names outside the book.
+    if weekly:
+        print("  • discovery sweep (broad market)...")
+        try:
+            from tools.discovery_screen import run_discovery
+            discovery_block = run_discovery()
         except Exception as e:
-            print(f"    (chart rendering failed: {e})")
-        filings, deep_fundamentals, filing_texts = deep_research_bundle(focus)
+            discovery_block = {"status": "error", "reason": str(e)[:150]}
+        tops = []
+        for row in (discovery_block.get("top_candidates") or [])[: budget.get("discovery_deep", 5)]:
+            t = row.get("ticker")
+            if t and t not in focus:
+                tops.append(t)
+        if tops:
+            print(f"  • weekly standouts for deep research: {tops}")
+            focus = list(dict.fromkeys(focus + tops))
+        # Always include watchlist on weekly so triggers get underwritten.
+        focus = list(dict.fromkeys(focus + watch))
+
+    # Balance: tape + 8-K promotions join the deep set on full/weekly too
+    # (cheap radar → expensive underwrite only for hits).
+    print("  • market-wide news (early, for tape promote)...")
+    market_news = fetch_market_news()
+    print("  • market radar (Alpaca movers/actives/news, market-wide)...")
+    try:
+        from tools.market_radar import get_market_radar
+        market_radar_block = get_market_radar()
+    except Exception as e:
+        market_radar_block = {"status": "error", "reason": str(e)[:150]}
+    if budget.get("filings_sweep"):
+        print("  • universe 8-K sweep (early, for promote)...")
+        todays_8ks = fetch_universe_8ks()
+    add, tape_promotions = tape_and_8k_promotions(
+        focus, market_news, todays_8ks,
+        int(budget.get("tape_promote_max") or 5),
+        market_events=market_events)
+    if add:
+        print(f"  • tape/8-K promoted into deep focus: {add}")
+        focus = list(dict.fromkeys(focus + add))
+        for t, px in light_prices(add).items():
+            scan.setdefault("prices", {})[t] = px
+
+    # Earnings reporters that forced this full run always get deep research,
+    # even if they did not rank into the scan's top setups (foreign filers /
+    # off-momentum names would otherwise be scanned but not underwritten).
+    earn_new = [t for t in earnings_reporters if t not in focus]
+    if earn_new:
+        print(f"  • earnings reporters promoted into deep focus: {earn_new}")
+        focus = list(dict.fromkeys(focus + earn_new))
+        for t, px in light_prices(earn_new).items():
+            scan.setdefault("prices", {})[t] = px
+
+    print("  • rendering candlestick charts...")
+    try:
+        from tools.price_chart import render_charts
+        render_charts(focus)
+    except Exception as e:
+        print(f"    (chart rendering failed: {e})")
+
+    print(f"  • deep research on {focus}...")
+    filings, deep_fundamentals, filing_texts = deep_research_bundle(focus)
+
+    print("  • fundamental screen (full universe, cached)...")
+    try:
+        from tools.fundamental_screen import get_screen
+        all_universe = sorted(validator.load_universe())
+        fundamental_screen = get_screen(all_universe)
+    except Exception as e:
+        fundamental_screen = {"status": "error", "reason": str(e)[:200]}
+    print("  • options-derived signals...")
+    options_signals = get_options_signals(focus)
+    print("  • guidance ledger...")
+    for t in focus:
         try:
-            from tools.fundamental_screen import get_screen
-            fundamental_screen = get_screen(None)
+            auto_grade(t)
         except Exception as e:
-            fundamental_screen = {"status": "error", "reason": str(e)[:200]}
-        options_signals = get_options_signals(focus) if focus else {"status": "skipped"}
-        for t in focus:
-            try:
-                auto_grade(t)
-            except Exception as e:
-                print(f"    (auto_grade {t} failed: {e})")
-        guidance = get_ledger_summary(focus)
-        smart_money = get_smart_money(focus) if focus else {"status": "skipped"}
-        news = (get_news_and_catalysts(
-            focus, company_names=_company_names_from_filings(filings))
-            if focus else {"status": "skipped"})
-        insiders = get_insider_activity(focus) if focus else {"status": "skipped"}
-        try:
-            from tools.partnerships import get_partnerships
-            partnerships = get_partnerships(focus) if focus else {"status": "skipped"}
-        except Exception as e:
-            partnerships = {"status": "error", "reason": str(e)[:150]}
-    else:
-        # full | weekly_market | evening_review (evening still gets full context)
-        weekly = bool(budget.get("weekly"))
-        print("  • universe scan" + (" (weekly breadth)..." if weekly else "..."))
-        try:
-            scan = scan_universe(
-                top_n=15 if not weekly else 20,
-                enrich=bool(budget.get("enrich_scan", True)),
-                weekly=weekly,
-            )
-        except TypeError:
-            scan = scan_universe(top_n=15 if not weekly else 20)
+            print(f"    (auto_grade {t} failed: {e})")
+    guidance = get_ledger_summary(focus)
+    smart_money = get_smart_money(focus) if focus else {"status": "skipped"}
+    news = (get_news_and_catalysts(
+        focus, company_names=_company_names_from_filings(filings))
+        if focus else {"status": "skipped"})
+    insiders = get_insider_activity(focus) if focus else {"status": "skipped"}
+    print("  • strategic partnerships / material deals...")
+    try:
+        from tools.partnerships import get_partnerships
+        partnerships = get_partnerships(focus) if focus else {"status": "skipped"}
+    except Exception as e:
+        partnerships = {"status": "error", "reason": str(e)[:150]}
+    return {
+        "scan": scan, "focus": focus, "filings": filings,
+        "deep_fundamentals": deep_fundamentals, "filing_texts": filing_texts,
+        "smart_money": smart_money, "insiders": insiders,
+        "partnerships": partnerships, "news": news, "guidance": guidance,
+        "options_signals": options_signals,
+        "fundamental_screen": fundamental_screen,
+        "market_news": market_news, "todays_8ks": todays_8ks,
+        "tape_promotions": tape_promotions,
+        "discovery_block": discovery_block,
+        "market_radar_block": market_radar_block,
+    }
 
-        candidates = [r["ticker"] for r in scan.get("top_setups", [])[: budget["top_setups"]]]
-        focus = list(dict.fromkeys(held + candidates))
 
-        contrarian_picks = [r["ticker"] for r in scan.get("contrarian_setups", [])[: budget["contrarian"]]]
-        focus = list(dict.fromkeys(focus + contrarian_picks))
-        deep_value_picks = [r["ticker"] for r in scan.get("deep_value_200w", [])[: budget["deep_value"]]]
-        focus = list(dict.fromkeys(focus + deep_value_picks))
-        if budget.get("supplier_pullbacks"):
-            sp = [r["ticker"] for r in scan.get("supplier_pullbacks", [])[: budget["supplier_pullbacks"]]]
-            focus = list(dict.fromkeys(focus + sp))
+def _reprice_held_and_mark(scan: dict, held: list, portfolio: dict) -> dict:
+    """Backfill prices for held names missing from the scan, then mark the book.
 
-        # Promote non-focus fat pitches (post-earnings drift, strong revisions, etc.).
-        promote_n = int(budget.get("promote_extra") or 0)
-        if promote_n > 0:
-            try:
-                from tools.universe_scanner import promote_focus_candidates
-                extra = promote_focus_candidates(scan, focus, max_extra=promote_n)
-            except Exception:
-                extra = []
-            if extra:
-                print(f"  • promoted fat-pitch names into deep bundle: {extra}")
-                focus = list(dict.fromkeys(focus + extra))
-
-        # Weekly: discovery sweep + a few standout names outside the book.
-        if weekly:
-            print("  • discovery sweep (broad market)...")
-            try:
-                from tools.discovery_screen import run_discovery
-                discovery_block = run_discovery()
-            except Exception as e:
-                discovery_block = {"status": "error", "reason": str(e)[:150]}
-            tops = []
-            for row in (discovery_block.get("top_candidates") or [])[: budget.get("discovery_deep", 5)]:
-                t = row.get("ticker")
-                if t and t not in focus:
-                    tops.append(t)
-            if tops:
-                print(f"  • weekly standouts for deep research: {tops}")
-                focus = list(dict.fromkeys(focus + tops))
-            # Always include watchlist on weekly so triggers get underwritten.
-            focus = list(dict.fromkeys(focus + watch))
-
-        # Balance: tape + 8-K promotions join the deep set on full/weekly too
-        # (cheap radar → expensive underwrite only for hits).
-        print("  • market-wide news (early, for tape promote)...")
-        market_news = fetch_market_news()
-        print("  • market radar (Alpaca movers/actives/news, market-wide)...")
-        try:
-            from tools.market_radar import get_market_radar
-            market_radar_block = get_market_radar()
-        except Exception as e:
-            market_radar_block = {"status": "error", "reason": str(e)[:150]}
-        if budget.get("filings_sweep"):
-            print("  • universe 8-K sweep (early, for promote)...")
-            todays_8ks = fetch_universe_8ks()
-        add, tape_promotions = tape_and_8k_promotions(
-            focus, market_news, todays_8ks,
-            int(budget.get("tape_promote_max") or 5),
-            market_events=market_events)
-        if add:
-            print(f"  • tape/8-K promoted into deep focus: {add}")
-            focus = list(dict.fromkeys(focus + add))
-            for t, px in light_prices(add).items():
-                scan.setdefault("prices", {})[t] = px
-
-        # Earnings reporters that forced this full run always get deep research,
-        # even if they did not rank into the scan's top setups (foreign filers /
-        # off-momentum names would otherwise be scanned but not underwritten).
-        earn_new = [t for t in earnings_reporters if t not in focus]
-        if earn_new:
-            print(f"  • earnings reporters promoted into deep focus: {earn_new}")
-            focus = list(dict.fromkeys(focus + earn_new))
-            for t, px in light_prices(earn_new).items():
-                scan.setdefault("prices", {})[t] = px
-
-        print("  • rendering candlestick charts...")
-        try:
-            from tools.price_chart import render_charts
-            render_charts(focus)
-        except Exception as e:
-            print(f"    (chart rendering failed: {e})")
-
-        print(f"  • deep research on {focus}...")
-        filings, deep_fundamentals, filing_texts = deep_research_bundle(focus)
-
-        print("  • fundamental screen (full universe, cached)...")
-        try:
-            from tools.fundamental_screen import get_screen
-            all_universe = sorted(validator.load_universe())
-            fundamental_screen = get_screen(all_universe)
-        except Exception as e:
-            fundamental_screen = {"status": "error", "reason": str(e)[:200]}
-        print("  • options-derived signals...")
-        options_signals = get_options_signals(focus)
-        print("  • guidance ledger...")
-        for t in focus:
-            try:
-                auto_grade(t)
-            except Exception as e:
-                print(f"    (auto_grade {t} failed: {e})")
-        guidance = get_ledger_summary(focus)
-        smart_money = get_smart_money(focus) if focus else {"status": "skipped"}
-        news = (get_news_and_catalysts(
-            focus, company_names=_company_names_from_filings(filings))
-            if focus else {"status": "skipped"})
-        insiders = get_insider_activity(focus) if focus else {"status": "skipped"}
-        print("  • strategic partnerships / material deals...")
-        try:
-            from tools.partnerships import get_partnerships
-            partnerships = get_partnerships(focus) if focus else {"status": "skipped"}
-        except Exception as e:
-            partnerships = {"status": "error", "reason": str(e)[:150]}
-
+    Mutates scan["prices"] in place; returns the (possibly refreshed) portfolio
+    (2026-08-05 extraction, moved verbatim).
+    """
     # Held names that dropped out of the universe scan (e.g. removed in a weekly review)
     # must STILL be priced, or mark_to_market and the safety layer freeze them at entry
     # cost - which quietly flatters losers that fell out of the momentum funnel.
@@ -816,11 +917,14 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
             portfolio = get_portfolio_state()
         except Exception as e:
             print(f"  (mark-to-market failed: {e})")
+    return portfolio
 
-    # Momentum-factor health (cheap, every depth): are momentum LEADERS being
-    # sold while the index holds up (July-2026-style factor unwind)? Uses this
-    # run's scan rows when a real scan happened (light runs pass none) plus a
-    # cached MTUM/SPMO-vs-SPY read. Fail-soft: never breaks a gather.
+
+def _gather_momentum_health(scan: dict) -> dict:
+    """Momentum-factor health (cheap, every depth): are momentum LEADERS being
+    sold while the index holds up (July-2026-style factor unwind)? Uses this
+    run's scan rows when a real scan happened (light runs pass none) plus a
+    cached MTUM/SPMO-vs-SPY read. Fail-soft: never breaks a gather."""
     print("  • momentum-factor health...")
     try:
         from tools.momentum_health import get_momentum_health
@@ -828,15 +932,15 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
                     + (scan.get("contrarian_setups") or [])
                     + (scan.get("deep_value_200w") or [])
                     + (scan.get("supplier_pullbacks") or []))
-        momentum_health = get_momentum_health(_mh_rows or None)
+        return get_momentum_health(_mh_rows or None)
     except Exception as e:
-        momentum_health = {"status": "unknown", "momentum_unwind": False,
-                           "signals": {}, "as_of": None,
-                           "note": f"momentum_health unavailable ({str(e)[:120]})"}
+        return {"status": "unknown", "momentum_unwind": False,
+                "signals": {}, "as_of": None,
+                "note": f"momentum_health unavailable ({str(e)[:120]})"}
 
-    print("  • position histories...")
-    histories = get_position_histories(held) if held else {"status": "skipped"}
 
+def _gather_watchlist_alerts(prior_watchlist: list, scan: dict) -> tuple[list, list]:
+    """Deterministic watchlist trigger check against this run's prices."""
     print("  • watchlist triggers...")
     # EVENT-GATED (2026-08-03). check_watchlist_triggers matches on PRICE ONLY, so
     # a compound condition fired the moment price touched the parsed level even
@@ -853,8 +957,12 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
     if watchlist_alerts_held:
         print(f"    ({len(watchlist_alerts_held)} alert(s) held by an event gate: "
               f"{[h.get('ticker') for h in watchlist_alerts_held]})")
+    return watchlist_alerts, watchlist_alerts_held
 
-    # Market-wide tape + 8-K: often already fetched early for promotions.
+
+def _gather_late_tape(market_news: dict | None, todays_8ks: dict | None,
+                      budget: dict, depth: str) -> tuple[dict, dict]:
+    """Market-wide tape + 8-K: often already fetched early for promotions."""
     if market_news is None:
         print("  • market-wide news...")
         market_news = fetch_market_news()
@@ -864,9 +972,12 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
             todays_8ks = fetch_universe_8ks()
         else:
             todays_8ks = {"status": f"skipped_{depth}_run", "filers": []}
+    return market_news, todays_8ks
 
-    # Portfolio correlation/beta: quantifies the book's common left tail and each
-    # top candidate's diversification value BEFORE the brain reasons about adds.
+
+def _gather_portfolio_risk(portfolio: dict, focus: list, held: list) -> dict:
+    """Portfolio correlation/beta: quantifies the book's common left tail and each
+    top candidate's diversification value BEFORE the brain reasons about adds."""
     print("  • portfolio correlation/beta...")
     try:
         from tools.correlation import get_portfolio_risk
@@ -880,23 +991,28 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
         # is one batched yf.download() call regardless of symbol count, so this
         # is not a real throttle for holdings_watchlist-sized runs (~10-15 names).
         _cand = [t for t in focus if t and t not in held][:30]
-        portfolio_risk = get_portfolio_risk(
+        return get_portfolio_risk(
             [{"ticker": p["ticker"], "market_value_usd": p.get("market_value_usd", 0)}
              for p in portfolio.get("positions", [])],
             candidates=_cand)
     except Exception as e:
-        portfolio_risk = {"status": "error", "reason": str(e)[:150]}
+        return {"status": "error", "reason": str(e)[:150]}
 
-    # Factor map / seat competition / ownership flow.
-    #
-    # All three modules (1,445 lines, fully tested) existed and were called by
-    # NOTHING in production — `git log -S build_factor_map -- runlib/context_gather.py`
-    # returns no commits, so their bundle wiring only ever lived in an uncommitted
-    # working tree and a `git reset --hard` erased it. The consequence was not merely
-    # a missing card: `factor_map.requires_factor_response` is the trigger for the
-    # process gate that blocks new BUYs on unanswered concentration, so that gate
-    # could never fire, and the validator's factor-stack cap had no narrative
-    # counterpart for the brain to reason with.
+
+def _gather_factor_blocks(cfg: dict, portfolio: dict, scan: dict,
+                          portfolio_risk: dict, focus: list, smart_money,
+                          options_signals) -> tuple[dict, dict, dict]:
+    """Factor map / seat competition / ownership flow.
+
+    All three modules (1,445 lines, fully tested) existed and were called by
+    NOTHING in production — `git log -S build_factor_map -- runlib/context_gather.py`
+    returns no commits, so their bundle wiring only ever lived in an uncommitted
+    working tree and a `git reset --hard` erased it. The consequence was not merely
+    a missing card: `factor_map.requires_factor_response` is the trigger for the
+    process gate that blocks new BUYs on unanswered concentration, so that gate
+    could never fire, and the validator's factor-stack cap had no narrative
+    counterpart for the brain to reason with.
+    """
     print("  • factor map / seat competition / ownership flow...")
     try:
         from tools.demand_drivers import build_driver_map
@@ -926,12 +1042,19 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
             focus, smart_money=smart_money, options_signals=options_signals, scan=scan)
     except Exception as e:
         ownership_block = {"status": "error", "reason": str(e)[:150]}
+    return factor_map_block, competition_block, ownership_block
 
-    # The agent's own track record: what it predicted vs. what actually happened.
+
+def _build_track_record() -> dict:
+    """The agent's own track record: what it predicted vs. what actually happened.
+
+    Local artifacts only (journal + equity history), no network (2026-08-05
+    extraction, moved verbatim).
+    """
     closed = compute_closed_trades()
     hist_file = ROOT / "dashboard" / "data" / "equity_history.json"
     hist = json.loads(hist_file.read_text()) if hist_file.exists() else []
-    track_record = {
+    return {
         "note": "Your own past trades. Study what worked and what did not before proposing.",
         "closed_trades": closed[-20:],
         "performance": compute_performance_stats(closed, hist),
@@ -939,9 +1062,14 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
         "calibration": compute_calibration(closed),
     }
 
-    # Fundamentals freshness: per focus name, does our extracted data reach the
-    # period covered by the newest filed 10-Q/10-K? Derived from the briefs already
-    # fetched (no extra network). stale=true names must never be cited as current.
+
+def _fundamentals_freshness(filings) -> tuple[dict, list]:
+    """Fundamentals freshness: per focus name, does our extracted data reach the
+    period covered by the newest filed 10-Q/10-K? Derived from the briefs already
+    fetched (no extra network). stale=true names must never be cited as current.
+
+    Pure transform (2026-08-05 extraction); returns (by_ticker, stale_names).
+    """
     fundamentals_freshness = {}
     for t, br in (filings or {}).items():
         if isinstance(br, dict) and br.get("status") == "ok":
@@ -951,13 +1079,24 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
                 "stale": bool(br.get("stale_fundamentals_warning")),
             }
     stale_names = sorted(t for t, v in fundamentals_freshness.items() if v["stale"])
-    if stale_names:
-        print(f"  !! STALE FUNDAMENTALS for {stale_names} - flagged to the brain")
+    return fundamentals_freshness, stale_names
 
-    # PER-NAME DIGEST: the financial identity card the brain reads FIRST. Key numbers
-    # from the statements (always labeled with their quarter-end - the backbone never
-    # goes out of view even though deep re-fetches are quarterly), plus everything
-    # that changes daily. Full detail remains below in the bundle for digging.
+
+def _build_digest(focus: list, filings: dict, deep_fundamentals: dict,
+                  scan: dict, news, insiders, smart_money, partnerships,
+                  earnings_next=None) -> dict:
+    """PER-NAME DIGEST: the financial identity card the brain reads FIRST. Key numbers
+    from the statements (always labeled with their quarter-end - the backbone never
+    goes out of view even though deep re-fetches are quarterly), plus everything
+    that changes daily. Full detail remains below in the bundle for digging.
+
+    Pure transform over already-fetched blocks (2026-08-05 extraction).
+    earnings_next is injectable for fixture tests; it defaults to the module's
+    calendar reader, resolved late so monkeypatching _earnings_next still works.
+    """
+    if earnings_next is None:
+        earnings_next = _earnings_next
+
     def _dig(t: str) -> dict:
         br = filings.get(t) if isinstance(filings.get(t), dict) else {}
         qf = br.get("quarterly_fundamentals") or {}
@@ -991,7 +1130,7 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
             # showed next_earnings 2026-05-26 on 2026-07-19 while days_to_earnings
             # (computed from the calendar) correctly said 45. Two fields disagreeing
             # about the same print is worse than one missing field.
-            "next_earnings": (_earnings_next(t)
+            "next_earnings": (earnings_next(t)
                               or ((news.get("tickers", {}).get(t) or {}).get("next_earnings")
                                   if isinstance(news, dict) else None)),
             "days_to_earnings": row.get("days_to_earnings"),
@@ -1015,7 +1154,144 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
                                if isinstance(partnerships, dict) else None,
         }
         return {k: v for k, v in d.items() if v is not None}
-    digest = {t: _dig(t) for t in focus}
+    return {t: _dig(t) for t in focus}
+
+
+def _market_checkin_payload(scan: dict, discovery_block: dict, focus: list) -> dict:
+    """The weekly market check-in artifact's content. Pure transform over the
+    scan + discovery blocks (2026-08-05 extraction)."""
+    return {
+        "as_of_et": et_date(),
+        "note": "Weekly multi-sector market check-in. Not a trade list — a "
+                "breadth map. Deep research was limited to holdings + standouts.",
+        "benchmark_trend": scan.get("benchmark_trend"),
+        "sector_relative_strength": scan.get("sector_relative_strength"),
+        "by_sector_leaders": scan.get("by_sector_leaders"),
+        "top_setups": (scan.get("top_setups") or [])[:15],
+        "discovery": {
+            "status": discovery_block.get("status"),
+            "top_candidates": (discovery_block.get("top_candidates") or [])[:15],
+            "scanned": discovery_block.get("scanned"),
+        },
+        "focus_deep_researched": focus,
+    }
+
+
+def _gather_market_checkin(depth: str, scan: dict, discovery_block: dict,
+                           focus: list) -> dict | None:
+    """Weekly market check-in artifact for the dashboard (sector leaders + discovery).
+
+    None on every depth except weekly_market; on weekly_market it also publishes
+    dashboard/data/market_checkin.json exactly as the monolith did.
+    """
+    if depth != "weekly_market":
+        return None
+    market_checkin = _market_checkin_payload(scan, discovery_block, focus)
+    try:
+        out = ROOT / "dashboard" / "data" / "market_checkin.json"
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(json_safe(market_checkin), indent=2, default=str))
+        print(f"  • published market_checkin.json ({len(focus)} deep names)")
+    except Exception as e:
+        print(f"  (market_checkin publish failed: {e})")
+    return market_checkin
+
+
+def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
+                   earnings_trigger: dict | None = None) -> dict:
+    """Build the brain's context bundle.
+
+    depth (preferred) selects how much work to do:
+      light | holdings_watchlist | full | weekly_market | evening_review
+    `light=True` is kept for backward compatibility (== depth light).
+
+    earnings_trigger (optional): when a universe name reported earnings this
+    slot, the orchestrator escalates depth to full and passes the trigger here;
+    its reporters are force-promoted into deep-research focus and surfaced in the
+    bundle so the brain prioritizes them.
+
+    Since 2026-08-05 this function is sequencing + assembly only: the per-depth
+    research work and every post-research block live in the _gather_* /
+    _build_* helpers above, called in the exact order the monolith ran them.
+    """
+    if depth is None:
+        depth = "light" if light else "full"
+    budget = focus_ticker_budget(depth)
+    print(f"  • run depth: {depth} — {depth_description(depth)}")
+
+    # Reporters that forced this deep dive (filtered to the universe).
+    earnings_reporters = _reporters_in_universe(earnings_trigger,
+                                                validator.load_universe())
+    if earnings_reporters:
+        print(f"  • earnings deep-dive reporters forced into focus: {earnings_reporters}")
+
+    print("  • macro regime...")
+    macro = get_macro_snapshot()
+    print("  • portfolio state...")
+    portfolio = get_portfolio_state()
+
+    prior_watchlist = prev_watchlist()
+    held, watch = _held_and_watch(portfolio, prior_watchlist)
+
+    market_events = _gather_market_events()
+
+    # WHICH BLOCKS RUN AT WHICH DEPTH is decided here, by dispatch, instead of
+    # by a 225-line if/elif/else: light and holdings_watchlist have dedicated
+    # research functions; every other depth (full | weekly_market |
+    # evening_review, plus any unknown string — matching the monolith's bare
+    # `else`) takes the full-research path, whose weekly extras are driven by
+    # budget["weekly"].
+    research = {
+        "light": _gather_light_research,
+        "holdings_watchlist": _gather_holdings_watchlist_research,
+    }.get(depth, _gather_full_research)(
+        held=held, watch=watch, prior_watchlist=prior_watchlist, budget=budget,
+        market_events=market_events, earnings_reporters=earnings_reporters,
+        depth=depth)
+    scan = research["scan"]
+    focus = research["focus"]
+    filings = research["filings"]
+    deep_fundamentals = research["deep_fundamentals"]
+    filing_texts = research["filing_texts"]
+    smart_money = research["smart_money"]
+    insiders = research["insiders"]
+    partnerships = research["partnerships"]
+    news = research["news"]
+    guidance = research["guidance"]
+    options_signals = research["options_signals"]
+    fundamental_screen = research["fundamental_screen"]
+    market_news = research["market_news"]
+    todays_8ks = research["todays_8ks"]
+    tape_promotions = research["tape_promotions"]
+    discovery_block = research["discovery_block"]
+    market_radar_block = research["market_radar_block"]
+
+    portfolio = _reprice_held_and_mark(scan, held, portfolio)
+
+    momentum_health = _gather_momentum_health(scan)
+
+    print("  • position histories...")
+    histories = get_position_histories(held) if held else {"status": "skipped"}
+
+    watchlist_alerts, watchlist_alerts_held = _gather_watchlist_alerts(
+        prior_watchlist, scan)
+
+    market_news, todays_8ks = _gather_late_tape(
+        market_news, todays_8ks, budget, depth)
+
+    portfolio_risk = _gather_portfolio_risk(portfolio, focus, held)
+
+    factor_map_block, competition_block, ownership_block = _gather_factor_blocks(
+        cfg, portfolio, scan, portfolio_risk, focus, smart_money, options_signals)
+
+    track_record = _build_track_record()
+
+    fundamentals_freshness, stale_names = _fundamentals_freshness(filings)
+    if stale_names:
+        print(f"  !! STALE FUNDAMENTALS for {stale_names} - flagged to the brain")
+
+    digest = _build_digest(focus, filings, deep_fundamentals, scan, news,
+                           insiders, smart_money, partnerships)
 
     # Volatility -> stop engineering. One source of truth (validator.stop_floor_pct)
     # for both the brain-facing floors and the deterministic validation at execute time.
@@ -1023,31 +1299,7 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
     stop_engineering = build_stop_engineering(focus, volatility, cfg)
     position_stop_cushion = build_position_stop_cushion(portfolio, volatility, cfg)
 
-    # Weekly market check-in artifact for the dashboard (sector leaders + discovery).
-    market_checkin = None
-    if depth == "weekly_market":
-        market_checkin = {
-            "as_of_et": et_date(),
-            "note": "Weekly multi-sector market check-in. Not a trade list — a "
-                    "breadth map. Deep research was limited to holdings + standouts.",
-            "benchmark_trend": scan.get("benchmark_trend"),
-            "sector_relative_strength": scan.get("sector_relative_strength"),
-            "by_sector_leaders": scan.get("by_sector_leaders"),
-            "top_setups": (scan.get("top_setups") or [])[:15],
-            "discovery": {
-                "status": discovery_block.get("status"),
-                "top_candidates": (discovery_block.get("top_candidates") or [])[:15],
-                "scanned": discovery_block.get("scanned"),
-            },
-            "focus_deep_researched": focus,
-        }
-        try:
-            out = ROOT / "dashboard" / "data" / "market_checkin.json"
-            out.parent.mkdir(parents=True, exist_ok=True)
-            out.write_text(json.dumps(json_safe(market_checkin), indent=2, default=str))
-            print(f"  • published market_checkin.json ({len(focus)} deep names)")
-        except Exception as e:
-            print(f"  (market_checkin publish failed: {e})")
+    market_checkin = _gather_market_checkin(depth, scan, discovery_block, focus)
 
     # ENGAGEMENT: how long the book has been sitting in cash, which fired
     # triggers are outstanding, and which watchlist names are decaying. The brain
