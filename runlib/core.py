@@ -5,10 +5,22 @@ import json
 import math
 import os
 import re
-from datetime import datetime, timezone, timedelta
 from pathlib import Path
 
 from dotenv import load_dotenv
+
+# CONSOLIDATED 2026-08-05 (audit): the ET calendar-day helpers lived as three
+# divergent copies (here, runlib/analytics.py — which imported these names and
+# then silently SHADOWED them with local redefinitions — and private copies in
+# validator.py). tools/et_time.py is now the single source; these re-exports
+# keep every existing `from runlib.core import et_now/et_date/to_et_date`
+# caller working unchanged. Behavior note: naive timestamps are now treated as
+# UTC everywhere (this module's old copy treated them as machine-local, which
+# answered differently on the UTC cloud runner vs the operator's ET Mac);
+# to_et_date keeps the legacy string contract including the first-10-chars
+# salvage on unparseable input. et_time is stdlib-only, so this import adds no
+# dependency weight.
+from tools.et_time import et_now, et_date, to_et_date_str as to_et_date  # noqa: F401
 
 ROOT = Path(__file__).resolve().parent.parent
 load_dotenv(ROOT / ".env")
@@ -23,32 +35,6 @@ def json_safe(obj):
     if isinstance(obj, (list, tuple)):
         return [json_safe(v) for v in obj]
     return obj
-
-
-def et_now() -> datetime:
-    try:
-        from zoneinfo import ZoneInfo
-        return datetime.now(ZoneInfo("America/New_York"))
-    except Exception:
-        return datetime.now(timezone.utc) - timedelta(hours=4)
-
-
-def et_date() -> str:
-    return et_now().date().isoformat()
-
-
-def to_et_date(iso_ts: str | None) -> str | None:
-    if not iso_ts:
-        return None
-    try:
-        dt = datetime.fromisoformat(str(iso_ts).replace("Z", "+00:00"))
-        try:
-            from zoneinfo import ZoneInfo
-            return dt.astimezone(ZoneInfo("America/New_York")).date().isoformat()
-        except Exception:
-            return (dt - timedelta(hours=4)).date().isoformat()
-    except Exception:
-        return str(iso_ts)[:10] if iso_ts else None
 
 
 def light_prices(tickers: list) -> dict:

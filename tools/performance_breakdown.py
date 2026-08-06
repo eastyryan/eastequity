@@ -33,10 +33,15 @@ _HOLDING_BUCKETS = (("0-7d", 0, 7), ("8-21d", 8, 21),
 # "losing" bucket. Two losing trades is not a 0% win rate; it is two losing
 # trades. Publishing the rate turned noise into a gate.
 #
-# Kept EQUAL to calibration_gate.DEFAULTS["min_bucket_trades"] and to
-# runlib/analytics.MIN_BUCKET_TRADES: the producer of these buckets and the gate
-# that reads them must agree about what counts as evidence, or one will suppress
-# a number the other still acts on. tests/test_truth_layer.py pins the equality.
+# THE AUTHORITATIVE COPY (2026-08-05 audit). This used to be "kept EQUAL to"
+# calibration_gate.DEFAULTS["min_bucket_trades"] and runlib/analytics.
+# MIN_BUCKET_TRADES by comment discipline alone — three hand-synchronized
+# statements of one number. The producer of these buckets and the gate that
+# reads them must agree about what counts as evidence, or one will suppress a
+# number the other still acts on; both now IMPORT this constant, so they cannot
+# drift. tests/test_truth_layer.py pins the equality. (learning_controls.
+# min_bucket_trades in autonomy_config.json remains a deliberate config-level
+# override for the gate, defaulting to this value.)
 MIN_BUCKET_TRADES = 5
 
 # Phase language mirrors the Learning Protocol's sample-size rules.

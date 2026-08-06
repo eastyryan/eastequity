@@ -14,7 +14,7 @@ from __future__ import annotations
 import json
 import re
 from dataclasses import dataclass, field
-from datetime import date, datetime, timedelta, timezone
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -27,8 +27,55 @@ class ValidationResult:
     reasons: list[str] = field(default_factory=list)  # rejection reasons (empty if approved)
 
 
+# Keys load_config verifies before returning. Dotted paths: every segment must
+# exist. The list is deliberately ONLY what this file (plus the mode block every
+# load_config caller reads) direct-indexes without a .get() guard — a hand-edited
+# typo in any of these used to surface as a bare KeyError somewhere mid-run,
+# hundreds of lines from the actual mistake. Fail-fast is correct for config (no
+# trades on a malformed file); the fix here is DIAGNOSABILITY: the error now
+# names the missing key at load time. Optional blocks (book_risk, theme_risk,
+# calibration_probe, conviction_tier...) are accessed with .get() and stay
+# optional — do not add them here.
+_REQUIRED_CONFIG_KEYS = (
+    "mode.trading_mode",
+    "mode.broker",
+    "hard_rules.allowed_actions",
+    "hard_rules.allowed_instruments",
+    "hard_rules.forbidden_ticker_patterns",
+    "universe.allow_off_universe_trades",
+    "swing_rules.min_holding_horizon_days",
+    "swing_rules.max_holding_horizon_days",
+    "swing_rules.reject_intraday_language",
+    "position_sizing.starting_capital_usd",
+    "position_sizing.max_position_usd",
+    "position_sizing.max_position_pct_of_portfolio",
+    "position_sizing.max_open_positions",
+    "position_sizing.max_total_exposure_pct",
+    "trade_quality_requirements.required_proposal_fields",
+    "trade_quality_requirements.min_confidence",
+    "trade_quality_requirements.min_risk_reward_ratio",
+    "trade_quality_requirements.min_target_upside_pct",
+    "trade_quality_requirements.max_stop_loss_distance_pct",
+    "trade_quality_requirements.min_stop_atr_multiple",
+    "trade_quality_requirements.min_stop_expected_move_fraction",
+    "risk_controls.kill_switch_file",
+)
+
+
+def _verify_required_config(cfg: dict) -> None:
+    for dotted in _REQUIRED_CONFIG_KEYS:
+        node = cfg
+        for part in dotted.split("."):
+            if not isinstance(node, dict) or part not in node:
+                raise ValueError(
+                    f"autonomy_config.json missing required key: {dotted}")
+            node = node[part]
+
+
 def load_config() -> dict:
-    return json.loads((ROOT / "autonomy_config.json").read_text())
+    cfg = json.loads((ROOT / "autonomy_config.json").read_text())
+    _verify_required_config(cfg)
+    return cfg
 
 
 def load_universe() -> set[str]:
@@ -118,39 +165,20 @@ def stop_floor_pct(atr_pct, expected_move_pct, cfg: dict) -> float | None:
 
 
 # --- calendar-day helpers (US/Eastern market day) ----------------------------
-
-def _et_now() -> datetime:
-    """Current time in America/New_York. zoneinfo preferred; UTC-4 fallback."""
-    try:
-        from zoneinfo import ZoneInfo
-        return datetime.now(ZoneInfo("America/New_York"))
-    except Exception:
-        return datetime.now(timezone.utc) - timedelta(hours=4)
-
-
-def _et_today() -> date:
-    return _et_now().date()
-
-
-def _to_et_date(iso_ts: str | None) -> date | None:
-    """Parse an ISO timestamp to its US/Eastern calendar date.
-
-    Fail-open: unparseable timestamps return None (caller skips them).
-    Naive timestamps are treated as UTC.
-    """
-    if not isinstance(iso_ts, str) or not iso_ts.strip():
-        return None
-    try:
-        dt = datetime.fromisoformat(iso_ts.replace("Z", "+00:00"))
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        try:
-            from zoneinfo import ZoneInfo
-            return dt.astimezone(ZoneInfo("America/New_York")).date()
-        except Exception:
-            return (dt.astimezone(timezone.utc) - timedelta(hours=4)).date()
-    except (ValueError, TypeError, OSError):
-        return None
+#
+# DELEGATED 2026-08-05 (audit): this file carried a third private copy of the ET
+# helpers, subtly divergent from runlib/core's and from the pair that silently
+# shadowed core's inside runlib/analytics. tools/et_time.py is now the single
+# source (this copy's strict semantics won: naive timestamps are UTC, the
+# no-tzdata fallback converts to UTC before the fixed -4h shift, unparseable
+# returns None). et_time is stdlib-only, so the header rule — never import
+# anything that talks to a network or a broker — still holds. The private names
+# stay because callers (tests/test_daily_buy_cap.py) use validator._et_today.
+from tools.et_time import (  # noqa: E402
+    et_now as _et_now,
+    et_today as _et_today,
+    to_et_date as _to_et_date,
+)
 
 
 def _count_filled_buys_today(portfolio: dict, today_et: date | None = None) -> int:
@@ -350,13 +378,22 @@ def _check_volatility_stop(p: dict, cfg: dict, market_context: dict, reasons: li
                        f"below entry ({src})")
 
 
-def _check_market_cap(p: dict, cfg: dict, market_context: dict, reasons: list[str]) -> None:
+def _check_market_cap(p: dict, cfg: dict, market_context: dict, reasons: list[str],
+                      require_data: bool | None = None) -> None:
     """Hard floor: never BUY a company under the configured minimum market cap
     ($1B - sub-billion names carry delisting/manipulation/liquidity risk this
     system is not built to price). The cap comes from market_context (supplied by
     the orchestrator from the gather bundle / a live lookup); when no figure is
     available this fails OPEN - the validator itself never touches a network, and
-    the universe review separately blocks sub-$1B names from ever entering."""
+    the universe review separately blocks sub-$1B names from ever entering.
+
+    require_data overrides book_risk.require_market_cap_data when the CALLER
+    knows its context can never carry a cap: the intent re-validation path
+    (revalidate_intent_against_book) passes False because the Actions executor's
+    market_context is a portfolio_risk relay with no per-ticker figures, and
+    flipping the config flag on must not silently start rejecting every queued
+    BUY there — that flag's own note scopes it to the per-proposal resolution
+    the orchestrator does."""
     if str(p.get("action", "")).upper() != "BUY":
         return
     floor = cfg["hard_rules"].get("min_market_cap_usd")
@@ -372,7 +409,10 @@ def _check_market_cap(p: dict, cfg: dict, market_context: dict, reasons: list[st
         # second line of defence, not a substitute: universe_candidates admits new
         # names between reviews, and those are precisely the ones most likely to be
         # missing a figure here.
-        if (cfg.get("book_risk") or {}).get("require_market_cap_data", False):
+        if require_data is None:
+            require_data = (cfg.get("book_risk") or {}).get(
+                "require_market_cap_data", False)
+        if require_data:
             reasons.append(
                 f"market_cap_unverifiable:{str(p.get('ticker','')).upper()} has no "
                 f"market cap in market_context — the ${floor/1e9:.0f}B floor cannot "
@@ -536,6 +576,95 @@ def _sum_committed_risk(positions, driver: str | None = None,
     return total, unverifiable
 
 
+# Queued-order side file written by execution/alpaca_broker._save_intents on
+# cloud nodes and consumed by scripts/execute_order_intents.py. Module-level so
+# tests can point it at a fixture without touching live state.
+_INTENTS_FILE = ROOT / "state" / "order_intents.json"
+
+# Statuses that mean "handed off, not yet executed". RESTATED here rather than
+# imported: this file's header rule forbids importing broker modules, so these
+# mirror execution/broker.py QUEUED_STATUSES + RESTING_STATUSES and
+# tests/test_validator_audit_f9.py fails if the two ever drift (the
+# test_schedule_sources_agree pattern). A row with NO status is also counted —
+# the executor places every row in the file regardless of its status field, so
+# a hand-edited row without one is still pending risk.
+_PENDING_INTENT_STATUSES = ("queued_intent",
+                            "resting_market_closed", "resting_awaiting_fill")
+
+
+def _pending_buy_intents_risk(portfolio: dict, driver: str | None = None,
+                              driver_map: dict | None = None,
+                              exclude_ids=None):
+    """(risk_usd, notes): committed entry-to-stop risk of still-pending queued
+    BUY intents, optionally filtered to one demand_driver.
+
+    F9 (2026-08-05 audit): a BUY queued to state/order_intents.json carried
+    ZERO portfolio heat in every later validation until it filled — the
+    executor runs on a */15 cron and intents survive a market close, so a
+    later run could stack a same-theme BUY on top of an invisible pending one
+    and the combined book land past the 8% cap the moment both filled.
+
+    Failure direction, deliberately asymmetric from the position-heat path:
+      * missing file -> 0 risk, silent (no queue is the normal state);
+      * unreadable/corrupt file, or a pending BUY row whose entry/stop/size
+        cannot be parsed -> that risk is SKIPPED and a note is returned for the
+        caller to print LOUDLY. Heat must not brick every future run on a
+        corrupt side file — but it must never skip one silently either.
+    Double-count guard: a row whose order_id/client_order_id already appears as
+    a FILLED record in portfolio history is the executor race (fill landed,
+    row not yet cleared/pulled) — its risk is already in the positions sum, so
+    it is excluded here. exclude_ids lets revalidate_intent_against_book keep
+    the intent under judgement from counting against itself.
+    """
+    notes: list[str] = []
+    try:
+        if not _INTENTS_FILE.exists():
+            return 0.0, notes
+        blob = json.loads(_INTENTS_FILE.read_text())
+        rows = blob.get("intents") if isinstance(blob, dict) else None
+        if not isinstance(rows, list):
+            raise ValueError("no 'intents' list in file")
+    except Exception as e:
+        return 0.0, [f"order_intents_unreadable:{str(e)[:80]} — pending-intent "
+                     f"risk NOT counted this run"]
+    exclude = {str(x) for x in (exclude_ids or ()) if x}
+    filled_ids = {
+        str(rec.get(k))
+        for rec in (portfolio or {}).get("history") or [] if isinstance(rec, dict)
+        and rec.get("status") == "filled"
+        for k in ("order_id", "client_order_id") if rec.get(k)}
+    total = 0.0
+    for it in rows:
+        if not isinstance(it, dict) or str(it.get("action") or "").upper() != "BUY":
+            continue
+        status = it.get("status")
+        if status is not None and status not in _PENDING_INTENT_STATUSES:
+            continue  # terminal status — not pending risk
+        ids = {str(it.get("order_id") or ""), str(it.get("client_order_id") or "")}
+        ids.discard("")
+        if ids & exclude:
+            continue
+        if ids & filled_ids:
+            continue  # already filled into a position — counted there
+        p = intent_to_proposal(it)
+        if driver is not None:
+            d = str(p.get("demand_driver") or "").strip().lower()
+            if not d and driver_map:
+                d = str(driver_map.get(p.get("ticker") or "") or "").strip().lower()
+            if d != driver:
+                continue
+        size = _num(p.get("position_size_usd"))
+        entry = _num(p.get("entry_price_max"))
+        stop = _num(p.get("stop_loss"))
+        if not size or size <= 0 or not entry or not stop or not 0 < stop < entry:
+            notes.append(
+                f"pending_intent_risk_unknown:{p.get('ticker') or '?'} — queued BUY "
+                f"has no parseable entry/stop/size; its heat is NOT counted")
+            continue
+        total += size * ((entry - stop) / entry)
+    return total, notes
+
+
 def _position_demand_driver(pos: dict, driver_map: dict | None = None) -> str | None:
     """The economic bet an open position represents.
 
@@ -637,10 +766,11 @@ def _apply_risk_based_sizing(p: dict, cfg: dict, portfolio: dict,
 
 def _check_portfolio_heat(p: dict, cfg: dict, portfolio: dict,
                           proposed_risk: float, batch_risk: float,
-                          reasons: list[str], market_context: dict | None = None) -> None:
+                          reasons: list[str], market_context: dict | None = None,
+                          exclude_intent_ids=None) -> None:
     """Total committed risk across the book (entry-basis, to current stops)
-    plus this batch's accepted BUY risk plus this proposal must stay under
-    portfolio_heat_cap_pct of equity."""
+    plus still-pending queued BUY intents plus this batch's accepted BUY risk
+    plus this proposal must stay under portfolio_heat_cap_pct of equity."""
     if str(p.get("action", "")).upper() != "BUY" or proposed_risk <= 0:
         return
     rbs = cfg["position_sizing"].get("risk_based_sizing") or {}
@@ -660,7 +790,13 @@ def _check_portfolio_heat(p: dict, cfg: dict, portfolio: dict,
             f"parseable stop — committed risk cannot be computed, so the "
             f"{cap:.0%} heat cap cannot be enforced")
         return
-    total = open_heat + batch_risk + proposed_risk
+    # F9: queued-but-unexecuted BUY intents are heat the book has already
+    # committed to taking; see _pending_buy_intents_risk for the fail-open notes.
+    pending_risk, pending_notes = _pending_buy_intents_risk(
+        portfolio, exclude_ids=exclude_intent_ids)
+    for note in pending_notes:
+        print(f"  (portfolio heat: {note})")
+    total = open_heat + pending_risk + batch_risk + proposed_risk
 
     gap_note = ""
     br = cfg.get("book_risk") or {}
@@ -686,8 +822,10 @@ def _check_portfolio_heat(p: dict, cfg: dict, portfolio: dict,
             pass
 
     if total > equity * cap + 1e-9:
+        pending_part = (f" + queued intents ${pending_risk:.0f}"
+                        if pending_risk > 0 else "")
         reasons.append(
-            f"portfolio_heat_cap_exceeded:open ${open_heat:.0f} + batch "
+            f"portfolio_heat_cap_exceeded:open ${open_heat:.0f}{pending_part} + batch "
             f"${batch_risk:.0f} + new ${proposed_risk:.0f} = ${total:.0f}{gap_note} > "
             f"{cap:.0%} of ${equity:.0f}")
 
@@ -860,7 +998,8 @@ def _check_stress_scenarios(p: dict, cfg: dict, portfolio: dict, market_context:
 
 def _check_theme_initial_risk(p: dict, cfg: dict, portfolio: dict,
                               proposed_risk: float, batch_theme_risk: dict,
-                              reasons: list[str]) -> None:
+                              reasons: list[str],
+                              exclude_intent_ids=None) -> None:
     """Committed risk sharing one demand_driver (open positions, entry-basis,
     plus this batch) must stay under theme_initial_risk_cap_pct of equity.
     This is the risk-based complement to the notional theme cap: two tickers
@@ -893,11 +1032,21 @@ def _check_theme_initial_risk(p: dict, cfg: dict, portfolio: dict,
             f"theme_risk_unverifiable:{driver} — {','.join(sorted(unverifiable))} "
             f"carry no parseable stop, so the {cap:.0%} theme budget cannot be enforced")
         return
-    total = theme_heat + batch_theme_risk.get(driver, 0.0) + proposed_risk
+    # F9: a queued-but-unexecuted BUY on this same theme is part of the bet.
+    pending_risk, pending_notes = _pending_buy_intents_risk(
+        portfolio, driver=driver, driver_map=driver_map,
+        exclude_ids=exclude_intent_ids)
+    for note in pending_notes:
+        print(f"  (theme risk: {note})")
+    total = (theme_heat + pending_risk
+             + batch_theme_risk.get(driver, 0.0) + proposed_risk)
     if total > equity * cap + 1e-9:
+        pending_part = (f" incl. queued intents ${pending_risk:.0f}"
+                        if pending_risk > 0 else "")
         reasons.append(
-            f"theme_risk_cap_exceeded:{driver} committed risk ${total:.0f} > "
-            f"{cap:.0%} of ${equity:.0f} (one economic bet, capped as one)")
+            f"theme_risk_cap_exceeded:{driver} committed risk ${total:.0f}"
+            f"{pending_part} > {cap:.0%} of ${equity:.0f} "
+            f"(one economic bet, capped as one)")
 
 
 def _check_data_quality(p: dict, cfg: dict, market_context: dict,
@@ -1512,6 +1661,11 @@ def intent_to_proposal(intent: dict) -> dict:
     return {
         "ticker": str(intent.get("ticker") or "").upper(),
         "action": str(intent.get("action") or "").upper(),
+        # Orders built by runlib/brain_io never carry `instrument` (EQUITY is
+        # the only thing that can be proposed), so this defaults; carried
+        # through so a hand-edited intent claiming another instrument is seen
+        # by _check_long_only at re-validation instead of vanishing here (F4).
+        "instrument": intent.get("instrument", "EQUITY"),
         "position_size_usd": intent.get("position_size_usd"),
         "entry_price_max": (intent.get("entry_price_max")
                             or plan.get("entry_price_max")
@@ -1549,17 +1703,47 @@ def revalidate_intent_against_book(intent: dict, portfolio: dict,
     thesis_invalidators, RR geometry). Those are judgements about the IDEA, they
     were made at commit time, and re-litigating them at execution would let a
     transient data gap silently cancel an approved trade. What is re-checked is
-    only what the passage of time can actually invalidate — the shape of the book.
+    what the passage of time can invalidate — the shape of the book — plus the
+    IDENTITY gates below, which time never made valid in the first place.
 
-    BUY-only. A SELL_TO_CLOSE reduces risk and is never blocked, matching every
-    other gate in this file.
+    IDENTITY GATES (F4, audited 2026-08-05). The first cut of this function
+    re-ran only the book-shape caps, so a hand-edited or bad-merged intent for
+    a ticker the system is FORBIDDEN to own executed if it was merely funded
+    and inside the caps: SOXL is not in forbidden_ticker_patterns' caps math,
+    it is in its identity rules. Re-run here: long-only/action whitelist,
+    instrument whitelist, ticker format, forbidden leveraged/inverse list,
+    universe membership, and the $1B market-cap floor WHEN a cap is knowable
+    (the executor's relay context carries no per-ticker caps, so the floor
+    cannot fail closed on absence here — see _check_market_cap's require_data).
+
+    A SELL_TO_CLOSE reduces risk and is never blocked, matching every other
+    gate in this file. Any OTHER non-BUY action is rejected: only BUY and
+    SELL_TO_CLOSE can legitimately be queued as orders (runlib/brain_io builds
+    them from nothing else), so an unknown action is a corrupted or foreign
+    row, not an exit.
     """
     reasons: list[str] = []
-    if str(intent.get("action") or "").upper() != "BUY":
-        return reasons
     cfg = cfg or load_config()
+    action = str(intent.get("action") or "").upper()
+    if action == "SELL_TO_CLOSE":
+        return reasons
+    if action != "BUY":
+        return [f"forbidden_intent_action:{action or '(missing)'} — only BUY and "
+                f"SELL_TO_CLOSE can be queued orders"]
     market_context = market_context or {}
     p = intent_to_proposal(intent)
+
+    # Identity first: a forbidden name should be rejected AS a forbidden name,
+    # not incidentally on a sizing cap.
+    _check_long_only(p, cfg, reasons)
+    try:
+        _check_universe(p, cfg, load_universe(), reasons)
+    except Exception as e:
+        # Fail CLOSED, matching this path's direction everywhere: an intent
+        # whose universe membership cannot be verified does not execute.
+        reasons.append(f"intent_identity_unverifiable:universe list unreadable "
+                       f"({str(e)[:80]})")
+    _check_market_cap(p, cfg, market_context, reasons, require_data=False)
 
     # The ledger's key is total_equity_usd; "equity" is accepted as a fallback so
     # a caller passing a trimmed dict still works.
@@ -1571,15 +1755,21 @@ def revalidate_intent_against_book(intent: dict, portfolio: dict,
     if not equity or size <= 0:
         # Cannot judge the book without an equity figure. Fail CLOSED: an
         # unverifiable book is exactly when a stale intent is most dangerous.
-        return ["intent_revalidation_unverifiable:missing equity or size"]
+        return reasons + ["intent_revalidation_unverifiable:missing equity or size"]
     proposed_risk = 0.0
     if entry and stop and entry > 0 and stop < entry:
         proposed_risk = size * ((entry - stop) / entry)
 
+    # This intent is still IN state/order_intents.json while it is being judged
+    # (the executor clears it after this gate), so the pending-intent heat (F9)
+    # must not count it against itself.
+    own_ids = {intent.get("order_id"), intent.get("client_order_id")}
+    own_ids.discard(None)
     _check_sizing(p, cfg, portfolio, reasons)
     _check_portfolio_heat(p, cfg, portfolio, proposed_risk, 0.0, reasons,
-                          market_context)
-    _check_theme_initial_risk(p, cfg, portfolio, proposed_risk, {}, reasons)
+                          market_context, exclude_intent_ids=own_ids)
+    _check_theme_initial_risk(p, cfg, portfolio, proposed_risk, {}, reasons,
+                              exclude_intent_ids=own_ids)
     _check_theme_concentration(p, cfg, portfolio, reasons)
     _check_factor_stack(p, cfg, portfolio, proposed_risk, reasons)
     _check_portfolio_beta(p, cfg, portfolio, market_context, reasons)
@@ -1754,7 +1944,17 @@ def _check_sell_position(p: dict, portfolio: dict, reasons: list[str]) -> None:
 
 def validate_proposals(proposals: list[dict], portfolio: dict,
                        market_context: dict | None = None) -> list[ValidationResult]:
-    """Validate a batch of proposals. Kill switch rejects everything.
+    """Validate a batch of proposals. Kill switch rejects everything except
+    SELL_TO_CLOSE, which continues through normal sell validation.
+
+    F10 (2026-08-05 audit): this used to reject the ENTIRE batch, sells
+    included, which contradicted the system-wide doctrine that exits are never
+    blocked — forced exits bypass the validator entirely, and the Actions
+    executor deliberately lets SELL intents through under kill switch
+    (scripts/execute_order_intents.py step 1: "protective exits must never be
+    blocked by a halt"). A halted book you cannot REDUCE is more dangerous than
+    the situation the switch was pulled for. Sells are still validated, not
+    waved through: sell_ticker_not_held, sell_fraction and the rest apply.
 
     market_context: optional {TICKER: {"atr_pct": float, "expected_move_pct": float}}
     used to enforce the volatility-aware stop floor. When absent, that check fails
@@ -1764,8 +1964,7 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
     sector_map = load_sector_map()
     results: list[ValidationResult] = []
 
-    if kill_switch_active(cfg):
-        return [ValidationResult(p, False, ["KILL_SWITCH_ACTIVE"]) for p in proposals]
+    kill = kill_switch_active(cfg)
 
     # Calendar-day BUY cap: count already-filled BUYs today (US/Eastern), then
     # combine with the running batch counter so multi-run days and multi-BUY
@@ -1776,6 +1975,12 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
     batch_risk = 0.0          # committed risk accepted earlier in this batch
     batch_theme_risk: dict[str, float] = {}
     for p in proposals:
+        if kill and str(p.get("action", "")).upper() != "SELL_TO_CLOSE":
+            # BUYs and HOLDs halt outright; order preserved so callers zipping
+            # results with proposals keep working. Sells fall through to the
+            # normal checks below.
+            results.append(ValidationResult(p, False, ["KILL_SWITCH_ACTIVE"]))
+            continue
         reasons: list[str] = []
         _check_required_fields(p, cfg, reasons)
         _check_long_only(p, cfg, reasons)

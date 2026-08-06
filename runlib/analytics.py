@@ -12,10 +12,12 @@ from tools.watchlist_triggers import TRIGGER_TOLERANCE_PCT, parse_price_level
 from runlib.core import ROOT, et_date, et_now, to_et_date, json_safe, light_prices
 
 # Minimum closed trades in a bucket before a RATE is published rather than a count.
-# Kept equal to tools/performance_breakdown.MIN_BUCKET_TRADES and
-# calibration_gate.DEFAULTS["min_bucket_trades"] — three places computed statistics
-# on the same trades and only one of them had a floor.
-MIN_BUCKET_TRADES = 5
+# IMPORTED, not restated (2026-08-05 audit): this was a third hand-synchronized
+# copy of the same number ("kept equal to" by comment only), alongside
+# calibration_gate.DEFAULTS["min_bucket_trades"]. performance_breakdown is the
+# producer of the buckets, so it owns the floor; everyone else imports it and
+# the three can no longer drift. tests/test_truth_layer.py pins the equality.
+from tools.performance_breakdown import MIN_BUCKET_TRADES  # noqa: E402
 
 def expected_slots(weekday: bool) -> list[float]:
     """Scheduled run slots (ET hours) for a weekday vs a weekend day.
@@ -925,39 +927,16 @@ def recent_improvements(limit: int = 30) -> list[dict]:
 # Time: user-facing dates use the MARKET timezone (ET), never UTC. An evening run
 # (after 8pm ET) is still ~02:00 UTC the NEXT day - stamping UTC would show viewers
 # "tomorrow's" date on the review blurb, the equity curve, and X posts.
+#
+# REDEFINITIONS REMOVED 2026-08-05 (audit): et_now/et_date/to_et_date were
+# defined HERE while the identical names were already imported from runlib.core
+# at the top of this module — the local copies silently shadowed the import, so
+# which body ran depended on which file you were reading, and the two had
+# drifted on naive-timestamp and no-tzdata fallback handling. The single source
+# is now tools/et_time.py (via the runlib.core import above); tests that
+# monkeypatch analytics.et_date / analytics.to_et_date keep working because the
+# imported names are ordinary module attributes.
 # ---------------------------------------------------------------------------
-def et_now() -> datetime:
-    try:
-        from zoneinfo import ZoneInfo
-        return datetime.now(ZoneInfo("America/New_York"))
-    except Exception:
-        # tzdata unavailable (some minimal Linux images): approximate ET as UTC-4 (EDT).
-        # Only affects a date stamp; off by at most an hour near midnight in winter.
-        return datetime.now(timezone.utc) - timedelta(hours=4)
-
-
-def et_date() -> str:
-    return et_now().date().isoformat()
-
-
-def to_et_date(iso_ts: str | None) -> str | None:
-    """Convert a UTC ISO timestamp to its ET calendar date (YYYY-MM-DD)."""
-    if not iso_ts:
-        return None
-    try:
-        dt = datetime.fromisoformat(iso_ts.replace("Z", "+00:00"))
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        from zoneinfo import ZoneInfo
-        return dt.astimezone(ZoneInfo("America/New_York")).date().isoformat()
-    except Exception:
-        try:
-            return (datetime.fromisoformat(iso_ts.replace("Z", "+00:00"))
-                    - timedelta(hours=4)).date().isoformat()
-        except Exception:
-            return iso_ts[:10]
-
-
 def proposal_ev(p: dict):
     """Probability-weighted expected value derived from a BUY proposal's own
     scenarios - published next to the proposal so every thesis carries its

@@ -14,11 +14,16 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 
+# Sample floor shared with the bucket producer — imported so the gate can never
+# act on a rate the breakdown would have withheld (2026-08-05 audit: this was a
+# hand-synchronized literal 5 in three files).
+from tools.performance_breakdown import MIN_BUCKET_TRADES  # noqa: E402
+
 # Defaults (also overridable via autonomy_config learning_controls)
 DEFAULTS = {
     "min_trades_for_binding": 15,
     "min_trades_for_caution": 5,
-    "min_bucket_trades": 5,
+    "min_bucket_trades": MIN_BUCKET_TRADES,
     "losing_win_rate_pct": 40.0,
     "high_conf_bucket": "0.70+",
     "high_conf_min_win_rate_pct": 50.0,
