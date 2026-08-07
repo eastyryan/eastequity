@@ -709,6 +709,10 @@
   "improvements": [
     {
       "date": "2026-08-07",
+      "note": "Weekly self-review: Last Friday's (7/31) stated change was to explicitly ask, whenever a watchlist name's would_buy_at condition was met or nearly met and still wasn't bought, whether the fat-pitch bar itself is set too high for this account's stated purpose. I cannot grade it as followed-and-worked in the strict sense, because the honest read is 'not exercised' -- engagement.watchlist_feedback shows hit_buy_level_not_acted_still_watched at 0 all week, meaning no watchlist trigger actually fired and sat unbought for me to apply the check to. The two biggest watchlist movers this week, TEAM (+51.9%) and SNOW (+26.4%), both moved without ever reaching their stated levels (TEAM's whole move was today's 8/7 earnings gap; SNOW stayed priced at 146x forward earnings) -- extension, not a missed trigger, so the specific mechanism the change targeted never came up. What actually happened instead: the book opened a second position, DexCom (8/6), off a genuine post-earnings-drift signal rather than a watchlist trigger, which is a different but real answer to the same underlying worry -- the two-week trade droughts documented in the 7/21 and 7/31 reviews did not repeat this week. Track record is unchanged: still 2 closed trades (DELL -13.52, HPE -4.53), both from mid-July, anecdote-phase calibration -- BKR and DXCM are both still open, so there's no new win/loss evidence yet on whether this week's picks were actually good. One number is worth naming honestly: the shadow book crossed into 'binding' this week at n=91 closed counterfactuals, and the raw split (59.3% regret_miss vs 39.6% good_skip) looks bad at a glance -- but the idiosyncratic subset, which strips out shadows whose move the benchmark tape already explains, flips the picture (59.5% good_skip vs 37.8% regret among n=37 idiosyncratic cases). Citing the raw number alone would have overstated how trigger-shy this process has been; the idiosyncratic split is the one that actually says something about where I set the entry bar. The one change for next week: when I cite the shadow book in any run, cite the idiosyncratic good_skip/regret split alongside (or instead of) the raw one, since the raw split is dominated by market-wide moves the entry bar didn't cause -- next Friday's review grades whether that distinction showed up anywhere it mattered, or ended up an unused footnote like this week's stated change did."
+    },
+    {
+      "date": "2026-08-07",
       "note": "Tests gate RED: suite fails at tests/test_mark_run_start.py::test_marker_is_written_with_slot_and_stage \u2014 new BUYs blocked until this checkout is green"
     },
     {
@@ -742,90 +746,6 @@
     {
       "date": "2026-08-06",
       "note": "Process gate: trigger_dead_confirmation_leg_stripped:AXON"
-    },
-    {
-      "date": "2026-08-06",
-      "note": "Tests gate RED: suite fails at tests/test_mark_run_start.py::test_marker_is_written_with_slot_and_stage \u2014 new BUYs blocked until this checkout is green"
-    },
-    {
-      "date": "2026-08-06",
-      "note": "Process gate: trigger_dead_confirmation_leg_stripped:MPC; trigger_dead_confirmation_leg_stripped:GE; trigger_reviews_missing_need_1_got_0"
-    },
-    {
-      "date": "2026-08-06",
-      "note": "Tests gate RED: suite fails at tests/test_context_budget.py::test_blocking_keys_are_inside_the_read_window \u2014 new BUYs blocked until this checkout is green"
-    },
-    {
-      "date": "2026-08-06",
-      "note": "Process gate: dead_indicator_veto:SHOP"
-    },
-    {
-      "date": "2026-08-05",
-      "note": "Daily study (technical_analysis): Anchored VWAP as an auditable reaction level, not a directional signal: where to anchor (event/swing-high/swing-low), the trapped-buyer cost-basis mechanism, and using it for stop/target/entry geometr - Anchored VWAP (AVWAP, pioneered by Brian Shannon) is the volume-weighted average price since a CHOSEN event rather than since the session open, so it reads as the average cost basis of everyone who tr"
-    },
-    {
-      "date": "2026-08-05",
-      "note": "Process gate: trigger_dead_confirmation_leg_stripped:MU"
-    },
-    {
-      "date": "2026-08-05",
-      "note": "Process gate: trigger_dead_confirmation_leg_stripped:DELL"
-    },
-    {
-      "date": "2026-08-05",
-      "note": "Process gate: trigger_dead_confirmation_leg_stripped:CRWD; trigger_dead_confirmation_leg_stripped:TRV; dead_indicator_veto:DELL"
-    },
-    {
-      "date": "2026-08-04",
-      "note": "Daily study (strategy_playbooks): The episodic pivot / power earnings gap: entering a fundamental gap-up on a LEADER that HOLDS, and why the day-after first-pullback with a stop under the gap-day low is the only version this EOD swing - The episodic pivot (Pradeep Bonde / Stockbee) or 'power earnings gap' (Qullamaggie) is the mirror image of my existing catalyst-in-a-downtrend lesson: instead of good news on a below-MA name (which dr"
-    },
-    {
-      "date": "2026-08-04",
-      "note": "Process gate: trigger_dead_confirmation_leg_stripped:FTNT"
-    },
-    {
-      "date": "2026-08-04",
-      "note": "Process gate: trigger_dead_confirmation_leg_stripped:S"
-    },
-    {
-      "date": "2026-08-04",
-      "note": "Process gate: trigger_dead_confirmation_leg_stripped:FTNT; trigger_dead_confirmation_leg_stripped:HPE; trigger_dead_confirmation_leg_stripped:SNOW; dead_indicator_veto:HPE"
-    },
-    {
-      "date": "2026-08-04",
-      "note": "Process gate: seat_reviews_missing_need_1_got_0; dead_indicator_veto:BSX"
-    },
-    {
-      "date": "2026-08-03",
-      "note": "Daily study (risk_management): Pyramiding into a winner: adding above blended cost while the trailed stop keeps total risk flat, and why the chandelier trail is what funds the second unit - My KB covers scaling OUT (KB-6231300499) but not scaling IN, though CLAUDE.md makes adds a core mechanic (max 2, above blended cost, never average down, and 'stops trailed above cost free their budget"
-    },
-    {
-      "date": "2026-08-03",
-      "note": "Process gate: trigger_dead_confirmation_leg_stripped:MPC; trigger_dead_confirmation_leg_stripped:ARES; trigger_dead_confirmation_leg_stripped:BSX"
-    },
-    {
-      "date": "2026-08-02",
-      "note": "** The context bundle correctly flags itself as a stale relay (22h old) and I supplemented it with live WebSearch for the exact class of information a weekend review most needs \u2014 what happened *after* the bundle was gathered (the Warsh/yields story, the chip-sector whipsaw, TEAM's AI-native Jira news, BKR's dividend declaration and reconfirmed turbine order). None of that was in the bundle at all. A cheap win: even on blocked-feed runs, a lightweight weekend-specific News/RSS pull (not the full yfinance/Alpaca stack, just headline sources) run Saturday or Sunday morning would close this gap without me having to reconstruct it by hand each week."
-    },
-    {
-      "date": "2026-07-31",
-      "note": "Weekly knowledge consolidation: 0 merged, 0 retired. No changes this week \u2014 the playbook is small (11 lessons), recent, and coherent. Every lesson is still ungraded because only two trades have closed and none are yet linked to a completed outcome, so there is no evidence to retire anything on, and I don't cut lessons on taste. The clusters that look mergeable (stop/entry/pivot/target geometry; Kelly sizing plus correlation) are explicitly complementary divisions of labor, not duplicates, and four of the newest are under the 7-day age lock anyway. Kept everything, cut nothing, and resisted inventing edits to look busy."
-    },
-    {
-      "date": "2026-07-31",
-      "note": "Weekly self-review: Last Friday's (7/24) stated change was to cross-check every dated or sequenced claim in a BUY thesis against the actual age_days/published timestamps in the bundle, and label anything not directly sourced as unverified rather than asserting a sequence the data does not support. It was followed and it worked: this week's only new position, Baker Hughes (opened 7/28), explicitly separated bundle-sourced, dated facts (record Q2 orders and raised guidance from the 7/27 earnings release, TD Cowen's 7/28 price-target raise) from WebSearch-verified external facts (the Chart Industries deal size and synergy target), flagging the latter plainly as external verification rather than an implied bundle citation -- exactly the discipline that would have caught the 7/24 UNP timing error, and no repeat of that mistake showed up this week. The track record itself is unchanged and still anecdote-phase: 2 closed trades (DELL -13.52, HPE -4.53), 0% win rate, nothing new to grade there. What actually happened this week was behavioral: the book sat 100% flat for two full weeks (7/15 to 7/27) before finally opening BKR, which is now +3.13% and comfortably inside its trailing stop with the thesis intact. What went right -- every other researched candidate this week (MPC, NET, TRV, APH, ADI, AJG, S, TEAM, BSX) was passed on for a specific, named reason (earnings binary already priced by options, insider selling against a green candle, institutional distribution against a beat-pop) rather than vague caution, and BKR itself was a genuine, verified fat pitch rather than a forced trade to end the drought. What went wrong is the drought itself -- a two-week stretch of zero activity is the same standing-caution-becomes-policy failure CLAUDE.md's own 7/21 audit already documented, just recurring in a milder form, and it is a process risk, not a data problem. The one change for next week: when a watchlist name's stated would_buy_at condition is met or nearly met and it still doesn't get bought, I will explicitly ask in that run whether the fat-pitch bar itself is set too high for this account's stated purpose, not only whether that one name's setup is clean -- next Friday's review grades whether that check actually shortened the gap between trades."
-    },
-    {
-      "date": "2026-07-31",
-      "note": "** The `fundamental_screen` block is stamped `age_hours: 290.6` (~12 days stale) despite its note saying it \"refreshed pre-market (6am/9am ET)\" \u2014 so its `estimate_changes_since_previous` (\"what moved THIS MORNING\") is actually a ~12-day-old snapshot, which quietly mis-attributes GOOGL/STX/MPC revision moves to today. A cheap deterministic guard \u2014 if `age_hours` exceeds, say, 24, relabel `estimate_changes_since_previous` as `estimate_changes_stale` and drop the \"this morning\" framing (or set `stale: true` the way `earnings_week` already does) \u2014 would stop a future run from treating a fortnight-old estimate delta as a same-day catalyst."
-    },
-    {
-      "date": "2026-07-31",
-      "note": "Universe freshness audit: 14 stale (['ABT', 'CB', 'CDNS', 'GLW', 'HCA', 'HUBB', 'HUM', 'KO', 'META', 'NEE', 'SLB', 'SPGI', 'V', 'WM']), 0 errors ([]), 23 yfinance mismatches (['ABT', 'APH', 'BLK', 'BSX', 'BX', 'DLR', 'FCX', 'FTNT', 'GS', 'IBKR', 'ICE', 'IESC', 'ITW', 'JPM', 'LRCX', 'MS', 'PWR', 'RDDT', 'SCCO', 'SCHW', 'STX', 'TER', 'TMO']) out of 186 names - investigate before trusting these names' fundamentals."
-    },
-    {
-      "date": "2026-07-30",
-      "note": "Daily study (technical_analysis): Target geometry and scaling out: where the profit target goes (discounted measured move / just under overhead supply), why the first partial waits for >=2R, and how the fixed target and the chandelier - My existing craft covers entries (pivot/pullback) and stops (noise band), but I had no rigorous rule for the TARGET side, which is exactly where my two documented failures live: cutting winners early "
     }
   ],
   "trade_events": [
