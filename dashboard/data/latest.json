@@ -64,15 +64,14 @@
   "mode": "paper",
   "schedule_note": "Runs at 6am, 8:45am, 10:30am, 12pm, 2pm and 4pm ET, a 5:30pm research review, plus overnight and weekend news checks",
   "portfolio": {
-    "cash_usd": 746.22,
-    "total_equity_usd": 992.55,
+    "cash_usd": 684.74,
     "positions": [
       {
         "ticker": "BKR",
         "quantity": 0.995395,
         "avg_cost": 58.198,
-        "market_value_usd": 62.17,
-        "last_price": 62.46,
+        "market_value_usd": 63.32,
+        "last_price": 63.61,
         "opened_at": "2026-07-28T17:54:27.847621+00:00",
         "proposal_id": "20260728-b66630",
         "plan": {
@@ -88,7 +87,7 @@
             "time_box": "If BKR has not sustained a daily close above $65 within 30 trading days of entry, exit and rotate -- the earnings-driven breakout needs volume-confirmed follow-through, not just a one-day pop."
           }
         },
-        "high_water": 62.94,
+        "high_water": 63.62,
         "trailing_stop": 56.863,
         "adds_count": 0,
         "buy_commission_usd": 0.0,
@@ -127,17 +126,14 @@
             "time_box": "If BKR has not sustained a daily close above $65 within 30 trading days of entry, exit and rotate -- the earnings-driven breakout needs volume-confirmed follow-through, not just a one-day pop."
           }
         },
-        "days_held": 12,
-        "sector": "energy_power",
-        "unrealized_pct": 7.32,
-        "unrealized_usd": 4.24
+        "days_held": 12
       },
       {
         "ticker": "DXCM",
         "quantity": 2.144115,
         "avg_cost": 82.92,
-        "market_value_usd": 184.16,
-        "last_price": 85.89,
+        "market_value_usd": 188.33,
+        "last_price": 87.835,
         "opened_at": "2026-08-06T15:05:47.791467+00:00",
         "proposal_id": "20260806-8f3821",
         "plan": {
@@ -154,7 +150,7 @@
           },
           "calibration_probe": null
         },
-        "high_water": 85.89,
+        "high_water": 87.835,
         "adds_count": 0,
         "buy_commission_usd": 0.0,
         "demand_driver": "healthcare",
@@ -192,12 +188,73 @@
             "time_box": "If DXCM has not reclaimed and held above $87 (near its 52-week high) within 25 trading days of entry (by ~2026-09-11), the post-earnings-drift thesis isn't playing out -- reassess."
           }
         },
-        "days_held": 4,
-        "sector": "healthcare",
-        "unrealized_pct": 3.58,
-        "unrealized_usd": 6.37
+        "days_held": 4
+      },
+      {
+        "ticker": "HPE",
+        "quantity": 1.114718,
+        "avg_cost": 55.144,
+        "market_value_usd": 61.44,
+        "last_price": 55.1175,
+        "opened_at": "2026-08-10T15:13:03.842037+00:00",
+        "proposal_id": "20260810-6708d8",
+        "plan": {
+          "stop_loss": 51.25,
+          "target_price": 66.5,
+          "holding_horizon_days": 50,
+          "entry_price_max": 55.75,
+          "confidence": 0.58,
+          "demand_driver": "hyperscaler_server_capex",
+          "thesis_invalidators": {
+            "invalidating_print": "Fiscal Q3 FY2026 results (due ~2026-09-03) showing TTM operating margin continuing to compress below the current 0.97% level rather than the Juniper-driven margin recovery Morgan Stanley's upgrade thesis assumes, or revenue coming in below the raised $11.5-12.1B guide.",
+            "invalidating_structure": "A daily close back below $53.22 (yesterday's pre-upgrade close) on above-average volume, giving back the entire 2026-08-10 Morgan-Stanley-upgrade gap.",
+            "time_box": "If HPE has not closed above $60 within 35 trading days of entry (roughly two-thirds of the way to the $65.56 consensus mean target), the upgrade-driven re-rate isn't playing out -- exit and rotate."
+          },
+          "calibration_probe": true
+        },
+        "high_water": 55.144,
+        "adds_count": 0,
+        "buy_commission_usd": 0.0,
+        "demand_driver": "hyperscaler_server_capex",
+        "protective_stop": {
+          "status": "resting",
+          "stop_price": 51.25,
+          "qty": 1.0,
+          "uncovered_qty": 0.114718,
+          "session_only": false,
+          "time_in_force": "gtc",
+          "client_order_id": "EESTOP-HPE-f97e3ae390",
+          "alpaca_order_id": "e5217369-d8f5-45fb-8b99-71bb9e59b8e5",
+          "armed_at": "2026-08-10T15:13:04.113714+00:00"
+        },
+        "original_plan": {
+          "thesis": "Morgan Stanley upgraded HPE to Overweight today (2026-08-10), PT $69 (from $71, ~30% upside from Friday's close), reframing the Juniper Networks acquisition as a higher-margin growth driver rather than an integration drag (WebSearch: CNBC, Investing.com, GuruFocus, analyst Erik Woodring). Shares gapped from Friday's $53.22 close to ~$55.56 intraday on the news, a move the bundle's live price snapshot corroborates. HPE ranks #2 in this run's top_setups lane (score 6.64), is in a MACD bull_cross_recent, carries +73.7% 3-month relative strength, and sits 13.5% below its 52-week high ($64.25) even after today's pop. It has beaten EPS estimates 4 straight quarters (last surprise +48%, news_and_catalysts). Fundamentals are genuinely mixed and I am underwriting that directly: TTM operating margin is just 0.97% (vs 6.54% a year ago, deteriorating trend, quarter ended 2026-04-30) and net debt/EBITDA is 4.36x (levered, deep_fundamentals) against $21.3B total debt post-Juniper, while TTM FCF has improved to $3.99B off a depressed prior-year comp. portfolio_risk shows this name is a genuine diversifier (corr_to_book -0.04) and the current book carries 0% hyperscaler_server_capex exposure (BKR=energy, DXCM=healthcare) -- this does not stack the DELL+HPE theme that produced the book's only realized losses to date, because nothing in that theme is currently held. Sized at ~70% of the full risk-based allocation to leave room to add on confirmation.",
+          "stop_loss": 51.25,
+          "target_price": 66.5,
+          "entry_price_max": 55.75,
+          "holding_horizon_days": 50,
+          "confidence": 0.58,
+          "risk_reward_ratio": 2.39,
+          "catalysts": [
+            "Morgan Stanley upgrade to Overweight, PT $69 (from $71, ~30% implied upside), 2026-08-10 (WebSearch-verified: CNBC, Investing.com, GuruFocus)",
+            "Fiscal Q3 FY2026 earnings due 2026-09-03 against the raised guide of $11.5-12.1B revenue (guidance_ledger, 8-K filed 2026-06-01)",
+            "4 consecutive quarters of EPS beats, most recent surprise +48% (news_and_catalysts.earnings_surprises)"
+          ],
+          "risk_map": "This fails if (1) the Juniper margin-recovery story MS is underwriting doesn't show up in the 9/3 print -- TTM operating margin is 0.97%, down from 6.54% a year ago, against 4.36x net debt/EBITDA (levered) and $21.3B total debt -- a name this leveraged has little room to disappoint; (2) this is a fresh upgrade-day gap, not a pullback -- real chase risk; (3) diluted shares grew +8.32% YoY, so a revenue beat can still under-deliver EPS, and CEO Antonio Neri sold $3.97M on a 10b5-1 plan on 4/17 with zero discretionary insider buying in the trailing 120 days -- routine, but no buying corroboration either; (4) options already price a 10.35% expected move and 71.8% ATM IV over 11 days, so this name can gap hard either direction -- the stop is set outside that band deliberately. Early tell: a daily close back below $53.22 (pre-upgrade close) on rising volume.",
+          "macro_context": "Regime is supportive (SPY above its 200-DMA, regime_hint 4/5) and momentum_health is healthy (no factor unwind, so full risk budget applies). hyperscaler_enablers and data_center_reits are among today's fastest-accelerating sectors (sector_rotation_30d: +31.1pp / +12.2pp), a tailwind for HPE's AI-server/networking mix. The current book (BKR=energy, DXCM=healthcare) carries zero hyperscaler_server_capex exposure, so this is a genuine third, uncorrelated leg rather than doubling an existing bet -- portfolio_risk shows corr_to_book of -0.04 for HPE specifically.",
+          "proposed_at": "2026-08-10T15:09:59.182889+00:00",
+          "demand_driver": "hyperscaler_server_capex",
+          "thesis_invalidators": {
+            "invalidating_print": "Fiscal Q3 FY2026 results (due ~2026-09-03) showing TTM operating margin continuing to compress below the current 0.97% level rather than the Juniper-driven margin recovery Morgan Stanley's upgrade thesis assumes, or revenue coming in below the raised $11.5-12.1B guide.",
+            "invalidating_structure": "A daily close back below $53.22 (yesterday's pre-upgrade close) on above-average volume, giving back the entire 2026-08-10 Morgan-Stanley-upgrade gap.",
+            "time_box": "If HPE has not closed above $60 within 35 trading days of entry (roughly two-thirds of the way to the $65.56 consensus mean target), the upgrade-driven re-rate isn't playing out -- exit and rotate."
+          },
+          "calibration_probe": true
+        },
+        "days_held": 0
       }
-    ]
+    ],
+    "total_equity_usd": 997.83
   },
   "as_of_et": "2026-08-10",
   "macro_snapshot": {
@@ -1764,5 +1821,11 @@
       "acted": false,
       "dropped_date": "2026-07-28"
     }
-  ]
+  ],
+  "executor_update": {
+    "executor_updated_at": "2026-08-10T15:13:04.398951+00:00",
+    "executed": [
+      "BUY HPE 1.114718 @ 55.144"
+    ]
+  }
 }

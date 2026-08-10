@@ -1,13 +1,13 @@
 {
-  "cash_usd": 746.22,
-  "total_equity_usd": 992.55,
+  "cash_usd": 684.74,
+  "total_equity_usd": 997.83,
   "positions": [
     {
       "ticker": "BKR",
       "quantity": 0.995395,
       "avg_cost": 58.198,
-      "market_value_usd": 62.17,
-      "last_price": 62.46,
+      "market_value_usd": 63.32,
+      "last_price": 63.61,
       "opened_at": "2026-07-28T17:54:27.847621+00:00",
       "proposal_id": "20260728-b66630",
       "plan": {
@@ -23,7 +23,7 @@
           "time_box": "If BKR has not sustained a daily close above $65 within 30 trading days of entry, exit and rotate -- the earnings-driven breakout needs volume-confirmed follow-through, not just a one-day pop."
         }
       },
-      "high_water": 62.94,
+      "high_water": 63.62,
       "trailing_stop": 56.863,
       "adds_count": 0,
       "buy_commission_usd": 0.0,
@@ -44,8 +44,8 @@
       "ticker": "DXCM",
       "quantity": 2.144115,
       "avg_cost": 82.92,
-      "market_value_usd": 184.16,
-      "last_price": 85.89,
+      "market_value_usd": 188.33,
+      "last_price": 87.835,
       "opened_at": "2026-08-06T15:05:47.791467+00:00",
       "proposal_id": "20260806-8f3821",
       "plan": {
@@ -62,7 +62,7 @@
         },
         "calibration_probe": null
       },
-      "high_water": 85.89,
+      "high_water": 87.835,
       "adds_count": 0,
       "buy_commission_usd": 0.0,
       "demand_driver": "healthcare",
@@ -76,6 +76,44 @@
         "client_order_id": "EESTOP-DXCM-c1c88205c1",
         "alpaca_order_id": "46bbbf81-5aa0-4cc9-878e-1e783a5d8418",
         "armed_at": "2026-08-06T15:05:47.948694+00:00"
+      }
+    },
+    {
+      "ticker": "HPE",
+      "quantity": 1.114718,
+      "avg_cost": 55.144,
+      "market_value_usd": 61.44,
+      "last_price": 55.1175,
+      "opened_at": "2026-08-10T15:13:03.842037+00:00",
+      "proposal_id": "20260810-6708d8",
+      "plan": {
+        "stop_loss": 51.25,
+        "target_price": 66.5,
+        "holding_horizon_days": 50,
+        "entry_price_max": 55.75,
+        "confidence": 0.58,
+        "demand_driver": "hyperscaler_server_capex",
+        "thesis_invalidators": {
+          "invalidating_print": "Fiscal Q3 FY2026 results (due ~2026-09-03) showing TTM operating margin continuing to compress below the current 0.97% level rather than the Juniper-driven margin recovery Morgan Stanley's upgrade thesis assumes, or revenue coming in below the raised $11.5-12.1B guide.",
+          "invalidating_structure": "A daily close back below $53.22 (yesterday's pre-upgrade close) on above-average volume, giving back the entire 2026-08-10 Morgan-Stanley-upgrade gap.",
+          "time_box": "If HPE has not closed above $60 within 35 trading days of entry (roughly two-thirds of the way to the $65.56 consensus mean target), the upgrade-driven re-rate isn't playing out -- exit and rotate."
+        },
+        "calibration_probe": true
+      },
+      "high_water": 55.144,
+      "adds_count": 0,
+      "buy_commission_usd": 0.0,
+      "demand_driver": "hyperscaler_server_capex",
+      "protective_stop": {
+        "status": "resting",
+        "stop_price": 51.25,
+        "qty": 1.0,
+        "uncovered_qty": 0.114718,
+        "session_only": false,
+        "time_in_force": "gtc",
+        "client_order_id": "EESTOP-HPE-f97e3ae390",
+        "alpaca_order_id": "e5217369-d8f5-45fb-8b99-71bb9e59b8e5",
+        "armed_at": "2026-08-10T15:13:04.113714+00:00"
       }
     }
   ],
@@ -304,8 +342,54 @@
       "alpaca_status": "filled",
       "filled_at": "2026-08-06T15:05:45.294888723Z",
       "position_avg_cost_after": 82.92
+    },
+    {
+      "ticker": "HPE",
+      "action": "BUY",
+      "position_size_usd": 61.48,
+      "reference_price": 55.57,
+      "proposal_id": "20260810-6708d8",
+      "sell_fraction": null,
+      "atr_pct": 5.71,
+      "entry_price_max": 55.75,
+      "plan": {
+        "stop_loss": 51.25,
+        "target_price": 66.5,
+        "holding_horizon_days": 50,
+        "entry_price_max": 55.75,
+        "confidence": 0.58,
+        "demand_driver": "hyperscaler_server_capex",
+        "thesis_invalidators": {
+          "invalidating_print": "Fiscal Q3 FY2026 results (due ~2026-09-03) showing TTM operating margin continuing to compress below the current 0.97% level rather than the Juniper-driven margin recovery Morgan Stanley's upgrade thesis assumes, or revenue coming in below the raised $11.5-12.1B guide.",
+          "invalidating_structure": "A daily close back below $53.22 (yesterday's pre-upgrade close) on above-average volume, giving back the entire 2026-08-10 Morgan-Stanley-upgrade gap.",
+          "time_box": "If HPE has not closed above $60 within 35 trading days of entry (roughly two-thirds of the way to the $65.56 consensus mean target), the upgrade-driven re-rate isn't playing out -- exit and rotate."
+        },
+        "calibration_probe": true
+      },
+      "demand_driver": "hyperscaler_server_capex",
+      "client_order_id": "EE-1b6d8042f88b",
+      "order_id": "EE-1b6d8042f88b",
+      "status": "filled",
+      "submitted_at": "2026-08-10T15:13:03.045670+00:00",
+      "alpaca_order_id": "8e459068-2411-4f4c-9eb0-a8b81c4b648d",
+      "fill_price": 55.144,
+      "quantity": 1.114718,
+      "notional_usd": 61.47,
+      "is_add": false,
+      "total_cost_usd": 61.47,
+      "entry_gap_usd": 0.0,
+      "fees_usd": {
+        "commission": 0.0,
+        "sec_fee": 0.0,
+        "taf": 0.0,
+        "slippage_bps": 0.0,
+        "effective_slippage_pct": 0.0
+      },
+      "alpaca_status": "filled",
+      "filled_at": "2026-08-10T15:13:03.488673999Z",
+      "position_avg_cost_after": 55.144
     }
   ],
-  "broker_synced_at": "2026-08-06T19:13:26.876044+00:00",
+  "broker_synced_at": "2026-08-10T15:13:04.396582+00:00",
   "broker_backend": "alpaca_paper"
 }
