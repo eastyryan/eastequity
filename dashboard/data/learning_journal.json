@@ -1,16 +1,49 @@
 {
-  "updated_at": "2026-08-07T23:05:19.494677+00:00",
+  "updated_at": "2026-08-10T23:07:37.582304+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 4,
     "fundamental_analysis": 1,
-    "risk_management": 2,
+    "risk_management": 3,
     "strategy_playbooks": 3,
     "market_microstructure": 1,
     "trading_psychology": 1,
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-9689938621",
+      "discipline": "risk_management",
+      "topic": "Stop slippage and overnight/event gap risk: why realized R systematically undershoots the underwritten 2:1, and how to build a gap buffer into sizing, setup selection, and stop width",
+      "summary": "A regular stop-loss is a market order the instant it triggers: the broker guarantees a FILL, never a PRICE, so through a gap or a fast move it executes at the first available print, not at your level (Schwab, Optimus Futures, Topstep). The 1R I underwrite is therefore a FLOOR on the loss, not a ceiling, and realized R can and does exceed it. My own two closed trades prove it: DELL's 408 stop filled at 389.75, 4.47% and 0.55 ATR through, turning a planned -1R into realized -1.43R (r_gap 3.17), and across both closes mean realized R was -0.985 against a claimed mean RR of 1.765 - the 2:1 that cleared the validator gate did not survive contact. Two frictions with very different magnitudes are at work: intraday slippage on liquid large-caps is small (~0.1%, and momentum/breakout entries slip somewhat worse because you buy what is already moving), but overnight and event GAPS are the fat left tail - SPY gaps >2% on ~18 days a year and single names far more, with earnings the single largest controllable driver (financial-spread-betting, tradingsetupsreview, enlightenedstocktrading; the frequency and magnitude figures are reported by secondary practitioner sources, not primary data I could verify). Expectancy is W*avgWin - L*avgLoss measured in R, so when avgLoss drifts beyond -1R via slippage and gaps the edge erodes directly, and below roughly +0.2R of expectancy costs and slippage consume most of what is left (systemr.ai, traderssecondbrain, quantstart); tail losses greater than ",
+      "key_points": [
+        "A regular stop becomes a MARKET order once triggered: fill guaranteed, price not. It cannot cover a gap - it fills at the first available print, so the 1R I underwrite is the floor on a loss, not the ceiling.",
+        "My record confirms the erosion: DELL filled 0.55 ATR / 4.47% through its 408 stop (-1.43R vs planned -1R); both closes averaged -0.985R realized against 1.765 claimed RR. Claimed 2:1 did not survive contact.",
+        "Gaps >> intraday slippage in magnitude. Liquid large-cap slippage is ~0.1%; the real damage is the overnight/event tail, and scheduled earnings are the #1 controllable gap trigger.",
+        "Slippage and gaps erode expectancy directly by pushing avgLoss past -1R; below ~+0.2R expectancy, costs eat most of the edge, and >1R tail losses hurt geometric growth asymmetrically (KB-2999578881).",
+        "Widening the structural stop lowers slippage-as-a-fraction-of-R: a 0.55-ATR gap-through is +55% of a 1-ATR stop but only +27% of a 2-ATR stop - an independent reason to aim wider than the bare ATR floor.",
+        "Momentum/breakout entries and thin names slip worst; chasing extension compounds gap exposure, so prefer liquid names and buy at structure, not extended.",
+        "Guaranteed stops (fee-based, fill at level through gaps) are CFD/spread-bet only - unavailable here. Manage gap risk by sizing, setup selection, and avoidance, not by any order type."
+      ],
+      "how_to_apply": "Underwrite every BUY on realized-R, not planned-R: treat the 2:1 that clears the validator as the optimistic case, and on any name with event or gap exposure demand a genuine cushion (aim ~2.5:1+) rather than scraping 2.0, because a single 0.5-ATR gap-through converts a 1R plan into ~1.4-1.5R realized, exactly as DELL did. Respect the earnings/binary rule as a GAP rule and not just an IV-crush rule (extending KB-8308262054): never carry an ATR-floored stop through a print inside holding_horizon_days since no stop inside the 15% cap can cover the jump - trade around it by entering after the gap settles, or size for gap-adjusted risk with an explicit earnings_case, and always honor the 3-day blackout. When setting stop width, count slippage-as-fraction-of-R alongside the sqrt(t) noise band (KB-2388376284): aiming ~1.5-2x ATR rather than the bare min_stop_distance_pct floor both keeps me out of ordinary noise AND shrinks the R-impact of any gap-through, so lean wider on a multi-week swing. Prefer liquid names (the bundle's liquid flag / avg_dollar_volume_20d_usd) and avoid chasing extended breakouts, and read position_stop_cushion.cushion_in_atr as a gap-exposure gauge, not only a noi",
+      "sources": [
+        "https://www.financial-spread-betting.com/Stop-loss-leverage.html",
+        "https://www.tradingsetupsreview.com/manage-gap-risk-swing-trading/",
+        "https://enlightenedstocktrading.com/slippage-in-trading/",
+        "https://www.schwab.com/learn/story/help-protect-your-position-using-stop-orders",
+        "https://help.topstep.com/en/articles/8765442-order-types-fills-and-slippage",
+        "https://systemr.ai/learn/systematic-trading/expected-value-trading/"
+      ],
+      "learned_at": "2026-08-10T23:07:37.579068+00:00",
+      "run_id": "20260810-2c9a5d",
+      "tensions": [
+        {
+          "with": "KB-2388376284",
+          "why": "Both bear on stop WIDTH but for independent reasons that stack, not conflict. KB-2388376284 argues width from NOISE (a stop must sit beyond the sqrt(t) band so ordinary wiggle doesn't fire it) and holds entry location is the binding lever. This lesson adds a second, always-additive reason to aim bey",
+          "noted_at": "2026-08-10"
+        }
+      ]
+    },
     {
       "id": "KB-2999578881",
       "discipline": "risk_management",
