@@ -3,67 +3,67 @@
   "_tier_note": "SLIM brain pack, ordered so everything BINDING is inside the first ~2000 lines \u2014 the default Read window. Keys appear in decision order: limits, digest, then the hard gate flags (data quality, freshness, halts, engagement, earnings lanes), factor_map, portfolio_competition, the book (portfolio, stop_engineering, cushion), then reasoning_process (learning_pack), then research detail. Research maps below are structurally capped; every cap stamps a `_trimmed` note naming what it dropped. Full archive: full_context_path.",
   "_pack_budget": {
     "note": "Measured line budget for this pack. Your Read tool returns ~2000 lines by default; anything starting past that is NOT read unless you page to it with Read(offset=N). Every input that can BLOCK a proposal is above that line by construction, so a default Read is sufficient to answer every gate. The entries below are what you did NOT get \u2014 page to them when a name matters.",
-    "total_lines": 36813,
+    "total_lines": 35476,
     "read_window_lines": 2000,
     "keys_beyond_read_window": [
-      "macro_regime@2425",
-      "benchmark_close@2509",
-      "market_events@2510",
-      "market_breadth@2563",
-      "momentum_health@2896",
-      "watchlist_trigger_alerts@2954",
-      "tape_focus_promotions@2968",
-      "portfolio_risk@3020",
-      "track_record@3130",
-      "ownership_flow@3317",
-      "earnings_deep_dive@3741",
-      "earnings_week@3745",
-      "lessons_learned@3764",
-      "position_histories@3777",
-      "market_news@4044",
-      "market_radar@4219",
-      "universe_scan@4470",
-      "sec_filings@15047",
-      "deep_fundamentals@20938",
-      "filing_texts@27466",
-      "filing_texts_note@27593",
-      "news_and_catalysts@27594",
-      "insider_activity@29455",
-      "smart_money_13f@32395",
-      "options_signals@32703",
-      "partnerships@34419",
-      "guidance_ledger@34818",
-      "fundamental_screen@34905",
-      "todays_8ks@35117",
-      "stack_cards@35152",
-      "financial_checklists@35471",
-      "concept_memory@36186",
-      "discovery_screen@36809",
-      "market_checkin@36812"
+      "macro_regime@2402",
+      "benchmark_close@2463",
+      "market_events@2464",
+      "market_breadth@2507",
+      "momentum_health@2840",
+      "watchlist_trigger_alerts@2898",
+      "tape_focus_promotions@2912",
+      "portfolio_risk@2955",
+      "track_record@3060",
+      "ownership_flow@3247",
+      "earnings_deep_dive@3650",
+      "earnings_week@3654",
+      "lessons_learned@3673",
+      "position_histories@3686",
+      "market_news@3953",
+      "market_radar@4119",
+      "universe_scan@4370",
+      "sec_filings@14947",
+      "deep_fundamentals@20504",
+      "filing_texts@26667",
+      "filing_texts_note@26794",
+      "news_and_catalysts@26795",
+      "insider_activity@28555",
+      "smart_money_13f@31275",
+      "options_signals@31568",
+      "partnerships@33183",
+      "guidance_ledger@33572",
+      "fundamental_screen@33659",
+      "todays_8ks@33871",
+      "stack_cards@33906",
+      "financial_checklists@34208",
+      "concept_memory@34883",
+      "discovery_screen@35472",
+      "market_checkin@35475"
     ],
     "trimmed": [
       "portfolio.history: kept newest 5 of 9 order records as flat rows (plans omitted)",
       "reasoning_process.price_freshness: sample cut to 5 of 12 rows",
-      "sec_filings: capped statement history to the newest 5 periods for 19 tickers",
-      "deep_fundamentals: capped quarterly_facts to the newest 2 periods for 19 tickers (985 rows); all series incl. deferred_revenue/RPO retained",
+      "sec_filings: capped statement history to the newest 5 periods for 18 tickers",
+      "deep_fundamentals: capped quarterly_facts to the newest 2 periods for 18 tickers (929 rows); all series incl. deferred_revenue/RPO retained",
       "filing_texts: truncated 10 prose excerpts (3000 chars, 6000 when guidance language is present)",
-      "fundamentals_freshness: dropped 19 fresh-ticker rows, kept all 0 stale/warned names",
-      "ownership_flow: kept alignment + read_for_swing + synthesis for 19 tickers, dropped the supporting evidence blocks (institutional / retail_proxy / price_action detail)"
+      "fundamentals_freshness: dropped 18 fresh-ticker rows, kept all 0 stale/warned names",
+      "ownership_flow: kept alignment + read_for_swing + synthesis for 18 tickers, dropped the supporting evidence blocks (institutional / retail_proxy / price_action detail)"
     ],
     "withheld_by_design": [],
     "unregistered_keys": [],
-    "full_archive": "/home/runner/work/eastequity/eastequity/state/context_full_20260810-0ce240.json"
+    "full_archive": "/home/runner/work/eastequity/eastequity/state/context_full_20260810-303627.json"
   },
-  "run_date": "2026-08-10T21:09:21.276583+00:00",
+  "run_date": "2026-08-10T22:06:00.303393+00:00",
   "as_of_et": "2026-08-10",
   "trading_mode": "paper",
   "run_depth": "evening_review",
   "run_depth_note": "Evening review: research and commentary refresh; no trading (orchestrator news-only path).",
   "allows_new_buys": false,
-  "full_context_path": "/home/runner/work/eastequity/eastequity/state/context_full_20260810-0ce240.json",
+  "full_context_path": "/home/runner/work/eastequity/eastequity/state/context_full_20260810-303627.json",
   "hard_limits": {
     "note": "SINGLE SOURCE OF TRUTH for every threshold the validator enforces, read live from autonomy_config.json this run. Any number quoted in CLAUDE.md prose is DESCRIPTIVE \u2014 when the two disagree, these values win, because these are the ones the code actually checks. (CLAUDE.md stated RR >= 1.0 for two days after the floor was raised to 2.0 on 2026-07-16, so every proposal built against the prose was rejected on arrival.)",
-    "effective_max_position_usd": 199.5,
+    "effective_max_position_usd": 199.6,
     "position_sizing": {
       "starting_capital_usd": 1000,
       "max_position_pct_of_portfolio": 0.2,
@@ -634,30 +634,14 @@
         "insider_distinct_buyers": 0,
         "13f_net_activity": "no_tracked_activity",
         "deal_8ks_recent": 4
-      },
-      "S": {
-        "latest_quarter_end": "2026-04-30",
-        "revenue_usd": 276657000,
-        "revenue_yoy_pct": 31.3,
-        "net_income_usd": -76164000,
-        "ttm_ebitda_usd": -260206000.0,
-        "fcf_ttm_usd": 61844000.0,
-        "sbc_pct_of_revenue": 27.07,
-        "market_cap_usd": 7491516448.043507,
-        "fundamentals_stale": false,
-        "next_earnings": "2026-08-27",
-        "insider_signal": "notable_discretionary_selling",
-        "insider_distinct_buyers": 0,
-        "13f_net_activity": "no_tracked_activity",
-        "deal_8ks_recent": 0
       }
     }
   },
   "price_freshness_live": {
     "status": "ok",
-    "as_of": "2026-08-10T21:03:50.895912+00:00",
+    "as_of": "2026-08-10T22:01:08.344220+00:00",
     "source": "alpaca_iex",
-    "age_min": 5.6,
+    "age_min": 4.9,
     "max_age_min": 30.0,
     "stale": false,
     "applied": [
@@ -858,7 +842,7 @@
     "stale_tickers": [],
     "universe_audit": null,
     "_trimmed": {
-      "fresh_ticker_rows": "19 names with non-stale fundamentals omitted (ABNB, ADBE, AEM, BKR, BSX, CLS, DXCM, HPE...). Their quarter-end is in digest.by_ticker[T].latest_quarter_end. Every STALE name is kept here in full \u2014 this cap can only ever drop fresh names."
+      "fresh_ticker_rows": "18 names with non-stale fundamentals omitted (ABNB, ADBE, AEM, BKR, BSX, CLS, DXCM, HPE...). Their quarter-end is in digest.by_ticker[T].latest_quarter_end. Every STALE name is kept here in full \u2014 this cap can only ever drop fresh names."
     }
   },
   "engagement": {
@@ -973,36 +957,36 @@
     "theme_buckets": [
       {
         "demand_driver": "healthcare",
-        "market_value_usd": 188.1,
-        "pct_of_equity": 0.1886,
+        "market_value_usd": 188.32,
+        "pct_of_equity": 0.1887,
         "tickers": [
           "DXCM"
         ]
       },
       {
         "demand_driver": "energy",
-        "market_value_usd": 63.37,
-        "pct_of_equity": 0.0635,
+        "market_value_usd": 63.85,
+        "pct_of_equity": 0.064,
         "tickers": [
           "BKR"
         ]
       },
       {
         "demand_driver": "hyperscaler_server_capex",
-        "market_value_usd": 61.31,
-        "pct_of_equity": 0.0615,
+        "market_value_usd": 61.09,
+        "pct_of_equity": 0.0612,
         "tickers": [
           "HPE"
         ]
       }
     ],
     "top_driver": "healthcare",
-    "top_driver_pct_of_equity": 0.1886,
+    "top_driver_pct_of_equity": 0.1887,
     "top_driver_tickers": [
       "DXCM"
     ],
-    "ai_stack_pct_of_equity": 0.0615,
-    "ai_core_pct_of_equity": 0.0615,
+    "ai_stack_pct_of_equity": 0.0612,
+    "ai_core_pct_of_equity": 0.0612,
     "n_positions": 3,
     "n_drivers": 3,
     "orthogonal_tickers": [
@@ -1031,8 +1015,8 @@
         "BKR",
         "HPE"
       ],
-      "ai_stack_pct_of_equity": 0.0615,
-      "top_driver_pct_of_equity": 0.1886
+      "ai_stack_pct_of_equity": 0.0612,
+      "top_driver_pct_of_equity": 0.1887
     },
     "how_to_respond": "When requires_factor_response is true, output factor_response: {concentration_level, plan (1-3 sentences), actions: [trim|cash|no_same_theme_buy|rotate|hold_plan]} aligned with unwind_playbook. Even when false, use the map before any BUY that would raise top_driver or ai_stack weight."
   },
@@ -1044,8 +1028,8 @@
       {
         "ticker": "BKR",
         "demand_driver": "energy",
-        "market_value_usd": 63.37,
-        "unrealized_pnl_pct": 9.39,
+        "market_value_usd": 63.85,
+        "unrealized_pnl_pct": 10.23,
         "setup_score": null,
         "scan_present": false,
         "rel_strength_1m_pct": null,
@@ -1103,8 +1087,8 @@
       {
         "ticker": "DXCM",
         "demand_driver": "healthcare",
-        "market_value_usd": 188.1,
-        "unrealized_pnl_pct": 5.8,
+        "market_value_usd": 188.32,
+        "unrealized_pnl_pct": 5.92,
         "setup_score": 6.25,
         "scan_present": true,
         "rel_strength_1m_pct": 14.5,
@@ -1162,8 +1146,8 @@
       {
         "ticker": "HPE",
         "demand_driver": "hyperscaler_server_capex",
-        "market_value_usd": 61.31,
-        "unrealized_pnl_pct": -0.26,
+        "market_value_usd": 61.09,
+        "unrealized_pnl_pct": -0.62,
         "setup_score": 7.03,
         "scan_present": true,
         "rel_strength_1m_pct": 10.3,
@@ -1232,14 +1216,14 @@
     "broker": "alpaca_paper",
     "mode": "paper",
     "cash_usd": 684.74,
-    "total_equity_usd": 997.52,
+    "total_equity_usd": 998.0,
     "positions": [
       {
         "ticker": "BKR",
         "quantity": 0.995395,
         "avg_cost": 58.198,
-        "market_value_usd": 63.37,
-        "last_price": 63.66,
+        "market_value_usd": 63.85,
+        "last_price": 64.15,
         "opened_at": "2026-07-28T17:54:27.847621+00:00",
         "proposal_id": "20260728-b66630",
         "plan": {
@@ -1255,7 +1239,7 @@
             "time_box": "If BKR has not sustained a daily close above $65 within 30 trading days of entry, exit and rotate -- the earnings-driven breakout needs volume-confirmed follow-through, not just a one-day pop."
           }
         },
-        "high_water": 64.14,
+        "high_water": 64.15,
         "trailing_stop": 57.6939,
         "adds_count": 0,
         "buy_commission_usd": 0.0,
@@ -1301,8 +1285,8 @@
         "ticker": "DXCM",
         "quantity": 2.144115,
         "avg_cost": 82.92,
-        "market_value_usd": 188.1,
-        "last_price": 87.73,
+        "market_value_usd": 188.32,
+        "last_price": 87.83,
         "opened_at": "2026-08-06T15:05:47.791467+00:00",
         "proposal_id": "20260806-8f3821",
         "plan": {
@@ -1363,8 +1347,8 @@
         "ticker": "HPE",
         "quantity": 1.114718,
         "avg_cost": 55.144,
-        "market_value_usd": 61.31,
-        "last_price": 55.0,
+        "market_value_usd": 61.09,
+        "last_price": 54.8,
         "opened_at": "2026-08-10T15:13:03.842037+00:00",
         "proposal_id": "20260810-6708d8",
         "plan": {
@@ -1476,7 +1460,7 @@
         "quantity": 0.995395
       }
     ],
-    "broker_synced_at": "2026-08-10T21:09:23.982421+00:00",
+    "broker_synced_at": "2026-08-10T22:06:01.052964+00:00",
     "broker_backend": "alpaca_paper",
     "_trimmed": {
       "history": "order log compacted to the newest 5 of 9 records, nested plans omitted. Open positions carry their plan on positions[].original_plan; closed-trade history is track_record.closed_trades; the full log is in the archive at full_context_path."
@@ -1592,12 +1576,6 @@
         "expected_move_pct": 6.89,
         "min_stop_distance_pct": 5.46,
         "tradeable": true
-      },
-      "S": {
-        "atr_pct": 3.94,
-        "expected_move_pct": 8.1,
-        "min_stop_distance_pct": 4.05,
-        "tradeable": true
       }
     }
   },
@@ -1605,41 +1583,41 @@
     "note": "For each open position: room left between today's price and your recorded stop, measured in the name's own ATR. cushion_in_atr < 1 (inside_noise_band true) means one ordinary session could hit the stop - decide deliberately (hold through it, or exit on your terms) rather than get noise-stopped. The safety layer still enforces the recorded stop on a closing basis.",
     "positions": {
       "BKR": {
-        "last_price": 63.66,
+        "last_price": 64.15,
         "recorded_stop": 54.0,
-        "cushion_to_stop_pct": 9.37,
+        "cushion_to_stop_pct": 10.06,
         "atr_pct": 3.25,
         "expected_move_pct": 4.88,
         "trailing_stop": 57.69,
         "effective_stop": 57.69,
-        "cushion_in_atr": 2.88,
+        "cushion_in_atr": 3.1,
         "inside_noise_band": false,
         "stop_distance_from_entry_pct": 2.21,
-        "unrealized_pnl_pct": 9.39,
+        "unrealized_pnl_pct": 10.23,
         "stalled": false
       },
       "DXCM": {
-        "last_price": 87.73,
+        "last_price": 87.83,
         "recorded_stop": 78.4,
-        "cushion_to_stop_pct": 10.63,
+        "cushion_to_stop_pct": 10.74,
         "atr_pct": 3.79,
         "expected_move_pct": 5.88,
-        "cushion_in_atr": 2.81,
+        "cushion_in_atr": 2.83,
         "inside_noise_band": false,
         "stop_distance_from_entry_pct": 5.54,
-        "unrealized_pnl_pct": 5.8,
+        "unrealized_pnl_pct": 5.92,
         "stalled": false
       },
       "HPE": {
-        "last_price": 55.0,
+        "last_price": 54.8,
         "recorded_stop": 51.25,
-        "cushion_to_stop_pct": 6.82,
+        "cushion_to_stop_pct": 6.48,
         "atr_pct": 5.67,
         "expected_move_pct": 9.26,
-        "cushion_in_atr": 1.2,
+        "cushion_in_atr": 1.14,
         "inside_noise_band": false,
         "stop_distance_from_entry_pct": 8.07,
-        "unrealized_pnl_pct": -0.26,
+        "unrealized_pnl_pct": -0.62,
         "stalled": false
       }
     }
@@ -1724,24 +1702,24 @@
     "theme_exposure": [
       {
         "demand_driver": "healthcare",
-        "market_value_usd": 188.1,
-        "pct_of_equity": 0.1886,
+        "market_value_usd": 188.32,
+        "pct_of_equity": 0.1887,
         "tickers": [
           "DXCM"
         ]
       },
       {
         "demand_driver": "energy",
-        "market_value_usd": 63.37,
-        "pct_of_equity": 0.0635,
+        "market_value_usd": 63.85,
+        "pct_of_equity": 0.064,
         "tickers": [
           "BKR"
         ]
       },
       {
         "demand_driver": "hyperscaler_server_capex",
-        "market_value_usd": 61.31,
-        "pct_of_equity": 0.0615,
+        "market_value_usd": 61.09,
+        "pct_of_equity": 0.0612,
         "tickers": [
           "HPE"
         ]
@@ -1750,37 +1728,37 @@
     "theme_concentration_cap_pct": 0.35,
     "price_freshness": {
       "bundle_as_of_et": "2026-08-10",
-      "bundle_run_utc": "2026-08-10T21:09:21.402464+00:00",
+      "bundle_run_utc": "2026-08-10T22:06:00.404484+00:00",
       "note": "Prefer universe_scan.prices_meta[T].price_as_of (bar session date) over bundle age alone. On catalyst days, verify live before chasing a trigger on a lagging close.",
-      "scan_fetched_at_utc": "2026-08-10T21:05:41.984049+00:00",
+      "scan_fetched_at_utc": "2026-08-10T22:02:58.114858+00:00",
       "prices_meta_sample": {
         "NET": {
           "last_close": 310.43,
-          "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+          "price_as_of": "2026-08-10T22:01:08.344220+00:00",
           "source": "alpaca_iex",
           "daily_bar_close": 310.59
         },
         "RBRK": {
           "last_close": 97.96,
-          "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+          "price_as_of": "2026-08-10T22:01:08.344220+00:00",
           "source": "alpaca_iex",
           "daily_bar_close": 97.91
         },
         "HPE": {
           "last_close": 54.67,
-          "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+          "price_as_of": "2026-08-10T22:01:08.344220+00:00",
           "source": "alpaca_iex",
           "daily_bar_close": 54.68
         },
         "OKTA": {
           "last_close": 150.77,
-          "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+          "price_as_of": "2026-08-10T22:01:08.344220+00:00",
           "source": "alpaca_iex",
           "daily_bar_close": 150.77
         },
         "MPC": {
           "last_close": 320.27,
-          "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+          "price_as_of": "2026-08-10T22:01:08.344220+00:00",
           "source": "alpaca_iex",
           "daily_bar_close": 320.32
         }
@@ -1808,11 +1786,11 @@
           "currently_watched": true,
           "hit_buy_level": true,
           "acted": false,
-          "move_pct_since_watched": 1.8,
+          "move_pct_since_watched": 1.9,
           "price_when_added": 368.98,
-          "latest_price": 375.69,
-          "would_buy_at": "A reclaim of $390 (prior high) on rising volume, or a pullback to $370 (near the 50-DMA) that holds.",
-          "one_line": "Cheapest name (2nd of 18) in its sector on forward P/E with real relative strength, but insider selling and a bear MACD cross keep this off the buy list for now.",
+          "latest_price": 375.82,
+          "would_buy_at": "A pullback that HOLDS the rising 20-day average (tracking well under today's $375.62 on the chart, not the stale $370 anchor) on light volume, or a fresh breakout above the $398.6 recent high",
+          "one_line": "Cheap in its sector with a genuinely constructive volume tell, but extended after a big run and the Street's own target now sits below the price.",
           "first_watched": "2026-07-19",
           "hit_date": "2026-08-10",
           "dropped_date": "2026-07-21",
@@ -1822,15 +1800,15 @@
       "opportunity_cost": [
         {
           "ticker": "TEAM",
-          "why": "still watched, moved +55.4% since added, never bought",
+          "why": "still watched, moved +54.7% since added, never bought",
           "currently_watched": true,
           "hit_buy_level": false,
           "acted": false,
-          "move_pct_since_watched": 55.4,
+          "move_pct_since_watched": 54.7,
           "price_when_added": 98.12,
-          "latest_price": 152.47,
-          "would_buy_at": "A multi-session base forming well above the old range, once I can identify today's catalyst and confirm the EPS-revision picture has genuinely turned.",
-          "one_line": "Up another +35% today on top of an already +55% move since I started watching it -- not chasing a single-day gap I can't yet explain.",
+          "latest_price": 151.81,
+          "would_buy_at": "A multi-session base forming well above the old range, once today's catalyst is identified and the EPS-revision picture is confirmed.",
+          "one_line": "Up over 55% since I started watching it on a gap I still can't fully explain -- not chasing it.",
           "first_watched": "2026-07-31",
           "hit_date": null,
           "dropped_date": "2026-08-05",
@@ -1838,13 +1816,13 @@
         },
         {
           "ticker": "SNOW",
-          "why": "dropped from watchlist, moved +28.3% since first watched, never bought",
+          "why": "dropped from watchlist, moved +28.0% since first watched, never bought",
           "currently_watched": false,
           "hit_buy_level": false,
           "acted": false,
-          "move_pct_since_watched": 28.3,
+          "move_pct_since_watched": 28.0,
           "price_when_added": 261.45,
-          "latest_price": 335.55,
+          "latest_price": 334.69,
           "would_buy_at": "A pullback into $300-310 (the prior breakout shelf), or a multi-session base above $315.",
           "one_line": "Best growth story in the software lane, still priced for perfection.",
           "first_watched": "2026-07-13",
@@ -1860,7 +1838,7 @@
           "acted": false,
           "move_pct_since_watched": 26.6,
           "price_when_added": 122.54,
-          "latest_price": 155.1,
+          "latest_price": 155.16,
           "would_buy_at": "After a stack-card and deep-fundamentals read confirms the business case -- technical setup is already there near current levels ($144).",
           "one_line": "Cleanest technical setup in today's focus set, but the business-model underwrite is still missing.",
           "first_watched": "2026-07-13",
@@ -1869,36 +1847,36 @@
           "parsed_level": 144.0
         },
         {
-          "ticker": "S",
-          "why": "dropped from watchlist, moved +25.2% since first watched, never bought",
+          "ticker": "WDC",
+          "why": "dropped from watchlist, moved -24.8% since first watched, never bought",
           "currently_watched": false,
           "hit_buy_level": false,
           "acted": false,
-          "move_pct_since_watched": 25.2,
+          "move_pct_since_watched": -24.8,
+          "price_when_added": 582.59,
+          "latest_price": 438.3,
+          "would_buy_at": "~$520 on a calm tape, or a confirmed post-7/29-earnings drift",
+          "one_line": "Cheapest way to play the tightening HDD/memory cycle, sitting well below its high right before a binary catalyst -- but today's memory-sector selloff is a direct test of that thesis.",
+          "first_watched": "2026-07-13",
+          "hit_date": null,
+          "dropped_date": "2026-07-13",
+          "parsed_level": null
+        },
+        {
+          "ticker": "S",
+          "why": "dropped from watchlist, moved +24.2% since first watched, never bought",
+          "currently_watched": false,
+          "hit_buy_level": false,
+          "acted": false,
+          "move_pct_since_watched": 24.2,
           "price_when_added": 17.88,
-          "latest_price": 22.39,
+          "latest_price": 22.21,
           "would_buy_at": "A base above $19 that holds through the sector's cooling, or a specific catalyst independent of the group.",
           "one_line": "Best relative-strength read in cybersecurity, with real institutional sponsorship, but the whole sector just decelerated 14 percentage points in three weeks.",
           "first_watched": "2026-07-13",
           "hit_date": null,
           "dropped_date": "2026-07-13",
           "parsed_level": 19.0
-        },
-        {
-          "ticker": "SMCI",
-          "why": "dropped from watchlist, moved +24.6% since first watched, never bought",
-          "currently_watched": false,
-          "hit_buy_level": false,
-          "acted": false,
-          "move_pct_since_watched": 24.6,
-          "price_when_added": 25.5,
-          "latest_price": 31.78,
-          "would_buy_at": "N/A - removed from active tracking until it reclaims its 200-DMA and weekly structure turns constructive.",
-          "one_line": "Bounced 7% today but remains in a broken downtrend - dropping it.",
-          "first_watched": "2026-07-22",
-          "hit_date": null,
-          "dropped_date": "2026-07-22",
-          "parsed_level": null
         }
       ]
     },
@@ -2035,38 +2013,38 @@
         "open_running_best": [
           {
             "ticker": "NET",
-            "unrealized_pct": 9.27,
+            "unrealized_pct": 9.58,
             "source": "watchlist_hold",
             "opened_at": "2026-07-31",
             "reason": "Best-in-class software grower (rev +48.8% YoY) with institutional sponsorship, but priced at a valuation and rate-sensit"
           },
           {
             "ticker": "BSX",
-            "unrealized_pct": 8.58,
+            "unrealized_pct": 7.96,
             "source": "rejected_idea",
             "opened_at": "2026-08-02",
             "reason": "Q2 beat came with a full-year guidance cut (Watchman/EP headwinds) and an RBC fair-value cut; ownership_flow structure s"
           },
           {
             "ticker": "PLTR",
-            "unrealized_pct": 8.47,
+            "unrealized_pct": 7.85,
             "source": "watchlist_hold",
             "opened_at": "2026-08-04",
             "reason": "Beat-and-raised Q2 and the stock is running hard today, but it wasn't part of this run's technical scan so there's no de"
           },
           {
             "ticker": "CRWD",
-            "unrealized_pct": 7.83,
+            "unrealized_pct": 7.38,
             "source": "rejected_idea",
             "opened_at": "2026-08-04",
             "reason": "Shadow book already flags this as a regret_miss (no_supply_pullback turning constructive) but it was not in this run's d"
           },
           {
-            "ticker": "S",
-            "unrealized_pct": 7.8,
+            "ticker": "HCA",
+            "unrealized_pct": 7.25,
             "source": "watchlist_hold",
-            "opened_at": "2026-08-04",
-            "reason": "Real AI-governance catalyst today (expanded AWS Bedrock partnership) but persistent insider selling and sector-lagging m"
+            "opened_at": "2026-07-24",
+            "reason": "Beat Q2 estimates today, but the stock is bouncing inside a still-active 6-month, -30% downtrend - one good print doesn'"
           }
         ]
       },
@@ -2399,25 +2377,24 @@
         }
       },
       "demand_driver_map_focus": {
-        "DXCM": "healthcare",
-        "S": "cybersecurity",
         "BKR": "energy",
-        "CLS": "hyperscaler_server_capex",
-        "AEM": "materials",
-        "NET": "software_platforms",
-        "ADBE": "software_platforms",
-        "SMR": "datacenter_power",
-        "UBER": "consumer_platforms",
-        "TRV": "financials",
         "BSX": "healthcare",
-        "RBRK": "cybersecurity",
-        "HPE": "hyperscaler_server_capex",
         "PH": "consumer_industrial",
+        "DXCM": "healthcare",
+        "ABNB": "consumer_platforms",
         "MPC": "energy",
         "VST": "datacenter_power",
-        "ABNB": "consumer_platforms",
+        "UBER": "consumer_platforms",
         "ZS": "cybersecurity",
-        "OKTA": "cybersecurity"
+        "AEM": "materials",
+        "HPE": "hyperscaler_server_capex",
+        "OKTA": "cybersecurity",
+        "ADBE": "software_platforms",
+        "CLS": "hyperscaler_server_capex",
+        "TRV": "financials",
+        "RBRK": "cybersecurity",
+        "SMR": "datacenter_power",
+        "NET": "software_platforms"
       },
       "_deduped": "process_checklist, theme_exposure, theme_concentration_cap_pct, price_freshness, demand_driver_map_note and watchlist_feedback live one level up on reasoning_process \u2014 not repeated here."
     }
@@ -2427,12 +2404,7 @@
     "as_of": "2026-08-10",
     "indicators": {
       "fed_funds_rate": {
-        "latest": 3.63,
-        "three_months_ago": 3.63,
-        "direction": "falling",
-        "as_of": "2026-08-07",
-        "units": "percent",
-        "frequency": "daily"
+        "error": "HTTPSConnectionPool(host='east-equity-agent.vercel.app', port=443): Read timed out. (read timeout=8)"
       },
       "ten_year_yield": {
         "latest": 4.65,
@@ -2443,20 +2415,10 @@
         "frequency": "daily"
       },
       "two_year_yield": {
-        "latest": 4.19,
-        "three_months_ago": 3.9,
-        "direction": "rising",
-        "as_of": "2026-08-07",
-        "units": "percent",
-        "frequency": "daily"
+        "error": "502 Server Error: Bad Gateway for url: https://east-equity-agent.vercel.app/api/fred?series_id=DGS2&observation_start=2024-02-22"
       },
-      "cpi_yoy_pct": {
-        "latest": 3.46,
-        "three_months_ago": 3.29,
-        "direction": "rising",
-        "as_of": "2026-06-01",
-        "units": "percent_yoy",
-        "frequency": "monthly"
+      "cpi_yoy_proxy": {
+        "error": "HTTPSConnectionPool(host='east-equity-agent.vercel.app', port=443): Read timed out. (read timeout=8)"
       },
       "unemployment_rate": {
         "latest": 4.1,
@@ -2475,12 +2437,7 @@
         "frequency": "daily"
       },
       "vix": {
-        "latest": 14.9,
-        "three_months_ago": 17.19,
-        "direction": "falling",
-        "as_of": "2026-08-07",
-        "units": "index",
-        "frequency": "daily"
+        "error": "HTTPSConnectionPool(host='east-equity-agent.vercel.app', port=443): Read timed out. (read timeout=8)"
       },
       "nfci": {
         "latest": -0.53,
@@ -2489,40 +2446,37 @@
         "as_of": "2026-07-31",
         "units": "index_zscore",
         "frequency": "weekly"
-      },
-      "yield_curve_10y2y": {
-        "latest": 0.46,
-        "units": "percentage_points",
-        "as_of": "2026-08-07",
-        "inverted": false,
-        "three_months_ago": 0.48,
-        "direction": "flattening"
       }
     },
     "regime_hint": {
-      "score_0_to_5": 4,
-      "label": "supportive",
-      "series_missing": null,
-      "note": "Deterministic hint only \u2014 the agent must form its own regime view."
+      "score_0_to_5": 2,
+      "label": "neutral",
+      "series_missing": [
+        "cpi_yoy_proxy",
+        "fed_funds_rate",
+        "two_year_yield",
+        "vix"
+      ],
+      "note": "Deterministic hint only \u2014 the agent must form its own regime view. CAUTION: 4 series failed to load and scored on conservative defaults (cpi_yoy_proxy, fed_funds_rate, two_year_yield, vix)."
     }
   },
   "benchmark_close": 773.03,
   "market_events": {
     "note": "commodities via yfinance (CL=F/USO, GC=F/GLD, ^VIX/VIXY, DX-Y.NYB/UUP); flags from keyword classification of market_news headlines \u2014 heuristic tags, not a risk model",
     "status": "ok",
-    "as_of": "2026-08-10T21:04:20.758289+00:00",
+    "as_of": "2026-08-10T22:01:49.218927+00:00",
     "commodities": {
       "oil": {
         "symbol": "CL=F",
-        "last": 82.32,
-        "pct_1d": 5.3,
-        "pct_5d": 2.46
+        "last": 82.3,
+        "pct_1d": 5.27,
+        "pct_5d": 2.44
       },
       "gold": {
         "symbol": "GC=F",
-        "last": 4449.1001,
-        "pct_1d": 2.5,
-        "pct_5d": 10.3
+        "last": 4448.6001,
+        "pct_1d": 2.49,
+        "pct_5d": 10.29
       },
       "vix": {
         "symbol": "^VIX",
@@ -2532,9 +2486,9 @@
       },
       "dxy": {
         "symbol": "DX-Y.NYB",
-        "last": 99.818,
-        "pct_1d": 0.22,
-        "pct_5d": -0.14
+        "last": 99.806,
+        "pct_1d": 0.21,
+        "pct_5d": -0.15
       }
     },
     "flags": {
@@ -2542,22 +2496,12 @@
         "geopolitical": 0,
         "inflation_rates": 0,
         "financial_stress": 0,
-        "sector_macro": 1
+        "sector_macro": 0
       },
-      "active": [
-        "sector_macro"
-      ],
-      "n_flagged": 1
+      "active": [],
+      "n_flagged": 0
     },
-    "flagged_headlines": [
-      {
-        "title": "Riot Platforms Stock Surges on Q2 Results, 20-Year Data Center Deal",
-        "tags": [
-          "sector_macro"
-        ],
-        "age_hours": 0.2
-      }
-    ],
+    "flagged_headlines": [],
     "headline_source": "market_news"
   },
   "market_breadth": {
@@ -2948,7 +2892,7 @@
         "source": "live"
       }
     },
-    "as_of": "2026-08-10T21:09:15.732647+00:00",
+    "as_of": "2026-08-10T22:05:56.549503+00:00",
     "note": "Momentum factor healthy (our 3m-RS leader decile averages +15.9% 1m rel strength; MTUM is -3.9% off its 20d high vs SPY -0.0%) \u2014 recent leaders still leading; no factor-unwind adjustment."
   },
   "watchlist_trigger_alerts": {
@@ -2956,7 +2900,7 @@
     "alerts": [
       {
         "ticker": "TRV",
-        "trigger_text": "A reclaim of $390 (prior high) on rising volume, or a pullback to $370 (near the 50-DMA) that holds.",
+        "trigger_text": "A pullback that HOLDS the rising 20-day average (tracking well under today's $375.62 on the chart, not the stale $370 anchor) on light volume, or a fresh breakout above the $398.6 recent high",
         "parsed_level": 370.0,
         "last_price": 375.62,
         "distance_from_level_pct": 1.52,
@@ -2999,22 +2943,13 @@
         ],
         "n_headlines": 1,
         "source_kind": "universe_8k"
-      },
-      {
-        "ticker": "S",
-        "titles": [
-          "Elroy Air Files Draft S-4 For SPAC Deal With  Columbus Circle Capital Corp II, Targeting Q4 2026 Nasdaq Listing Under \u201cELRY\u201d"
-        ],
-        "n_headlines": 1,
-        "source_kind": "tape_headline"
       }
     ],
     "promoted_tickers": [
       "CLS",
       "TRV",
       "UBER",
-      "VST",
-      "S"
+      "VST"
     ]
   },
   "portfolio_risk": {
@@ -3118,11 +3053,6 @@
       "VST": {
         "corr_to_book": 0.11,
         "beta": 1.25,
-        "diversifier": true
-      },
-      "S": {
-        "corr_to_book": 0.2,
-        "beta": 0.95,
         "diversifier": true
       }
     }
@@ -3334,8 +3264,7 @@
       "CLS",
       "TRV",
       "UBER",
-      "VST",
-      "S"
+      "VST"
     ],
     "by_ticker": {
       "BKR": {
@@ -3697,26 +3626,6 @@
         "_trimmed": {
           "supporting evidence (institutional, retail_proxy, price_action)": "omitted from the slim pack \u2014 full copy in full_context_path"
         }
-      },
-      "S": {
-        "ticker": "S",
-        "alignment": "institutions_buying_price_rising",
-        "read_for_swing": "Institutional sponsorship (13F and/or tape) aligns with rising price \u2014 trend has real participation; still demand your entry geometry.",
-        "synthesis": {
-          "alignment": "institutions_buying_price_rising",
-          "read_for_swing": "Institutional sponsorship (13F and/or tape) aligns with rising price \u2014 trend has real participation; still demand your entry geometry.",
-          "structure": "advancing_uptrend",
-          "components": {
-            "institutional_stance": "accumulating",
-            "retail_proxy_label": "elevated_speculation",
-            "price_lean": "rising",
-            "thirteen_f_net": "no_tracked_activity",
-            "tape_lean": "constructive_sponsorship"
-          }
-        },
-        "_trimmed": {
-          "supporting evidence (institutional, retail_proxy, price_action)": "omitted from the slim pack \u2014 full copy in full_context_path"
-        }
       }
     },
     "how_to_use": {
@@ -3732,10 +3641,10 @@
     },
     "status": "ok",
     "coverage": {
-      "requested": 19,
-      "succeeded": 19,
+      "requested": 18,
+      "succeeded": 18,
       "failed": 0,
-      "cards_with_alignment_vote": 18
+      "cards_with_alignment_vote": 17
     }
   },
   "earnings_deep_dive": {
@@ -4044,7 +3953,7 @@
   "market_news": {
     "note": "Market-wide headlines (last ~24h) for tape context - what is moving EVERYTHING today, not just your focus names. Weigh it in the macro/regime read; never build a single-name thesis on it alone.",
     "status": "ok",
-    "as_of": "2026-08-10T21:05:41.987998+00:00",
+    "as_of": "2026-08-10T22:02:58.119496+00:00",
     "sources": [
       {
         "name": "yahoo_finance",
@@ -4071,147 +3980,138 @@
       {
         "title": "Nvidia lines up $500 billion in financing as CEO Jensen Huang tells CNBC his chips are \u2018investable asset\u2019",
         "source": "cnbc",
-        "published": "2026-08-10T21:03:33+00:00",
+        "published": "2026-08-10T21:59:28+00:00",
         "url": "https://www.cnbc.com/2026/08/10/nvidia-wall-street-asset-managers-500-billion-ai-push.html",
-        "age_hours": 0.0
+        "age_hours": 0.1
       },
       {
-        "title": "New Concept Energy Q2 EPS $(0.01), Sales $41.000K Up From $40.000K YoY",
+        "title": "NFL Coach Crashes Tesla Car Using Autopilot: After 40 Stitches Says \u2018You Can\u2019t Take Your Eyes Off the Road\u2019",
         "source": "alpaca_benzinga",
-        "published": "2026-08-10T21:04:19Z",
-        "url": "https://www.benzinga.com/news/earnings/26/08/61095638/new-concept-energy-q2-eps-0-01-sales-41-000k-40-000k-yoy",
-        "age_hours": 0.0,
-        "symbols": [
-          "GBR"
-        ]
-      },
-      {
-        "title": "Flowco Holdings Declares A One-Time Special Cash Dividend Of $0.14 Per Share Of Class A Common Stock, Payable On August 31, 2026",
-        "source": "alpaca_benzinga",
-        "published": "2026-08-10T21:03:26Z",
-        "url": "https://www.benzinga.com/news/26/08/61095603/flowco-holdings-declares-one-time-special-cash-dividend-0-14-share-class-common-stock-payable-august",
-        "age_hours": 0.0,
-        "symbols": [
-          "FLOC"
-        ]
-      },
-      {
-        "title": "Nike Johanna Nielsen To Resign As Chief Accounting Officer And Corporate Controller; David Denton To Assume Role Of Interim Corporate Controller As Of Sept 4, 2026",
-        "source": "alpaca_benzinga",
-        "published": "2026-08-10T21:03:23Z",
-        "url": "https://www.benzinga.com/news/26/08/61095602/nike-johanna-nielsen-resign-chief-accounting-officer-and-corporate-controller-david-denton-assume-ro",
-        "age_hours": 0.0,
-        "symbols": [
-          "NKE"
-        ]
-      },
-      {
-        "title": "RBC Bearings\u2019 Dodge Industrial Subsidiary Acquires Business Assets Of PSC Couplings For Cash Purchase Price Of $24.2M",
-        "source": "alpaca_benzinga",
-        "published": "2026-08-10T21:02:31Z",
-        "url": "https://www.benzinga.com/m/26/08/61095578/rbc-bearings-dodge-industrial-subsidiary-acquires-business-assets-psc-couplings-cash-purchase-price-",
+        "published": "2026-08-10T21:59:16Z",
+        "url": "https://www.benzinga.com/news/sports/26/08/61097166/nfl-coach-crashes-tesla-car-using-autopilot-after-40-stitches-says-you-cant-take-your-eyes-off-the-road",
         "age_hours": 0.1,
         "symbols": [
-          "RBC"
+          "TSLA"
         ]
       },
       {
-        "title": "Microvast Holdings Q2 Adj. EPS $(0.01) Misses $0.01 Estimate, Sales $87.262M Miss $94.403M Estimate",
-        "source": "alpaca_benzinga",
-        "published": "2026-08-10T21:00:45Z",
-        "url": "https://www.benzinga.com/news/earnings/26/08/61095510/microvast-holdings-q2-adj-eps-0-01-misses-0-01-estimate-sales-87-262m-miss-94-403m-estimate",
-        "age_hours": 0.1,
-        "symbols": [
-          "MVST"
-        ]
-      },
-      {
-        "title": "$100 Invested In Valero Energy 5 Years Ago Would Be Worth This Much Today",
-        "source": "alpaca_benzinga",
-        "published": "2026-08-10T21:00:16Z",
-        "url": "https://www.benzinga.com/news/26/08/61095493/100-invested-valero-energy-5-years-ago-would-be-worth-much-today",
-        "age_hours": 0.1,
-        "symbols": [
-          "VLO"
-        ]
-      },
-      {
-        "title": "Envoy Medical Expects To Submit Four Modules, Final Module Of PMA Application Targeted For Submission In Q2 2027",
-        "source": "alpaca_benzinga",
-        "published": "2026-08-10T21:00:08Z",
-        "url": "https://www.benzinga.com/news/26/08/61095482/envoy-medical-expects-submit-four-modules-final-module-pma-application-targeted-submission-q2-2027",
-        "age_hours": 0.1,
-        "symbols": [
-          "COCH"
-        ]
-      },
-      {
-        "title": "Elroy Air Files Draft S-4 For SPAC Deal With  Columbus Circle Capital Corp II, Targeting Q4 2026 Nasdaq Listing Under \u201cELRY\u201d",
-        "source": "alpaca_benzinga",
-        "published": "2026-08-10T20:59:49Z",
-        "url": "https://www.benzinga.com/m/26/08/61095461/elroy-air-files-draft-s-4-spac-deal-columbus-circle-capital-corp-ii-targeting-q4-2026-nasdaq-listing",
-        "age_hours": 0.1,
-        "symbols": [
-          "CMII",
-          "COHN",
-          "IPXG"
-        ]
-      },
-      {
-        "title": "ENvue Medical Files Prelim Prospectus To Offer Securities Up To $50M",
-        "source": "alpaca_benzinga",
-        "published": "2026-08-10T20:58:46Z",
-        "url": "https://www.benzinga.com/quote/FEED",
-        "age_hours": 0.1,
-        "symbols": [
-          "FEED"
-        ]
-      },
-      {
-        "title": "Stellus Cap Investment Q2 Adj. EPS $0.26, Inline, Sales $22.303M Miss $25.139M Estimate",
-        "source": "alpaca_benzinga",
-        "published": "2026-08-10T20:58:24Z",
-        "url": "https://www.benzinga.com/news/earnings/26/08/61095421/stellus-cap-investment-q2-adj-eps-0-26-inline-sales-22-303m-miss-25-139m-estimate",
-        "age_hours": 0.1,
-        "symbols": [
-          "SCM"
-        ]
-      },
-      {
-        "title": "Upwork Stock Crashes After Q2 Print \u2014 Here's Why",
-        "source": "alpaca_benzinga",
-        "published": "2026-08-10T20:57:44Z",
-        "url": "https://www.benzinga.com/trading-ideas/movers/26/08/61095405/upwork-stock-crashes-after-q2-print-heres-why",
-        "age_hours": 0.1,
-        "symbols": [
-          "UPWK"
-        ]
-      },
-      {
-        "title": "Trump signs executive order calling for fewer childhood vaccines, falsely linking shots to autism",
+        "title": "Trump Media posts $238 million second-quarter loss as crypto declines",
         "source": "cnbc",
-        "published": "2026-08-10T20:51:17+00:00",
-        "url": "https://www.cnbc.com/2026/08/10/trump-vaccine-executive-order-autism.html",
+        "published": "2026-08-10T21:48:14+00:00",
+        "url": "https://www.cnbc.com/2026/08/10/trump-media-djt-tmtg-earnings-truth-social-crypto.html",
         "age_hours": 0.2
       },
       {
-        "title": "Pangaea Logistics Solns Q2 Adj. EPS $0.26 Misses $0.32 Estimate, Sales $187.119M Miss $192.795M Estimate",
+        "title": "UPDATE: Proficient Auto Logistics Q2 Adj. EPS $0.00 Misses $0.07 Estimate, Sales $109.399M Beat $108.525M Estimate",
         "source": "alpaca_benzinga",
-        "published": "2026-08-10T20:55:49Z",
-        "url": "https://www.benzinga.com/news/earnings/26/08/61095347/pangaea-logistics-solns-q2-adj-eps-0-26-misses-0-32-estimate-sales-187-119m-miss-192-795m-estimate",
+        "published": "2026-08-10T21:52:32Z",
+        "url": "https://www.benzinga.com/news/earnings/26/08/61097141/update-proficient-auto-logistics-q2-adj-eps-0-00-misses-0-07-estimate-sales-109-399m-beat-108-525m-e",
         "age_hours": 0.2,
         "symbols": [
-          "PANL"
+          "PAL"
         ]
       },
       {
-        "title": "Rapid7 Announces 2026 Restructuring Plan Cutting About 12% Of Workforce, Estimates $10M To $11M In Charges; Expects Plan Substantially Complete By End Of Q4",
+        "title": "Kalshi Eyes $40B Valuation, While Polymarket Targets $20B: Is Either One Actually Exploring An IPO?",
         "source": "alpaca_benzinga",
-        "published": "2026-08-10T20:55:34Z",
-        "url": "https://www.benzinga.com/quote/RPD",
+        "published": "2026-08-10T21:49:08Z",
+        "url": "https://www.benzinga.com/Opinion/26/08/61097119/kalshi-eyes-40b-valuation-while-polymarket-targets-20b-is-either-one-actually-exploring-an-ipo",
         "age_hours": 0.2,
+        "symbols": []
+      },
+      {
+        "title": "CrowdStrike, Palo Alto hit records after Black Hat cyber conference illuminates rising AI threat",
+        "source": "cnbc",
+        "published": "2026-08-10T21:43:37+00:00",
+        "url": "https://www.cnbc.com/2026/08/10/crowdstrike-palo-alto-stock-black-hat.html",
+        "age_hours": 0.3
+      },
+      {
+        "title": "NewHold Investment Corp. III Reveals Effectiveness of Registration Statement on Form F-4 With The SEC In Connection With Proposed Business Combination and Nasdaq Listing; Combined Company Is To Be Named \"Newcleo PLC\" And Is Expected To Trade On The Nasdaq Under The Ticker Symbol \"NWCL\"",
+        "source": "alpaca_benzinga",
+        "published": "2026-08-10T21:47:07Z",
+        "url": "https://www.benzinga.com/news/26/08/61097089/newhold-investment-corp-iii-reveals-effectiveness-registration-statement-form-f-4-sec-connection-pro",
+        "age_hours": 0.3,
         "symbols": [
-          "RPD"
+          "NHIC"
+        ]
+      },
+      {
+        "title": "Anaergia Q2 Sales $63.900M Beat $62.850M Estimate",
+        "source": "alpaca_benzinga",
+        "published": "2026-08-10T21:46:30Z",
+        "url": "https://www.benzinga.com/news/earnings/26/08/61097077/anaergia-q2-sales-63-900m-beat-62-850m-estimate",
+        "age_hours": 0.3,
+        "symbols": [
+          "TSX:ANRG"
+        ]
+      },
+      {
+        "title": "$100 Invested In EnerSys 15 Years Ago Would Be Worth This Much Today",
+        "source": "alpaca_benzinga",
+        "published": "2026-08-10T21:45:26Z",
+        "url": "https://www.benzinga.com/news/26/08/61097063/100-invested-enersys-15-years-ago-would-be-worth-much-today",
+        "age_hours": 0.3,
+        "symbols": [
+          "ENS"
+        ]
+      },
+      {
+        "title": "UPDATE: Natural Gas Services Gr Q2 Adj. EPS $0.47 Beats $0.40 Estimate, Sales $51.401M Beat $49.995M Estimate",
+        "source": "alpaca_benzinga",
+        "published": "2026-08-10T21:43:30Z",
+        "url": "https://www.benzinga.com/news/earnings/26/08/61097038/update-natural-gas-services-gr-q2-adj-eps-0-47-beats-0-40-estimate-sales-51-401m-beat-49-995m-estima",
+        "age_hours": 0.3,
+        "symbols": [
+          "NGS"
+        ]
+      },
+      {
+        "title": "Rocket Lab reveals some big plans, but its stock is dropping on mixed earnings",
+        "source": "marketwatch",
+        "published": "2026-08-10T21:37:00+00:00",
+        "url": "https://www.marketwatch.com/story/rocket-lab-reveals-some-big-plans-but-its-stock-is-dropping-on-mixed-earnings-4012ba2b?mod=mw_rss_topstories",
+        "age_hours": 0.4
+      },
+      {
+        "title": "Sunstone Hotel Investors Enters $300M Equity Distribution Agreement With Sales Agents On Aug 10, 2026",
+        "source": "alpaca_benzinga",
+        "published": "2026-08-10T21:41:37Z",
+        "url": "https://www.benzinga.com/news/26/08/61096914/sunstone-hotel-investors-enters-300m-equity-distribution-agreement-sales-agents-aug-10-2026",
+        "age_hours": 0.4,
+        "symbols": [
+          "SHO"
+        ]
+      },
+      {
+        "title": "CORRECTION Red Violet Q2 Adj. EPS $0.50 Beats $0.33 Estimate, Sales $26.700M Beat $25.618M Estimate",
+        "source": "alpaca_benzinga",
+        "published": "2026-08-10T21:40:51Z",
+        "url": "https://www.benzinga.com/news/earnings/26/08/61096902/correction-red-violet-q2-adj-eps-0-50-beats-0-33-estimate-sales-26-700m-beat-25-618m-estimate",
+        "age_hours": 0.4,
+        "symbols": [
+          "RDVT"
+        ]
+      },
+      {
+        "title": "Nexus Ind REIT Q2 FFO $0.15 Down From $0.16 YoY, Sales $46.620M Up From $42.022M YoY",
+        "source": "alpaca_benzinga",
+        "published": "2026-08-10T21:39:59Z",
+        "url": "https://www.benzinga.com/news/earnings/26/08/61096876/nexus-ind-reit-q2-ffo-0-15-down-0-16-yoy-sales-46-620m-42-022m-yoy",
+        "age_hours": 0.4,
+        "symbols": [
+          "TSX:NXR",
+          "TSX:NXR/UN"
+        ]
+      },
+      {
+        "title": "UPDATE: Mesa Laboratories Q1 Adj. EPS $2.68 Beats $2.40 Estimate, Sales $60.138M Miss $60.867M Estimate",
+        "source": "alpaca_benzinga",
+        "published": "2026-08-10T21:39:52Z",
+        "url": "https://www.benzinga.com/news/earnings/26/08/61096865/update-mesa-laboratories-q1-adj-eps-2-68-beats-2-40-estimate-sales-60-138m-miss-60-867m-estimate",
+        "age_hours": 0.4,
+        "symbols": [
+          "MLAB"
         ]
       }
     ]
@@ -4219,7 +4119,7 @@
   "market_radar": {
     "note": "Market-WIDE radar (Alpaca screeners + news), not limited to the universe. off_universe_symbols are candidates for the universe_candidates output field IF a real swing setup exists \u2014 they are not tradeable until deterministically added ($1B cap, priceable, liquid) and are never a buy signal by themselves.",
     "status": "ok",
-    "as_of": "2026-08-10T21:05:42.532608+00:00",
+    "as_of": "2026-08-10T22:02:59.516449+00:00",
     "coverage": {
       "requested": 3,
       "succeeded": 3,
@@ -4352,88 +4252,88 @@
         "ticker": "NVDA",
         "in_universe": true,
         "news_mentions_24h": 0,
-        "volume": 115718425
+        "volume": 116277784
       },
       {
         "ticker": "SPCX",
         "in_universe": false,
         "news_mentions_24h": 0,
-        "volume": 168577922
+        "volume": 169151988
       },
       {
         "ticker": "JWEL",
         "in_universe": false,
         "news_mentions_24h": 0,
-        "volume": 84160636
+        "volume": 84900176
       },
       {
         "ticker": "AAPL",
         "in_universe": true,
         "news_mentions_24h": 0,
-        "volume": 43976020
+        "volume": 45014496
       },
       {
         "ticker": "SCKT",
         "in_universe": false,
         "news_mentions_24h": 0,
-        "volume": 216423913
+        "volume": 218747872
       },
       {
         "ticker": "INTC",
         "in_universe": false,
         "news_mentions_24h": 0,
-        "volume": 100451826
+        "volume": 100736202
       },
       {
         "ticker": "STKH",
         "in_universe": false,
         "news_mentions_24h": 0,
-        "volume": 75651950
+        "volume": 75757454
       },
       {
         "ticker": "TSLA",
         "in_universe": true,
-        "news_mentions_24h": 0,
-        "volume": 25205098
+        "news_mentions_24h": 1,
+        "volume": 25259765
       },
       {
         "ticker": "MU",
         "in_universe": true,
         "news_mentions_24h": 0,
-        "volume": 27628227
+        "volume": 27704958
       },
       {
         "ticker": "PLTR",
         "in_universe": true,
         "news_mentions_24h": 0,
-        "volume": 56906354
+        "volume": 57207993
       },
       {
         "ticker": "MSFT",
         "in_universe": true,
-        "news_mentions_24h": 1,
-        "volume": 31794726
+        "news_mentions_24h": 0,
+        "volume": 31828961
       },
       {
         "ticker": "GOOGL",
         "in_universe": true,
         "news_mentions_24h": 0,
-        "volume": 19100766
+        "volume": 19140283
       }
     ],
     "news_trending": [
       {
-        "ticker": "UPWK",
-        "in_universe": false,
-        "news_mentions_24h": 4
-      },
-      {
-        "ticker": "RUM",
+        "ticker": "TISI",
         "in_universe": false,
         "news_mentions_24h": 2
       },
       {
-        "ticker": "SAIH",
+        "ticker": "COGT",
+        "in_universe": false,
+        "news_mentions_24h": 2
+      },
+      {
+        "ticker": "MG",
         "in_universe": false,
         "news_mentions_24h": 2
       }
@@ -4447,21 +4347,21 @@
       "BCARU",
       "BTDL",
       "BWMN",
+      "COGT",
       "COHC",
       "COHH",
       "COHX",
       "HZO",
       "INTC",
       "JWEL",
+      "MG",
       "RKLB",
-      "RUM",
-      "SAIH",
       "SCKT",
       "SPCX",
       "STDN",
       "STKH",
+      "TISI",
       "TNON",
-      "UPWK",
       "VATE",
       "VREX",
       "XHLD"
@@ -5141,10 +5041,10 @@
         "valuation": {
           "trailing_pe": 22.886442,
           "forward_pe": 12.732485,
-          "price_to_sales_ttm": 3.7768962,
+          "price_to_sales_ttm": null,
           "ev_to_ebitda": 14.623
         },
-        "market_cap_usd": 161760690176,
+        "market_cap_usd": null,
         "analyst_ratings": {
           "recommendation_key": "buy",
           "recommendation_mean": 1.67308,
@@ -6137,13 +6037,13 @@
         "di_plus": 27.6,
         "di_minus": 21.5,
         "gap_analysis": {
-          "count_20d": 14,
+          "count_20d": 15,
           "last": {
-            "sessions_ago": 1,
-            "pct": 4.6,
+            "sessions_ago": 0,
+            "pct": 2.4,
             "direction": "up",
-            "filled": false,
-            "retained_pct": 1.82
+            "filled": true,
+            "retained_pct": -1.63
           }
         },
         "rel_strength_1m_pct": -9.3,
@@ -6623,7 +6523,7 @@
           "recommendation_key": "strong_buy",
           "recommendation_mean": 1.38636,
           "n_analysts": 15,
-          "target_mean_price": 2175.0188,
+          "target_mean_price": 2175.27,
           "target_vs_price_pct": 25.5
         },
         "short_interest": {
@@ -11352,7 +11252,7 @@
     "price_basis": "split_dividend_adjusted",
     "price_basis_note": "All bars are split/dividend ADJUSTED (yfinance auto_adjust=True). Adjusted history is restated retroactively on every corporate action, so long-horizon MOVING-AVERAGE LEVELS computed from it (notably wma_200w) are NOT the levels printed on an unadjusted retail chart - the crowd watching 'the 200-week' may be watching a different number. Returns, momentum and relative strength are unaffected (adjustment is exactly what makes those correct). Treat pct_vs_200w_ma as a total-return reversion measure, and confirm the actual support level on a chart before placing a stop against it.",
     "bar_completeness_note": "The still-forming session bar is DROPPED from the daily series, so vol_surge, volume_signal and the breakout tests compare completed sessions to completed sessions. An intraday run therefore reports yesterday's close as last_close - check price_as_of.",
-    "scan_fetched_at_utc": "2026-08-10T21:05:41.984049+00:00",
+    "scan_fetched_at_utc": "2026-08-10T22:02:58.114858+00:00",
     "note": "Ranked by deterministic swing_setup_score; agent must apply judgment and research before proposing.",
     "sector_comps_note": "sector_comps (on surfaced rows): fwd_pe_est = last close / cached pre-market current-FY EPS estimate (snapshot may be ~a day old); growth = current-FY revenue-growth estimate. Medians span ALL scanned names with data - coverage.pe_n/growth_n are the true denominators; medians under 4 same-sector data points report None.",
     "top_setups": [
@@ -11877,10 +11777,10 @@
         "valuation": {
           "trailing_pe": 109.253624,
           "forward_pe": 35.20599,
-          "price_to_sales_ttm": 8.824094,
+          "price_to_sales_ttm": 8.746641,
           "ev_to_ebitda": 88.394
         },
-        "market_cap_usd": 26436984832,
+        "market_cap_usd": 26204936192,
         "analyst_ratings": {
           "recommendation_key": "buy",
           "recommendation_mean": 1.70455,
@@ -12022,10 +11922,10 @@
         "valuation": {
           "trailing_pe": 11.106796,
           "forward_pe": 10.786301,
-          "price_to_sales_ttm": 0.6066531,
+          "price_to_sales_ttm": 0.58356225,
           "ev_to_ebitda": 7.593
         },
-        "market_cap_usd": 93513146368,
+        "market_cap_usd": 89953787904,
         "analyst_ratings": {
           "recommendation_key": "buy",
           "recommendation_mean": 2.21053,
@@ -12315,7 +12215,7 @@
         "swing_setup_score": 6.4,
         "valuation": {
           "trailing_pe": null,
-          "forward_pe": 144.08765,
+          "forward_pe": 143.93935,
           "price_to_sales_ttm": 45.006332,
           "ev_to_ebitda": 3618.489
         },
@@ -12347,7 +12247,7 @@
         "earnings_reaction_validation": "MEASURED, NO EDGE on the price leg: gap_held scored -0.07pp ATR-matched over 12 years while gap_filled (+0.29) and down_gap (+0.18) - the two reads this lane calls failures - scored better. All inside noise. Treat earnings_reaction as DESCRIPTIVE only; it is not evidence for or against an entry. The revision leg is untested, not validated.",
         "fwd_pe_to_growth": 6.13,
         "valuation_context": {
-          "fwd_pe": 144.08765,
+          "fwd_pe": 143.93935,
           "fwd_pe_est": 183.06,
           "fwd_pe_to_growth": 6.13,
           "fwd_revenue_growth_pct": 23.5,
@@ -13479,10 +13379,10 @@
         "valuation": {
           "trailing_pe": 34.728664,
           "forward_pe": 21.944185,
-          "price_to_sales_ttm": 4.769987,
+          "price_to_sales_ttm": 4.7503996,
           "ev_to_ebitda": 16.493
         },
-        "market_cap_usd": 88893472768,
+        "market_cap_usd": 88528445440,
         "analyst_ratings": {
           "recommendation_key": "buy",
           "recommendation_mean": 1.93103,
@@ -13734,1123 +13634,1123 @@
     "prices_meta": {
       "NET": {
         "last_close": 310.43,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 310.59
       },
       "RBRK": {
         "last_close": 97.96,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 97.91
       },
       "HPE": {
         "last_close": 54.67,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 54.68
       },
       "OKTA": {
         "last_close": 150.77,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 150.77
       },
       "MPC": {
         "last_close": 320.27,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 320.32
       },
       "ABNB": {
         "last_close": 184.56,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 184.7
       },
       "CRWD": {
         "last_close": 225.25,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 225.16
       },
       "SNOW": {
         "last_close": 334.69,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 334.7
       },
       "AXON": {
         "last_close": 596.56,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 596.33
       },
       "DELL": {
         "last_close": 458.15,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 457.88
       },
       "PH": {
         "last_close": 1061.22,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 1060.5
       },
       "PANW": {
         "last_close": 385.06,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 385.04
       },
       "FTNT": {
         "last_close": 164.16,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 164.21
       },
       "DXCM": {
         "last_close": 87.64,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 87.65
       },
       "EMR": {
         "last_close": 158.68,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 158.71
       },
       "TRV": {
         "last_close": 375.82,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 375.62
       },
       "S": {
         "last_close": 22.21,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 22.23
       },
       "IESC": {
         "last_close": 751.72,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 751.09
       },
       "APH": {
         "last_close": 167.66,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 167.7
       },
       "ALL": {
         "last_close": 269.72,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 269.67
       },
       "VRTX": {
         "last_close": 523.89,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 523.91
       },
       "ITW": {
         "last_close": 294.53,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 294.52
       },
       "RTX": {
         "last_close": 224.16,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 224.12
       },
       "AMGN": {
         "last_close": 417.21,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 417.2
       },
       "MRK": {
         "last_close": 130.9,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 130.92
       },
       "ETN": {
         "last_close": 445.07,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 444.96
       },
       "GE": {
         "last_close": 366.69,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 366.7
       },
       "PLTR": {
         "last_close": 175.22,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 175.23
       },
       "AJG": {
         "last_close": 252.65,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 252.43
       },
       "LLY": {
         "last_close": 1230.9,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 1231.94
       },
       "AMZN": {
         "last_close": 277.99,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 278.09
       },
       "DDOG": {
         "last_close": 260.74,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 260.78
       },
       "EOG": {
         "last_close": 142.22,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 142.22
       },
       "HON": {
         "last_close": 242.97,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 242.93
       },
       "JNJ": {
         "last_close": 261.64,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 261.81
       },
       "FANG": {
         "last_close": 198.94,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 198.97
       },
       "SHOP": {
         "last_close": 155.16,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 155.18
       },
       "TEAM": {
         "last_close": 151.81,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 151.87
       },
       "ANET": {
         "last_close": 191.47,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 191.52
       },
       "FCX": {
         "last_close": 70.51,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 70.51
       },
       "KO": {
         "last_close": 86.88,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 86.87
       },
       "CRDO": {
         "last_close": 239.96,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 239.93
       },
       "CNC": {
         "last_close": 66.59,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 66.57
       },
       "HUM": {
         "last_close": 385.34,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 385.7
       },
       "XOM": {
         "last_close": 159.78,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 159.79
       },
       "LNG": {
         "last_close": 265.67,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 265.68
       },
       "DUOL": {
         "last_close": 137.19,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 137.19
       },
       "HWM": {
         "last_close": 283.46,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 283.71
       },
       "DE": {
         "last_close": 609.55,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 609.28
       },
       "TJX": {
         "last_close": 158.83,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 158.82
       },
       "SCCO": {
         "last_close": 200.18,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 200.11
       },
       "JPM": {
         "last_close": 359.9,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 359.79
       },
       "COP": {
         "last_close": 123.05,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 123.03
       },
       "SCHW": {
         "last_close": 108.02,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 107.99
       },
       "DLR": {
         "last_close": 191.25,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 191.3
       },
       "CSCO": {
         "last_close": 122.61,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 122.57
       },
       "AVGO": {
         "last_close": 422.38,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 422.4
       },
       "HUBB": {
         "last_close": 504.81,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 504.9
       },
       "NOW": {
         "last_close": 127.47,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 127.44
       },
       "MS": {
         "last_close": 215.41,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 215.33
       },
       "CVX": {
         "last_close": 194.92,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 194.91
       },
       "NVDA": {
         "last_close": 219.16,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 217.55
       },
       "ABBV": {
         "last_close": 247.89,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 247.97
       },
       "DASH": {
         "last_close": 209.91,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 209.86
       },
       "BKR": {
         "last_close": 64.09,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 64.07
       },
       "PGR": {
         "last_close": 213.89,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 213.95
       },
       "SLB": {
         "last_close": 53.2,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 53.2
       },
       "V": {
         "last_close": 361.44,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 361.32
       },
       "BKNG": {
         "last_close": 212.93,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 212.88
       },
       "NVT": {
         "last_close": 162.35,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 162.33
       },
       "ABT": {
         "last_close": 108.67,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 108.62
       },
       "SPOT": {
         "last_close": 511.81,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 511.82
       },
       "EME": {
         "last_close": 808.88,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 809.33
       },
       "UNP": {
         "last_close": 292.15,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 292.24
       },
       "ARES": {
         "last_close": 137.64,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 137.66
       },
       "TMO": {
         "last_close": 599.56,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 599.69
       },
       "MSFT": {
         "last_close": 506.15,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 506.06
       },
       "APD": {
         "last_close": 308.19,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 308.18
       },
       "LPLA": {
         "last_close": 372.13,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 372.11
       },
       "CB": {
         "last_close": 348.25,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 348.3
       },
       "GOOGL": {
         "last_close": 357.03,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 357.52
       },
       "MA": {
         "last_close": 563.12,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 563.17
       },
       "ZS": {
         "last_close": 176.7,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 176.68
       },
       "B": {
         "last_close": 40.91,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 40.88
       },
       "LMT": {
         "last_close": 603.09,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 603.16
       },
       "REGN": {
         "last_close": 808.43,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 808.05
       },
       "MCO": {
         "last_close": 478.23,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 478.14
       },
       "BX": {
         "last_close": 141.66,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 141.66
       },
       "WM": {
         "last_close": 226.62,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 226.6
       },
       "CRM": {
         "last_close": 197.49,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 197.51
       },
       "ADBE": {
         "last_close": 273.02,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 272.96
       },
       "ICE": {
         "last_close": 150.49,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 150.54
       },
       "APO": {
         "last_close": 132.05,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 132.02
       },
       "WPM": {
         "last_close": 133.34,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 133.39
       },
       "KKR": {
         "last_close": 103.85,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 103.83
       },
       "PM": {
         "last_close": 186.0,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 186.0
       },
       "AEM": {
         "last_close": 180.41,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 180.48
       },
       "CME": {
         "last_close": 263.7,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 263.65
       },
       "FNV": {
         "last_close": 240.81,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 240.9
       },
       "NEM": {
         "last_close": 117.27,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 117.26
       },
       "MDT": {
         "last_close": 89.41,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 89.41
       },
       "SYK": {
         "last_close": 345.67,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 345.81
       },
       "SMCI": {
         "last_close": 31.45,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 31.46
       },
       "CAMT": {
         "last_close": 158.18,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 158.1
       },
       "RGLD": {
         "last_close": 234.17,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 234.13
       },
       "GILD": {
         "last_close": 133.1,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 133.06
       },
       "ASML": {
         "last_close": 1733.9,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 1733.48
       },
       "LOW": {
         "last_close": 218.84,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 218.88
       },
       "CEG": {
         "last_close": 270.58,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 270.43
       },
       "COST": {
         "last_close": 952.76,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 952.75
       },
       "UBER": {
         "last_close": 78.0,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 78.03
       },
       "BLK": {
         "last_close": 1131.12,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 1131.4
       },
       "NOC": {
         "last_close": 577.3,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 577.89
       },
       "ALAB": {
         "last_close": 317.37,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 317.23
       },
       "EQIX": {
         "last_close": 1041.77,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 1043.38
       },
       "BSX": {
         "last_close": 50.45,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 50.46
       },
       "TSM": {
         "last_close": 418.59,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 418.47
       },
       "HD": {
         "last_close": 350.81,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 350.78
       },
       "INTU": {
         "last_close": 334.46,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 334.43
       },
       "KGC": {
         "last_close": 27.4,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 27.4
       },
       "PWR": {
         "last_close": 660.9,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 660.86
       },
       "MELI": {
         "last_close": 1824.51,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 1824.34
       },
       "MRVL": {
         "last_close": 209.0,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 208.56
       },
       "ADI": {
         "last_close": 384.02,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 383.92
       },
       "COHR": {
         "last_close": 325.12,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 325.15
       },
       "ARM": {
         "last_close": 267.97,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 267.85
       },
       "WMT": {
         "last_close": 112.67,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 112.66
       },
       "TER": {
         "last_close": 365.14,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 365.1
       },
       "TDG": {
         "last_close": 1223.92,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 1223.48
       },
       "DUK": {
         "last_close": 121.18,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 121.19
       },
       "SMR": {
         "last_close": 9.18,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 9.18
       },
       "ISRG": {
         "last_close": 393.31,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 393.38
       },
       "IBKR": {
         "last_close": 90.66,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 90.66
       },
       "NU": {
         "last_close": 13.87,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 13.86
       },
       "PG": {
         "last_close": 146.43,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 146.44
       },
       "MCD": {
         "last_close": 273.68,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 273.72
       },
       "HCA": {
         "last_close": 413.72,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 414.03
       },
       "CRWV": {
         "last_close": 87.79,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 88.19
       },
       "KMI": {
         "last_close": 31.4,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 31.39
       },
       "NFLX": {
         "last_close": 76.31,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 76.29
       },
       "WMB": {
         "last_close": 71.84,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 71.85
       },
       "ORCL": {
         "last_close": 151.02,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 151.05
       },
       "LITE": {
         "last_close": 820.71,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 813.51
       },
       "LIN": {
         "last_close": 492.42,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 492.46
       },
       "ONTO": {
         "last_close": 291.66,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 291.35
       },
       "SNPS": {
         "last_close": 411.76,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 411.68
       },
       "MPWR": {
         "last_close": 1380.92,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 1381.1
       },
       "GS": {
         "last_close": 1033.87,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 1034.51
       },
       "CVS": {
         "last_close": 95.64,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 95.67
       },
       "TXN": {
         "last_close": 280.35,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 280.44
       },
       "CCJ": {
         "last_close": 97.33,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 97.31
       },
       "NEE": {
         "last_close": 84.7,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 84.7
       },
       "HOOD": {
         "last_close": 94.49,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 94.52
       },
       "AMAT": {
         "last_close": 522.15,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 522.12
       },
       "IBM": {
         "last_close": 236.14,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 236.31
       },
       "UNH": {
         "last_close": 408.75,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 408.74
       },
       "AAPL": {
         "last_close": 308.17,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 308.26
       },
       "MU": {
         "last_close": 866.9,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 861.0
       },
       "SPGI": {
         "last_close": 411.0,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 410.94
       },
       "ROK": {
         "last_close": 435.22,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 435.22
       },
       "VST": {
         "last_close": 142.89,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 142.87
       },
       "LRCX": {
         "last_close": 306.23,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 306.4
       },
       "OKLO": {
         "last_close": 44.51,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 44.49
       },
       "STX": {
         "last_close": 800.57,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 800.99
       },
       "NBIS": {
         "last_close": 184.1,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 184.11
       },
       "AMD": {
         "last_close": 469.71,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 469.56
       },
       "GLW": {
         "last_close": 157.71,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 157.76
       },
       "META": {
         "last_close": 594.11,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 594.92
       },
       "KLAC": {
         "last_close": 192.83,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 192.74
       },
       "GEV": {
         "last_close": 989.91,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 990.85
       },
       "RDDT": {
         "last_close": 158.67,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 158.72
       },
       "CAT": {
         "last_close": 837.58,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 837.58
       },
       "NRG": {
         "last_close": 118.91,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 118.91
       },
       "CLS": {
         "last_close": 314.93,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 314.59
       },
       "FIX": {
         "last_close": 1673.73,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 1674.84
       },
       "CDNS": {
         "last_close": 331.87,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 331.91
       },
       "TLN": {
         "last_close": 343.24,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 343.19
       },
       "COIN": {
         "last_close": 148.58,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 148.68
       },
       "WDC": {
         "last_close": 438.3,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 438.34
       },
       "APP": {
         "last_close": 338.85,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 339.0
       },
       "QCOM": {
         "last_close": 162.25,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 162.17
       },
       "VRT": {
         "last_close": 270.29,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 270.1
       },
       "CIEN": {
         "last_close": 388.09,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 387.7
       },
       "TSLA": {
         "last_close": 330.87,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 330.88
       },
       "SNDK": {
         "last_close": 1238.23,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 1237.92
       },
       "STRL": {
         "last_close": 528.49,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 528.51
       },
       "SPY": {
         "last_close": 772.82,
-        "price_as_of": "2026-08-10T21:03:50.895912+00:00",
+        "price_as_of": "2026-08-10T22:01:08.344220+00:00",
         "source": "alpaca_iex"
       }
     },
@@ -20596,340 +20496,6 @@
         ]
       },
       "fundamentals_current_through": "2026-06-30",
-      "_trimmed": {
-        "quarterly_fundamentals history (8 older periods; newest 5 kept per series)": "omitted from the slim pack \u2014 full copy in full_context_path"
-      }
-    },
-    "S": {
-      "status": "ok",
-      "ticker": "S",
-      "cik": "0001583708",
-      "company": "SentinelOne, Inc.",
-      "recent_filings": [
-        {
-          "form": "8-K",
-          "filed": "2026-06-26",
-          "url": "https://www.sec.gov/Archives/edgar/data/1583708/000158370826000044/s-20260625.htm"
-        },
-        {
-          "form": "10-Q",
-          "filed": "2026-05-28",
-          "url": "https://www.sec.gov/Archives/edgar/data/1583708/000158370826000041/s-20260430.htm"
-        },
-        {
-          "form": "8-K",
-          "filed": "2026-05-28",
-          "url": "https://www.sec.gov/Archives/edgar/data/1583708/000158370826000039/s-20260528.htm"
-        },
-        {
-          "form": "8-K",
-          "filed": "2026-03-25",
-          "url": "https://www.sec.gov/Archives/edgar/data/1583708/000158370826000025/s-20260319.htm"
-        },
-        {
-          "form": "10-K",
-          "filed": "2026-03-19",
-          "url": "https://www.sec.gov/Archives/edgar/data/1583708/000158370826000020/s-20260131.htm"
-        },
-        {
-          "form": "8-K",
-          "filed": "2026-03-12",
-          "url": "https://www.sec.gov/Archives/edgar/data/1583708/000158370826000014/s-20260312.htm"
-        },
-        {
-          "form": "8-K",
-          "filed": "2026-03-05",
-          "url": "https://www.sec.gov/Archives/edgar/data/1583708/000158370826000009/s-20260228.htm"
-        },
-        {
-          "form": "8-K",
-          "filed": "2026-01-14",
-          "url": "https://www.sec.gov/Archives/edgar/data/1583708/000158370826000003/s-20260108.htm"
-        }
-      ],
-      "latest_periodic_filing": {
-        "form": "10-Q",
-        "filed": "2026-05-28",
-        "period_end": "2026-04-30"
-      },
-      "quarterly_fundamentals": {
-        "revenue": [
-          {
-            "period_end": "2024-07-31",
-            "value_usd": 198937000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2024-10-31",
-            "value_usd": 210648000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-04-30",
-            "value_usd": 229029000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-07-31",
-            "value_usd": 242183000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-10-31",
-            "value_usd": 258913000,
-            "form": "10-Q"
-          }
-        ],
-        "annual_revenue": [
-          {
-            "period_end": "2023-01-31",
-            "value_usd": 422179000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2024-01-31",
-            "value_usd": 621154000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2025-01-31",
-            "value_usd": 821461000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2026-01-31",
-            "value_usd": 1001278000,
-            "form": "10-K"
-          }
-        ],
-        "net_income": [
-          {
-            "period_end": "2024-07-31",
-            "value_usd": -69184000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2024-10-31",
-            "value_usd": -78364000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-04-30",
-            "value_usd": -208193000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-07-31",
-            "value_usd": -72019000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-10-31",
-            "value_usd": -60291000,
-            "form": "10-Q"
-          }
-        ],
-        "gross_profit": [
-          {
-            "period_end": "2024-07-31",
-            "value_usd": 148238000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2024-10-31",
-            "value_usd": 157388000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-04-30",
-            "value_usd": 172497000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-07-31",
-            "value_usd": 181709000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-10-31",
-            "value_usd": 191062000,
-            "form": "10-Q"
-          }
-        ],
-        "capex": [
-          {
-            "period_end": "2021-04-30",
-            "value_usd": 780000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2022-04-30",
-            "value_usd": 2808000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2023-04-30",
-            "value_usd": 462000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2024-04-30",
-            "value_usd": 886000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-04-30",
-            "value_usd": 146000,
-            "form": "10-Q"
-          }
-        ],
-        "cash_and_equivalents": [
-          {
-            "period_end": "2025-01-31",
-            "value": 186574000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2025-04-30",
-            "value": 188624000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-07-31",
-            "value": 278005000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-10-31",
-            "value": 150206000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2026-01-31",
-            "value": 169627000,
-            "form": "10-Q"
-          }
-        ],
-        "long_term_debt": [
-          {
-            "period_end": "2021-01-31",
-            "value": 19621000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2021-07-31",
-            "value": 0,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2021-10-31",
-            "value": 0,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2022-01-31",
-            "value": 0,
-            "form": "10-K"
-          }
-        ],
-        "operating_cash_flow": [
-          {
-            "period_end": "2025-01-31",
-            "value": 33728000,
-            "form": "10-K",
-            "period_days": 365
-          },
-          {
-            "period_end": "2025-04-30",
-            "value": 52274000,
-            "form": "10-Q",
-            "period_days": 88
-          },
-          {
-            "period_end": "2025-07-31",
-            "value": 51231000,
-            "form": "10-Q",
-            "period_days": 180
-          },
-          {
-            "period_end": "2025-10-31",
-            "value": 72245000,
-            "form": "10-Q",
-            "period_days": 272
-          },
-          {
-            "period_end": "2026-01-31",
-            "value": 76616000,
-            "form": "10-K",
-            "period_days": 364
-          }
-        ],
-        "stock_based_compensation": [
-          {
-            "period_end": "2025-01-31",
-            "value": 267531000,
-            "form": "10-K",
-            "period_days": 365
-          },
-          {
-            "period_end": "2025-04-30",
-            "value": 68655000,
-            "form": "10-Q",
-            "period_days": 88
-          },
-          {
-            "period_end": "2025-07-31",
-            "value": 142539000,
-            "form": "10-Q",
-            "period_days": 180
-          },
-          {
-            "period_end": "2025-10-31",
-            "value": 217880000,
-            "form": "10-Q",
-            "period_days": 272
-          },
-          {
-            "period_end": "2026-01-31",
-            "value": 297587000,
-            "form": "10-K",
-            "period_days": 364
-          }
-        ],
-        "diluted_shares": [
-          {
-            "period_end": "2025-07-31",
-            "value": 329481933,
-            "form": "10-Q",
-            "period_days": 180
-          },
-          {
-            "period_end": "2025-07-31",
-            "value": 330938421,
-            "form": "10-Q",
-            "period_days": 91
-          },
-          {
-            "period_end": "2025-10-31",
-            "value": 328516203,
-            "form": "10-Q",
-            "period_days": 272
-          },
-          {
-            "period_end": "2025-10-31",
-            "value": 332732831,
-            "form": "10-Q",
-            "period_days": 91
-          },
-          {
-            "period_end": "2026-01-31",
-            "value": 330111148,
-            "form": "10-K",
-            "period_days": 364
-          }
-        ]
-      },
-      "fundamentals_current_through": "2026-04-30",
       "_trimmed": {
         "quarterly_fundamentals history (8 older periods; newest 5 kept per series)": "omitted from the slim pack \u2014 full copy in full_context_path"
       }
@@ -27096,371 +26662,6 @@
       "_trimmed": {
         "quarterly_facts history (52 older periods; every series kept, newest 2 periods each)": "omitted from the slim pack \u2014 full copy in full_context_path"
       }
-    },
-    "S": {
-      "status": "ok",
-      "ticker": "S",
-      "cik": "0001583708",
-      "company": "SENTINELONE, INC",
-      "currency_note": null,
-      "note": "quarterly_facts: instant rows are balance-sheet snapshots; duration rows include period_days - rows spanning >100 days are YTD-cumulative, not single quarters. quality_ratios are pre-computed - do not recompute them.",
-      "quarterly_facts": {
-        "operating_income": [
-          {
-            "period_end": "2025-07-31",
-            "value": -168101000,
-            "form": "10-Q",
-            "period_days": 180,
-            "period_start": "2025-02-01"
-          },
-          {
-            "period_end": "2025-07-31",
-            "value": -80618000,
-            "form": "10-Q",
-            "period_days": 91,
-            "period_start": "2025-05-01"
-          }
-        ],
-        "rd_expense": [
-          {
-            "period_end": "2025-07-31",
-            "value": 151344000,
-            "form": "10-Q",
-            "period_days": 180,
-            "period_start": "2025-02-01"
-          },
-          {
-            "period_end": "2025-07-31",
-            "value": 79091000,
-            "form": "10-Q",
-            "period_days": 91,
-            "period_start": "2025-05-01"
-          }
-        ],
-        "sga_expense": [
-          {
-            "period_end": "2025-07-31",
-            "value": 100153000,
-            "form": "10-Q",
-            "period_days": 180,
-            "period_start": "2025-02-01"
-          },
-          {
-            "period_end": "2025-07-31",
-            "value": 51474000,
-            "form": "10-Q",
-            "period_days": 91,
-            "period_start": "2025-05-01"
-          }
-        ],
-        "interest_expense": [
-          {
-            "period_end": "2024-01-31",
-            "value": 1216000,
-            "form": "10-K",
-            "period_days": 364,
-            "period_start": "2023-02-01"
-          },
-          {
-            "period_end": "2024-07-31",
-            "value": 72000,
-            "form": "10-Q",
-            "period_days": 181,
-            "period_start": "2024-02-01"
-          }
-        ],
-        "eps_diluted": [
-          {
-            "period_end": "2025-07-31",
-            "value": -0.85,
-            "form": "10-Q",
-            "period_days": 180,
-            "period_start": "2025-02-01"
-          },
-          {
-            "period_end": "2025-07-31",
-            "value": -0.22,
-            "form": "10-Q",
-            "period_days": 91,
-            "period_start": "2025-05-01"
-          }
-        ],
-        "accounts_receivable": [
-          {
-            "period_end": "2025-01-31",
-            "value": 236012000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2025-04-30",
-            "value": 155010000,
-            "form": "10-Q"
-          }
-        ],
-        "total_current_assets": [
-          {
-            "period_end": "2025-01-31",
-            "value": 1069722000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2025-04-30",
-            "value": 1030598000,
-            "form": "10-Q"
-          }
-        ],
-        "total_current_liabilities": [
-          {
-            "period_end": "2025-01-31",
-            "value": 613553000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2025-04-30",
-            "value": 588928000,
-            "form": "10-Q"
-          }
-        ],
-        "stockholders_equity": [
-          {
-            "period_end": "2025-01-31",
-            "value": 1669247000,
-            "form": "10-Q"
-          },
-          {
-            "period_end": "2025-04-30",
-            "value": 1546542000,
-            "form": "10-Q"
-          }
-        ],
-        "deferred_revenue": [
-          {
-            "period_end": "2025-01-31",
-            "value": 470127000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2025-04-30",
-            "value": 453563000,
-            "form": "10-Q"
-          }
-        ],
-        "remaining_performance_obligation": [
-          {
-            "period_end": "2025-01-31",
-            "value": 1169100000,
-            "form": "10-K"
-          },
-          {
-            "period_end": "2025-04-30",
-            "value": 1163400000,
-            "form": "10-Q"
-          }
-        ],
-        "share_buybacks": [
-          {
-            "period_end": "2024-07-31",
-            "value": 0,
-            "form": "10-Q",
-            "period_days": 181,
-            "period_start": "2024-02-01"
-          },
-          {
-            "period_end": "2024-10-31",
-            "value": 0,
-            "form": "10-Q",
-            "period_days": 273,
-            "period_start": "2024-02-01"
-          }
-        ],
-        "acquisitions": [
-          {
-            "period_end": "2025-01-31",
-            "value": 123837000,
-            "form": "10-K",
-            "period_days": 365,
-            "period_start": "2024-02-01"
-          },
-          {
-            "period_end": "2025-04-30",
-            "value": 0,
-            "form": "10-Q",
-            "period_days": 88,
-            "period_start": "2025-02-01"
-          }
-        ],
-        "depreciation_amortization": [
-          {
-            "period_end": "2025-01-31",
-            "value": 42766000,
-            "form": "10-K",
-            "period_days": 365,
-            "period_start": "2024-02-01"
-          },
-          {
-            "period_end": "2025-04-30",
-            "value": 10848000,
-            "form": "10-Q",
-            "period_days": 88,
-            "period_start": "2025-02-01"
-          }
-        ]
-      },
-      "quality_ratios": {
-        "ratios": {
-          "gross_margin_pct": {
-            "value": 71.82,
-            "trend": "deteriorating",
-            "note": "latest Q 71.82% vs 75.32% four quarters ago (2026-04-30)"
-          },
-          "operating_margin_pct": {
-            "value": -28.81,
-            "trend": "improving",
-            "note": "latest Q -28.81% vs -38.2% four quarters ago"
-          },
-          "sbc_pct_of_revenue": {
-            "value": 27.07,
-            "trend": "improving",
-            "xbrl_tag": "AllocatedShareBasedCompensationExpense",
-            "period_days": 88,
-            "note": "SBC is 27.07% of latest Q revenue (single-quarter, tag AllocatedShareBasedCompensationExpense) - haircut GAAP-adjusted earnings by this"
-          },
-          "diluted_shares_yoy_change_pct": {
-            "value": 2.75,
-            "trend": "deteriorating",
-            "note": "share count growing - net dilution (2026-04-30 vs 2025-04-30)"
-          },
-          "net_debt_usd": {
-            "value": -153228000.0,
-            "trend": "unknown",
-            "note": "net cash = total debt (long-term + current, incl. finance leases) minus cash, as of 2022-01-31 (STALE: debt last reported 2022-01-31, older than cash 2026-04-30 - carried forward, NOT zeroed)",
-            "components": {
-              "long_term_debt": 0.0,
-              "current_debt": null,
-              "total_debt": 0.0,
-              "cash_and_equivalents": 153228000,
-              "as_of": "2022-01-31",
-              "cash_as_of": "2026-04-30",
-              "long_term_tags": [
-                "LongTermDebtNoncurrent"
-              ],
-              "current_tags": [],
-              "stale": true
-            }
-          },
-          "total_debt_usd": {
-            "value": 0.0,
-            "trend": "unknown",
-            "note": "long-term 0.0 + current None (finance leases in, operating leases out); LT tags ['LongTermDebtNoncurrent'], current tags []"
-          },
-          "operating_lease_liability_usd": {
-            "value": 15001000,
-            "trend": "unknown",
-            "xbrl_tag": "OperatingLeaseLiabilityCurrent + Noncurrent",
-            "note": "operating lease liabilities, NOT in total_debt (a debt-like commitment for asset-light/retail names) as of 2026-01-31"
-          },
-          "current_ratio": {
-            "value": 1.44,
-            "trend": "unknown",
-            "xbrl_tag": "AssetsCurrent / LiabilitiesCurrent",
-            "note": "current assets / current liabilities = 1.44x as of 2026-04-30"
-          },
-          "free_cash_flow_usd": {
-            "value": 38069000,
-            "trend": "unknown",
-            "note": "OCF minus capex, period ending 2026-04-30 spanning 88 days"
-          },
-          "free_cash_flow_ttm_usd": {
-            "value": 61844000.0,
-            "trend": "improving",
-            "note": "trailing-twelve-month FCF = OCF - capex over 4 de-YTD'd quarters ending 2026-04-30; TTM FCF +44.2% vs the prior TTM"
-          },
-          "rule_of_40": {
-            "value": 38.6,
-            "rule_of_40_value": 38.6,
-            "rule_of_40_pass": false,
-            "note": "TTM revenue growth 32.5% + TTM FCF margin 6.1% (software heuristic; pass = >=40; TTM ending 2026-04-30)"
-          },
-          "gross_margin_ttm_pct": {
-            "value": 73.89,
-            "trend": "flat",
-            "xbrl_tag": "GrossProfit / revenue",
-            "period_days": 365,
-            "note": "TTM gross margin 73.89% vs 73.97% prior TTM"
-          },
-          "operating_margin_ttm_pct": {
-            "value": -31.9,
-            "trend": "improving",
-            "xbrl_tag": "OperatingIncomeLoss / revenue",
-            "period_days": 365,
-            "note": "TTM operating margin, ending 2026-04-30; TTM operating margin -31.90% vs -43.49% a year ago (+11.59pp)"
-          },
-          "interest_coverage": {
-            "value": -2327.03,
-            "trend": "unknown",
-            "xbrl_tag": "OperatingIncomeLoss / InterestExpense",
-            "period_days": 365,
-            "note": "TTM EBIT covers interest -2327.03x - THIN (<3x) (no prior-year TTM available \u2014 trend NOT measured)"
-          },
-          "buyback_ttm_usd": {
-            "value": 147319000,
-            "trend": "unknown",
-            "xbrl_tag": "PaymentsForRepurchaseOfCommonStock",
-            "period_days": 365,
-            "note": "TTM common-stock repurchases ending 2026-01-31; buyback yield = this / market cap (divide by the market cap in your bundle)"
-          },
-          "ebitda_ttm_usd": {
-            "value": -260206000.0,
-            "trend": "unknown",
-            "xbrl_tags": "OperatingIncomeLoss + DepreciationAndAmortization",
-            "period_days": 365,
-            "components": {
-              "ttm_operating_income_usd": -321130000,
-              "ttm_d_and_a_usd": 60924000.0,
-              "d_and_a_tag": "DepreciationAndAmortization"
-            },
-            "note": "TTM EBITDA (USD) = TTM operating income -321130000 + TTM D&A 60924000.0 [DepreciationAndAmortization], ending 2026-04-30"
-          },
-          "net_debt_to_ebitda": {
-            "value": null,
-            "trend": "unknown",
-            "leverage_read": "net_cash",
-            "xbrl_tags": "(total_debt - cash) / (OperatingIncomeLoss + D&A) TTM",
-            "period_days": 365,
-            "note": "net debt (total debt 0.0 - cash 153228000 = -153228000.0) / TTM EBITDA -260206000.0 = n/m (net cash, EBITDA non-positive) [read=net_cash; scale: net_cash / conservative <2x / moderate 2-3x / levered >3x]"
-          },
-          "market_cap_usd": {
-            "value": 7491516448.043507,
-            "trend": "unknown",
-            "xbrl_tags": "yfinance close x WeightedAverageNumberOfDilutedSharesOutstanding",
-            "note": "market cap (USD) = S close 22.23 (2026-08-10) x 337000297 weighted-avg diluted shares \u2014 approximate vs point-in-time shares outstanding"
-          },
-          "enterprise_value_usd": {
-            "value": 7338288448.043507,
-            "trend": "unknown",
-            "xbrl_tags": "market_cap + total_debt - cash",
-            "note": "EV (USD) = market cap 7491516448.04 + total debt 0.0 - cash 153228000"
-          },
-          "ev_to_ebitda": {
-            "value": null,
-            "trend": "unknown",
-            "reason": "ebitda_non_positive",
-            "note": "EV/EBITDA not computable: TTM EBITDA is non-positive"
-          },
-          "buyback_yield_pct": {
-            "value": 1.97,
-            "trend": "unknown",
-            "xbrl_tags": "PaymentsForRepurchaseOfCommonStock TTM / market_cap x 100",
-            "note": "buyback yield = TTM repurchases 147319000 / market cap 7491516448.04 = 1.97% (cash returned via buybacks; add dividend yield for total shareholder yield)"
-          }
-        },
-        "omitted": {
-          "inventory_to_revenue_pct": "no inventory reported (common for software) or revenue missing"
-        }
-      },
-      "_trimmed": {
-        "quarterly_facts history (56 older periods; every series kept, newest 2 periods each)": "omitted from the slim pack \u2014 full copy in full_context_path"
-      }
     }
   },
   "filing_texts": {
@@ -27592,7 +26793,7 @@
   },
   "filing_texts_note": "Real MD&A and press-release prose per focus ticker. When earnings_release.contains_guidance_language is true, QUOTE the specific guidance sentence (numbers and fiscal period) instead of paraphrasing. mdna.section == 'document_start' means general filing text, not MD&A.",
   "news_and_catalysts": {
-    "as_of": "2026-08-10T21:07:05.832693+00:00",
+    "as_of": "2026-08-10T22:04:05.326853+00:00",
     "news_max_age_days": 7,
     "tickers": {
       "BKR": {
@@ -27616,11 +26817,11 @@
             "tier": "commentary"
           },
           {
-            "title": "Baker Hughes Bags Major Award To Deliver 17 Deepwater Subsea Systems And Digital Solutions For Kutei Northern Hub Offshore Indonesia",
+            "title": "Baker Hughes Wins Award To Deliver 17 Deepwater Subsea Systems And Digital Solutions For Kutei Northern Hub Offshore Indonesia",
             "published": "2026-08-10T11:13:44Z",
-            "url": "https://www.benzinga.com/news/26/08/61069874/baker-hughes-bags-major-award-deliver-17-deepwater-subsea-systems-and-digital-solutions-kutei-northe",
+            "url": "https://www.benzinga.com/news/26/08/61069874/baker-hughes-bags-major-award-to-deliver-17-deepwater-subsea-systems-and-digital-solutions-for-kutei-northern-hub-offshore-indonesia",
             "source": "alpaca_benzinga",
-            "age_days": 0.4,
+            "age_days": 0.5,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -27647,7 +26848,7 @@
             "published": "2026-08-07T23:00:28Z",
             "url": "https://finance.yahoo.com/energy/articles/kodiak-gas-services-inc-kgs-230028140.html",
             "source": "GuruFocus.com",
-            "age_days": 2.9,
+            "age_days": 3.0,
             "subject": "peer_or_market",
             "tier": "commentary"
           }
@@ -27759,7 +26960,7 @@
             "published": "2026-08-10T15:49:00Z",
             "url": "https://www.barrons.com/articles/hewlett-packard-enterprise-hpe-stock-ai-price-43f20b6f?siteid=yhoof2&yptr=yahoo",
             "source": "Barrons.com",
-            "age_days": 0.2,
+            "age_days": 0.3,
             "subject": "direct",
             "tier": "primary"
           },
@@ -27768,7 +26969,7 @@
             "published": "2026-08-10T15:14:51Z",
             "url": "https://247wallst.com/investing/2026/08/10/super-micro-rises-4-ahead-of-earnings-hpe-gains-4-dell-climbs-3-as-ai-server-stocks-advance/",
             "source": "24/7 Wall St.",
-            "age_days": 0.2,
+            "age_days": 0.3,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -27777,7 +26978,7 @@
             "published": "2026-08-10T15:12:18Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/hpe-stock-jumps-6-morgan-151218336.html",
             "source": "GuruFocus.com",
-            "age_days": 0.2,
+            "age_days": 0.3,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -27786,7 +26987,7 @@
             "published": "2026-08-10T13:39:34Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/apple-downgraded-hpe-upgraded-wall-133934661.html",
             "source": "The Fly",
-            "age_days": 0.3,
+            "age_days": 0.4,
             "subject": "direct",
             "tier": null
           },
@@ -27795,7 +26996,7 @@
             "published": "2026-08-10T12:53:35Z",
             "url": "https://investorshub.advfn.com/market-news/article/33858/hpe-shares-jump-5-as-morgan-stanley-upgrade-points-to-nearly-30-upside",
             "source": "InvestorsHub",
-            "age_days": 0.3,
+            "age_days": 0.4,
             "subject": "direct",
             "tier": null
           },
@@ -27860,7 +27061,7 @@
             "published": "2026-08-10T15:31:12Z",
             "url": "https://finance.yahoo.com/technology/articles/cloudflare-falls-3-2-2-153112176.html",
             "source": "GuruFocus.com",
-            "age_days": 0.2,
+            "age_days": 0.3,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -27883,15 +27084,6 @@
             "tier": "primary"
           },
           {
-            "title": "Why Did NET, ABNB, SNOW Stocks Jump To 52-Week Highs Last Week?",
-            "published": "2026-08-10T04:10:38Z",
-            "url": "https://stocktwits.com/news-articles/markets/equity/why-did-net-abnb-snow-stocks-jump-to-52-week-highs-last-week/cZojQDdRJao",
-            "source": "Stocktwits",
-            "age_days": 0.7,
-            "subject": "direct",
-            "tier": "commentary"
-          },
-          {
             "title": "Citigroup Maintains Buy on Cloudflare, Raises Price Target to $400",
             "published": "2026-08-10T14:40:28Z",
             "url": "https://www.benzinga.com/news/26/08/61078036/citigroup-maintains-buy-cloudflare-raises-price-target-400",
@@ -27905,7 +27097,16 @@
             "published": "2026-08-10T13:17:43Z",
             "url": "https://www.benzinga.com/news/26/08/61074268/susquehanna-maintains-neutral-cloudflare-raises-price-target-300",
             "source": "alpaca_benzinga",
-            "age_days": 0.3,
+            "age_days": 0.4,
+            "subject": "direct",
+            "tier": "commentary"
+          },
+          {
+            "title": "Cloudflare For Government Receives FedRAMP High Certification And GovRAMP Moderate Authorization",
+            "published": "2026-08-10T13:03:39Z",
+            "url": "https://www.benzinga.com/news/26/08/61073742/cloudflare-government-receives-fedramp-high-certification-and-govramp-moderate-authorization",
+            "source": "alpaca_benzinga",
+            "age_days": 0.4,
             "subject": "direct",
             "tier": "commentary"
           }
@@ -27920,8 +27121,8 @@
         },
         "company": "Cloudflare, Inc.",
         "headline_mix": {
-          "direct": 18,
-          "peer_or_market": 6,
+          "direct": 17,
+          "peer_or_market": 7,
           "roundup": 3
         },
         "earnings_surprises": {
@@ -27961,7 +27162,7 @@
             "published": "2026-08-04T13:37:05Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/walmart-downgraded-palantir-upgraded-wall-133705916.html",
             "source": "The Fly",
-            "age_days": 6.3,
+            "age_days": 6.4,
             "subject": "peer_or_market",
             "tier": null
           },
@@ -28163,7 +27364,7 @@
             "published": "2026-08-10T13:40:04Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/oils-energy-stocks-lagging-marathon-134004902.html",
             "source": "Zacks",
-            "age_days": 0.3,
+            "age_days": 0.4,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -28172,7 +27373,7 @@
             "published": "2026-08-10T13:30:03Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/invest-marathon-petroleum-mpc-based-133003648.html",
             "source": "Zacks",
-            "age_days": 0.3,
+            "age_days": 0.4,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -28237,7 +27438,7 @@
             "published": "2026-08-10T13:16:00Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/zscalers-discounted-valuation-buying-opportunity-131600441.html",
             "source": "Zacks",
-            "age_days": 0.3,
+            "age_days": 0.4,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -28246,7 +27447,7 @@
             "published": "2026-08-04T13:11:03Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/zscaler-zs-could-20-undervalued-131103006.html",
             "source": "Simply Wall St.",
-            "age_days": 6.3,
+            "age_days": 6.4,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -28255,16 +27456,7 @@
             "published": "2026-08-04T12:55:00Z",
             "url": "https://finance.yahoo.com/technology/articles/zscalers-large-deal-activity-surges-125500260.html",
             "source": "Zacks",
-            "age_days": 6.3,
-            "subject": "direct",
-            "tier": "commentary"
-          },
-          {
-            "title": "Zscaler (ZS) Rises Higher Than Market: Key Facts",
-            "published": "2026-08-03T21:45:02Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/zscaler-zs-rises-higher-market-214502419.html",
-            "source": "Zacks",
-            "age_days": 7.0,
+            "age_days": 6.4,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -28285,6 +27477,15 @@
             "age_days": 3.3,
             "subject": "peer_or_market",
             "tier": null
+          },
+          {
+            "title": "Palo Alto Networks Surges 89% in 3 Months: Hold or Fold the Stock?",
+            "published": "2026-08-04T14:34:00Z",
+            "url": "https://finance.yahoo.com/markets/stocks/articles/palo-alto-networks-surges-89-143400177.html",
+            "source": "Zacks",
+            "age_days": 6.3,
+            "subject": "peer_or_market",
+            "tier": "commentary"
           }
         ],
         "next_earnings": "2026-09-03",
@@ -28297,7 +27498,7 @@
         },
         "company": "Zscaler, Inc.",
         "headline_mix": {
-          "direct": 4,
+          "direct": 3,
           "peer_or_market": 3,
           "roundup": 0
         },
@@ -28338,7 +27539,7 @@
             "published": "2026-08-10T13:06:00Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/aem-stock-pops-25-month-130600702.html",
             "source": "Zacks",
-            "age_days": 0.3,
+            "age_days": 0.4,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -28374,7 +27575,7 @@
             "published": "2026-08-07T22:27:06Z",
             "url": "https://stocktwits.com/news-articles/markets/equity/gold-stocks-et-fs-see-best-week-in-over-a-year-why-gold-is-back-in-vogue/cZofjpERJ9U",
             "source": "Stocktwits",
-            "age_days": 2.9,
+            "age_days": 3.0,
             "subject": "peer_or_market",
             "tier": "commentary"
           },
@@ -28558,7 +27759,7 @@
             "published": "2026-08-10T13:01:00Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/buy-sell-hold-nuscale-stock-130100078.html",
             "source": "Zacks",
-            "age_days": 0.3,
+            "age_days": 0.4,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -28581,12 +27782,12 @@
             "tier": "commentary"
           },
           {
-            "title": "NuScale Power Stock Could Triple by 2030. Here's Why.",
-            "published": "2026-08-07T13:50:00Z",
-            "url": "https://www.fool.com/investing/2026/08/07/nuscale-power-stock-could-triple-by-2030-heres-why/",
+            "title": "Prediction: This $10 Nuclear Energy Stock Could Be Worth $100 by 2036",
+            "published": "2026-08-10T21:20:00Z",
+            "url": "https://www.fool.com/investing/2026/08/10/prediction-nuclear-energy-stock-could-be-worth/",
             "source": "Motley Fool",
-            "age_days": 3.3,
-            "subject": "direct",
+            "age_days": 0.0,
+            "subject": "peer_or_market",
             "tier": "commentary"
           }
         ],
@@ -28600,8 +27801,8 @@
         },
         "company": "NUSCALE POWER Corp",
         "headline_mix": {
-          "direct": 6,
-          "peer_or_market": 4,
+          "direct": 5,
+          "peer_or_market": 5,
           "roundup": 0
         },
         "earnings_surprises": {
@@ -28641,7 +27842,7 @@
             "published": "2026-08-10T18:14:53Z",
             "url": "https://www.trefis.com/articles/610765/boston-scientific-stock-is-priced-as-if-watchman-were-the-whole-company/2026-08-10",
             "source": "Trefis",
-            "age_days": 0.1,
+            "age_days": 0.2,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -28650,7 +27851,7 @@
             "published": "2026-08-10T18:14:01Z",
             "url": "https://www.fool.com/coverage/filings/2026/08/10/boston-scientific-director-habiger-buys-usd100k-of-shares-amid-54-decline-what-does-this-mean-for-bsx-in-2026/",
             "source": "Motley Fool",
-            "age_days": 0.1,
+            "age_days": 0.2,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -28659,7 +27860,7 @@
             "published": "2026-08-10T17:46:01Z",
             "url": "https://www.fool.com/coverage/filings/2026/08/10/boston-scientific-ceo-mahoney-buys-more-than-200k-shares-for-usd10-million-what-does-this-mean-for-investors-in-2026/",
             "source": "Motley Fool",
-            "age_days": 0.1,
+            "age_days": 0.2,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -28756,6 +27957,15 @@
             "tier": null
           },
           {
+            "title": "Airbnb Is Starting To Think Like Amazon's Jeff Bezos, And It's Paying Off",
+            "published": "2026-08-10T21:50:00Z",
+            "url": "https://www.fool.com/investing/2026/08/10/airbnb-is-starting-to-think-like-amazons-jeff-bezo/",
+            "source": "Motley Fool",
+            "age_days": 0.0,
+            "subject": "direct",
+            "tier": "commentary"
+          },
+          {
             "title": "Why Airbnb Stock Surged And The Rest Of Travel Did Not",
             "published": "2026-08-10T19:48:18Z",
             "url": "https://www.trefis.com/articles/610753/why-airbnb-stock-surged-and-the-rest-of-travel-did-not/2026-08-10",
@@ -28778,16 +27988,7 @@
             "published": "2026-08-10T17:55:23Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/airbnb-abnb-breakout-quarter-reopens-175523801.html",
             "source": "Insider Monkey",
-            "age_days": 0.1,
-            "subject": "direct",
-            "tier": "commentary"
-          },
-          {
-            "title": "Why Airbnb (ABNB) International Revenue Trends Deserve Your Attention",
-            "published": "2026-08-10T13:15:04Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/why-airbnb-abnb-international-revenue-131504679.html",
-            "source": "Zacks",
-            "age_days": 0.3,
+            "age_days": 0.2,
             "subject": "direct",
             "tier": "commentary"
           }
@@ -28843,7 +28044,7 @@
             "published": "2026-08-10T03:17:22Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/ph-q2-deep-dive-broad-031722922.html",
             "source": "StockStory",
-            "age_days": 0.7,
+            "age_days": 0.8,
             "subject": "direct",
             "tier": null
           },
@@ -28852,7 +28053,7 @@
             "published": "2026-08-09T01:03:58Z",
             "url": "https://www.marketbeat.com/instant-alerts/parker-hannifin-q4-earnings-call-highlights-2026-08-08/?utm_source=yahoofinance&utm_medium=yahoofinance",
             "source": "MarketBeat",
-            "age_days": 1.8,
+            "age_days": 1.9,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -28879,7 +28080,7 @@
             "published": "2026-08-06T23:03:51Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/parker-hannifin-corp-ph-q4-230351363.html",
             "source": "GuruFocus.com",
-            "age_days": 3.9,
+            "age_days": 4.0,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -28888,7 +28089,7 @@
             "published": "2026-08-06T17:35:33Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/parker-hannifin-stock-surges-10-173533481.html",
             "source": "GuruFocus.com",
-            "age_days": 4.1,
+            "age_days": 4.2,
             "subject": "direct",
             "tier": "commentary"
           }
@@ -28903,7 +28104,7 @@
         },
         "company": "Parker-Hannifin Corp",
         "headline_mix": {
-          "direct": 10,
+          "direct": 9,
           "peer_or_market": 4,
           "roundup": 0
         },
@@ -28989,7 +28190,7 @@
             "published": "2026-08-05T13:30:02Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/celestica-cls-just-overtook-50-133002139.html",
             "source": "Zacks",
-            "age_days": 5.3,
+            "age_days": 5.4,
             "subject": "direct",
             "tier": "commentary"
           }
@@ -29045,7 +28246,7 @@
             "published": "2026-08-10T16:00:06Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/travelers-trv-2-66-one-160006024.html",
             "source": "Zacks",
-            "age_days": 0.2,
+            "age_days": 0.3,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -29068,11 +28269,20 @@
             "tier": "commentary"
           },
           {
+            "title": "If You Invested $100 In Travelers Companies Stock 5 Years Ago, You Would Have This Much Today",
+            "published": "2026-08-10T21:30:38Z",
+            "url": "https://www.benzinga.com/news/26/08/61096695/if-you-invested-100-travelers-companies-stock-5-years-ago-you-would-have-much-today",
+            "source": "alpaca_benzinga",
+            "age_days": 0.0,
+            "subject": "direct",
+            "tier": "commentary"
+          },
+          {
             "title": "Stock Market Today: Dow Dips, Nvidia Falls On This; Warren Buffett's Berkshire In Buy Zone (Live Coverage)",
             "published": "2026-08-10T20:31:50Z",
             "url": "https://www.investors.com/market-trend/stock-market-today/dow-jones-sp500-nasdaq-oil-prices-us-iran-spacex-stock-spcx/?src=A00220&yptr=yahoo",
             "source": "Investor's Business Daily",
-            "age_days": 0.0,
+            "age_days": 0.1,
             "subject": "peer_or_market",
             "tier": null
           },
@@ -29084,15 +28294,6 @@
             "age_days": 0.4,
             "subject": "peer_or_market",
             "tier": null
-          },
-          {
-            "title": "Progressive Q2 Earnings Call Highlights",
-            "published": "2026-08-05T12:04:07Z",
-            "url": "https://www.marketbeat.com/instant-alerts/progressive-q2-earnings-call-highlights-2026-08-05/?utm_source=yahoofinance&utm_medium=yahoofinance",
-            "source": "MarketBeat",
-            "age_days": 5.4,
-            "subject": "peer_or_market",
-            "tier": "commentary"
           }
         ],
         "next_earnings": "2026-10-15",
@@ -29105,7 +28306,7 @@
         },
         "company": "TRAVELERS COMPANIES, INC.",
         "headline_mix": {
-          "direct": 3,
+          "direct": 4,
           "peer_or_market": 5,
           "roundup": 0
         },
@@ -29164,7 +28365,7 @@
             "published": "2026-08-10T13:34:16Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/jefferies-adds-uber-franchise-picks-133416963.html",
             "source": "Investing.com",
-            "age_days": 0.3,
+            "age_days": 0.4,
             "subject": "direct",
             "tier": null
           },
@@ -29173,7 +28374,7 @@
             "published": "2026-08-10T13:15:07Z",
             "url": "https://finance.yahoo.com/markets/stocks/articles/unlocking-uber-uber-international-revenues-131507440.html",
             "source": "Zacks",
-            "age_days": 0.3,
+            "age_days": 0.4,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -29206,8 +28407,8 @@
         },
         "company": "Uber Technologies, Inc",
         "headline_mix": {
-          "direct": 10,
-          "peer_or_market": 3,
+          "direct": 9,
+          "peer_or_market": 4,
           "roundup": 3
         },
         "earnings_surprises": {
@@ -29256,7 +28457,7 @@
             "published": "2026-08-10T13:15:02Z",
             "url": "https://www.barchart.com/story/news/3755907/vistra-corp-vst-stocks-underperformance-could-open-up-a-contrarian-options-trade",
             "source": "Barchart",
-            "age_days": 0.3,
+            "age_days": 0.4,
             "subject": "direct",
             "tier": "commentary"
           },
@@ -29265,7 +28466,7 @@
             "published": "2026-08-10T10:19:41Z",
             "url": "https://www.utilitydive.com/news/vistra-texas-data-center-pause-comanche-amazon-earnings/827434/",
             "source": "Utility Dive",
-            "age_days": 0.4,
+            "age_days": 0.5,
             "subject": "direct",
             "tier": null
           },
@@ -29340,116 +28541,15 @@
           ],
           "beat_streak": 0
         }
-      },
-      "S": {
-        "headlines": [
-          {
-            "title": "What to Know About SentinelOne's Insider Transactions Ahead of Earnings",
-            "published": "2026-08-08T20:49:36Z",
-            "url": "https://www.fool.com/coverage/filings/2026/08/08/what-to-know-about-sentinelone-s-insider-transactions-ahead-of-earnings/",
-            "source": "Motley Fool",
-            "age_days": 2.0,
-            "subject": "direct",
-            "tier": "commentary"
-          },
-          {
-            "title": "SentinelOne's Chief Accountant Sold Shares. Here's What Investors Should Know",
-            "published": "2026-08-08T20:38:43Z",
-            "url": "https://www.fool.com/coverage/filings/2026/08/08/sentinelone-s-chief-accountant-sold-shares-here-s-what-investors-should-know/",
-            "source": "Motley Fool",
-            "age_days": 2.0,
-            "subject": "direct",
-            "tier": "commentary"
-          },
-          {
-            "title": "This SentinelOne Executive Holds $15 Million in Stock Ahead of Earnings. Here's What to Know",
-            "published": "2026-08-08T20:32:29Z",
-            "url": "https://www.fool.com/coverage/filings/2026/08/08/this-sentinelone-executive-holds-usd15-million-in-stock-ahead-of-earnings-here-s-what-to-know/",
-            "source": "Motley Fool",
-            "age_days": 2.0,
-            "subject": "direct",
-            "tier": "commentary"
-          },
-          {
-            "title": "Should You Worry That SentinelOne's COO Sold Stock? Here's How to Read It",
-            "published": "2026-08-08T20:26:32Z",
-            "url": "https://www.fool.com/coverage/filings/2026/08/08/should-you-worry-that-sentinelone-s-coo-sold-stock-here-s-how-to-read-it/",
-            "source": "Motley Fool",
-            "age_days": 2.0,
-            "subject": "direct",
-            "tier": "commentary"
-          },
-          {
-            "title": "SentinelOne (S) Deepens AWS Ties As Growth Accelerates",
-            "published": "2026-08-08T20:09:54Z",
-            "url": "https://finance.yahoo.com/technology/ai/articles/sentinelone-deepens-aws-ties-growth-200954951.html",
-            "source": "Insider Monkey",
-            "age_days": 2.0,
-            "subject": "direct",
-            "tier": "commentary"
-          },
-          {
-            "title": "What Does SentinelOne CEO Tomer Weingarten's Sale of Over 50,000 Shares for $1.1 Million Mean for Investors?",
-            "published": "2026-08-08T17:20:01Z",
-            "url": "https://www.fool.com/coverage/filings/2026/08/08/what-does-sentinelone-ceo-tomer-weingarten-s-sale-of-over-50-000-shares-for-usd1-1-million-mean-for-investors/",
-            "source": "Motley Fool",
-            "age_days": 2.2,
-            "subject": "direct",
-            "tier": "commentary"
-          }
-        ],
-        "next_earnings": "2026-08-27",
-        "analyst_ratings": {
-          "recommendation_key": "buy",
-          "recommendation_mean": 1.85714,
-          "n_analysts": 31,
-          "target_mean_price": 19.67742,
-          "target_vs_price_pct": -11.5
-        },
-        "company": "SentinelOne, Inc.",
-        "headline_mix": {
-          "direct": 9,
-          "peer_or_market": 1,
-          "roundup": 0
-        },
-        "earnings_surprises": {
-          "quarters": [
-            {
-              "period": "2025-07-31",
-              "eps_actual": -0.22,
-              "eps_estimate": -0.19,
-              "surprise_pct": -15.0
-            },
-            {
-              "period": "2025-10-31",
-              "eps_actual": -0.18,
-              "eps_estimate": -0.17,
-              "surprise_pct": -2.9
-            },
-            {
-              "period": "2026-01-31",
-              "eps_actual": -0.33,
-              "eps_estimate": -0.18,
-              "surprise_pct": -79.2
-            },
-            {
-              "period": "2026-04-30",
-              "eps_actual": -0.23,
-              "eps_estimate": -0.24,
-              "surprise_pct": 2.8
-            }
-          ],
-          "beat_streak": 1
-        }
       }
     },
     "note": "status/coverage describe the FETCH, not the tape. 'error' = every news call failed (absence of headlines is NOT a quiet tape - do not read it as 'no news'); 'degraded' = some names unfetched, listed in coverage.failures; 'empty' = every name reachable, none had a headline inside news_max_age_days. EVERY headline carries subject/source/tier. subject='direct' is about THIS company; 'peer_or_market' is about someone else (a competitor's print, a macro story) and must NEVER be cited as this ticker's catalyst - it is context only; 'roundup' is a multi-name list piece and cannot support a thesis at all. Rows are sorted direct-first. headline_mix counts each class BEFORE the max_headlines cut, so a name showing direct:0 genuinely has no company-specific news - say that rather than reaching for a peer headline. tier='primary' is a wire/major outlet, 'commentary' is a content mill (Zacks/Fool/247wallst/trefis and the like) whose 'analysis' is not reporting, null is simply unrated - weight accordingly, and never treat a commentary headline as a sourced fact.",
     "status": "ok",
     "coverage": {
-      "requested": 19,
-      "succeeded": 19,
+      "requested": 18,
+      "succeeded": 18,
       "failed": 0,
-      "tickers_with_headlines": 19
+      "tickers_with_headlines": 18
     }
   },
   "insider_activity": {
@@ -31801,206 +30901,6 @@
           "plan_10b5_1_trades": 6,
           "institutional_entity_trades": 0
         }
-      },
-      "S": {
-        "transactions": [
-          {
-            "insider": "Weingarten Tomer",
-            "title": "President, CEO",
-            "role": "officer",
-            "type": "SELL",
-            "shares": 53811.0,
-            "price": 20.08,
-            "notional_usd": 1080524.88,
-            "date": "2026-08-06",
-            "is_10b5_1_plan": false,
-            "is_institutional_entity": false
-          },
-          {
-            "insider": "Weingarten Tomer",
-            "title": "President, CEO",
-            "role": "officer",
-            "type": "SELL",
-            "shares": 39118.0,
-            "price": 15.7257,
-            "notional_usd": 615157.93,
-            "date": "2026-06-08",
-            "is_10b5_1_plan": false,
-            "is_institutional_entity": false
-          },
-          {
-            "insider": "Parekh Sonalee Elizabeth",
-            "title": "Chief Financial Officer",
-            "role": "officer",
-            "type": "SELL",
-            "shares": 33823.0,
-            "price": 17.89,
-            "notional_usd": 605093.47,
-            "date": "2026-07-06",
-            "is_10b5_1_plan": false,
-            "is_institutional_entity": false
-          },
-          {
-            "insider": "Conder Keenan Michael",
-            "title": "Chief Legal Officer & Sec'y",
-            "role": "officer",
-            "type": "SELL",
-            "shares": 26374.0,
-            "price": 20.08,
-            "notional_usd": 529589.92,
-            "date": "2026-08-06",
-            "is_10b5_1_plan": false,
-            "is_institutional_entity": false
-          },
-          {
-            "insider": "Weingarten Tomer",
-            "title": "President, CEO",
-            "role": "officer",
-            "type": "SELL",
-            "shares": 21960.0,
-            "price": 15.647,
-            "notional_usd": 343608.12,
-            "date": "2026-05-06",
-            "is_10b5_1_plan": false,
-            "is_institutional_entity": false
-          },
-          {
-            "insider": "Pinczuk Ana G.",
-            "title": "President Product & Technology",
-            "role": "officer",
-            "type": "SELL",
-            "shares": 16042.0,
-            "price": 17.89,
-            "notional_usd": 286991.38,
-            "date": "2026-07-06",
-            "is_10b5_1_plan": false,
-            "is_institutional_entity": false
-          },
-          {
-            "insider": "Padgett Barry L.",
-            "title": "President and COO",
-            "role": "officer",
-            "type": "SELL",
-            "shares": 15460.0,
-            "price": 17.89,
-            "notional_usd": 276579.4,
-            "date": "2026-07-06",
-            "is_10b5_1_plan": false,
-            "is_institutional_entity": false
-          },
-          {
-            "insider": "Parekh Sonalee Elizabeth",
-            "title": "Chief Financial Officer",
-            "role": "officer",
-            "type": "SELL",
-            "shares": 12987.0,
-            "price": 18.254,
-            "notional_usd": 237064.7,
-            "date": "2026-07-27",
-            "is_10b5_1_plan": false,
-            "is_institutional_entity": false
-          },
-          {
-            "insider": "Padgett Barry L.",
-            "title": "President and COO",
-            "role": "officer",
-            "type": "SELL",
-            "shares": 9778.0,
-            "price": 20.092,
-            "notional_usd": 196459.58,
-            "date": "2026-08-06",
-            "is_10b5_1_plan": false,
-            "is_institutional_entity": false
-          },
-          {
-            "insider": "Tomasello Robin",
-            "title": "Chief Accounting Officer",
-            "role": "officer",
-            "type": "SELL",
-            "shares": 11905.0,
-            "price": 15.7005,
-            "notional_usd": 186914.45,
-            "date": "2026-06-08",
-            "is_10b5_1_plan": false,
-            "is_institutional_entity": false
-          },
-          {
-            "insider": "Conder Keenan Michael",
-            "title": "Chief Legal Officer & Sec'y",
-            "role": "officer",
-            "type": "SELL",
-            "shares": 8401.0,
-            "price": 15.7037,
-            "notional_usd": 131926.78,
-            "date": "2026-06-08",
-            "is_10b5_1_plan": false,
-            "is_institutional_entity": false
-          },
-          {
-            "insider": "Pinczuk Ana G.",
-            "title": "President Product & Technology",
-            "role": "officer",
-            "type": "SELL",
-            "shares": 6230.0,
-            "price": 20.087,
-            "notional_usd": 125142.01,
-            "date": "2026-08-06",
-            "is_10b5_1_plan": false,
-            "is_institutional_entity": false
-          },
-          {
-            "insider": "Tomasello Robin",
-            "title": "Chief Accounting Officer",
-            "role": "officer",
-            "type": "SELL",
-            "shares": 5467.0,
-            "price": 20.084,
-            "notional_usd": 109799.23,
-            "date": "2026-08-06",
-            "is_10b5_1_plan": false,
-            "is_institutional_entity": false
-          },
-          {
-            "insider": "Conder Keenan Michael",
-            "title": "Chief Legal Officer & Sec'y",
-            "role": "officer",
-            "type": "SELL",
-            "shares": 4550.0,
-            "price": 15.647,
-            "notional_usd": 71193.85,
-            "date": "2026-05-06",
-            "is_10b5_1_plan": false,
-            "is_institutional_entity": false
-          },
-          {
-            "insider": "Tomasello Robin",
-            "title": "Chief Accounting Officer",
-            "role": "officer",
-            "type": "SELL",
-            "shares": 2459.0,
-            "price": 15.6474,
-            "notional_usd": 38476.96,
-            "date": "2026-05-06",
-            "is_10b5_1_plan": false,
-            "is_institutional_entity": false
-          }
-        ],
-        "summary": {
-          "signal": "notable_discretionary_selling",
-          "window_days": 120,
-          "filings_unfetched": 0,
-          "open_market_buys": 0,
-          "open_market_sells": 21,
-          "buy_notional_usd": 0,
-          "sell_notional_usd": 12214240.22,
-          "discretionary_officer_dir_buys": 0,
-          "discretionary_officer_dir_sells": 15,
-          "distinct_discretionary_buyers": 0,
-          "plan_10b5_1_trades": 6,
-          "institutional_entity_trades": 0
-        },
-        "transactions_omitted": 6,
-        "transactions_note": "raw rows truncated for bundle weight - the summary above is computed from ALL rows; omitted rows are routine plan/sponsor flow"
       }
     },
     "by_ticker": {
@@ -32363,32 +31263,12 @@
           "institutional_entity_trades": 0
         },
         "error": null
-      },
-      "S": {
-        "signal": "notable_discretionary_selling",
-        "distinct_discretionary_buyers": 0,
-        "new_insider_form3_filings": 0,
-        "summary": {
-          "signal": "notable_discretionary_selling",
-          "window_days": 120,
-          "filings_unfetched": 0,
-          "open_market_buys": 0,
-          "open_market_sells": 21,
-          "buy_notional_usd": 0,
-          "sell_notional_usd": 12214240.22,
-          "discretionary_officer_dir_buys": 0,
-          "discretionary_officer_dir_sells": 15,
-          "distinct_discretionary_buyers": 0,
-          "plan_10b5_1_trades": 6,
-          "institutional_entity_trades": 0
-        },
-        "error": null
       }
     },
     "status": "ok",
     "coverage": {
-      "requested": 19,
-      "succeeded": 19,
+      "requested": 18,
+      "succeeded": 18,
       "failed": 0
     }
   },
@@ -32411,8 +31291,7 @@
       "CLS",
       "TRV",
       "UBER",
-      "VST",
-      "S"
+      "VST"
     ],
     "note": "13F data is ~45 days stale - conviction/positioning ONLY, never timing. Signal is QUARTER-OVER-QUARTER activity: by_ticker[T].net_activity says whether the 9 tracked elite funds were net BUYING or SELLING the name last quarter; notable_increases/decreases name the biggest dollar moves; holdings lists each manager's move. Matched by CUSIP when a map is supplied, else strict issuer-name match. no_tracked_activity just means none of these 9 hold the name - NOT bearish.",
     "managers_fetched": 9,
@@ -32669,20 +31548,6 @@
         "net_activity": "no_tracked_activity",
         "notable_increases": [],
         "notable_decreases": []
-      },
-      "S": {
-        "ticker": "S",
-        "managers_new": 0,
-        "managers_added": 0,
-        "managers_held": 0,
-        "managers_trimmed": 0,
-        "managers_exited": 0,
-        "net_share_delta": 0,
-        "net_value_delta_usd": 0,
-        "matched_by": null,
-        "net_activity": "no_tracked_activity",
-        "notable_increases": [],
-        "notable_decreases": []
       }
     },
     "holdings": [],
@@ -32910,7 +31775,7 @@
         "atm_iv_pct": 63.8,
         "put_call_volume_ratio": 0.36,
         "put_call_oi_ratio": 0.47,
-        "call_volume": 12520,
+        "call_volume": 12521,
         "put_volume": 4545,
         "call_open_interest": 89827,
         "put_open_interest": 41830,
@@ -33398,10 +32263,10 @@
         "spot": 180.48,
         "expected_move_pct": 6.4,
         "atm_iv_pct": 51.0,
-        "put_call_volume_ratio": 0.62,
+        "put_call_volume_ratio": 0.63,
         "put_call_oi_ratio": 0.58,
         "call_volume": 1475,
-        "put_volume": 919,
+        "put_volume": 924,
         "call_open_interest": 20699,
         "put_open_interest": 11948,
         "iv_skew_pct": 0.3,
@@ -33439,7 +32304,7 @@
               "source": "put_call_volume",
               "regime": "call_lean",
               "tilt": "constructive",
-              "note": "P/C vol 0.62: call lean \u2014 mild constructive tilt if price confirms."
+              "note": "P/C vol 0.63: call lean \u2014 mild constructive tilt if price confirms."
             }
           ],
           "bearish_tilts": [
@@ -33655,9 +32520,9 @@
         "spot": 50.46,
         "expected_move_pct": 5.35,
         "atm_iv_pct": 38.9,
-        "put_call_volume_ratio": 6.9,
+        "put_call_volume_ratio": 6.89,
         "put_call_oi_ratio": 0.6,
-        "call_volume": 3110,
+        "call_volume": 3114,
         "put_volume": 21446,
         "call_open_interest": 86137,
         "put_open_interest": 51460,
@@ -33725,7 +32590,7 @@
               "source": "put_call_volume",
               "regime": "put_heavy",
               "tilt": "bearish_or_hedging",
-              "note": "P/C vol 6.90: elevated put volume \u2014 often protective hedging by longs OR downside speculation; with rising price can be bullish-compatible (collar/hedge). With falling price, risk of more deleveraging."
+              "note": "P/C vol 6.89: elevated put volume \u2014 often protective hedging by longs OR downside speculation; with rising price can be bullish-compatible (collar/hedge). With falling price, risk of more deleveraging."
             },
             {
               "source": "iv_skew",
@@ -33776,7 +32641,7 @@
         "atm_iv_pct": 33.3,
         "put_call_volume_ratio": 0.5,
         "put_call_oi_ratio": 0.46,
-        "call_volume": 5738,
+        "call_volume": 5739,
         "put_volume": 2848,
         "call_open_interest": 22192,
         "put_open_interest": 10183,
@@ -34305,113 +33170,12 @@
           },
           "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
         }
-      },
-      "S": {
-        "status": "ok",
-        "expiry": "2026-08-21",
-        "days_to_expiry": 11,
-        "spot": 22.23,
-        "expected_move_pct": 8.1,
-        "atm_iv_pct": 56.0,
-        "put_call_volume_ratio": 0.55,
-        "put_call_oi_ratio": 0.25,
-        "call_volume": 1707,
-        "put_volume": 933,
-        "call_open_interest": 15443,
-        "put_open_interest": 3917,
-        "iv_skew_pct": -3.5,
-        "skew_read": "calls_bid_over_puts (speculative upside demand)",
-        "unusual_strikes": [
-          {
-            "type": "call",
-            "strike": 24.5,
-            "volume": 669,
-            "open_interest": 12,
-            "pct_from_spot": 10.2
-          },
-          {
-            "type": "put",
-            "strike": 21.0,
-            "volume": 681,
-            "open_interest": 100,
-            "pct_from_spot": -5.5
-          }
-        ],
-        "iv_rank": {
-          "status": "warming_up",
-          "n_samples": 0,
-          "atm_iv_pct": 56.0,
-          "note": "Need \u22655 daily IV samples for percentile (have 0). Builds automatically as runs accumulate."
-        },
-        "term_structure": {
-          "status": "ok",
-          "front_atm_iv_pct": 56.0,
-          "back_atm_iv_pct": 69.8,
-          "front_days": 11,
-          "back_days": 32,
-          "front_minus_back_pp": -13.8,
-          "shape": "contango",
-          "tilt": "longer_term_uncertainty",
-          "note": "Back IV higher than front (spread -14pp) \u2014 chronic/longer uncertainty or quiet front month.",
-          "back_expiry": "2026-09-11"
-        },
-        "oi_change": {
-          "status": "no_prior",
-          "note": "No prior OI snapshot yet \u2014 next run will compare."
-        },
-        "swing_options_read": {
-          "status": "ok",
-          "net_tilt": "mixed_or_neutral",
-          "direction_confidence": "low",
-          "direction_confidence_note": "Always LOW on free chains: we cannot see if volume was buy or sell. Use tilts only with price structure + thesis; never alone.",
-          "bullish_tilts": [
-            {
-              "source": "put_call_volume",
-              "regime": "call_lean",
-              "tilt": "constructive",
-              "note": "P/C vol 0.55: call lean \u2014 mild constructive tilt if price confirms."
-            },
-            {
-              "source": "iv_skew",
-              "regime": "call_skew",
-              "tilt": "bullish_speculation",
-              "note": "Call IV 3.5pp over put IV: speculative upside demand (or short-put supply). Can mark FOMO; chase risk is real."
-            }
-          ],
-          "bearish_tilts": [
-            {
-              "source": "iv_level",
-              "tilt": "event_premium",
-              "note": "ATM IV ~56% elevated vs quiet large-caps \u2014 event or growth-name premium. Nearest-expiry expected move \u00b18.1% \u2014 stops inside this band are noise for that window. Elevated IV raises the cost of being early on a long."
-            },
-            {
-              "source": "unusual_strikes",
-              "tilt": "near_support_hedge",
-              "note": "Near ATM put heat at $21.0 (-6% from spot) \u2014 support/hedge zone; longs often defend here with puts."
-            }
-          ],
-          "neutral_notes": [],
-          "for_stop_engineering": {
-            "expected_move_pct": 8.1,
-            "atm_iv_pct": 56.0,
-            "expiry": "2026-08-21",
-            "days_to_expiry": 11,
-            "rule": "Stop should sit outside max(ATR floor, ~0.5\u00d7 expected_move). Target ideally outside the same noise band for a true swing."
-          },
-          "swing_playbook": {
-            "if_lean_bullish": "Only add weight if price is reclaiming structure (e.g. above 50-DMA / prior breakout) AND thesis/fundamentals agree. Call heat without reclaim is often late FOMO.",
-            "if_lean_bearish": "Raise the bar: smaller size, wider invalidation, or wait for post-event IV crush. Put skew + estimate cuts + insider selling = risk stack.",
-            "if_mixed": "Default to price + fundamentals. Options are not voting.",
-            "into_earnings": "Elevated IV + large expected_move \u2192 prefer trading AFTER the print (drift) unless the thesis is the binary itself."
-          },
-          "how_to_use": "Free chain data has NO aggressor side: high call volume is NOT proof of bullish flow (could be covered-call writing or call spreads). High put volume is NOT proof of crash bets (could be protective hedges by longs). Use expected_move_pct for stop/target geometry; use swing_options_read tilts as SECONDARY confirmation or risk flags alongside price/fundamentals \u2014 never as the sole thesis. You still never trade options."
-        }
       }
     },
     "status": "ok",
     "coverage": {
-      "requested": 19,
-      "succeeded": 19,
+      "requested": 18,
+      "succeeded": 18,
       "failed": 0,
       "no_chain": 0
     }
@@ -34791,27 +33555,17 @@
           }
         ],
         "partnership_headlines": []
-      },
-      "S": {
-        "material_agreement_8ks": [],
-        "partnership_headlines": [
-          {
-            "title": "SentinelOne (S) Expands AI Partnerships As Investors Ask If The Stock Is Fully Valued",
-            "published": "2026-08-08T06:12:54Z",
-            "url": "https://finance.yahoo.com/markets/stocks/articles/sentinelone-expands-ai-partnerships-investors-061254570.html"
-          }
-        ]
       }
     },
     "source_coverage": {
-      "sec_ok": 19,
-      "news_ok": 19,
+      "sec_ok": 18,
+      "news_ok": 18,
       "both_failed": 0
     },
     "status": "ok",
     "coverage": {
-      "requested": 19,
-      "succeeded": 19,
+      "requested": 18,
+      "succeeded": 18,
       "failed": 0
     }
   },
@@ -34903,8 +33657,8 @@
     "note": "Company guidance you previously extracted vs. delivered results, graded deterministically from EDGAR XBRL. Cite consecutive_beats/verdicts as receipts; pending_guidance are the numbers management is on the hook for next print."
   },
   "fundamental_screen": {
-    "as_of": "2026-08-10T21:06:42.347675+00:00",
-    "age_hours": 168.9,
+    "as_of": "2026-08-10T22:03:45.680926+00:00",
+    "age_hours": 169.9,
     "names_covered": 186,
     "note": "Full-universe estimate screen, refreshed pre-market (6am/9am ET, gated on true America/New_York time). top_upward_revisions = fundamental inflections regardless of price - candidates the momentum funnel may not surface. estimate_changes_since_previous = what moved THIS MORNING (earnings/guidance). Each row may carry revision_direction (up/down/flat), eps_growth_next_yr_pct (forward EPS growth), and eps_estimate_current_yr / eps_estimate_next_yr (current/next fiscal-year EPS estimates - the scanner's fwd_pe_est divides last close by the current-year figure) - judge a multiple against growth, not news tone.",
     "top_upward_revisions": [
@@ -35117,7 +33871,7 @@
   "todays_8ks": {
     "note": "8-K filings TODAY across the ENTIRE universe (one EDGAR index sweep). An 8-K on a non-focus name may be the day's real opportunity - pull the filing with WebFetch if the form looks material before dismissing it.",
     "status": "ok",
-    "as_of": "2026-08-10T21:05:43.171895+00:00",
+    "as_of": "2026-08-10T22:02:59.684293+00:00",
     "index_date": "2026-08-07",
     "filers": [
       {
@@ -35447,26 +34201,9 @@
         "customer_concentration": "market/region specific",
         "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
         "source": "ticker_card"
-      },
-      "S": {
-        "ticker": "S",
-        "sector": "cybersecurity",
-        "demand_driver": "cybersecurity",
-        "layer": "Cybersecurity software / platforms",
-        "typical_customers": [
-          "enterprises",
-          "governments"
-        ],
-        "peer_substitutes": [
-          "platform suite vendors",
-          "point products"
-        ],
-        "differential_question": "Is growth new logo or expansion in existing estates?",
-        "note": "Use this card to write variant_perception and to avoid stacking identical demand drivers. Prefer names with different layers. Read what_they_do / business_model_note before judging FCF.",
-        "source": "driver_template"
       }
     },
-    "n": 19
+    "n": 18
   },
   "financial_checklists": {
     "note": "Per-focus-name financial-line checklists by business model. Use the weight line: different models, different scoreboards.",
@@ -36130,46 +34867,6 @@
         "ticker": "VST",
         "demand_driver": "datacenter_power",
         "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
-      },
-      "S": {
-        "model_type": "software_saas",
-        "label": "Software / SaaS / platforms (subscription, high incremental margin)",
-        "weight": "Growth + retention + FCF conversion + rule-of-40 style quality.",
-        "lines": [
-          {
-            "line": "revenue_growth_and_nrr",
-            "why": "SaaS value is durable growth and expansion.",
-            "good_looks_like": "Solid growth; net retention >100% if disclosed; guide intact.",
-            "red_flag": "Growth cliff, guide cut, or AI-at-risk seat compression."
-          },
-          {
-            "line": "free_cash_flow_and_margins",
-            "why": "Mature software should convert earnings to cash.",
-            "good_looks_like": "Positive/rising FCF margins; gross margin stable/high.",
-            "red_flag": "FCF negative without hyper growth; gross margin collapse."
-          },
-          {
-            "line": "sbc_and_dilution",
-            "why": "SBC can fake profitability.",
-            "good_looks_like": "SBC as % revenue contained; buybacks offset dilution.",
-            "red_flag": "Huge SBC with no FCF; endless dilution."
-          },
-          {
-            "line": "rule_of_40_style",
-            "why": "Growth + FCF margin is the quality screen.",
-            "good_looks_like": "Growth% + FCF margin% competitive for the subsector.",
-            "red_flag": "Neither growth nor FCF working."
-          },
-          {
-            "line": "estimate_direction",
-            "why": "Multiple compression follows estimate cuts.",
-            "good_looks_like": "Revisions up or stable.",
-            "red_flag": "Persistent downward revisions at a rich multiple."
-          }
-        ],
-        "ticker": "S",
-        "demand_driver": "cybersecurity",
-        "note": "Answer each line briefly before a BUY. Model-specific: do not force SaaS FCF rules on capex-growth names, or ignore FCF on mature compounders."
       }
     },
     "models_present": [
@@ -36181,7 +34878,7 @@
       "mega_platform",
       "software_saas"
     ],
-    "n": 19
+    "n": 18
   },
   "concept_memory": {
     "note": "Durable concept memory for focus names \u2014 what they do, how to score them, and lessons appended from research/exits/shadows. Prefer this over reinventing the business each run; update via new lessons only.",
@@ -36214,7 +34911,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.431426+00:00"
+        "updated_at": "2026-08-10T22:06:00.438686+00:00"
       },
       "DXCM": {
         "what_they_do": "Operates in: unspecified (healthcare)",
@@ -36244,7 +34941,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.431637+00:00"
+        "updated_at": "2026-08-10T22:06:00.438964+00:00"
       },
       "HPE": {
         "what_they_do": "Operates in: AI servers / hybrid cloud systems",
@@ -36289,7 +34986,7 @@
             "ts": "2026-07-15T16:32:49.854157+00:00"
           }
         ],
-        "updated_at": "2026-08-10T21:09:21.431816+00:00"
+        "updated_at": "2026-08-10T22:06:00.439199+00:00"
       },
       "NET": {
         "what_they_do": "Operates in: Enterprise / AI software platforms",
@@ -36323,7 +35020,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.432134+00:00"
+        "updated_at": "2026-08-10T22:06:00.439428+00:00"
       },
       "RBRK": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -36357,7 +35054,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.432301+00:00"
+        "updated_at": "2026-08-10T22:06:00.439629+00:00"
       },
       "OKTA": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -36391,7 +35088,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.432460+00:00"
+        "updated_at": "2026-08-10T22:06:00.439822+00:00"
       },
       "MPC": {
         "what_they_do": "Operates in: unspecified (energy)",
@@ -36421,7 +35118,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.432621+00:00"
+        "updated_at": "2026-08-10T22:06:00.440015+00:00"
       },
       "ZS": {
         "what_they_do": "Operates in: Cybersecurity software / platforms",
@@ -36455,7 +35152,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.432784+00:00"
+        "updated_at": "2026-08-10T22:06:00.440266+00:00"
       },
       "AEM": {
         "what_they_do": "Operates in: unspecified (materials)",
@@ -36485,7 +35182,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.432943+00:00"
+        "updated_at": "2026-08-10T22:06:00.440486+00:00"
       },
       "ADBE": {
         "what_they_do": "Operates in: Enterprise / AI software platforms",
@@ -36519,7 +35216,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.433107+00:00"
+        "updated_at": "2026-08-10T22:06:00.440789+00:00"
       },
       "SMR": {
         "what_they_do": "Operates in: Power generation / power equipment for data centers",
@@ -36549,7 +35246,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.433265+00:00"
+        "updated_at": "2026-08-10T22:06:00.440988+00:00"
       },
       "BSX": {
         "what_they_do": "Operates in: unspecified (healthcare)",
@@ -36579,7 +35276,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.433415+00:00"
+        "updated_at": "2026-08-10T22:06:00.441198+00:00"
       },
       "ABNB": {
         "what_they_do": "Operates in: unspecified (consumer_platforms)",
@@ -36609,7 +35306,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.433567+00:00"
+        "updated_at": "2026-08-10T22:06:00.441387+00:00"
       },
       "PH": {
         "what_they_do": "Operates in: unspecified (consumer_industrial)",
@@ -36639,7 +35336,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.433715+00:00"
+        "updated_at": "2026-08-10T22:06:00.441570+00:00"
       },
       "CLS": {
         "what_they_do": "Operates in: AI servers / systems OEM",
@@ -36673,7 +35370,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.433865+00:00"
+        "updated_at": "2026-08-10T22:06:00.441753+00:00"
       },
       "TRV": {
         "what_they_do": "Operates in: unspecified (financials)",
@@ -36707,7 +35404,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.434014+00:00"
+        "updated_at": "2026-08-10T22:06:00.441941+00:00"
       },
       "UBER": {
         "what_they_do": "Operates in: unspecified (consumer_platforms)",
@@ -36737,7 +35434,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.434163+00:00"
+        "updated_at": "2026-08-10T22:06:00.442103+00:00"
       },
       "VST": {
         "what_they_do": "Operates in: Independent power generation (data-center adjacent)",
@@ -36767,44 +35464,10 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.434285+00:00"
-      },
-      "S": {
-        "what_they_do": "Operates in: Cybersecurity software / platforms",
-        "unit_economics": null,
-        "business_model_type": "software_saas",
-        "demand_driver": "cybersecurity",
-        "financial_weight": "Growth + retention + FCF conversion + rule-of-40 style quality.",
-        "what_moves_stock": [
-          "Is growth new logo or expansion in existing estates?"
-        ],
-        "key_financial_lines": [
-          {
-            "line": "revenue_growth_and_nrr",
-            "red_flag": "Growth cliff, guide cut, or AI-at-risk seat compression."
-          },
-          {
-            "line": "free_cash_flow_and_margins",
-            "red_flag": "FCF negative without hyper growth; gross margin collapse."
-          },
-          {
-            "line": "sbc_and_dilution",
-            "red_flag": "Huge SBC with no FCF; endless dilution."
-          },
-          {
-            "line": "rule_of_40_style",
-            "red_flag": "Neither growth nor FCF working."
-          },
-          {
-            "line": "estimate_direction",
-            "red_flag": "Persistent downward revisions at a rich multiple."
-          }
-        ],
-        "recent_lessons": [],
-        "updated_at": "2026-08-10T21:09:21.434407+00:00"
+        "updated_at": "2026-08-10T22:06:00.442263+00:00"
       }
     },
-    "n": 19
+    "n": 18
   },
   "discovery_screen": {
     "status": "skipped"
