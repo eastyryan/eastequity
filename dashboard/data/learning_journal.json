@@ -1,16 +1,54 @@
 {
-  "updated_at": "2026-08-11T23:05:36.686205+00:00",
+  "updated_at": "2026-08-12T23:06:32.882033+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 4,
     "fundamental_analysis": 2,
-    "risk_management": 3,
+    "risk_management": 4,
     "strategy_playbooks": 3,
     "market_microstructure": 1,
     "trading_psychology": 1,
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-1005106931",
+      "discipline": "risk_management",
+      "topic": "Maximum Adverse/Favorable Excursion as a path diagnostic: winner-MAE is the empirical stop check, live heat is read from position_stop_cushion, and two closed trades cannot refit a stop",
+      "summary": "John Sweeney (TASC Oct 1985 / Jan 1991; Campaign Trading, Wiley 1996; Maximum Adverse Excursion, Wiley 1997) defined MAE as the worst unrealized loss from entry to the lowest subsequent low on a long, and MFE (MaxFE) as the peak unrealized gain, independent of the final P&L. His rule, quoted from the MAE book, is that good trades generally do not go far against you while bad ones do: if the entry rules can distinguish winners from losers, their MAE distributions separate, and the cliff where a trade becomes more likely to end badly than profitably is where the stop belongs. Van Tharp (Trade Your Way to Financial Freedom, 1998) restates the same observation \u2014 'Good trades seldom go too far against us' \u2014 and lists winner-MAE as one legitimate way to set a stop, alongside a noise-beyond stop of roughly 2.7\u20133.4\u00d7 the 10-day ATR (about 3 ATR; he suggests even wider, ~10 ATR, for long-term stock holdings). Practitioner write-ups (LuxAlgo; JournalPlus; Traders Second Brain) operationalize this as a scatter of MAE vs final P&L in R or ATR units, plus an MFE capture rate (realized gain / MFE) as the exit-quality diagnostic. Sources disagree on the action: some secondary blogs say if winner-MAE sits at 0.3R against a 1R stop you should tighten to 0.5\u20130.6R; JournalPlus says if 30%+ of winners cluster just beyond the stop you should widen; Tharp himself warns the MAE stop is after-the-fact and easy to curve-fit, and that the wider ~3 ATR stop is generally more profitable than a tight one ",
+      "key_points": [
+        "Sweeney's rule: if the entry has edge, winner-MAE and loser-MAE separate; the stop belongs just beyond the winner cluster, not at a round number or a support line everyone else uses.",
+        "MAE/MFE measure the PATH, not the blotter: two +$200 winners can be a near-stop rescue and a 50%-captured runner; final P&L hides both stop quality and exit leakage.",
+        "Normalize in R or ATR, never raw dollars, and require 30\u2013100 trades per setup before changing a stop. Two closed trades are anecdotes. Tharp flags curve-fitting; LuxAlgo flags regime shift.",
+        "Do not take the blog 'tighten to winner-MAE' half as a standing rule. Tharp's 3\u00d7ATR class of stop and this system's 1.5\u20132\u00d7ATR swing floor plus gap buffer are the prior; MAE may later justify WIDENING if winners cluster inside the noise band, not tightening into gaps.",
+        "MFE capture (realized / peak open profit) grades exits. Retail sources put typical capture near 35\u201355% and call 65\u201380% healthy for swings \u2014 those bands are practitioner-illustrative, not a measured law. This system's >=2R partial plus 3\u00d7ATR chandelier is the designed capture mechanism; a discretiona",
+        "A break-even move once MFE hits +0.5R or +1R is a common MAE-blog tactic and is the opposite of this system's coded trail (the chandelier never jumps to breakeven at +1R). For 3\u201390 day swings that early BE move guts expectancy.",
+        "Live MAE is already in the bundle: position_stop_cushion.cushion_in_atr. Under ~1 ATR (inside_noise_band) means ordinary noise can finish the 1R. Stalled (14d, \u00b13% of cost) is low MAE and low MFE together \u2014 opportunity cost, not a stop-width problem."
+      ],
+      "how_to_apply": "On every BUY, treat low expected MAE as a reason to prefer the pullback / throwback / day-after-gap-low entries already in the playbooks (KB-6241168493, KB-9692173165, KB-3704904010): buying at the level keeps the winner-MAE budget inside stop_engineering.min_stop_distance_pct and the 1.5\u20132\u00d7ATR swing width so the 2:1 RR floor is honest; a chase that opens 1 ATR in the hole has already spent that budget and should be sized as a 50\u201370% starter or passed. Do not refit the stop from two closes \u2014 leave it beyond structure AND the ATR/expected-move floor, and after a gap-prone or event name add the realized-R cushion from KB-9689938621 rather than hugging a hypothetical MAE cliff. On every holdings review, read cushion_in_atr as live remaining room to 1R: inside_noise_band means the path is approaching Sweeney's loser side, so either hold through knowingly because thesis_invalidators are clean or let the recorded/chandelier stop do its job \u2014 never discretionarily exit because 'it's taking too much heat' (that is the HPE process_fail). On every close, log MAE and MFE in both R and ATR (DELL: loser that kept digging, 1.43R realized with 0.55 ATR gap-through; HPE: \u22120.54R cut before either c",
+      "sources": [
+        "John Sweeney, Maximum Adverse Excursion: Analyzing Price Fluctuations for Trading Management (Wiley, 1997) \u2014 'Generally, good trades don\u2019t go too far against you while bad ones do'; stop at the point a trade is more likely to end badly than profitably (excerpts via dokumen.pub)",
+        "John Sweeney, Campaign Trading (Wiley, 1996) \u2014 divide backtested trades into winners/losers, tabulate MAE for each; a decent rule-set produces distinctly different distributions; adjust stops to the loss/profit combination you accept (reviewed with page cites at readingthemarkets.blogspot.com/2010/0",
+        "John Sweeney, Technical Analysis of Stocks & Commodities, Oct 1985 and Jan 1991; also 'Quantifying The Tried And True,' TASC V.9:9 (387\u2013389) \u2014 MAE as the quantified version of 'minimize losses'; the amount of movement against you indicates whether to hold or stop",
+        "Van Tharp, Trade Your Way to Financial Freedom (1998), Ch. 10\u201311, via the7circles.uk/van-tharp-7-stops-and-exits/ \u2014 winner-MAE as a stop method; 2.7\u20133.4\u00d7 10-day ATR noise stop; MAE analysis is after-the-fact / curve-fit risk; wider ~3 ATR generally more profitable than tight stops; trail rather than",
+        "https://www.luxalgo.com/library/concept/mae-mfe-informed-management/ \u2014 calculation in R or ATR; 50\u2013100 trades per setup; regime-dependent; cannot give an objectively best stop",
+        "https://journalplus.co/learn/guides/mae-mfe-guide and https://journalplus.co/learn/glossary/mae \u2014 scatter method; 30\u201340 trade floor / 80\u2013100 before permanent change; widen if winners cluster beyond the stop; do not mix setups on one plot (practitioner/SaaS \u2014 treat sample-size and widen-vs-tighten fr"
+      ],
+      "learned_at": "2026-08-12T23:06:32.878594+00:00",
+      "run_id": "20260812-cd2e46",
+      "tensions": [
+        {
+          "with": "KB-2388376284",
+          "why": "KB-2388376284 is the a-priori stop: sit beyond the sqrt(t)/ATR noise band, and treat entry location as the lever. This lesson is the empirical check on the same stop once trades exist \u2014 winner-MAE vs loser-MAE \u2014 and the live read of that path via cushion_in_atr. They stack: a late chase inflates MAE",
+          "noted_at": "2026-08-12"
+        },
+        {
+          "with": "KB-9689938621",
+          "why": "Winner-MAE scatter is computed on trades that survived to a close; it systematically misses the gap-through tail (DELL filled 0.55 ATR / 4.47% past the stop). Tightening toward a winner-MAE cliff would recreate the planned-R vs realized-R gap that lesson exists to prevent. Use MAE to diagnose entrie",
+          "noted_at": "2026-08-12"
+        }
+      ]
+    },
     {
       "id": "KB-1695380801",
       "discipline": "fundamental_analysis",
@@ -34,7 +72,9 @@
         "Quantpedia, 'Momentum Factor Effect in Stocks' - momentum buys low-value/expensive names (flagged reported-by-secondary) (https://quantpedia.com/strategies/momentum-factor-effect-in-stocks)"
       ],
       "learned_at": "2026-08-11T23:05:36.673484+00:00",
-      "run_id": "20260811-7f72b9"
+      "run_id": "20260811-7f72b9",
+      "times_cited": 6,
+      "last_cited": "2026-08-12T22:21:59.435802+00:00"
     },
     {
       "id": "KB-9689938621",
@@ -67,7 +107,9 @@
           "why": "Both bear on stop WIDTH but for independent reasons that stack, not conflict. KB-2388376284 argues width from NOISE (a stop must sit beyond the sqrt(t) band so ordinary wiggle doesn't fire it) and holds entry location is the binding lever. This lesson adds a second, always-additive reason to aim bey",
           "noted_at": "2026-08-10"
         }
-      ]
+      ],
+      "times_cited": 3,
+      "last_cited": "2026-08-12T14:39:09.992904+00:00"
     },
     {
       "id": "KB-2999578881",
@@ -162,8 +204,8 @@
           "noted_at": "2026-08-04"
         }
       ],
-      "times_cited": 7,
-      "last_cited": "2026-08-11T19:54:23.701759+00:00"
+      "times_cited": 10,
+      "last_cited": "2026-08-12T14:39:09.992900+00:00"
     },
     {
       "id": "KB-8928427464",
@@ -471,8 +513,8 @@
       "learned_at": "2026-07-17T05:18:15.396682+00:00",
       "run_id": "20260717-ed4649",
       "rebuilt_from_journal": "2026-07-19",
-      "times_cited": 3,
-      "last_cited": "2026-07-21T16:15:16.015928+00:00"
+      "times_cited": 6,
+      "last_cited": "2026-08-12T14:39:09.992885+00:00"
     }
   ]
 }
