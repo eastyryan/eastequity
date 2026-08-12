@@ -79,6 +79,26 @@ jobs:
           git config user.name "east-equity-grok[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
+      # Prefer the SuperGrok / grok.com session (same "don't pay extra" model as
+      # Claude CCR). API key is optional fallback only.
+      - name: Restore Grok subscription login
+        env:
+          GROK_AUTH_JSON: ${{ secrets.GROK_AUTH_JSON }}
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+        run: |
+          mkdir -p "$HOME/.grok"
+          if [ -n "$GROK_AUTH_JSON" ]; then
+            printf '%s\n' "$GROK_AUTH_JSON" > "$HOME/.grok/auth.json"
+            chmod 600 "$HOME/.grok/auth.json"
+            echo "using GROK_AUTH_JSON session (subscription, no API bill)"
+          elif [ -z "${XAI_API_KEY:-}" ]; then
+            echo "FATAL: no Grok login on this runner."
+            echo "Free path (uses your existing Grok plan, no console.x.ai spend):"
+            echo "  gh secret set GROK_AUTH_JSON < ~/.grok/auth.json"
+            echo "from a machine where you have already run \`grok login\`."
+            exit 1
+          fi
+
       - name: Run scheduled slot
         env:
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
@@ -88,13 +108,6 @@ jobs:
           EE_SCHEDULED_TRADER: "1"
           PYTHON: python
         run: |
-          if [ -z "$XAI_API_KEY" ]; then
-            echo "FATAL: repo secret XAI_API_KEY is empty."
-            echo "Create a key at https://console.x.ai and add it under"
-            echo "Settings → Secrets and variables → Actions → XAI_API_KEY."
-            echo "The Mac is no longer the trader; without this secret nothing runs."
-            exit 1
-          fi
           chmod +x scripts/cloud_slot.sh
           grok --version
           scripts/cloud_slot.sh "${{ github.event.inputs.role || 'auto' }}"

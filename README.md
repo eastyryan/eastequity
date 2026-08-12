@@ -45,8 +45,9 @@ Full universe deep research is slow — most slots no longer do it.
 ### Running it by hand
 
 The **scheduled trader is Grok 4.6 on GitHub Actions** (`grok-cycle.yml`). The Mac
-does not need to be awake. See `docs/GROK_SCHEDULE.md`. Requires repo secret
-`XAI_API_KEY`. Hand-fired local runs still go through `scripts/manual_run.sh`.
+does not need to be awake. See `docs/GROK_SCHEDULE.md`. Auth is your existing
+Grok login (`GROK_AUTH_JSON` secret) — no paid API key. Hand-fired local runs
+still go through `scripts/manual_run.sh`.
 
 ```bash
 scripts/manual_run.sh                       # fast focused cycle (holdings_watchlist)

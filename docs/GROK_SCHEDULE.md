@@ -3,9 +3,10 @@
 The scheduled brain is **Grok 4.6 on GitHub Actions**. The Mac does not need to
 be awake. Claude is not on the path: not the brain, not the risk desk, not study.
 
-Auth is the Grok CLI in CI (`XAI_API_KEY` repo secret). That is the only way a
-headless runner can call Grok with the laptop off. It is not a Python SDK
-wrapper around the API; it is `grok -p`, same CLI as local.
+Auth is the Grok CLI in CI. **You do not buy an API key.** Paste the same
+`~/.grok/auth.json` login you already use (SuperGrok / grok.com session) into
+the `GROK_AUTH_JSON` repo secret. That is the Claude-CCR pattern: subscription
+quota, no console.x.ai invoice. `XAI_API_KEY` is optional fallback only.
 
 ## Clock (America/New_York)
 
@@ -26,15 +27,20 @@ wrapper around the API; it is `grok -p`, same CLI as local.
 Workflow: `.github/workflows/grok-cycle.yml`  
 Gate: `scripts/cloud_slot.sh` (20-minute window after each slot so GitHub cron delay cannot steal the next slot)
 
-## Required secret
+## Required secret (no paid API key)
 
-Repo **Settings → Secrets and variables → Actions → New repository secret**:
+From any Mac where you have already run `grok login`:
 
-- `XAI_API_KEY` — create at https://console.x.ai  
-- Already present: `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`  
-- Optional: `FRED_API_KEY` (gather degrades without it)
+```bash
+gh secret set GROK_AUTH_JSON --repo eastyryan/eastequity < ~/.grok/auth.json
+```
 
-Until `XAI_API_KEY` is set, every cycle job fails in the first step and no slot runs.
+That file is your Grok subscription session. Sessions last on the order of
+weeks; if slots start failing with an auth error, run `grok login` again and
+re-set the secret. Do not commit `auth.json` to the repo.
+
+Already present: `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`.  
+Optional: `FRED_API_KEY`, `XAI_API_KEY` (only if you later want metered API).
 
 ## Hand-fire from Actions
 
