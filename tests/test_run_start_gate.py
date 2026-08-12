@@ -24,7 +24,15 @@ def test_cloud_routine_gather_marks(monkeypatch):
 def test_github_bundle_action_does_not_mark(monkeypatch):
     """--auto-depth WITH GITHUB_ACTIONS → the hourly bundle refresh → do NOT mark."""
     monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.delenv("EE_SCHEDULED_TRADER", raising=False)
     assert orchestrator._should_mark_run_start(True) is False
+
+
+def test_github_scheduled_trader_does_mark(monkeypatch):
+    """grok-cycle.yml sets EE_SCHEDULED_TRADER so a death is visible."""
+    monkeypatch.setenv("GITHUB_ACTIONS", "true")
+    monkeypatch.setenv("EE_SCHEDULED_TRADER", "1")
+    assert orchestrator._should_mark_run_start(True) is True
 
 
 def test_non_auto_depth_never_marks(monkeypatch):

@@ -98,6 +98,7 @@ from runlib.brain_io import (
     ask_claude,
     llm_settings,
     claude_cmd,
+    grok_cmd,
     run_claude,
     adversarial_review,
     parse_proposals,
@@ -125,7 +126,15 @@ def _should_mark_run_start(auto_depth: bool) -> bool:
     the died-vs-missed distinction the breadcrumb exists to draw.
     """
     import os
-    return bool(auto_depth) and not os.environ.get("GITHUB_ACTIONS")
+    # GITHUB_ACTIONS is set on every Actions job, including the hourly
+    # bundle-refresh. EE_SCHEDULED_TRADER is set only on grok-cycle.yml, which
+    # IS the scheduled brain now that Claude CCR and the Mac launchd trader
+    # are gone — those gathers must leave a run_started breadcrumb.
+    if not auto_depth:
+        return False
+    if os.environ.get("EE_SCHEDULED_TRADER"):
+        return True
+    return not os.environ.get("GITHUB_ACTIONS")
 
 
 # ---------------------------------------------------------------------------
@@ -137,6 +146,7 @@ _et_now = et_now
 _to_et_date = to_et_date
 _light_prices = light_prices
 _claude_cmd = claude_cmd
+_grok_cmd = grok_cmd
 _run_claude = run_claude
 _llm_settings = llm_settings
 _sector_map = sector_map
@@ -742,7 +752,7 @@ def _gather_and_wake(args, cfg: dict, run_id: str, run_depth: str,
     if _dq.get("stale") or _dq.get("source") not in (None, "live"):
         print(f"  DATA QUALITY: {_dq.get('source')} "
               f"stale={bool(_dq.get('stale'))} age={_dq.get('age_hours')}h")
-    print("[2/5] Waking the brain (Claude)...")
+    print("[2/5] Waking the brain (Grok)...")
     response = ask_claude(
         context, run_id,
         news_only=args.news_only or run_depth in ("evening_review", "weekly_market"),

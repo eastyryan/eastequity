@@ -1,0 +1,100 @@
+name: Grok trading cycle
+
+# THE scheduled trader. Replaces claude.ai CCR and the Mac launchd agent.
+# Runs on GitHub-hosted runners so the book trades with the Mac asleep.
+#
+# Clock: UTC crons cover BOTH EST and EDT for every slot. scripts/cloud_slot.sh
+# self-gates on America/New_York, so the DST-wrong twin is a few-second no-op
+# and a late GitHub cron still lands inside the 20-minute slot window.
+
+on:
+  schedule:
+    # 6:00 ET
+    - cron: "0 10,11 * * 1-5"
+    # 8:45 ET
+    - cron: "45 12,13 * * 1-5"
+    # 10:30 ET
+    - cron: "30 14,15 * * 1-5"
+    # 12:00 ET
+    - cron: "0 16,17 * * 1-5"
+    # 14:00 ET
+    - cron: "0 18,19 * * 1-5"
+    # 15:30 ET
+    - cron: "30 19,20 * * 1-5"
+    # 17:30 ET evening review
+    - cron: "30 21,22 * * 1-5"
+    # 19:00 ET study (EDT = 23:00 UTC weekdays; EST = 00:00 UTC Tue-Sat)
+    - cron: "0 23 * * 1-5"
+    - cron: "0 0 * * 2-6"
+    # midnight ET
+    - cron: "0 4,5 * * *"
+    # weekend 23:59 ET (Sat+Sun)
+    - cron: "59 3,4 * * 0,1"
+    # watchdog :15, 7:15–19:15 ET year-round
+    - cron: "15 11-23 * * 1-5"
+    - cron: "15 12-23 * * 1-5"
+    - cron: "15 0 * * 2-6"
+  workflow_dispatch:
+    inputs:
+      role:
+        description: "Slot role (auto = infer from ET clock)"
+        type: choice
+        options: [auto, brain, evening, study, midnight, weekend, watchdog]
+        default: auto
+
+permissions:
+  contents: write
+
+concurrency:
+  # Same queue as gather / execute-orders / stop-watch. A trading run that
+  # pushes the ledger must not race those writers.
+  group: main-writer
+  cancel-in-progress: false
+
+jobs:
+  cycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 300
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+
+      - name: Install Python deps
+        run: pip install -r requirements.txt
+
+      - name: Install Grok CLI
+        run: |
+          curl -fsSL https://x.ai/cli/install.sh | bash
+          echo "$HOME/.grok/bin" >> "$GITHUB_PATH"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Configure git
+        run: |
+          git config user.name "east-equity-grok[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Run scheduled slot
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          ALPACA_API_KEY: ${{ secrets.ALPACA_API_KEY }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          FRED_API_KEY: ${{ secrets.FRED_API_KEY }}
+          EE_SCHEDULED_TRADER: "1"
+          PYTHON: python
+        run: |
+          if [ -z "$XAI_API_KEY" ]; then
+            echo "FATAL: repo secret XAI_API_KEY is empty."
+            echo "Create a key at https://console.x.ai and add it under"
+            echo "Settings → Secrets and variables → Actions → XAI_API_KEY."
+            echo "The Mac is no longer the trader; without this secret nothing runs."
+            exit 1
+          fi
+          chmod +x scripts/cloud_slot.sh
+          grok --version
+          scripts/cloud_slot.sh "${{ github.event.inputs.role || 'auto' }}"

@@ -68,6 +68,25 @@ def test_run_cycle_fires_on_exactly_the_graded_slots():
     assert set(gate.group(1).split("|")) == {_hhmm(s) for s in _weekday_slots()}
 
 
+def test_cloud_slot_names_every_graded_slot():
+    """The GitHub Actions trader self-gates on the same weekday ticks."""
+    src = (ROOT / "scripts" / "cloud_slot.sh").read_text()
+    for hhmm in (_hhmm(s) for s in _weekday_slots()):
+        assert f"in_window {hhmm}" in src, f"cloud_slot.sh missing window for {hhmm}"
+
+
+def test_grok_slot_fires_on_exactly_the_graded_slots():
+    """The Grok launchd trader is now the scheduled brain. Its clock gate must
+    name the same weekday ticks the heartbeat grades, plus the 1-minute jitter
+    aliases so a :59/:01 fire still counts."""
+    src = (ROOT / "scripts" / "grok_slot.sh").read_text()
+    primaries = set(re.findall(r"^      (0[6-9]\d{2}|1[0-7]\d{2})\|", src, re.M))
+    # 1730 is evening (graded); 1900 is study (not a trading slot, not graded).
+    graded = {_hhmm(s) for s in _weekday_slots()}
+    assert primaries >= graded, (primaries, graded)
+    assert graded <= primaries
+
+
 def test_run_cycle_no_longer_hardcodes_depths():
     """A second copy of the depth map is a second thing to forget."""
     src = (ROOT / "scripts" / "run_cycle.sh").read_text()

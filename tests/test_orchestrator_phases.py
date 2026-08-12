@@ -309,7 +309,7 @@ def test_module_surface_preserved():
                  "label_data_quality", "_should_mark_run_start",
                  "expected_slots", "compute_closed_trades",
                  "write_tiered_context", "gather_context", "main",
-                 "_claude_cmd", "_llm_settings", "_sector_map",
+                 "_claude_cmd", "_grok_cmd", "_llm_settings", "_sector_map",
                  "_sector_exposure"):
         check(f"orchestrator.{name} reachable",
               callable(getattr(orchestrator, name, None)))

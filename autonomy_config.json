@@ -257,10 +257,10 @@
     "_target_calibration_note": "Added 2026-07-19. min_risk_reward_ratio (2.0) is the system's most rigorously justified rule - the config carries the expectancy math - and it is computed from the LLM's own target_price, which appears ZERO times in execution/exit_guard.py. Exits are stop, trail or horizon only; CLAUDE.md calls the target 'a milestone, not a tripwire'. So the gate filtered on a number nothing enforced or graded, and the model could always clear it by writing a bigger one. Targets stay NON-BINDING for exits (letting winners run is correct and literature-supported) - instead every close is graded on claimed RR vs REALIZED RR and target attainment. Binds only at min_trades_for_binding closed trades; at n=2 it reports phase 'anecdote' and withholds the binding-grade number entirely."
   },
   "llm": {
-    "brain_model": "claude-opus-4-8",
-    "risk_desk_model": "claude-sonnet-5",
-    "allowed_tools": "Read Glob Grep WebSearch WebFetch",
-    "_note": "Every claude -p invocation pins --model (public track record stays reproducible across CLI-default changes) and --allowedTools (exactly what CLAUDE.md instructs: Read the chart PNGs, WebSearch/WebFetch to verify catalysts). Missing block falls back to CLI defaults. Risk desk uses a kill-checklist prompt (falsifiers, theme overlap, variant perception, entry geometry).",
+    "brain_model": "grok-4.6",
+    "risk_desk_model": "grok-4.5",
+    "allowed_tools": "read_file,grep,list_dir,web_search,web_fetch",
+    "_note": "Every grok -p invocation pins --model (public track record stays reproducible across CLI-default changes) and --tools (exactly what CLAUDE.md instructs: Read the chart PNGs, web search/fetch to verify catalysts). Writers are denied. Missing block falls back to CLI defaults. Risk desk uses a different Grok model so it is not the proposer's second draft.",
     "_security_note": "CORRECTION 2026-07-18 (audit). This block previously claimed the allowlist grants 'nothing that can write, so an injected headline can never touch the ledger'. That reasoned about the wrong threat: ledger writes were never the exposure - SECRET READS plus egress were. The bundle carries unsanitized headlines and filing prose to a model holding Read/Glob/Grep and WebFetch, and .env sat at the repo root with live broker and write-capable X tokens. Note a Read deny rule alone would NOT have closed it, because Grep prints matching lines. Fixed by moving secrets outside the working directory (tools/envload.py; Glob/Grep are cwd-scoped), plus deny rules in .claude/settings.json. Do not reintroduce a secrets file under the repo root - tests/test_secrets_hygiene.py fails the build if one appears.",
     "_risk_desk_note": "CHANGED 2026-07-19 (audit). The desk previously ran the SAME model as the brain on the SAME context file, so it shared the generator's priors and was anchored on its framing - a second draft, not a second opinion, while CLAUDE.md sold it as an 'independent adversarial review'. A different model is the cheapest real independence available here. The desk cannot approve anything the validator would reject; its only powers are veto and a capped haircut, so a stricter or weaker reviewer costs at most a missed trade, never an unchecked position. Revisit if veto rates look indiscriminate."
   },
@@ -270,7 +270,7 @@
     "max_drawdown_pct_halt": 0.15,
     "require_broker_readback_confirmation": true,
     "require_risk_desk_for_buys": true,
-    "_require_risk_desk_note": "Paper track-record integrity: BUYs require adversarial risk desk when the claude CLI is available. If CLI is absent (some cloud sandboxes), BUYs are rejected (risk_desk_unavailable) rather than passing unreviewed. Set false only for emergency local dry debugging.",
+    "_require_risk_desk_note": "Paper track-record integrity: BUYs require adversarial risk desk when the grok CLI is available. If CLI is absent, BUYs are rejected (risk_desk_unavailable) rather than passing unreviewed. Set false only for emergency local dry debugging.",
     "max_orders_per_run": 3,
     "market_hours_only": true,
     "cross_node_lease_enabled": true,

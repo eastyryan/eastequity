@@ -29,20 +29,22 @@ from runlib import brain_io
 
 
 # ---------------------------------------------------------------------------
-# claude_cmd stays backward compatible.
+# grok_cmd (exported as claude_cmd) pins model + tools.
 # ---------------------------------------------------------------------------
 
 def test_output_format_is_opt_in():
-    """The bare invocation must be byte-for-byte what it always was."""
-    assert brain_io.claude_cmd("p", None, None) == ["claude", "-p", "p"]
+    """No format flag unless asked; prompt is last so flags cannot be swallowed."""
+    cmd = brain_io.claude_cmd("p", None, None)
+    assert cmd[0] == "grok"
+    assert cmd[-2:] == ["-p", "p"]
+    assert "--output-format" not in cmd
 
 
 def test_output_format_appended_when_asked():
-    cmd = brain_io.claude_cmd("p", "claude-opus-4-8", "Read Grep", output_format="json")
+    cmd = brain_io.claude_cmd("p", "grok-4.6", "Read Grep", output_format="json")
     assert cmd[cmd.index("--output-format") + 1] == "json"
-    # The tool allowlist must still grant nothing that can write.
-    tools = cmd[cmd.index("--allowedTools") + 1].split()
-    assert not {"Write", "Edit", "Bash"} & set(tools)
+    tools = cmd[cmd.index("--tools") + 1].split(",")
+    assert not {"Write", "Edit", "Bash", "run_terminal_cmd", "search_replace"} & set(tools)
 
 
 # ---------------------------------------------------------------------------
@@ -101,8 +103,8 @@ def recorded(monkeypatch):
     import journal
     monkeypatch.setattr(journal, "log_brain_call", rec)
     monkeypatch.setattr(brain_io, "llm_settings",
-                        lambda: {"brain_model": "claude-opus-4-8",
-                                 "allowed_tools": "Read Grep"})
+                        lambda: {"brain_model": "grok-4.6",
+                                 "allowed_tools": "read_file,grep"})
     monkeypatch.setattr(brain_io.time if hasattr(brain_io, "time") else __import__("time"),
                         "sleep", lambda *_: None, raising=False)
     return rec
@@ -123,7 +125,7 @@ def test_successful_call_is_journaled_with_usage(monkeypatch, recorded):
     assert len(recorded.calls) == 1
     rec = recorded.calls[0]
     assert rec["ok"] is True and rec["run_id"] == "RID"
-    assert rec["call"] == "brain:full" and rec["model"] == "claude-opus-4-8"
+    assert rec["call"] == "brain:full" and rec["model"] == "grok-4.6"
     assert rec["input_tokens"] == 900 and rec["total_cost_usd"] == 0.11
     assert rec["attempt"] == 1 and rec["elapsed_s"] >= 0
 
@@ -131,7 +133,7 @@ def test_successful_call_is_journaled_with_usage(monkeypatch, recorded):
 def test_timeout_is_handled_retried_and_journaled(monkeypatch, recorded):
     """THE BUG: TimeoutExpired escaped every handler and crashed the run."""
     def _boom(*a, **k):
-        raise subprocess.TimeoutExpired(cmd="claude", timeout=1800)
+        raise subprocess.TimeoutExpired(cmd="grok", timeout=1800)
     monkeypatch.setattr(subprocess, "run", _boom)
 
     with pytest.raises(RuntimeError) as e:
@@ -150,7 +152,7 @@ def test_timeout_then_success_recovers(monkeypatch, recorded):
     def _flaky(*a, **k):
         calls["n"] += 1
         if calls["n"] == 1:
-            raise subprocess.TimeoutExpired(cmd="claude", timeout=1800)
+            raise subprocess.TimeoutExpired(cmd="grok", timeout=1800)
         return _completed(0, json.dumps({"result": "recovered"}))
 
     monkeypatch.setattr(subprocess, "run", _flaky)

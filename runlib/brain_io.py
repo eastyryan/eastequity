@@ -243,28 +243,53 @@ def llm_settings() -> dict:
         return {}
 
 
-def claude_cmd(prompt: str, model: str | None, allowed_tools: str | None,
-               output_format: str | None = None) -> list[str]:
-    """Build the headless claude invocation (pure - offline-testable).
+# Claude Code tool names → Grok CLI tool ids. autonomy_config used to carry the
+# Claude allowlist; either form is accepted so a stale checkout still pins tools.
+_CLAUDE_TO_GROK_TOOLS = {
+    "Read": "read_file",
+    "Glob": "list_dir",
+    "Grep": "grep",
+    "WebSearch": "web_search",
+    "WebFetch": "web_fetch",
+}
+
+
+def normalize_tools(allowed_tools: str | None) -> str | None:
+    """Comma-separated Grok tool ids. Writers (bash/edit) are never granted here."""
+    if not allowed_tools:
+        return None
+    parts = [p.strip() for p in allowed_tools.replace(",", " ").split() if p.strip()]
+    if not parts:
+        return None
+    return ",".join(_CLAUDE_TO_GROK_TOOLS.get(p, p) for p in parts)
+
+
+def grok_cmd(prompt: str, model: str | None, allowed_tools: str | None,
+             output_format: str | None = None) -> list[str]:
+    """Build the headless grok invocation (pure - offline-testable).
 
     Pinning --model keeps the public track record reproducible across CLI-default
-    changes. --allowedTools grants exactly what CLAUDE.md instructs the brain to
-    do (Read the chart PNGs, WebSearch/WebFetch to verify catalysts) and nothing
-    that can write - an injected headline must never be able to touch the ledger.
-    The installed CLI accepts a space/comma-separated tool list as one argument.
-
-    output_format is OPTIONAL and defaults off so the bare invocation is byte-for-byte
-    what it always was. run_claude passes "json" to get a usage envelope: until
-    2026-07-19 nothing recorded what any brain call cost, how long it took, or
-    whether it succeeded on the first attempt."""
-    cmd = ["claude", "-p", prompt]
+    changes. --tools is an allowlist: Read/grep/list + web search/fetch to verify
+    catalysts, and nothing that can write. An injected headline must never be
+    able to touch the ledger. --yolo is required on GitHub Actions (no TTY).
+    -p is last so a flag cannot be swallowed as the prompt.
+    """
+    cmd = ["grok", "--yolo", "--no-auto-update"]
     if model:
         cmd += ["--model", model]
-    if allowed_tools:
-        cmd += ["--allowedTools", allowed_tools]
+    tools = normalize_tools(allowed_tools)
+    if tools:
+        cmd += ["--tools", tools]
+        # Belt: even if a future default injects writers, deny them.
+        cmd += ["--disallowed-tools", "run_terminal_cmd,search_replace"]
     if output_format:
         cmd += ["--output-format", output_format]
+    cmd += ["-p", prompt]
     return cmd
+
+
+# Backward-compatible name. Tests and orchestrator._claude_cmd still import this.
+claude_cmd = grok_cmd
 
 
 def unwrap_cli_json(stdout: str) -> tuple[str, dict]:
@@ -282,7 +307,12 @@ def unwrap_cli_json(stdout: str) -> tuple[str, dict]:
         env = json.loads(stdout)
     except Exception:
         return stdout, {}
-    if not isinstance(env, dict) or not isinstance(env.get("result"), str):
+    if not isinstance(env, dict):
+        return stdout, {}
+    # Claude Code used `result`; grok --output-format json uses `text`.
+    # Accept either so a CLI envelope change costs us metrics, never the parse.
+    text = env.get("result") if isinstance(env.get("result"), str) else env.get("text")
+    if not isinstance(text, str):
         return stdout, {}
     usage = env.get("usage") if isinstance(env.get("usage"), dict) else {}
     # modelUsage is keyed by the model that ACTUALLY served the request, so it
@@ -314,10 +344,10 @@ def unwrap_cli_json(stdout: str) -> tuple[str, dict]:
         # as QUOTA CONSUMED and as the relative weight of one call type against
         # another (daily_study ~$1.6 vs a full brain call ~$5), never as money out.
         "total_cost_usd": env.get("total_cost_usd"),
-        "session_id": env.get("session_id"),
+        "session_id": env.get("session_id") or env.get("sessionId"),
         "is_error": env.get("is_error"),
         "subtype": env.get("subtype"),
-        "stop_reason": env.get("stop_reason"),
+        "stop_reason": env.get("stop_reason") or env.get("stopReason"),
         "models_served_by": sorted(model_usage) or None,
         "permission_denials": len(denials) or None,
         "permission_denied_tools": denied_tools,
@@ -334,7 +364,7 @@ def unwrap_cli_json(stdout: str) -> tuple[str, dict]:
         "cache_read_input_tokens": usage.get("cache_read_input_tokens"),
         "cache_creation_input_tokens": usage.get("cache_creation_input_tokens"),
     }
-    return env["result"], {k: v for k, v in meta.items() if v is not None}
+    return text, {k: v for k, v in meta.items() if v is not None}
 
 
 def run_claude(prompt: str, model: str | None = None, *,
@@ -356,9 +386,9 @@ def run_claude(prompt: str, model: str | None = None, *,
         the slot and left no record of itself.
       * EVERY LAUNCH FAILURE IS NOW RECORDED TOO (2026-08-03). Only TimeoutExpired
         was caught, so anything else subprocess.run can raise before the child
-        answers - FileNotFoundError when the `claude` binary is not on PATH, an
+        answers - FileNotFoundError when the `grok` binary is not on PATH, an
         OSError on a fork/pipe failure - escaped with ZERO telemetry. That is not
-        hypothetical: adversarial_review guards itself with shutil.which("claude"),
+        hypothetical: adversarial_review guards itself with shutil.which("grok"),
         but ask_claude, reviews.self_review / daily_study / universe_review and
         publish._brain_trade_memo do not, and each of those callers wraps the call
         in a bare `except Exception` that prints and returns. On a node without the
@@ -391,7 +421,7 @@ def run_claude(prompt: str, model: str | None = None, *,
             _log_brain_call(call, run_id, model, allowed_tools, attempt,
                             elapsed_s=round(time.time() - started, 1),
                             ok=False, error=last_err, uid=uid)
-            print(f"  claude attempt {attempt} timed out after {timeout_s}s")
+            print(f"  grok attempt {attempt} timed out after {timeout_s}s")
             if attempt == 1:
                 time.sleep(90)
             continue
@@ -405,7 +435,7 @@ def run_claude(prompt: str, model: str | None = None, *,
             _log_brain_call(call, run_id, model, allowed_tools, attempt,
                             elapsed_s=round(time.time() - started, 1),
                             ok=False, error=f"launch_failed {last_err}", uid=uid)
-            print(f"  claude attempt {attempt} could not launch: {last_err[:300]}")
+            print(f"  grok attempt {attempt} could not launch: {last_err[:300]}")
             if attempt == 1:
                 time.sleep(90)
             continue
@@ -420,10 +450,10 @@ def run_claude(prompt: str, model: str | None = None, *,
                     f"stdout={result.stdout[:1000]}")
         _log_brain_call(call, run_id, model, allowed_tools, attempt,
                         elapsed_s=elapsed, ok=False, error=last_err[:500], uid=uid)
-        print(f"  claude attempt {attempt} failed: {last_err[:300]}")
+        print(f"  grok attempt {attempt} failed: {last_err[:300]}")
         if attempt == 1:
             time.sleep(90)
-    raise RuntimeError(f"claude CLI failed after retry: {last_err}")
+    raise RuntimeError(f"grok CLI failed after retry: {last_err}")
 
 
 # Per-process invocation counter. `call` alone does NOT identify an invocation:
@@ -624,7 +654,7 @@ def _repair_proposals(queue: list[dict], reviews: dict, context_file: str,
 def adversarial_review(proposals: list[dict], context_file: str, run_id: str) -> list[dict]:
     """Second pass by a separate Claude session prompted to REFUTE each BUY.
     Veto drops the proposal (journaled); survivors may get a confidence haircut.
-    Skipped where the claude CLI is unavailable (cloud sandboxes) - noted loudly."""
+    Skipped where the grok CLI is unavailable - noted loudly."""
     import shutil
     LAST_RISK_DESK_VETOES.clear()
     buys = [p for p in proposals if str(p.get("action", "")).upper() == "BUY"]
@@ -660,7 +690,7 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
                 kept.append(p)
         return kept
 
-    if shutil.which("claude") is None:
+    if shutil.which("grok") is None:
         return _no_desk("risk desk unavailable in this environment")
 
     # PRECOMPUTED SOURCING CHECK (2026-07-25). The desk has been doing this grep

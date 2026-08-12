@@ -145,7 +145,7 @@ def _no_sleep(monkeypatch):
     """The retry sleeps 90s between attempts; tests must not."""
     monkeypatch.setattr(time, "sleep", lambda *_: None)
     monkeypatch.setattr(brain_io, "llm_settings",
-                        lambda: {"brain_model": "claude-opus-4-8"})
+                        lambda: {"brain_model": "grok-4.6"})
 
 
 def test_missing_cli_binary_is_journaled_then_raised(monkeypatch, _no_sleep):
@@ -157,7 +157,7 @@ def test_missing_cli_binary_is_journaled_then_raised(monkeypatch, _no_sleep):
     prints and returns. On a node without the CLI the system therefore failed
     silently and recorded nothing about why."""
     def _no_binary(*a, **k):
-        raise FileNotFoundError(2, "No such file or directory: 'claude'")
+        raise FileNotFoundError(2, "No such file or directory: 'grok'")
 
     monkeypatch.setattr(subprocess, "run", _no_binary)
     with pytest.raises(RuntimeError) as e:
@@ -252,7 +252,7 @@ def test_repair_round_is_three_separately_labelled_calls(monkeypatch, tmp_path,
     judged on what it recovers versus what it burns.
     """
     import shutil
-    monkeypatch.setattr(shutil, "which", lambda _n: "/usr/bin/claude")
+    monkeypatch.setattr(shutil, "which", lambda _n: "/usr/bin/grok")
 
     ctx = tmp_path / "context.json"
     ctx.write_text(json.dumps({"universe_scan": {}}))

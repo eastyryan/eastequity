@@ -16,7 +16,7 @@ orchestrator.py        thin entrypoint (re-exports + main)
   │    brain_io         ask Claude / risk desk / execute
   │    analytics, publish, reviews
   ├─ tools/            research + learning (shadow, exit, adopt, learning_mark)
-  ├─ Claude (via `claude -p`, rules in CLAUDE.md) → JSON trade proposals
+  ├─ Grok 4.6 (via `grok -p` on GitHub Actions, rules in CLAUDE.md) → JSON trade proposals
   ├─ validator.py      pure-Python hard-rule enforcement (long-only, swing, sizing)
   ├─ execution/        broker router: Alpaca paper (live) + simulation fallback
   ├─ journal/          append-only JSONL audit trail
@@ -33,16 +33,20 @@ Full universe deep research is slow — most slots no longer do it.
 
 | Slot (ET) | Depth | What it does |
 |-----------|--------|----------------|
-| 6:00am | `light` | Holdings + watchlist prices; exits only |
-| 9am, 10am, 12pm, 2pm | `holdings_watchlist` | **Four fast trading cycles** — mini-scan + deep research on holdings & watchlist only |
-| 4:00pm | `full` | Full universe scan + fat-pitch promotion + deep focus set |
-| 5:30pm | evening review | News-only commentary (no trading) |
-| Sunday 12:00am | `weekly_market` | Multi-sector breadth + discovery sweep; publishes `market_checkin.json`; no trading |
+| 6:00am wkdy | `light` | Holdings + watchlist prices; exits only |
+| 8:45am, 12pm, 2pm wkdy | `holdings_watchlist` | Fast trading cycles — holdings, watchlist, tape/8-K only |
+| 10:30am + 3:30pm wkdy | `full` | Full universe scan + fat-pitch promotion (3:30 is pre-bell) |
+| 5:30pm wkdy | evening review | News-only commentary (Fri also weekly self-review) |
+| 7:00pm wkdy | `--study` | Learning only, no trades |
+| 12:00am daily | news / `weekly_market` | Overnight review; Sunday = weekly breadth |
+| 11:59pm Sat+Sun | `--news-only` | Weekend news; Sunday also universe review |
+| :15 7:15am–7:15pm wkdy | watchdog | Re-runs missed slots; serves watchlist triggers |
 
 ### Running it by hand
 
-The **cloud routine is the scheduled trader.** Local runs are the operator deliberately
-driving, and they go through `scripts/manual_run.sh` — never `orchestrator.py` directly.
+The **scheduled trader is Grok 4.6 on GitHub Actions** (`grok-cycle.yml`). The Mac
+does not need to be awake. See `docs/GROK_SCHEDULE.md`. Requires repo secret
+`XAI_API_KEY`. Hand-fired local runs still go through `scripts/manual_run.sh`.
 
 ```bash
 scripts/manual_run.sh                       # fast focused cycle (holdings_watchlist)
@@ -157,4 +161,4 @@ Weekly self-review runs the adopt pipeline and re-marks shadows. See CLAUDE.md L
 - [x] Dashboard (Next.js) — live
 - [x] Phase 3 — real-broker execution (Alpaca paper; IBKR later for live — Moomoo Canada has no OpenAPI)
 - [ ] Phase 5 — X posting (draft path exists)
-- [ ] Phase 6 — further scheduling/watchdog hardening
+- [x] Phase 6 — Grok scheduled trader (launchd + grok CLI + Automations pulse)
