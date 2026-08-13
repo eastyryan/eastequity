@@ -75,6 +75,21 @@ def test_cloud_slot_names_every_graded_slot():
         assert f"in_window {hhmm}" in src, f"cloud_slot.sh missing window for {hhmm}"
 
 
+def test_cloud_slot_absorbs_github_cron_delay():
+    """2026-08-13: a 20-min primary window + minute==:15 watchdog gate turned
+    every late Actions fire into a green stand-down and froze the dashboard.
+    Primary window must match depths.slot_depth_from_hhmm (75); late weekday
+    fires must fall through to watchdog recovery."""
+    src = (ROOT / "scripts" / "cloud_slot.sh").read_text()
+    assert "PRIMARY_WINDOW=75" in src
+    assert "falling through to watchdog recovery" in src
+    assert "in_watchdog_band" in src
+    # Must NOT require minute==:15 only — that was the broken gate.
+    assert '[ "${HHMM:2:2}" = "15" ]' not in src
+    from scripts.slot_already_landed import SLOT_WINDOW_MIN
+    assert SLOT_WINDOW_MIN == 75
+
+
 def test_grok_slot_fires_on_exactly_the_graded_slots():
     """The Grok launchd trader is now the scheduled brain. Its clock gate must
     name the same weekday ticks the heartbeat grades, plus the 1-minute jitter

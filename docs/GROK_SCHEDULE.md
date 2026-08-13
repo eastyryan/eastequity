@@ -25,7 +25,7 @@ quota, no console.x.ai invoice. `XAI_API_KEY` is optional fallback only.
 | :15 7:15 AM–7:15 PM wkdy | watchdog | `find_missed_slot.py` then a pinned-depth rerun |
 
 Workflow: `.github/workflows/grok-cycle.yml`  
-Gate: `scripts/cloud_slot.sh` (20-minute window after each slot so GitHub cron delay cannot steal the next slot). Crons are EDT (UTC-4) through 2026-11-01; `slot_already_landed.py` refuses a second landing the same ET day.
+Gate: `scripts/cloud_slot.sh` (75-minute primary window after each slot — matches `slot_depth_from_hhmm` tolerance; min inter-slot gap is 90 min so GitHub cron delay cannot steal the next slot). Any weekday fire outside a primary window during ~06:20–19:20 ET falls through to **watchdog recovery** (not only when the clock minute is `:15`). Crons are EDT (UTC-4) through 2026-11-01; `slot_already_landed.py` refuses a second landing of the same primary slot the same ET day.
 
 ## Required secret (no paid API key)
 

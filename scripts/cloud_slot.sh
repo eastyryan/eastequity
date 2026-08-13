@@ -8,6 +8,16 @@
 #   scripts/cloud_slot.sh            # infer role from ET clock
 #   scripts/cloud_slot.sh watchdog
 #   scripts/cloud_slot.sh brain
+#
+# GITHUB CRON DELAY (measured 2026-08-13): scheduled fires routinely land
+# 30–70+ minutes late. A 20-minute primary window + "minute == :15" watchdog
+# gate made every late fire a green no-op ("not inside a slot window"), so the
+# dashboard froze while Actions showed success. Fixes:
+#   1. Primary window = 75 min (matches runlib.depths.slot_depth_from_hhmm;
+#      min inter-slot gap is 90 min, so no double-claim).
+#   2. Any weekday fire outside a primary window during session hours becomes
+#      watchdog recovery — not only when the clock minute is :15.
+#   3. slot_already_landed still blocks a second primary landing the same day.
 set -uo pipefail
 
 export TZ="America/New_York"
@@ -22,6 +32,12 @@ DOW=$(date +%u)    # 1=Mon ... 7=Sun
 HHMM=$(date +%H%M)
 ROLE="${1:-auto}"
 
+# Keep in sync with scripts/slot_already_landed.py SLOT_WINDOW_MIN and
+# runlib.depths.slot_depth_from_hhmm tolerance_minutes (75).
+PRIMARY_WINDOW=75
+MIDNIGHT_WINDOW=90
+STUDY_WINDOW=75
+
 log() { echo "$(date '+%Y-%m-%d %H:%M:%S %Z') [$ROLE] $*"; }
 
 if [ -f state/KILL_SWITCH ]; then
@@ -35,32 +51,41 @@ mins_now=$((10#${HHMM:0:2} * 60 + 10#${HHMM:2:2}))
 in_window() {
   # $1 = HHMM slot. True if now is in [slot, slot+WINDOW) ET.
   local slot="$1"
-  local window="${2:-20}"
+  local window="${2:-$PRIMARY_WINDOW}"
   local sm=$((10#${slot:0:2} * 60 + 10#${slot:2:2}))
   local delta=$((mins_now - sm))
   [ "$delta" -ge 0 ] && [ "$delta" -lt "$window" ]
 }
 
+# Weekday session band where a late fire should become watchdog recovery
+# rather than a silent stand-down. Starts just after the 06:00 primary window
+# can still claim itself; ends with the last watchdog cron (~19:15 ET).
+in_watchdog_band() {
+  [ "$DOW" -le 5 ] && [ "$mins_now" -ge $((6 * 60 + 20)) ] && [ "$mins_now" -le $((19 * 60 + 20)) ]
+}
+
 if [ "$ROLE" = "auto" ]; then
   ROLE=""
   if [ "$DOW" -eq 6 ] || [ "$DOW" -eq 7 ]; then
-    if in_window 0000 25; then
+    if in_window 0000 "$MIDNIGHT_WINDOW"; then
       ROLE="midnight"
-    elif in_window 2359 20 || { [ "$HHMM" = "0000" ] && [ "$DOW" -eq 7 ]; }; then
+    elif in_window 2359 45 || { [ "$HHMM" = "0000" ] && [ "$DOW" -eq 7 ]; }; then
       ROLE="weekend"
     fi
   elif [ "$DOW" -le 5 ]; then
-    if in_window 0600 20; then ROLE="brain"
-    elif in_window 0845 20; then ROLE="brain"
-    elif in_window 1030 20; then ROLE="brain"
-    elif in_window 1200 20; then ROLE="brain"
-    elif in_window 1400 20; then ROLE="brain"
-    elif in_window 1530 20; then ROLE="brain"
-    elif in_window 1730 20; then ROLE="evening"
-    elif in_window 1900 20; then ROLE="study"
-    elif in_window 0000 25; then ROLE="midnight"
-    elif [ "${HHMM:2:2}" = "15" ] && [ "$HHMM" \> "0714" ] && [ "$HHMM" \< "1916" ]; then
+    if in_window 0600; then ROLE="brain"
+    elif in_window 0845; then ROLE="brain"
+    elif in_window 1030; then ROLE="brain"
+    elif in_window 1200; then ROLE="brain"
+    elif in_window 1400; then ROLE="brain"
+    elif in_window 1530; then ROLE="brain"
+    elif in_window 1730; then ROLE="evening"
+    elif in_window 1900 "$STUDY_WINDOW"; then ROLE="study"
+    elif in_window 0000 "$MIDNIGHT_WINDOW"; then ROLE="midnight"
+    elif in_watchdog_band; then
+      # Late primary cron OR delayed :15 watchdog — recover the missed slot.
       ROLE="watchdog"
+      log "ET $HHMM outside primary window — falling through to watchdog recovery"
     fi
   fi
   if [ -z "$ROLE" ]; then
@@ -70,18 +95,27 @@ if [ "$ROLE" = "auto" ]; then
 fi
 
 if [ "$ROLE" = "watchdog" ]; then
-  if [ "$DOW" -ge 6 ] || [ "$HHMM" \< "0715" ] || [ "$HHMM" \> "1915" ]; then
-    log "watchdog outside weekday 07:15–19:15 ET — standing down"
+  if [ "$DOW" -ge 6 ] || ! in_watchdog_band; then
+    log "watchdog outside weekday 06:20–19:20 ET — standing down"
     exit 0
   fi
 fi
 
 # One landing per ET-day+role. A DST-twin cron or a GitHub double-dispatch
 # must not re-run a slot that already produced a summary / study file.
+# Watchdog is never "already done" — it decides per-slot via find_missed_slot.
 if [ "$ROLE" != "watchdog" ]; then
   if "$PY" scripts/slot_already_landed.py "$ROLE"; then
-    log "role=$ROLE already landed today ET — standing down"
-    exit 0
+    # Primary already landed, but a late fire may still owe a *different*
+    # earlier miss (e.g. 10:30 fire after 08:45 was lost). Fall through to
+    # watchdog instead of a hard stand-down.
+    if in_watchdog_band; then
+      log "role=$ROLE already landed — checking watchdog for other misses"
+      ROLE="watchdog"
+    else
+      log "role=$ROLE already landed today ET — standing down"
+      exit 0
+    fi
   fi
 fi
 
@@ -134,6 +168,8 @@ case "$ROLE" in
     ;;
   watchdog)
     # Always pull first: breadcrumbs live on origin/main.
+    # NOTE: only reset if we are not mid-publish with local commits; on GHA
+    # the workspace is a clean checkout of the commit that launched the job.
     git fetch origin --quiet || true
     git reset --hard origin/main --quiet || true
     DETECT=$("$PY" scripts/find_missed_slot.py)
