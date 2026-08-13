@@ -69,6 +69,12 @@ jobs:
 
       # Prefer the SuperGrok / grok.com session (same "don't pay extra" model as
       # Claude CCR). API key is optional fallback only.
+      #
+      # OIDC sessions ROTATE. A successful CI call can invalidate the refresh
+      # token stored in GROK_AUTH_JSON; the next slot then dies with
+      # "Not signed in" while Actions still looks green if we skip the brain.
+      # Verify auth before the heavy cycle, and re-upload refreshed tokens at
+      # the end when GH_PAT_SECRETS (repo secret with secrets:write) is set.
       - name: Restore Grok subscription login
         env:
           GROK_AUTH_JSON: ${{ secrets.GROK_AUTH_JSON }}
@@ -85,7 +91,21 @@ jobs:
             echo "  gh secret set GROK_AUTH_JSON < ~/.grok/auth.json"
             echo "from a machine where you have already run \`grok login\`."
             exit 1
+          else
+            echo "using XAI_API_KEY (metered)"
           fi
+          # Fail BEFORE a 20-minute gather if the session is dead. `grok models`
+          # is a cheap authenticated call.
+          if ! grok models >/tmp/grok-models.out 2>/tmp/grok-models.err; then
+            echo "FATAL: Grok auth is present but not signed in."
+            echo "stderr:"
+            cat /tmp/grok-models.err || true
+            echo "Re-sync from a logged-in Mac:"
+            echo "  gh secret set GROK_AUTH_JSON --repo eastyryan/eastequity < ~/.grok/auth.json"
+            exit 1
+          fi
+          echo "grok auth ok:"
+          head -20 /tmp/grok-models.out || true
 
       - name: Run scheduled slot
         env:
@@ -99,3 +119,24 @@ jobs:
           chmod +x scripts/cloud_slot.sh
           grok --version
           scripts/cloud_slot.sh "${{ github.event.inputs.role || 'auto' }}"
+
+      # If the OIDC session refreshed on this runner, push the new tokens back
+      # into GROK_AUTH_JSON so the next slot does not wake up "Not signed in".
+      # Requires a PAT with secrets:write stored as GH_PAT_SECRETS (optional).
+      - name: Persist refreshed Grok session
+        if: always()
+        env:
+          GH_PAT_SECRETS: ${{ secrets.GH_PAT_SECRETS }}
+        run: |
+          if [ -z "$GH_PAT_SECRETS" ]; then
+            echo "GH_PAT_SECRETS not set — if OIDC rotates, re-sync with:"
+            echo "  gh secret set GROK_AUTH_JSON --repo ${{ github.repository }} < ~/.grok/auth.json"
+            exit 0
+          fi
+          if [ ! -f "$HOME/.grok/auth.json" ]; then
+            echo "no auth.json to persist"
+            exit 0
+          fi
+          GH_TOKEN="$GH_PAT_SECRETS" gh secret set GROK_AUTH_JSON \
+            --repo "${{ github.repository }}" < "$HOME/.grok/auth.json"
+          echo "GROK_AUTH_JSON secret refreshed from runner session"

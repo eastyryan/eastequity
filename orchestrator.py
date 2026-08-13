@@ -753,10 +753,52 @@ def _gather_and_wake(args, cfg: dict, run_id: str, run_depth: str,
         print(f"  DATA QUALITY: {_dq.get('source')} "
               f"stale={bool(_dq.get('stale'))} age={_dq.get('age_hours')}h")
     print("[2/5] Waking the brain (Grok)...")
-    response = ask_claude(
-        context, run_id,
-        news_only=args.news_only or run_depth in ("evening_review", "weekly_market"),
-    )
+    try:
+        response = ask_claude(
+            context, run_id,
+            news_only=args.news_only or run_depth in ("evening_review", "weekly_market"),
+        )
+    except Exception as e:
+        # A dead Grok session used to abort before journal/dashboard publish, so
+        # the public site froze while Actions still showed a finished job. Keep
+        # the safety layer's work and publish a clear offline marker instead.
+        err = str(e).replace("\n", " ")[:280]
+        print(f"  BRAIN FAILED (publishing offline marker): {err}")
+        try:
+            journal.log_improvement(
+                f"Brain unavailable this run: {err[:200]} — held book; "
+                f"dashboard still refreshed so the site does not go stale",
+                run_id)
+        except Exception:
+            pass
+        # Prefer last published watchlist so the board does not blank out.
+        prev_watch: list = []
+        try:
+            prev = json.loads(
+                (ROOT / "dashboard" / "data" / "latest.json").read_text())
+            prev_watch = prev.get("watchlist") or []
+        except Exception:
+            prev_watch = []
+        response = (
+            "Brain unavailable this scheduled run — Grok CLI did not authenticate "
+            f"or failed after retry ({err}). Open positions held; safety-layer "
+            "exits still applied. Re-sync auth: "
+            "`gh secret set GROK_AUTH_JSON < ~/.grok/auth.json`.\n\n"
+            "```json\n"
+            + json.dumps({
+                "proposals": [],
+                "no_trade_reason": "brain_unavailable",
+                "commentary": (
+                    "Scheduled run reached the desk but the Grok brain was offline "
+                    f"({err[:160]}). The book is held as-is; forced exits from the "
+                    "safety layer still run. This update is published so the public "
+                    "dashboard does not freeze on a dead session."
+                ),
+                "watchlist": prev_watch,
+                "rejected_ideas": [],
+            }, indent=2)
+            + "\n```"
+        )
     return context, forced_exit_fills, response
 
 
