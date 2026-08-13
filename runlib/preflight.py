@@ -404,6 +404,29 @@ def preflight(cfg: dict, run_id: str, news_only: bool = False,
 # ---------------------------------------------------------------------------
 TESTS_GATE_WALL_CLOCK_S = 240
 
+# Money-path only. The full suite still runs in CI (tests.yml). A red
+# test_mark_run_start (observed 2026-08-12 on the evening recovery) must not
+# block a 10:30 BUY. These files can actually corrupt fills, stops, or
+# validation. Missing files are skipped so a half-checkout fails open.
+TESTS_GATE_TARGETS = (
+    "tests/test_execution_correctness.py",
+    "tests/test_execution_costs.py",
+    "tests/test_execution_audit_subprocesses.py",
+    "tests/test_alpaca_broker.py",
+    "tests/test_sell_validation.py",
+    "tests/test_entry_order_shape.py",
+    "tests/test_forced_exit_idempotency.py",
+    "tests/test_resting_stops.py",
+    "tests/test_fill_double_apply.py",
+    "tests/test_risk_controls.py",
+    "tests/test_risk_fail_closed.py",
+    "tests/test_risk_sizing.py",
+    "tests/test_publish_kill_switch.py",
+    "tests/test_run_lease_lifecycle.py",
+    "tests/test_stop_watch.py",
+    "tests/test_ledger_atomicity.py",
+)
+
 
 def tests_gate(repo_root=None, tests_path: str = "tests/",
                timeout_s: int = TESTS_GATE_WALL_CLOCK_S,
@@ -459,7 +482,20 @@ def tests_gate(repo_root=None, tests_path: str = "tests/",
     # -p no:cacheprovider: the repo auto-commits and pushes from cloud runs, and
     # .pytest_cache is not gitignored — a cache written on every cycle would leak
     # into the public ledger history (2026-08-05).
-    cmd = [sys.executable, "-m", "pytest", tests_path, "-q", "-x",
+    # Default live checkout: only money-path files (fills/stops/validator).
+    # Scratch repos used by tests_gate's own tests have none of those files, so
+    # they fall back to tests_path and keep exercising the gate.
+    args = [tests_path]
+    if tests_path in ("tests/", "tests"):
+        found = [t for t in TESTS_GATE_TARGETS if (root / t).exists()]
+        found += sorted(
+            str(p.relative_to(root))
+            for p in (root / "tests").glob("test_validator*.py")
+            if p.is_file()
+        )
+        if found:
+            args = found
+    cmd = [sys.executable, "-m", "pytest", *args, "-q", "-x",
            "-p", "no:cacheprovider"]
     # Per-test timeout only when the plugin exists: pytest-timeout is not
     # installed everywhere (absent from the 2026-08-05 local venv), and passing

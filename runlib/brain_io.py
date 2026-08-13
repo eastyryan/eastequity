@@ -651,8 +651,47 @@ def _repair_proposals(queue: list[dict], reviews: dict, context_file: str,
     return fixed
 
 
+def _desk_phase_instructions() -> str:
+    """Strict kill-the-trade desk, with one phase carve-out.
+
+    MEASURED: 29 of 45 lifetime rejections are risk_desk_veto, closed-trade n=2,
+    and the shadow book is 66 regret_miss vs 36 good_skip. 'Merely adequate = veto'
+    is the right rule once calibration can bind (min_trades_for_binding). Before
+    that it prevents the sample the desk itself needs. Hard fails stay vetoes.
+    """
+    try:
+        from runlib.analytics import compute_closed_trades
+        n_closed = len(compute_closed_trades() or [])
+    except Exception:
+        n_closed = 0
+    try:
+        min_bind = int((validator.load_config().get("learning_controls") or {})
+                       .get("min_trades_for_binding") or 15)
+    except Exception:
+        min_bind = 15
+    shared = (
+        "You are not the proposer's colleague. Your job is to find the reason this "
+        "trade fails, state it plainly, and veto when you find a HARD fail: "
+        "fabricated or unsourced catalyst, vague falsifiers, stop inside noise, "
+        "target <10% or flattered RR, same demand_driver stacked without a distinct "
+        "catalyst, or chasing a stale-price / melt-up print. A trade that survives "
+        "a genuine attempt to kill it is worth more than one that was never attacked.\n"
+    )
+    if n_closed < min_bind:
+        return shared + (
+            f"PHASE: anecdote (closed_trades={n_closed}, binds at {min_bind}). "
+            "Do NOT veto a setup that clears the hard-fail checklist merely because "
+            "it is not the best idea of the quarter. For a merely-adequate case, "
+            "APPROVE with a haircut (confidence_adjustment up to -0.10). This book "
+            "cannot calibrate, unlock conviction, or grade the shadow ledger until "
+            "it completes cycles. Fabrication is still a veto — never talk a bad "
+            "citation through.\n"
+        )
+    return shared + "If the case is merely adequate, that is a veto.\n"
+
+
 def adversarial_review(proposals: list[dict], context_file: str, run_id: str) -> list[dict]:
-    """Second pass by a separate Claude session prompted to REFUTE each BUY.
+    """Second pass by a separate Grok session prompted to REFUTE each BUY.
     Veto drops the proposal (journaled); survivors may get a confidence haircut.
     Skipped where the grok CLI is unavailable - noted loudly."""
     import shutil
@@ -742,18 +781,8 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
         "on a catalyst day, haircut or veto chasing.\n"
         "6) CHARTS: if charts missing for the ticker, haircut confidence.\n"
         f"{unsourced_block}"
-        # REMOVED 2026-07-19: "Be a skeptic, not a contrarian for sport - approve
-        # genuinely sound trades." That is an approval-bias instruction inside the
-        # one component whose entire job is refusal, and it was the only sentence
-        # in this prompt telling the desk to lean toward yes. The desk already
-        # cannot over-approve anything — its power is veto or a haircut, and every
-        # validator floor still runs afterwards — so the downside of a strict desk
-        # is a missed trade, while the downside of a lenient one is an unexamined
-        # position. Those are not symmetric.
-        "You are not the proposer's colleague. Your job is to find the reason this "
-        "trade fails, state it plainly, and veto when you find one. A trade that "
-        "survives a genuine attempt to kill it is worth more than one that was "
-        "never attacked. If the case is merely adequate, that is a veto.\n"
+        f"{_desk_phase_instructions()}"
+        # PROBE LANE kept below regardless of phase.
         # PROBE LANE (2026-08-05): stated confidence under 0.60 no longer dies at
         # the validator — it executes as a half-risk calibration probe (max one
         # open). Without this carve-out the desk's "merely adequate = veto" rule

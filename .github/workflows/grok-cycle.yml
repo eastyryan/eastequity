@@ -3,37 +3,25 @@ name: Grok trading cycle
 # THE scheduled trader. Replaces claude.ai CCR and the Mac launchd agent.
 # Runs on GitHub-hosted runners so the book trades with the Mac asleep.
 #
-# Clock: UTC crons cover BOTH EST and EDT for every slot. scripts/cloud_slot.sh
-# self-gates on America/New_York, so the DST-wrong twin is a few-second no-op
-# and a late GitHub cron still lands inside the 20-minute slot window.
+# Clock: America/New_York in EDT (UTC-4) through 2026-11-01. One cron per
+# slot — the EST twins were removed after a second 19:09 study double-fired
+# on 2026-08-12. After the November fallback, add one hour to each UTC time.
+# scripts/cloud_slot.sh still self-gates + slot_already_landed.py refuses a
+# second landing the same ET day.
 
 on:
   schedule:
-    # 6:00 ET
-    - cron: "0 10,11 * * 1-5"
-    # 8:45 ET
-    - cron: "45 12,13 * * 1-5"
-    # 10:30 ET
-    - cron: "30 14,15 * * 1-5"
-    # 12:00 ET
-    - cron: "0 16,17 * * 1-5"
-    # 14:00 ET
-    - cron: "0 18,19 * * 1-5"
-    # 15:30 ET
-    - cron: "30 19,20 * * 1-5"
-    # 17:30 ET evening review
-    - cron: "30 21,22 * * 1-5"
-    # 19:00 ET study (EDT = 23:00 UTC weekdays; EST = 00:00 UTC Tue-Sat)
-    - cron: "0 23 * * 1-5"
-    - cron: "0 0 * * 2-6"
-    # midnight ET
-    - cron: "0 4,5 * * *"
-    # weekend 23:59 ET (Sat+Sun)
-    - cron: "59 3,4 * * 0,1"
-    # watchdog :15, 7:15–19:15 ET year-round
-    - cron: "15 11-23 * * 1-5"
-    - cron: "15 12-23 * * 1-5"
-    - cron: "15 0 * * 2-6"
+    - cron: "0 10 * * 1-5"      # 6:00 ET light
+    - cron: "45 12 * * 1-5"     # 8:45 ET holdings_watchlist
+    - cron: "30 14 * * 1-5"     # 10:30 ET full
+    - cron: "0 16 * * 1-5"      # 12:00 ET holdings_watchlist
+    - cron: "0 18 * * 1-5"      # 14:00 ET holdings_watchlist
+    - cron: "30 19 * * 1-5"     # 15:30 ET full (pre-bell)
+    - cron: "30 21 * * 1-5"     # 17:30 ET evening_review
+    - cron: "0 23 * * 1-5"      # 19:00 ET study
+    - cron: "0 4 * * *"         # 00:00 ET midnight / Sunday weekly_market
+    - cron: "59 3 * * 0,1"      # 23:59 ET Sat+Sun news
+    - cron: "15 11-23 * * 1-5"  # watchdog 7:15–19:15 ET
   workflow_dispatch:
     inputs:
       role:

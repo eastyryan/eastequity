@@ -76,6 +76,15 @@ if [ "$ROLE" = "watchdog" ]; then
   fi
 fi
 
+# One landing per ET-day+role. A DST-twin cron or a GitHub double-dispatch
+# must not re-run a slot that already produced a summary / study file.
+if [ "$ROLE" != "watchdog" ]; then
+  if "$PY" scripts/slot_already_landed.py "$ROLE"; then
+    log "role=$ROLE already landed today ET — standing down"
+    exit 0
+  fi
+fi
+
 log "running role=$ROLE"
 
 run_py() {

@@ -31,7 +31,7 @@
 # to re-run once it finishes. That is intentional: scheduled wins, manual yields.
 set -uo pipefail
 
-export PATH="/Users/eastonryan/.local/bin:/Users/eastonryan/.npm-global/bin:/usr/local/bin:/usr/bin:/bin"
+export PATH="/Users/eastonryan/.grok/bin:/Users/eastonryan/.local/bin:/Users/eastonryan/.npm-global/bin:/usr/local/bin:/usr/bin:/bin"
 cd "$(dirname "$0")/.." || exit 1
 mkdir -p logs
 
