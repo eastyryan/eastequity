@@ -64,7 +64,13 @@ in_watchdog_band() {
   [ "$DOW" -le 5 ] && [ "$mins_now" -ge $((6 * 60 + 20)) ] && [ "$mins_now" -le $((19 * 60 + 20)) ]
 }
 
+# Track whether role was inferred from the clock. Explicit workflow_dispatch
+# roles (brain/evening/study) must NOT be rewritten to watchdog when a nearby
+# slot already landed — that ate a manual brain fire at 17:49 ET on 2026-08-14
+# and left the public watchlist blank.
+AUTO_SELECTED=0
 if [ "$ROLE" = "auto" ]; then
+  AUTO_SELECTED=1
   ROLE=""
   if [ "$DOW" -eq 6 ] || [ "$DOW" -eq 7 ]; then
     if in_window 0000 "$MIDNIGHT_WINDOW"; then
@@ -106,10 +112,10 @@ fi
 # Watchdog is never "already done" — it decides per-slot via find_missed_slot.
 if [ "$ROLE" != "watchdog" ]; then
   if "$PY" scripts/slot_already_landed.py "$ROLE"; then
-    # Primary already landed, but a late fire may still owe a *different*
-    # earlier miss (e.g. 10:30 fire after 08:45 was lost). Fall through to
-    # watchdog instead of a hard stand-down.
-    if in_watchdog_band; then
+    # Auto-inferred late fires may still owe an earlier miss. Explicit
+    # hand-fires keep their role (or stand down) so a manual brain publish
+    # cannot be silently rewritten into a no-op watchdog.
+    if [ "$AUTO_SELECTED" = "1" ] && in_watchdog_band; then
       log "role=$ROLE already landed — checking watchdog for other misses"
       ROLE="watchdog"
     else
