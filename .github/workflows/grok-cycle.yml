@@ -70,21 +70,36 @@ jobs:
       # Prefer the SuperGrok / grok.com session (same "don't pay extra" model as
       # Claude CCR). API key is optional fallback only.
       #
-      # OIDC sessions ROTATE. A successful CI call can invalidate the refresh
-      # token stored in GROK_AUTH_JSON; the next slot then dies with
-      # "Not signed in" while Actions still looks green if we skip the brain.
-      # Verify auth before the heavy cycle, and re-upload refreshed tokens at
-      # the end when GH_PAT_SECRETS (repo secret with secrets:write) is set.
+      # OIDC sessions ROTATE. A successful agent call refreshes tokens on the
+      # runner disk; the GROK_AUTH_JSON secret still holds the OLD refresh
+      # token. Next slot then fails mid-run with "Not signed in" (models may
+      # still pass on a barely-alive access token). Fix: prefer a GitHub
+      # Actions cache of auth.json from the previous cycle, fall back to the
+      # secret, verify with a real headless agent prompt (not just `grok
+      # models`), and save the cache at job end.
+      - name: Restore cached Grok OIDC session
+        uses: actions/cache@v4
+        with:
+          path: ~/.grok/auth.json
+          # Unique key every run so the post-job save always writes the
+          # just-refreshed tokens; restore-keys pulls the newest prior cache.
+          key: grok-oidc-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            grok-oidc-
+
       - name: Restore Grok subscription login
         env:
           GROK_AUTH_JSON: ${{ secrets.GROK_AUTH_JSON }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
         run: |
           mkdir -p "$HOME/.grok"
-          if [ -n "$GROK_AUTH_JSON" ]; then
+          if [ -f "$HOME/.grok/auth.json" ] && [ -s "$HOME/.grok/auth.json" ]; then
+            chmod 600 "$HOME/.grok/auth.json"
+            echo "using cached OIDC session from prior Actions run"
+          elif [ -n "$GROK_AUTH_JSON" ]; then
             printf '%s\n' "$GROK_AUTH_JSON" > "$HOME/.grok/auth.json"
             chmod 600 "$HOME/.grok/auth.json"
-            echo "using GROK_AUTH_JSON session (subscription, no API bill)"
+            echo "using GROK_AUTH_JSON secret (subscription, no API bill)"
           elif [ -z "${XAI_API_KEY:-}" ]; then
             echo "FATAL: no Grok login on this runner."
             echo "Free path (uses your existing Grok plan, no console.x.ai spend):"
@@ -94,18 +109,22 @@ jobs:
           else
             echo "using XAI_API_KEY (metered)"
           fi
-          # Fail BEFORE a 20-minute gather if the session is dead. `grok models`
-          # is a cheap authenticated call.
-          if ! grok models >/tmp/grok-models.out 2>/tmp/grok-models.err; then
-            echo "FATAL: Grok auth is present but not signed in."
+          # `grok models` is NOT enough — it can pass on a dying access token
+          # while the real agent path (`grok -p`) is already Not signed in.
+          # Exercise the same headless path the brain uses.
+          if ! grok --yolo --no-auto-update -p "Reply with exactly: pong" \
+                --output-format text >/tmp/grok-ping.out 2>/tmp/grok-ping.err; then
+            echo "FATAL: Grok agent auth failed (headless -p)."
             echo "stderr:"
-            cat /tmp/grok-models.err || true
+            cat /tmp/grok-ping.err || true
+            echo "stdout:"
+            cat /tmp/grok-ping.out || true
             echo "Re-sync from a logged-in Mac:"
             echo "  gh secret set GROK_AUTH_JSON --repo eastyryan/eastequity < ~/.grok/auth.json"
             exit 1
           fi
-          echo "grok auth ok:"
-          head -20 /tmp/grok-models.out || true
+          echo "grok agent auth ok:"
+          head -5 /tmp/grok-ping.out || true
 
       - name: Run scheduled slot
         env:
@@ -120,17 +139,15 @@ jobs:
           grok --version
           scripts/cloud_slot.sh "${{ github.event.inputs.role || 'auto' }}"
 
-      # If the OIDC session refreshed on this runner, push the new tokens back
-      # into GROK_AUTH_JSON so the next slot does not wake up "Not signed in".
-      # Requires a PAT with secrets:write stored as GH_PAT_SECRETS (optional).
-      - name: Persist refreshed Grok session
+      # Optional: also write rotated tokens back into the repo secret when a
+      # PAT with secrets:write is configured. Cache is the primary persistence.
+      - name: Persist refreshed Grok session to secret
         if: always()
         env:
           GH_PAT_SECRETS: ${{ secrets.GH_PAT_SECRETS }}
         run: |
           if [ -z "$GH_PAT_SECRETS" ]; then
-            echo "GH_PAT_SECRETS not set — if OIDC rotates, re-sync with:"
-            echo "  gh secret set GROK_AUTH_JSON --repo ${{ github.repository }} < ~/.grok/auth.json"
+            echo "GH_PAT_SECRETS not set — OIDC tokens persist via Actions cache only"
             exit 0
           fi
           if [ ! -f "$HOME/.grok/auth.json" ]; then

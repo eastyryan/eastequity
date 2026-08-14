@@ -771,14 +771,10 @@ def _gather_and_wake(args, cfg: dict, run_id: str, run_depth: str,
                 run_id)
         except Exception:
             pass
-        # Prefer last published watchlist so the board does not blank out.
-        prev_watch: list = []
-        try:
-            prev = json.loads(
-                (ROOT / "dashboard" / "data" / "latest.json").read_text())
-            prev_watch = prev.get("watchlist") or []
-        except Exception:
-            prev_watch = []
+        # Prefer last NON-EMPTY published watchlist. Offline runs used to read
+        # latest.json only — once one offline publish wrote [], every later
+        # offline publish carried the blank forward and the public board died.
+        prev_watch = _last_good_watchlist()
         response = (
             "Brain unavailable this scheduled run — Grok CLI did not authenticate "
             f"or failed after retry ({err}). Open positions held; safety-layer "
@@ -791,8 +787,8 @@ def _gather_and_wake(args, cfg: dict, run_id: str, run_depth: str,
                 "commentary": (
                     "Scheduled run reached the desk but the Grok brain was offline "
                     f"({err[:160]}). The book is held as-is; forced exits from the "
-                    "safety layer still run. This update is published so the public "
-                    "dashboard does not freeze on a dead session."
+                    "safety layer still run. Watchlist names are carried forward "
+                    "from the last live brain run so the board does not blank out."
                 ),
                 "watchlist": prev_watch,
                 "rejected_ideas": [],
@@ -800,6 +796,26 @@ def _gather_and_wake(args, cfg: dict, run_id: str, run_depth: str,
             + "\n```"
         )
     return context, forced_exit_fills, response
+
+
+def _last_good_watchlist() -> list:
+    """Most recent non-empty watchlist from latest.json or archived run_*.json.
+
+    Offline / parse-failed publishes must not erase the public board. Walk
+    newest-first so a just-finished good run wins over an older one.
+    """
+    dash = ROOT / "dashboard" / "data"
+    candidates = [dash / "latest.json"]
+    candidates.extend(sorted(dash.glob("run_*.json"), reverse=True))
+    for path in candidates:
+        try:
+            wl = json.loads(path.read_text()).get("watchlist") or []
+        except Exception:
+            continue
+        if isinstance(wl, list) and wl:
+            return wl
+    return []
+
 
 
 def _process_gate_inputs(context: dict, cfg: dict, run_depth: str) -> dict:

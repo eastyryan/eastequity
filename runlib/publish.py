@@ -111,10 +111,26 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
         _rej_by_tkr.values(),
         key=lambda r: (r.get("last_seen") or "", r.get("count", 0)),
         reverse=True)[:12]
+    # Never blank the public watchlist on an empty parse / offline brain.
+    # Intentional clears are rare and the board going to "0 NAMES" is almost
+    # always a transport failure, not a deliberate empty book of ideas.
+    pub_watchlist = list(watchlist or [])
+    if not pub_watchlist:
+        for path in [dash / "latest.json", *sorted(dash.glob("run_*.json"), reverse=True)]:
+            try:
+                prev_wl = json.loads(path.read_text()).get("watchlist") or []
+            except Exception:
+                continue
+            if isinstance(prev_wl, list) and prev_wl:
+                pub_watchlist = prev_wl
+                print(f"  (watchlist empty this run — keeping last-good "
+                      f"{len(pub_watchlist)} names from {path.name})")
+                break
+
     out = {
         "no_trade_reason": no_trade_reason,
         "commentary": commentary,
-        "watchlist": watchlist or [],
+        "watchlist": pub_watchlist,
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "run_id": run_id,
         "mode": context["trading_mode"],
@@ -199,7 +215,8 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
     except Exception as e:
         print(f"  (position_charts write failed: {e})")
     try:
-        out["watchlist_outcomes"] = update_watchlist_outcomes(watchlist or [], prices, positions)
+        out["watchlist_outcomes"] = update_watchlist_outcomes(
+            pub_watchlist, prices, positions)
     except Exception as e:
         print(f"  (watchlist outcomes failed: {e})")
     append_runs_index(run_id, context.get("trading_mode", "paper"), fills, commentary,
