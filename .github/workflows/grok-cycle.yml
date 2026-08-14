@@ -112,8 +112,9 @@ jobs:
           # `grok models` is NOT enough — it can pass on a dying access token
           # while the real agent path (`grok -p`) is already Not signed in.
           # Exercise the same headless path the brain uses.
+          # Format must be plain|json (not "text" — that fails the CLI before auth).
           if ! grok --yolo --no-auto-update -p "Reply with exactly: pong" \
-                --output-format text >/tmp/grok-ping.out 2>/tmp/grok-ping.err; then
+                --output-format plain >/tmp/grok-ping.out 2>/tmp/grok-ping.err; then
             echo "FATAL: Grok agent auth failed (headless -p)."
             echo "stderr:"
             cat /tmp/grok-ping.err || true
