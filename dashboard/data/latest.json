@@ -836,6 +836,10 @@
   "improvements": [
     {
       "date": "2026-08-18",
+      "note": "Daily study (strategy_playbooks): The pre-print fork: run-up and exit before the print vs hold-through vs wait, when earnings sits 4-30 days out - A scheduled earnings date 4-30 days away is not one decision and is not a skip. It is a three-way fork between (1) a shortened-horizon run-up that is flat before the print, (2) a deliberate hold-throu"
+    },
+    {
+      "date": "2026-08-18",
       "note": "The TER trigger fired on the dump session itself because `would_buy_at` dated \u201cafter the 2026-08-18 dump\u201d was treated as event-passed on 8/18; the event gate should not mark a same-day \u201cafter this session\u2019s dump\u201d condition live until the *next* session."
     },
     {
@@ -949,10 +953,6 @@
     {
       "date": "2026-08-13",
       "note": "Process gate: watchlist_empty; watchlist_empty_on_trading_depth; seat_reviews_missing_need_3_got_0"
-    },
-    {
-      "date": "2026-08-13",
-      "note": "Two earlier runs today underwrote this same CSCO print and died on `probe_cap_reached` because they scored it 0.56-0.57. The pack still does not surface \u201copen calibration-probe count\u201d as a first-window gate next to `allows_new_buys`, so a focused run can re-research a name for twenty minutes before discovering the only legal path is a 0.60 full-size score. A one-line `open_probes: 1/1 (HPE)` flag in the digest would have made the 0.60-or-pass decision the first question, not the last."
     }
   ],
   "trade_events": [

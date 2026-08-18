@@ -1,16 +1,54 @@
 {
-  "updated_at": "2026-08-12T23:06:32.882033+00:00",
+  "updated_at": "2026-08-18T23:21:08.250662+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 4,
     "fundamental_analysis": 2,
     "risk_management": 4,
-    "strategy_playbooks": 3,
+    "strategy_playbooks": 4,
     "market_microstructure": 1,
     "trading_psychology": 1,
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-5731674677",
+      "discipline": "strategy_playbooks",
+      "topic": "The pre-print fork: run-up and exit before the print vs hold-through vs wait, when earnings sits 4-30 days out",
+      "summary": "A scheduled earnings date 4-30 days away is not one decision and is not a skip. It is a three-way fork between (1) a shortened-horizon run-up that is flat before the print, (2) a deliberate hold-through of the binary, and (3) waiting for the post-print reaction. These rest on different evidence. Frazzini and Lamont (NBER w13090, 2007) document an earnings-announcement premium: stocks rise around scheduled prints, a long announcers / short non-announcers book earned over 60 bp per month, the effect is strong in large caps, lasts about 20 days / four weeks, and shows up in samples back to 1927; they tie it to predictable volume and attention-driven buying. Barber, De George, Lehavy and Trueman (Journal of Financial Economics 2013) replicate the premium globally (~60 bp/month long-short; ~76 bp in the US book) but disagree on the mechanism: the bulk of the premium is realized BEFORE the announcement day, pre-announcement returns arrive with REDUCED volume (the opposite of an attention-buying surge), and idiosyncratic volatility spikes in the three days centered on the print \u2014 they read it as compensation for uncertainty about the information to be released. Savor and Wilson (Journal of Finance 2016) give a third account (systematic risk): firms scheduled to report earned about 9.9% annualized abnormal return. I cannot adjudicate the mechanism from this session; what the three papers share, and what I will use, is the TIMING: average excess return accrues on the way INTO a known ",
+      "key_points": [
+        "A print outside the 3-day coded blackout is a fork, not a veto: run-up (flat before the print), hold-through (binary is the thesis), or wait (post-print playbook).",
+        "The academic announcement premium (Frazzini-Lamont; Barber et al.; Savor-Wilson) accrues INTO the scheduled date \u2014 Barber's event study is positive on days -10 to 0, with the vol spike on days 0 and +1 \u2014 so the harvestable swing is the approach, not the jump.",
+        "Sources disagree on WHY (attention/volume vs pre-print uncertainty premium vs systematic risk). They agree on WHEN. Use the timing; do not pick a mechanism as a thesis pillar.",
+        "The run-up is a tailwind of a few percent, not a 10% setup. Take it only when an existing structure already has honest 10% and 2:1 to a level that can print BEFORE the blackout.",
+        "Hold-through is a different trade from the run-up: it needs an explicit earnings_case, gap-adjusted R (aim ~2.5:1+), and a real cushion versus the options expected move \u2014 otherwise flatten before T-3.",
+        "PEAD / gap-and-hold is the third fork (already in KB-3704904010 / KB-2596574918), not a reason to sit out a live pre-print setup. Classic large-cap SUE drift has faded; do not wait for a 60-day SUE residual that the literature says is mostly gone in liquid names.",
+        "A new BUY whose horizon still contains the print is a hold-through whether you admit it or not. If you will not write earnings_case, the horizon and the target must both expire before the 3-day gate."
+      ],
+      "how_to_apply": "When a universe name has a live structure (no_supply_pullback, throwback to a written pivot, or a day-after-gap pullback) and earnings_week / days_to_earnings puts the print 4-30 days out, do not reject it for the print \u2014 that is the LITE miss (+12.1% after 'earnings in 4 days'). Fork it. Run-up (default when 2:1 and 10% clear to a named pre-print level): enter on the existing trigger, set holding_horizon_days so the plan expires at least one session before the 3-day blackout, put target_price just below the first overhead supply that can be reached in that shortened window (prior high, discounted measured move, or the swing-high anchored VWAP), and plan the SELL_TO_CLOSE before T-3. If that geometry cannot clear 10% and 2:1 without inventing a post-print target, the run-up is a pass \u2014 do not inflate the target and do not silently turn it into a hold-through. Hold-through only when the binary itself is the thesis: write earnings_case, size for gap-adjusted R using options_signals.expected_move_pct (if the implied move is larger than stop distance the stop is theater), and require a real cushion (trail already lifting, or unrealized room that can absorb the expected move) per Minerv",
+      "sources": [
+        "Andrea Frazzini and Owen Lamont, 'The Earnings Announcement Premium and Trading Volume,' NBER Working Paper 13090 (May 2007), https://www.nber.org/papers/w13090 ; AQR summary https://www.aqr.com/Insights/Research/Working-Paper/The-Earnings-Announcement-Premium-and-Trading-Volume ; NBER Digest https:",
+        "Brad M. Barber, Emmanuel T. De George, Reuven Lehavy, and Brett Trueman, 'The earnings announcement premium around the globe,' Journal of Financial Economics 108 (2013): 118-138, https://webuser.bus.umich.edu/rlehavy/BDLT.pdf (Fig. 3: positive market-adjusted returns days -10 to 0; volume below aver",
+        "Pavel Savor and Mungo Wilson, 'Earnings Announcements and Systematic Risk,' Journal of Finance 71 (2016): 83-138 (scheduled announcers ~9.9% annualized abnormal return)",
+        "Victor L. Bernard and Jacob K. Thomas, 'Post-Earnings-Announcement Drift: Delayed Price Response or Risk Premium?,' Journal of Accounting Research 27 (1989): 1-36; and JAE 13 (1990): 305-340 \u2014 PEAD as the POST-print contrast, not the run-up",
+        "Avanidhar Subrahmanyam, 'Keeping it Simple: How Can Post-Earnings Return Drift Exist and Not Exist Simultaneously?,' SSRN 5930255 (2025), via UCLA Anderson Review https://anderson-review.ucla.edu/is-post-earnings-announcement-drift-a-thing-again/ (PEAD in non-microcaps largely gone once size is filt",
+        "TrendSpider Learning Center, 'Earnings Report Trading Strategies' (run-up: buy weeks-to-days before, sell at a predetermined target before the announcement) https://trendspider.com/learning-center/earnings-report-trading-strategies/"
+      ],
+      "learned_at": "2026-08-18T23:21:08.247356+00:00",
+      "run_id": "20260818-d77212",
+      "tensions": [
+        {
+          "with": "KB-8308262054",
+          "why": "KB-8308262054 is right that an ATR-floored stop cannot cover the print jump and that the implied move is the market-priced noise band, so 'do not carry the stop through the binary' still stands. This lesson adds the missing fork: a shortened-horizon run-up that is flat before T-3, which 'default to ",
+          "noted_at": "2026-08-18"
+        },
+        {
+          "with": "KB-3704904010",
+          "why": "KB-3704904010 is the post-print episodic-pivot entry (gap holds, day-after first pullback, stop under the gap-day low). This lesson is the pre-print clock that decides whether to take a live setup now and be flat into the print, or park the name for that post-print playbook. Same scheduled event, op",
+          "noted_at": "2026-08-18"
+        }
+      ]
+    },
     {
       "id": "KB-1005106931",
       "discipline": "risk_management",
@@ -47,7 +85,9 @@
           "why": "Winner-MAE scatter is computed on trades that survived to a close; it systematically misses the gap-through tail (DELL filled 0.55 ATR / 4.47% past the stop). Tightening toward a winner-MAE cliff would recreate the planned-R vs realized-R gap that lesson exists to prevent. Use MAE to diagnose entrie",
           "noted_at": "2026-08-12"
         }
-      ]
+      ],
+      "times_cited": 1,
+      "last_cited": "2026-08-18T16:25:53.855523+00:00"
     },
     {
       "id": "KB-1695380801",
@@ -73,8 +113,8 @@
       ],
       "learned_at": "2026-08-11T23:05:36.673484+00:00",
       "run_id": "20260811-7f72b9",
-      "times_cited": 6,
-      "last_cited": "2026-08-12T22:21:59.435802+00:00"
+      "times_cited": 8,
+      "last_cited": "2026-08-18T21:45:41.569437+00:00"
     },
     {
       "id": "KB-9689938621",
@@ -108,8 +148,8 @@
           "noted_at": "2026-08-10"
         }
       ],
-      "times_cited": 3,
-      "last_cited": "2026-08-12T14:39:09.992904+00:00"
+      "times_cited": 4,
+      "last_cited": "2026-08-13T18:16:01.434247+00:00"
     },
     {
       "id": "KB-2999578881",
@@ -428,8 +468,8 @@
       ],
       "learned_at": "2026-07-22T10:12:55.570932+00:00",
       "run_id": "20260722-2d9d1d",
-      "times_cited": 14,
-      "last_cited": "2026-07-27T18:16:52.324805+00:00"
+      "times_cited": 15,
+      "last_cited": "2026-08-18T20:31:25.180652+00:00"
     },
     {
       "id": "KB-4213529672",
