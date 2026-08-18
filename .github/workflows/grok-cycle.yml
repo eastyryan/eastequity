@@ -92,13 +92,20 @@ jobs:
           GROK_AUTH_JSON: ${{ secrets.GROK_AUTH_JSON }}
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
         run: |
+          # Prefer Actions-cache OIDC (rotated tokens), but NEVER stick on a dead
+          # cache: if headless -p fails, fall back to GROK_AUTH_JSON. The old
+          # path preferred any non-empty cache forever, so one expired OIDC
+          # file bricked every later slot even when the secret was fresh.
           mkdir -p "$HOME/.grok"
+          AUTH_SOURCE=""
           if [ -f "$HOME/.grok/auth.json" ] && [ -s "$HOME/.grok/auth.json" ]; then
             chmod 600 "$HOME/.grok/auth.json"
-            echo "using cached OIDC session from prior Actions run"
+            AUTH_SOURCE="cache"
+            echo "trying cached OIDC session from prior Actions run"
           elif [ -n "$GROK_AUTH_JSON" ]; then
             printf '%s\n' "$GROK_AUTH_JSON" > "$HOME/.grok/auth.json"
             chmod 600 "$HOME/.grok/auth.json"
+            AUTH_SOURCE="secret"
             echo "using GROK_AUTH_JSON secret (subscription, no API bill)"
           elif [ -z "${XAI_API_KEY:-}" ]; then
             echo "FATAL: no Grok login on this runner."
@@ -107,15 +114,50 @@ jobs:
             echo "from a machine where you have already run \`grok login\`."
             exit 1
           else
+            AUTH_SOURCE="api_key"
             echo "using XAI_API_KEY (metered)"
           fi
+
           # `grok models` is NOT enough — it can pass on a dying access token
           # while the real agent path (`grok -p`) is already Not signed in.
-          # Exercise the same headless path the brain uses.
           # Format must be plain|json (not "text" — that fails the CLI before auth).
-          if ! grok --yolo --no-auto-update -p "Reply with exactly: pong" \
-                --output-format plain >/tmp/grok-ping.out 2>/tmp/grok-ping.err; then
-            echo "FATAL: Grok agent auth failed (headless -p)."
+          ping_grok() {
+            grok --yolo --no-auto-update -p "Reply with exactly: pong" \
+              --output-format plain >/tmp/grok-ping.out 2>/tmp/grok-ping.err
+          }
+
+          if [ "$AUTH_SOURCE" = "cache" ]; then
+            if ping_grok; then
+              echo "grok agent auth ok (cache):"
+              head -5 /tmp/grok-ping.out || true
+              exit 0
+            fi
+            echo "cached OIDC session dead; falling back to GROK_AUTH_JSON secret"
+            echo "cache stderr:"
+            cat /tmp/grok-ping.err || true
+            rm -f "$HOME/.grok/auth.json"
+            if [ -n "$GROK_AUTH_JSON" ]; then
+              printf '%s\n' "$GROK_AUTH_JSON" > "$HOME/.grok/auth.json"
+              chmod 600 "$HOME/.grok/auth.json"
+              AUTH_SOURCE="secret"
+            elif [ -n "${XAI_API_KEY:-}" ]; then
+              AUTH_SOURCE="api_key"
+              echo "falling back to XAI_API_KEY (metered)"
+            else
+              echo "FATAL: cached session dead and no GROK_AUTH_JSON / XAI_API_KEY."
+              echo "Re-sync from a logged-in Mac:"
+              echo "  gh secret set GROK_AUTH_JSON --repo eastyryan/eastequity < ~/.grok/auth.json"
+              exit 1
+            fi
+          fi
+
+          if [ "$AUTH_SOURCE" = "api_key" ]; then
+            echo "API key path — skipping auth.json ping"
+            exit 0
+          fi
+
+          if ! ping_grok; then
+            echo "FATAL: Grok agent auth failed (headless -p) via $AUTH_SOURCE."
             echo "stderr:"
             cat /tmp/grok-ping.err || true
             echo "stdout:"
@@ -124,7 +166,7 @@ jobs:
             echo "  gh secret set GROK_AUTH_JSON --repo eastyryan/eastequity < ~/.grok/auth.json"
             exit 1
           fi
-          echo "grok agent auth ok:"
+          echo "grok agent auth ok ($AUTH_SOURCE):"
           head -5 /tmp/grok-ping.out || true
 
       - name: Run scheduled slot
