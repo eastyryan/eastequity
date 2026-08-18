@@ -605,7 +605,51 @@
           "noted_at": "2026-08-18"
         }
       ]
+    },
+    {
+      "id": "KB-6015268368",
+      "discipline": "technical_analysis",
+      "topic": "1-month vs 3-month relative strength vs SPY: 3m filters leaders, 1m times the pullback, and they mean opposite things when they diverge",
+      "summary": "The two RS fields on every scanned row are not interchangeable leadership scores. Jegadeesh and Titman (Journal of Finance 1993; NBER w7159, 1999) document that stocks with high returns over the prior 3\u201312 months continue to outperform over the next 3\u201312 months (~1% per month long-short in the original sample; the 1990s out-of-sample window paid about the same). Their construction, and the standard Carhart/AQR follow-ons, SKIP the most recent month because of the short-term reversal Jegadeesh (Journal of Finance 1990) found: prior-month winners underperform the next month (~2% per month in 1934\u20131987). Da, Qian and Gao (NY Fed Staff Report 513, 2011) later show that this 1-month reversal is weaker in large, analyst-covered names (standard reversal three-factor alpha 0.33%/month, t=1.37, insignificant) and is mostly a WITHIN-industry, non-fundamental residual \u2014 liquidity shocks on recent losers, sentiment on recent winners \u2014 so I should not treat a high 1m RS on a liquid large-cap as a fade, nor a low 1m RS as a buy-the-washed-out-laggard signal. Practitioners (O'Neil CAN SLIM; Minervini Trend Template) still want high RS \u2014 Deepvue, summarizing O'Neil's 500-winner study 1953\u20131985, reports an average RS Rating of 87 BEFORE the major advance; Minervini's template (via Finer Market Points) wants RS >70, ideally 90+ \u2014 but they are using a 12-month PERCENTILE rank, often reverse-engineered as 40% on 3-month return and 20% each on 6/9/12 (Worden/AmiBroker reconstructions; not an offi",
+      "key_points": [
+        "3\u201312 month relative performance is the documented momentum edge (Jegadeesh-Titman); academic portfolios skip the last month on purpose so 1-month reversal does not contaminate the ranking.",
+        "rel_strength_3m_pct vs SPY is the leadership FILTER: positive = in the winner cohort; negative = a laggard, even if it just popped on news.",
+        "rel_strength_1m_pct is the EXTENSION CLOCK, not a second leadership score. Strongly positive 1m on already-positive 3m = extended; modestly negative/flat 1m with still-positive 3m = a leader pulling back.",
+        "1-month reversal is a long-short, often-illiquid effect and is weak in large analyst-covered names (Da/Qian/Gao). Do not fade a liquid large-cap winner on 1m RS, and do not buy a washed-out laggard because 1m RS is negative.",
+        "Our RS is excess vs SPY, not IBD's 1\u201399 percentile. Do not mentally translate '+X% vs SPY' into 'RS 90.' momentum_6m_pct (raw) plus 3m RS vs SPY is closer to the 6-month JT formation than 1m RS is.",
+        "rel_strength_vs_sector failed its 12-year ablation (same score as an arbitrary grouping). It is descriptive colour for where a name sits in its group, not evidence of leadership.",
+        "Daniel-Moskowitz: momentum crashes after declines + high vol, in the rebound. In unwind/hostile tapes, 3m-RS leadership is the left tail, not the fat pitch.",
+        "Novy-Marx (intermediate 7\u201312m) vs IBD (overweight 3m) is a real disagreement. For this swing book, treat 6m/3m as who, 1m as when \u2014 and do not rank 'higher 1m RS = better idea.'"
+      ],
+      "how_to_apply": "On every candidate, read rel_strength_3m_pct (and, when present, momentum_6m_pct) BEFORE 1m RS. A pullback-continuation or throwback (KB-6241168493 / KB-9692173165) is only a leadership buy when 3m RS vs SPY is still positive: that is a JT winner resetting, which is the 'leader that held up' O'Neil/Minervini are pointing at. If 1m RS is also strongly positive, the name is extended \u2014 do not chase the spike (the RBRK pattern); write would_buy_at as the no_supply_pullback or throwback to the pivot and wait. If 1m RS has gone modestly negative or flat while 3m RS remains positive, that DIVERGENCE is the constructive pullback, not a broken leader \u2014 do not reject it for '1m RS rolled over.' If 3m RS is negative, a 1m pop is a laggard bounce: route it through the confirmation-gated re-entry of KB-2665689010, do not promote it as leadership. Never cite rel_strength_vs_sector_* as a reason to buy or skip, and never rank ideas by who has the hottest 1m RS. When momentum_health is unwind or the tape has just washed out, do not add more 3m-RS leadership (Daniel-Moskowitz crash window); take the code's 0.5x haircut as given and prefer catalyst/value/diversifier setups instead of more of the sam",
+      "sources": [
+        "Jegadeesh and Titman, Returns to Buying Winners and Selling Losers: Implications for Stock Market Efficiency, Journal of Finance 48 (1993); Profitability of Momentum Strategies: An Evaluation of Alternative Explanations, NBER Working Paper 7159 (1999), https://www.nber.org/system/files/working_paper",
+        "Jegadeesh, Evidence of Predictable Behavior of Security Returns, Journal of Finance 45 (1990); Da, Qian and Gao, Decomposing Short-Term Return Reversal, Federal Reserve Bank of New York Staff Report 513 (2011), https://www.newyorkfed.org/medialibrary/media/research/staff_reports/sr513.pdf",
+        "Daniel and Moskowitz, Momentum Crashes, Journal of Financial Economics 122 (2016); working-paper PDF https://www.stern.nyu.edu/sites/default/files/assets/documents/con_038332.pdf",
+        "Novy-Marx, Is momentum really momentum?, Journal of Financial Economics 103 (2012) \u2014 intermediate 12-to-7 month result cited from secondary summaries; primary PDF not fetched this session",
+        "Wiest, What do we know 30 years after Jegadeesh and Titman's seminal paper, Financial Markets and Portfolio Management (2023) \u2014 skip-one-month convention as standard construction",
+        "O'Neil CAN SLIM / IBD RS Rating (Investor's Business Daily; 12-month percentile 1\u201399, plus a faster 3-month RS Rating); Deepvue, 5 Secrets to Find Winning Relative Strength Stocks (2025), https://deepvue.com/indicators/relative-strength-stocks/ \u2014 O'Neil 500-winner RS-87 figure is reported-by-seconda"
+      ],
+      "learned_at": "2026-08-18T23:39:31.929239+00:00",
+      "run_id": "20260818-06d22a",
+      "tensions": [
+        {
+          "with": "KB-6241168493",
+          "why": "KB-6241168493 is the ENTRY on a no-supply dip to structure. This lesson is the RS filter for WHICH dips qualify as leadership pullbacks (positive 3m RS, 1m resetting) versus laggard bounces (negative 3m RS). Same setup, different diagnostic; apply both.",
+          "noted_at": "2026-08-18"
+        },
+        {
+          "with": "KB-2665689010",
+          "why": "KB-2665689010 is the 52-week-high / below-MA version of the same leadership split (good news on a laggard has the weakest drift). Negative 3m RS vs SPY is the quantitative flag that routes a name into that confirmation-gated playbook rather than into the pullback-continuation book.",
+          "noted_at": "2026-08-18"
+        },
+        {
+          "with": "KB-1695380801",
+          "why": "KB-1695380801 forbids skipping a quality leader because it is 'expensive.' High 3m RS vs SPY is usually why those names look expensive; this lesson supplies the RS test that identifies them as leaders instead of using the multiple as a veto.",
+          "noted_at": "2026-08-18"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-08-18T23:21:08.249822+00:00"
+  "updated_at": "2026-08-18T23:39:31.931995+00:00"
 }
