@@ -39,7 +39,40 @@ That file is your Grok subscription session. Sessions last on the order of
 weeks; if slots start failing with an auth error, run `grok login` again and
 re-set the secret. Do not commit `auth.json` to the repo.
 
-Already present: `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`.  
+Already present: `ALPACA_API_KEY`, `ALPACA_SECRET_KEY`.
+
+### Keep auth from dying (required for unattended trading)
+
+OIDC access tokens expire in hours and **rotate on every successful agent
+call**. Actions cache keeps the rotated file between jobs; that alone is not
+enough — when the cache goes stale the secret still holds the *old* refresh
+token and every slot dies with `Not signed in`.
+
+Wire secret auto-refresh so each successful cycle writes the rotated
+`auth.json` back into `GROK_AUTH_JSON`:
+
+1. Create a classic PAT with the `repo` scope (or a fine-grained PAT with
+   Secrets: Read and write on this repo only).
+2. Store it (never commit it):
+
+```bash
+gh secret set GH_PAT_SECRETS --repo eastyryan/eastequity
+```
+
+3. Confirm the next Grok cycle log ends with
+   `GROK_AUTH_JSON secret refreshed from runner session`
+   instead of `GH_PAT_SECRETS not set`.
+
+Manual recovery if auth still fails:
+
+```bash
+grok login
+gh secret set GROK_AUTH_JSON --repo eastyryan/eastequity < ~/.grok/auth.json
+```
+
+Optional paid fallback: `XAI_API_KEY` (metered). The workflow uses it only
+when OIDC is completely unavailable.
+  
 Optional: `FRED_API_KEY`, `XAI_API_KEY` (only if you later want metered API).
 
 ## Hand-fire from Actions
