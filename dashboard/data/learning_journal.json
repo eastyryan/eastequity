@@ -1,16 +1,54 @@
 {
-  "updated_at": "2026-08-18T23:39:31.932944+00:00",
+  "updated_at": "2026-08-19T23:25:57.880403+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 5,
     "fundamental_analysis": 2,
-    "risk_management": 4,
+    "risk_management": 5,
     "strategy_playbooks": 4,
     "market_microstructure": 1,
     "trading_psychology": 1,
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-8671934946",
+      "discipline": "risk_management",
+      "topic": "R-multiple expectancy and losing-streak math: why a 2:1 book is profitable at 40% wins, why three losses cannot license a stand-down, and why clustered same-theme losses are one bet not a broken proce",
+      "summary": "Van Tharp's R-multiple (Trade Your Way to Financial Freedom, 1993/2007) normalizes every close as outcome divided by initial entry-to-stop risk, so a +2R winner and a \u22121R stop are comparable across names and sizes. Expectancy is then E = (W \u00d7 avg_win_R) \u2212 ((1\u2212W) \u00d7 avg_loss_R). At this system's 2:1 floor and a 40% win rate with avg_loss = 1R, E = +0.20R per trade (0.40\u00d72 \u2212 0.60\u00d71); breakeven win rate is 1/(1+2) = 33.3%, so 40\u201355% is the profitable band CLAUDE.md already names, not a hope. Sources disagree on the swing RATIO: ForTraders (2026) wants 1:3+ on multi-day holds because overnight/gap costs eat planned R, while the 2:1 math is already positive if avg_loss stays near 1R \u2014 I keep the validator floor and treat the overnight cost as a realized-R haircut (KB-9689938621's ~2.5:1 cushion on gap/event names), not as a higher coded bar. The same formula shows why cutting winners early is fatal: if avg_win collapses toward 1R while losses stay 1R, 40% wins go to E \u2248 0. The sequence of three closed trades (DELL \u22121.43R with 0.55 ATR gap-through; two HPE exits at \u22120.54R; mean realized R \u22120.837 vs mean claimed RR 2.15) is not a measured expectancy. Tversky and Kahneman (Psychological Bulletin, 1971) document the law of small numbers \u2014 people treat a tiny sample as representative of the generating process; with 0 wins in 3 trials the 95% upper bound on true win rate is roughly 63% (rule of three), so n=3 cannot distinguish a 40% system from a coin flip. Consecutive-loss math makes t",
+      "key_points": [
+        "Expectancy E = (W \u00d7 avg_win_R) \u2212 ((1\u2212W) \u00d7 avg_loss_R) is the number that decides whether the game is worth playing; win rate alone is a vanity metric.",
+        "At 2:1 with avg_loss = 1R, breakeven W is 33.3% and 40% wins produce +0.20R/trade; that is the mathematical reason the validator's 2:1 floor exists.",
+        "Realized avg_loss above 1R (DELL \u22121.43R) can flip a 40%/2:1 book to negative E; that is a gap/slippage problem, not a reason to raise the 2:1 floor or to skip the next clean setup.",
+        "n=3 with 0 wins cannot estimate W or E (law of small numbers); Tharp wants 30\u2013100 R-outcomes before SQN/expectancy is more than noise, and this system's anecdote/caution/binding gates already encode that.",
+        "A 3-loss streak is a ~22% event at the design 40% win rate and the expected longest streak in 100 independent trades is ~9; abandoning a positive-E process because the first three lost is the error the math names.",
+        "When the three losses share a demand_driver they are one correlated bet, so they diagnose theme stacking (2% theme / factor_map) rather than 'swing trading does not work.'",
+        "Risk is controlled by SIZE (1% budget, 0.5% probe, 0.5\u00d7 unwind haircut, 8% heat). Standing down double-counts the same caution and produces zero calibration data."
+      ],
+      "how_to_apply": "After any losing streak \u2014 including the 2026-08-19 HPE probe that closed \u22120.54R on resting_stop_breached \u2014 judge the next candidate on its own thesis, geometry, and validator floors (2:1, 10% upside, stop outside stop_engineering.min_stop_distance_pct, 3-day earnings blackout only). Do not skip it because the last three lost, and do not refit stops, targets, or the 2:1 floor from n=3. Grade the book in realized R (track_record / exit_execution_grades.realized_r), not win rate: if avg_loss is drifting above 1R, demand the ~2.5:1 cushion and liquid/non-event entries of KB-9689938621 on the NEXT buy rather than standing down; if the losses cluster on one demand_driver, the next BUY should prefer a different driver or a diversifier (portfolio_risk.diversifier / low corr_to_book) and must respect the 2% theme and factor-stack caps \u2014 that is rotation of the bet, not abstention. Never cut a live winner early to 'get back to even' after a streak (the HPE 07-15 process_fail): that is the move that collapses avg_win_R and kills the +0.20R design; bank sell_fraction 0.4\u20130.6 only at \u22652R and let the 3\u00d7ATR chandelier trail the rest. A 0.50\u20130.60 setup is a half-risk probe, which is the correct re",
+      "sources": [
+        "Van K. Tharp, Trade Your Way to Financial Freedom (McGraw-Hill, 1993; 2nd ed. 2007), ch. 6 on expectancy and R-multiples; SQN sample-size guidance in the 2006/2007 material as restated by practitioners (min ~30 trades, ~100 for live evaluation)",
+        "https://www.turtletrader.com/trader-tharp/ (Tharp/Seykota: trade for expectancy not accuracy; R-multiple definition; 40% wins at 3:1 beats 75% wins at poor RR)",
+        "https://crosstrade.io/learn/performance-metrics/r-multiple (E in R; avg_loss can exceed \u22121R on slip; +0.3R to +0.5R/trade as a strong active-strategy target; below +0.2R costs consume the edge)",
+        "https://crosstrade.io/learn/risk-management/risk-of-ruin (RoR vs per-trade size; +0.1R at 1% risk \u2248 negligible sequential ruin; 0 edge \u2192 RoR \u2192 100%; losing streaks expected even at 60% W)",
+        "https://fortraders.com/blog/risk-reward-ratio-how-to-use-it-to-your-advantage (breakeven W = 1/(1+RR); 40%/2:1 = +0.20R over 100 trades; planned vs realized RR; disagrees with a 2:1 swing floor \u2014 wants 1:3 because overnight cost, which I treat as a realized-R haircut not a higher coded bar)",
+        "https://www.backtestbase.com/education/losing-streak-calculator-trading (P(k consecutive) = q^k; expected longest streak \u2248 ln(N)/ln(1/q); independent-Bernoulli is a baseline; cites Tversky & Kahneman 1971 on the gambler's fallacy / law of small numbers and Cont 2007 on clustering)"
+      ],
+      "learned_at": "2026-08-19T23:25:57.876671+00:00",
+      "run_id": "20260819-960361",
+      "tensions": [
+        {
+          "with": "KB-2999578881",
+          "why": "Kelly answers how much to risk given known W and R (1% as deep-fractional Kelly under unknown edge; correlated names share one budget). This lesson answers a prior question: whether a short losing sequence is evidence that W and E have gone to zero, and it is not. Same math family, different job \u2014 s",
+          "noted_at": "2026-08-19"
+        },
+        {
+          "with": "KB-9689938621",
+          "why": "The +0.20R design at 40%/2:1 assumes avg_loss stays near 1R. DELL's \u22121.43R fill shows that assumption fails on gaps, and plugging avg_loss = 1.43R into the same formula can flip E negative at 40% wins. This lesson therefore does NOT argue that scraping a 2.00 RR is enough on event/gap names; it argu",
+          "noted_at": "2026-08-19"
+        }
+      ]
+    },
     {
       "id": "KB-6015268368",
       "discipline": "technical_analysis",
@@ -53,7 +91,9 @@
           "why": "KB-1695380801 forbids skipping a quality leader because it is 'expensive.' High 3m RS vs SPY is usually why those names look expensive; this lesson supplies the RS test that identifies them as leaders instead of using the multiple as a veto.",
           "noted_at": "2026-08-18"
         }
-      ]
+      ],
+      "times_cited": 6,
+      "last_cited": "2026-08-19T21:57:02.522226+00:00"
     },
     {
       "id": "KB-5731674677",
@@ -130,8 +170,8 @@
           "noted_at": "2026-08-12"
         }
       ],
-      "times_cited": 1,
-      "last_cited": "2026-08-18T16:25:53.855523+00:00"
+      "times_cited": 2,
+      "last_cited": "2026-08-19T13:50:28.422658+00:00"
     },
     {
       "id": "KB-1695380801",
@@ -157,8 +197,8 @@
       ],
       "learned_at": "2026-08-11T23:05:36.673484+00:00",
       "run_id": "20260811-7f72b9",
-      "times_cited": 8,
-      "last_cited": "2026-08-18T21:45:41.569437+00:00"
+      "times_cited": 10,
+      "last_cited": "2026-08-19T19:46:56.849743+00:00"
     },
     {
       "id": "KB-9689938621",
@@ -192,8 +232,8 @@
           "noted_at": "2026-08-10"
         }
       ],
-      "times_cited": 4,
-      "last_cited": "2026-08-13T18:16:01.434247+00:00"
+      "times_cited": 5,
+      "last_cited": "2026-08-19T13:50:28.422655+00:00"
     },
     {
       "id": "KB-2999578881",
@@ -420,8 +460,8 @@
       ],
       "learned_at": "2026-07-28T23:06:11.432336+00:00",
       "run_id": "20260728-a97f3d",
-      "times_cited": 14,
-      "last_cited": "2026-08-04T13:01:28.410168+00:00"
+      "times_cited": 16,
+      "last_cited": "2026-08-19T15:15:19.013691+00:00"
     },
     {
       "id": "KB-9692173165",
