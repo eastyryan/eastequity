@@ -689,7 +689,45 @@
           "noted_at": "2026-08-19"
         }
       ]
+    },
+    {
+      "id": "KB-2770353193",
+      "discipline": "strategy_playbooks",
+      "topic": "Undercut-and-rally (Wyckoff spring): the confirmation entry is the reclaim of undercut support, never the undercut bar, and a failed reclaim is a real breakdown",
+      "summary": "An undercut-and-rally is one event with three names: Wyckoff's spring (price briefly breaks a trading-range low then closes back inside the range), the swing-trader U&R (TraderLion lists it as an entry tactic; Qullamaggie calls the same bar a demand-tail shakeout of the 10/21-EMA or prior low), and the microstructure stop-run (Bookmap, ITI). The mechanism is not mysticism. Osler (NY Fed SR 150 / JIMF 2005) shows stop-loss orders cluster at obvious levels and, when triggered, produce a burst of positive-feedback flow; her FX results are statistically significant at the hourly horizon and not at the daily, so I transfer the clustering fact, not the cascade magnitudes, to this EOD equity book. Once that liquidity is consumed the market either rejects (no acceptance below, reclaim and hold of the old range) or accepts (prior support becomes resistance and the breakdown continues). ITI is the honest fork I will use: a sweep is an information event, not a buy signal, and the third bucket is no-trade when reclaim/acceptance is unclear or invalidation is too wide. Practitioner sources agree on the entry I can actually execute: do not buy the undercut wick. TradingSim and Wyckoff Analytics want the close back above support, preferably on expanding volume, with the stop just below the spring low; Villahermosa splits springs by depth (shallow/low-volume can be bought on the reclaim, deep/high-volume springs need a successful higher-low test on reduced volume) and I keep that split as de",
+      "key_points": [
+        "U&R / spring / stop-run are the same sequence: obvious support is undercut, resting stops fire, then price either reclaims the range (rejection) or accepts below it (real breakdown).",
+        "A sweep is not a BUY. Classify first: reversal (reclaim and hold), continuation (acceptance below), or no-trade (ambiguous or stop too wide to clear 2:1 / the 15% cap).",
+        "Never buy the undercut / selling-climax bar. Entry is the daily close back above the named level; if the undercut was deep or climactic, wait for the higher-low test on lighter volume (this system's no_supply_pullback language) before adding or promoting.",
+        "Stop sits just below the spring low \u2014 a structural, auditable invalidation \u2014 and must still clear stop_engineering.min_stop_distance_pct. If that distance cannot produce honest 2:1 to the first overhead supply, it is a pass, not a tighter stop.",
+        "Location ranks it: U&R of a leader's prior low / 21-day rail with positive 3m RS vs SPY is continuation; U&R of a below-50/200-DMA name is only the confirmation that upgrades a catalyst-in-downtrend watchlist name, not a bottom-pick.",
+        "Failed reclaim is the kill: a daily close that re-accepts below the undercut level means the breakdown was real \u2014 that sentence is the invalidating_structure, and it is also when a watchlist U&R trigger is dropped rather than requalified at the same number.",
+        "Osler's stop-clustering evidence is FX and hourly; Villahermosa's and ForTraders' hit-rate figures are not my universe. Use the mechanism and the geometry; do not import their percentages as my expectancy."
+      ],
+      "how_to_apply": "When volume_signal prints selling_climax or selling_climax_reversal_watch, or a focus chart undercuts a named level (base low, prior swing low, 21-day rail, earnings-gap low, 200-week MA in the deep_value_200w lane), do not BUY the undercut bar and do not reject-and-forget: write would_buy_at as a price reclaim \u2014 'a daily close back above [level] after undercutting it, or the light-volume retest of the undercut low that holds above it' \u2014 which is a sanitizer-safe trigger (price + structure + no_supply_pullback). Promote to BUY only on that reclaim close (50-70% starter if the undercut was shallow on a 3m-RS-positive leader); if the undercut was climactic, wait for the test and add only above blended cost once the chandelier has room, per the pyramid rule. Place stop_loss just below the spring low, at least stop_engineering.min_stop_distance_pct away, set target_price at or just below the first overhead supply (range high, then discounted measured move), and confirm 2:1 clears from the reclaim entry not from the wick; if it does not, pass. Write invalidating_structure as 'a daily close that re-accepts below [undercut level]' and drop the name if that prints rather than requalifying ",
+      "sources": [
+        "https://www.wyckoffanalytics.com/wyckoff-method/ \u2014 Richard D. Wyckoff Course; springs/shakeouts as Phase C tests of supply (Bogomazov / Pruden presentation of the original method)",
+        "https://chartschool.stockcharts.com/table-of-contents/market-analysis/wyckoff-analysis-articles/the-wyckoff-method-a-tutorial \u2014 StockCharts Wyckoff tutorial (Bogomazov, Lipsett, Pruden): spring takes price below the TR low then reverses to close within the TR; low-volume spring or low-volume test of",
+        "https://www.tradingsim.com/blog/wyckoff-method-trading \u2014 TradingSim (Al Hill, updated 2026-07-21): spring = failed breakdown on unremarkable volume, 1-2 bars below support, reclaim on expanding volume; entry = close back above support; stop below spring low; target = top of the zone then height proj",
+        "https://tradingwyckoff.com/en/spring-shakeout/ \u2014 Rub\u00e9n Villahermosa: Spring vs terminal shakeout vs ordinary (uptrend) shakeout; depth/volume split (#3 shallow/low-volume can be bought on the reclaim, #1/#2 need a successful higher-low test); failed spring = remains outside the range >~5 daily sessi",
+        "https://fortraders.com/blog/false-breakouts-why-they-happen-how-to-trade \u2014 Marcel Hamb\u00e1lek / For Traders (2026-07-30): false breakout = close back inside a 20-bar range within five bars; daily failure ~40-45% vs 68-72% on 1-minute (futures/FX 2026 H1 sample); retest-confirmation had higher expectanc",
+        "https://bookmap.com/blog/stop-runs-liquidity-traps-how-the-market-flushes-out-weak-hands \u2014 Bookmap (2025-09-24): stop run = push into clustered stops that convert to market orders; after the burst, either snap-back (no fresh interest) or acceptance of the new level; wait for confirmation, do not fad"
+      ],
+      "learned_at": "2026-08-19T23:40:05.490779+00:00",
+      "run_id": "20260819-bce47d",
+      "tensions": [
+        {
+          "with": "KB-2665689010",
+          "why": "KB-2665689010 is the PEAD-location prior: good news near 52-week highs drifts, good news near lows does not, so a below-MA catalyst is confirmation-gated rather than chased. This lesson supplies the missing geometry of that gate \u2014 undercut, daily reclaim close, optional light-volume test, stop below",
+          "noted_at": "2026-08-19"
+        },
+        {
+          "with": "KB-6241168493",
+          "why": "KB-6241168493 is the no-supply pullback that HOLDS structural support in an already-leading uptrend. U&R is the shakeout variant of the same continuation: support is briefly violated then reclaimed. If the dip holds the 21-day rail without undercutting, use 6241168493; if it undercuts and reclaims, ",
+          "noted_at": "2026-08-19"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-08-19T23:25:57.879491+00:00"
+  "updated_at": "2026-08-19T23:40:05.494282+00:00"
 }
