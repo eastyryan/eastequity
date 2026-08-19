@@ -1,13 +1,13 @@
 {
-  "cash_usd": 684.73,
-  "total_equity_usd": 1004.35,
+  "cash_usd": 737.77,
+  "total_equity_usd": 1004.34,
   "positions": [
     {
       "ticker": "BKR",
       "quantity": 0.995395,
       "avg_cost": 58.198,
-      "market_value_usd": 64.63,
-      "last_price": 64.93,
+      "market_value_usd": 64.05,
+      "last_price": 64.345,
       "opened_at": "2026-07-28T17:54:27.847621+00:00",
       "proposal_id": "20260728-b66630",
       "plan": {
@@ -45,8 +45,8 @@
       "ticker": "DXCM",
       "quantity": 2.144115,
       "avg_cost": 82.92,
-      "market_value_usd": 195.24,
-      "last_price": 91.06,
+      "market_value_usd": 196.52,
+      "last_price": 91.655,
       "opened_at": "2026-08-06T15:05:47.791467+00:00",
       "proposal_id": "20260806-8f3821",
       "plan": {
@@ -63,7 +63,7 @@
         },
         "calibration_probe": null
       },
-      "high_water": 91.54,
+      "high_water": 91.655,
       "trailing_stop": 82.0782,
       "adds_count": 0,
       "buy_commission_usd": 0.0,
@@ -82,10 +82,10 @@
     },
     {
       "ticker": "HPE",
-      "quantity": 1.114718,
+      "quantity": 0.114718,
       "avg_cost": 55.144,
-      "market_value_usd": 59.75,
-      "last_price": 53.6,
+      "market_value_usd": 6.0,
+      "last_price": 52.3099,
       "opened_at": "2026-08-10T15:13:03.842037+00:00",
       "proposal_id": "20260810-6708d8",
       "plan": {
@@ -106,17 +106,17 @@
       "trailing_stop": 52.9974,
       "adds_count": 0,
       "buy_commission_usd": 0.0,
+      "dividends_received_usd": 0.0,
       "demand_driver": "hyperscaler_server_capex",
       "protective_stop": {
-        "status": "resting",
-        "stop_price": 53.01,
-        "qty": 1.0,
+        "status": "FAILED",
+        "stop_price": 52.9974,
+        "qty": 0.114718,
         "uncovered_qty": 0.114718,
         "session_only": false,
-        "time_in_force": "gtc",
-        "client_order_id": "f261bb6f-11a8-40c5-a0ed-fd2b767f4aa5",
-        "alpaca_order_id": "594c3c14-6fb4-4345-b6d9-0000995b332e",
-        "armed_at": "2026-08-18T16:20:13.754704+00:00"
+        "time_in_force": null,
+        "reason": "sell_to_close_fill",
+        "failed_at": "2026-08-19T14:17:17.797973+00:00"
       }
     }
   ],
@@ -401,8 +401,57 @@
       "cash_credited": false,
       "date": "2026-08-07",
       "processed_at": "2026-08-13T13:56:27.971684+00:00"
+    },
+    {
+      "ticker": "HPE",
+      "action": "SELL_TO_CLOSE",
+      "order_id": "f86c48cf-b81c-4853-8800-51cb63f9a616",
+      "client_order_id": "f86c48cf-b81c-4853-8800-51cb63f9a616",
+      "alpaca_order_id": "51edd4bb-899b-420e-a9d1-c85b4a33e811",
+      "proposal_id": "out-of-band",
+      "out_of_band": true,
+      "forced_exit_reason": "resting_stop_breached",
+      "reference_price": 53.04,
+      "submitted_at": "2026-08-18T16:26:58.999877Z",
+      "status": "filled",
+      "fill_price": 53.04,
+      "quantity": 1.0,
+      "notional_usd": 53.04,
+      "sell_fraction": 0.8971,
+      "avg_cost": 55.144,
+      "position_opened_at": "2026-08-10T15:13:03.842037+00:00",
+      "entry_plan": {
+        "stop_loss": 51.25,
+        "target_price": 66.5,
+        "holding_horizon_days": 50,
+        "entry_price_max": 55.75,
+        "confidence": 0.58,
+        "demand_driver": "hyperscaler_server_capex",
+        "thesis_invalidators": {
+          "invalidating_print": "Fiscal Q3 FY2026 results (due ~2026-09-03) showing TTM operating margin continuing to compress below the current 0.97% level rather than the Juniper-driven margin recovery Morgan Stanley's upgrade thesis assumes, or revenue coming in below the raised $11.5-12.1B guide.",
+          "invalidating_structure": "A daily close back below $53.22 (yesterday's pre-upgrade close) on above-average volume, giving back the entire 2026-08-10 Morgan-Stanley-upgrade gap.",
+          "time_box": "If HPE has not closed above $60 within 35 trading days of entry (roughly two-thirds of the way to the $65.56 consensus mean target), the upgrade-driven re-rate isn't playing out -- exit and rotate."
+        },
+        "calibration_probe": true
+      },
+      "entry_proposal_id": "20260810-6708d8",
+      "realized_pnl_usd": -2.1,
+      "total_realized_pnl_usd": -2.1,
+      "dividends_received_usd": 0.0,
+      "fees_usd": {
+        "commission": 0.0,
+        "sec_fee": 0.0,
+        "taf": 0.0,
+        "slippage_bps": 0.0,
+        "effective_slippage_pct": 0.0
+      },
+      "alpaca_status": "filled",
+      "filled_at": "2026-08-19T13:54:53.285759Z"
     }
   ],
-  "broker_synced_at": "2026-08-19T13:50:33.438741+00:00",
-  "broker_backend": "alpaca_paper"
+  "broker_synced_at": "2026-08-19T14:17:18.012870+00:00",
+  "broker_backend": "alpaca_paper",
+  "ingested_broker_orders": [
+    "f86c48cf-b81c-4853-8800-51cb63f9a616"
+  ]
 }
