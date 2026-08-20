@@ -1,13 +1,13 @@
 {
   "cash_usd": 743.69,
-  "total_equity_usd": 998.94,
+  "total_equity_usd": 999.6,
   "positions": [
     {
       "ticker": "BKR",
       "quantity": 0.995395,
       "avg_cost": 58.198,
-      "market_value_usd": 62.77,
-      "last_price": 63.06,
+      "market_value_usd": 62.56,
+      "last_price": 62.845,
       "opened_at": "2026-07-28T17:54:27.847621+00:00",
       "proposal_id": "20260728-b66630",
       "plan": {
@@ -24,29 +24,29 @@
         }
       },
       "high_water": 65.05,
-      "trailing_stop": 60.6968,
+      "trailing_stop": 60.7161,
       "adds_count": 0,
       "buy_commission_usd": 0.0,
       "dividends_received_usd": 0.23,
       "demand_driver": "energy",
       "protective_stop": {
         "status": "resting",
-        "stop_price": 60.71,
+        "stop_price": 60.72,
         "qty": 0.995395,
         "uncovered_qty": 0.0,
         "session_only": true,
         "time_in_force": "day",
-        "client_order_id": "EESTOP-BKR-d58b76bf34",
-        "alpaca_order_id": "1c4ba10a-8881-4bcf-ada9-51485badf4f9",
-        "armed_at": "2026-08-20T18:26:17.031455+00:00"
+        "client_order_id": "EESTOP-BKR-a1d91653c5",
+        "alpaca_order_id": "b8d04838-2b0f-4423-a755-677a61d15a9e",
+        "armed_at": "2026-08-20T19:50:20.221609+00:00"
       }
     },
     {
       "ticker": "DXCM",
       "quantity": 2.144115,
       "avg_cost": 82.92,
-      "market_value_usd": 192.48,
-      "last_price": 89.77,
+      "market_value_usd": 193.36,
+      "last_price": 90.18,
       "opened_at": "2026-08-06T15:05:47.791467+00:00",
       "proposal_id": "20260806-8f3821",
       "plan": {
@@ -84,8 +84,8 @@
       "ticker": "HPE",
       "quantity": 0.114718,
       "avg_cost": 55.144,
-      "market_value_usd": 6.11,
-      "last_price": 53.22,
+      "market_value_usd": 6.1,
+      "last_price": 53.17,
       "opened_at": "2026-08-10T15:13:03.842037+00:00",
       "proposal_id": "20260810-6708d8",
       "plan": {
@@ -763,9 +763,41 @@
       "status": "rejected_no_position",
       "submitted_at": "2026-08-20T18:34:07.793119+00:00",
       "filled_at": "2026-08-20T18:34:08.508098+00:00"
+    },
+    {
+      "ticker": "HPE",
+      "action": "SELL_TO_CLOSE",
+      "position_size_usd": null,
+      "reference_price": 53.17,
+      "proposal_id": "20260820-014392",
+      "sell_fraction": null,
+      "atr_pct": 6.29,
+      "entry_price_max": null,
+      "plan": {
+        "stop_loss": 51.25,
+        "target_price": 66.5,
+        "holding_horizon_days": 50,
+        "entry_price_max": 55.75,
+        "confidence": 0.58,
+        "demand_driver": "hyperscaler_server_capex",
+        "thesis_invalidators": {
+          "invalidating_print": "Fiscal Q3 FY2026 results (due ~2026-09-03) showing TTM operating margin continuing to compress below the current 0.97% level rather than the Juniper-driven margin recovery Morgan Stanley's upgrade thesis assumes, or revenue coming in below the raised $11.5-12.1B guide.",
+          "invalidating_structure": "A daily close back below $53.22 (yesterday's pre-upgrade close) on above-average volume, giving back the entire 2026-08-10 Morgan-Stanley-upgrade gap.",
+          "time_box": "If HPE has not closed above $60 within 35 trading days of entry (roughly two-thirds of the way to the $65.56 consensus mean target), the upgrade-driven re-rate isn't playing out -- exit and rotate."
+        },
+        "calibration_probe": true
+      },
+      "demand_driver": null,
+      "exit_reason_kind": "discretionary",
+      "exit_thesis": "The invalidating_structure on the 2026-08-10 plan has fired: a daily close back below $53.22, giving back the Morgan Stanley upgrade gap. HPE closed 2026-08-19 at $53.13 and the 2026-08-20 bar (position_histories) printed $52.96, with live $53.17 as of 2026-08-20T19:25:01Z alpaca_iex. The main lot w",
+      "order_id": "EE-52a45969a906",
+      "client_order_id": "EE-52a45969a906",
+      "status": "rejected_no_position",
+      "submitted_at": "2026-08-20T19:58:12.884567+00:00",
+      "filled_at": "2026-08-20T19:58:13.514681+00:00"
     }
   ],
-  "broker_synced_at": "2026-08-20T18:34:09.420899+00:00",
+  "broker_synced_at": "2026-08-20T19:58:14.314232+00:00",
   "broker_backend": "alpaca_paper",
   "ingested_broker_orders": [
     "f86c48cf-b81c-4853-8800-51cb63f9a616"
