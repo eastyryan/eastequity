@@ -1,16 +1,52 @@
 {
-  "updated_at": "2026-08-20T23:24:49.432138+00:00",
+  "updated_at": "2026-08-20T23:43:43.180188+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 6,
     "fundamental_analysis": 2,
-    "risk_management": 5,
+    "risk_management": 6,
     "strategy_playbooks": 5,
     "market_microstructure": 1,
     "trading_psychology": 1,
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-1382348131",
+      "discipline": "risk_management",
+      "topic": "Time stops and stalled-capital opportunity cost: a 14-day flat is a forced re-underwrite not an auto-exit, and a 5-day clock is the wrong import for a 3-90 day chandelier book",
+      "summary": "A time stop exits because the clock ran out, not because price proved the thesis wrong. Van Tharp (Trade Your Way to Financial Freedom, ch. 10) defines it as getting out after a fixed period if you have not made a (sufficient) profit, and he restricts it to short-term trading: do not use one if you are a longer-horizon trader and cannot get back in should the expected move then print. Momentum-burst practitioners sit at the tight pole \u2014 Qullamaggie (Jan 2021) sells 1/3\u20131/2 after 3\u20135 days, moves the stub to breakeven, and trails the rest on the 10-/20-day \u2014 which is a time-based partial plus an early-breakeven rule this system has already refused (the chandelier never jumps to breakeven at +1R, because that guts trend expectancy). Original Turtle trend-following sits at the other pole: exit on a 2N ATR stop or a 10-/20-day channel, not a calendar, so a weeks-long grind can still become the one large R-multiple. Curtis Faith (Way of the Turtle, 2007; the 80-trading-day hold vs Donchian-exit comparison is reported by a secondary summary I could not verify in the primary, so I take only the qualitative claim) later tested a long fixed hold in place of a reactive channel exit and argued the calendar max-hold beat noisy price exits in choppier post-1980s data \u2014 that is a MAXIMUM-HOLD time stop, the opposite of a 5-day dump. Academic time-series momentum (Moskowitz, Ooi and Pedersen, Journal of Financial Economics 2012) finds return persistence of 1\u201312 months that then partially rev",
+      "key_points": [
+        "Price stop = the thesis is wrong; time stop = the thesis is not working on the schedule you underwrote. They are different tools and both belong on the plan.",
+        "A 5\u201310 day mechanical dump belongs to burst traders. It conflicts with a 3\u201390 day horizon, the 3\u00d7ATR chandelier, and the coded refusal to jump the stop to breakeven at +1R.",
+        "Moskowitz\u2013Ooi\u2013Pedersen TSMOM persistence is 1\u201312 months. Fourteen flat days is not evidence a continuation thesis has failed; it is evidence the capital is idle.",
+        "stalled:true (14+ days, within \u00b13% of cost) is a forced decision \u2014 name the remaining wait and its date, or rotate \u2014 never 'nothing has changed' and never an automatic SELL_TO_CLOSE.",
+        "Write a dated time_box on every BUY (the pre-committed clock). holding_horizon_days is the hard coded max-hold; when horizon expiry fires, stay out until a fresh trigger.",
+        "Do not time-stop a working winner (cushion healthy, invalidators clean, trail lifting). Bank sell_fraction only at \u22652R and let the chandelier trail the rest.",
+        "Because this book can re-enter next run, rotating a stall onto a watchlist price/structure trigger is the correct use of opportunity cost \u2014 unlike a Turtle who cannot get back into the one trend."
+      ],
+      "how_to_apply": "On every BUY write a dated time_box \u2014 'if [observable] has not printed by [date], exit or cut' \u2014 aligned to holding_horizon_days, not an open-ended hope; the HPE 2026-08-19 shape ('close above $60 within 35 days') is the right template. On every holdings review, if position_stop_cushion.stalled is true (14+ days, within \u00b13% of cost), either name the remaining catalyst or level and the date it must arrive, or SELL_TO_CLOSE and put the name back on the watchlist with a sanitizer-safe price/structure/no_supply_pullback trigger so you can re-enter \u2014 do not hold on 'nothing has changed,' and do not invent a 5\u201310 day auto-exit this 3\u201390 day chandelier book does not run. Never time-stop a name that is working (cushion healthy, thesis_invalidators clean, trail lifting): that is Qullamaggie's 3\u20135 day breakeven move, which this system already refuses because it guts expectancy; bank sell_fraction 0.4\u20130.6 only at \u22652R per KB-6231300499 and let the 3\u00d7ATR chandelier trail the rest. Treat horizon expiry as the Faith-style max-hold \u2014 when it fires, stay out; do not re-propose the same seat without a fresh trigger. On a cash book the same clock is waiting_for: a dated condition, not an undated stal",
+      "sources": [
+        "Van K. Tharp, Trade Your Way to Financial Freedom, ch. 10 (stops/time stops), as summarized at https://the7circles.uk/van-tharp-7-stops-and-exits/",
+        "Tobias J. Moskowitz, Yao Hua Ooi, Lasse Heje Pedersen, 'Time series momentum,' Journal of Financial Economics 104 (2012) 228\u2013250, https://w4.stern.nyu.edu/facdir/lpederse/papers/TimeSeriesMomentum.pdf",
+        "Kristjan Kullam\u00e4gi (Qullamaggie), '3 TIMELESS setups that have made me TENS OF MILLIONS!' (8 Jan 2021), https://qullamaggie.com/my-3-timeless-setups-that-have-made-me-tens-of-millions/",
+        "Curtis M. Faith, Way of the Turtle (McGraw-Hill, 2007), 80-trading-day time-exit test as summarized at https://alchemymarkets.com/education/strategies/turtle-trading-guide/ (secondary; primary not fetched \u2014 qualitative claim only)"
+      ],
+      "learned_at": "2026-08-20T23:43:43.175911+00:00",
+      "run_id": "20260820-3db244",
+      "tensions": [
+        {
+          "with": "KB-6231300499",
+          "why": "KB-6231300499 already forbids early scale-out and parks the first partial at \u22652R with the chandelier trailing the stub. This lesson supplies the TIME-dimension reason not to replace that rule with Qullamaggie's 3\u20135 day clock-and-breakeven: a working winner is not dead money. They apply together \u2014 ba",
+          "noted_at": "2026-08-20"
+        },
+        {
+          "with": "KB-4213529672",
+          "why": "KB-4213529672 requires exits to be licensed by pre-committed invalidators rather than live mood. A dated time_box is one of those invalidators; a stalled flag is not an invalidator by itself, it is the review that asks whether the time_box (or a better seat) has now fired. Same discipline, different",
+          "noted_at": "2026-08-20"
+        }
+      ]
+    },
     {
       "id": "KB-9135641435",
       "discipline": "technical_analysis",
