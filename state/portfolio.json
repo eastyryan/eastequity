@@ -1,13 +1,13 @@
 {
   "cash_usd": 743.69,
-  "total_equity_usd": 1000.04,
+  "total_equity_usd": 1001.15,
   "positions": [
     {
       "ticker": "BKR",
       "quantity": 0.995395,
       "avg_cost": 58.198,
-      "market_value_usd": 64.23,
-      "last_price": 64.53,
+      "market_value_usd": 63.38,
+      "last_price": 63.67,
       "opened_at": "2026-07-28T17:54:27.847621+00:00",
       "proposal_id": "20260728-b66630",
       "plan": {
@@ -45,8 +45,8 @@
       "ticker": "DXCM",
       "quantity": 2.144115,
       "avg_cost": 82.92,
-      "market_value_usd": 192.11,
-      "last_price": 89.6,
+      "market_value_usd": 194.09,
+      "last_price": 90.52,
       "opened_at": "2026-08-06T15:05:47.791467+00:00",
       "proposal_id": "20260806-8f3821",
       "plan": {
@@ -635,9 +635,41 @@
       "status": "rejected_no_position",
       "submitted_at": "2026-08-20T10:41:31.440175+00:00",
       "filled_at": "2026-08-20T10:41:31.621619+00:00"
+    },
+    {
+      "ticker": "HPE",
+      "action": "SELL_TO_CLOSE",
+      "position_size_usd": null,
+      "reference_price": 53.13,
+      "proposal_id": "20260820-99bda7",
+      "sell_fraction": null,
+      "atr_pct": 6.29,
+      "entry_price_max": null,
+      "plan": {
+        "stop_loss": 51.25,
+        "target_price": 66.5,
+        "holding_horizon_days": 50,
+        "entry_price_max": 55.75,
+        "confidence": 0.58,
+        "demand_driver": "hyperscaler_server_capex",
+        "thesis_invalidators": {
+          "invalidating_print": "Fiscal Q3 FY2026 results (due ~2026-09-03) showing TTM operating margin continuing to compress below the current 0.97% level rather than the Juniper-driven margin recovery Morgan Stanley's upgrade thesis assumes, or revenue coming in below the raised $11.5-12.1B guide.",
+          "invalidating_structure": "A daily close back below $53.22 (yesterday's pre-upgrade close) on above-average volume, giving back the entire 2026-08-10 Morgan-Stanley-upgrade gap.",
+          "time_box": "If HPE has not closed above $60 within 35 trading days of entry (roughly two-thirds of the way to the $65.56 consensus mean target), the upgrade-driven re-rate isn't playing out -- exit and rotate."
+        },
+        "calibration_probe": true
+      },
+      "demand_driver": null,
+      "exit_reason_kind": "discretionary",
+      "exit_thesis": "The structure invalidator fired on 2026-08-19: Hewlett Packard Enterprise closed $53.13 (low $51.59) back through the $53.22 pre-upgrade close that was supposed to prove the 2026-08-10 Morgan Stanley gap still held. The chandelier already sold the working 1.0 share that morning at $53.04 (forced, re",
+      "order_id": "EE-54af8d38e52e",
+      "client_order_id": "EE-54af8d38e52e",
+      "status": "rejected_no_position",
+      "submitted_at": "2026-08-20T15:05:41.602538+00:00",
+      "filled_at": "2026-08-20T15:05:42.261096+00:00"
     }
   ],
-  "broker_synced_at": "2026-08-20T13:26:35.812919+00:00",
+  "broker_synced_at": "2026-08-20T15:05:43.169071+00:00",
   "broker_backend": "alpaca_paper",
   "ingested_broker_orders": [
     "f86c48cf-b81c-4853-8800-51cb63f9a616"
