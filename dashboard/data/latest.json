@@ -932,6 +932,10 @@
   "improvements": [
     {
       "date": "2026-08-20",
+      "note": "Daily study (technical_analysis): ADX/DMI as a lagging description of how extended a trend already is: ADX>25 is a late-entry warning, ADX<20 cannot veto a live thesis, and direction lives in +DI vs -DI - J. Welles Wilder introduced the Average Directional Index in New Concepts in Technical Trading Systems (1978) as a measure of trend STRENGTH, not direction: ADX is the smoothed absolute gap between +D"
+    },
+    {
+      "date": "2026-08-20",
       "note": "Capability audit FAILED: protective_stops_armed: UNPROTECTED positions: HPE(FAILED)"
     },
     {
@@ -1045,10 +1049,6 @@
     {
       "date": "2026-08-19",
       "note": "Capability audit FAILED: protective_stops_armed: UNPROTECTED positions: HPE(FAILED)"
-    },
-    {
-      "date": "2026-08-19",
-      "note": "After a trailing-stop fill on a mixed whole-share plus fractional lot, the leftover 0.11 share stayed on the local book as `not_at_broker` with `protective_stop FAILED`, two `SELL_TO_CLOSE` attempts came back `rejected_no_position`, and that remnant then blocked every new BUY via `capability_dead:protective_stops_armed`. Auto-drop a broker-absent leftover (or treat `rejected_no_position` as a successful local close) so an unarmed ghost seat cannot freeze the probe/full-size book for the rest of the session. Second: `state/live_prices.json` on disk is dated 2026-07-23 and `price_freshness_live` was already stale at 40 minutes, while `prices_meta` is yesterday's close \u2014 a focused midday run should fail over to a live quote overlay or explicitly stamp `allows_new_buys: false` when marks are older than the session, rather than inviting a chase on 8/18 bars."
     }
   ],
   "trade_events": [

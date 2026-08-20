@@ -733,7 +733,45 @@
       ],
       "times_cited": 6,
       "last_cited": "2026-08-20T21:51:42.101372+00:00"
+    },
+    {
+      "id": "KB-9135641435",
+      "discipline": "technical_analysis",
+      "topic": "ADX/DMI as a lagging description of how extended a trend already is: ADX>25 is a late-entry warning, ADX<20 cannot veto a live thesis, and direction lives in +DI vs -DI",
+      "summary": "J. Welles Wilder introduced the Average Directional Index in New Concepts in Technical Trading Systems (1978) as a measure of trend STRENGTH, not direction: ADX is the smoothed absolute gap between +DI and -DI divided by their sum, so a violent downtrend prints a high ADX the same way a violent uptrend does. Direction is a separate read \u2014 +DI above -DI is up-pressure, the reverse is down-pressure. Wilder\u2019s commodity-daily rule of thumb (StockCharts ChartSchool; Investopedia, Cory Mitchell CMT) is ADX>25 = a trend is present, ADX<20 = no trend, with a gray zone between; his original system bought the +DI/-DI cross only when ADX was already above 25. That construction is late by design: ChartSchool notes the nested Wilder smoothing takes on the order of 150 periods to stabilize, and Wikipedia is explicit that ADX is lagging \u2014 a trend must already exist before the line says so. Serious practitioners disagree with using the LEVEL as a gate. Charles LeBeau (TradingMarkets, 15 Apr 2008; with David Lucas, Computer Analysis of the Futures Market, 1992), who also invented the chandelier exit this system already runs, wrote that Wilder \u2018got our basic understanding off to a bad start\u2019 by emphasizing level: an ADX of 20 rising steeply is more predictive of trendiness than an ADX of 40 that is flat or declining, and a one-bar rise of 0.25+ is the significance threshold he used. John Murphy\u2019s Law #9 (StockCharts, 5 Dec 2025) takes the same slope view and, crucially, wants ADX used to choos",
+      "key_points": [
+        "ADX measures how one-sided the recent ranges have been, not which way or whether a thesis is valid; +DI vs \u2212DI carries direction, ADX does not.",
+        "Wilder\u2019s >25 / <20 thresholds were built for commodity daily charts and are late by construction because of heavy smoothing; ChartSchool itself warns the ADX filter \u2018tends to filter as many good signals as bad.\u2019",
+        "LeBeau and Murphy: slope beats level. A rising ADX from a low print is the developing-trend read; a high, flat, or falling ADX is the already-extended or exhausting read. This bundle\u2019s compact line does not give slope.",
+        "Chesler and this book\u2019s 12-year study agree against the retail rule: ADX contracted below ~20 is when bases resolve, not when breakouts should be distrusted. ADX>25 breakouts were the worst, most stable cell in the study (\u22120.35pp, 10 of 12 years negative).",
+        "Do not conflate ADX<20 with a downtrend. ADX low = neither side dominating (a coil). ADX high and \u2212DI > +DI = a strong downtrend, which is a skip-or-gate-the-long, not \u2018chop.\u2019",
+        "ADX is a description of how extended the trend already is. It cannot be evidence for a BUY, cannot be the sole ground to reject one, and must not be written into would_buy_at (the sanitizer will strip it; dead_indicator_veto fires if it is the whole argument).",
+        "LeBeau, the ADX specialist, said he did not find ADX useful after entry because it is too slow for exits. This system already has his other tool for that job: the 3\u00d7ATR chandelier trail."
+      ],
+      "how_to_apply": "On every candidate, read adx_14 with di_plus / di_minus as a DESCRIPTION of extension, then ignore it as a gate. If ADX is already >25 and +DI > \u2212DI on a name sitting at a 20-day high or just after a thrust, that is the late-entry cell the 12-year study scored worst \u2014 do not chase the breakout and do not cite \u2018ADX confirms the trend\u2019 as a pillar; wait for the no_supply_pullback or throwback already in KB-6241168493 / KB-9692173165, place stop_loss beyond the pullback low and stop_engineering.min_stop_distance_pct, and confirm 2:1 to the first overhead supply. If ADX is <20 around a named base, pivot, or post-print structure (the GEV 2026-07-23 shape: ADX 14 after a raised-guide print, rejected as \u2018no trend / falling knife,\u2019 then +11.64%), do not reject it for chop and do not call it a knife \u2014 route it through whichever playbook the thesis actually belongs to (throwback, U&R reclaim, or confirmation-gated catalyst-in-a-downtrend), and write would_buy_at on a price reclaim, a named level, a catalyst, or no_supply_pullback. The one ADX-informed SKIP that is still a structure call, not a dead-indicator veto: ADX high with \u2212DI > +DI means a strong downtrend is already in force \u2014 treat i",
+      "sources": [
+        "J. Welles Wilder Jr., New Concepts in Technical Trading Systems (Trend Research, 1978) \u2014 original ADX/DMI system; thresholds taken from standard reconstructions, book not fetched",
+        "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/average-directional-index-adx",
+        "Charles LeBeau, \u2018Direction is the Key to Using ADX Correctly,\u2019 TradingMarkets, 15 Apr 2008, https://tradingmarkets.com/recent/direction_is_the_key_to_using_adx_correctly-639297",
+        "Charles LeBeau and David Lucas, Computer Analysis of the Futures Market (McGraw-Hill, 1992) \u2014 rising ADX above ~15 as trend presence, per Chesler\u2019s citation",
+        "Daniel L. Chesler, \u2018Identifying Significant Chart Formations,\u2019 Technical Analysis of Stocks & Commodities, Vol. 15:9 (Sep 1997), http://chesler.us/resources/articles/IDENTIF.pdf",
+        "Daniel Chesler, \u2018Volatility and Structure: Building Blocks of Classical Chart Pattern Analysis,\u2019 MTA Journal, Winter 2000 (ADX sub-20 coinciding with pattern completion / breakouts)"
+      ],
+      "learned_at": "2026-08-20T23:24:49.427783+00:00",
+      "run_id": "20260820-489334",
+      "tensions": [
+        {
+          "with": "KB-9692173165",
+          "why": "KB-9692173165 already prefers the throwback to the pivot over chasing the breakout through it. This lesson supplies the indicator-side reason that preference survives measurement: ADX>25 at the breakout bar is the \u2018move has already been trending\u2019 cell, so the higher-expectancy swing entry is still t",
+          "noted_at": "2026-08-20"
+        },
+        {
+          "with": "KB-6241168493",
+          "why": "KB-6241168493 is the no-supply dip to structural support inside an already-leading uptrend. High ADX with +DI > \u2212DI is exactly the description of that already-leading state, and it is a reason to WAIT for the dip rather than a reason to buy the extension. If ADX is still low, the name is not in that",
+          "noted_at": "2026-08-20"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-08-20T21:51:42.101375+00:00"
+  "updated_at": "2026-08-20T23:24:49.431118+00:00"
 }
