@@ -28,7 +28,10 @@
       "run_id": "20260717-ed4649",
       "rebuilt_from_journal": "2026-07-19",
       "times_cited": 6,
-      "last_cited": "2026-08-12T14:39:09.992885+00:00"
+      "last_cited": "2026-08-12T14:39:09.992885+00:00",
+      "superseded_by": "KB-1365918646",
+      "superseded_at": "2026-08-21T23:23:52.093380+00:00",
+      "supersede_reason": "merged"
     },
     {
       "id": "KB-1223831607",
@@ -499,7 +502,10 @@
         }
       ],
       "times_cited": 5,
-      "last_cited": "2026-08-19T13:50:28.422655+00:00"
+      "last_cited": "2026-08-19T13:50:28.422655+00:00",
+      "superseded_by": "KB-1365918646",
+      "superseded_at": "2026-08-21T23:23:52.093387+00:00",
+      "supersede_reason": "merged"
     },
     {
       "id": "KB-1695380801",
@@ -809,7 +815,38 @@
           "noted_at": "2026-08-20"
         }
       ]
+    },
+    {
+      "id": "KB-1365918646",
+      "discipline": "risk_management",
+      "topic": "Stop underwriting: the sqrt(t) noise band plus gap-fill slippage make 1R a floor not a ceiling, and entry location \u2014 not stop width \u2014 is the binding lever",
+      "summary": "A stop is a trigger that becomes a market order, so 1R is a floor on the loss, not a ceiling (Schwab; SEC). Kaminski and Lo (SIFR 63 / JFM 2014): under a random walk stops always reduce expected return and only pay when momentum is present, so a stop inside the noise band is a tax. Noise grows with sqrt(t) \u2014 a 1-day ATR stop is ~sqrt(N) too tight for an N-day hold \u2014 and Danielsson and Zigrand (JBF 2006) show jumps make the sqrt(t) rule understate risk, worse at longer horizons. Independently, overnight and event gaps are the fat left tail: DELL's 408 stop filled 0.55 ATR / 4.47% through at 389.75, turning planned -1R into realized -1.43R. Intraday slippage on liquid large-caps is ~0.1%; scheduled earnings is the #1 controllable gap. When gaps push avgLoss past -1R the 2:1 design erodes: a 0.55-ATR through-fill is +55% of a 1-ATR stop but only +27% of a 2-ATR stop. Diffusion noise and jump fills always add, which is why I aim ~1.5-2x ATR on a multi-week swing rather than hugging the 1-day min_stop_distance_pct floor \u2014 not a license to exceed the 15% cap or inflate a target to scrape 2:1. No static entry stop inside that cap covers a 45-day band or an earnings jump: ENTRY LOCATION is the binding lever. Buy at structural support so the same stop clears both the sqrt(t) band until the thesis starts working (~ATR * sqrt(days_to_catalyst)) and a 1.5-2x ATR swing width. On event/gap names demand ~2.5:1 rather than scraping 2.00. The chandelier (22d high - 3x ATR) re-measures the ban",
+      "key_points": [
+        "A stop is a trigger that becomes a market order: fill guaranteed, price not (Schwab; SEC). 1R is the floor on a loss, not the ceiling. DELL's 408 stop filled at 389.75, 0.55 ATR / 4.47% through, turning planned -1R into realized -1.43R.",
+        "Kaminski & Lo: under a random walk stops ALWAYS reduce expected return; they only pay when momentum is present. A stop inside the noise band is a tax. Noise scales with sqrt(t): min_stop_distance_pct is a ONE-DAY floor, not a horizon band.",
+        "Danielsson & Zigrand: under jumps the sqrt(t) rule UNDERSTATES risk, worse at longer horizons. Gaps dwarf intraday slippage (~0.1% on liquid large-caps). Scheduled earnings is the #1 controllable gap; no ATR-floored stop inside the 15% cap covers the print jump.",
+        "Two always-additive reasons to sit beyond the 1-day floor: diffusion noise AND gap-as-fraction-of-R. A 0.55-ATR through-fill is +55% of a 1-ATR stop but only +27% of a 2-ATR stop. Aim ~1.5-2x ATR on a multi-week swing. Neither reason licenses widening past 15% or inflating a target to scrape 2:1.",
+        "No static entry stop within the 15% cap can cover a 45-day noise band or an earnings jump. Stop WIDTH is not the free lever; ENTRY LOCATION is. Buy at structural support so the same stop clears both the sqrt(t) band until the thesis starts working and a 1.5-2x ATR swing width.",
+        "On event/gap names demand a genuine ~2.5:1 cushion rather than scraping 2.00, because a 0.5-ATR gap-through converts a 1R plan into ~1.4-1.5R realized. Prefer liquid names and structure entries; chasing extension compounds gap exposure.",
+        "The chandelier (22d high - 3x ATR) re-measures the band as the trade works. Job at entry is only to buy the trade time to get moving. Do not refit the entry stop from two closes \u2014 that is the MAE diagnostic (KB-1005106931), which warns that tightening toward a winner-MAE cliff recreates the gap hole",
+        "Read cushion_in_atr as remaining room to 1R and as gap-exposure, not only as a noise flag. A 40-day thesis with no catalyst for three weeks needs ~4x ATR of room just to survive to its event, which usually breaches the cap and is a pass."
+      ],
+      "how_to_apply": "Before any BUY, underwrite realized-R not planned-R. Place stop_loss beyond the named structural low AND at least ~1.5-2x ATR \u2014 never hugging stop_engineering.min_stop_distance_pct \u2014 so one width clears both the sqrt(t) noise band until the nearest catalyst and a typical 0.5-ATR gap-through as a fraction of R. Then check that 2:1 and 10% still clear honestly from that stop; if they do not, move the entry down to the swing low, shorten holding_horizon_days to match what the stop can actually survive (days to catalyst, not the full horizon), or pass. Never widen past 15% and never inflate the target. On any name with event or overnight-gap exposure (earnings inside the horizon, a history of gaps, thin dollar volume) demand ~2.5:1 rather than scraping 2.0, because DELL's 0.55-ATR fill turned a 1R plan into -1.43R. Never carry an ATR-floored stop through a print: enter after the gap settles, or size for gap-adjusted risk with an explicit earnings_case, and honor the 3-day blackout. Prefer liquid names and entries at support; a chase that opens 1 ATR in the hole has already spent the MAE budget. Read cushion_in_atr as remaining room to 1R and as gap-exposure. Do not refit the stop from ",
+      "sources": [
+        "Kaminski, K. & Lo, A.W., 'When Do Stop-Loss Rules Stop Losses?', SIFR Research Report Series 63 (2008); Journal of Financial Markets 18(C):234-254 (2014)",
+        "Danielsson, J. & Zigrand, J-P., 'On Time-Scaling of Risk and the Square-Root-Of-Time Rule', Journal of Banking & Finance 30(10):2701-2713 (2006)",
+        "U.S. SEC, 'Investor Bulletin: Stop, Stop-Limit, and Trailing Stop Orders' \u2014 https://www.sec.gov/oiea/investor-alerts-bulletins/ib-stoporders",
+        "StockCharts ChartSchool, 'Chandelier Exit' \u2014 https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-overlays/chandelier-exit",
+        "https://www.schwab.com/learn/story/help-protect-your-position-using-stop-orders",
+        "https://www.tradingsetupsreview.com/manage-gap-risk-swing-trading/"
+      ],
+      "learned_at": "2026-08-21T23:23:52.090297+00:00",
+      "run_id": "20260821-e2a624",
+      "merged_from": [
+        "KB-2388376284",
+        "KB-9689938621"
+      ]
     }
   ],
-  "updated_at": "2026-08-21T21:47:03.215657+00:00"
+  "updated_at": "2026-08-21T23:23:52.094329+00:00"
 }

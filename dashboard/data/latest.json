@@ -932,6 +932,10 @@
   "improvements": [
     {
       "date": "2026-08-21",
+      "note": "Weekly knowledge consolidation: 1 merged, 0 retired. Folded the two stop-underwriting notes (the sqrt(t) noise band and gap/fill slippage) into one principle: 1R is a fill-floor, the stop sits beyond both diffusion noise and gap-as-fraction-of-R, and entry location is the lever. Last Friday deferred this merge until the 7-day lock lifted; I did not pull MAE into it because that lesson's own tension warns that tightening toward a winner-MAE cliff recreates the realized-R hole the gap note exists to prevent, and I left valuation, pullback-vs-pivot, and scale-in-vs-scale-out as documented splits of labor. Retired nothing: all 22 lessons are still u"
+    },
+    {
+      "date": "2026-08-21",
       "note": "Weekly self-review: Last week\u2019s change was to quote the shadow book\u2019s cleaner split (about 52% misses / 46% good skips once you strip out moves the whole market already explained) instead of the scary raw 66% miss rate \u2014 I did not do it, and 8/14 never even ran a review to catch that. What I got right: DexCom is on its $92.50 target with the $87 reclaim printed on time, I did not restack Dell on top of Hewlett Packard Enterprise, and I did not dress 0.56 ideas up as 0.60. What I got wrong: I bought an upgrade-day gap in Hewlett Packard Enterprise, the same server theme that produced this book\u2019s only closed losses, and a leftover fraction then blocked new buys for three days. Calibration is still anecdote \u2014 three closed trades, all red, all that same hardware bucket \u2014 so I am not inventing a sector rule from it. The one change next week: if a buy dies only because of that leftover bookkeeping, re-file the same ticket at the same price the next session; do not walk the trigger.\n\n**Improvement note:** `prior_self_reviews` arrived empty, and the 8/14 weekly slot was entirely `brain_unavailable`, so the 8/7 change had no machine-checked home. Persist the last review\u2019s \u201cone change\u201d as a first-class field the next weekly bundle cannot drop, and treat a ghost remnant (`not_at_broker` + `rejected_no_position`) as already flat for `protective_stops_armed` so it cannot occupy the probe seat or rewrite live triggers."
     },
     {
@@ -1045,10 +1049,6 @@
     {
       "date": "2026-08-20",
       "note": "The Hewlett Packard Enterprise remnant is still marked `not_at_broker` with `protective_stop FAILED`, nine SELL_TO_CLOSE fills have come back `rejected_no_position`, and that same ghost stripped this morning's Arista BUY as `capability_dead:protective_stops_armed`. A deterministic local-book reconcile \u2014 if broker qty is 0, drop the remnant and free the probe seat \u2014 would have let today's Arista underwrite stand or fail on thesis, not on a six-dollar sync error. The trigger parser also latched onto `$183.84` (the undercut) instead of `$187` (the buy level), so the alert fired on a number I had named as the washout, not the entry."
-    },
-    {
-      "date": "2026-08-20",
-      "note": "Capability audit FAILED: protective_stops_armed: UNPROTECTED positions: HPE(FAILED)"
     }
   ],
   "trade_events": [
