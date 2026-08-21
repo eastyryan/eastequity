@@ -1,6 +1,5 @@
 {
-  "updated_at": "2026-08-21T21:47:03.214639+00:00",
-  "pruned_at": "2026-08-21T21:47:03.214645+00:00",
+  "updated_at": "2026-08-21T21:47:09.734013+00:00",
   "lessons": [
     {
       "id": "LP-0693555695",
@@ -43,6 +42,86 @@
       "text": "** Two process gaps cost research time today. First, candlestick charts did not render this run \u2014 `data/charts/` was empty even though the gather log said \"rendering candlestick charts...\"; the chart step appears to depend on the same blocked live yfinance feed rather than falling back to the relay bundle the way the rest of the pipeline does, so I judged entry geometry on numeric indicators alone with no visual confirmation of the actual price bars. Second, the watchlist-trigger-alert logic flagged AMD as \"price trigger reached\" when the price was actually 3.9% away from my stated $555 level ",
       "adopted_at": "2026-07-19T05:26:56.324497+00:00",
       "run_id": "20260714-35bb96"
+    },
+    {
+      "id": "LP-5569262445",
+      "note_fp": "Capability audit FAILED: protective_stops_armed: UNPROTECTED positions: HPE(FAIL",
+      "kind": "soft_lesson",
+      "text": "Capability audit FAILED: protective_stops_armed: UNPROTECTED positions: HPE(FAILED)",
+      "adopted_at": "2026-08-21T21:47:09.733416+00:00",
+      "run_id": "20260821-2cd2a6"
+    },
+    {
+      "id": "LP-0217367290",
+      "note_fp": "Digest.by_ticker.BKNG.revenue_yoy_pct printed 54.4% for the quarter ended 2026-0",
+      "kind": "soft_lesson",
+      "text": "Digest.by_ticker.BKNG.revenue_yoy_pct printed 54.4% for the quarter ended 2026-06-30 while the 2026-08-04 earnings materials, TIKR, and quality_ratios.TTM all say ~8% / 24.6% TTM \u2014 that conflict almost became a cited pillar. Pairing a digest YoY figure against the matching 10-Q revenue line (or flagging a >10pp gap in the digest card itself) would have made the error obvious before research. The ICE tape-promotion headline had the same shape: Simply Wall St recast today\u2019s MarketAxess financing 8-K as a $2B Polymarket investment that actually closed in March 2026; a filing-item vs headline-enti",
+      "adopted_at": "2026-08-21T21:47:09.733425+00:00",
+      "run_id": "20260821-f5755c"
+    },
+    {
+      "id": "LP-4427977120",
+      "note_fp": "The live-price overlay was 917 minutes stale on a Friday session while every sca",
+      "kind": "soft_process",
+      "text": "The live-price overlay was 917 minutes stale on a Friday session while every scan bar is Thursday 2026-08-20, so a name that actually printed my trigger overnight (or failed it) would have been invisible. A fail-closed skip of time-sensitive BUYs when `price_freshness_live.stale=true` \u2014 or a second fetch of IEX last/nbbo for watchlist names only \u2014 would have let me underwrite Deere and Raytheon against this morning's tape instead of yesterday's close.",
+      "adopted_at": "2026-08-21T21:47:09.733427+00:00",
+      "run_id": "20260821-f7358f"
+    },
+    {
+      "id": "LP-6209693179",
+      "note_fp": "Capability audit FAILED: atr_map_for_trail: ATR map is EMPTY \u2014 the chandelier tr",
+      "kind": "soft_lesson",
+      "text": "Capability audit FAILED: atr_map_for_trail: ATR map is EMPTY \u2014 the chandelier trail cannot ratchet between cycles and the simulated stop gap-through is off; protective_stops_armed: UNPROTECTED positions: HPE(FAILED)",
+      "adopted_at": "2026-08-21T21:47:09.733429+00:00",
+      "run_id": "20260821-c013c8"
+    },
+    {
+      "id": "LP-5025699474",
+      "note_fp": "Daily study (risk_management): Time stops and stalled-capital opportunity cost: ",
+      "kind": "soft_lesson",
+      "text": "Daily study (risk_management): Time stops and stalled-capital opportunity cost: a 14-day flat is a forced re-underwrite not an auto-exit, and a 5-day clock is the wrong import for a 3-90 day chandelier book - A time stop exits because the clock ran out, not because price proved the thesis wrong. Van Tharp (Trade Your Way to Financial Freedom, ch. 10) defines it as getting out after a fixed period if you ha",
+      "adopted_at": "2026-08-21T21:47:09.733436+00:00",
+      "run_id": "20260820-3db244"
+    },
+    {
+      "id": "LP-4079134999",
+      "note_fp": "Daily study (technical_analysis): ADX/DMI as a lagging description of how extend",
+      "kind": "soft_lesson",
+      "text": "Daily study (technical_analysis): ADX/DMI as a lagging description of how extended a trend already is: ADX>25 is a late-entry warning, ADX<20 cannot veto a live thesis, and direction lives in +DI vs -DI - J. Welles Wilder introduced the Average Directional Index in New Concepts in Technical Trading Systems (1978) as a measure of trend STRENGTH, not direction: ADX is the smoothed absolute gap between +D",
+      "adopted_at": "2026-08-21T21:47:09.733438+00:00",
+      "run_id": "20260820-489334"
+    },
+    {
+      "id": "LP-6398206624",
+      "note_fp": "Dynamic universe add: ['MRNA'] (187 names). Proposed from the market-wide radar;",
+      "kind": "soft_lesson",
+      "text": "Dynamic universe add: ['MRNA'] (187 names). Proposed from the market-wide radar; tradeable from the next run.",
+      "adopted_at": "2026-08-21T21:47:09.733440+00:00",
+      "run_id": "20260820-99bda7"
+    },
+    {
+      "id": "LP-0365001753",
+      "note_fp": "Daily study (strategy_playbooks): Undercut-and-rally (Wyckoff spring): the confi",
+      "kind": "soft_lesson",
+      "text": "Daily study (strategy_playbooks): Undercut-and-rally (Wyckoff spring): the confirmation entry is the reclaim of undercut support, never the undercut bar, and a failed reclaim is a real breakdown - An undercut-and-rally is one event with three names: Wyckoff's spring (price briefly breaks a trading-range low then closes back inside the range), the swing-trader U&R (TraderLion lists it as an entr",
+      "adopted_at": "2026-08-21T21:47:09.733443+00:00",
+      "run_id": "20260819-bce47d"
+    },
+    {
+      "id": "LP-8422347894",
+      "note_fp": "Daily study (risk_management): R-multiple expectancy and losing-streak math: why",
+      "kind": "soft_lesson",
+      "text": "Daily study (risk_management): R-multiple expectancy and losing-streak math: why a 2:1 book is profitable at 40% wins, why three losses cannot license a stand-down, and why clustered same-theme losses are one bet not a broken proce - Van Tharp's R-multiple (Trade Your Way to Financial Freedom, 1993/2007) normalizes every close as outcome divided by initial entry-to-stop risk, so a +2R winner and a \u22121R stop are comparable across na",
+      "adopted_at": "2026-08-21T21:47:09.733445+00:00",
+      "run_id": "20260819-960361"
+    },
+    {
+      "id": "LP-5209354218",
+      "note_fp": "After a resting-stop fill, auto-clear any leftover fractional quantity that the ",
+      "kind": "soft_lesson",
+      "text": "After a resting-stop fill, auto-clear any leftover fractional quantity that the broker no longer holds (`not_at_broker` + `sell_to_close_fill`) so a 0.11-share ghost cannot block the next run's buys the way it did across five HPE SELL_TO_CLOSE attempts today.",
+      "adopted_at": "2026-08-21T21:47:09.733447+00:00",
+      "run_id": "20260819-c4e539"
     }
   ]
 }

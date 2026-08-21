@@ -932,6 +932,10 @@
   "improvements": [
     {
       "date": "2026-08-21",
+      "note": "Weekly self-review: Last week\u2019s change was to quote the shadow book\u2019s cleaner split (about 52% misses / 46% good skips once you strip out moves the whole market already explained) instead of the scary raw 66% miss rate \u2014 I did not do it, and 8/14 never even ran a review to catch that. What I got right: DexCom is on its $92.50 target with the $87 reclaim printed on time, I did not restack Dell on top of Hewlett Packard Enterprise, and I did not dress 0.56 ideas up as 0.60. What I got wrong: I bought an upgrade-day gap in Hewlett Packard Enterprise, the same server theme that produced this book\u2019s only closed losses, and a leftover fraction then blocked new buys for three days. Calibration is still anecdote \u2014 three closed trades, all red, all that same hardware bucket \u2014 so I am not inventing a sector rule from it. The one change next week: if a buy dies only because of that leftover bookkeeping, re-file the same ticket at the same price the next session; do not walk the trigger.\n\n**Improvement note:** `prior_self_reviews` arrived empty, and the 8/14 weekly slot was entirely `brain_unavailable`, so the 8/7 change had no machine-checked home. Persist the last review\u2019s \u201cone change\u201d as a first-class field the next weekly bundle cannot drop, and treat a ghost remnant (`not_at_broker` + `rejected_no_position`) as already flat for `protective_stops_armed` so it cannot occupy the probe seat or rewrite live triggers."
+    },
+    {
+      "date": "2026-08-21",
       "note": "Capability audit FAILED: protective_stops_armed: UNPROTECTED positions: HPE(FAILED)"
     },
     {
@@ -1045,10 +1049,6 @@
     {
       "date": "2026-08-20",
       "note": "Capability audit FAILED: protective_stops_armed: UNPROTECTED positions: HPE(FAILED)"
-    },
-    {
-      "date": "2026-08-20",
-      "note": "The Hewlett Packard Enterprise 0.1147-share remnant (`not_at_broker`, protective_stop FAILED after `sell_to_close_fill`) has now produced eight-plus `rejected_no_position` sells across 2026-08-19 and 2026-08-20 and blocked the 8:45 Arista BUY as `capability_dead:protective_stops_armed`. Auto-retire a broker-absent fractional leftover when the working size is already trail-filled \u2014 and free the calibration-probe seat \u2014 so a $6 ghost cannot freeze a 12:00 ET holdings_watchlist slot. Second: `price_freshness_live` was already stale at 42.5 minutes and `prices_meta` is yesterday's close on every name, so Arista's live $186.02 / $183.84-$187.24 range existed only on Yahoo, not in the bundle that is supposed to time the reclaim."
     }
   ],
   "trade_events": [
