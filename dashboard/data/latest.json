@@ -932,6 +932,10 @@
   "improvements": [
     {
       "date": "2026-08-21",
+      "note": "Weekly knowledge consolidation: 0 merged, 0 retired. Kept all 21 active lessons and cut none. The one true duplicate \u2014 the sqrt(t) noise-band stop and the gap/fill slippage note \u2014 was already folded earlier today into KB-1365918646, and I will not re-merge it. Every lesson is still ungraded (three closed trades, zero linked outcomes, evidence_status null), so there is nothing to retire on underperformance, and the remaining overlaps (pullback vs pivot, episodic-pivot vs catalyst-in-a-downtrend, scale-in vs scale-out, MAE as a path check next to the stop, valuation as skip-hygiene rather than a timer) are documented splits of labor, not one princ"
+    },
+    {
+      "date": "2026-08-21",
       "note": "Weekly knowledge consolidation: 1 merged, 0 retired. Folded the two stop-underwriting notes (the sqrt(t) noise band and gap/fill slippage) into one principle: 1R is a fill-floor, the stop sits beyond both diffusion noise and gap-as-fraction-of-R, and entry location is the lever. Last Friday deferred this merge until the 7-day lock lifted; I did not pull MAE into it because that lesson's own tension warns that tightening toward a winner-MAE cliff recreates the realized-R hole the gap note exists to prevent, and I left valuation, pullback-vs-pivot, and scale-in-vs-scale-out as documented splits of labor. Retired nothing: all 22 lessons are still u"
     },
     {
@@ -1045,10 +1049,6 @@
     {
       "date": "2026-08-20",
       "note": "Capability audit FAILED: protective_stops_armed: UNPROTECTED positions: HPE(FAILED)"
-    },
-    {
-      "date": "2026-08-20",
-      "note": "The Hewlett Packard Enterprise remnant is still marked `not_at_broker` with `protective_stop FAILED`, nine SELL_TO_CLOSE fills have come back `rejected_no_position`, and that same ghost stripped this morning's Arista BUY as `capability_dead:protective_stops_armed`. A deterministic local-book reconcile \u2014 if broker qty is 0, drop the remnant and free the probe seat \u2014 would have let today's Arista underwrite stand or fail on thesis, not on a six-dollar sync error. The trigger parser also latched onto `$183.84` (the undercut) instead of `$187` (the buy level), so the alert fired on a number I had named as the washout, not the entry."
     }
   ],
   "trade_events": [
