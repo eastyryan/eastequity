@@ -1,13 +1,13 @@
 {
   "cash_usd": 743.69,
-  "total_equity_usd": 1003.92,
+  "total_equity_usd": 1003.73,
   "positions": [
     {
       "ticker": "BKR",
       "quantity": 0.995395,
       "avg_cost": 58.198,
-      "market_value_usd": 62.29,
-      "last_price": 62.575,
+      "market_value_usd": 62.05,
+      "last_price": 62.34,
       "opened_at": "2026-07-28T17:54:27.847621+00:00",
       "proposal_id": "20260728-b66630",
       "plan": {
@@ -45,8 +45,8 @@
       "ticker": "DXCM",
       "quantity": 2.144115,
       "avg_cost": 82.92,
-      "market_value_usd": 197.94,
-      "last_price": 92.32,
+      "market_value_usd": 197.99,
+      "last_price": 92.34,
       "opened_at": "2026-08-06T15:05:47.791467+00:00",
       "proposal_id": "20260806-8f3821",
       "plan": {
@@ -63,21 +63,21 @@
         },
         "calibration_probe": null
       },
-      "high_water": 92.33,
-      "trailing_stop": 83.9811,
+      "high_water": 92.48,
+      "trailing_stop": 84.405,
       "adds_count": 0,
       "buy_commission_usd": 0.0,
       "demand_driver": "healthcare",
       "protective_stop": {
         "status": "resting",
-        "stop_price": 83.9811,
+        "stop_price": 84.405,
         "qty": 2.0,
         "uncovered_qty": 0.144115,
         "session_only": false,
         "time_in_force": "gtc",
-        "client_order_id": "8c79a3a5-6268-4a7f-9ef7-abf842ac18e2",
-        "alpaca_order_id": "d2403757-ef96-4428-9947-198ea915bb5f",
-        "armed_at": "2026-08-21T19:41:26.846610+00:00"
+        "client_order_id": "a63c9073-4b55-4825-a1e7-2e502defe43f",
+        "alpaca_order_id": "912de85c-4f05-4eaa-8601-48b18ede3abe",
+        "armed_at": "2026-08-21T19:55:00.945093+00:00"
       }
     },
     {
@@ -85,7 +85,7 @@
       "quantity": 0.114718,
       "avg_cost": 55.144,
       "market_value_usd": 6.13,
-      "last_price": 53.4,
+      "last_price": 53.45,
       "opened_at": "2026-08-10T15:13:03.842037+00:00",
       "proposal_id": "20260810-6708d8",
       "plan": {
@@ -905,9 +905,41 @@
       "status": "rejected_no_position",
       "submitted_at": "2026-08-21T19:48:16.548684+00:00",
       "filled_at": "2026-08-21T19:48:17.425878+00:00"
+    },
+    {
+      "ticker": "HPE",
+      "action": "SELL_TO_CLOSE",
+      "position_size_usd": null,
+      "reference_price": 53.45,
+      "proposal_id": "20260821-6ce506",
+      "sell_fraction": null,
+      "atr_pct": 6.12,
+      "entry_price_max": null,
+      "plan": {
+        "stop_loss": 51.25,
+        "target_price": 66.5,
+        "holding_horizon_days": 50,
+        "entry_price_max": 55.75,
+        "confidence": 0.58,
+        "demand_driver": "hyperscaler_server_capex",
+        "thesis_invalidators": {
+          "invalidating_print": "Fiscal Q3 FY2026 results (due ~2026-09-03) showing TTM operating margin continuing to compress below the current 0.97% level rather than the Juniper-driven margin recovery Morgan Stanley's upgrade thesis assumes, or revenue coming in below the raised $11.5-12.1B guide.",
+          "invalidating_structure": "A daily close back below $53.22 (yesterday's pre-upgrade close) on above-average volume, giving back the entire 2026-08-10 Morgan-Stanley-upgrade gap.",
+          "time_box": "If HPE has not closed above $60 within 35 trading days of entry (roughly two-thirds of the way to the $65.56 consensus mean target), the upgrade-driven re-rate isn't playing out -- exit and rotate."
+        },
+        "calibration_probe": true
+      },
+      "demand_driver": null,
+      "exit_reason_kind": "discretionary",
+      "exit_thesis": "The structure invalidator already fired. Hewlett Packard Enterprise closed $53.13 on 2026-08-19 and $52.89 on 2026-08-20, both back through the $53.22 pre-upgrade close that was the binding kill. The chandelier filled the working lot on 2026-08-19 at $53.04 (resting_stop_breached, -0.54R). What rema",
+      "order_id": "EE-7483f1b547d5",
+      "client_order_id": "EE-7483f1b547d5",
+      "status": "rejected_no_position",
+      "submitted_at": "2026-08-21T20:03:02.368054+00:00",
+      "filled_at": "2026-08-21T20:03:02.766496+00:00"
     }
   ],
-  "broker_synced_at": "2026-08-21T19:48:18.312817+00:00",
+  "broker_synced_at": "2026-08-21T20:03:03.229302+00:00",
   "broker_backend": "alpaca_paper",
   "ingested_broker_orders": [
     "f86c48cf-b81c-4853-8800-51cb63f9a616"
