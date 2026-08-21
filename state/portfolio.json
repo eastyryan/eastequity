@@ -1,13 +1,13 @@
 {
   "cash_usd": 743.69,
-  "total_equity_usd": 1000.53,
+  "total_equity_usd": 1002.17,
   "positions": [
     {
       "ticker": "BKR",
       "quantity": 0.995395,
       "avg_cost": 58.198,
-      "market_value_usd": 62.14,
-      "last_price": 62.43,
+      "market_value_usd": 62.31,
+      "last_price": 62.6,
       "opened_at": "2026-07-28T17:54:27.847621+00:00",
       "proposal_id": "20260728-b66630",
       "plan": {
@@ -45,8 +45,8 @@
       "ticker": "DXCM",
       "quantity": 2.144115,
       "avg_cost": 82.92,
-      "market_value_usd": 194.7,
-      "last_price": 90.8056,
+      "market_value_usd": 196.17,
+      "last_price": 91.49,
       "opened_at": "2026-08-06T15:05:47.791467+00:00",
       "proposal_id": "20260806-8f3821",
       "plan": {
@@ -70,22 +70,22 @@
       "demand_driver": "healthcare",
       "protective_stop": {
         "status": "resting",
-        "stop_price": 83.7517,
+        "stop_price": 83.8,
         "qty": 2.0,
         "uncovered_qty": 0.144115,
         "session_only": false,
         "time_in_force": "gtc",
-        "client_order_id": "cf973e98-77b1-45c2-9887-fe9fe903b0b4",
-        "alpaca_order_id": "2fe4b265-8d50-4cd0-b911-809a05897a04",
-        "armed_at": "2026-08-21T13:15:00.377941+00:00"
+        "client_order_id": "23c5c77a-9a99-46ff-a4ca-2fbb22d96dbd",
+        "alpaca_order_id": "6cddb611-23d4-4de5-a145-358c6d9583fa",
+        "armed_at": "2026-08-21T16:44:13.718824+00:00"
       }
     },
     {
       "ticker": "HPE",
       "quantity": 0.114718,
       "avg_cost": 55.144,
-      "market_value_usd": 6.11,
-      "last_price": 53.22,
+      "market_value_usd": 6.07,
+      "last_price": 52.89,
       "opened_at": "2026-08-10T15:13:03.842037+00:00",
       "proposal_id": "20260810-6708d8",
       "plan": {
@@ -847,9 +847,35 @@
       "status": "rejected_no_position",
       "submitted_at": "2026-08-21T13:15:00.825939+00:00",
       "filled_at": "2026-08-21T13:15:01.824660+00:00"
+    },
+    {
+      "ticker": "HPE",
+      "action": "SELL_TO_CLOSE",
+      "reference_price": 52.89,
+      "proposal_id": "20260821-63924b",
+      "forced_exit_reason": "trailing_stop_breached",
+      "client_order_id": "EEXIT-HPE-2026-08-21-trailing-stop-breach",
+      "stop_loss": 52.9974,
+      "atr_pct": 6.12,
+      "plan_stop_loss": 51.25,
+      "plan_target_price": 66.5,
+      "plan_holding_horizon_days": 50,
+      "trailing_stop": 52.9974,
+      "exit_plan_snapshot": {
+        "stop_loss": 51.25,
+        "target_price": 66.5,
+        "holding_horizon_days": 50,
+        "entry_price_max": 55.75,
+        "confidence": 0.58
+      },
+      "days_held_at_exit": 11,
+      "order_id": "EEXIT-HPE-2026-08-21-trailing-stop-breach",
+      "status": "rejected_no_position",
+      "submitted_at": "2026-08-21T16:44:13.835235+00:00",
+      "filled_at": "2026-08-21T16:44:14.000820+00:00"
     }
   ],
-  "broker_synced_at": "2026-08-21T15:24:51.452815+00:00",
+  "broker_synced_at": "2026-08-21T16:51:11.556434+00:00",
   "broker_backend": "alpaca_paper",
   "ingested_broker_orders": [
     "f86c48cf-b81c-4853-8800-51cb63f9a616"
