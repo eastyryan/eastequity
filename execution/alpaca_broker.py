@@ -685,6 +685,15 @@ def place_order(order: dict) -> dict:
         qty = _sell_qty(ticker, order.get("sell_fraction"))
         if qty is None or qty <= 0:
             pending["status"] = "rejected_no_position"
+            # Broker has nothing to sell. If the mirror is already flagged
+            # not_at_broker, adopt any missed fill / write the ghost off so
+            # exit_guard stops thrashing and protective_stops_armed can clear.
+            try:
+                pos = _position_in_mirror(ticker)
+                if pos and pos.get("not_at_broker"):
+                    reconcile_not_at_broker_ghosts(tickers=[ticker])
+            except Exception as e:
+                print(f"  (post-reject ghost reconcile for {ticker}: {e})")
             return _record_dead_order(pending)
         pending["requested_qty"] = qty
         body = {"symbol": ticker, "side": "sell", "type": "market",
@@ -1039,8 +1048,35 @@ def ensure_protective_stop(ticker: str, *, reason: str = "") -> dict | None:
         _retire_protective_stop(ticker, reason=reason or "no_mirror_position")
         return None
 
+    # Ghost / mirror-only: there are no shares at the exchange to protect.
+    # Never stamp FAILED here — that marked protective_stops_armed DEAD and
+    # blocked every new BUY while an HPE fractional remnant sat not_at_broker
+    # after its broker fill was poisoned out of OOB ingest (2026-08-19).
+    if pos.get("not_at_broker"):
+        try:
+            reconcile_not_at_broker_ghosts(tickers=[ticker])
+        except Exception as e:
+            print(f"  (ghost reconcile for {ticker} failed: {e})")
+        pos = _position_in_mirror(ticker)
+        if pos is None:
+            return None
+        if pos.get("not_at_broker"):
+            # Still a ghost after repair — clear FAILED so the capability
+            # probe is not held hostage; next sync/tick retries the write-off.
+            _write_protective_stop(ticker, None)
+            return None
+
     bp = _broker_position(ticker)
-    qty = round(_f(bp.get("qty") if bp else pos.get("quantity")), 6)
+    if bp is None:
+        # Single-position GET miss is NOT proof the shares are gone (transient
+        # 5xx looks identical to 404 here). Clear a FAILED stamp so we do not
+        # block the book, but do not write off — only sync_mirror's full
+        # positions list may flip not_at_broker, and ghost reconcile then owns
+        # the cleanup.
+        _write_protective_stop(ticker, None)
+        return None
+
+    qty = round(_f(bp.get("qty")), 6)
     if qty <= 0:
         _retire_protective_stop(ticker, reason=reason or "flat")
         return None
@@ -1089,12 +1125,13 @@ def ensure_protective_stop(ticker: str, *, reason: str = "") -> dict | None:
 
 
 def unprotected_positions() -> list[dict]:
-    """Open positions with no resting stop at the broker. Anything in here is
-    exposed to exactly the overnight/weekend windows this subsystem exists to
-    close, so it belongs in front of a human."""
+    """Open broker-held positions with no resting stop. Mirror-only
+    `not_at_broker` remnants are excluded — they have no shares at the exchange
+    to protect (see reconcile_not_at_broker_ghosts)."""
     return [p for p in simulated_broker._load().get("positions", []) or []
-            if not (isinstance(p.get("protective_stop"), dict)
-                    and p["protective_stop"].get("status") == "resting")]
+            if not p.get("not_at_broker")
+            and not (isinstance(p.get("protective_stop"), dict)
+                     and p["protective_stop"].get("status") == "resting")]
 
 
 def _maintain_protective_stop(ticker: str, action: str) -> None:
@@ -1107,6 +1144,242 @@ def _maintain_protective_stop(ticker: str, action: str) -> None:
             _retire_protective_stop(ticker, reason="position_closed")
     except Exception as e:
         print(f"  (protective stop maintenance failed for {ticker}: {e})")
+
+
+# --------------------------------------------------------------------------- #
+# not_at_broker ghost repair
+# --------------------------------------------------------------------------- #
+def _filled_history_ids(state: dict | None = None) -> set[str]:
+    """Ids from history rows that actually realized — never rejected_*.
+
+    Rejected rows must not suppress broker-fill ingest: a deterministic
+    forced-exit client_order_id can be recorded as rejected_no_position AFTER
+    the same id already filled at the broker, and counting that reject as
+    'known' permanently orphans the fill.
+    """
+    state = state if state is not None else simulated_broker._load()
+    known: set[str] = set()
+    for h in state.get("history", []) or []:
+        if str(h.get("status", "")).lower() != "filled":
+            continue
+        for k in ("client_order_id", "order_id", "alpaca_order_id"):
+            if h.get(k):
+                known.add(str(h[k]))
+    return known
+
+
+def write_off_not_at_broker(ticker: str, *, reason: str = "",
+                            mark_price: float | None = None) -> dict | None:
+    """Remove a confirmed mirror-only remnant and book the realization.
+
+    Cash is left untouched: the broker is authoritative and already reflects
+    whatever happened to the shares. We only clear the ghost so capability
+    probes and exit_guard stop thrashing on it, and we book realized P&L so
+    ledger_expected_equity stays honest about the closed cost basis.
+    """
+    ticker = str(ticker).upper()
+    state = simulated_broker._load()
+    pos = next((p for p in state.get("positions", []) or []
+                if str(p.get("ticker", "")).upper() == ticker), None)
+    if pos is None:
+        return None
+    qty = round(_f(pos.get("quantity")), 6)
+    if qty <= 0:
+        state["positions"] = [p for p in state["positions"] if p is not pos]
+        simulated_broker._save(state)
+        return None
+    avg_cost = _f(pos.get("avg_cost"))
+    px = _f(mark_price)
+    if px <= 0:
+        px = _f(pos.get("last_price"))
+    if px <= 0:
+        px = avg_cost
+    price_pnl = round((px - avg_cost) * qty, 2) if avg_cost else None
+    oid = f"WRITEOFF-{ticker}-{uuid.uuid4().hex[:10]}"
+    fill = {
+        "ticker": ticker,
+        "action": "SELL_TO_CLOSE",
+        "order_id": oid,
+        "client_order_id": oid,
+        "proposal_id": "not-at-broker-writeoff",
+        "status": "filled",
+        "fill_price": round(px, 4),
+        "quantity": qty,
+        "notional_usd": round(qty * px, 2),
+        "sell_fraction": 1.0,
+        "avg_cost": avg_cost or None,
+        "position_opened_at": pos.get("opened_at"),
+        "entry_plan": pos.get("plan"),
+        "entry_proposal_id": pos.get("proposal_id"),
+        "realized_pnl_usd": price_pnl,
+        "total_realized_pnl_usd": price_pnl,
+        "dividends_received_usd": 0.0,
+        "write_off": True,
+        "not_at_broker_writeoff": True,
+        "forced_exit_reason": reason or "not_at_broker_writeoff",
+        "filled_at": datetime.now(timezone.utc).isoformat(),
+        "fees_usd": {"commission": 0.0, "sec_fee": 0.0, "taf": 0.0,
+                     "slippage_bps": 0.0, "effective_slippage_pct": 0.0},
+    }
+    state["positions"] = [p for p in state["positions"] if p is not pos]
+    state.setdefault("history", []).append(fill)
+    if state.get("positions"):
+        state["total_equity_usd"] = round(
+            float(state.get("cash_usd") or 0.0)
+            + sum(p.get("market_value_usd", 0.0) for p in state["positions"]), 2)
+    else:
+        state["total_equity_usd"] = round(float(state.get("cash_usd") or 0.0), 2)
+    simulated_broker._save(state)
+    try:
+        from execution import reconcile_runner
+        reconcile_runner.record_fill(
+            {k: fill.get(k) for k in
+             ("ticker", "action", "order_id", "client_order_id",
+              "proposal_id", "forced_exit_reason", "alpaca_order_id")},
+            fill)
+    except Exception as e:
+        print(f"  (write-off journal for {ticker} failed: {e})")
+    print(f"  WRITE-OFF {ticker} {qty} @ {px} ({reason or 'not_at_broker'})")
+    return fill
+
+
+def reconcile_not_at_broker_ghosts(
+        *, tickers: list[str] | None = None,
+        lookback_hours: float = 720.0) -> list[dict]:
+    """Repair mirror-only positions whose broker shares already left.
+
+    For each not_at_broker (or broker-flat) remnant:
+      1. Sweep closed broker sells over an extended lookback and apply any
+         fill the ordinary 96h OOB window / rejected-id poison missed.
+      2. If the broker is still flat and the remnant remains, write it off.
+
+    Returns the fills / write-offs applied. Fail-soft; never raises.
+    """
+    if not api_reachable():
+        return []
+    from execution import reconcile_runner
+
+    state = simulated_broker._load()
+    want = {str(t).upper() for t in (tickers or [])} if tickers else None
+    # ONLY positions sync_mirror has already flagged. A lone
+    # _broker_position 404/5xx must never write off a live seat.
+    ghosts = []
+    for p in state.get("positions", []) or []:
+        t = str(p.get("ticker", "")).upper()
+        if not t or not p.get("not_at_broker"):
+            continue
+        if want is not None and t not in want:
+            continue
+        ghosts.append(t)
+    seen_t: set[str] = set()
+    ghosts = [t for t in ghosts if not (t in seen_t or seen_t.add(t))]
+    if not ghosts:
+        return []
+
+    after = (datetime.now(timezone.utc)
+             - timedelta(hours=max(lookback_hours, 24.0))).isoformat()
+    code, orders = _req("GET", "/v2/orders",
+                        params={"status": "closed", "limit": 500,
+                                "direction": "desc", "after": after})
+    if code != 200 or not isinstance(orders, list):
+        orders = []
+
+    applied: list[dict] = []
+    known = _filled_history_ids(state)
+    seen_list = [str(x) for x in (state.get("ingested_broker_orders") or [])]
+    seen = set(seen_list)
+    pending_ids = set((state.get("pending_orders") or {}).keys())
+    touched_memo = False
+
+    for ao in orders:
+        if not isinstance(ao, dict) or str(ao.get("status")) != "filled":
+            continue
+        if str(ao.get("side", "")).lower() != "sell":
+            continue
+        symbol = str(ao.get("symbol", "")).upper()
+        if symbol not in ghosts:
+            continue
+        qty = _f(ao.get("filled_qty"))
+        if qty <= 0:
+            continue
+        cid = str(ao.get("client_order_id") or "")
+        oid = str(ao.get("id") or "")
+        key = cid or oid
+        if not key:
+            continue
+        if cid and cid in pending_ids:
+            continue
+        if (cid and cid in known) or (oid and oid in known):
+            continue
+        if cid in seen or oid in seen:
+            continue
+        if reconcile_runner._already_journaled(cid or None, oid or None):
+            continue
+        # Skip if alpaca_order_id already booked (filled rows only)
+        if oid and any(str(h.get("alpaca_order_id") or "") == oid
+                       and str(h.get("status", "")).lower() == "filled"
+                       for h in (simulated_broker._load().get("history") or [])):
+            continue
+
+        price = round(_f(ao.get("filled_avg_price")), 4)
+        pending = {
+            "ticker": symbol,
+            "action": "SELL_TO_CLOSE",
+            "order_id": key,
+            "client_order_id": key,
+            "alpaca_order_id": oid or None,
+            "proposal_id": "ghost-reconcile",
+            "out_of_band": True,
+            "ghost_reconcile": True,
+            "forced_exit_reason": ("resting_stop_breached"
+                                   if str(ao.get("type")) == "stop"
+                                   else "broker_side_fill"),
+            "reference_price": price,
+            "submitted_at": (ao.get("submitted_at") or ao.get("created_at")
+                             or ao.get("filled_at")),
+        }
+        try:
+            fill = _apply_fill(pending, ao)
+        except Exception as e:
+            print(f"  (ghost reconcile apply {key} failed: {e})")
+            continue
+        seen.add(key)
+        seen_list.append(key)
+        touched_memo = True
+        if fill and fill.get("status") == "filled":
+            print(f"  GHOST REPAIR {symbol} {fill.get('quantity')} "
+                  f"@ {fill.get('fill_price')} (missed broker fill adopted)")
+            try:
+                reconcile_runner.record_fill(pending, fill)
+            except Exception as e:
+                print(f"  (ghost repair journal failed: {e})")
+            applied.append(fill)
+            known = _filled_history_ids()
+
+    if touched_memo:
+        st = simulated_broker._load()
+        st["ingested_broker_orders"] = seen_list[-500:]
+        simulated_broker._save(st)
+
+    # Confirm flat via the FULL positions list (same authority sync_mirror
+    # uses), then write off anything still mirrored.
+    _acct, poss = _fetch_account_positions()
+    if poss is None:
+        return applied
+    at_broker = {str(p.get("symbol", "")).upper()
+                 for p in (poss or []) if p.get("symbol")}
+    for t in ghosts:
+        pos = _position_in_mirror(t)
+        if pos is None:
+            continue
+        if t in at_broker:
+            continue
+        fill = write_off_not_at_broker(
+            t, reason="ghost_reconcile_broker_flat")
+        if fill:
+            applied.append(fill)
+
+    return applied
 
 
 # --------------------------------------------------------------------------- #
@@ -1145,11 +1418,12 @@ def ingest_out_of_band_fills() -> list[tuple[dict, dict]]:
 
     state = simulated_broker._load()
     pending_ids = set((state.get("pending_orders") or {}).keys())
-    known: set[str] = set()
-    for h in state.get("history", []) or []:
-        for k in ("client_order_id", "order_id", "alpaca_order_id"):
-            if h.get(k):
-                known.add(str(h[k]))
+    # ONLY filled history rows suppress ingest. A later rejected_no_position
+    # reuse of the same deterministic client_order_id (EEXIT-TICKER-day-reason)
+    # used to land in `known` and permanently hide the broker fill that had
+    # already succeeded under that id — leaving a not_at_broker ghost that
+    # poisoned protective_stops_armed (HPE 2026-08-19).
+    known = _filled_history_ids(state)
     # Insertion-ordered dedupe memo (fixed 2026-08-05). Kept as a LIST + set
     # pair because the trim below must evict the OLDEST ingested ids first: the
     # previous `sorted(seen)[-500:]` trimmed lexicographically, so once the memo
@@ -1240,6 +1514,20 @@ def ingest_out_of_band_fills() -> list[tuple[dict, dict]]:
         st = simulated_broker._load()
         st["ingested_broker_orders"] = seen_list[-500:]   # oldest dropped first
         simulated_broker._save(st)
+
+    # Extended repair for any remnant the 96h window / rejected-id poison
+    # still left behind. Fail-soft: a ghost repair error must not lose the
+    # fills this sweep already booked.
+    try:
+        for fill in reconcile_not_at_broker_ghosts():
+            done.append((
+                {k: fill.get(k) for k in
+                 ("ticker", "action", "order_id", "client_order_id",
+                  "proposal_id", "forced_exit_reason", "alpaca_order_id",
+                  "out_of_band", "ghost_reconcile")},
+                fill))
+    except Exception as e:
+        print(f"  (not_at_broker ghost reconcile failed: {e})")
     return done
 
 

@@ -93,6 +93,22 @@ def test_the_stop_probe_accepts_a_protected_position(monkeypatch):
     assert alive is True
 
 
+def test_the_stop_probe_ignores_not_at_broker_ghosts(monkeypatch):
+    """A mirror-only remnant must not mark protective_stops_armed DEAD.
+
+    HPE 2026-08-19: fractional leftover flagged not_at_broker with
+    protective_stop FAILED blocked every new BUY via capability_dead.
+    """
+    from execution import simulated_broker
+    monkeypatch.setattr(simulated_broker, "_load", lambda: {"positions": [
+        {"ticker": "BKR", "protective_stop": {"status": "resting"}},
+        {"ticker": "HPE", "quantity": 0.11, "not_at_broker": True,
+         "protective_stop": {"status": "FAILED"}},
+    ]})
+    alive, detail = C._probe_protective_stops()
+    assert alive is True, detail
+
+
 def test_orchestrator_actually_runs_the_audit():
     """The wiring of the wiring-checker. Without this line in production, every
     probe above is itself decoration."""

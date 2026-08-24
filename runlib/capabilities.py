@@ -236,22 +236,32 @@ def _probe_feed_health_predicate() -> tuple[bool, str]:
 
 
 def _probe_protective_stops() -> tuple[bool, str]:
-    """Every OPEN position must be protected, or say why not."""
+    """Every OPEN broker-held position must be protected, or say why not.
+
+    Mirror-only `not_at_broker` remnants are excluded: they carry no broker risk
+    and cannot have a resting stop armed. Treating them as UNPROTECTED used to
+    mark protective_stops_armed DEAD and block every new BUY while a fractional
+    ghost (HPE 2026-08-19) sat in the ledger. Ghost cleanup is
+    alpaca_broker.reconcile_not_at_broker_ghosts; this probe must not hold the
+    book hostage to it.
+    """
     try:
         from execution import simulated_broker
         positions = (simulated_broker._load().get("positions") or [])
     except Exception as e:
         return False, f"cannot read the ledger: {e}"
-    if not positions:
-        return True, "no open positions"
+    live = [p for p in positions if not p.get("not_at_broker")]
+    if not live:
+        return True, ("no open broker positions"
+                      if not positions else "only not_at_broker remnants")
     naked = []
-    for pos in positions:
+    for pos in live:
         ps = pos.get("protective_stop") or {}
         if str(ps.get("status") or "") not in ("resting", "session_only"):
             naked.append(f"{pos.get('ticker')}({ps.get('status') or 'none'})")
     if naked:
         return False, f"UNPROTECTED positions: {', '.join(naked)}"
-    return True, f"{len(positions)} position(s) protected"
+    return True, f"{len(live)} position(s) protected"
 
 
 PROBES = {
