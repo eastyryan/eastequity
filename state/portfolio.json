@@ -1,13 +1,13 @@
 {
   "cash_usd": 743.69,
-  "total_equity_usd": 1003.79,
+  "total_equity_usd": 1004.94,
   "positions": [
     {
       "ticker": "BKR",
       "quantity": 0.995395,
       "avg_cost": 58.198,
-      "market_value_usd": 61.77,
-      "last_price": 62.06,
+      "market_value_usd": 61.89,
+      "last_price": 62.18,
       "opened_at": "2026-07-28T17:54:27.847621+00:00",
       "proposal_id": "20260728-b66630",
       "plan": {
@@ -45,8 +45,8 @@
       "ticker": "DXCM",
       "quantity": 2.144115,
       "avg_cost": 82.92,
-      "market_value_usd": 198.33,
-      "last_price": 92.5,
+      "market_value_usd": 199.36,
+      "last_price": 92.98,
       "opened_at": "2026-08-06T15:05:47.791467+00:00",
       "proposal_id": "20260806-8f3821",
       "plan": {
@@ -63,20 +63,21 @@
         },
         "calibration_probe": null
       },
-      "high_water": 92.5,
-      "trailing_stop": 84.7511,
+      "high_water": 92.98,
+      "trailing_stop": 84.7711,
       "adds_count": 0,
       "buy_commission_usd": 0.0,
       "demand_driver": "healthcare",
       "protective_stop": {
-        "status": "FAILED",
-        "stop_price": 84.7511,
-        "qty": 2.144115,
-        "uncovered_qty": 2.144115,
+        "status": "resting",
+        "stop_price": 84.7711,
+        "qty": 2.0,
+        "uncovered_qty": 0.144115,
         "session_only": false,
-        "time_in_force": null,
-        "reason": "trail_ratchet",
-        "failed_at": "2026-08-23T04:55:52.728140+00:00"
+        "time_in_force": "gtc",
+        "client_order_id": "13fdb75d-50b9-4562-b4bf-1f1c5284368b",
+        "alpaca_order_id": "72c291fe-b90b-4dbd-909a-0f9f029dd3aa",
+        "armed_at": "2026-08-24T13:16:37.992921+00:00"
       }
     },
     {
@@ -936,9 +937,41 @@
       "status": "rejected_no_position",
       "submitted_at": "2026-08-21T20:03:02.368054+00:00",
       "filled_at": "2026-08-21T20:03:02.766496+00:00"
+    },
+    {
+      "ticker": "HPE",
+      "action": "SELL_TO_CLOSE",
+      "position_size_usd": null,
+      "reference_price": 53.45,
+      "proposal_id": "20260824-3764ec",
+      "sell_fraction": null,
+      "atr_pct": 5.67,
+      "entry_price_max": null,
+      "plan": {
+        "stop_loss": 51.25,
+        "target_price": 66.5,
+        "holding_horizon_days": 50,
+        "entry_price_max": 55.75,
+        "confidence": 0.58,
+        "demand_driver": "hyperscaler_server_capex",
+        "thesis_invalidators": {
+          "invalidating_print": "Fiscal Q3 FY2026 results (due ~2026-09-03) showing TTM operating margin continuing to compress below the current 0.97% level rather than the Juniper-driven margin recovery Morgan Stanley's upgrade thesis assumes, or revenue coming in below the raised $11.5-12.1B guide.",
+          "invalidating_structure": "A daily close back below $53.22 (yesterday's pre-upgrade close) on above-average volume, giving back the entire 2026-08-10 Morgan-Stanley-upgrade gap.",
+          "time_box": "If HPE has not closed above $60 within 35 trading days of entry (roughly two-thirds of the way to the $65.56 consensus mean target), the upgrade-driven re-rate isn't playing out -- exit and rotate."
+        },
+        "calibration_probe": true
+      },
+      "demand_driver": null,
+      "exit_reason_kind": "discretionary",
+      "exit_thesis": "The structure invalidator already fired. Hewlett Packard Enterprise closed $53.13 on 2026-08-19 and $52.89 on 2026-08-20, both back through the $53.22 pre-upgrade close that was the binding kill. The chandelier filled the working lot on 2026-08-19 at $53.04 (resting_stop_breached, -0.54R). What rema",
+      "order_id": "EE-63e4c44a0347",
+      "client_order_id": "EE-63e4c44a0347",
+      "status": "rejected_no_position",
+      "submitted_at": "2026-08-24T13:24:42.998553+00:00",
+      "filled_at": "2026-08-24T13:24:44.181231+00:00"
     }
   ],
-  "broker_synced_at": "2026-08-24T10:46:46.263340+00:00",
+  "broker_synced_at": "2026-08-24T13:24:45.013757+00:00",
   "broker_backend": "alpaca_paper",
   "ingested_broker_orders": [
     "f86c48cf-b81c-4853-8800-51cb63f9a616"
