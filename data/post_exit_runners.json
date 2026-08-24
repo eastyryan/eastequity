@@ -23,7 +23,7 @@
       },
       "high_after_exit": 500.02,
       "low_after_exit": 389.7542,
-      "last_price": 435.88,
+      "last_price": 433.64,
       "marks": {
         "15": {
           "window_days": 15,
@@ -98,7 +98,7 @@
       "seed_age_days": 19,
       "order_id": "SIM-afbba17462",
       "last_mark_at": "2026-08-24",
-      "current_leftover_pct": 11.83,
+      "current_leftover_pct": 11.26,
       "runner_verdict_interim": "stopped_then_recovered",
       "hold_lesson_interim": "DELL: after loss exit, price recovered +28.29% above exit \u2014 possible noise stop or early invalidation; review stop width vs ATR.",
       "max_extension_pct": 28.29,
@@ -175,7 +175,7 @@
       },
       "high_after_exit": 62.04,
       "low_after_exit": 46.082,
-      "last_price": 52.37,
+      "last_price": 52.5,
       "marks": {
         "15": {
           "window_days": 15,
@@ -250,7 +250,7 @@
       "seed_age_days": 19,
       "order_id": "SIM-d02ec3368c",
       "last_mark_at": "2026-08-24",
-      "current_leftover_pct": 13.65,
+      "current_leftover_pct": 13.93,
       "runner_verdict_interim": "stopped_then_recovered",
       "hold_lesson_interim": "HPE: after loss exit, price recovered +34.63% above exit \u2014 possible noise stop or early invalidation; review stop width vs ATR.",
       "max_extension_pct": 34.63,
@@ -334,7 +334,7 @@
       },
       "high_after_exit": 55.69,
       "low_after_exit": 52.37,
-      "last_price": 52.37,
+      "last_price": 52.5,
       "marks": {},
       "status": "tracking",
       "runner_verdict": null,
@@ -344,11 +344,11 @@
       "seed_age_days": 0,
       "order_id": "f86c48cf-b81c-4853-8800-51cb63f9a616",
       "last_mark_at": "2026-08-24",
-      "current_leftover_pct": -1.26
+      "current_leftover_pct": -1.02
     }
   ],
   "completed": [],
-  "updated_at": "2026-08-24T17:07:43.080057+00:00",
+  "updated_at": "2026-08-24T19:12:19.055336+00:00",
   "exit_grades": [
     {
       "exit_key": "DELL|SIM-afbba17462",
@@ -542,6 +542,67 @@
       "missing": [],
       "gradeable": true,
       "headline": "HPE 2026-08-19 forced_other | realized -0.54R vs claimed +2.92R"
+    },
+    {
+      "exit_key": "HPE|EEXIT-HPE-2026-08-19-trailing-stop-breach",
+      "ticker": "HPE",
+      "exit_date": "2026-08-19",
+      "exit_ts": "2026-08-19T14:22:07.396945Z",
+      "order_id": "EEXIT-HPE-2026-08-19-trailing-stop-breach",
+      "graded_at": "2026-08-24T19:12:19.053180+00:00",
+      "graded_by": "exit_grade_v1",
+      "exit_reason_kind": "forced_other",
+      "exit_reason": "broker_side_fill",
+      "is_stop_exit": false,
+      "forced": true,
+      "entry_plan": {
+        "stop_loss": 51.25,
+        "target_price": 66.5,
+        "holding_horizon_days": 50,
+        "entry_price_max": 55.75,
+        "confidence": 0.58,
+        "thesis_invalidators": {
+          "invalidating_print": "Fiscal Q3 FY2026 results (due ~2026-09-03) showing TTM operating margin continuing to compress below the current 0.97% level rather than the Juniper-driven margin recovery Morgan Stanley's upgrade thesis assumes, or revenue coming in below the raised $11.5-12.1B guide.",
+          "invalidating_structure": "A daily close back below $53.22 (yesterday's pre-upgrade close) on above-average volume, giving back the entire 2026-08-10 Morgan-Stanley-upgrade gap.",
+          "time_box": "If HPE has not closed above $60 within 35 trading days of entry (roughly two-thirds of the way to the $65.56 consensus mean target), the upgrade-driven re-rate isn't playing out -- exit and rotate."
+        }
+      },
+      "plan_source": "fill_entry_plan",
+      "plan_stop_loss": 51.25,
+      "binding_stop_loss": null,
+      "trailing_stop": null,
+      "entry_price": 55.144,
+      "exit_price": 51.836,
+      "quantity": 0.114718,
+      "reference_price": 51.836,
+      "days_held": 9,
+      "horizon_days": 50,
+      "realized_pnl_usd": -0.38,
+      "atr_pct": null,
+      "r_grade": {
+        "gradeable": true,
+        "entry_price": 55.144,
+        "exit_price": 51.836,
+        "stop_loss": 51.25,
+        "target_price": 66.5,
+        "risk_unit_usd": 3.894,
+        "claimed_rr": 2.92,
+        "claimed_rr_stated": null,
+        "realized_r": -0.85,
+        "r_gap": 3.77,
+        "risk_used_fraction": 0.85,
+        "capture_fraction": -0.291,
+        "ungradeable_reason": null
+      },
+      "stop_slippage": {
+        "applicable": false,
+        "reason": "exit_reason_kind=forced_other \u2014 not a stop exit",
+        "verdict": "not_applicable"
+      },
+      "process_grade": "mixed",
+      "missing": [],
+      "gradeable": true,
+      "headline": "HPE 2026-08-19 forced_other | realized -0.85R vs claimed +2.92R"
     }
   ]
 }
