@@ -1,13 +1,13 @@
 {
   "cash_usd": 743.69,
-  "total_equity_usd": 1001.52,
+  "total_equity_usd": 1001.32,
   "positions": [
     {
       "ticker": "BKR",
       "quantity": 0.995395,
       "avg_cost": 58.198,
-      "market_value_usd": 61.46,
-      "last_price": 61.745,
+      "market_value_usd": 61.58,
+      "last_price": 61.869,
       "opened_at": "2026-07-28T17:54:27.847621+00:00",
       "proposal_id": "20260728-b66630",
       "plan": {
@@ -45,8 +45,8 @@
       "ticker": "DXCM",
       "quantity": 2.144115,
       "avg_cost": 82.92,
-      "market_value_usd": 196.37,
-      "last_price": 91.585,
+      "market_value_usd": 196.05,
+      "last_price": 91.435,
       "opened_at": "2026-08-06T15:05:47.791467+00:00",
       "proposal_id": "20260806-8f3821",
       "plan": {
@@ -70,14 +70,14 @@
       "demand_driver": "healthcare",
       "protective_stop": {
         "status": "resting",
-        "stop_price": 85.2955,
+        "stop_price": 85.3,
         "qty": 2.0,
         "uncovered_qty": 0.144115,
         "session_only": false,
         "time_in_force": "gtc",
         "client_order_id": "aac7f06f-38aa-4a89-b1b1-fc27d71ba786",
         "alpaca_order_id": "b20922d9-d4ae-4ca2-a262-8bbcb2e73a24",
-        "armed_at": "2026-08-24T16:48:28.799536+00:00"
+        "armed_at": "2026-08-24T17:01:33.182533+00:00"
       }
     },
     {
@@ -1053,9 +1053,35 @@
       "status": "rejected_no_position",
       "submitted_at": "2026-08-24T16:48:29.836398+00:00",
       "filled_at": "2026-08-24T16:48:30.498718+00:00"
+    },
+    {
+      "ticker": "HPE",
+      "action": "SELL_TO_CLOSE",
+      "reference_price": 52.37,
+      "proposal_id": "20260824-ebe90d",
+      "forced_exit_reason": "trailing_stop_breached",
+      "client_order_id": "EEXIT-HPE-2026-08-24-trailing-stop-breach",
+      "stop_loss": 53.2619,
+      "atr_pct": 5.67,
+      "plan_stop_loss": 51.25,
+      "plan_target_price": 66.5,
+      "plan_holding_horizon_days": 50,
+      "trailing_stop": 53.2619,
+      "exit_plan_snapshot": {
+        "stop_loss": 51.25,
+        "target_price": 66.5,
+        "holding_horizon_days": 50,
+        "entry_price_max": 55.75,
+        "confidence": 0.58
+      },
+      "days_held_at_exit": 14,
+      "order_id": "EEXIT-HPE-2026-08-24-trailing-stop-breach",
+      "status": "rejected_no_position",
+      "submitted_at": "2026-08-24T17:01:33.482415+00:00",
+      "filled_at": "2026-08-24T17:01:33.897842+00:00"
     }
   ],
-  "broker_synced_at": "2026-08-24T16:57:03.674659+00:00",
+  "broker_synced_at": "2026-08-24T17:10:07.938456+00:00",
   "broker_backend": "alpaca_paper",
   "ingested_broker_orders": [
     "f86c48cf-b81c-4853-8800-51cb63f9a616"
