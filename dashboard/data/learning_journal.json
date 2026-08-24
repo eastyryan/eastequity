@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-08-21T23:23:52.095230+00:00",
+  "updated_at": "2026-08-24T23:22:19.671054+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
-    "technical_analysis": 5,
+    "technical_analysis": 6,
     "fundamental_analysis": 2,
     "risk_management": 6,
     "strategy_playbooks": 5,
@@ -11,6 +11,45 @@
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-4252672139",
+      "discipline": "technical_analysis",
+      "topic": "50-day and 200-day MAs as structural rails: Stage-2 filter and 50-DMA pullback entry, not a golden-cross trading system",
+      "summary": "The 50-day and 200-day simple moving averages do two jobs that traders constantly mix up, and only one of those jobs survives contact with the evidence. The first job is a mechanical crossover SYSTEM: buy when the short average crosses the long one (the golden cross), sell on the death cross. Brock, Lakonishok and LeBaron (Journal of Finance, 1992) found that variable-length moving-average rules on the Dow Jones Industrial Average, 1897\u20131986 (25,806 daily observations), produced buy-signal average daily returns of 0.042% versus \u22120.025% on sells, with lower volatility on the buy side (0.89% vs 1.34% daily standard deviation), and they rejected random-walk, AR(1), GARCH-M and EGARCH nulls. That in-sample gap did not travel. Sullivan, Timmermann and White (Journal of Finance, 1999) rebuilt the tournament those 26 rules were drawn from (~7,846 MA, filter, breakout and OBV variants), applied White\u2019s Reality Check, and found the in-sample champion still looked genuine after the snooping correction \u2014 then went dead in the years after 1986. Ready (Financial Management, 2002) argues the BLL profits after costs are a data-snooping artifact. Bajgrowicz and Scaillet (Journal of Financial Economics, 2012), using a false-discovery-rate screen on DJIA 1897\u20132011, go further: even with a more powerful selector an investor could never have picked the future best-performing rules ex ante, and even the in-sample edge is completely offset by low transaction costs. So a golden-cross print is not a",
+      "key_points": [
+        "A golden-cross / death-cross SYSTEM is not a trade: BLL\u2019s 1897\u20131986 DJIA buy\u2013sell gap did not survive Sullivan\u2013Timmermann\u2013White\u2019s out-of-sample test, Ready\u2019s after-cost snooping critique, or Bajgrowicz\u2013Scaillet\u2019s FDR result that you cannot pick the future winner ex ante and that low costs wipe the i",
+        "Use the 50/200 stack as a Stage-2 FILTER the way Weinstein and Minervini do: trend_up_50_over_200 plus above_200dma means the name is in the advancing stage; it is not, by itself, a reason to buy.",
+        "The swing ENTRY in that filter is the first or second no-supply tag of the 50-DMA (O\u2019Neil\u2019s 10-week line), bought on the hold/bounce close to the rail \u2014 never while price is still falling, and not a chase 8\u201315% above the 50.",
+        "If the 50-DMA breaks, ChartSchool\u2019s next rail is the 200-DMA; a name already below its 200-DMA is Stage 4 / confirmation-gated, not a leadership pullback.",
+        "SPY versus its 200-DMA is Faber\u2019s index-level regime filter (drawdown control), already the coded hostile gate; do not fight it and do not treat a single-name golden cross as a substitute for it.",
+        "A close through the 50-DMA on a holding is a re-underwrite, not an automatic sell: it can be a spring of the rail, a trip to the 200, or the invalidating_structure you actually wrote.",
+        "Do not import O\u2019Neil/Minervini\u2019s 7\u20138% pivot stops (inside this book\u2019s ATR floor) or an early-breakeven move (the chandelier forbids it), and do not confuse the 200-DAY rail with the 200-WEEK deep_value_200w zone.",
+        "Weekly wma_30w / wma_30w_rising is Weinstein\u2019s 30-week tool used as DESCRIPTION only: this book already measured it as non-discriminating for 3\u201390 day swings."
+      ],
+      "how_to_apply": "On every candidate, read trend_up_50_over_200 and above_200dma as a stage filter before you read RSI, MACD or a 20-day high. If the stack is aligned and rel_strength_3m_pct is still positive, this is a Stage-2 leadership name: do not BUY it for being above the 50, and do not BUY a golden-cross bar; write would_buy_at as a no_supply_pullback that holds the 50-DMA (or the 21-day rail if the trend is that tight) on the first or second tag, promote only on that hold, place stop_loss below the tagged rail AND stop_engineering.min_stop_distance_pct, and confirm 2:1 to the first overhead supply from that entry \u2014 buying at the rail is the entry-location lever in KB-1365918646. If above_200dma is true but trend_up_50_over_200 is not (price under the 50, or 50 still under 200), this is not KB-6241168493: treat a 200-DMA bounce as last-rail / confirmation-gated, and treat a fresh 50/200 reclaim as a throwback setup (KB-9692173165), not as a leadership dip. If above_200dma is false, route through KB-2665689010 and do not buy the eventual golden-cross print; wait for the first 50-DMA hold after the stack is actually aligned. If above_200dma is null, that is insufficient history, not a downtrend",
+      "sources": [
+        "William Brock, Josef Lakonishok and Blake LeBaron, 1992, 'Simple Technical Trading Rules and the Stochastic Properties of Stock Returns,' Journal of Finance 47(5), 1731\u20131764. https://onlinelibrary.wiley.com/doi/10.1111/j.1540-6261.1992.tb04681.x",
+        "Ryan Sullivan, Allan Timmermann and Halbert White, 1999, 'Data-Snooping, Technical Trading Rule Performance, and the Bootstrap,' Journal of Finance 54(5), 1647\u20131691. https://onlinelibrary.wiley.com/doi/abs/10.1111/0022-1082.00163",
+        "Pierre Bajgrowicz and Olivier Scaillet, 2012, 'Technical trading revisited: False discoveries, persistence tests, and transaction costs,' Journal of Financial Economics 106(3), 473\u2013491. https://doi.org/10.1016/j.jfineco.2012.06.001",
+        "Mark J. Ready, 2002, 'Profits from Technical Trading Rules,' Financial Management 31(3). https://www.jstor.org/stable/3666314",
+        "Mebane T. Faber, 2007 (2013 update), 'A Quantitative Approach to Tactical Asset Allocation,' Journal of Wealth Management 9(4), 69\u201379. https://papers.ssrn.com/sol3/papers.cfm?abstract_id=962461 and https://mebfaber.com/2013/06/07/qtaa-paper-update-manage-your-risk-4/",
+        "Stan Weinstein, 1988, Secrets for Profiting in Bull and Bear Markets, McGraw-Hill (30-week MA stage analysis)."
+      ],
+      "learned_at": "2026-08-24T23:22:19.665769+00:00",
+      "run_id": "20260824-cc9f9f",
+      "tensions": [
+        {
+          "with": "KB-6241168493",
+          "why": "KB-6241168493 is the no-supply dip to unnamed structural support inside an already-leading uptrend. This lesson names the default rail in that playbook when trend_up_50_over_200 is true: the 50-DMA (O\u2019Neil\u2019s 10-week line), with the 21-day as the tighter rail and the 200-DMA as the last rail if the 5",
+          "noted_at": "2026-08-24"
+        },
+        {
+          "with": "KB-2665689010",
+          "why": "KB-2665689010 is the below-MA / near-52-week-low catalyst: weakest expected drift, confirmation-gated. This lesson supplies the MA definition of that location \u2014 above_200dma false is Weinstein Stage 4 / Minervini \u2018not a candidate\u2019 \u2014 and forbids treating the later golden-cross bar as the confirmation",
+          "noted_at": "2026-08-24"
+        }
+      ]
+    },
     {
       "id": "KB-1365918646",
       "discipline": "risk_management",
@@ -115,8 +154,8 @@
           "noted_at": "2026-08-20"
         }
       ],
-      "times_cited": 4,
-      "last_cited": "2026-08-21T20:00:40.672240+00:00"
+      "times_cited": 5,
+      "last_cited": "2026-08-24T19:12:19.058307+00:00"
     },
     {
       "id": "KB-2770353193",
@@ -155,8 +194,8 @@
           "noted_at": "2026-08-19"
         }
       ],
-      "times_cited": 9,
-      "last_cited": "2026-08-21T21:47:03.215649+00:00"
+      "times_cited": 14,
+      "last_cited": "2026-08-24T10:46:41.129894+00:00"
     },
     {
       "id": "KB-8671934946",
@@ -195,8 +234,8 @@
           "noted_at": "2026-08-19"
         }
       ],
-      "times_cited": 4,
-      "last_cited": "2026-08-21T20:00:40.672235+00:00"
+      "times_cited": 6,
+      "last_cited": "2026-08-24T19:12:19.058297+00:00"
     },
     {
       "id": "KB-6015268368",
