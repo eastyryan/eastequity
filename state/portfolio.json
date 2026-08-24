@@ -1,13 +1,13 @@
 {
   "cash_usd": 743.69,
-  "total_equity_usd": 1003.23,
+  "total_equity_usd": 1002.69,
   "positions": [
     {
       "ticker": "BKR",
       "quantity": 0.995395,
       "avg_cost": 58.198,
-      "market_value_usd": 61.2,
-      "last_price": 61.48,
+      "market_value_usd": 61.03,
+      "last_price": 61.31,
       "opened_at": "2026-07-28T17:54:27.847621+00:00",
       "proposal_id": "20260728-b66630",
       "plan": {
@@ -45,8 +45,8 @@
       "ticker": "DXCM",
       "quantity": 2.144115,
       "avg_cost": 82.92,
-      "market_value_usd": 198.34,
-      "last_price": 92.505,
+      "market_value_usd": 197.98,
+      "last_price": 92.335,
       "opened_at": "2026-08-06T15:05:47.791467+00:00",
       "proposal_id": "20260806-8f3821",
       "plan": {
@@ -77,15 +77,15 @@
         "time_in_force": "gtc",
         "client_order_id": "8f33684d-ca49-46bd-ae86-579481b7438d",
         "alpaca_order_id": "c2b579b1-1b8d-4deb-b041-67ac4f61e523",
-        "armed_at": "2026-08-24T15:03:58.086990+00:00"
+        "armed_at": "2026-08-24T15:18:47.806290+00:00"
       }
     },
     {
       "ticker": "HPE",
       "quantity": 0.114718,
       "avg_cost": 55.144,
-      "market_value_usd": 6.01,
-      "last_price": 52.38,
+      "market_value_usd": 6.13,
+      "last_price": 53.45,
       "opened_at": "2026-08-10T15:13:03.842037+00:00",
       "proposal_id": "20260810-6708d8",
       "plan": {
@@ -995,9 +995,41 @@
       "status": "rejected_no_position",
       "submitted_at": "2026-08-24T15:03:59.315260+00:00",
       "filled_at": "2026-08-24T15:04:00.092731+00:00"
+    },
+    {
+      "ticker": "HPE",
+      "action": "SELL_TO_CLOSE",
+      "position_size_usd": null,
+      "reference_price": 53.45,
+      "proposal_id": "20260824-196c68",
+      "sell_fraction": null,
+      "atr_pct": 5.67,
+      "entry_price_max": null,
+      "plan": {
+        "stop_loss": 51.25,
+        "target_price": 66.5,
+        "holding_horizon_days": 50,
+        "entry_price_max": 55.75,
+        "confidence": 0.58,
+        "demand_driver": "hyperscaler_server_capex",
+        "thesis_invalidators": {
+          "invalidating_print": "Fiscal Q3 FY2026 results (due ~2026-09-03) showing TTM operating margin continuing to compress below the current 0.97% level rather than the Juniper-driven margin recovery Morgan Stanley's upgrade thesis assumes, or revenue coming in below the raised $11.5-12.1B guide.",
+          "invalidating_structure": "A daily close back below $53.22 (yesterday's pre-upgrade close) on above-average volume, giving back the entire 2026-08-10 Morgan-Stanley-upgrade gap.",
+          "time_box": "If HPE has not closed above $60 within 35 trading days of entry (roughly two-thirds of the way to the $65.56 consensus mean target), the upgrade-driven re-rate isn't playing out -- exit and rotate."
+        },
+        "calibration_probe": true
+      },
+      "demand_driver": null,
+      "exit_reason_kind": "discretionary",
+      "exit_thesis": "The structure invalidator already fired. Hewlett Packard Enterprise closed $53.13 on 2026-08-19 and $52.89 on 2026-08-20, both back through the $53.22 pre-upgrade close that was the binding kill. The chandelier filled the working lot on 2026-08-19 at $53.04 (resting_stop_breached, -0.54R). What rema",
+      "order_id": "EE-3078097ec59c",
+      "client_order_id": "EE-3078097ec59c",
+      "status": "rejected_no_position",
+      "submitted_at": "2026-08-24T15:27:04.469210+00:00",
+      "filled_at": "2026-08-24T15:27:05.145483+00:00"
     }
   ],
-  "broker_synced_at": "2026-08-24T15:12:47.888057+00:00",
+  "broker_synced_at": "2026-08-24T15:27:06.087687+00:00",
   "broker_backend": "alpaca_paper",
   "ingested_broker_orders": [
     "f86c48cf-b81c-4853-8800-51cb63f9a616"
