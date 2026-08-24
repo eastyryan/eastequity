@@ -1,16 +1,59 @@
 {
-  "updated_at": "2026-08-24T23:22:19.671054+00:00",
+  "updated_at": "2026-08-24T23:39:48.758251+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 6,
     "fundamental_analysis": 2,
     "risk_management": 6,
-    "strategy_playbooks": 5,
+    "strategy_playbooks": 6,
     "market_microstructure": 1,
     "trading_psychology": 1,
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-7281929606",
+      "discipline": "strategy_playbooks",
+      "topic": "Analyst upgrades and price-target raises as a swing catalyst: the CHANGE not the LEVEL is the signal, the announcement gap is usually the whole long-side move, and a piggyback rec is not an episodic p",
+      "summary": "Classic event studies found real announcement reactions and some post-revision drift. Womack (Journal of Finance 1996) reports an unadjusted three-day return of +3.3% on added-to-buy recommendations and -4.3% on added-to-sell, with post-event drift that is modest and short-lived on the long side (+2.4% over one month) but larger and longer on sells (-9.1%, lasting up to six months). Barber, Lehavy, McNichols and Trueman (Journal of Finance 2001; primary PDF read this session) take the investor's calendar-time view: a daily-rebalanced, same-day-close consensus book earned +4.13% / -4.91% annual abnormal gross on the most/least-favored portfolios (Zacks 1986\u20131996), but a one-week delay dropped the long side to about 2% and a month's delay below 1%, neither reliably above zero; among the few hundred largest firms there was no reliable spread; after transaction costs (turnover sometimes exceeding 400% a year) net returns were not reliably positive. That is the binding result for this EOD large-cap book: we see an upgrade after the gap and we cannot daily-rebalance, so the long-side announcement premium is already gone by the time a proposal can print. Jegadeesh, Kim, Krische and Lee (Journal of Finance 2004) split LEVEL from CHANGE: sell-side analysts systematically recommend glamour (positive momentum, high growth, expensive), the consensus LEVEL only helps among names that already have favorable quantitative characteristics, and among unfavorable-quant names a higher consensus ",
+      "key_points": [
+        "Womack: the announcement reaction is real (+3.3% / -4.3% three-day), but leftover UPGRADE drift is modest and ~1 month; SELL drift is larger and longer \u2014 this long-only book is on the weaker side of that asymmetry.",
+        "Barber et al. 2001 (primary): daily same-day-close consensus alpha is +4.13% gross on the most-favored names and dies under a one-week delay, among large firms, and after costs. An EOD swing book that sees the upgrade after the gap is already in the delay cell.",
+        "Jegadeesh et al. 2004: use the CHANGE in consensus, never the LEVEL. Analysts recommend glamour; a crowded strong-buy on an expensive momentum name is the cell where higher ratings predict worse subsequent returns.",
+        "Brav-Lehavy: the average 12-month target is 28% above spot. Never set target_price to analyst_ratings.target_mean_price; a PT raise that merely chases a rally is a lagging restatement of price, not a 3-90 day expected return.",
+        "Piggybacking is real but not the whole story (Alt\u0131nk\u0131l\u0131\u00e7-Hansen vs Li-Ramesh-Shen-Wu). Fork it: if the rec lands on earnings/guidance/8-K, trade THAT playbook and treat the rec as color; if it is standalone, demand Loh-Stulz influence (star, away-from-consensus, paired with an estimate revision) and",
+        "Loh-Stulz: only ~12% of rec changes are influential at the stock; more than a third of reactions have the wrong sign. A faded upgrade gap that closes back through the pre-rec close is the tell that this one was in the 88%.",
+        "HPE 2026-08-19 is the worked example: a Morgan Stanley upgrade gap bought after it printed, on a large-cap glamour/theme name, with the mean target used as destination. Literature predicted weak remaining edge; giving back the pre-upgrade close was the right invalidator."
+      ],
+      "how_to_apply": "When news_and_catalysts or analyst_ratings shows a rating upgrade or a price-target raise, do not promote to BUY on the rec itself and do not write target_price from target_mean_price or target_vs_price_pct \u2014 Brav-Lehavy's 28% average premium is optimism, and CLAUDE.md already forbids citing a Street target as our own. First ask whether the rec piggybacks a dated fundamental: if earnings_week, a retained earnings gap, or todays_8ks/item 1.01 sits under it, route the name through the episodic-pivot or estimate-revision playbook (KB-3704904010 / KB-2596574918) and treat the rec as color, not a second catalyst. If it is standalone, require the Loh-Stulz influence screen (away from consensus, paired with a near-term estimate revision, preferably a star/leader house) AND a held gap (retained_pct not faded); then wait for the day-after first pullback or a no_supply_pullback of the upgrade bar rather than buying the announcement print, place stop_loss below the pre-upgrade close or the gap-day low (at least stop_engineering.min_stop_distance_pct), and confirm 2:1 to the first overhead supply \u2014 not to the new PT. If the upgrade gap gives back the pre-rec close, that is invalidating_structu",
+      "sources": [
+        "Womack, K.L. (1996), 'Do Brokerage Analysts' Recommendations Have Investment Value?', Journal of Finance 51(1):137-167 \u2014 three-day +3.3% / -4.3%; post-event drift +2.4% (upgrades, ~1 month) vs -9.1% (sells, up to 6 months)",
+        "Barber, B., Lehavy, R., McNichols, M. and Trueman, B. (2001), 'Can Investors Profit from the Prophets? Security Analyst Recommendations and Stock Returns', Journal of Finance 56(2):531-563 \u2014 primary PDF read this session; +4.13% / -4.91% annual abnormal gross with daily same-day-close rebalancing; d",
+        "Jegadeesh, N., Kim, J., Krische, S.D. and Lee, C.M.C. (2004), 'Analyzing the Analysts: When Do Recommendations Add Value?', Journal of Finance 59(3):1083-1124 \u2014 analysts recommend glamour; CHANGE in consensus is the robust predictor, LEVEL is not",
+        "Brav, A. and Lehavy, R. (2003), 'An Empirical Analysis of Analysts' Target Prices: Short-term Informativeness and Long-term Dynamics', Journal of Finance 58(5):1933-1967 \u2014 average 1-year target 28% above spot; TP revision incremental to rec + EPS revision",
+        "Loh, R.K. and Stulz, R.M. (2011), 'When Are Analyst Recommendation Changes Influential?', Review of Financial Studies 24(2):593-627 \u2014 only ~12% influential at the stock level; star, away-from-consensus, paired with an earnings forecast",
+        "Alt\u0131nk\u0131l\u0131\u00e7, O. and Hansen, R.S. (2009), 'On the Information Role of Stock Recommendation Revisions', Journal of Accounting and Economics 48(1):17-36 \u2014 tiny intraday means, piggybacking on recent news"
+      ],
+      "learned_at": "2026-08-24T23:39:48.752936+00:00",
+      "run_id": "20260824-7cfce5",
+      "tensions": [
+        {
+          "with": "KB-2596574918",
+          "why": "KB-2596574918 is estimate-revision BREADTH (EPS/revenue), which is a documented 3-90 day drift. This lesson is recommendation and price-target CHANGES, a different analyst output. They stack: a rec upgrade that is NOT accompanied by near-term estimate breadth is the weaker Loh-Stulz cell and should ",
+          "noted_at": "2026-08-24"
+        },
+        {
+          "with": "KB-3704904010",
+          "why": "KB-3704904010 is the power-earnings-gap / episodic pivot: a fundamental gap of ~8-10%+ that HOLDS on a leader. A standalone analyst upgrade is not that catalyst \u2014 the announcement premium is mostly day-0 and leftover long-side drift is modest once this EOD book can trade. If the upgrade piggybacks a",
+          "noted_at": "2026-08-24"
+        },
+        {
+          "with": "KB-1695380801",
+          "why": "KB-1695380801 forbids skipping a quality leader because it is 'expensive' or because price sits above the mean target. This lesson forbids the opposite misuse of the same field: do not BUY because a house raised its PT, and do not set target_price to target_mean_price. A rich multiple is not a veto;",
+          "noted_at": "2026-08-24"
+        }
+      ]
+    },
     {
       "id": "KB-4252672139",
       "discipline": "technical_analysis",
