@@ -684,10 +684,14 @@ def place_order(order: dict) -> dict:
             print(f"  (stop stand-down failed for {ticker}: {e})")
         qty = _sell_qty(ticker, order.get("sell_fraction"))
         if qty is None or qty <= 0:
+            # CRITICAL: a deterministic forced-exit client_order_id may already
+            # have FILLED at the broker on an earlier tick. Recording
+            # rejected_no_position under that same id poisons OOB ingest
+            # (HPE 2026-08-19) and leaves a not_at_broker ghost. Adopt first.
+            adopted = _try_adopt_filled_client_order(pending)
+            if adopted is not None:
+                return adopted
             pending["status"] = "rejected_no_position"
-            # Broker has nothing to sell. If the mirror is already flagged
-            # not_at_broker, adopt any missed fill / write the ghost off so
-            # exit_guard stops thrashing and protective_stops_armed can clear.
             try:
                 pos = _position_in_mirror(ticker)
                 if pos and pos.get("not_at_broker"):
@@ -1166,6 +1170,135 @@ def _filled_history_ids(state: dict | None = None) -> set[str]:
             if h.get(k):
                 known.add(str(h[k]))
     return known
+
+
+def _try_adopt_filled_client_order(pending: dict) -> dict | None:
+    """If this client_order_id already filled at the broker, book it.
+
+    Returns the applied fill dict, or None when there is nothing to adopt.
+    Prevents rejected_no_position from being written under an id that already
+    realized — the poison that hid HPE's fractional fill from OOB ingest.
+    """
+    cid = str(pending.get("client_order_id") or pending.get("order_id") or "")
+    if not cid or not api_reachable():
+        return None
+    ao = _get_order_by_client_id(cid)
+    if not isinstance(ao, dict) or str(ao.get("status")) != "filled":
+        return None
+    if _f(ao.get("filled_qty")) <= 0:
+        return None
+    oid = str(ao.get("id") or "")
+    for h in simulated_broker._load().get("history") or []:
+        if oid and str(h.get("alpaca_order_id") or "") == oid \
+                and str(h.get("status", "")).lower() == "filled":
+            return dict(h)
+        if cid and str(h.get("client_order_id") or "") == cid \
+                and str(h.get("status", "")).lower() == "filled":
+            return dict(h)
+    print(f"  (adopting already-filled broker order {cid} — not recording reject)")
+    try:
+        fill = _apply_fill(pending, ao)
+    except Exception as e:
+        print(f"  (adopt of {cid} failed: {e})")
+        return None
+    if fill and fill.get("status") == "filled":
+        try:
+            from execution import reconcile_runner
+            reconcile_runner.record_fill(pending, fill)
+        except Exception as e:
+            print(f"  (adopt journal for {cid} failed: {e})")
+        return fill
+    return None
+
+
+def _sweep_fractional_dust(ticker: str, *, parent_reason: str = "") -> dict | None:
+    """Market-sell a sub-share leftover a GTC protective stop cannot cover.
+
+    Alpaca refuses fractional GTC stops, so a whole-share stop fill routinely
+    leaves 0 < qty < 1 at the broker. That dust used to sit until exit_guard
+    fired a deterministic EEXIT id, race with reconcile, and spawn a
+    not_at_broker ghost. Sweeping it here — immediately after the stop fill —
+    closes the position before that failure mode can start.
+    """
+    ticker = str(ticker).upper()
+    if not api_reachable():
+        return None
+    bp = _broker_position(ticker)
+    if not isinstance(bp, dict):
+        return None
+    qty = round(_f(bp.get("qty")), 6)
+    if qty <= 0 or qty >= 1.0 - 1e-9:
+        return None
+    # Free shares held by any lingering stop before sizing the sweep.
+    try:
+        _stand_down_protective_stop(ticker, reason="fractional_dust_sweep")
+        _await_shares_released(ticker)
+    except Exception as e:
+        print(f"  (dust sweep stand-down for {ticker}: {e})")
+    bp = _broker_position(ticker)
+    if not isinstance(bp, dict):
+        return None
+    qty = round(_f(bp.get("qty")), 6)
+    avail = round(_f(bp.get("qty_available") or bp.get("qty")), 6)
+    if qty <= 0 or qty >= 1.0 - 1e-9 or avail <= 0:
+        return None
+    sell_qty = min(qty, avail)
+    oid = f"EEDUST-{ticker}-{uuid.uuid4().hex[:10]}"
+    body = {"symbol": ticker, "side": "sell", "type": "market",
+            "time_in_force": "day", "qty": _fmt_qty(sell_qty),
+            "client_order_id": oid}
+    code, resp = _req("POST", "/v2/orders", body=body, timeout=15)
+    if not (code == 200 and isinstance(resp, dict) and resp.get("id")):
+        print(f"  (fractional dust sweep submit failed for {ticker}: "
+              f"{code} {resp})")
+        return None
+    pending = {
+        "ticker": ticker,
+        "action": "SELL_TO_CLOSE",
+        "order_id": oid,
+        "client_order_id": oid,
+        "alpaca_order_id": resp.get("id"),
+        "proposal_id": "fractional-dust-sweep",
+        "forced_exit_reason": "fractional_dust_after_stop",
+        "parent_reason": parent_reason or None,
+        "reference_price": _f(bp.get("current_price")) or None,
+        "submitted_at": datetime.now(timezone.utc).isoformat(),
+        "status": "submitted",
+    }
+    # Poll briefly for the fill; reconcile() will finish it if we time out.
+    ao = resp
+    for _ in range(8):
+        time.sleep(0.25)
+        got = _get_order_by_client_id(oid)
+        if isinstance(got, dict):
+            ao = got
+            st = str(ao.get("status") or "")
+            if st == "filled" or (_f(ao.get("filled_qty")) > 0 and st in (
+                    *_TERMINAL_DEAD, "done_for_day", "filled")):
+                break
+    if _f(ao.get("filled_qty")) <= 0:
+        # Park for reconcile — do not lose the working order.
+        st = simulated_broker._load()
+        st.setdefault("pending_orders", {})[oid] = pending
+        simulated_broker._save(st)
+        print(f"  (fractional dust sweep for {ticker} resting — "
+              f"reconcile will finish)")
+        return None
+    try:
+        fill = _apply_fill(pending, ao)
+    except Exception as e:
+        print(f"  (fractional dust sweep apply for {ticker} failed: {e})")
+        return None
+    if fill and fill.get("status") == "filled":
+        print(f"  DUST SWEEP {ticker} {fill.get('quantity')} "
+              f"@ {fill.get('fill_price')} (after {parent_reason or 'stop'})")
+        try:
+            from execution import reconcile_runner
+            reconcile_runner.record_fill(pending, fill)
+        except Exception as e:
+            print(f"  (dust sweep journal for {ticker} failed: {e})")
+        return fill
+    return None
 
 
 def write_off_not_at_broker(ticker: str, *, reason: str = "",
@@ -1862,6 +1995,28 @@ def _apply_fill(pending: dict, ao: dict) -> dict:
     # The resting stop follows the position: armed on entry, re-sized on a
     # scale-in or a sell_fraction partial, retired on a full close.
     _maintain_protective_stop(ticker, action)
+
+    # After a protective STOP fill, immediately market-sell any sub-share
+    # leftover the GTC stop could not cover. Skipping this is what left the
+    # HPE 0.11 remnant to become a not_at_broker ghost.
+    if action == "SELL_TO_CLOSE" and fill.get("status") == "filled":
+        reason = str(pending.get("forced_exit_reason") or "")
+        is_stop = (reason == "resting_stop_breached"
+                   or str(ao.get("type") or "").lower() == "stop")
+        # Never recurse from a dust sweep into another dust sweep.
+        if is_stop and reason != "fractional_dust_after_stop" \
+                and not pending.get("dust_sweep"):
+            try:
+                dust = _sweep_fractional_dust(
+                    ticker, parent_reason=reason or "stop_fill")
+                if dust:
+                    fill["dust_sweep"] = {
+                        "quantity": dust.get("quantity"),
+                        "fill_price": dust.get("fill_price"),
+                        "order_id": dust.get("order_id"),
+                    }
+            except Exception as e:
+                print(f"  (fractional dust sweep after {ticker} stop failed: {e})")
     return fill
 
 

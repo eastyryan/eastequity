@@ -177,3 +177,157 @@ def test_ensure_protective_stop_does_not_fail_ghosts(isolated, monkeypatch):
 def test_unprotected_positions_skips_ghosts(isolated):
     naked = ab.unprotected_positions()
     assert naked == []
+
+
+def test_rejected_no_position_adopts_already_filled_client_id(isolated, monkeypatch):
+    """The poison path: broker already filled EEXIT-*; local must adopt, not reject."""
+    filled = _missed_fill()
+
+    class Fake(FakeBroker):
+        def __call__(self, method, path, *, params=None, body=None, timeout=10):
+            if path.startswith("/v2/orders:by_client_order_id/") or (
+                    path.startswith("/v2/orders") and method == "GET"
+                    and (params or {}).get("client_order_id")):
+                return 200, filled
+            if "/v2/orders:" in path or path.endswith(CID):
+                return 200, filled
+            return super().__call__(method, path, params=params, body=body,
+                                    timeout=timeout)
+
+    fake = Fake(closed=[filled], positions=[])
+    monkeypatch.setattr(ab, "_req", fake)
+    monkeypatch.setattr(ab, "sync_mirror", lambda: sb._load())
+    # _get_order_by_client_id walks the API — stub it directly for clarity.
+    monkeypatch.setattr(ab, "_get_order_by_client_id",
+                        lambda cid: filled if cid == CID else None)
+    monkeypatch.setattr(ab, "_sell_qty", lambda *a, **k: None)
+
+    out = ab.place_order({
+        "ticker": "HPE", "action": "SELL_TO_CLOSE",
+        "client_order_id": CID,
+        "forced_exit_reason": "trailing_stop_breached",
+        "reference_price": 52.0,
+    })
+    assert out.get("status") == "filled", out
+    assert abs(float(out.get("quantity") or 0) - 0.114718) < 1e-3
+    st = sb._load()
+    assert not any(p.get("ticker") == "HPE" for p in st["positions"])
+    assert not any(h.get("status") == "rejected_no_position"
+                   and h.get("client_order_id") == CID
+                   and h.get("filled_at", "") > "2026-08-24"
+                   for h in st["history"][-3:])
+
+
+def test_stop_fill_sweeps_fractional_dust(isolated, monkeypatch):
+    """Whole-share stop fill must immediately market-sell the sub-share leftover."""
+    state = json.loads(isolated.read_text())
+    state["positions"] = [{
+        "ticker": "HPE", "quantity": 1.114718, "avg_cost": 55.144,
+        "market_value_usd": 58.0, "last_price": 52.0,
+        "opened_at": "2026-08-10T15:13:03+00:00",
+        "proposal_id": "20260810-6708d8",
+        "plan": {"stop_loss": 51.25, "confidence": 0.58},
+        "protective_stop": {"status": "resting", "stop_price": 53.0,
+                            "qty": 1.0, "uncovered_qty": 0.114718},
+    }]
+    state["history"] = []
+    isolated.write_text(json.dumps(state))
+
+    stop_fill = {
+        "id": "stop-oid-1", "client_order_id": "EESTOP-HPE-abc",
+        "symbol": "HPE", "side": "sell", "type": "stop", "status": "filled",
+        "filled_qty": "1.0", "filled_avg_price": "53.04",
+        "filled_at": "2026-08-19T13:54:53Z",
+    }
+    broker_qty = {"HPE": 0.114718}  # post-stop remnant
+    submits = []
+
+    def fake_req(method, path, *, params=None, body=None, timeout=10):
+        if path == "/v2/clock":
+            return 200, {"is_open": True}
+        if path == "/v2/account":
+            return 200, {"cash": "753", "equity": "753"}
+        if path == "/v2/positions" and method == "GET":
+            q = broker_qty.get("HPE", 0)
+            if q <= 0:
+                return 200, []
+            return 200, [{"symbol": "HPE", "qty": str(q),
+                          "qty_available": str(q), "avg_entry_price": "55.144",
+                          "current_price": "52.0",
+                          "market_value": str(round(q * 52, 2))}]
+        if path.startswith("/v2/positions/") and method == "GET":
+            q = broker_qty.get("HPE", 0)
+            if q <= 0:
+                return 404, {"message": "position does not exist"}
+            return 200, {"symbol": "HPE", "qty": str(q),
+                         "qty_available": str(q), "current_price": "52.0"}
+        if path == "/v2/orders" and method == "POST":
+            submits.append(body)
+            q = float(body["qty"])
+            broker_qty["HPE"] = max(0.0, round(broker_qty.get("HPE", 0) - q, 6))
+            return 200, {
+                "id": "dust-oid-1",
+                "client_order_id": body["client_order_id"],
+                "symbol": "HPE", "side": "sell", "type": "market",
+                "status": "filled", "filled_qty": body["qty"],
+                "filled_avg_price": "51.836",
+                "filled_at": "2026-08-19T13:55:00Z",
+            }
+        if path == "/v2/orders" and method == "GET":
+            return 200, []
+        if method == "DELETE":
+            return 204, None
+        return 404, None
+
+    def sync_from_broker():
+        st = sb._load()
+        q = broker_qty.get("HPE", 0)
+        if q <= 0:
+            st["positions"] = [p for p in st.get("positions") or []
+                               if p.get("ticker") != "HPE"]
+        else:
+            found = False
+            for p in st.get("positions") or []:
+                if p.get("ticker") == "HPE":
+                    p["quantity"] = q
+                    p["market_value_usd"] = round(q * 52.0, 2)
+                    p.pop("not_at_broker", None)
+                    found = True
+            if not found:
+                st.setdefault("positions", []).append({
+                    "ticker": "HPE", "quantity": q, "avg_cost": 55.144,
+                    "market_value_usd": round(q * 52.0, 2),
+                    "opened_at": "2026-08-10T15:13:03+00:00",
+                    "plan": {"stop_loss": 51.25},
+                })
+        sb._save(st)
+        return st
+
+    monkeypatch.setattr(ab, "_req", fake_req)
+    monkeypatch.setattr(ab, "sync_mirror", sync_from_broker)
+    monkeypatch.setattr(
+        ab, "_get_order_by_client_id",
+        lambda cid: ({
+            "id": "dust-oid-1", "client_order_id": cid, "symbol": "HPE",
+            "side": "sell", "type": "market", "status": "filled",
+            "filled_qty": "0.114718", "filled_avg_price": "51.836",
+            "filled_at": "2026-08-19T13:55:00Z",
+        } if str(cid).startswith("EEDUST-") else None))
+    monkeypatch.setattr(ab, "_stand_down_protective_stop", lambda *a, **k: True)
+    monkeypatch.setattr(ab, "_await_shares_released", lambda *a, **k: None)
+    monkeypatch.setattr(ab, "_maintain_protective_stop", lambda *a, **k: None)
+
+    pending = {
+        "ticker": "HPE", "action": "SELL_TO_CLOSE",
+        "order_id": "EESTOP-HPE-abc", "client_order_id": "EESTOP-HPE-abc",
+        "alpaca_order_id": "stop-oid-1",
+        "proposal_id": "out-of-band", "out_of_band": True,
+        "forced_exit_reason": "resting_stop_breached",
+        "reference_price": 53.04,
+    }
+    fill = ab._apply_fill(pending, stop_fill)
+    assert fill.get("status") == "filled"
+    assert fill.get("dust_sweep"), "stop fill did not sweep fractional dust"
+    assert submits and float(submits[0]["qty"]) < 1.0
+    st = sb._load()
+    assert not any(p.get("ticker") == "HPE" for p in st["positions"]), st["positions"]
