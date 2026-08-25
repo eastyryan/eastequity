@@ -969,7 +969,43 @@
           "noted_at": "2026-08-25"
         }
       ]
+    },
+    {
+      "id": "KB-2863806537",
+      "discipline": "risk_management",
+      "topic": "Drawdown recovery math for a 1% risk / 8% heat swing book: recovery is asymmetric, the heat cap is a max-DD budget not a halt, and cash is the zero-drift regime where expected MDD grows as sqrt(T)",
+      "summary": "A peak-to-trough loss of fraction L requires a gain of L/(1-L) on the remaining capital to get back to the high-water mark \u2014 an identity, not a trading theory. The curve is gentle to about 20% (10% needs +11.1%, 20% needs +25%) and then steep (50% needs +100%, 75% needs +300%). Sequential 1% losses compound slightly worse than addition: five losers leave \u22124.90%, ten leave \u22129.56%, and it takes 69 consecutive 1% losses to reach \u221250%. Van Tharp (Trade Your Way to Financial Freedom) uses the same recovery table and then shows that size, not the setup, is the drawdown lever: in his worked sequence of one system, a 2% R produced a 26% max DD, 5% R a 65% DD, and 10% R blew the account. Magdon-Ismail, Atiya, Pratap and Abu-Mostafa (Journal of Applied Probability 2004) give the structural result that expected maximum drawdown of a Brownian motion scales as log T under positive drift, as \u03c3\u221a(\u03c0T/2) under zero drift, and linearly under negative drift \u2014 a profitable book still draws down, but cash (zero drift) has expected underwater depth that grows with the square root of calendar time. Chekhlov, Uryasev and Zabarankin (IJTAF 2005) formalize what an active manager actually feels as risk: Conditional Drawdown, the mean of the worst tail of the underwater curve, with MaxDD and Average DD as limits; our 8% portfolio-heat cap is a crude MaxDD constraint on simultaneous stop-out, not a participation rule. Sequence matters as much as size: Atamus (citing Magdon-Ismail) shows the same multiset ",
+      "key_points": [
+        "Recovery is L/(1\u2212L) on remaining capital: 10%\u2192+11.1%, 20%\u2192+25%, 50%\u2192+100%. The job of risk limits is to stay on the flat part of that curve.",
+        "At 1% risk, five sequential losers are \u22124.90% and ten are \u22129.56%; 69 consecutive 1% losses reach \u221250%. A 2% paper-book hole is noise on that scale, not a crisis.",
+        "Tharp: the same system at 2% / 5% / 10% R produced 26% / 65% / blown in his worked sequence. Size is the drawdown lever; the 1% budget and 8% heat cap are that lever, already set.",
+        "Magdon-Ismail et al. (JAP 2004): expected MDD ~ log T with positive drift, \u03c3\u221a(\u03c0T/2) with zero drift, linear with negative drift. Standing down (cash, \u03bc=0) is the regime where expected underwater depth grows with sqrt of waiting.",
+        "Chekhlov et al. (IJTAF 2005): an active book's risk is the underwater curve (CDD / MaxDD), not variance. The 8% heat cap is a MaxDD budget on simultaneous stop-out \u2014 if every stop fires, recovery needed is ~8.7% plus any gap-through, still on the gentle part of L/(1\u2212L).",
+        "Drawdown is a path functional: clustered same-theme losses (DELL+HPE, shared_left_tail) are one drawdown event, not two independent 1R hits. That is why the 2% theme / factor-stack caps exist.",
+        "Do not martingale to get even. Do not add a blog-style 0.5% de-risk halt on a 2% hole on top of 1%-of-current-equity and the code's unwind 0.5x \u2014 that is the stand-down that left the learning loops dark. Percent-of-current-equity is already the brake."
+      ],
+      "how_to_apply": "After every close, compute realized drawdown versus the book's high-water mark and the recovery needed as L/(1\u2212L). If that figure is inside the 8% heat budget \u2014 today's four-trade hole is ~2.05% and needs ~2.1%, i.e. one honest 2R winner at the 1% risk budget \u2014 judge the next BUY on thesis, geometry, 2:1, the ATR/expected-move stop floor, and the 3-day earnings blackout, not on 'we are in a hole.' Never size up to get even; keep size = (current equity \u00d7 1%) / stop_distance_pct so dollar risk auto-brakes as equity falls, which is Tharp's percent-risk model and already how the validator sizes. Never invent an extra de-risk halt or a cash stand-down on top of that 1% and the code's momentum-unwind 0.5x: Magdon-Ismail says cash is the zero-drift cell where expected MDD grows as sqrt(T), and a 2% hole that needs one 2R winner is exactly the setup this paper book's completed-cycle objective is supposed to take. When the losses cluster on one demand_driver or shared_left_tail is true, treat them as one path-DD event: the next BUY should prefer a different driver or a portfolio_risk.diversifier / low corr_to_book name, and must respect the 2% theme and factor-stack caps \u2014 that is rotation ",
+      "sources": [
+        "Van Tharp, Trade Your Way to Financial Freedom (McGraw-Hill, 1993/2007) \u2014 recovery table and the same-system 2%/5%/10% R \u2192 26%/65%/blown sequence; summarized at https://www.financialwisdomtv.com/post/van-tharp-trade-your-way-to-financial-freedom and https://quantstrategy.io/blog/position-sizing-mast",
+        "Magdon-Ismail, M., Atiya, A. F., Pratap, A., and Abu-Mostafa, Y. S. (2004), 'On the maximum drawdown of a Brownian motion,' Journal of Applied Probability 41(1), 147\u2013161. Asymptotics: E[MDD] ~ (\u03c3\u00b2/\u03bc)(\u00bd log T + log(\u03bc/\u03c3) + 0.63519) for \u03bc>0; \u03c3\u221a(\u03c0T/2) for \u03bc=0; \u2212\u03bcT \u2212 \u03c3\u00b2/\u03bc for \u03bc<0. Slides: https://www.cs.",
+        "Chekhlov, A., Uryasev, S., and Zabarankin, M. (2005), 'Drawdown Measure in Portfolio Optimization,' International Journal of Theoretical and Applied Finance 8(1), 13\u201358. Conditional Drawdown (CDD) as CVaR of the underwater curve; MaxDD and Average DD as limits. PDF: https://www.math.columbia.edu/~ch",
+        "MacLean, L. C., Thorp, E. O., and Ziemba, W. T. (2010/2011), 'The Kelly Capital Growth Investment Criterion' / 'Good and bad properties of the Kelly criterion,' Journal of Portfolio Management \u2014 full Kelly's 50%+ drawdowns are a feature of log-utility, which is why fractional Kelly is what Thorp act"
+      ],
+      "learned_at": "2026-08-25T23:39:59.191909+00:00",
+      "run_id": "20260825-580a8b",
+      "tensions": [
+        {
+          "with": "KB-2999578881",
+          "why": "KB-2999578881 answers how much to risk given edge (deep-fractional Kelly; 8% heat / 2% theme as portfolio-Kelly on correlated names). This lesson answers what that risk does to the PATH: recovery is L/(1\u2212L), expected MDD scales with the drift regime, and the 8% cap is a MaxDD budget. Same sizing fam",
+          "noted_at": "2026-08-25"
+        },
+        {
+          "with": "KB-8671934946",
+          "why": "KB-8671934946 is the per-trade argument that three losses cannot license a stand-down (law of small numbers; +0.20R design at 40%/2:1). This lesson is the equity-curve argument for the same conclusion: a ~2% hole needs ~2.1% to recover, Magdon-Ismail's zero-drift cell is cash, and clustered same-the",
+          "noted_at": "2026-08-25"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-08-25T23:24:37.407964+00:00"
+  "updated_at": "2026-08-25T23:39:59.196694+00:00"
 }
