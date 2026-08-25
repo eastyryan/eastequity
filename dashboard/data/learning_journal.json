@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-08-24T23:39:48.758251+00:00",
+  "updated_at": "2026-08-25T23:24:37.408862+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
-    "technical_analysis": 6,
+    "technical_analysis": 7,
     "fundamental_analysis": 2,
     "risk_management": 6,
     "strategy_playbooks": 6,
@@ -11,6 +11,45 @@
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-8718018770",
+      "discipline": "technical_analysis",
+      "topic": "RSI-14 as swing-entry timing context: the 40-50 reset in a Stage-2 uptrend is the usable read, RSI>70 is not a sell, and RSI<30 is not a bounce buy",
+      "summary": "J. Welles Wilder introduced the 14-period Relative Strength Index in New Concepts in Technical Trading Systems (1978) as a 0-100 momentum oscillator of Wilder-smoothed up-closes versus down-closes; it is not relative strength versus SPY. His original commodity-daily reading treated RSI above 70 as overbought (a reversal warning) and below 30 as oversold, with divergences and failure swings as the tells \u2014 that cartoon is still the one most people quote, and it is the one that fails in equity trends. John Murphy (StockCharts 10 Laws, Law 7) is explicit that oscillators work best in a trading range; StockCharts ChartSchool's McDonald's example shows three successive RSI>70 prints that were consolidations, not tops, because a strong uptrend can stay overbought. Andrew Cardwell and Constance Brown (Technical Analysis for the Trading Professional, as taught on ChartSchool) and Fidelity's RSI guide relocate the range: in an uptrend RSI typically lives in roughly 40-90 with the 40-50 zone acting as support; in a downtrend it lives in roughly 10-60 with 50-60 as resistance (Cardwell's close variant is 40-80 / 20-60). Academic tests of RSI as a standalone RULE are mixed and not robust across markets. Chong, Ng and Liew (MPRA 54149, 2014; daily OECD indices 1976-2002, 10-day holds) found the classic RSI(14, 30/70) mean-reversion rule \u2014 buy the reclaim of 30, sell the failure of 70 \u2014 produced negative pair-returns in three of five markets, including a statistically significant loss of 1.",
+      "key_points": [
+        "RSI-14 is a speedometer of recent closing momentum, not a valuation, a buy/sell switch, or relative strength vs SPY.",
+        "Wilder's 70/30 mean-reversion reading is a range tool. In a Stage-2 equity uptrend, RSI>70 is strength and the 40-50 zone is pullback support (Cardwell/Brown/Fidelity); Murphy is explicit that oscillators work best in a trading range.",
+        "Chong, Ng and Liew (2014): the classic RSI(14, 30/70) rule lost in three of five OECD markets (DAX 'sell overbought' -1.049%); the centerline-50 crossover was the better construction and still was not robust across markets.",
+        "This book's 12-year study: RSI 40-50 vs RSI>70 is the right sign and too small to trade (0.09pp); RSI<30 inside a 200-DMA uptrend is the only interesting cell and is underpowered (n=257).",
+        "Do not skip a 3m-RS leader because rsi_14 is 75, and do not SELL_TO_CLOSE a live winner because it is \u2014 that is the RBRK-shaped 'extended' veto in oscillator costume.",
+        "Do not buy rsi_14 <30 under the 200-DMA as a bounce; that is a downtrend describing itself, not a mean-reversion gift.",
+        "Never write would_buy_at as an RSI cross, divergence, or failure swing \u2014 those confirmation legs get stripped. Use RSI only as timing color on a price, structure, catalyst, or no_supply_pullback trigger.",
+        "Connors RSI(2) (no stops, 5-day SMA exit) is a different system; do not import it into this 2:1 / ATR-floor / chandelier book."
+      ],
+      "how_to_apply": "On every candidate, read rsi_14 only after above_200dma, trend_up_50_over_200, and rel_strength_3m_pct. If that stack is Stage-2 and 3m RS is still positive, treat rsi_14 in the 40-50 band as the timing description of the no_supply_pullback / 50-DMA tag already in KB-6241168493 / KB-4252672139: write would_buy_at on the named rail or no_supply_pullback, promote on that hold, place stop_loss below the tagged low AND stop_engineering.min_stop_distance_pct, and confirm 2:1 to the first overhead supply \u2014 do not promote because RSI printed 45. If rsi_14 is already >70 on a 3m-RS leader, that is strength, not a skip and not a SELL_TO_CLOSE: park the name for the first reset toward 40-50 at the 21-day or 50-DMA, and do not take sell_fraction just because RSI is extended (the first partial still waits for >=2R per KB-6231300499). If rsi_14 is <30 while above_200dma is still true, do not buy that bar \u2014 it is the underpowered watch cell; route it through a daily reclaim of the undercut rail (KB-2770353193) or a light-volume retest of the 200-DMA last rail. If above_200dma is false, rsi_14 <30 is not a bounce buy: it is the confirmation-gated downtrend of KB-2665689010. Never write would_buy_",
+      "sources": [
+        "J. Welles Wilder, New Concepts in Technical Trading Systems (Trend Research, 1978)",
+        "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/relative-strength-index-rsi",
+        "https://www.fidelity.com/learning-center/trading-investing/technical-analysis/technical-indicator-guide/RSI",
+        "https://chartschool.stockcharts.com/table-of-contents/overview/john-murphys-10-laws-of-technical-trading",
+        "Chong, Terence Tai-Leung, Wing-Kam Ng and Venus Khim-Sen Liew, 2014, Revisiting the Performance of MACD and RSI Oscillators, MPRA Paper 54149, https://mpra.ub.uni-muenchen.de/54149/1/MPRA_paper_54149.pdf",
+        "Constance Brown, Technical Analysis for the Trading Professional (McGraw-Hill) \u2014 bull/bear RSI ranges as taught on StockCharts ChartSchool"
+      ],
+      "learned_at": "2026-08-25T23:24:37.404286+00:00",
+      "run_id": "20260825-c4a758",
+      "tensions": [
+        {
+          "with": "KB-6241168493",
+          "why": "KB-6241168493 is the no-supply dip to structural support inside an already-leading uptrend. This lesson supplies the oscillator-side timing of that same dip: when trend_up_50_over_200 and 3m RS are still positive, rsi_14 resetting into 40-50 is the description of the pullback, not a second setup. Us",
+          "noted_at": "2026-08-25"
+        },
+        {
+          "with": "KB-1695380801",
+          "why": "KB-1695380801 forbids skipping a quality/momentum leader because it is 'expensive' or 'extended.' RSI>70 is the oscillator costume of that same skip: RBRK was rejected on RSI 75.2 plus a rich multiple, then ran +10.36%. This lesson names the RSI version of that mistake and forbids selling a live win",
+          "noted_at": "2026-08-25"
+        }
+      ]
+    },
     {
       "id": "KB-7281929606",
       "discipline": "strategy_playbooks",
@@ -52,7 +91,9 @@
           "why": "KB-1695380801 forbids skipping a quality leader because it is 'expensive' or because price sits above the mean target. This lesson forbids the opposite misuse of the same field: do not BUY because a house raised its PT, and do not set target_price to target_mean_price. A rich multiple is not a veto;",
           "noted_at": "2026-08-24"
         }
-      ]
+      ],
+      "times_cited": 4,
+      "last_cited": "2026-08-25T20:06:34.022106+00:00"
     },
     {
       "id": "KB-4252672139",
@@ -197,8 +238,8 @@
           "noted_at": "2026-08-20"
         }
       ],
-      "times_cited": 5,
-      "last_cited": "2026-08-24T19:12:19.058307+00:00"
+      "times_cited": 10,
+      "last_cited": "2026-08-25T20:06:34.022102+00:00"
     },
     {
       "id": "KB-2770353193",
@@ -693,8 +734,8 @@
           "noted_at": "2026-07-27"
         }
       ],
-      "times_cited": 5,
-      "last_cited": "2026-07-29T19:26:40.039871+00:00"
+      "times_cited": 8,
+      "last_cited": "2026-08-25T20:06:34.022089+00:00"
     },
     {
       "id": "KB-8308262054",
