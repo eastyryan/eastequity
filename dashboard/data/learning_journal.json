@@ -1,16 +1,53 @@
 {
-  "updated_at": "2026-08-25T23:39:59.197976+00:00",
+  "updated_at": "2026-08-26T23:35:22.112783+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 7,
     "fundamental_analysis": 2,
     "risk_management": 7,
-    "strategy_playbooks": 6,
+    "strategy_playbooks": 7,
     "market_microstructure": 1,
     "trading_psychology": 1,
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-6831088945",
+      "discipline": "strategy_playbooks",
+      "topic": "The bull flag after a thrust: buy the tight no-supply flag, not the pole and not the flag-breakout chase",
+      "summary": "A bull flag is a short continuation, not a multi-week base: a steep several-day pole on heavy volume, then a 3\u201315 session parallel channel that slopes against the uptrend while volume dries, then a resumption. Edwards & Magee and Murphy call it a half-mast rest in a straight-line move; StockCharts wants the pole to have already broken a level; Investopedia adds that the flag should not retrace past the midpoint of the pole and typically lasts 5\u201320 bars. Duration is the first honest disagreement: Bulkowski treats anything longer than three weeks as a rectangle or channel, Murphy\u2019s pennants \u2018usually last no longer than three weeks,\u2019 while ChartSchool allows one to twelve weeks and calls eight weeks \u2018pushing it.\u2019 For this 3\u201390 day book I keep Bulkowski\u2019s short definition \u2014 past ~3 weeks the name is a base (KB-9692173165) or a 50-DMA tag (KB-6241168493), not a flag. The second disagreement is the numbers. SEO posts quote 66\u201385% win rates and 14% in three weeks; Bulkowski\u2019s own 8/27/2020 update, measured on the short swing rather than the ultimate high, is a 44% break-even failure, a 9% average rise, and only 46% of flags meeting the full measured-move target (pennants are worse: 54% failure, 7% average, 35% meeting target, and the half-staff equality holds only ~30% of the time). Tight flags (little white space, contained in the channel, volume down 74% of the time) beat loose/jagged ones; flags that tilt with the trend underperform flags that tilt against it. The textbook entry ",
+      "key_points": [
+        "A flag is a 3\u201315 day parallel channel after a steep pole; longer than ~3 weeks is a rectangle/base, not a flag. Pennants (converging) are the weaker twin (Bulkowski 54% 5%-failure, 7% average) \u2014 do not promote them as a separate setup.",
+        "SEO 66\u201385% win-rate claims are not Bulkowski. His 2020 short-swing numbers are 44% break-even failure, 9% average rise, 46% meeting the full pole projection. Discount the measured move; do not write target_price as pole-height added to the breakout.",
+        "Textbook entry is the flag-breakout close. This book\u2019s measured confirmed_breakout cell is negative; no_supply_pullback is the surviving tell. Buy the flag, not the pole and not the breakout chase.",
+        "Quality filter: inbound 3m RS still positive (Stage 2), pole unusually steep (not a grind), flag tilts against the trend, tight (contained, little white space), volume declining in the flag, retrace holds above the pole midpoint / roughly <50% of the pole.",
+        "Stop sits below the flag low AND stop_engineering.min_stop_distance_pct (aim 1.5\u20132\u00d7 ATR). A 4% flag whose ATR floor is 7% is still valid if 2:1 and 10% clear from that wider stop; if they do not, pass \u2014 tightness is not a license to hug noise.",
+        "High-tight flags (O\u2019Neil: +100% in \u22648 weeks, then 10\u201325%) are rare and usually untradeable here because a stop under the flag low averaged 26% of price in Bulkowski\u2019s restudy. Only take one if a tighter final contraction lets the stop clear the 15% cap."
+      ],
+      "how_to_apply": "After a steep several-day thrust on a name that still has trend_up_50_over_200 and positive rel_strength_3m_pct \u2014 including a held earnings/upgrade gap that is the pole \u2014 do not BUY the pole bar and do not reject the leader because rsi_14 printed >70 on that bar. Write would_buy_at as a 3\u201315 day no_supply_pullback that holds the flag low (or the 21-DMA if the flag tags it): that is sanitizer-safe (price + structure + no_supply_pullback). Promote only on that hold, 50\u201370% starter; place stop_loss below the flag low AND at least stop_engineering.min_stop_distance_pct (aim 1.5\u20132\u00d7 ATR, never past 15%); set target_price at the first overhead supply or a discounted measured move (pole height \u00d7 ~0.5, because only 46% of flags meet the full projection), and require 10% upside and 2:1 from that ATR-floored stop \u2014 if a tight flag cannot clear those from an honest stop, pass rather than hugging the noise band. If you miss the flag dip and price breaks the upper channel, do not chase the 20-day high; wait for the throwback to the flag high (KB-9692173165). Invalidating_structure is a daily close back below the flag low; time_box is \u2018if this pause is still unresolved past 3 weeks, it is no long",
+      "sources": [
+        "Thomas N. Bulkowski, ThePatternSite, \u2018Flags\u2019 (stats updated 2020-08-27): https://thepatternsite.com/flags.html",
+        "Thomas N. Bulkowski, ThePatternSite, \u2018Pennants\u2019 (stats updated 2020-08-27): https://www.thepatternsite.com/pennants.html",
+        "Thomas N. Bulkowski, \u2018Study of High & Tight Flags\u2019: https://thepatternsite.com/HTFStudy.html",
+        "StockCharts ChartSchool, \u2018Flag, Pennant\u2019: https://chartschool.stockcharts.com/table-of-contents/chart-analysis/chart-patterns/flag-pennant",
+        "Robert D. Edwards & John Magee, Technical Analysis of Stock Trends, Ch. 11 (Flags and Pennants; half-mast measuring formula and authenticity tests)",
+        "John J. Murphy, Technical Analysis of the Financial Markets, Ch. 6 / Charting Made Easy (flags and pennants fly at half-mast; slope against the trend; volume dries in the flag)"
+      ],
+      "learned_at": "2026-08-26T23:35:22.107932+00:00",
+      "run_id": "20260826-78d696",
+      "tensions": [
+        {
+          "with": "KB-6241168493",
+          "why": "KB-6241168493 is the no-supply dip to a named MA rail (21-day / 50-DMA) inside an already-leading uptrend. A bull flag is the same supply-drying mechanism on a shorter clock that often never reaches the 50. If the flag tags the 21- or 50-DMA, both apply and the rail is the stop reference; if the fla",
+          "noted_at": "2026-08-26"
+        },
+        {
+          "with": "KB-9692173165",
+          "why": "KB-9692173165 is a multi-week/month consolidation whose pivot is the breakout level, with the throwback as the entry. A flag is defined here as \u22643 weeks; once the pause exceeds that, reclassify it as a base and use 9692173165 (throwback to the pivot, not a flag-breakout chase). They share the \u2018do no",
+          "noted_at": "2026-08-26"
+        }
+      ]
+    },
     {
       "id": "KB-2863806537",
       "discipline": "risk_management",
@@ -128,8 +165,8 @@
           "noted_at": "2026-08-24"
         }
       ],
-      "times_cited": 4,
-      "last_cited": "2026-08-25T20:06:34.022106+00:00"
+      "times_cited": 5,
+      "last_cited": "2026-08-26T22:38:07.680129+00:00"
     },
     {
       "id": "KB-4252672139",
