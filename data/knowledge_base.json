@@ -1044,7 +1044,45 @@
       ],
       "times_cited": 2,
       "last_cited": "2026-08-27T22:49:18.426252+00:00"
+    },
+    {
+      "id": "KB-1313448240",
+      "discipline": "technical_analysis",
+      "topic": "Price gaps as swing geometry: type labels are retrospective, fill folklore is not an edge vs a random walk, and retained_pct plus the pre-gap close are named levels \u2014 not a skip or a fade",
+      "summary": "A daily gap is an untraded range between one session's close and the next open; an up-gap means today's low sits above yesterday's high. Edwards & Magee, Murphy, and ChartSchool split gaps into common/area (inside congestion, usually filled in days), breakaway (leaving a base), runaway/measuring (mid-trend), and exhaustion (end of a move). The first honest disagreement is that those labels are retrospective: ChartSchool's own gap-trading page says the type is only distinguishable after the stock continues up or down, so the taxonomy is a post-hoc description, not a day-0 signal. Edwards & Magee already put the practical test on the day after the gap: continuation makes new highs without filling, exhaustion fails to extend and fills within about a week. The second disagreement is the fill slogan. Murphy calls 'gaps are always filled' a myth. Plastun, Sibande, Gupta and Wohar (North American Journal of Economics and Finance 2020), on DJI/S&P 500/NASDAQ from 1928\u20132018, find gap-day prices tend to continue in the gap's direction, a temporary momentum effect, and only about 20 percent of those index gaps fill within five days \u2014 contrary to the fill myth, with the caveat that this is index overnight structure, not single-name earnings gaps. Bulkowski, on typed individual-stock gaps (~1,100 samples), shows why SEO posts still quote 80 percent fills: area gaps close within a week 85\u201390 percent of the time (median 3\u20134 days), exhaustion 60\u201366 percent (median 5\u20136 days), continuation 8\u20131",
+      "key_points": [
+        "Common / breakaway / runaway / exhaustion labels are after-the-fact; Edwards & Magee distinguish continuation from exhaustion on the day after the gap, not on the open.",
+        "Murphy, Plastun et al. (index gaps, ~20% fill in 5 days, gap-day continuation), and Bulkowski (breakaway 1% fill in a week vs area 85\u201390%) all reject 'gaps always fill'; unconditional fills on 3%+ stock gaps match a random walk.",
+        "Read gap_analysis.filled AND retained_pct together: ~1.0 is a held open, ~0 or negative is the UNH fade (sold intraday) that the filled flag alone misses.",
+        "Do not fade a 2%+ unfilled gap hoping for a fill, and do not skip a 3m-RS leader because an unfilled gap exists \u2014 that is the TEAM '31.7% unfilled August gap' costume of 'extended.'",
+        "Do not BUY the gap bar; the swing entry is the first pullback that holds the gap-day low or the pre-gap high (the fill line).",
+        "A runaway/measuring gap is not a new BUY and is not a full measured-move target (continuation gaps are rare; we already discount measured moves). Holders trail; an island (exhaustion up then breakaway down) is a kill.",
+        "A daily close that re-accepts through the pre-gap close is invalidating_structure. Gap_held as a directional classifier scored nothing in the 12-year earnings-reaction test \u2014 geometry, not a pillar."
+      ],
+      "how_to_apply": "When gap_analysis lists a \u22652% gap in the last 20 sessions, read filled and retained_pct together before any promote or reject. If retained_pct is \u2265 ~0.5, filled is false, and a dated fundamental sits under it (earnings_week, todays_8ks/item 1.01), that is the PEG of KB-3704904010: do not BUY the gap bar; write would_buy_at as the first no_supply_pullback that holds the gap-day low (or the pre-gap high / fill line), promote a 50\u201370% starter, place stop_loss below that named low AND at least stop_engineering.min_stop_distance_pct (aim 1.5\u20132\u00d7 ATR, never past 15%), set target_price at the first overhead supply \u2014 never at 'the gap fill' and never from a measuring-gap projection \u2014 and require 10% upside and 2:1 from that ATR-floored stop; if that geometry cannot clear, pass. If retained_pct is low or negative (UNH shape) or the gap fills within a few sessions, classify it as faded/common/exhaustion: it is not a PEG, and if you already hold, a daily close that re-accepts through the pre-gap close is invalidating_structure. If the gap is unfilled on a 3m-RS leader with no new catalyst, that is extension, not a skip and not a fade \u2014 do not reject it the way TEAM was rejected for a 31.7% unf",
+      "sources": [
+        "https://chartschool.stockcharts.com/table-of-contents/chart-analysis/gaps-and-gap-analysis",
+        "https://chartschool.stockcharts.com/table-of-contents/trading-strategies-and-models/trading-strategies/gap-trading-strategies",
+        "https://thepatternsite.com/gaps.html",
+        "https://thepatternsite.com/GaugingGaps.html",
+        "John J. Murphy, Technical Analysis of the Financial Markets (New York Institute of Finance), Chapter 4, 'Price Gaps,' pp. 94\u201398",
+        "Plastun, A., Sibande, X., Gupta, R., and Wohar, M.E. (2020), 'Price gap anomaly in the US stock market: The whole story,' North American Journal of Economics and Finance 52, https://doi.org/10.1016/j.najef.2020.101177"
+      ],
+      "learned_at": "2026-08-27T23:58:23.274832+00:00",
+      "run_id": "20260827-b51df8",
+      "tensions": [
+        {
+          "with": "KB-3704904010",
+          "why": "KB-3704904010 is the dated-fundamental special case of a held breakaway gap (power earnings gap, day-after first pullback, stop under the gap-day low). This lesson is the general taxonomy plus the fill-folklore result that forbids fading an unfilled 2%+ gap. Same event, different jobs: PEG still req",
+          "noted_at": "2026-08-27"
+        },
+        {
+          "with": "KB-1695380801",
+          "why": "KB-1695380801 forbids skipping a quality/momentum leader because it is 'expensive' or extended. An unfilled gap is the chart costume of that same skip (TEAM rejected for a 31.7% unfilled August gap plus RSI/ADX). This lesson names the gap version: do not reject a 3m-RS leader because gap_analysis sh",
+          "noted_at": "2026-08-27"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-08-27T22:49:18.426256+00:00"
+  "updated_at": "2026-08-27T23:58:23.278581+00:00"
 }
