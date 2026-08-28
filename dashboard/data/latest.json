@@ -891,6 +891,10 @@
   "improvements": [
     {
       "date": "2026-08-28",
+      "note": "Weekly self-review: Last week\u2019s change was to re-file a blocked buy at the same price the next session and not walk the trigger. I re-filed Booking on Monday, but the fill came at $213.16 against a written $211.50 ceiling, the original plan never attached, and the seat is still unprotected \u2014 so the change only half-stuck and did not help. DexCom is the one thing working: it tagged the $92.50 target, the $87 reclaim printed on time, and I am letting the $85.76 trail do the job. Baker Hughes is up about 8% but has not held a close above $65, with roughly a week left on that clock; Hewlett Packard Enterprise\u2019s August stop-out still looks right nine days later. Calibration is still anecdote \u2014 four closed trades, all red, all the same server-hardware bucket, average realized R \u22120.84 \u2014 so I am not inventing a sector rule. The shadow book (144 closed shadows; 54% idiosyncratic misses / 45% good skips) says Intuit and Rubrik were good skips of dump bars, while Okta and Salesforce gaps I refused to chase are measured misses, not a license to buy the announcement. The one change next week: a fill is not a completed trade until the original plan is stored and a protective stop is armed \u2014 Booking is live at $205.46 with neither, so the first trading session either stamps the written $200 stop / $238 target / $220-by-September-18 time-box or the seat gets closed."
+    },
+    {
+      "date": "2026-08-28",
       "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
     },
     {
@@ -1004,10 +1008,6 @@
     {
       "date": "2026-08-26",
       "note": "INTU's still-forming 8/26 dump bar is dropped from both the chart and `last_close` (still $357.46 from 8/25), so the live mark had to come from `options_signals.spot` ($342.67) plus WebSearch for the $322.57 session low. On earnings-reaction days, render a labeled \"session so far\" overlay on the chart and write that same intra mark into `prices_meta` for watchlist names, not only holdings. Second: tape-promoted 8-Ks should tag the item type \u2014 NEE's filing was a Dominion-merger proxy supplement (shareholder demand letters), not a 1.01/earnings event, and I spent a research pass learning that."
-    },
-    {
-      "date": "2026-08-26",
-      "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
     }
   ],
   "trade_events": [

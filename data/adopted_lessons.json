@@ -1,6 +1,5 @@
 {
-  "updated_at": "2026-08-28T22:49:15.613220+00:00",
-  "pruned_at": "2026-08-28T22:49:15.613227+00:00",
+  "updated_at": "2026-08-28T22:49:23.597002+00:00",
   "lessons": [
     {
       "id": "LP-0693555695",
@@ -123,6 +122,126 @@
       "text": "After a resting-stop fill, auto-clear any leftover fractional quantity that the broker no longer holds (`not_at_broker` + `sell_to_close_fill`) so a 0.11-share ghost cannot block the next run's buys the way it did across five HPE SELL_TO_CLOSE attempts today.",
       "adopted_at": "2026-08-21T21:47:09.733447+00:00",
       "run_id": "20260819-c4e539"
+    },
+    {
+      "id": "LP-7484439948",
+      "note_fp": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_",
+      "kind": "soft_lesson",
+      "text": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green",
+      "adopted_at": "2026-08-28T22:49:23.595787+00:00",
+      "run_id": "20260828-a816c3"
+    },
+    {
+      "id": "LP-2349279888",
+      "note_fp": "Capability audit FAILED: protective_stops_armed: UNPROTECTED positions: BKNG(non",
+      "kind": "soft_lesson",
+      "text": "Capability audit FAILED: protective_stops_armed: UNPROTECTED positions: BKNG(none)",
+      "adopted_at": "2026-08-28T22:49:23.595798+00:00",
+      "run_id": "20260828-a816c3"
+    },
+    {
+      "id": "LP-9271251482",
+      "note_fp": "The MRVL alert fired because Friday's $216.62 close was within 2% of the parsed ",
+      "kind": "soft_lesson",
+      "text": "The MRVL alert fired because Friday's $216.62 close was within 2% of the parsed $220 level even though the written condition was a *hold* of $220 and the regular-session close went *through* it. A hold/reclaim token should require the close at or above the level, not proximity from below \u2014 same class of defect as the old direction-blind trigger checker. Secondary: this evening pack's `market_news` was mostly Benzinga 'if you invested $100' filler, so Warsh, the Marvell/Rubrik dumps, and the Boston Scientific restoration status had to be web-searched; a headline-quality filter that ranks Fed-ch",
+      "adopted_at": "2026-08-28T22:49:23.595802+00:00",
+      "run_id": "20260828-a816c3"
+    },
+    {
+      "id": "LP-8105930182",
+      "note_fp": "Overnight after-hours marks for AMC prints (MRVL ~$222.62, RBRK ~$99.52) live on",
+      "kind": "soft_process",
+      "text": "Overnight after-hours marks for AMC prints (MRVL ~$222.62, RBRK ~$99.52) live only in web search, not in `universe_scan.prices_meta` or a dedicated after-hours overlay, so a Friday open could look like a $220 trigger fill on a stale $241.45 close. A post-close AMC overlay on `earnings_week` names \u2014 last AH print, % vs regular close, and whether a watchlist level was tagged after hours \u2014 would stop the next run from treating Thursday's close as Friday's entry.",
+      "adopted_at": "2026-08-28T22:49:23.595804+00:00",
+      "run_id": "20260828-df44b8"
+    },
+    {
+      "id": "LP-8808708621",
+      "note_fp": "After-hours marks for tonight\u2019s AMC names never landed in `universe_scan.prices_",
+      "kind": "soft_lesson",
+      "text": "After-hours marks for tonight\u2019s AMC names never landed in `universe_scan.prices_meta` (Rubrik\u2019s session close stayed $107.02 while Public.com showed ~$100.60 at 7:00 PM ET, range $93\u2013$121). A forced live overlay on `earnings_deep_dive` tickers \u2014 even a single delayed last \u2014 would have shown the fade without a WebSearch, and would have kept the 15:30 run from describing after-hours as \u201c~$107.14.\u201d Same gap on SentinelOne (~$21.84 vs $22.71 close).",
+      "adopted_at": "2026-08-28T22:49:23.595807+00:00",
+      "run_id": "20260827-97f184"
+    },
+    {
+      "id": "LP-6800271407",
+      "note_fp": "The live-price overlay was 1,322 minutes stale on a 15:30 ET full run while `uni",
+      "kind": "soft_process",
+      "text": "The live-price overlay was 1,322 minutes stale on a 15:30 ET full run while `universe_scan.prices_meta` already had 2026-08-27 daily bars \u2014 that split made after-hours RBRK (~$107.14 on a beat-and-raise) invisible in the pack, so a post-print name I had explicitly gated on \u201cthe morning after if the gap holds\u201d had to be verified by WebSearch. Separately, the event-gate on watchlist triggers still treats a non-dated condition (\u201cafter Boston Scientific confirms shipping restored\u201d) as live once price is within 2%, which is how BSX fired today while the 8-K and 2026-08-27 coverage still say shippin",
+      "adopted_at": "2026-08-28T22:49:23.595809+00:00",
+      "run_id": "20260827-a14ed8"
+    },
+    {
+      "id": "LP-7105008934",
+      "note_fp": "Evening-review packs still price AMC reporters on the regular-session close (CRW",
+      "kind": "soft_lesson",
+      "text": "Evening-review packs still price AMC reporters on the regular-session close (CRWD $189.18, CRM $205.62) with a stale live overlay, while the real tape is the after-hours print (~$206 / ~$232). Overlay after-hours last-sale for names that filed an 8-K/earnings release that session, and rank those releases above leftover pre-print commentary in `news_and_catalysts` (NVDA's card was still \"4 reasons Nvidia stock is lagging\" after the blowout was already in `market_news`).",
+      "adopted_at": "2026-08-28T22:49:23.595816+00:00",
+      "run_id": "20260827-d2c503"
+    },
+    {
+      "id": "LP-3504448789",
+      "note_fp": "Daily study (strategy_playbooks): The bull flag after a thrust: buy the tight no",
+      "kind": "soft_lesson",
+      "text": "Daily study (strategy_playbooks): The bull flag after a thrust: buy the tight no-supply flag, not the pole and not the flag-breakout chase - A bull flag is a short continuation, not a multi-week base: a steep several-day pole on heavy volume, then a 3\u201315 session parallel channel that slopes against the uptrend while volume dries, then a re",
+      "adopted_at": "2026-08-28T22:49:23.595820+00:00",
+      "run_id": "20260826-78d696"
+    },
+    {
+      "id": "LP-7129156477",
+      "note_fp": "After-hours on AMC names is split by venue \u2014 CrowdStrike's IEX overlay already s",
+      "kind": "soft_lesson",
+      "text": "After-hours on AMC names is split by venue \u2014 CrowdStrike's IEX overlay already showed $209.62 vs a $189.18 bar in `prices_meta` at 18:18 ET, while Salesforce (NYSE) was still $205.75 against a confirmed ~$232 Public.com after-hours print at 6:30 p.m. ET. Stamp AMC reporters with an explicit after-hours mark (price, as-of, source) so a 5:30/6:30 p.m. ET full cycle does not have to WebSearch the gap that is the whole tape. Second: Booking still carries `original_plan: null` and no protective stop on a live $73 seat; copy the last accepted plan onto the fill the way Baker Hughes and DexCom carry ",
+      "adopted_at": "2026-08-28T22:49:23.595840+00:00",
+      "run_id": "20260826-4f297b"
+    },
+    {
+      "id": "LP-0788578155",
+      "note_fp": "INTU's still-forming 8/26 dump bar is dropped from both the chart and `last_clos",
+      "kind": "soft_process",
+      "text": "INTU's still-forming 8/26 dump bar is dropped from both the chart and `last_close` (still $357.46 from 8/25), so the live mark had to come from `options_signals.spot` ($342.67) plus WebSearch for the $322.57 session low. On earnings-reaction days, render a labeled \"session so far\" overlay on the chart and write that same intra mark into `prices_meta` for watchlist names, not only holdings. Second: tape-promoted 8-Ks should tag the item type \u2014 NEE's filing was a Dominion-merger proxy supplement (shareholder demand letters), not a 1.01/earnings event, and I spent a research pass learning that.",
+      "adopted_at": "2026-08-28T22:49:23.595844+00:00",
+      "run_id": "20260826-2d6d85"
+    },
+    {
+      "id": "LP-9270998477",
+      "note_fp": "Pre-market prices never reach `watchlist_trigger_alerts` \u2014 Intuit is $314.80 at ",
+      "kind": "soft_process",
+      "text": "Pre-market prices never reach `watchlist_trigger_alerts` \u2014 Intuit is $314.80 at 6:30 a.m. ET, ~1.5% from the $310 hold, but the parser still compares against Tuesday's $357.46 close, so a light 6am slot cannot see a near-trigger. Overlay IEX/pre-market marks onto trigger evaluation for overnight and 6am runs (or stamp `premarket_near_trigger`). Secondary: Booking still carries `original_plan: null`, no chandelier, and no resting stop on a live $74 seat; stamp the executed probe plan (stop $196-200 / target $238) onto the fill so a light re-underwrite is checking kill criteria instead of recons",
+      "adopted_at": "2026-08-28T22:49:23.595847+00:00",
+      "run_id": "20260826-398a1a"
+    },
+    {
+      "id": "LP-7085646948",
+      "note_fp": "After a guidance-miss gap, `analyst_ratings.target_mean_price` still shows the p",
+      "kind": "soft_lesson",
+      "text": "After a guidance-miss gap, `analyst_ratings.target_mean_price` still shows the pre-print Street mean (INTU $444.50 vs overnight ~$321). Stamp that field `pre_print` / `stale_pending_revision` on names that just reported so a news-review cycle cannot treat a $444 target as live 10% upside the same night the company guided $23.28-23.51B vs ~$23.74B Street. Second: `position_stop_cushion` should surface days remaining on each holding's `time_box` \u2014 Baker Hughes is approaching a \"sustained close above $65\" box it has never printed, and that should be a first-class field on the holding card rather ",
+      "adopted_at": "2026-08-28T22:49:23.595849+00:00",
+      "run_id": "20260826-52a5e9"
+    },
+    {
+      "id": "LP-4320854641",
+      "note_fp": "Daily study (risk_management): Drawdown recovery math for a 1% risk / 8% heat sw",
+      "kind": "soft_lesson",
+      "text": "Daily study (risk_management): Drawdown recovery math for a 1% risk / 8% heat swing book: recovery is asymmetric, the heat cap is a max-DD budget not a halt, and cash is the zero-drift regime where expected MDD grows as sqrt(T) - A peak-to-trough loss of fraction L requires a gain of L/(1-L) on the remaining capital to get back to the high-water mark \u2014 an identity, not a trading theory. The curve is gentle to about 20% (10% ne",
+      "adopted_at": "2026-08-28T22:49:23.595851+00:00",
+      "run_id": "20260825-580a8b"
+    },
+    {
+      "id": "LP-2057490471",
+      "note_fp": "Daily study (technical_analysis): RSI-14 as swing-entry timing context: the 40-5",
+      "kind": "soft_lesson",
+      "text": "Daily study (technical_analysis): RSI-14 as swing-entry timing context: the 40-50 reset in a Stage-2 uptrend is the usable read, RSI>70 is not a sell, and RSI<30 is not a bounce buy - J. Welles Wilder introduced the 14-period Relative Strength Index in New Concepts in Technical Trading Systems (1978) as a 0-100 momentum oscillator of Wilder-smoothed up-closes versus down-closes; it",
+      "adopted_at": "2026-08-28T22:49:23.595853+00:00",
+      "run_id": "20260825-c4a758"
+    },
+    {
+      "id": "LP-3994041610",
+      "note_fp": "`digest.by_ticker.BKNG.revenue_yoy_pct` still prints 54.4% for the quarter ended",
+      "kind": "soft_lesson",
+      "text": "`digest.by_ticker.BKNG.revenue_yoy_pct` still prints 54.4% for the quarter ended 2026-06-30 against company-reported ~8% YoY on the same $7.35B print (Insider Monkey/MarketBeat/Q2 slides). A labeled `source_conflict` on YoY when XBRL and the earnings release disagree would stop the brain from citing the flattering figure.",
+      "adopted_at": "2026-08-28T22:49:23.595855+00:00",
+      "run_id": "20260825-dfa9c6"
     }
   ]
 }
