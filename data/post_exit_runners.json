@@ -23,7 +23,7 @@
       },
       "high_after_exit": 500.02,
       "low_after_exit": 389.7542,
-      "last_price": 456.01,
+      "last_price": 423.4,
       "marks": {
         "15": {
           "window_days": 15,
@@ -98,7 +98,7 @@
       "seed_age_days": 19,
       "order_id": "SIM-afbba17462",
       "last_mark_at": "2026-09-01",
-      "current_leftover_pct": 17.0,
+      "current_leftover_pct": 8.63,
       "runner_verdict_interim": "stopped_then_recovered",
       "hold_lesson_interim": "DELL: after loss exit, price recovered +28.29% above exit \u2014 possible noise stop or early invalidation; review stop width vs ATR.",
       "max_extension_pct": 28.29,
@@ -175,7 +175,7 @@
       },
       "high_after_exit": 62.04,
       "low_after_exit": 46.082,
-      "last_price": 52.24,
+      "last_price": 50.75,
       "marks": {
         "15": {
           "window_days": 15,
@@ -250,7 +250,7 @@
       "seed_age_days": 19,
       "order_id": "SIM-d02ec3368c",
       "last_mark_at": "2026-09-01",
-      "current_leftover_pct": 13.36,
+      "current_leftover_pct": 10.13,
       "runner_verdict_interim": "stopped_then_recovered",
       "hold_lesson_interim": "HPE: after loss exit, price recovered +34.63% above exit \u2014 possible noise stop or early invalidation; review stop width vs ATR.",
       "max_extension_pct": 34.63,
@@ -333,8 +333,8 @@
         "calibration_probe": true
       },
       "high_after_exit": 55.69,
-      "low_after_exit": 52.1,
-      "last_price": 52.24,
+      "low_after_exit": 50.75,
+      "last_price": 50.75,
       "marks": {},
       "status": "tracking",
       "runner_verdict": null,
@@ -344,11 +344,39 @@
       "seed_age_days": 0,
       "order_id": "f86c48cf-b81c-4853-8800-51cb63f9a616",
       "last_mark_at": "2026-09-01",
-      "current_leftover_pct": -1.51
+      "current_leftover_pct": -4.32
+    },
+    {
+      "id": "PX-bf0f20644c",
+      "ticker": "BKNG",
+      "exit_date": "2026-09-01",
+      "exit_price": 198.6,
+      "avg_cost": 213.156,
+      "gain_at_exit_pct": -6.83,
+      "realized_pnl_usd": -5.06,
+      "track_kind": "loser",
+      "forced": false,
+      "forced_reason": "async_executor_fill",
+      "process_grade": "process_fail",
+      "days_held": null,
+      "entry_plan": null,
+      "high_after_exit": 198.6,
+      "low_after_exit": 195.97,
+      "last_price": 195.97,
+      "marks": {},
+      "status": "tracking",
+      "runner_verdict": null,
+      "hold_lesson": null,
+      "seed_source": "ledger_backfill",
+      "seeded_at": "2026-09-01",
+      "seed_age_days": 0,
+      "order_id": "EE-aacb4dbba717",
+      "last_mark_at": "2026-09-01",
+      "current_leftover_pct": -1.32
     }
   ],
   "completed": [],
-  "updated_at": "2026-09-01T17:04:50.936026+00:00",
+  "updated_at": "2026-09-01T20:30:27.055309+00:00",
   "exit_grades": [
     {
       "exit_key": "DELL|SIM-afbba17462",
@@ -603,6 +631,66 @@
       "missing": [],
       "gradeable": true,
       "headline": "HPE 2026-08-19 forced_other | realized -0.85R vs claimed +2.92R"
+    },
+    {
+      "exit_key": "BKNG|EE-aacb4dbba717",
+      "ticker": "BKNG",
+      "exit_date": "2026-09-01",
+      "exit_ts": "2026-09-01T13:30:01.082350043Z",
+      "order_id": "EE-aacb4dbba717",
+      "graded_at": "2026-09-01T20:30:27.052948+00:00",
+      "graded_by": "exit_grade_v1",
+      "exit_reason_kind": "discretionary",
+      "exit_reason": "async_executor_fill",
+      "is_stop_exit": false,
+      "forced": false,
+      "entry_plan": {
+        "stop_loss": null,
+        "target_price": null,
+        "holding_horizon_days": null,
+        "entry_price_max": null,
+        "confidence": null
+      },
+      "plan_source": "none",
+      "plan_stop_loss": null,
+      "binding_stop_loss": null,
+      "trailing_stop": null,
+      "entry_price": 213.156,
+      "exit_price": 198.6,
+      "quantity": 0.347727,
+      "reference_price": 199.09,
+      "days_held": null,
+      "horizon_days": null,
+      "realized_pnl_usd": -5.06,
+      "atr_pct": 3.03,
+      "r_grade": {
+        "gradeable": false,
+        "entry_price": 213.156,
+        "exit_price": 198.6,
+        "stop_loss": null,
+        "target_price": null,
+        "risk_unit_usd": null,
+        "claimed_rr": null,
+        "claimed_rr_stated": null,
+        "realized_r": null,
+        "r_gap": null,
+        "risk_used_fraction": null,
+        "capture_fraction": null,
+        "ungradeable_reason": "missing_stop"
+      },
+      "stop_slippage": {
+        "applicable": false,
+        "reason": "exit_reason_kind=discretionary \u2014 not a stop exit",
+        "verdict": "not_applicable"
+      },
+      "process_grade": "process_fail",
+      "missing": [
+        "plan_stop_loss",
+        "plan_target_price",
+        "holding_horizon_days"
+      ],
+      "gradeable": false,
+      "headline": "BKNG 2026-09-01 discretionary | UNGRADEABLE (missing_stop) | missing: plan_stop_loss,plan_target_price,holding_horizon_days"
     }
   ]
 }
