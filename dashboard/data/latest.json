@@ -962,6 +962,10 @@
   "improvements": [
     {
       "date": "2026-09-01",
+      "note": "Daily study (risk_management): Left-tail dependence vs 90-day Pearson: why corr_to_book understates the simultaneous-stop-out, and how to read shared_left_tail and demand_driver as the shock-regime test - The 90-day Pearson that portfolio_risk.corr_to_book reports is a full-sample average. Mean-variance treats that one number as symmetric on the way up and the way down; it is not. Longin and Solnik (Jo"
+    },
+    {
+      "date": "2026-09-01",
       "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
     },
     {
@@ -1075,10 +1079,6 @@
     {
       "date": "2026-08-28",
       "note": "Capability audit FAILED: protective_stops_armed: UNPROTECTED positions: BKNG(none)"
-    },
-    {
-      "date": "2026-08-28",
-      "note": "Overnight after-hours marks for AMC prints (MRVL ~$222.62, RBRK ~$99.52) live only in web search, not in `universe_scan.prices_meta` or a dedicated after-hours overlay, so a Friday open could look like a $220 trigger fill on a stale $241.45 close. A post-close AMC overlay on `earnings_week` names \u2014 last AH print, % vs regular close, and whether a watchlist level was tagged after hours \u2014 would stop the next run from treating Thursday's close as Friday's entry."
     }
   ],
   "trade_events": [

@@ -1,16 +1,54 @@
 {
-  "updated_at": "2026-08-27T23:58:23.279901+00:00",
+  "updated_at": "2026-09-01T23:37:10.777420+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 8,
     "fundamental_analysis": 2,
-    "risk_management": 7,
+    "risk_management": 8,
     "strategy_playbooks": 7,
     "market_microstructure": 1,
     "trading_psychology": 1,
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-8945303779",
+      "discipline": "risk_management",
+      "topic": "Left-tail dependence vs 90-day Pearson: why corr_to_book understates the simultaneous-stop-out, and how to read shared_left_tail and demand_driver as the shock-regime test",
+      "summary": "The 90-day Pearson that portfolio_risk.corr_to_book reports is a full-sample average. Mean-variance treats that one number as symmetric on the way up and the way down; it is not. Longin and Solnik (Journal of Finance 2001), using extreme-value theory on monthly returns of the five largest equity markets from 1958\u20131996, reject multivariate normality in the negative tail but not the positive tail, and show correlation rises in bear markets, not in bull markets, and is not a function of volatility per se. Ang and Chen (Journal of Financial Economics 2002) find the same asymmetry inside the US: equity-portfolio correlations with the market, conditional on the downside, sit 11.6 percentage points above the Gaussian conditional correlation, while the upside cannot be distinguished from normal; small, value, and past-loser names show more of it, and, controlling for size, so do lower-beta names. The slogan 'correlations go to 1 in a crash' is an oversimplification (Page and Panariello, Financial Analysts Journal 2018; Kinlaw, Kritzman, Page and Turkington, Journal of Portfolio Management 2021). Two disagreements sit on that finding and both are real. Forbes and Rigobon (Journal of Finance 2002) show a raw Pearson computed in a high-vol window is biased upward by heteroskedasticity; after their adjustment, 1997 Asia, 1994 Mexico and 1987 show 'no contagion, only interdependence' \u2014 the linkage was already high, it did not structurally increase. That is a statement about whether the tr",
+      "key_points": [
+        "corr_to_book is a 90-day Pearson full-sample average: it mixes upside decoupling with downside unification and therefore understates the simultaneous-stop-out path that 8% gap-adjusted heat actually cares about.",
+        "Left-tail dependence is real and asymmetric: Longin-Solnik reject normality only in the negative tail (bear, not vol); Ang-Chen find US downside corr 11.6pp above Gaussian, with the upside indistinguishable from normal.",
+        "'Correlations go to 1' is exaggerated. Forbes-Rigobon show much of the measured jump in a vol spike is heteroskedasticity bias (interdependence, not a new linkage). That does not help P&L: both names still gap together.",
+        "Condition on the BOOK being down, not on both names being down (Kinlaw et al. 2021). Double-conditioning ignores successful diversification. For high-corr equity pairs the conclusion survives; for low-corr pairs it overstates downside unification.",
+        "GICS labels are not diversification. Leibowitz-Bova: a more 'diversified' risk-on mix raised stress beta 0.65\u21920.95 and lost 9pp to 60/40 in 2008. Same-driver or same AI-stack factor group is one bet even when 90-day corr is moderate.",
+        "The calm-weather screen remains corr_to_book \u2273 0.7 (Kelly's one-bet test). The shock-regime screen is demand_driver, factor_map.what_kills_the_book, and shared_left_tail \u2014 and the shock screen outranks the Pearson when they disagree.",
+        "A diversifier is a different NON-AI-stack demand_driver with low corr_to_book / diversifier=true. Another semiconductor, server OEM, or datacenter REIT is a clone, not a complement, on the left tail this book has already realized."
+      ],
+      "how_to_apply": "Before any BUY, read the book in this order: (1) demand_driver against holdings and factor_map.what_kills_the_book \u2014 same driver or same AI-stack factor group is one bet regardless of GICS; (2) shared_left_tail; (3) corr_to_book, cited as a number, as the calm-weather screen; (4) 90-day beta vs SPY against the 1.6 ceiling. If the candidate shares a driver OR sits in the AI-stack factor group OR shared_left_tail is true, it adds to an existing bet: size the pair against the 2% theme cap and the factor-stack cap, not as two independent 1% risks, place stop_loss beyond structure AND stop_engineering.min_stop_distance_pct (aim 1.5\u20132\u00d7 ATR, never past 15%), and prefer a diversifier=true / low-corr name with a different non-AI-stack driver over a higher-conviction clone even if the clone has a fatter solo thesis. Do not read a 90-day corr below 0.7 as clearance when the economic linkage is the same \u2014 that is Pearson mixing upside decoupling with downside unification \u2014 and do not stand down because shared_left_tail is true (that is unwind-used-as-halt); rotate the KIND of setup. On a cash book the first BUY has no corr_to_book: pick it knowing it defines the left tail the next seat will be",
+      "sources": [
+        "Fran\u00e7ois Longin and Bruno Solnik, 'Extreme Correlation of International Equity Markets,' Journal of Finance 56(2), 2001, pp. 649\u2013676. https://doi.org/10.1111/0022-1082.00340",
+        "Andrew Ang and Joseph Chen, 'Asymmetric correlations of equity portfolios,' Journal of Financial Economics 63(3), 2002, pp. 443\u2013494. https://doi.org/10.1016/S0304-405X(02)00068-5",
+        "Kristin J. Forbes and Roberto Rigobon, 'No Contagion, Only Interdependence: Measuring Stock Market Co-Movements,' Journal of Finance 57(5), 2002, pp. 2223\u20132261. https://doi.org/10.1111/0022-1082.00494 ; working-paper PDF: https://mitsloan.mit.edu/shared/ods/documents?DocumentID=5001",
+        "William Kinlaw, Mark Kritzman, S\u00e9bastien Page and David Turkington, 'The Myth of Diversification Reconsidered,' Journal of Portfolio Management 47(8), August 2021. https://www.statestreet.com/web/insights/articles/documents/jpm-the-myth-of-diversification-reconsidered.pdf",
+        "Martin L. Leibowitz and Anthony Bova, 'Diversification Performance and Stress-Betas,' Journal of Portfolio Management 35(3), Spring 2009, pp. 41\u201347 (stress-beta 0.65\u21920.95 and \u22129pp vs 60/40 in 2008; cited via Kinlaw et al. 2021).",
+        "David B. Chua, Mark Kritzman and S\u00e9bastien Page, 'The Myth of Diversification,' Journal of Portfolio Management 36(1), Fall 2009 (double-conditioned +76%/\u221217% at 1\u03c3 and +93% vs +14% Gaussian at 2\u03c3; cited as the illustration Kinlaw et al. 2021 then qualify)."
+      ],
+      "learned_at": "2026-09-01T23:37:10.773077+00:00",
+      "run_id": "20260901-8a8ec4",
+      "tensions": [
+        {
+          "with": "KB-2999578881",
+          "why": "Kelly answers how much to risk given edge and that correlated names share one budget (1% as deep-fractional Kelly; N_eff; the ~0.7 corr_to_book one-bet test; 8%/2% as portfolio-Kelly). This lesson answers a prior measurement question: that 90-day Pearson is a calm-weather average that understates le",
+          "noted_at": "2026-09-01"
+        },
+        {
+          "with": "KB-2863806537",
+          "why": "The drawdown-recovery lesson is the post-loss path: after clustered same-theme losses, treat them as one path-DD event and rotate. This lesson is the pre-trade diagnosis that should have prevented stacking the second name. They apply in sequence \u2014 diagnose the left tail before entry, rotate after it",
+          "noted_at": "2026-09-01"
+        }
+      ]
+    },
     {
       "id": "KB-1313448240",
       "discipline": "technical_analysis",
@@ -47,7 +85,9 @@
           "why": "KB-1695380801 forbids skipping a quality/momentum leader because it is 'expensive' or extended. An unfilled gap is the chart costume of that same skip (TEAM rejected for a 31.7% unfilled August gap plus RSI/ADX). This lesson names the gap version: do not reject a 3m-RS leader because gap_analysis sh",
           "noted_at": "2026-08-27"
         }
-      ]
+      ],
+      "times_cited": 8,
+      "last_cited": "2026-09-01T22:05:20.073088+00:00"
     },
     {
       "id": "KB-6831088945",
@@ -205,8 +245,8 @@
           "noted_at": "2026-08-24"
         }
       ],
-      "times_cited": 7,
-      "last_cited": "2026-08-27T22:49:18.426245+00:00"
+      "times_cited": 13,
+      "last_cited": "2026-09-01T20:30:27.058492+00:00"
     },
     {
       "id": "KB-4252672139",
@@ -680,8 +720,8 @@
           "noted_at": "2026-08-04"
         }
       ],
-      "times_cited": 14,
-      "last_cited": "2026-08-20T19:58:09.031723+00:00"
+      "times_cited": 16,
+      "last_cited": "2026-09-01T22:05:20.073078+00:00"
     },
     {
       "id": "KB-8928427464",
