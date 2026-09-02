@@ -951,6 +951,10 @@
   "improvements": [
     {
       "date": "2026-09-02",
+      "note": "Daily study (strategy_playbooks): VCP / 3-weeks-tight as a coiled-base filter: tightness names a ready pivot and forbids waiting for a dip the pattern says will not come \u2014 it does not license buying the breakout bar - Mark Minervini\u2019s Volatility Contraction Pattern, as defined in Trade Like a Stock Market Wizard and Think & Trade Like a Champion, is a characteristic of a Stage-2 consolidation rather than a named cu"
+    },
+    {
+      "date": "2026-09-02",
       "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
     },
     {
@@ -1064,10 +1068,6 @@
     {
       "date": "2026-08-31",
       "note": "Booking still carries `original_plan: null`, no chandelier, and no row in `position_stop_cushion`, so a light re-underwrite cannot check kill criteria and the written $200 stop is not armed; broker-sync should stamp the last accepted plan (stop $200 / target $238 / $220-by-Sep-18) onto the fill the way BKR and DXCM carry theirs, and overlay IEX/pre-market marks onto holdings for 6am slots \u2014 live overlay is 3,579 minutes stale, so this run cannot see whether $200 is being tested at Monday's open."
-    },
-    {
-      "date": "2026-08-31",
-      "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
     }
   ],
   "trade_events": [

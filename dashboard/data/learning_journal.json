@@ -1,16 +1,54 @@
 {
-  "updated_at": "2026-09-01T23:37:10.777420+00:00",
+  "updated_at": "2026-09-02T23:36:28.109743+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 8,
     "fundamental_analysis": 2,
     "risk_management": 8,
-    "strategy_playbooks": 7,
+    "strategy_playbooks": 8,
     "market_microstructure": 1,
     "trading_psychology": 1,
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-0377299371",
+      "discipline": "strategy_playbooks",
+      "topic": "VCP / 3-weeks-tight as a coiled-base filter: tightness names a ready pivot and forbids waiting for a dip the pattern says will not come \u2014 it does not license buying the breakout bar",
+      "summary": "Mark Minervini\u2019s Volatility Contraction Pattern, as defined in Trade Like a Stock Market Wizard and Think & Trade Like a Champion, is a characteristic of a Stage-2 consolidation rather than a named cup or flag: typically 2\u20136 pullbacks (his \u2018T\u2019s) whose percentage depth roughly halves (for example 25% then 12% then 6%), volume drying on the pullbacks, and a named pivot at the high of the final, tightest contraction. O\u2019Neil\u2019s weekly tightness is the same idea in different clothes: small high-to-low ranges and consecutive weekly closes near the prior close; a wide, loose base that is \u2018constantly in the market\u2019s eye\u2019 frequently fails on breakout (How to Make Money in Stocks, 4th ed.). IBD treats three-weeks-tight as the secondary buy or add when you missed the orthodox pivot and the leader is stair-stepping without giving a dip. The academic disagreement is load-bearing and I keep it. Engle (American Economic Review 2004) restates Mandelbrot\u2019s clustering: quiet periods cluster, extremes cluster, but returns themselves are almost unpredictable. Bollinger\u2019s own squeeze (ChartSchool, following Bollinger on Bollinger Bands) is explicit that band contraction forecasts a volatility expansion, not its direction, and a subsequent band-break can be a \u2018head fake\u2019 that reverses. Mechanical squeeze tests do not rescue the directional claim: QuantifiedStrategies could not beat buy-and-hold across the versions they tried, and an independent 7.2-million-test Bollinger-squeeze scan (EdgeTools) fo",
+      "key_points": [
+        "VCP is a Stage-2 characteristic (2\u20136 successively shallower contractions, volume dry-up, named pivot at the final-T high), not a standalone buy signal and not a cup-with-handle clone.",
+        "O\u2019Neil tightness / 3-weeks-tight is the weekly version of the same coil; a wide, loose base is the failure mode he actually named, and 3WT is the missed-breakout/add when a leader stair-steps instead of dipping.",
+        "Volatility contraction (Engle clustering; Bollinger squeeze) forecasts MAGNITUDE of the next move, not DIRECTION; head-fakes and failed breakouts are in the source texts, not a footnote.",
+        "This book\u2019s own 12-year study already scored confirmed_breakout and ADX>25-at-breakout as late/negative \u2014 so tightness cannot veto the throwback preference or license chasing a 20-day high.",
+        "The geometry gift of a tight final T is a named stop under that low that can still clear 10% and 2:1 after the ATR floor; if it cannot, pass rather than hugging the noise band or inflating the target.",
+        "Volume dry-up into the final T is no_supply_pullback (the one volume read that survived). Volume SURGE on the breakout is measured-dead \u2014 do not write it into would_buy_at.",
+        "A daily close that re-accepts below the final-T low is a squat/failure (invalidating_structure). A shakeout of a prior T that reclaims is U&R, not a broken VCP. Do not import Minervini\u2019s 7\u20138% stop, 2R-to-breakeven, or 20\u201325% sell-into-strength."
+      ],
+      "how_to_apply": "On a Stage-2 name (trend_up_50_over_200, above_200dma, rel_strength_3m_pct still positive) read the focus chart for successive contractions together with volume_signal and pullback_from_20d_high_pct. A sloppy, overlapping range with no tightening right side is not a VCP: do not invent a pivot \u2014 hold or drop. If two or more contractions have each been shallower and the last T is a no_supply_pullback with only a few percent off the 20-day high, name the pivot as the high of that final T and write would_buy_at as a sanitizer-safe price/structure trigger: \u2018a daily close through [pivot] or the first no_supply_pullback that holds it\u2019 \u2014 never \u2018breakout on 1.5\u00d7 volume.\u2019 If the right side is three-weeks-tight / stair-stepping (weekly closes stacked, no 10\u201315% dip on offer), do not write a deep-pullback trigger the pattern says will not print (the NOW-wait-for-$120 / DE-chase-wait shape); promote a 50\u201370% starter on that pivot hold. Place stop_loss below the final-T low AND at least stop_engineering.min_stop_distance_pct (aim 1.5\u20132\u00d7 ATR, never past 15%); set target_price at the first overhead supply and require 10% upside and 2:1 from that ATR-floored stop \u2014 if a tight coil still cannot clea",
+      "sources": [
+        "Mark Minervini, Trade Like a Stock Market Wizard (McGraw-Hill, 2013) and Think & Trade Like a Champion (2017): VCP as a Stage-2 characteristic (2\u20136 contractions, volume dry-up, pivot at the final-T high, stop under that low); 3C cup-completion cheat (HTMMIS p.243); squat/false breakout. Practitioner",
+        "William J. O\u2019Neil, How to Make Money in Stocks, 4th ed. (McGraw-Hill, 2009): weekly tightness = small high-to-low range with consecutive weeks closing unchanged or near the prior close; wide/loose bases \u2018constantly in the market\u2019s eye\u2019 frequently fail on breakout. IBD Investor\u2019s Corner quoting that ",
+        "Investor\u2019s Business Daily, \u2018Bullish Action Within The IBD 50: Three-Weeks-Tight Patterns\u2019 (2017-01-06): 3WT is the alternative entry or add after missing the orthodox breakout, because some leaders stair-step and never give another dip. https://www.investors.com/stock-lists/ibd-50/bullish-action-wit",
+        "John Bollinger, Bollinger on Bollinger Bands; StockCharts ChartSchool \u2018Bollinger Band Squeeze\u2019: contraction forecasts a volatility expansion, not direction; subsequent band-break can be a head fake. https://chartschool.stockcharts.com/table-of-contents/trading-strategies-and-models/trading-strategie",
+        "Robert F. Engle, \u2018Risk and Volatility: Econometric Models and Financial Practice,\u2019 American Economic Review 94(3), June 2004: returns almost unpredictable; quiet and extreme periods cluster (ARCH/GARCH). Mandelbrot (1963) first documented the clustering fact in commodity prices.",
+        "East Equity 12-year indicator study (2026-07-19): confirmed_breakout \u22120.32pp ATR-matched (n=1,482), unconfirmed_breakout \u22120.15 (n=5,595); ADX>25 breakouts \u22120.35 / \u22120.42 and negative in 10 of 12 years; no_supply_pullback +0.22 / +0.25 the only volume read that survived. Mechanical squeeze/breakout sc"
+      ],
+      "learned_at": "2026-09-02T23:36:28.103853+00:00",
+      "run_id": "20260902-91b39a",
+      "tensions": [
+        {
+          "with": "KB-9692173165",
+          "why": "KB-9692173165 still owns the default entry after a genuine multi-week base: the throwback to the named pivot, not the breakout through it, which is what the 12-year confirmed_breakout and ADX>25 cells already scored as late. This lesson supplies the missing QUALITY filter for which bases deserve a n",
+          "noted_at": "2026-09-02"
+        },
+        {
+          "with": "KB-6831088945",
+          "why": "KB-6831088945 is a 3\u201315 session continuation after a steep pole, with the flag low as the stop; past ~3 weeks it is no longer a flag. A VCP is the multi-week (often 2\u20136 contractions, weeks to months) coiled-base characteristic of that longer pause. If the pause is still a short no-supply channel aga",
+          "noted_at": "2026-09-02"
+        }
+      ]
+    },
     {
       "id": "KB-8945303779",
       "discipline": "risk_management",
@@ -720,8 +758,8 @@
           "noted_at": "2026-08-04"
         }
       ],
-      "times_cited": 16,
-      "last_cited": "2026-09-01T22:05:20.073078+00:00"
+      "times_cited": 21,
+      "last_cited": "2026-09-02T22:02:39.044747+00:00"
     },
     {
       "id": "KB-8928427464",
