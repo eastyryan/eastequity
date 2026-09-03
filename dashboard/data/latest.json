@@ -987,6 +987,10 @@
   "improvements": [
     {
       "date": "2026-09-03",
+      "note": "Daily study (risk_management): Portfolio beta vs dollar-stop risk: the 1.6 ceiling is MV-weighted against equity, a 1% R on a 2.5-beta name is not 1% of a market shock, and betting-against-beta is not a 3-90 day stock-picking rule - Beta is the slope of an asset's return on the market: Cov(R_i, R_m)/Var(R_m). Portfolio beta is the market-value-weighted sum \u03a3(w_i \u00d7 \u03b2_i). This system's code (tools/book_risk.projected_portfolio_beta"
+    },
+    {
+      "date": "2026-09-03",
       "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
     },
     {
@@ -1100,10 +1104,6 @@
     {
       "date": "2026-09-01",
       "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
-    },
-    {
-      "date": "2026-09-01",
-      "note": "Yesterday's LPLA buy was rejected as `capability_dead:protective_stops_armed` plus a leftover `tests_red` on Hewlett Packard Enterprise's partial fill \u2014 the brain's only lever is to re-file, so a run-start flag that the protective-stop gate is live (or still dead) would have saved a full underwrite cycle and let the 6am/8:45 slots act. Secondary: `digest.by_ticker.LPLA.revenue_yoy_pct` still prints 41.3% against company-reported ~35% on the same $5.187B Q2 print; a labeled `source_conflict` on YoY (LP-3994041610, already filed for Booking) would stop the flattering figure from being the default."
     }
   ],
   "trade_events": [

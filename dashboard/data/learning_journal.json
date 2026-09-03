@@ -1,16 +1,53 @@
 {
-  "updated_at": "2026-09-03T00:17:26.540583+00:00",
+  "updated_at": "2026-09-03T23:34:57.693032+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 9,
     "fundamental_analysis": 2,
-    "risk_management": 8,
+    "risk_management": 9,
     "strategy_playbooks": 8,
     "market_microstructure": 1,
     "trading_psychology": 1,
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-4115597092",
+      "discipline": "risk_management",
+      "topic": "Portfolio beta vs dollar-stop risk: the 1.6 ceiling is MV-weighted against equity, a 1% R on a 2.5-beta name is not 1% of a market shock, and betting-against-beta is not a 3-90 day stock-picking rule",
+      "summary": "Beta is the slope of an asset's return on the market: Cov(R_i, R_m)/Var(R_m). Portfolio beta is the market-value-weighted sum \u03a3(w_i \u00d7 \u03b2_i). This system's code (tools/book_risk.projected_portfolio_beta) weights against EQUITY, not invested capital, so cash is a 0-beta sleeve and a half-cash book reads as half-exposed \u2014 the same formula Britannica and Guardfolio teach, with cash included. That number is a different risk axis from the 1% entry-to-stop dollar budget. A name with a 5% stop sizes to ~20% of a $1k book at 1% risk; if its 90-day beta vs SPY is 2.5, that one seat contributes 0.50 to book beta and, in the named broad_market_selloff_10 stress (market_pct \u221210%, losses not floored at stops), about $50 of equity loss from that position alone. Two such seats already consume the 1.6 cap's room; a fully invested 1.6-beta book would lose ~16% in that \u221210% tape, which also breaches the 12% max_stress_loss_pct \u2014 so in practice a fully invested book is tighter than 1.6, and cash is the slack that makes 1.6 reachable. CAPM (Sharpe 1964) said high beta should earn more. Black, Jensen and Scholes (1972) already found the security market line too flat. Baker, Bradley and Wurgler (Financial Analysts Journal 2011), which I read in full, document the inversion over 1968\u20132008 on CRSP: $1 in the lowest-beta quintile grew to $60.46 ($10.28 real) versus $3.77 (64 cents real) in the highest-beta quintile; among the top 1,000 names the figures are $78.66 versus $4.70. Their Table 1 (beta sort",
+      "key_points": [
+        "Portfolio beta = \u03a3(MV_i / equity \u00d7 \u03b2_i). Cash is 0-beta; weighting against invested-only would report a fully-invested beta for a half-cash book. This system's 1.6 cap uses the equity denominator.",
+        "Dollar-to-stop risk and market-shock risk are different units. A 1% R on a tight-stop 2.5-beta name can be 20% of equity notional and 0.50 of book beta; the 1% budget does not automatically keep the 1.6 ceiling.",
+        "The 12% stress cap on a \u221210% SPY tape (losses not floored at stops) implies ~1.2 book beta when fully invested. The 1.6 ceiling is reachable only with cash or lower-beta seats as slack.",
+        "CAPM's high-beta premium is empirically flat-to-inverted at long horizons (BJS 1972; Baker-Bradley-Wurgler 1968\u20132008 paths and Table 1). That does NOT license a BAB overlay on a 3\u201390 day long-only momentum book: Baker's own long-only low-vol IR was 0.08\u20130.17 versus momentum 0.64, and Novy-Marx/Velik",
+        "In a supportive tape, high beta is participation (Pettengill). Do not reject a 2.5-beta leader solely for the number \u2014 size it so projected book beta stays \u22641.6, start at 50\u201370%, or pair with cash/a lower-beta diversifier. Unknown beta on a PROPOSED name is assumed at 1.6; unknown beta on a HELD nam",
+        "90-day beta is the constraint input, not a thesis. It is backward-looking and window-dependent. Beta measures systematic risk only; idiosyncratic gaps and same-driver left tails are the other axes (already covered)."
+      ],
+      "how_to_apply": "Before any BUY, read the candidate's 90-day beta vs SPY from portfolio_risk and compute its contribution as (position_size_usd / equity) \u00d7 beta, then the projected book beta including that seat against the 1.6 cap. Size from the 1% stop-distance budget first, then haircut notional if that contribution would push the book through 1.6 or through the 12% stress on broad_market_selloff_10 (shock \u2248 book_beta \u00d7 10% of equity, not floored at the stop). A tight-stop high-beta name (HOOD-shape 2.31, DELL-shape 2.76) is the trap: a 5% stop sizes ~$200 on this $1k book and contributes ~0.46\u20130.55 of book beta from one seat \u2014 cut to a 50\u201370% starter, demand a wider 1.5\u20132\u00d7ATR stop that shrinks notional, or pass rather than hugging min_stop_distance_pct. Do not skip a 3m-RS leader solely because beta is 2.3 (that is the unwind-used-as-halt shape applied to a number); size it. If the proposed name has no beta, treat it as 1.6 and enforce the cap against that; if a holding has no beta, do not add anything until it is measurable. In a supportive tape, high beta is allowed participation so long as the projected book clears 1.6 and the 12% stress; in a hostile tape the regime gate already blocks the B",
+      "sources": [
+        "Baker, Bradley and Wurgler, 'Benchmarks as Limits to Arbitrage: Understanding the Low-Volatility Anomaly,' Financial Analysts Journal 67(1) 2011 \u2014 primary PDF read this session: https://pages.stern.nyu.edu/~jwurgler/papers/faj-benchmarks.pdf",
+        "Frazzini and Pedersen, 'Betting against beta,' Journal of Financial Economics 111(1) 2014, pp. 1\u201325. AQR summary: https://www.aqr.com/Insights/Research/Journal-Article/Betting-Against-Beta ; ScienceDirect (US BAB Sharpe 0.78, 1926\u2013March 2012): https://www.sciencedirect.com/science/article/pii/S03044",
+        "Novy-Marx and Velikov, 'Betting against betting against beta,' Journal of Financial Economics 2022 \u2014 BAB construction equal-weights and commits ~$1.05 per dollar to the bottom 1% of cap: https://www.sciencedirect.com/science/article/abs/pii/S0304405X21002051 (abstract; primary PDF not fetched)",
+        "Britannica Money, 'Beta Weighting a Portfolio' (formula \u03a3(position value \u00d7 beta)/portfolio value; limitations: backward-looking, systematic-only): https://www.britannica.com/money/portfolio-beta-weighting",
+        "Guardfolio, 'Portfolio Beta Calculator & Formula' (weighted-average vs statistical beta; window-dependence; beta is not total risk): https://www.guardfolio.ai/portfolio-beta-formula",
+        "Black, Jensen and Scholes, 'The Capital Asset Pricing Model: Some Empirical Tests' (1972) \u2014 SML too flat; cited via Baker and subsequent literature"
+      ],
+      "learned_at": "2026-09-03T23:34:57.687074+00:00",
+      "run_id": "20260903-c35a02",
+      "tensions": [
+        {
+          "with": "KB-2999578881",
+          "why": "Kelly answers how much to RISK given edge and that correlated names share one 1%/8%/2% budget. This lesson is a different axis: market-factor loading. Two names can have corr_to_book of 0.3 (different drivers, N_eff looks fine) and both print beta 2.0, so they both amplify a SPY shock even though th",
+          "noted_at": "2026-09-03"
+        },
+        {
+          "with": "KB-8945303779",
+          "why": "Left-tail dependence is the nonlinear crash where 90-day Pearson understates simultaneous stop-outs. Beta is the LINEAR average sensitivity to SPY. They stack rather than substitute: beta sizes the typical market move (broad_market_selloff_10); shared_left_tail and demand_driver size the shock that ",
+          "noted_at": "2026-09-03"
+        }
+      ]
+    },
     {
       "id": "KB-2413484258",
       "discipline": "technical_analysis",
@@ -800,8 +837,8 @@
           "noted_at": "2026-08-04"
         }
       ],
-      "times_cited": 21,
-      "last_cited": "2026-09-02T22:02:39.044747+00:00"
+      "times_cited": 25,
+      "last_cited": "2026-09-03T21:53:30.379554+00:00"
     },
     {
       "id": "KB-8928427464",
