@@ -945,6 +945,10 @@
   "improvements": [
     {
       "date": "2026-09-04",
+      "note": "Weekly self-review: Last week\u2019s change stuck on the part that mattered: Booking was closed instead of carried naked, and at $193.29 three days later that kill looks right. DexCom is the one working long \u2014 it tagged $92.50, reclaimed $87, and the $86.08 trail is now the manager; I will not discretionary-sell it just because an ordinary day could nick the stop. Baker Hughes is still green but has never held a close above $65, and rewriting that clock to September 9 is the last extension it gets. Five closed trades, five losses, average \u22120.84R, so calibration is now caution and new confidence gets shaded about 0.05 \u2014 that is a sample, not a sector ban. The shadow book\u2019s regrets are mostly announcement gaps I was right not to buy; the good skips are the dump bars (Palo Alto, CrowdStrike, Hewlett Packard Enterprise). The one change next week: every watchlist trigger is a reclaim of a prior session\u2019s high or low \u2014 never today\u2019s close \u2014 so Snowflake cannot false-alert four times because I typed the bar I was supposed to wait for."
+    },
+    {
+      "date": "2026-09-04",
       "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
     },
     {
@@ -1058,10 +1062,6 @@
     {
       "date": "2026-09-02",
       "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
-    },
-    {
-      "date": "2026-09-02",
-      "note": "LPLA has now been proposed six times across 2026-08-31, 2026-09-01 and this morning and died every time on `tests_red:tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder` (the Hewlett Packard remnant), not the thesis \u2014 stamp last-run validator rejection reasons (`ticker`, `reasons`) and a live/dead `tests_gate` flag at the top of the pack so a midday focused cycle does not spend a full underwrite rediscovering a leftover test flag. Secondary: `price_freshness_live` is 18 hours stale at 12:55 p.m. ET; the only usable live LPLA marks this run were options spot ($359.69) and WebSearch, so overlay IEX/pre-market marks onto holdings + watchlist even when `stale=true` rather than dropping the overlay entirely."
     }
   ],
   "trade_events": [
