@@ -945,6 +945,10 @@
   "improvements": [
     {
       "date": "2026-09-04",
+      "note": "Weekly knowledge consolidation: 1 merged, 0 retired. Folded the two 'do not halt on a hole' notes \u2014 R-multiple expectancy / losing-streak math and drawdown-recovery / cash-as-zero-drift \u2014 into one principle: a ~2% paper-book hole needs one honest 2R winner, five closed losses still cannot estimate expectancy, and standing down is the regime where expected drawdown grows with waiting. I did not pull MAE, Kelly, or left-tail into it; those remain different axes (path diagnostic, how-big, shock-regime). Retired nothing: every lesson is still ungraded (five closed trades, zero linked outcomes), five lessons are under the 7-day lock, and the remainin"
+    },
+    {
+      "date": "2026-09-04",
       "note": "Weekly self-review: Last week\u2019s change stuck on the part that mattered: Booking was closed instead of carried naked, and at $193.29 three days later that kill looks right. DexCom is the one working long \u2014 it tagged $92.50, reclaimed $87, and the $86.08 trail is now the manager; I will not discretionary-sell it just because an ordinary day could nick the stop. Baker Hughes is still green but has never held a close above $65, and rewriting that clock to September 9 is the last extension it gets. Five closed trades, five losses, average \u22120.84R, so calibration is now caution and new confidence gets shaded about 0.05 \u2014 that is a sample, not a sector ban. The shadow book\u2019s regrets are mostly announcement gaps I was right not to buy; the good skips are the dump bars (Palo Alto, CrowdStrike, Hewlett Packard Enterprise). The one change next week: every watchlist trigger is a reclaim of a prior session\u2019s high or low \u2014 never today\u2019s close \u2014 so Snowflake cannot false-alert four times because I typed the bar I was supposed to wait for."
     },
     {
@@ -1058,10 +1062,6 @@
     {
       "date": "2026-09-02",
       "note": "The DELL trigger fired on the 2026-09-01 $425.00 daily_bar (price_as_of 2026-09-01, the pre-print close) while live was $466-$479 on the gap; stamp `prices_meta.price_as_of` onto trigger evaluation and suppress an alert whose parsed level equals yesterday's close on a name that gapped overnight. Secondary: LPLA has now been proposed seven times across 2026-08-31 through this afternoon and died on `tests_red:tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder` \u2014 put a live/dead `tests_gate` flag at the top of the pack so a 2 p.m. focused cycle does not spend a full underwrite rediscovering a leftover Hewlett Packard test flag."
-    },
-    {
-      "date": "2026-09-02",
-      "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
     }
   ],
   "trade_events": [

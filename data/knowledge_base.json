@@ -698,7 +698,10 @@
         }
       ],
       "times_cited": 6,
-      "last_cited": "2026-08-24T19:12:19.058297+00:00"
+      "last_cited": "2026-08-24T19:12:19.058297+00:00",
+      "superseded_by": "KB-9586927181",
+      "superseded_at": "2026-09-04T23:20:37.574995+00:00",
+      "supersede_reason": "merged"
     },
     {
       "id": "KB-2770353193",
@@ -1004,7 +1007,10 @@
           "why": "KB-8671934946 is the per-trade argument that three losses cannot license a stand-down (law of small numbers; +0.20R design at 40%/2:1). This lesson is the equity-curve argument for the same conclusion: a ~2% hole needs ~2.1% to recover, Magdon-Ismail's zero-drift cell is cash, and clustered same-the",
           "noted_at": "2026-08-25"
         }
-      ]
+      ],
+      "superseded_by": "KB-9586927181",
+      "superseded_at": "2026-09-04T23:20:37.575002+00:00",
+      "supersede_reason": "merged"
     },
     {
       "id": "KB-6831088945",
@@ -1277,7 +1283,38 @@
           "noted_at": "2026-09-04"
         }
       ]
+    },
+    {
+      "id": "KB-9586927181",
+      "discipline": "risk_management",
+      "topic": "A 1%/8% swing book does not halt on a small hole: 40%/2:1 still earns +0.20R, recovery is L/(1-L), and standing down is the zero-drift cell",
+      "summary": "A 2:1 book at 40% wins with avg_loss near 1R has expectancy E = +0.20R per trade (breakeven W = 33.3%). That is why the validator's 2:1 floor exists; win rate alone is a vanity metric. This book's closed sequence (DELL -1.43R with 0.55 ATR gap-through; HPE around -0.54R) is not a measured expectancy: Tversky and Kahneman's law of small numbers says n=3-5 with 0 wins cannot distinguish a 40% system from a coin flip. A 3-loss streak is a ~22% event at the design 40% win rate; abandoning a positive-E process because the first few lost is the named error. Recovery from a peak-to-trough loss L requires L/(1-L) on remaining capital. At 1% risk, five sequential losers are -4.90%; a ~2% paper-book hole needs ~2.1% \u2014 one honest 2R winner. Magdon-Ismail et al. (JAP 2004) show expected MDD scales as log T under positive drift and as sigma*sqrt(pi*T/2) under zero drift, so standing down (cash, mu=0) is the regime where expected underwater depth grows with sqrt of waiting. Chekhlov et al. (IJTAF 2005) formalize the 8% heat cap as a MaxDD constraint on simultaneous stop-out, not a participation rule. Tharp: the same system at 2%/5%/10% R produced 26%/65%/blown \u2014 size is the lever, and 1% plus 8% heat are already set. Clustered same-theme losses (DELL+HPE) are one path-DD event, not a broken process. Never martingale; never add a de-risk halt on top of 1%-of-current-equity and the code's 0.5x unwind haircut.",
+      "key_points": [
+        "Expectancy E = (W x avg_win_R) - ((1-W) x avg_loss_R). At 2:1 with avg_loss near 1R, breakeven W is 33.3% and 40% wins produce +0.20R/trade \u2014 that is why the validator's 2:1 floor exists.",
+        "n=3-5 with 0 wins cannot estimate W or E (Tversky-Kahneman law of small numbers). A 3-loss streak is a ~22% event at the design 40% win rate; abandoning a positive-E process because the first few lost is the named error.",
+        "Recovery is L/(1-L) on remaining capital: 10% needs +11.1%, 20% needs +25%. At 1% risk, five sequential losers are -4.90%; a ~2% paper-book hole needs ~2.1%, i.e. one honest 2R winner.",
+        "Magdon-Ismail et al. (JAP 2004): expected MDD ~ log T with positive drift, sigma*sqrt(pi*T/2) with zero drift, linear with negative drift. Standing down (cash, mu=0) is the cell where expected underwater depth grows with sqrt of waiting.",
+        "The 8% heat cap is a MaxDD budget on simultaneous stop-out (Chekhlov CDD), not a participation rule. Tharp: the same system at 2%/5%/10% R produced 26%/65%/blown \u2014 size is the lever, and 1% plus 8% heat are already set.",
+        "Clustered same-theme losses (DELL+HPE, shared_left_tail) are one path-DD event, not two independent 1R hits and not evidence that swing trading does not work. Rotate the driver; do not abstain.",
+        "Realized avg_loss above 1R (DELL -1.43R) can flip a 40%/2:1 book negative; that is a gap/slippage problem (demand ~2.5:1 on event names) \u2014 not a reason to raise the 2:1 floor or skip the next clean setup.",
+        "Never martingale to get even; never cut a live winner early to get back (that kills avg_win_R). Percent-of-current-equity is already the brake. A 0.50-0.60 setup is a half-risk probe, the correct re-entry size, not a stand-down."
+      ],
+      "how_to_apply": "After every close, compute realized drawdown versus the high-water mark as L/(1-L) and grade the book in realized R, not win rate. If the hole is inside the 8% heat budget (a ~2% hole needs ~2.1%, one honest 2R winner), judge the next BUY on thesis, geometry, 2:1, the ATR/expected-move stop floor, and the 3-day earnings blackout \u2014 not on 'we are in a hole' and not because the last three lost. Never size up to get even; keep size = (current equity x 1%) / stop_distance_pct. Never invent an extra de-risk halt or cash stand-down on top of that 1% and the code's 0.5x unwind haircut: cash is the zero-drift cell where expected MDD grows as sqrt(T). If avg_loss drifts above 1R, demand the ~2.5:1 cushion of KB-1365918646 on the NEXT buy rather than standing down. When losses cluster on one demand_driver or shared_left_tail is true, treat them as one path-DD event: prefer a different driver or a diversifier=true / low corr_to_book name, and respect the 2% theme and factor-stack caps \u2014 rotation, not abstention. Never cut a live winner early to get even (HPE 07-15): that kills avg_win_R; bank sell_fraction 0.4-0.6 only at >=2R and let the 3xATR chandelier trail the rest.",
+      "sources": [
+        "Van K. Tharp, Trade Your Way to Financial Freedom (McGraw-Hill, 1993; 2nd ed. 2007) \u2014 R-multiples, expectancy, recovery table, and the same-system 2%/5%/10% R producing 26%/65%/blown",
+        "Magdon-Ismail, M., Atiya, A.F., Pratap, A., and Abu-Mostafa, Y.S. (2004), 'On the maximum drawdown of a Brownian motion,' Journal of Applied Probability 41(1), 147-161",
+        "Chekhlov, A., Uryasev, S., and Zabarankin, M. (2005), 'Drawdown Measure in Portfolio Optimization,' International Journal of Theoretical and Applied Finance 8(1), 13-58",
+        "Tversky, A. and Kahneman, D. (1971), 'Belief in the Law of Small Numbers,' Psychological Bulletin 76(2), 105-110 \u2014 n=3-5 cannot represent the generating process",
+        "https://crosstrade.io/learn/performance-metrics/r-multiple \u2014 E in R; 40%/2:1 = +0.20R; avg_loss can exceed -1R on slip",
+        "https://www.backtestbase.com/education/losing-streak-calculator-trading \u2014 P(k consecutive)=q^k; expected longest streak ~ ln(N)/ln(1/q); independent-Bernoulli baseline"
+      ],
+      "learned_at": "2026-09-04T23:20:37.570478+00:00",
+      "run_id": "20260904-60cb36",
+      "merged_from": [
+        "KB-8671934946",
+        "KB-2863806537"
+      ]
     }
   ],
-  "updated_at": "2026-09-04T21:46:21.159398+00:00"
+  "updated_at": "2026-09-04T23:20:37.576504+00:00"
 }
