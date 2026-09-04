@@ -1239,7 +1239,45 @@
           "noted_at": "2026-09-03"
         }
       ]
+    },
+    {
+      "id": "KB-5080476485",
+      "discipline": "strategy_playbooks",
+      "topic": "Post-earnings announcement drift as a swing playbook: the 60-day SUE sort is dead in this book's liquid names; the 10-day preferred lane is a tradability window, not SUE-alpha",
+      "summary": "Ball and Brown (1968) first showed abnormal returns keep moving with an earnings surprise after the announcement month. Bernard and Thomas (1989, 1990) made it a tradable anomaly: a top-minus-bottom SUE-decile book earned about 4% over the next 60 trading days (~2% on each side; they estimated ~18% annualized before costs in the first subsequent quarter), the spread was positive in 41 of 48 quarters from 1974-1985, and 25-30% of the drift packed into the three-day windows around the next three prints \u2014 as if the market used a naive seasonal random walk and was then surprised again when quarterly earnings autocorrelated (lags about 0.34, 0.19, 0.06, then -0.24 at lag four). That is classic PEAD. It has not survived in names this book can hold. Martineau (Critical Finance Review 2022), on analyst surprises 1984-2019, shows announcement-day BHAR[0,1] per surprise-rank unit rose from 20 bps (1984-90) to 120 bps (2016-19) for all-but-microcap stocks, while post-announcement BHAR[2,60] lost significance after 2005 and printed negative in 2016-19; he dates the large-stock disappearance to 2006, with leftover drift in microcaps and no-analyst names. Chordia, Goyal, Sadka, Sadka and Shivakumar (Financial Analysts Journal 2009) had already located the paper profits in illiquid names: 0.04%/month value-weighted in the most liquid quintile versus 2.43% in the most illiquid, with transaction costs consuming 70-100% of a long-short SUE book. Fink's 2021 review of 216 papers reaches the sam",
+      "key_points": [
+        "Classic PEAD is a 60-day SUE-decile sort (~4% long-short in Bernard-Thomas 1974-85). In liquid large caps that sort has been gone since ~2006 (Martineau); remaining paper profits sit in illiquid/no-analyst names whose costs eat 70-100% of them (Chordia et al. FAJ 2009).",
+        "Price discovery moved onto the print: Martineau's all-but-microcap BHAR[0,1] per surprise-rank unit rose 6x (20\u2192120 bps) while BHAR[2,60] went insignificant after 2005 and negative in 2016-19.",
+        "A beat is not a 60-day long at the single-name level. Katz, McCubbins and McMullin (2018) found only 51.8% of 'Good News' observations had positive subsequent returns; a 2016-2026 liquid-US backtest found only 48.3% of >5% beats beat the universe, with the residual stronger on misses (-1.63%) than b",
+        "Ball & Brown 2019 'PEAD continues' uses annual/monthly windows that include the announcement month. That is the gap, not a 60-day post-print hold.",
+        "What still pays in this book is not SUE-rank: it is a held announcement gap on a leader (PEG), subsequent analyst-revision breadth (Livnat-Mendenhall), and O'Neil C as a leadership filter \u2014 not a mechanical surprise sort.",
+        "This book's 10-day post_print_drift window is a tradability gate (binary resolved, reaction observable, geometry clean), not a claim that SUE will deliver +4%. The 12-year earnings_reaction taxonomy cannot promote or veto.",
+        "Chan-Jegadeesh-Lakonishok 1996: earnings momentum and price momentum were complements then, and the earnings leg was shorter-lived than prior return. Do not treat a 3m-RS leader with a miss, or a beat on a Stage-4 name, as the same trade."
+      ],
+      "how_to_apply": "When earnings_week or days_since_earnings shows a name printed inside the 10-day post_print_drift window, treat it as the preferred lane because the binary is resolved \u2014 not because SUE will drift. Do not promote solely because post_earnings_drift_candidate fired, and do not reject because earnings_reaction is gap_filled or down_gap (those cells were measured as noise). Require the remaining engine: analyst_estimates revision_direction up (weight ear_low_coverage higher, per Martineau's leftover low-coverage cell and Chordia's illiquidity result), Stage-2 structure (trend_up_50_over_200, above_200dma, rel_strength_3m_pct still positive), and honest geometry. If a \u22652% gap held (retained_pct \u2273 0.5, filled false), route through PEG \u2014 do not buy the gap bar; write would_buy_at as the first no_supply_pullback that holds the gap-day low; otherwise enter on a sanitizer-safe rail (50-DMA / no_supply_pullback / throwback to the pivot), 50\u201370% starter, stop_loss below that named low AND at least stop_engineering.min_stop_distance_pct (aim 1.5\u20132\u00d7 ATR, never past 15%), target at the first overhead supply, requiring 10% upside and 2:1 from that ATR-floored stop \u2014 never from a 60-day SUE average",
+      "sources": [
+        "Ball, R., & Brown, P. (1968). An empirical evaluation of accounting income numbers. Journal of Accounting Research, 6(2), 159\u2013178. https://www.jstor.org/stable/2490232",
+        "Bernard, V. L., & Thomas, J. K. (1989). Post-earnings-announcement drift: Delayed price response or risk premium? Journal of Accounting Research, 27, 1\u201336. https://www.jstor.org/stable/2491062",
+        "Bernard, V. L., & Thomas, J. K. (1990). Evidence that stock prices do not fully reflect the implications of current earnings for future earnings. Journal of Accounting and Economics, 13, 305\u2013340. https://deepblue.lib.umich.edu/handle/2027.42/28288",
+        "Martineau, C. (2022). Rest in Peace Post-Earnings Announcement Drift. Critical Finance Review, 11(3-4), 613\u2013646. https://cfr.ivo-welch.org/published/papers/martineau2021rest.pdf",
+        "Chordia, T., Goyal, A., Sadka, G., Sadka, R., & Shivakumar, L. (2009). Liquidity and the Post-Earnings-Announcement Drift. Financial Analysts Journal. https://rpc.cfainstitute.org/research/financial-analysts-journal/2009/liquidity-and-the-post-earnings-announcement-drift",
+        "Fink, J. (2021). A review of the Post-Earnings-Announcement Drift. Journal of Behavioral and Experimental Finance, 29, 100446. https://doi.org/10.1016/j.jbef.2020.100446"
+      ],
+      "learned_at": "2026-09-04T00:10:47.393173+00:00",
+      "run_id": "20260903-ba3ce2",
+      "tensions": [
+        {
+          "with": "KB-3704904010",
+          "why": "PEG is the held-gap ENTRY on a leader (day-after first pullback, stop under the gap-day low). This lesson is the 60-day SUE-DRIFT claim, which is dead in liquid large caps. Same print, different jobs: still wait for the throwback rather than buying the gap bar because PEAD will 'finish the move.'",
+          "noted_at": "2026-09-04"
+        },
+        {
+          "with": "KB-2596574918",
+          "why": "Estimate-revision breadth is the remaining post-print mechanism (Livnat-Mendenhall: analyst SUE historically beat time-series). This lesson forbids treating the surprise rank itself as a 60-day hold. Use revisions plus price confirmation; do not use SUE-alone.",
+          "noted_at": "2026-09-04"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-09-03T23:34:57.691541+00:00"
+  "updated_at": "2026-09-04T00:10:47.397558+00:00"
 }

@@ -987,6 +987,10 @@
   "improvements": [
     {
       "date": "2026-09-03",
+      "note": "Daily study (strategy_playbooks): Post-earnings announcement drift as a swing playbook: the 60-day SUE sort is dead in this book's liquid names; the 10-day preferred lane is a tradability window, not SUE-alpha - Ball and Brown (1968) first showed abnormal returns keep moving with an earnings surprise after the announcement month. Bernard and Thomas (1989, 1990) made it a tradable anomaly: a top-minus-bottom S"
+    },
+    {
+      "date": "2026-09-03",
       "note": "Daily study (risk_management): Portfolio beta vs dollar-stop risk: the 1.6 ceiling is MV-weighted against equity, a 1% R on a 2.5-beta name is not 1% of a market shock, and betting-against-beta is not a 3-90 day stock-picking rule - Beta is the slope of an asset's return on the market: Cov(R_i, R_m)/Var(R_m). Portfolio beta is the market-value-weighted sum \u03a3(w_i \u00d7 \u03b2_i). This system's code (tools/book_risk.projected_portfolio_beta"
     },
     {
@@ -1100,10 +1104,6 @@
     {
       "date": "2026-09-01",
       "note": "The tests-red gate on `test_partial_broker_side_fill_leaves_a_correct_remainder` has now blocked the same LPLA ticket on 2026-08-31 and twice on 2026-09-01. Surface that flag as a first-class `capability_dead` banner at the top of the pack (ticker-agnostic, with last-fail timestamp) so a focused cycle does not spend the WebSearch budget re-underwriting a buy the validator cannot accept until the checkout is green."
-    },
-    {
-      "date": "2026-09-01",
-      "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
     }
   ],
   "trade_events": [
