@@ -945,6 +945,10 @@
   "improvements": [
     {
       "date": "2026-09-04",
+      "note": "Weekly knowledge consolidation: 0 merged, 0 retired. Kept all 31 active lessons and cut none. Earlier today I already folded the two 'do not halt on a hole' notes into one principle, and I will not re-merge it. Every lesson is still ungraded \u2014 five closed trades, zero linked outcomes \u2014 so there is no evidence_status to retire on, and six notes from this week (including that merge) are under the seven-day lock. The remaining overlaps \u2014 pullback versus 50-day rail versus RSI versus volume, throwback versus flag versus VCP, power-earnings-gap versus gap taxonomy versus PEAD, pre-print fork versus options expected-move, Kelly versus left-tail versus"
+    },
+    {
+      "date": "2026-09-04",
       "note": "Weekly knowledge consolidation: 1 merged, 0 retired. Folded the two 'do not halt on a hole' notes \u2014 R-multiple expectancy / losing-streak math and drawdown-recovery / cash-as-zero-drift \u2014 into one principle: a ~2% paper-book hole needs one honest 2R winner, five closed losses still cannot estimate expectancy, and standing down is the regime where expected drawdown grows with waiting. I did not pull MAE, Kelly, or left-tail into it; those remain different axes (path diagnostic, how-big, shock-regime). Retired nothing: every lesson is still ungraded (five closed trades, zero linked outcomes), five lessons are under the 7-day lock, and the remainin"
     },
     {
@@ -1058,10 +1062,6 @@
     {
       "date": "2026-09-02",
       "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
-    },
-    {
-      "date": "2026-09-02",
-      "note": "The DELL trigger fired on the 2026-09-01 $425.00 daily_bar (price_as_of 2026-09-01, the pre-print close) while live was $466-$479 on the gap; stamp `prices_meta.price_as_of` onto trigger evaluation and suppress an alert whose parsed level equals yesterday's close on a name that gapped overnight. Secondary: LPLA has now been proposed seven times across 2026-08-31 through this afternoon and died on `tests_red:tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder` \u2014 put a live/dead `tests_gate` flag at the top of the pack so a 2 p.m. focused cycle does not spend a full underwrite rediscovering a leftover Hewlett Packard test flag."
     }
   ],
   "trade_events": [
