@@ -1314,7 +1314,45 @@
         "KB-8671934946",
         "KB-2863806537"
       ]
+    },
+    {
+      "id": "KB-2369805317",
+      "discipline": "risk_management",
+      "topic": "The chandelier trail hangs from high-water since entry, not a rolling 22-day high: 3\u00d7ATR, ratchet-only, no breakeven jump, and trailing_stop_breached means a volatility-sized giveback from the peak",
+      "summary": "Chuck LeBeau designed the chandelier as an exit, not an entry: hang a stop from the ceiling of the trade (the highest high since entry) by a multiple of Wilder's Average True Range, so the stop advances when the trend prints a new extreme instead of lagging from prior lows. Alexander Elder carried that idea to a wide audience in Come Into My Trading Room (2002). The published chart overlay that StockCharts ChartSchool prints is a different object: 22-day High \u2212 ATR(22)\u00d73, and ChartSchool is explicit that this line 'rises and falls as the period high and the ATR value changes.' LuxAlgo's reconstruction of the same split is the honest one: LeBeau's original hangs from the high since entry; the fixed 22-bar lookback is the charting adaptation; and in the raw formula a rising ATR with no new high lowers a long stop, which is why many implementations add a ratchet. This book's code is the original-plus-ratchet, not the overlay. exit_guard._chandelier_stop computes high_water \u2212 3\u00d7ATR$ (ATR% of the current price, trailing_stop_atr_multiple=3.0), it becomes the effective stop only once that level exceeds the plan stop, and it only ever ratchets up \u2014 never down, never widened, and with no breakeven jump at +1R. Until the trail has climbed above the plan stop, the entry stop still governs. The academic disagreement on whether trailing stops add return is real and I keep it. Kaminski and Lo (SIFR 63 / Journal of Financial Markets 2014) show that under a random walk a stop always reduces",
+      "key_points": [
+        "LeBeau original: stop = highest high (or close) SINCE ENTRY \u2212 k\u00d7ATR. ChartSchool/Elder overlay: 22-day High \u2212 ATR(22)\u00d73, and that line can fall. This book implements the original plus a ratchet, not the overlay.",
+        "Code: trail = high_water \u2212 3\u00d7(ATR% \u00d7 last). It binds only once it exceeds the plan stop; then effective_stop = max(plan stop, trail) and it only ever rises. Forced-exit reason is trailing_stop_breached when the trail was the binding level.",
+        "Kaminski-Lo: stops tax expected return under a random walk and only earn a stopping premium when momentum/serial correlation is present. Lei-Li 2009 on individual stocks: trailing stops do not raise returns vs buy-and-hold; they reduce return volatility. Treat the chandelier as risk-reduction and tr",
+        "3\u00d7ATR from the peak is sized to survive an ordinary 1\u20132 ATR pullback and fire on a genuine volatility-sized reversal. It is LeBeau/Elder convention, not a fitted optimum. Do not import 2\u00d7 (shakeout) or LeBeau's later 2\u00d7-after-4-ATR-profit shorten \u2014 this code does not run those.",
+        "No breakeven jump at +1R. A cost-anchored BE move is a different trigger from a 3-ATR giveback from high-water; on this book's 8\u201312% swing stops the former fires inside the noise band the entry stop was built to survive.",
+        "cushion_in_atr is remaining room to the EFFECTIVE stop (max of plan stop and trail), in the name's own ATR. Under ~1 ATR (inside_noise_band) an ordinary session can hit it. trailing_stop_breached is the mechanical 'the move gave back 3 ATR from the peak' \u2014 not a re-entry.",
+        "The chandelier is an exit overlay. Do not use a break of the ChartSchool long-line as a BUY, and do not discretionary-exit a holding whose thesis_invalidators are still clean just because open profit feels large."
+      ],
+      "how_to_apply": "On every holdings review read position_stop_cushion before writing HOLD or SELL_TO_CLOSE: recorded_stop, trailing_stop, effective_stop, cushion_in_atr, inside_noise_band. Until trailing_stop is above the plan stop the ENTRY stop still governs \u2014 do not move it to breakeven at +1R and do not 'protect profits' with a discretionary full close (HPE 07-15, BKNG 09-01). If the trail is binding and cushion_in_atr is under ~1, either HOLD through because invalidating_print / invalidating_structure / time_box are still clean, or let the safety layer fire; never SELL_TO_CLOSE to beat the trail by a few ticks. Bank sell_fraction 0.4\u20130.6 only at \u22652R and leave the stub on the single chandelier; the trail lifting above cost is what frees 8% heat for a pyramid add (max 2, only above blended cost), not a reason to shorten the chain to 2\u00d7ATR. When a forced exit reason is trailing_stop_breached, treat it as 'high-water giveback of 3 ATR' \u2014 do not re-BUY that bar; requalify from a sanitizer-safe rail (price / structure / no_supply_pullback). Never write would_buy_at off a chandelier cross; it is not an entry signal.",
+      "sources": [
+        "Charles LeBeau, 'Trailing Stops \u2014 The Chandelier Exit' (System Traders Club bulletin; reproduced at https://www.forexfactory.com/attachment/file/513633?d=1280062818 and https://idoc.pub/documents/chuck-lebeau-trailing-stops-chandelier-strategy-mwl183q7zj4j) \u2014 original: hang 3 ATR below the highest h",
+        "StockCharts ChartSchool, 'Chandelier Exit' \u2014 https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-overlays/chandelier-exit \u2014 22-day High \u2212 ATR(22)\u00d73; explicit that the overlay rises AND falls; volatile names may need a higher multiple (HPQ example at 5\u00d7)",
+        "Alexander Elder, Come Into My Trading Room (Wiley, 2002) \u2014 popularized LeBeau's chandelier as a trailing stop, with credit",
+        "Kaminski, K. and Lo, A.W., 'When Do Stop-Loss Rules Stop Losses?', SIFR Research Report Series 63 (2008); Journal of Financial Markets 18:234\u2013254 (2014) \u2014 under a random walk stops always reduce expected return; a stopping premium requires momentum/serial correlation",
+        "Lei, A.Y.C. and Li, H., 'The Value of Stop Loss Strategies', Financial Services Review 18(1):23\u201351 (2009); CXO Advisory summary of the same paper at https://www.cxoadvisory.com/technical-trading/using-trailing-stop-losses-to-reduce-risk/ \u2014 NYSE/AMEX 1970\u20132005: trailing stops do not change return lev",
+        "LuxAlgo Library, 'Chandelier Stop' \u2014 https://www.luxalgo.com/library/concept/chandelier-stop/ \u2014 original (since-entry high) vs 22-bar charting adaptation; raw formula can fall when ATR expands; many implementations add a ratchet so the long stop never falls"
+      ],
+      "learned_at": "2026-09-07T23:34:00.683763+00:00",
+      "run_id": "20260907-c8080d",
+      "tensions": [
+        {
+          "with": "KB-1365918646",
+          "why": "KB-1365918646 owns the ENTRY stop (sqrt(t) noise band, gap-through, entry location as the lever). Its supporting line that the chandelier is '22d high \u2212 3\u00d7ATR' is the ChartSchool overlay, not this book's code, which hangs from high_water since entry and only ratchets up. Same tool, different job and",
+          "noted_at": "2026-09-07"
+        },
+        {
+          "with": "KB-8928427464",
+          "why": "KB-8928427464 uses the trail as the FUNDING source for a second unit once it has lifted toward or above cost. This lesson is the construction and firing rule of that same trail (high_water, 3\u00d7, ratchet, activation gate, trailing_stop_breached). They apply in sequence: this one says when the trail is",
+          "noted_at": "2026-09-07"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-09-07T22:19:41.694788+00:00"
+  "updated_at": "2026-09-07T23:34:00.688318+00:00"
 }
