@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-09-07T23:34:00.689885+00:00",
+  "updated_at": "2026-09-07T23:46:33.218050+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
-    "technical_analysis": 9,
+    "technical_analysis": 10,
     "fundamental_analysis": 2,
     "risk_management": 9,
     "strategy_playbooks": 9,
@@ -11,6 +11,43 @@
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-0862294276",
+      "discipline": "technical_analysis",
+      "topic": "MACD as a lagging description of 12-vs-26 EMA momentum, not a timing trigger: bull/bear crosses carry no measured information and cannot veto a live thesis",
+      "summary": "Gerald Appel built MACD in the late 1970s as EMA(12) minus EMA(26), with a 9-day EMA of that spread as the signal line; Thomas Aspray\u2019s histogram (MACD minus signal) is the series this book stores as macd.hist, and bull_cross_recent / bear_cross_recent means that histogram flipped sign within about five sessions. The zero line is not a third oscillator \u2014 it is the 12/26 EMA cross itself, so above_zero is the standing regime and the signal-line cross is a lagged turn in that spread. Practitioner rules disagree on which event is the trade: Murphy\u2019s Law 8 (and Fidelity) want the buy when the fast line crosses the slow line with both still below zero, and the sell when the cross happens from above zero; ChartSchool treats any signal-line cross as the most common alert but warns that crosses at extremes are often just momentum cooling after a surge, and its IBM example printed eight signal-line crosses in six months with two bearish ones while the stock kept trending. Elder treats histogram slope as an earlier, less reliable warning than the line cross; ChartSchool is explicit that bearish divergences are commonplace in a strong uptrend and that MACD, being unbounded, is a poor overbought/oversold tool. Academic tests of MACD as a RULE are not robust. Chong and Ng (2008) found MACD and RSI beat buy-and-hold on 60 years of FT30; Chong, Ng and Liew (2014) then showed the zero-line rule MACD(12,26,0) on 1976\u20132002 daily index data produced a significant 10-day buy\u2013sell spread of 1.379",
+      "key_points": [
+        "MACD line = EMA(12)\u2212EMA(26); signal = EMA(9) of MACD; histogram = MACD\u2212signal. above_zero is the 12/26 EMA-cross regime; bull_cross_recent / bear_cross_recent is a histogram sign-flip within ~5 sessions \u2014 a lagged turn in a lagged spread.",
+        "Appel/Murphy\u2019s textbook buy is the signal-line cross with both lines still below zero, not any bull cross anywhere; ChartSchool\u2019s own IBM tape shows serial signal-line crosses, including bearish ones, inside a continuing uptrend.",
+        "ChartSchool: divergences are warnings not predictions, and bearish MACD divergences are commonplace in strong uptrends; MACD is unbounded, so it is a poor overbought/oversold tool (Fidelity agrees).",
+        "Elder\u2019s histogram-slope \u2018earlier warning\u2019 is earlier because it is noisier; Incredible Charts states the histogram is less reliable than the line cross as a consequence.",
+        "Chong-Ng-Liew (2014): MACD(12,26,0) worked on 1976\u20132002 Milan and TSX 10-day holds; MACD(12,26,9) did not travel. Chio (2022) US large-cap 2015\u20132021: MACD-only win rate <50% before costs. This book\u2019s 12-year cells are all flat.",
+        "A dead read cannot be a trigger and cannot be a veto. Writing \u2018buy when MACD crosses\u2019 into would_buy_at is a gate the sanitizer will strip; refusing a live price/structure trigger because the cross has not printed is the CRWD/GE dead_indicator_veto."
+      ],
+      "how_to_apply": "On every candidate read macd.state / hist / hist_direction only after above_200dma, trend_up_50_over_200, and rel_strength_3m_pct \u2014 the same stage filter as RSI and ADX. If that stack is Stage-2, treat above_zero as the description that the 12-EMA sits over the 26-EMA, and treat bull_cross_recent as a lagged turn in that spread: write would_buy_at on a sanitizer-safe rail (named price, 50-DMA / pivot hold, or no_supply_pullback), promote a 50\u201370% starter on that hold, place stop_loss below the tagged low AND at least stop_engineering.min_stop_distance_pct (aim 1.5\u20132\u00d7 ATR, never past 15%), and require 10% upside and 2:1 from that ATR-floored stop \u2014 do not promote because the histogram flipped, and never write a MACD cross into the trigger (the sanitizer will strip it and journal the original). If a watchlist name\u2019s own price/structure trigger has printed but macd.state is still below_zero or the bull cross has not printed, that is the CRWD/GE shape: promote or requalify on the price rail, do not reject for the missing cross (dead_indicator_veto fires when that is the only ground). If you already hold and macd.state flips to bear_cross_recent or hist_direction turns down while invali",
+      "sources": [
+        "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-indicators/macd-moving-average-convergence-divergence-oscillator",
+        "John J. Murphy, Ten Laws of Technical Trading, Law 8 (StockCharts); https://articles.stockcharts.com/article/stockcharts-insider-john-murphys-law-8-know-the-warning-signs-macd/",
+        "https://www.fidelity.com/learning-center/trading-investing/technical-analysis/technical-indicator-guide/macd",
+        "Alexander Elder, Trading for a Living (MACD-Histogram: slope as earlier, noisier warning); restated at https://www.incrediblecharts.com/technical/macd_and_histogram.php",
+        "Chong, T.T.-L. and Ng, W.-K. (2008), Technical analysis and the London stock exchange: testing the MACD and RSI rules using the FT30, Applied Economics Letters 15(14), 1111\u20131114.",
+        "Chong, T.T.-L., Ng, W.-K. and Liew, V.K.-S. (2014), Revisiting the Performance of MACD and RSI Oscillators, Journal of Risk and Financial Management 7(1), 1\u201312. https://doi.org/10.3390/jrfm7010001"
+      ],
+      "learned_at": "2026-09-07T23:46:33.212101+00:00",
+      "run_id": "20260907-7ba123",
+      "tensions": [
+        {
+          "with": "KB-8718018770",
+          "why": "KB-8718018770 owns RSI-14 as Stage-2 pullback context (40-50 reset is description, RSI>70 is not a sell). This lesson is the other oscillator in the same entry-timing stack: MACD state describes the 12/26 EMA spread, it does not time the entry and cannot veto one. Use RSI for the pullback-band descr",
+          "noted_at": "2026-09-07"
+        },
+        {
+          "with": "KB-9135641435",
+          "why": "KB-9135641435 owns ADX/DMI as a lagging description of how extended a trend already is (ADX>25 cannot corroborate a breakout; ADX<20 cannot veto). MACD is a different lag \u2014 the 12/26 EMA spread and its 9-EMA turn \u2014 with the same job restriction: describe, do not trigger, do not veto. They stack as c",
+          "noted_at": "2026-09-07"
+        }
+      ]
+    },
     {
       "id": "KB-2369805317",
       "discipline": "risk_management",
