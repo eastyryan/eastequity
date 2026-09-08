@@ -1,13 +1,13 @@
 {
-  "cash_usd": 909.33,
-  "total_equity_usd": 985.49,
+  "cash_usd": 921.53,
+  "total_equity_usd": 985.46,
   "positions": [
     {
       "ticker": "BKR",
       "quantity": 0.995395,
       "avg_cost": 58.198,
-      "market_value_usd": 63.9,
-      "last_price": 64.2,
+      "market_value_usd": 63.93,
+      "last_price": 64.225,
       "opened_at": "2026-07-28T17:54:27.847621+00:00",
       "proposal_id": "20260728-b66630",
       "plan": {
@@ -39,45 +39,6 @@
         "client_order_id": "EESTOP-BKR-8a307cb6b0",
         "alpaca_order_id": "5180f23b-0d3e-4e36-8bca-b68c796e10a6",
         "armed_at": "2026-08-24T18:25:32.204489+00:00"
-      }
-    },
-    {
-      "ticker": "DXCM",
-      "quantity": 0.144115,
-      "avg_cost": 82.92,
-      "market_value_usd": 12.25,
-      "last_price": 85.03,
-      "opened_at": "2026-08-06T15:05:47.791467+00:00",
-      "proposal_id": "20260806-8f3821",
-      "plan": {
-        "stop_loss": 78.4,
-        "target_price": 92.5,
-        "holding_horizon_days": 45,
-        "entry_price_max": 83.0,
-        "confidence": 0.61,
-        "demand_driver": "healthcare",
-        "thesis_invalidators": {
-          "invalidating_print": "Q3 FY2026 results (~2026-10-29) showing reported revenue growth below the ~11% low end of the just-raised $5.18-5.25B FY26 guide, or non-GAAP operating margin missing the guided 23.5-24% range.",
-          "invalidating_structure": "A daily close below $78.00 on above-average volume, breaking the noise-band stop and confirming the pullback is not just digestion.",
-          "time_box": "If DXCM has not reclaimed and held above $87 (near its 52-week high) within 25 trading days of entry (by ~2026-09-11), the post-earnings-drift thesis isn't playing out -- reassess."
-        },
-        "calibration_probe": null
-      },
-      "high_water": 92.98,
-      "trailing_stop": 86.0843,
-      "adds_count": 0,
-      "buy_commission_usd": 0.0,
-      "demand_driver": "healthcare",
-      "protective_stop": {
-        "status": "resting",
-        "stop_price": 86.0843,
-        "qty": 2.0,
-        "uncovered_qty": 0.144115,
-        "session_only": false,
-        "time_in_force": "gtc",
-        "client_order_id": "0f9c07a8-f8e2-4336-80b2-d1cf360c61f4",
-        "alpaca_order_id": "cc8ceebf-a492-4b44-a7e3-2df0a24c42f5",
-        "armed_at": "2026-09-02T18:44:05.138675+00:00"
       }
     }
   ],
@@ -1124,12 +1085,59 @@
       },
       "alpaca_status": "filled",
       "filled_at": "2026-09-01T13:30:01.082350043Z"
+    },
+    {
+      "ticker": "DXCM",
+      "action": "SELL_TO_CLOSE",
+      "order_id": "EEXIT-DXCM-2026-09-08-trailing-stop-breach",
+      "client_order_id": "EEXIT-DXCM-2026-09-08-trailing-stop-breach",
+      "alpaca_order_id": "36ed14be-e671-4a32-9728-728c08675984",
+      "proposal_id": "out-of-band",
+      "out_of_band": true,
+      "forced_exit_reason": "broker_side_fill",
+      "reference_price": 84.684,
+      "submitted_at": "2026-09-08T19:38:50.643866633Z",
+      "status": "filled",
+      "fill_price": 84.684,
+      "quantity": 0.144115,
+      "notional_usd": 12.2,
+      "sell_fraction": 1.0,
+      "avg_cost": 82.92,
+      "position_opened_at": "2026-08-06T15:05:47.791467+00:00",
+      "entry_plan": {
+        "stop_loss": 78.4,
+        "target_price": 92.5,
+        "holding_horizon_days": 45,
+        "entry_price_max": 83.0,
+        "confidence": 0.61,
+        "demand_driver": "healthcare",
+        "thesis_invalidators": {
+          "invalidating_print": "Q3 FY2026 results (~2026-10-29) showing reported revenue growth below the ~11% low end of the just-raised $5.18-5.25B FY26 guide, or non-GAAP operating margin missing the guided 23.5-24% range.",
+          "invalidating_structure": "A daily close below $78.00 on above-average volume, breaking the noise-band stop and confirming the pullback is not just digestion.",
+          "time_box": "If DXCM has not reclaimed and held above $87 (near its 52-week high) within 25 trading days of entry (by ~2026-09-11), the post-earnings-drift thesis isn't playing out -- reassess."
+        },
+        "calibration_probe": null
+      },
+      "entry_proposal_id": "20260806-8f3821",
+      "realized_pnl_usd": 0.25,
+      "total_realized_pnl_usd": 0.25,
+      "dividends_received_usd": 0.0,
+      "fees_usd": {
+        "commission": 0.0,
+        "sec_fee": 0.0,
+        "taf": 0.0,
+        "slippage_bps": 0.0,
+        "effective_slippage_pct": 0.0
+      },
+      "alpaca_status": "filled",
+      "filled_at": "2026-09-08T19:38:50.651129392Z"
     }
   ],
-  "broker_synced_at": "2026-09-08T18:48:36.987320+00:00",
+  "broker_synced_at": "2026-09-08T19:45:24.258114+00:00",
   "broker_backend": "alpaca_paper",
   "ingested_broker_orders": [
     "f86c48cf-b81c-4853-8800-51cb63f9a616",
-    "EEXIT-HPE-2026-08-19-trailing-stop-breach"
+    "EEXIT-HPE-2026-08-19-trailing-stop-breach",
+    "EEXIT-DXCM-2026-09-08-trailing-stop-breach"
   ]
 }
