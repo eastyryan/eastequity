@@ -1,16 +1,55 @@
 {
-  "updated_at": "2026-09-07T23:46:33.218050+00:00",
+  "updated_at": "2026-09-08T23:42:37.643629+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 10,
     "fundamental_analysis": 2,
-    "risk_management": 9,
+    "risk_management": 10,
     "strategy_playbooks": 9,
     "market_microstructure": 1,
     "trading_psychology": 1,
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-1510950925",
+      "discipline": "risk_management",
+      "topic": "Percent-volatility vs percent-risk sizing: 1% / ATR-floored stop already inverse-vol-scales the book, and a second ATR haircut is double-counting",
+      "summary": "Van Tharp (Trade Your Way to Financial Freedom, ch. 14) splits two sizing models that get mashed together. Percent-risk sets position size so a stop-out costs a fixed fraction of equity: P = (equity \u00d7 risk%) / (entry \u2212 stop). Percent-volatility sets size so one day's ATR costs a fixed fraction: P = (equity \u00d7 vol%) / ATR. They are not the same object: a name can print a small daily ATR and a distant structural stop, or a huge ATR and a tight stop. The Turtles (Dennis/Eckhardt, as published by Faith) used the volatility form as their unit \u2014 Unit = 1% of account / (N \u00d7 dollars per point), N a 20-day ATR \u2014 then placed the stop at 2N, so each unit actually risked about 2%. This book's coded formula is percent-risk, size = (equity \u00d7 1%) / stop_distance_pct, but because stop_engineering floors the stop at max(1\u00d7ATR, 0.5\u00d7expected_move) and the swing craft aims 1.5\u20132\u00d7ATR, the two models coincide on every tradeable name: a high-ATR name automatically gets a smaller notional and a quiet name a larger one, which is the formula working, not a problem to fix. Moskowitz, Ooi and Pedersen (Journal of Financial Economics 2012) vol-scale each futures sleeve toward a common target so the loudest contract does not dominate the book; Kim, Tse and Wald (Journal of Financial Markets 2016) then show that a large share of MOP's published time-series-momentum alpha is that scaler, not the momentum signal \u2014 equal-dollar sizing is a silent overweight of the volatile names. Hallerbach (2012) proves that ",
+      "key_points": [
+        "Tharp percent-risk equalizes 1R (loss if the stop hits); percent-vol equalizes daily wiggle. They coincide if and only if the stop is an ATR multiple.",
+        "This book's size = (equity \u00d7 1%) / stop_distance_pct is percent-risk; the ATR/expected-move floor makes it inverse-vol as well. A 5% stop on this $1k book is ~$200; a 12% stop is ~$83. High-ATR \u2192 smaller notional is the formula working.",
+        "Turtles sized to 1N = 1% of equity and stopped at 2N, so each unit risked ~2%. Do not import that 2%: this book sizes to the actual stop so 1R stays 1%.",
+        "Equal-dollar notionals (same $ on a 4% ATR name and a 12% ATR name) are a silent overweight of the loud name. That is the MOP construction; Kim-Tse-Wald show the scaler itself is doing real work.",
+        "Hugging stop_engineering.min_stop_distance_pct to inflate notional cheats the vol-scaler: you are pretending the name is quieter than the 1.5\u20132\u00d7ATR swing width the stop must actually survive.",
+        "When the ATR/expected-move floor exceeds the 15% stop cap, stop_engineering.tradeable is false: you cannot inverse-vol size inside the cap. Pass. Do not squeeze the stop or inflate the target to scrape 2:1.",
+        "Time-series vol-management (Moreira-Muir's ~50% cut after a vol shock) is already the code's 0.5\u00d7 unwind haircut plus the hostile regime gate. Cederburg: the spanning alpha is not a real-time rule, so do not add a third discretionary vol cut or stand down (unwind_used_as_halt).",
+        "Vol targeting budgets an estimate; it does not cap the outcome (gaps, news, regime breaks). 1R remains a floor, not a ceiling."
+      ],
+      "how_to_apply": "On every BUY, place stop_loss beyond the named structural low AND at least stop_engineering.min_stop_distance_pct, aiming 1.5\u20132\u00d7ATR and never past 15%, then size from size = (equity \u00d7 1%) / stop_distance_pct \u2014 that single fraction is both the 1R budget and the inverse-vol scaler, so do not also cut the 1% because ATR looks high. If stop_engineering.tradeable is false, pass: that name cannot be inverse-vol sized inside the 15% cap, and squeezing the stop to pass 2:1 is the cheat this lesson forbids. After sizing, check the resulting notional against the 1.6 beta ceiling and the 35% theme-MV cap \u2014 a tight-stop high-beta name (HOOD-shape 2.3 beta, ~$200 on a 5% stop) is allowed by inverse-vol and then clipped by beta, not skipped because ATR is high. During momentum_health unwind the code already applies 0.5\u00d7 to the 1% numerator (Moreira-Muir's ~50% cut after a vol shock); do not add a third haircut or stand down. A 0.50\u20130.60 probe is a smaller numerator (0.5%), not a different vol model. Prefer liquid names so the ATR estimate is not a thin-tape fiction; gaps still make 1R a floor, so on event/gap names keep the ~2.5:1 cushion rather than scraping 2.00 from a hugged noise-band stop.",
+      "sources": [
+        "Van K. Tharp, Trade Your Way to Financial Freedom (McGraw-Hill, 1993/2007), ch. 14 \u2014 percent-risk vs percent-volatility; P = C/R; daily ATR is not the same as stop-risk (restated in The Definitive Guide to Position Sizing Strategies)",
+        "Original Turtle Trading Rules (Dennis/Eckhardt, as published by Curtis Faith): Unit = 1% of account / (N \u00d7 dollars per point), N = 20-day ATR, stop at 2N \u2248 2% risk per unit \u2014 https://www.theturtletrader.com/turtle-trading-rules/",
+        "Moreira, A. & Muir, T., 'Volatility-Managed Portfolios', Journal of Finance 72(4):1611\u20131644 (2017) \u2014 scale by inverse of prior-month realized variance; market alpha 4.9%, appraisal 0.33, +25% Sharpe; ~50% cut after a 1-SD variance shock \u2014 https://doi.org/10.1111/jofi.12513",
+        "Cederburg, S., O'Doherty, M.S., Wang, F. & Yan, X., 'On the performance of volatility-managed portfolios', Journal of Financial Economics 138(1):95\u2013117 (2020) \u2014 103 equity strategies; 53 vs 50 Sharpe wins; only 8 significant; spanning alphas not implementable in real time \u2014 https://doi.org/10.1016/j",
+        "Moskowitz, T.J., Ooi, Y.H. & Pedersen, L.H., 'Time Series Momentum', Journal of Financial Economics 104(2):228\u2013250 (2012) \u2014 per-instrument vol-scaling so high-vol contracts do not dominate",
+        "Kim, A.Y., Tse, Y. & Wald, J.K., 'Time series momentum and volatility scaling', Journal of Financial Markets 30:103\u2013124 (2016) \u2014 a large share of MOP's TSMOM alpha is the vol-scaler, not the signal; unscaled TSMOM \u2248 unscaled buy-and-hold \u2014 https://doi.org/10.1016/j.finmar.2016.05.003"
+      ],
+      "learned_at": "2026-09-08T23:42:37.635695+00:00",
+      "run_id": "20260908-8b922a",
+      "tensions": [
+        {
+          "with": "KB-2999578881",
+          "why": "Kelly sets the NUMERATOR: how much edge justifies risking (1% as deep-fractional Kelly under unknown edge; 8%/2% as portfolio-Kelly on correlated names). This lesson is the DENOMINATOR identity: once the stop is ATR-floored, size = 1% / stop_distance already inverse-vol-scales the notional, so a sec",
+          "noted_at": "2026-09-08"
+        },
+        {
+          "with": "KB-4115597092",
+          "why": "Inverse-vol can produce LARGE notionals on tight-stop names (5% stop \u2192 ~$200 on this $1k book). Beta is a different axis: that $200 seat on a 2.3-beta name contributes ~0.46 of book beta against the 1.6 ceiling and the 12% stress. Do not skip a 3m-RS leader because ATR is high (that is this lesson);",
+          "noted_at": "2026-09-08"
+        }
+      ]
+    },
     {
       "id": "KB-0862294276",
       "discipline": "technical_analysis",
@@ -84,7 +123,9 @@
           "why": "KB-8928427464 uses the trail as the FUNDING source for a second unit once it has lifted toward or above cost. This lesson is the construction and firing rule of that same trail (high_water, 3\u00d7, ratchet, activation gate, trailing_stop_breached). They apply in sequence: this one says when the trail is",
           "noted_at": "2026-09-07"
         }
-      ]
+      ],
+      "times_cited": 3,
+      "last_cited": "2026-09-08T18:48:34.383676+00:00"
     },
     {
       "id": "KB-9586927181",
@@ -905,8 +946,8 @@
           "noted_at": "2026-08-04"
         }
       ],
-      "times_cited": 32,
-      "last_cited": "2026-09-07T22:19:41.694778+00:00"
+      "times_cited": 37,
+      "last_cited": "2026-09-08T22:00:09.117763+00:00"
     },
     {
       "id": "KB-8928427464",

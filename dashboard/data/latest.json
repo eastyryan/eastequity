@@ -930,6 +930,10 @@
   "improvements": [
     {
       "date": "2026-09-08",
+      "note": "Daily study (risk_management): Percent-volatility vs percent-risk sizing: 1% / ATR-floored stop already inverse-vol-scales the book, and a second ATR haircut is double-counting - Van Tharp (Trade Your Way to Financial Freedom, ch. 14) splits two sizing models that get mashed together. Percent-risk sets position size so a stop-out costs a fixed fraction of equity: P = (equity \u00d7"
+    },
+    {
+      "date": "2026-09-08",
       "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
     },
     {
@@ -1043,10 +1047,6 @@
     {
       "date": "2026-09-04",
       "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
-    },
-    {
-      "date": "2026-09-04",
-      "note": "The SNOW trigger fired on the 2026-09-03 close of $356.47 versus a $355.47 gap-day low while this midday focused run's live tape had already undercut $344.63 \u2014 `price_freshness_live` is stale (age 1,127 min, holdings only) and `prices_meta` is the prior session, so a 12:00 ET holdings_watchlist slot cannot see an intraday throwback fail. Overlay IEX/intraday marks onto trigger evaluation for midday and 2pm runs (or stamp `intraday_undercut` when the live low is more than 2% through a parsed level) so a lagging close cannot count as a hit. Secondary: `digest.by_ticker.LPLA.revenue_yoy_pct` still prints 41.3% for the quarter ended 2026-06-30 against company-reported +35% on the same $5.187B (Q2 2026 release 2026-07-30) \u2014 the same labeled `source_conflict` already adopted for BKNG (LP-3994041610)."
     }
   ],
   "trade_events": [
