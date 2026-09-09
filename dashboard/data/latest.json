@@ -940,6 +940,10 @@
   "improvements": [
     {
       "date": "2026-09-09",
+      "note": "Daily study (technical_analysis): Nearness to the 52-week high is a Stage-2 location filter, not an 'extended' skip \u2014 and the new-high bar is still not the entry - George and Hwang (Journal of Finance, 2004) rank CRSP stocks each month by current price divided by the 52-week high, hold the top versus bottom 30% for six months, and print a 0.45% per month winner-"
+    },
+    {
+      "date": "2026-09-09",
       "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
     },
     {
@@ -1053,10 +1057,6 @@
     {
       "date": "2026-09-07",
       "note": "Daily study (risk_management): The chandelier trail hangs from high-water since entry, not a rolling 22-day high: 3\u00d7ATR, ratchet-only, no breakeven jump, and trailing_stop_breached means a volatility-sized giveback from the peak - Chuck LeBeau designed the chandelier as an exit, not an entry: hang a stop from the ceiling of the trade (the highest high since entry) by a multiple of Wilder's Average True Range, so the stop advanc"
-    },
-    {
-      "date": "2026-09-07",
-      "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
     }
   ],
   "trade_events": [

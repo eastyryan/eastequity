@@ -1472,7 +1472,45 @@
       ],
       "times_cited": 5,
       "last_cited": "2026-09-09T22:01:57.844400+00:00"
+    },
+    {
+      "id": "KB-6553773801",
+      "discipline": "technical_analysis",
+      "topic": "Nearness to the 52-week high is a Stage-2 location filter, not an 'extended' skip \u2014 and the new-high bar is still not the entry",
+      "summary": "George and Hwang (Journal of Finance, 2004) rank CRSP stocks each month by current price divided by the 52-week high, hold the top versus bottom 30% for six months, and print a 0.45% per month winner-minus-loser spread (July 1963\u2013December 2001); excluding January the spread is 1.23% (winners 1.30%, losers 0.07%), and in Fama\u2013MacBeth horse races the 52-week-high dummies dominate Jegadeesh\u2013Titman 6-month return momentum (0.65% vs 0.38% per month all months; 1.06% vs 0.46% outside January). Their mechanism is anchoring on a published round number: traders are reluctant to bid through a 52-week high even when news warrants it, so good news is absorbed slowly and the name continues; they are equally reluctant to sell as low as bad news implies when price is far from the high. O'Neil's CAN SLIM 'N' (new highs after a base) and AAII's operational screen (price at least 90% of the 52-week high) plus Minervini's Trend Template criterion 7 (within 25% of the high, closer better, 10\u201315% ideal) are the practitioner version of the same location filter \u2014 'stocks that seem too high-priced and risky often go even higher' \u2014 and Minervini is explicit that the template is a watchlist pool, not a buy list. Huddart, Lang and Yetman (Management Science, 2009) show volume spikes when price crosses a 52-week high or low, then subsides, with subsequent week-and-month risk-adjusted returns reliably positive after either crossing and strongest in small, retail-heavy names: the crossing bar is an attent",
+      "key_points": [
+        "Price / 52-week-high rank is a 6-month continuation factor that dominates past-return momentum in George\u2013Hwang; the long-only winner leg is similar to other momentum winners, so the practical use is location, not a new alpha source.",
+        "O'Neil (\u226590% of the high) and Minervini (within 25%, 10\u201315% better) treat nearness as a Stage-2 filter after a base \u2014 buy high, sell higher \u2014 not as a market order on the high bar.",
+        "Huddart's volume spike at the crossing, this book's confirmed_breakout cell (\u22120.32pp), ADX>25 breakouts (\u22120.35pp, negative 10 of 12 years), and 1-month reversal / anchor-reversion all agree: the bar that just printed the high is the late entry.",
+        "Skipping a Stage-2 name because it is 1\u20132% off the high, RSI>70, or ADX>25 is the filter run backwards (the MPC shadow-regret shape); those reads remain description, not a veto.",
+        "Names 20%+ off the 52-week high are the other fork of the same factor (cup-with-handle if the 200-DMA still holds, confirmation-gated downtrend if it does not) \u2014 not a bargain.",
+        "If is_full_52w_window is false, the '52-week' high is a shorter window; do not treat it as George\u2013Hwang's anchor. January is when 52-week-high losers bounce; the near-high filter is weakest then.",
+        "Index all-time highs (Li\u2013Yu historical-high overreaction) are a market-regime caution, not a reason to skip an individual name at its own 52-week high."
+      ],
+      "how_to_apply": "On every candidate, read distance to the 52-week high only after is_full_52w_window, above_200dma, trend_up_50_over_200, and rel_strength_3m_pct. If the 200-DMA is lost or 3m RS is deeply negative, this is not a 52-week-high leader \u2014 route it through KB-2665689010 and do not relabel the dip as 'near highs.' If Stage-2 still holds and the name sits inside ~10\u201325% of a true 52-week high (AAII's 10% / Minervini's 25% band), treat that as the George\u2013Hwang winner bucket: do not write a rejected_ideas or trigger_reviews reason that is only 'extended,' '1.4% off the high,' 'RSI 75,' or 'ADX 41,' and do not demand a deep dip the location says will not come. HOLD on the watchlist and write would_buy_at as a sanitizer-safe rail \u2014 the first no_supply_pullback that holds the 50-DMA / last swing low / handle low, or a throwback to the 52-week-high pivot \u2014 never 'buy the new-high bar' and never a volume-confirmation leg. Promote a 50\u201370% starter only on that hold; place stop_loss below that named low AND at least stop_engineering.min_stop_distance_pct (aim 1.5\u20132\u00d7ATR, never past 15%); require 10% upside and 2:1 from that ATR-floored stop \u2014 nearness does not relax geometry, the 1% risk budget, or ",
+      "sources": [
+        "Thomas J. George and Chuan-Yang Hwang, 'The 52-Week High and Momentum Investing,' Journal of Finance 59(5), 2004, pp. 2145\u20132176, https://doi.org/10.1111/j.1540-6261.2004.00695.x",
+        "AAII, 'A Tribute to William O'Neil: Revisiting the CAN SLIM Strategy' (How to Make Money in Stocks / price at least 90% of the 52-week high), https://www.aaii.com/journal/article/68036-a-tribute-to-william-o-neil-revisiting-the-can-slim-strategy",
+        "Mark Minervini, Trade Like a Stock Market Wizard (McGraw-Hill, 2013), Trend Template criterion 7: price within 25% of the 52-week high (closer better).",
+        "Steven Huddart, Mark Lang, and Michelle H. Yetman, 'Volume and Price Patterns Around a Stock's 52-Week Highs and Lows: Theory and Evidence,' Management Science 55(1), 2009, pp. 16\u201331, https://doi.org/10.1287/mnsc.1080.0920",
+        "Jun Li and Jianfeng Yu, 'Investor attention, psychological anchors, and stock return predictability,' Journal of Financial Economics 104(2), 2012, pp. 401\u2013419, https://doi.org/10.1016/j.jfineco.2011.04.003",
+        "Benjamin M. Blau, Todd G. Griffith, Ryan J. Whitby, and Darren Woodward, 'Anchor Reversion: The Case of the 52-Week High and Asset Prices,' Journal of Behavioral Finance 26(1), 2025, pp. 82\u201394, https://doi.org/10.1080/15427560.2023.2244103"
+      ],
+      "learned_at": "2026-09-09T23:34:00.434230+00:00",
+      "run_id": "20260909-1fcd86",
+      "tensions": [
+        {
+          "with": "KB-4009348751",
+          "why": "KB-4009348751 is the 20%+ OFF-high fork of the same George\u2013Hwang factor: a quality name that far from the high is on the wrong side until the right side recovers into a handle. This lesson is the NEAR-high fork (within ~10\u201325%): Stage-2 location, not a skip. Same factor, opposite distance band, oppo",
+          "noted_at": "2026-09-09"
+        },
+        {
+          "with": "KB-9692173165",
+          "why": "KB-9692173165 still owns the default entry after a named multi-week pivot: the throwback to the level, not the breakout through it, which this book's 20-day confirmed_breakout cell already scored negative. This lesson only forbids treating 52-week-high nearness as a skip and forbids treating the hig",
+          "noted_at": "2026-09-09"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-09-09T22:01:57.844404+00:00"
+  "updated_at": "2026-09-09T23:34:00.439647+00:00"
 }
