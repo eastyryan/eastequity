@@ -3,5 +3,7 @@
     "deploymentEnabled": {
       "live-data": false
     }
-  }
+  },
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "ignoreCommand": "if printf '%s' \"$VERCEL_GIT_COMMIT_MESSAGE\" | grep -qF '[vercel skip]'; then exit 0; fi; if git diff --quiet HEAD^ HEAD -- .; then exit 0; fi; exit 1"
 }
