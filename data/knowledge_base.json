@@ -1510,7 +1510,49 @@
           "noted_at": "2026-09-09"
         }
       ]
+    },
+    {
+      "id": "KB-2211352502",
+      "discipline": "risk_management",
+      "topic": "Volatility-managed portfolios: Moreira-Muir's ~50% cut after a vol shock is a size scaler not a halt, and the surviving case is momentum-crash avoidance",
+      "summary": "Moreira and Muir (Journal of Finance 2017; NBER WP 22208, which I read) scale a factor's next-month excess return by the inverse of last month's realized variance from daily data, then renormalize so the managed series has the same unconditional volatility as the original. Because short-horizon variance is highly forecastable and is not offset by a proportional rise in expected return, the mean-variance trade-off weakens when vol is high: for the market they report a 4.9% annualized spanning alpha, an appraisal ratio of 0.33, and about a 25% lift in the buy-and-hold Sharpe. Their VAR result is the number this book already coded: after a one-standard-deviation shock to market variance a mean-variance investor cuts risk exposure by around 50%, then gradually scales back up as the vol shock fades faster than expected returns. That is a size path, not a cash stand-down; they only went near-zero in 2008-style spikes, and even then they returned as vol receded. Barroso and Santa-Clara (Journal of Financial Economics 2015) and Daniel and Moskowitz (JFE 2016) are the momentum-specific version: WML crashes are partly forecastable (after market declines, when vol is high, and contemporaneous with the rebound, when loser betas spike and winner betas collapse), and scaling the book to a constant vol using the prior six months of realized volatility nearly doubles Sharpe, cuts excess kurtosis from 18.24 to 2.68, lifts left skew from -2.47 to -0.42, and shrinks the worst month from -79% to",
+      "key_points": [
+        "Moreira-Muir construction: next-month factor return scaled by 1 / prior-month realized variance from daily bars, c chosen so unmanaged and managed have the same unconditional vol. Market: 4.9% spanning alpha, appraisal 0.33, ~25% Sharpe lift, because lagged vol forecasts future vol and barely foreca",
+        "Their VAR: after a 1-SD shock to market variance a mean-variance investor cuts exposure ~50%, then scales back as vol mean-reverts faster than expected returns. That 50% is this book's momentum_unwind_risk_scale=0.5. It is a size path, not a halt.",
+        "The robust cell is momentum, not generic factors. Barroso-Santa-Clara 6-month constant-vol scaling of WML nearly doubles Sharpe and halves crash depth (worst month -79% to -28%, max DD -97% to -45%). Daniel-Moskowitz: those crashes cluster after a market decline, in high vol, on the rebound when los",
+        "Cederburg et al. (103 strategies): VMPs do not systematically beat unmanaged on Sharpe; spanning alphas (77/103 positive) overstate the live edge because the implied combination uses ex-post weights. OOS combinations beat the original on Sharpe in 45/103 and on CER in 31/103. Remaining wins concentr",
+        "Barroso-Detzel: 1/variance scaling can multiply turnover ~15x; after costs most factor VMPs other than the market go to zero alpha. Six-month RV scaling of momentum, excluding small-caps, is the exception they leave standing. Do not import Moreira-Muir's low-vol leverage (P99 weight ~6.4): 1% is alr",
+        "This book's implementation is one-sided and discrete: cut the 1% numerator to 0.5% on momentum_health=unwind, never lever up when vol is quiet, and the haircut lifts when the flag prints healthy. Weight zero is more extreme than their 50% cut and is unwind_used_as_halt. The only coded halt remains S"
+      ],
+      "how_to_apply": "On every run read momentum_health with benchmark_trend before sizing. When it prints unwind, the validator already multiplies the 1% numerator by 0.5: take that half-sized BUY if thesis, geometry, 10% upside, 2:1 from an ATR-floored stop (aim 1.5-2x ATR, never past 15%), and the 3-day earnings blackout all clear \u2014 do not add a third haircut on top of 0.5x and the inverse-vol size already in size = (equity x 1% x 0.5) / stop_distance_pct, and do not write unwind into no_trade_reason unless at least two rejected_ideas stand without it. Change the KIND of setup, not participation: pass on pullback-continuation / VCP / 3m-RS leaders whose thesis needs factor momentum to keep running, and prefer a catalyst lane (post_print_drift / PEG / the upgrade that is the change), a different demand_driver, or diversifier=true / low corr_to_book. When it prints softening the code does not haircut \u2014 still prefer non-momentum-continuation at full 1%; when it prints healthy the 0.5x comes off, which is Moreira-Muir's gradual re-increase as the vol shock fades, so do not keep a discretionary cash stand-down. Never import levering the 1% up in quiet months, and never treat unwind as the regime gate: onl",
+      "sources": [
+        "Moreira, A. and Muir, T., 'Volatility-Managed Portfolios,' Journal of Finance 72(4):1611-1644 (2017); NBER Working Paper 22208 (April 2016, revised June 2016), https://www.nber.org/papers/w22208 and https://www.nber.org/system/files/working_papers/w22208/w22208.pdf \u2014 construction f^\u03c3_{t+1} = c / RV^",
+        "Moreira-Muir slides (Brevan Howard 2016 / Cornell 2016): https://amoreira2.github.io/alan-moreira.github.io/SlidesVol.pdf \u2014 1/RV^2 weight distribution P50=0.93, P90=2.64, P99=6.39; 1/RV milder (P99=3.36); original vs managed Sharpes",
+        "Barroso, P. and Santa-Clara, P., 'Momentum has its moments,' Journal of Financial Economics 116(1):111-120 (2015), https://www.sciencedirect.com/science/article/abs/pii/S0304405X14002566 \u2014 6-month realized-vol constant-vol scaling of WML; kurtosis 18.24\u21922.68, skew -2.47\u2192-0.42, min month -78.96%\u2192-28.",
+        "Daniel, K. and Moskowitz, T.J., 'Momentum crashes,' Journal of Financial Economics 122(2):221-247 (2016), https://econpapers.repec.org/RePEc:eee:jfinec:v:122:y:2016:i:2:p:221-247 \u2014 crashes after market declines, in high vol, contemporaneous with the rebound; dynamic mean-and-variance scaling approxi",
+        "Cederburg, S., O'Doherty, M.S., Wang, F. and Yan, X., 'On the performance of volatility-managed portfolios,' Journal of Financial Economics 138(1):95-117 (2020), https://www.sciencedirect.com/science/article/abs/pii/S0304405X2030132X and author copy https://www.lehigh.edu/~xuy219/research/COWY.pdf \u2014",
+        "Alpha Architect restatement of Cederburg (2021-06-17), https://alphaarchitect.com/2021/06/17/the-performance-of-volatility-managed-portfolios/ \u2014 remaining Sharpe wins concentrate in momentum, profitability, and BAB; vol-management more likely to work when vol is persistent (momentum)"
+      ],
+      "learned_at": "2026-09-10T00:19:01.085784+00:00",
+      "run_id": "20260909-cc276a",
+      "tensions": [
+        {
+          "with": "KB-1510950925",
+          "why": "KB-1510950925 is the POSITION-level identity: once the stop is ATR-floored, size = 1% / stop_distance already inverse-vol-scales the notional, so a second ATR haircut is double-counting. This lesson is the PORTFOLIO-level scaler of that same 1% NUMERATOR when momentum_health flags unwind (Moreira-Mu",
+          "noted_at": "2026-09-10"
+        },
+        {
+          "with": "KB-9586927181",
+          "why": "KB-9586927181 forbids standing down after a P&L hole because cash is the zero-drift cell and 40%/2:1 still earns +0.20R. This lesson forbids standing down after a vol shock for a different reason: Moreira-Muir's optimal response is a ~50% size cut that then scales back, not weight zero. Same action ",
+          "noted_at": "2026-09-10"
+        },
+        {
+          "with": "KB-2999578881",
+          "why": "Kelly sets the 1% as deep-fractional under unknown edge and forbids levering that numerator on a narrative. This lesson says when the MOMENTUM FACTOR itself is in a crash-regime the coded 0.5x is the Moreira-Muir/Barroso-Santa-Clara response, not a Kelly revision. Do not import Moreira-Muir's low-vo",
+          "noted_at": "2026-09-10"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-09-09T23:34:00.439647+00:00"
+  "updated_at": "2026-09-10T00:19:01.090711+00:00"
 }
