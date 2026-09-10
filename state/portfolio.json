@@ -1,47 +1,7 @@
 {
-  "cash_usd": 921.5,
-  "total_equity_usd": 984.85,
-  "positions": [
-    {
-      "ticker": "BKR",
-      "quantity": 0.995395,
-      "avg_cost": 58.198,
-      "market_value_usd": 63.35,
-      "last_price": 63.64,
-      "opened_at": "2026-07-28T17:54:27.847621+00:00",
-      "proposal_id": "20260728-b66630",
-      "plan": {
-        "stop_loss": 54.0,
-        "target_price": 70.0,
-        "holding_horizon_days": 45,
-        "entry_price_max": 59.0,
-        "confidence": 0.62,
-        "demand_driver": "energy",
-        "thesis_invalidators": {
-          "invalidating_print": "A guidance cut, IET order intake reversing meaningfully below the Q2 record $7.1B run-rate, or Chart Industries integration charges/write-downs that exceed the stated $325M synergy target by year three.",
-          "invalidating_structure": "A daily close below $56 on above-average volume, reversing the 2026-07-27 breakout and closing the reclaim of the 20/50-DMA.",
-          "time_box": "If BKR has not sustained a daily close above $65 within 30 trading days of entry, exit and rotate -- the earnings-driven breakout needs volume-confirmed follow-through, not just a one-day pop."
-        }
-      },
-      "high_water": 65.05,
-      "trailing_stop": 60.7161,
-      "adds_count": 0,
-      "buy_commission_usd": 0.0,
-      "dividends_received_usd": 0.23,
-      "demand_driver": "energy",
-      "protective_stop": {
-        "status": "resting",
-        "stop_price": 60.72,
-        "qty": 0.995395,
-        "uncovered_qty": 0.0,
-        "session_only": true,
-        "time_in_force": "day",
-        "client_order_id": "EESTOP-BKR-8a307cb6b0",
-        "alpaca_order_id": "5180f23b-0d3e-4e36-8bca-b68c796e10a6",
-        "armed_at": "2026-08-24T18:25:32.204489+00:00"
-      }
-    }
-  ],
+  "cash_usd": 984.82,
+  "total_equity_usd": 984.82,
+  "positions": [],
   "pending_orders": {
     "EE-161bd054d331": {
       "ticker": "BKR",
@@ -1164,9 +1124,82 @@
       },
       "alpaca_status": "filled",
       "filled_at": "2026-09-08T19:38:50.651129392Z"
+    },
+    {
+      "ticker": "BKR",
+      "action": "SELL_TO_CLOSE",
+      "order_id": "WRITEOFF-BKR-4edfac8081",
+      "client_order_id": "WRITEOFF-BKR-4edfac8081",
+      "proposal_id": "not-at-broker-writeoff",
+      "status": "filled",
+      "fill_price": 63.64,
+      "quantity": 0.995395,
+      "notional_usd": 63.35,
+      "sell_fraction": 1.0,
+      "avg_cost": 58.198,
+      "position_opened_at": "2026-07-28T17:54:27.847621+00:00",
+      "entry_plan": {
+        "stop_loss": 54.0,
+        "target_price": 70.0,
+        "holding_horizon_days": 45,
+        "entry_price_max": 59.0,
+        "confidence": 0.62,
+        "demand_driver": "energy",
+        "thesis_invalidators": {
+          "invalidating_print": "A guidance cut, IET order intake reversing meaningfully below the Q2 record $7.1B run-rate, or Chart Industries integration charges/write-downs that exceed the stated $325M synergy target by year three.",
+          "invalidating_structure": "A daily close below $56 on above-average volume, reversing the 2026-07-27 breakout and closing the reclaim of the 20/50-DMA.",
+          "time_box": "If BKR has not sustained a daily close above $65 within 30 trading days of entry, exit and rotate -- the earnings-driven breakout needs volume-confirmed follow-through, not just a one-day pop."
+        }
+      },
+      "entry_proposal_id": "20260728-b66630",
+      "realized_pnl_usd": 5.42,
+      "total_realized_pnl_usd": 5.42,
+      "dividends_received_usd": 0.0,
+      "write_off": true,
+      "not_at_broker_writeoff": true,
+      "forced_exit_reason": "ghost_reconcile_broker_flat",
+      "filled_at": "2026-09-10T15:13:52.314401+00:00",
+      "fees_usd": {
+        "commission": 0.0,
+        "sec_fee": 0.0,
+        "taf": 0.0,
+        "slippage_bps": 0.0,
+        "effective_slippage_pct": 0.0
+      }
+    },
+    {
+      "ticker": "BKR",
+      "action": "SELL_TO_CLOSE",
+      "position_size_usd": null,
+      "reference_price": 63.64,
+      "proposal_id": "20260910-12ddec",
+      "sell_fraction": null,
+      "atr_pct": 2.61,
+      "entry_price_max": null,
+      "plan": {
+        "stop_loss": 54.0,
+        "target_price": 70.0,
+        "holding_horizon_days": 45,
+        "entry_price_max": 59.0,
+        "confidence": 0.62,
+        "demand_driver": "energy",
+        "thesis_invalidators": {
+          "invalidating_print": "A guidance cut, IET order intake reversing meaningfully below the Q2 record $7.1B run-rate, or Chart Industries integration charges/write-downs that exceed the stated $325M synergy target by year three.",
+          "invalidating_structure": "A daily close below $56 on above-average volume, reversing the 2026-07-27 breakout and closing the reclaim of the 20/50-DMA.",
+          "time_box": "If BKR has not sustained a daily close above $65 within 30 trading days of entry, exit and rotate -- the earnings-driven breakout needs volume-confirmed follow-through, not just a one-day pop."
+        }
+      },
+      "demand_driver": null,
+      "exit_reason_kind": "discretionary",
+      "exit_thesis": "The binding time_box on Baker Hughes has fired and today's tape confirmed it. Entry was 2026-07-28 at $58.20 against a plan that required a sustained daily close above $65 within 30 trading days of the 2026-07-27 earnings breakout; the 2026-09-04 weekly review made 2026-09-09 the last extension of t",
+      "order_id": "EE-0029696d2317",
+      "client_order_id": "EE-0029696d2317",
+      "status": "rejected_no_position",
+      "submitted_at": "2026-09-10T15:13:51.174299+00:00",
+      "filled_at": "2026-09-10T15:13:52.468528+00:00"
     }
   ],
-  "broker_synced_at": "2026-09-09T22:02:01.271924+00:00",
+  "broker_synced_at": "2026-09-10T15:13:52.963865+00:00",
   "broker_backend": "alpaca_paper",
   "ingested_broker_orders": [
     "f86c48cf-b81c-4853-8800-51cb63f9a616",
