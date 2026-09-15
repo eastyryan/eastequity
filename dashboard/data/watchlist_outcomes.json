@@ -1,52 +1,59 @@
 [
   {
-    "ticker": "SNOW",
-    "first_watched": "2026-07-13",
-    "price_when_added": 261.45,
-    "hit_buy_level": false,
-    "currently_watched": true,
-    "would_buy_at": "A daily close back above $348, with the 48-analyst mean still at least 10% above the stock.",
-    "one_line": "Q2 FY2027 beat-and-raise still has ~26% to the prior 48-analyst mean $418; EPS revisions +14.5% over 30 days; waiting for a close back above $348.",
-    "latest_price": 332.35,
-    "move_pct_since_watched": 27.1,
-    "acted": false,
-    "dropped_date": "2026-07-13",
-    "parsed_level": 348.0
-  },
-  {
     "ticker": "ANET",
     "first_watched": "2026-07-13",
     "price_when_added": 181.15,
-    "hit_buy_level": true,
+    "hit_buy_level": false,
     "currently_watched": true,
-    "would_buy_at": "A daily close that holds $185 through the 2026-09-16 FOMC decision, with the 28-analyst mean still at least 10% above the stock.",
-    "one_line": "28-analyst mean $241.04 is +28.3% vs $187.81 and the $185 no_supply hold printed on the daily bar \u2014 wait for that hold to survive Wednesday's FOMC, not Tuesday's Trump/Huang bounce.",
+    "would_buy_at": "A no_supply_pullback that holds $186 (Monday's session low) after the 2026-09-16 FOMC decision, with the 28-analyst mean still at least 10% above the stock.",
+    "one_line": "28-analyst mean $241.04 is +24.6% vs live ~$193; wait for Monday's $186 low to hold after Wednesday's FOMC, not Tuesday's bounce.",
     "latest_price": 187.81,
     "move_pct_since_watched": 3.7,
     "acted": false,
-    "parsed_level": 185.0,
+    "parsed_level": 186.0,
     "dropped_date": "2026-07-15",
-    "hit_date": "2026-09-14",
-    "unbought_hit_days": [
-      "2026-09-14"
-    ]
+    "trigger_gate": {
+      "held_on": "2026-09-15",
+      "reason": "event_gate_not_yet_satisfied",
+      "note": "price is at the stated level, but the trigger conditions on an event 1 day(s) out (2026-09-16) \u2014 \"after the 2026-09-16\". Alert held until then: firing early is the AMD 2026-07-17 failure (LP-0693555695), and a fired trigger now owes a trigger_reviews row and counts toward a force-drop.",
+      "gates": [
+        {
+          "kind": "after",
+          "date": "2026-09-16",
+          "event": null,
+          "soft": false,
+          "raw": "after the 2026-09-16",
+          "branch": 0
+        }
+      ]
+    }
+  },
+  {
+    "ticker": "HOOD",
+    "first_watched": "2026-07-13",
+    "price_when_added": 111.97,
+    "hit_buy_level": false,
+    "currently_watched": true,
+    "would_buy_at": "A handle that peaks within 15% of the 52-week high, then a no_supply_pullback that holds that handle low, with the 27-analyst mean still at least 10% above the stock.",
+    "one_line": "27-analyst mean $129.34 is +17.6% vs Friday $114.33, but 25.7% off the high is a cup in progress \u2014 wait for a handle, not this 20-day tag.",
+    "latest_price": 114.33,
+    "move_pct_since_watched": 2.1,
+    "acted": false,
+    "dropped_date": "2026-07-13",
+    "parsed_level": null
   },
   {
     "ticker": "LPLA",
     "first_watched": "2026-08-31",
     "price_when_added": 370.14,
-    "hit_buy_level": true,
+    "hit_buy_level": false,
     "currently_watched": true,
-    "would_buy_at": "Fill at or under $340, only after tests_red:test_partial_broker_side_fill_leaves_a_correct_remainder is green.",
-    "one_line": "Thesis intact but un-armable: close $345.66 is at the old $344 fill, and the orchestrator still dies on tests_red:test_partial_broker_side_fill_leaves_a_correct_remainder.",
+    "would_buy_at": "Fill at or under $335, only after tests_red:test_partial_broker_side_fill_leaves_a_correct_remainder is green.",
+    "one_line": "17-analyst mean $429.33 is +24.9% vs live $343.65, but the 50-DMA is lost and the orchestrator still dies on tests_red.",
     "latest_price": 345.66,
     "move_pct_since_watched": -6.6,
-    "parsed_level": 340.0,
-    "acted": false,
-    "hit_date": "2026-09-14",
-    "unbought_hit_days": [
-      "2026-09-14"
-    ]
+    "parsed_level": 335.0,
+    "acted": false
   },
   {
     "ticker": "LITE",
@@ -55,53 +62,23 @@
     "hit_buy_level": false,
     "currently_watched": true,
     "would_buy_at": "A no_supply_pullback that holds $800 after the Corning ATM digestion, with the 26-analyst mean still at least 10% above the stock.",
-    "one_line": "26-analyst mean $1,148 is +37.5% vs $835, but today's -9.92% close is Corning ATM contagion, not a no_supply hold of $830.",
+    "one_line": "26-analyst mean still ~$1,148 vs Friday $835 is +37%, but Monday's -9.92% Corning-ATM dump is not a hold of $800.",
     "latest_price": 835.03,
     "move_pct_since_watched": -15.6,
     "parsed_level": 800.0,
     "acted": false
   },
   {
-    "ticker": "PLTR",
-    "first_watched": "2026-09-09",
-    "price_when_added": 169.53,
-    "hit_buy_level": false,
-    "currently_watched": true,
-    "would_buy_at": "Right-side recovery within 15% of the 52-week high, then a no_supply_pullback that holds the handle low, with the 27-analyst mean still at least 10% above the stock.",
-    "one_line": "16.5% off the high, 27-analyst mean $195.73 is +12.9% vs $173.31; cup-with-handle in progress, not a handle pivot yet.",
-    "latest_price": 173.31,
-    "move_pct_since_watched": 2.2,
-    "parsed_level": null,
-    "acted": false
-  },
-  {
     "ticker": "CME",
     "first_watched": "2026-09-10",
     "price_when_added": 275.01,
-    "hit_buy_level": true,
-    "currently_watched": true,
-    "would_buy_at": "A no_supply_pullback that holds $270, with the analyst mean still at least 10% above the stock.",
-    "one_line": "hits_not_bought: the $270 hold printed, close is now $280.46, and 15-analyst mean ~$284 is still only ~+1% \u2014 a rates-volatility name without 10% to consensus.",
-    "latest_price": 280.46,
-    "move_pct_since_watched": 2.0,
-    "parsed_level": 270.0,
-    "hit_date": "2026-09-10",
-    "unbought_hit_days": [
-      "2026-09-10"
-    ],
-    "acted": false
-  },
-  {
-    "ticker": "MRK",
-    "first_watched": "2026-09-10",
-    "price_when_added": 147.53,
     "hit_buy_level": false,
     "currently_watched": true,
-    "would_buy_at": "A no_supply_pullback that holds $136, with the 26-analyst mean still at least 10% above the stock.",
-    "one_line": "Healthcare diversifier, beta near zero, but the 26-analyst mean ~$153 is only +5.6% vs $144.85 \u2014 not 10% to consensus.",
-    "latest_price": 144.85,
-    "move_pct_since_watched": -1.8,
-    "parsed_level": 136.0,
+    "would_buy_at": "n/a - removing",
+    "one_line": "Dropping: 15-analyst mean is still only ~+1% vs Friday $280.46, so the $270 no_supply hold never had 10% to consensus.",
+    "latest_price": 280.46,
+    "move_pct_since_watched": 2.0,
+    "parsed_level": null,
     "acted": false
   },
   {
@@ -110,15 +87,15 @@
     "price_when_added": 495.63,
     "hit_buy_level": true,
     "currently_watched": true,
-    "would_buy_at": "Fill at or under $508.",
-    "one_line": "Still the Tuesday seat: 52-analyst mean $572.92 is +13.4% vs close $505.41; Azure is capacity-short, not demand-short \u2014 fill at or under $508.",
+    "would_buy_at": "Fill at or under $502.",
+    "one_line": "Tuesday seat: 52-analyst mean $572.92 is +14.8% vs live $499; Azure is capacity-short, not demand-short \u2014 fill at or under $502.",
     "latest_price": 505.41,
     "move_pct_since_watched": 2.0,
-    "parsed_level": 508.0,
+    "parsed_level": 502.0,
     "acted": false,
-    "hit_date": "2026-09-14",
+    "hit_date": "2026-09-15",
     "unbought_hit_days": [
-      "2026-09-14"
+      "2026-09-15"
     ]
   },
   {
@@ -127,12 +104,39 @@
     "price_when_added": 107.25,
     "hit_buy_level": false,
     "currently_watched": true,
-    "would_buy_at": "A no_supply_pullback that holds $104, with the 21-analyst 3-month mean still at least 10% above the stock.",
-    "one_line": "Financials backup if MSFT gaps: 22-analyst mean $124.95 is +16.4% vs $107.31; higher-for-longer is the cash-sweep case, not a reason to chase $107 into FOMC.",
+    "would_buy_at": "A no_supply_pullback that holds $104, with the 22-analyst mean still at least 10% above the stock.",
+    "one_line": "22-analyst mean $124.95 is +16.0% vs live $107.73; financials diversifier if MSFT is blocked, but wait for a $104 hold rather than buying the hike bar.",
     "latest_price": 107.31,
     "move_pct_since_watched": 0.1,
     "parsed_level": 104.0,
     "acted": false
+  },
+  {
+    "ticker": "AEM",
+    "first_watched": "2026-09-15",
+    "price_when_added": 197.55,
+    "hit_buy_level": false,
+    "currently_watched": true,
+    "would_buy_at": "A no_supply_pullback that holds $190 after the 2026-09-16 FOMC decision, with the 14-analyst mean still at least 10% above the stock.",
+    "one_line": "14-analyst mean $214.89 is +10.6% vs Friday $197.55 and the bar reads no_supply_pullback, but gold is slipping into Wednesday's hike.",
+    "latest_price": 197.55,
+    "move_pct_since_watched": 0.0,
+    "parsed_level": 190.0,
+    "acted": false
+  },
+  {
+    "ticker": "SNOW",
+    "first_watched": "2026-07-13",
+    "price_when_added": 261.45,
+    "hit_buy_level": false,
+    "currently_watched": false,
+    "would_buy_at": "A daily close back above $348, with the 48-analyst mean still at least 10% above the stock.",
+    "one_line": "Q2 FY2027 beat-and-raise still has ~26% to the prior 48-analyst mean $418; EPS revisions +14.5% over 30 days; waiting for a close back above $348.",
+    "latest_price": 332.35,
+    "move_pct_since_watched": 27.1,
+    "acted": false,
+    "dropped_date": "2026-07-13",
+    "parsed_level": 348.0
   },
   {
     "ticker": "OKTA",
@@ -147,24 +151,6 @@
     "acted": false,
     "dropped_date": "2026-07-13",
     "parsed_level": null
-  },
-  {
-    "ticker": "HOOD",
-    "first_watched": "2026-07-13",
-    "price_when_added": 111.97,
-    "hit_buy_level": true,
-    "currently_watched": false,
-    "would_buy_at": "A daily close back above $117.34 (the 2026-09-08 close), with the 27-analyst mean still at least 10% above the stock.",
-    "one_line": "Fintech leader, 27-analyst mean $128.45 is +11.4% vs $115.28; Crypto.com is franchise color, not the $117.34 reclaim.",
-    "latest_price": 114.33,
-    "move_pct_since_watched": 2.1,
-    "acted": false,
-    "dropped_date": "2026-07-13",
-    "parsed_level": 117.34,
-    "hit_date": "2026-09-09",
-    "unbought_hit_days": [
-      "2026-09-09"
-    ]
   },
   {
     "ticker": "SHOP",
@@ -230,8 +216,8 @@
     "currently_watched": false,
     "would_buy_at": "A base above $19-20 that holds through a genuine pullback, ideally resolved before the 2026-08-27 print.",
     "one_line": "Still the cheapest growth-adjusted name in cybersecurity, still carrying persistent insider selling into an 8/27 print.",
-    "latest_price": 22.61,
-    "move_pct_since_watched": 26.5,
+    "latest_price": 22.35,
+    "move_pct_since_watched": 25.0,
     "acted": false,
     "dropped_date": "2026-07-13",
     "parsed_level": 19.0
@@ -383,8 +369,8 @@
     "currently_watched": false,
     "would_buy_at": "A pullback that holds support and bases, ideally sizing around (not through) the 8/5 earnings.",
     "one_line": "LatAm commerce/fintech platform -- the largest analyst upside on the list and a genuine non-AI diversifier for the book.",
-    "latest_price": 1900.24,
-    "move_pct_since_watched": 3.3,
+    "latest_price": 1843.15,
+    "move_pct_since_watched": 0.2,
     "acted": false,
     "dropped_date": "2026-07-16",
     "parsed_level": null
@@ -834,5 +820,19 @@
     "parsed_level": 390.0,
     "acted": false,
     "dropped_date": "2026-08-27"
+  },
+  {
+    "ticker": "PLTR",
+    "first_watched": "2026-09-09",
+    "price_when_added": 169.53,
+    "hit_buy_level": false,
+    "currently_watched": false,
+    "would_buy_at": "Right-side recovery within 15% of the 52-week high, then a no_supply_pullback that holds the handle low, with the 27-analyst mean still at least 10% above the stock.",
+    "one_line": "16.5% off the high, 27-analyst mean $195.73 is +12.9% vs $173.31; cup-with-handle in progress, not a handle pivot yet.",
+    "latest_price": 173.31,
+    "move_pct_since_watched": 2.2,
+    "parsed_level": null,
+    "acted": false,
+    "dropped_date": "2026-09-15"
   }
 ]
