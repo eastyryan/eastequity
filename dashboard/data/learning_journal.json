@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-09-14T23:57:05.619315+00:00",
+  "updated_at": "2026-09-15T00:06:21.268414+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
-    "technical_analysis": 11,
+    "technical_analysis": 12,
     "fundamental_analysis": 2,
     "risk_management": 11,
     "strategy_playbooks": 11,
@@ -11,6 +11,50 @@
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-3099641994",
+      "discipline": "technical_analysis",
+      "topic": "The 20-day average as the short-swing rail and 2\u00d7ATR Keltner stretch as 'this bar is extended' \u2014 not a 20-EMA crossover system, and not nearness to the 52-week high",
+      "summary": "Chester Keltner's 1960 Ten-Day Moving Average Trading Rule put a 10-day SMA of typical price in the middle and offset the bands by a 10-day SMA of the high-low range. Linda Bradford Raschke's 1980s rewrite \u2014 the version StockCharts ChartSchool actually plots \u2014 is a 20-day EMA of the close with bands at \u00b12\u00d7ATR(10); Incredible Charts documents a nearby Raschke default of \u00b12.5\u00d7ATR(20). Those parameter disagreements are real and I keep them; what is shared is the geometry: a ~20-day mean as the midline and ATR (or range) as the width, so a bar two ATRs from that mean is rare by construction. Practitioners mash two jobs. Keltner and ChartSchool treat a close through the upper band, with the channel turning up, as the START of a trend, and in a flat channel they fade the bands as overbought/oversold. ChartSchool then immediately qualifies the breakout: even with a new uptrend established, it is often prudent to wait for a pullback to improve reward-to-risk. Raschke's honest addendum, via Incredible Charts, is that the bands are most useful in a runaway/blowoff, when retracements are extremely short or non-existent and normal dip-buying should be adjusted. The academic record on using the 20 as a SYSTEM (buy a 20/50 cross, buy a close above the 20) is the same object the 50/200 lesson already killed: Brock, Lakonishok and LeBaron (Journal of Finance 1992) found a DJIA 1897\u20131986 variable-length MA buy\u2013sell gap of 0.042% versus \u22120.025% per day; Sullivan, Timmermann and White (Journal ",
+      "key_points": [
+        "Raschke/ChartSchool Keltner is 20-EMA \u00b1 2\u00d7ATR(10); original Keltner was 10-SMA of typical price \u00b1 1\u00d7 daily range; Incredible Charts' Raschke default is \u00b12.5\u00d7ATR(20). Parameter disagreement is real; the shared object is ATR-width around a ~20-day mean.",
+        "An upper-band BREAK as the entry is the late chase this book already measured dead (confirmed_breakout \u22120.32pp ATR-matched; ADX>25 breakouts negative in 10 of 12 years). ChartSchool's own next sentence is wait for the pullback.",
+        "A 20/50 crossover SYSTEM is the same dead MA-rule as the golden cross: Brock\u2013Lakonishok\u2013LeBaron in-sample, Sullivan\u2013Timmermann\u2013White out-of-sample dead, Hudson\u2013Dempsey\u2013Keasey after costs.",
+        "THIS BAR is extended when it sits ~2\u00d7ATR above the chart's 20d avg. That is not 'the name is near its 52-week high' and is not a reason to drop a Stage-2 leader from the watchlist.",
+        "The 20 is the short-swing ENTRY rail (3\u201315 day flag / first pullback). The 50 is the deeper rail. Lost-the-20 for one session is not a SELL_TO_CLOSE on a 30\u201390 day swing; the chandelier and the written last-HL / 50-DMA invalidator still govern.",
+        "Raschke blowoff: if price is riding the upper band with no retrace, do not write a 20-dip trigger the tape will not give \u2014 use the last-contraction / range low (VCP / flat-base fork).",
+        "Our charts draw SMA(20), Keltner uses EMA(20). Name the drawn line and measure stretch in stop_engineering ATR; do not invent an overlay we do not plot.",
+        "In a flat 20-line / low-ADX range, fading the upper band is mean-reversion this long-only Stage-2 book does not take; do not relabel an upper-band ride or RSI>70 as a sell of a working leader."
+      ],
+      "how_to_apply": "On a Stage-2 name (above_200dma, trend_up_50_over_200, rel_strength_3m_pct still positive), open the chart and read the blue 20d avg against stop_engineering ATR before you promote or reject. If the live bar sits ~2\u00d7ATR or more above that 20d line, this BAR is extended: do not BUY it, do not write rejected_ideas as only 'extended / 1% off the high / RSI 75 / ADX 41', and write would_buy_at as the first no_supply_pullback that holds the 20d avg (or the flag low if the 3\u201315 day channel is tighter) \u2014 sanitizer-safe: price + structure + no_supply_pullback. Promote a 50\u201370% starter only on that hold; place stop_loss below the tagged 20 / flag low AND at least stop_engineering.min_stop_distance_pct (aim 1.5\u20132\u00d7ATR, never past 15%); set target_price at the first overhead supply; require 10% upside and 2:1 from that ATR-floored stop \u2014 buying 2 ATR extended makes the stop-to-the-20 too wide for 2:1 under the 15% cap, which is the geometry reason not to chase, not a 52-week-high skip. If price has already lost the 20 and is tagging the 50, this is the deeper 50-DMA rail, not this lesson. If the name is three-weeks-tight / riding the upper band with no 20-tag on offer, do not invent a 20-dip t",
+      "sources": [
+        "https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-overlays/keltner-channels",
+        "https://www.incrediblecharts.com/indicators/keltner_channels.php",
+        "William Brock, Josef Lakonishok and Blake LeBaron, 1992, 'Simple Technical Trading Rules and the Stochastic Properties of Stock Returns,' Journal of Finance 47(5), 1731\u20131764. https://onlinelibrary.wiley.com/doi/10.1111/j.1540-6261.1992.tb04681.x",
+        "Ryan Sullivan, Allan Timmermann and Halbert White, 1999, 'Data-Snooping, Technical Trading Rule Performance, and the Bootstrap,' Journal of Finance 54(5), 1647\u20131691. https://onlinelibrary.wiley.com/doi/abs/10.1111/0022-1082.00163",
+        "Robert Hudson, Michael Dempsey and Kevin Keasey, 1996, 'A note on the weak form efficiency of capital markets: The application of simple technical trading rules to UK stock prices \u2014 1935 to 1994,' Journal of Banking & Finance 20(6), 1121\u20131132. https://www.sciencedirect.com/science/article/pii/037842",
+        "Chester W. Keltner, 1960, How to Make Money in Commodities (Ten-Day Moving Average Trading Rule); Linda Bradford Raschke 1980s ATR rewrite as documented by ChartSchool and Incredible Charts."
+      ],
+      "learned_at": "2026-09-15T00:06:21.261443+00:00",
+      "run_id": "20260914-c58de7",
+      "tensions": [
+        {
+          "with": "KB-4252672139",
+          "why": "KB-4252672139 owns the 50/200 as Stage-2 filter and the 50-DMA as the default pullback rail; it already allows a 21-day tag 'if the trend is that tight' but does not define when the 20 is the rail versus when 2\u00d7ATR above it means this bar is untradeable. This lesson is that short-swing fork and the ",
+          "noted_at": "2026-09-15"
+        },
+        {
+          "with": "KB-6553773801",
+          "why": "KB-6553773801 forbids treating nearness to the 52-week high as an 'extended' skip \u2014 that is a 6-month continuation location. This lesson supplies the other 'extended': 2\u00d7ATR above the 20d avg is a statement about THIS BAR's geometry, not about the name's 52-week rank. A George\u2013Hwang winner can still",
+          "noted_at": "2026-09-15"
+        },
+        {
+          "with": "KB-6831088945",
+          "why": "KB-6831088945 is the 3\u201315 day flag pattern after a thrust (buy the flag, not the pole). This lesson names the rail that flag usually rides \u2014 the chart's 20d avg \u2014 and the 2\u00d7ATR stretch that is the pole bar you do not chase. If the flag tags the 20, both apply and the 20/flag low is the stop; if the ",
+          "noted_at": "2026-09-15"
+        }
+      ]
+    },
     {
       "id": "KB-8593787923",
       "discipline": "strategy_playbooks",
