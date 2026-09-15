@@ -1643,7 +1643,44 @@
       ],
       "times_cited": 1,
       "last_cited": "2026-09-15T19:56:43.431531+00:00"
+    },
+    {
+      "id": "KB-5161743531",
+      "discipline": "risk_management",
+      "topic": "The 2% per-driver theme cap is not an AI-stack cap: Turtle nested unit limits, and why four 1% AI seats are still one left-tail",
+      "summary": "The Original Turtle Rules (originalturtles.org, 2003) cap open risk in four nested layers of volatility-normalized Units: 4 in a single market, 6 in closely correlated markets, 10 in loosely correlated markets, and 12 in one direction. Closely correlated is an economic grouping, not a ticker or exchange label \u2014 heating oil with crude, gold with silver, T-bills with Eurodollars. Units are sized so 1N (20-day ATR) equals 1% of equity and the stop sits at 2N, so one unit risks 2%; when units are added the earlier stops ratchet to 2N from the newest entry, so a four-unit pyramid does not risk 8% as four separate 2% bets. Those count caps still left a 20\u201340% one-day hole after the October 1987 Fed cut, when the book was loaded long Eurodollars, T-bills and bonds at once (Faith\u2019s later memoir instead says loaded short and 40\u201360%; I keep the 2003 rules document for the sign and the 20\u201340% band, and keep the shared-driver mechanism from both). Alexander Elder\u2019s 6% rule (Come Into My Trading Room; Incredible Charts) mashes two different objects: cap open risk at 6%, and stop trading for the rest of the month if net losses hit 6%. This book\u2019s 8% heat is the first object only; the second is the participation halt already rejected. Leibowitz and Bova (Journal of Portfolio Management, 2009) showed that a more \u2018diversified\u2019 mix of US stocks, bonds, international, EM and REITs saw its equity beta rise from 0.65 to 0.95 in 2008 and lost 9 percentage points to a plain 60/40 \u2014 more names can r",
+      "key_points": [
+        "Turtle nested caps are COUNT limits on volatility-normalized Units (4 / 6 / 10 / 12), grouped by shared driver \u2014 heating oil with crude, not by GICS or ticker. One unit is sized to 1N = 1% of equity with a 2N stop (2% risk); pyramid ratchets mean 4 units in one market is not 8% of separate 2% bets.",
+        "The 2003 Original Turtle Rules document the 1987 interest-rate cluster at 20\u201340% of equity in a day even with those limits (loaded long Eurodollars, T-bills and bonds after the Fed cut). Faith\u2019s memoir disagrees on long-vs-short and prints 40\u201360%. Nested caps reduce a factor crash; they do not delet",
+        "Elder\u2019s 6% rule is two rules: cap open risk, and halt new trades for the month once 6% is lost. This book\u2019s 8% heat is the open-risk cap only. The monthly halt is the stand-down already forbidden.",
+        "Leibowitz\u2013Bova: a more \u2018diversified\u2019 institutional mix raised stress-beta 0.65\u21920.95 in 2008 and lost 9pp to 60/40. Page\u2013Panariello: full-sample Pearson is an average of extremes; long-only style/size/sector sleeves still co-crash. Meucci ENB: name-count is not bet-count.",
+        "This book\u2019s nested arithmetic is 1% per trade, 2% per demand_driver, 4% across AI_STACK_DRIVERS, 8% heat. Two 1% seats in the same driver fill the theme cap (DELL+HPE). Four 1% seats in four different AI-stack drivers fill the stack-risk cap and are still one left-tail. GICS 40% and the 35% theme-MV",
+        "A diversifier is a non-AI-stack demand_driver (energy, healthcare, financials, materials, consumer_industrial, robotics_industrial) with diversifier=true / low corr_to_book. Cyber, software_platforms and mega_tech sit in AI_STACK even though they are not AI_CORE \u2014 they still spend the 4%."
+      ],
+      "how_to_apply": "Before any BUY, read factor_map (concentration_level, what_kills_the_book, unwind_playbook) then sum committed entry-to-stop risk already in the candidate\u2019s demand_driver (2% theme_initial_risk_cap) and already in AI_STACK_DRIVERS (4% max_factor_stack_risk_pct). Same driver as a holding \u2014 DELL-shape plus another hyperscaler_server_capex name \u2014 is one 2% bet, not two 1% bets: size the pair against the theme cap or pass. A different AI-stack driver (ai_compute_gpu, semi_memory, networking, datacenter_power, cybersecurity, software_platforms, mega_tech_platforms) still spends the 4% stack-risk budget; if that 4% is already spoken for, the next seat must be a non-stack driver with diversifier=true / low corr_to_book, not a \u2018diversified\u2019 fourth AI name, and you owe factor_response (no_same_theme_buy / rotate) when requires_factor_response is true. Do not cite GICS 40%, a 90-day corr_to_book under 0.7, or \u2018different sector\u2019 as clearance when the driver is in the stack \u2014 that is the Leibowitz\u2013Bova / Page\u2013Panariello long-only sleeve. Then place stop_loss beyond the named structural low AND at least stop_engineering.min_stop_distance_pct (aim 1.5\u20132\u00d7ATR, never past 15%), size = (equity \u00d7 1%)",
+      "sources": [
+        "Curtis Faith, The Original Turtle Trading Rules (originalturtles.org, 2003), Ch. 3 \u2018Units as a measure of Risk\u2019 and Ch. 5 \u2018Stop Placement\u2019: 4/6/10/12 unit limits; 1N = 1% of equity; 2N stop = 2% per unit; closely correlated = heating oil/crude, gold/silver, T-bills/Eurodollars; Oct-1987 interest-rat",
+        "TheTurtleTrader, \u2018The original Turtle Trading rules, explained\u2019 (Faith/Dennis/Eckhardt summary; 2N stop, 4/6/10/12, shared-driver grouping). https://www.theturtletrader.com/turtle-trading-rules/",
+        "Alexander Elder, Come Into My Trading Room (2002), via Incredible Charts \u2018The 6% Rule\u2019: cap open risk at 6% AND halt new trades for the month once 6% is lost. https://www.incrediblecharts.com/trading/6_percent_rule.php",
+        "Martin L. Leibowitz and Anthony Bova, \u2018Diversification Performance and Stress-Betas,\u2019 Journal of Portfolio Management 35(3), Spring 2009, pp. 41\u201347: diversified mix stress-beta 0.65\u21920.95 in 2008, \u22129pp vs 60/40. https://www.pm-research.com/content/iijpormgmt/35/3/41",
+        "S\u00e9bastien Page and Robert A. Panariello, \u2018When Diversification Fails,\u2019 Financial Analysts Journal 74(3), 2018, pp. 19\u201332: full-sample Pearson misleading; US\u2013EAFE left-tail +87% vs right-tail \u221217%; long-only style/size/sector sleeves co-crash; long-short factors diversify because they short. https://",
+        "Attilio Meucci, \u2018Managing Diversification,\u2019 Risk, May 2009 (SSRN 1358533): effective number of bets from the entropy of uncorrelated risk-factor exposures; N_Ent = 1 when all risk is one principal portfolio. https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1358533"
+      ],
+      "learned_at": "2026-09-15T23:45:22.938112+00:00",
+      "run_id": "20260915-0015f4",
+      "tensions": [
+        {
+          "with": "KB-8945303779",
+          "why": "KB-8945303779 is the measurement diagnosis: 90-day Pearson understates the simultaneous-stop-out, so demand_driver / shared_left_tail / factor_map.what_kills_the_book outrank corr_to_book. This lesson is the budget arithmetic of that diagnosis \u2014 2% per driver vs 4% across AI_STACK_DRIVERS vs 8% heat",
+          "noted_at": "2026-09-15"
+        },
+        {
+          "with": "KB-2999578881",
+          "why": "Kelly sets the 1% numerator and treats 8% heat / 2% theme as the portfolio-Kelly budget for correlated names. That 2% theme cap still permits two 1% seats per driver and, stacked across four AI-stack drivers, 8% of AI heat that passes every Kelly number. This lesson adds the missing layer the code a",
+          "noted_at": "2026-09-15"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-09-15T19:56:43.431535+00:00"
+  "updated_at": "2026-09-15T23:45:22.944181+00:00"
 }
