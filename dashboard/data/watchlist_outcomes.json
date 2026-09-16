@@ -5,8 +5,8 @@
     "price_when_added": 181.15,
     "hit_buy_level": false,
     "currently_watched": true,
-    "would_buy_at": "A no_supply_pullback that holds $186 (Monday's session low) after the 2026-09-16 FOMC decision, with the 28-analyst mean still at least 10% above the stock.",
-    "one_line": "Best geometry on the board: 28-analyst mean $241.04 is +25% vs Tuesday close $192.84, interconnect is a different layer than the DELL/HPE server-box loss cluster, and the $186 hold still waits for the Fed.",
+    "would_buy_at": "A no_supply_pullback that holds $186 (Monday's session low) after the 2026-09-16 2:00 p.m. ET FOMC statement and 2:30 p.m. presser, with the 28-analyst mean still at least 10% above the stock.",
+    "one_line": "Best geometry on the board: 28-analyst mean $241.04 is +25% vs Tuesday $192.84 and still ~+22% vs live ~$197, interconnect is a different layer than the DELL/HPE server-box loss cluster, and the $186 hold still waits for the Fed.",
     "latest_price": 192.84,
     "move_pct_since_watched": 6.5,
     "acted": false,
@@ -19,54 +19,47 @@
     "price_when_added": 1838.85,
     "hit_buy_level": false,
     "currently_watched": true,
-    "would_buy_at": "A daily close back above $1,900 (Friday's close, reclaiming the lost 50-day area) after the 2026-09-16 FOMC decision, with the 24-analyst mean still at least 10% above the stock.",
-    "one_line": "Consumer-platform diversifier with 24-analyst mean $2,265 (+24% vs $1,828.94), but Tuesday lost the 50-day and the 200-day \u2014 the $1,831 hold is dead.",
+    "would_buy_at": "n/a - dropping",
+    "one_line": "Dropping: Tuesday lost both the 50-day and the 200-day, so the old $1,831 hold would be buying a lower low in a broken trend.",
     "latest_price": 1828.94,
     "move_pct_since_watched": -0.5,
     "acted": false,
     "dropped_date": "2026-07-16",
-    "parsed_level": 1900.0
+    "parsed_level": null
   },
   {
     "ticker": "LITE",
     "first_watched": "2026-09-09",
     "price_when_added": 988.98,
-    "hit_buy_level": false,
+    "hit_buy_level": true,
     "currently_watched": true,
-    "would_buy_at": "A no_supply_pullback that holds $800 after the 2026-09-16 FOMC decision, with the live analyst mean still at least 10% above the stock.",
-    "one_line": "Optics name 23% off the high with a 26-analyst mean $1,149 (+37% vs $838.96), but ATR 7.0% is still too wide to size into Wednesday's hike.",
+    "would_buy_at": "A no_supply_pullback that holds $850 after the 2026-09-16 2:00 p.m. ET FOMC statement and 2:30 p.m. presser, with the live analyst mean still at least 10% above the stock.",
+    "one_line": "Optics name with a 26-analyst mean $1,149 still ~+29% vs live ~$890, but ATR 7% and this morning's +5\u20137% bounce is the opposite of the $800 hold.",
     "latest_price": 838.96,
     "move_pct_since_watched": -15.2,
-    "parsed_level": 800.0,
-    "acted": false
+    "parsed_level": 850.0,
+    "acted": false,
+    "hit_date": "2026-09-16",
+    "unbought_hit_days": [
+      "2026-09-16"
+    ]
   },
   {
     "ticker": "MSFT",
     "first_watched": "2026-09-14",
     "price_when_added": 495.63,
-    "hit_buy_level": false,
+    "hit_buy_level": true,
     "currently_watched": true,
-    "would_buy_at": "A no_supply_pullback that holds $496 (the 20-day) after the 2026-09-16 FOMC decision, with the 55-analyst mean still at least 10% above the stock.",
-    "one_line": "Software/cloud layer of the AI stack, 55-analyst mean $572.92 is +15.3% vs Tuesday $497.12, tagging the 20-day \u2014 the seat we already tried to take and still cannot arm.",
+    "would_buy_at": "A daily close back above $500 after the 2026-09-16 2:00 p.m. ET FOMC statement and 2:30 p.m. presser, with the 55-analyst mean still at least 10% above the stock AND tests_red:test_partial_broker_side_fill_leaves_a_correct_remainder green.",
+    "one_line": "Software/cloud layer of the AI stack, 55-analyst mean $572.92 is +16.2% vs live $493, but this morning lost the $496 20-day \u2014 reclaim after the presser, and only if the resting-stop test is green.",
     "latest_price": 497.12,
     "move_pct_since_watched": 0.3,
-    "parsed_level": 496.0,
+    "parsed_level": 500.0,
     "acted": false,
-    "trigger_gate": {
-      "held_on": "2026-09-15",
-      "reason": "event_gate_not_yet_satisfied",
-      "note": "price is at the stated level, but the trigger conditions on an event 1 day(s) out (2026-09-16) \u2014 \"after the 2026-09-16\". Alert held until then: firing early is the AMD 2026-07-17 failure (LP-0693555695), and a fired trigger now owes a trigger_reviews row and counts toward a force-drop.",
-      "gates": [
-        {
-          "kind": "after",
-          "date": "2026-09-16",
-          "event": null,
-          "soft": false,
-          "raw": "after the 2026-09-16",
-          "branch": 0
-        }
-      ]
-    }
+    "hit_date": "2026-09-16",
+    "unbought_hit_days": [
+      "2026-09-16"
+    ]
   },
   {
     "ticker": "SCHW",
@@ -74,27 +67,29 @@
     "price_when_added": 107.25,
     "hit_buy_level": false,
     "currently_watched": true,
-    "would_buy_at": "A no_supply_pullback that holds $106 (the 50-day) after the 2026-09-16 FOMC decision, with the 22-analyst mean still at least 10% above the stock.",
-    "one_line": "Financials diversifier: record August NNA $64.8B, Tuesday printed a pocket_pivot, and 22-analyst mean $124.95 is still +16% vs $107.79 \u2014 the rates seat that only becomes a swing after the dots.",
+    "would_buy_at": "A no_supply_pullback that holds $105 after the 2026-09-16 2:00 p.m. ET FOMC statement and 2:30 p.m. presser, with the 22-analyst mean still at least 10% above the stock.",
+    "one_line": "Financials diversifier: record August NNA $64.8B, 22-analyst mean $124.95 is still +16.7% vs live ~$107, and the 50-day is the rail \u2014 but only after the dots, not three hours before them.",
     "latest_price": 107.79,
     "move_pct_since_watched": 0.5,
-    "parsed_level": 106.0,
-    "acted": false,
-    "trigger_gate": {
-      "held_on": "2026-09-15",
-      "reason": "event_gate_not_yet_satisfied",
-      "note": "price is at the stated level, but the trigger conditions on an event 1 day(s) out (2026-09-16) \u2014 \"after the 2026-09-16\". Alert held until then: firing early is the AMD 2026-07-17 failure (LP-0693555695), and a fired trigger now owes a trigger_reviews row and counts toward a force-drop.",
-      "gates": [
-        {
-          "kind": "after",
-          "date": "2026-09-16",
-          "event": null,
-          "soft": false,
-          "raw": "after the 2026-09-16",
-          "branch": 0
-        }
-      ]
-    }
+    "parsed_level": 105.0,
+    "acted": false
+  },
+  {
+    "ticker": "ICE",
+    "first_watched": "2026-09-16",
+    "price_when_added": 156.9,
+    "hit_buy_level": true,
+    "currently_watched": true,
+    "would_buy_at": "A no_supply_pullback that holds $154 after the 2026-09-16 2:00 p.m. ET FOMC statement and 2:30 p.m. presser, with a live analyst mean still at least 10% above the stock.",
+    "one_line": "Exchange diversifier sitting 10% off the high with RSI 50.8 and a weekly uptrend \u2014 a different financials seat than SCHW if the Fed path is the story.",
+    "latest_price": 156.9,
+    "move_pct_since_watched": 0.0,
+    "parsed_level": 154.0,
+    "hit_date": "2026-09-16",
+    "unbought_hit_days": [
+      "2026-09-16"
+    ],
+    "acted": false
   },
   {
     "ticker": "HOOD",
@@ -174,8 +169,8 @@
     "currently_watched": false,
     "would_buy_at": "A no_supply_pullback that holds $580, with the 19-analyst mean still at least 10% above the stock.",
     "one_line": "Scan 7.24 with +49.8% revenue, but 6.22x leverage and a $693 mean that fails 2:1 from here \u2014 wait for $580.",
-    "latest_price": 442.08,
-    "move_pct_since_watched": -21.9,
+    "latest_price": 453.54,
+    "move_pct_since_watched": -19.8,
     "acted": false,
     "dropped_date": "2026-07-13",
     "parsed_level": 580.0
@@ -202,8 +197,8 @@
     "currently_watched": false,
     "would_buy_at": "A base above $19-20 that holds through a genuine pullback, ideally resolved before the 2026-08-27 print.",
     "one_line": "Still the cheapest growth-adjusted name in cybersecurity, still carrying persistent insider selling into an 8/27 print.",
-    "latest_price": 23.48,
-    "move_pct_since_watched": 31.3,
+    "latest_price": 23.65,
+    "move_pct_since_watched": 32.3,
     "acted": false,
     "dropped_date": "2026-07-13",
     "parsed_level": 19.0
@@ -626,8 +621,8 @@
     "currently_watched": false,
     "would_buy_at": "n/a - dropped",
     "one_line": "Clean uptrend but no catalyst has developed across four-plus runs on the watchlist.",
-    "latest_price": 307.05,
-    "move_pct_since_watched": -11.0,
+    "latest_price": 315.24,
+    "move_pct_since_watched": -8.6,
     "parsed_level": null,
     "acted": false,
     "dropped_date": "2026-07-30"
@@ -831,20 +826,6 @@
     "one_line": "Dropping: 15-analyst mean is still only ~+1% vs Friday $280.46, so the $270 no_supply hold never had 10% to consensus.",
     "latest_price": 275.09,
     "move_pct_since_watched": 0.0,
-    "parsed_level": null,
-    "acted": false,
-    "dropped_date": "2026-09-15"
-  },
-  {
-    "ticker": "AEM",
-    "first_watched": "2026-09-15",
-    "price_when_added": 197.55,
-    "hit_buy_level": false,
-    "currently_watched": false,
-    "would_buy_at": "n/a - removing",
-    "one_line": "Dropping: 14-analyst mean $214.89 is only +9.3% vs Friday $197.55, so a 10% swing versus consensus is not there.",
-    "latest_price": 196.9,
-    "move_pct_since_watched": -0.3,
     "parsed_level": null,
     "acted": false,
     "dropped_date": "2026-09-15"
