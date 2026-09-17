@@ -1,7 +1,46 @@
 {
-  "cash_usd": 984.79,
-  "total_equity_usd": 984.79,
-  "positions": [],
+  "cash_usd": 907.15,
+  "total_equity_usd": 984.76,
+  "positions": [
+    {
+      "ticker": "ANET",
+      "quantity": 0.380726,
+      "avg_cost": 203.926,
+      "market_value_usd": 77.61,
+      "last_price": 203.86,
+      "opened_at": "2026-09-17T15:05:01.775566+00:00",
+      "proposal_id": "20260917-a7db91",
+      "plan": {
+        "stop_loss": 192.0,
+        "target_price": 241.04,
+        "holding_horizon_days": 35,
+        "entry_price_max": 205.0,
+        "confidence": 0.52,
+        "demand_driver": "networking",
+        "thesis_invalidators": {
+          "invalidating_print": "FY2026 revenue guide cut below the $12.6B / ~40% growth path, or 30-day EPS revisions worse than -5% from the $3.64 current-year estimate.",
+          "invalidating_structure": "A daily close below $192.00, undercutting the 2026-09-17 session low of $192.98 and breaking the $195 hold this entry is underwriting.",
+          "time_box": "If ANET has not closed above $214.89 (the 52-week high) or at least held a daily close at/above $205 through 2026-10-08 (15 trading days), the throwback-reclaim is not converting \u2014 exit and rotate."
+        },
+        "calibration_probe": true
+      },
+      "high_water": 204.63,
+      "adds_count": 0,
+      "buy_commission_usd": 0.0,
+      "demand_driver": "networking",
+      "protective_stop": {
+        "status": "resting",
+        "stop_price": 192.0,
+        "qty": 0.380726,
+        "uncovered_qty": 0.0,
+        "session_only": true,
+        "time_in_force": "day",
+        "client_order_id": "EESTOP-ANET-d20b3e044d",
+        "alpaca_order_id": "e04196c5-fb26-4879-bed6-f8fe385de55e",
+        "armed_at": "2026-09-17T15:05:02.454971+00:00"
+      }
+    }
+  ],
   "pending_orders": {},
   "history": [
     {
@@ -1216,9 +1255,55 @@
       "alpaca_status": "filled",
       "avg_cost_source": "history_backfill",
       "filled_at": "2026-09-10T13:30:00.806859553Z"
+    },
+    {
+      "ticker": "ANET",
+      "action": "BUY",
+      "position_size_usd": 77.65,
+      "reference_price": 204.63,
+      "proposal_id": "20260917-a7db91",
+      "sell_fraction": null,
+      "atr_pct": 3.78,
+      "entry_price_max": 205.0,
+      "plan": {
+        "stop_loss": 192.0,
+        "target_price": 241.04,
+        "holding_horizon_days": 35,
+        "entry_price_max": 205.0,
+        "confidence": 0.52,
+        "demand_driver": "networking",
+        "thesis_invalidators": {
+          "invalidating_print": "FY2026 revenue guide cut below the $12.6B / ~40% growth path, or 30-day EPS revisions worse than -5% from the $3.64 current-year estimate.",
+          "invalidating_structure": "A daily close below $192.00, undercutting the 2026-09-17 session low of $192.98 and breaking the $195 hold this entry is underwriting.",
+          "time_box": "If ANET has not closed above $214.89 (the 52-week high) or at least held a daily close at/above $205 through 2026-10-08 (15 trading days), the throwback-reclaim is not converting \u2014 exit and rotate."
+        },
+        "calibration_probe": true
+      },
+      "demand_driver": "networking",
+      "order_id": "EE-36d2ef5b450a",
+      "client_order_id": "EE-36d2ef5b450a",
+      "status": "filled",
+      "submitted_at": "2026-09-17T15:04:59.898873+00:00",
+      "alpaca_order_id": "f609b997-fdb3-4d14-8d8a-6ace71adecfd",
+      "fill_price": 203.926,
+      "quantity": 0.380726,
+      "notional_usd": 77.64,
+      "is_add": false,
+      "total_cost_usd": 77.64,
+      "entry_gap_usd": 0.0,
+      "fees_usd": {
+        "commission": 0.0,
+        "sec_fee": 0.0,
+        "taf": 0.0,
+        "slippage_bps": 0.0,
+        "effective_slippage_pct": 0.0
+      },
+      "alpaca_status": "filled",
+      "filled_at": "2026-09-17T15:05:00.971123947Z",
+      "position_avg_cost_after": 203.926
     }
   ],
-  "broker_synced_at": "2026-09-16T22:26:10.783117+00:00",
+  "broker_synced_at": "2026-09-17T15:05:03.264501+00:00",
   "broker_backend": "alpaca_paper",
   "ingested_broker_orders": [
     "f86c48cf-b81c-4853-8800-51cb63f9a616",
