@@ -494,24 +494,49 @@ def test_already_journaled_matches_the_alpaca_order_id_too(tmp_path, monkeypatch
     assert not reconcile_runner._already_journaled("EESTOP-X-2", "srv-99")
 
 
-def test_partial_broker_side_fill_leaves_a_correct_remainder(api, monkeypatch):
-    """The GTC leg only covers whole shares, so a fired stop can leave a
-    fractional remainder. That remainder must survive with its entry metadata
-    and get a fresh stop — not be dropped, and not become a phantom."""
+def test_partial_broker_side_fill_sweeps_fractional_remainder(
+        api, monkeypatch, tmp_path):
+    """GTC stops cover whole shares only. After a stop fill, the sub-share
+    leftover must be market-swept immediately — re-arming a fractional stop is
+    what used to leave not_at_broker ghosts (see _sweep_fractional_dust)."""
+    import tools.exit_autopsy as EA
+    import tools.x_poster as XP
+    monkeypatch.setattr(EA, "ROOT", tmp_path)
+    monkeypatch.setattr(EA, "AUTOPSY_DIR", tmp_path / "journal" / "exit_autopsies")
+    monkeypatch.setattr(EA, "grade_and_persist_autopsy", lambda rec: rec)
+    monkeypatch.setattr(XP, "promote_draft_for_fill", lambda *a, **k: None)
+
     entry_buy(api, monkeypatch, qty=5.37, price=100.0, stop=90.0)
     cid = next(o["client_order_id"] for o in api.working_stops())
     api.fill_stop(cid, 89.4)                      # 5 whole shares sold
     api.set_position("NVDA", 0.37, 100.0, 89.4)
     api.cash = round(api.cash + 5 * 89.4, 2)
 
+    # Autofill the dust market sell and clear the broker remnant.
+    api.autofill_market = {
+        "filled_qty": "0.37", "filled_avg_price": "89.4",
+        "filled_at": "2026-07-18T20:15:05Z",
+    }
+    base = FakeAlpaca.__call__
+
+    def wrapper(method, path, **kw):
+        code, body = base(api, method, path, **kw)
+        req = kw.get("body") or {}
+        if (path == "/v2/orders" and method == "POST"
+                and req.get("type") == "market" and req.get("side") == "sell"):
+            q = float(req["qty"])
+            api.set_position("NVDA", 0.0, 100.0, 89.4)
+            api.cash = round(api.cash + q * 89.4, 2)
+        return code, body
+
+    monkeypatch.setattr(ab, "_req", wrapper)
+
     done = ab.ingest_out_of_band_fills()
 
     assert len(done) == 1 and done[0][1]["quantity"] == 5.0
-    remaining = _pos()
-    assert remaining is not None
-    assert remaining["quantity"] == pytest.approx(0.37)
-    assert remaining["opened_at"] and remaining["plan"]["stop_loss"] == 90.0
-    assert float(api.working_stops()[0]["qty"]) == pytest.approx(0.37)
+    assert done[0][1].get("dust_sweep"), "stop fill must sweep fractional dust"
+    assert _pos() is None
+    assert api.working_stops() == []
 
 
 def test_reconcile_sweeps_out_of_band_fills(api, monkeypatch):
