@@ -1718,7 +1718,50 @@
           "noted_at": "2026-09-16"
         }
       ]
+    },
+    {
+      "id": "KB-2454897375",
+      "discipline": "technical_analysis",
+      "topic": "The last confirmed swing low is the invalidation: HH/HL structure, Magee's three-days-away, and why the stop goes beyond that low \u2014 not a round number and not the 50-DMA by default",
+      "summary": "Hamilton (via Rhea and StockCharts ChartSchool) defines an uptrend as rising peaks and rising troughs, a downtrend as declining peaks and troughs, and treats the trend as valid until proved otherwise. A lower high does not kill an uptrend until a lower low also prints and the decline exceeds the prior trough \u2014 ChartSchool's Jun-99 DJIA example still made two all-time highs after lower highs with no lower low. Edwards and Magee apply the same HH/HL grammar to individual stocks and operationalize the trough as a Basing Point: a candidate low is confirmed only after three subsequent days trade completely outside that low day's range (three-days-away) before a new low is made, and the protective stop is then placed a percent interval under that low (historically never less than 5%, typically 5\u20136% on conservative high-priced names, wider on cheaper or more volatile ones; later editions also let a new-high day's low become a basing point once price exceeds the prior wave high by about 3%). Bill Williams' 5-bar fractal is the mechanical cousin: a swing low is a bar whose low is strictly below the two bars on each side, confirmed only after those two following bars complete, so every fractal is two bars late. Those three objects disagree on significance \u2014 Williams marks every 2\u20133 day wiggle, Magee's three-days-away marks a minor reaction, and Hamilton's 3% noise filter was stated for the averages, not as a single-stock stop width \u2014 and I keep the disagreements. What they share is tha",
+      "key_points": [
+        "Uptrend = higher highs AND higher lows; a lower high is not a trend change until a lower low also prints and is not immediately reclaimed.",
+        "Name the last reaction low with Magee three-days-away (or at least a Williams 5-bar); that price is invalidating_structure, not a round number and not the 50-DMA.",
+        "Stop goes beyond that low AND the ATR/expected-move floor; Magee's 5\u20136% offset and Hamilton's 3% average-filter are not this book's width.",
+        "Williams 5-bar fractals print too often to be entries; they only label local extrema, and they confirm two bars late.",
+        "Dow Theory as Industrials+Transports market timing is a different object (BGK ~3% alpha 1902\u201329; mixed later) \u2014 do not import two-average confirmation onto a single stock.",
+        "Polarity: broken resistance becomes support (the throwback). An undercut-and-reclaim of the swing low is a spring, not the invalidation.",
+        "The coded 3\u00d7ATR chandelier is the trail; Magee basing-point stairs are not a second discretionary trail."
+      ],
+      "how_to_apply": "On every candidate, open data/charts/<TICKER>.png and name the last Magee-class swing low: the trough from which price later made a higher high, confirmed by at least two higher-low bars on the right (Williams) and preferably three subsequent days whose range is entirely above that low day. Write invalidating_structure as a sanitizer-safe close \u2014 'A daily close below $[that low]' \u2014 with no volume-confirmation leg. Place stop_loss below that low AND at least stop_engineering.min_stop_distance_pct (aim 1.5\u20132\u00d7ATR, never past 15%), then size = (equity \u00d7 1%) / stop_distance_pct; if 10% upside and 2:1 do not clear from that ATR-floored stop, wait for a tighter inner swing (flag / handle / 3-C pause low) or pass \u2014 do not hug a round number inside the swing. The 50-DMA is the pullback rail, not the invalidation: if the last swing low sits above the 50, the stop is the swing low; if price is still above the 50 but has already printed a lower low versus the prior swing, structure is broken \u2014 do not buy it as a 50-DMA dip. Until the coded 3\u00d7ATR chandelier from high-water since entry climbs above the plan stop, that named swing-low stop still governs; do not replace it with Magee 6% stair-stop",
+      "sources": [
+        "https://chartschool.stockcharts.com/table-of-contents/market-analysis/dow-theory",
+        "https://chartschool.stockcharts.com/table-of-contents/chart-analysis/support-and-resistance",
+        "Edwards, R.D. and Magee, J., Technical Analysis of Stock Trends \u2014 Ch. 3 (Dow Theory HH/HL), Ch. 27 (stop orders; never less than 5% interval), Ch. 28 (Basing Points; three-days-away rule)",
+        "Brown, S.J., Goetzmann, W.N. and Kumar, A. (1998), 'The Dow Theory: William Peter Hamilton's Track Record Reconsidered', Journal of Finance 53(4):1311-1333. https://doi.org/10.1111/0022-1082.00054",
+        "Cowles, A. (1934), 'Can Stock Market Forecasters Forecast?', Econometrica \u2014 Hamilton 12% vs 15.5% fully invested, 1902\u20131929, long 55%/short 16%/cash 29%",
+        "Williams, B., Trading Chaos \u2014 5-bar fractal (swing low = bar whose low is below the two bars on each side). Definitions: https://www.investopedia.com/terms/f/fractal.asp and https://www.luxalgo.com/library/concept/williams-fractal/"
+      ],
+      "learned_at": "2026-09-17T23:45:57.704575+00:00",
+      "run_id": "20260917-8e1a0a",
+      "tensions": [
+        {
+          "with": "KB-4252672139",
+          "why": "KB-4252672139 owns the 50/200 as a Stage-2 FILTER and the 50-DMA as the default PULLBACK RAIL. This lesson owns the invalidation GRID: the last confirmed swing low, which may sit above or below that rail. When the 50-tag IS the swing low, both apply and that low is the stop. When price holds a swing",
+          "noted_at": "2026-09-17"
+        },
+        {
+          "with": "KB-2369805317",
+          "why": "KB-2369805317 is the coded TRAIL: high-water since entry minus 3\u00d7ATR, ratchet-only, no breakeven jump. Magee's basing-point stairs are a structural trail from successive wave lows; importing them as a second discretionary trail would fight the chandelier. They apply in sequence: this lesson names th",
+          "noted_at": "2026-09-17"
+        },
+        {
+          "with": "KB-2770353193",
+          "why": "KB-2770353193 is the undercut-and-rally fork: never buy the undercut bar, enter on the reclaim of the named support. A close that undercuts this lesson's swing low and then reclaims it is that spring, not automatic invalidation. Invalidation here is a daily close that STAYS below the named swing low",
+          "noted_at": "2026-09-17"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-09-16T23:51:03.195601+00:00"
+  "updated_at": "2026-09-17T23:45:57.710157+00:00"
 }

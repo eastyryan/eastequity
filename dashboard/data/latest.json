@@ -1013,6 +1013,10 @@
   "improvements": [
     {
       "date": "2026-09-17",
+      "note": "Daily study (technical_analysis): The last confirmed swing low is the invalidation: HH/HL structure, Magee's three-days-away, and why the stop goes beyond that low \u2014 not a round number and not the 50-DMA by default - Hamilton (via Rhea and StockCharts ChartSchool) defines an uptrend as rising peaks and rising troughs, a downtrend as declining peaks and troughs, and treats the trend as valid until proved otherwise."
+    },
+    {
+      "date": "2026-09-17",
       "note": "Dynamic universe add: ['GNRC'] (187 names). Proposed from the market-wide radar; tradeable from the next run."
     },
     {
@@ -1126,10 +1130,6 @@
     {
       "date": "2026-09-15",
       "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
-    },
-    {
-      "date": "2026-09-15",
-      "note": "Watchlist names that lose the 200-DMA after a trigger is written still inherit the old Stage-2 rail (MELI's `$1,831 after FOMC` fired as event-gated even though Tuesday's compact line has `above_200dma: false`); stamp a 200-DMA-lost flag onto event-gated triggers so an evening review does not carry a hold-the-low instruction on a broken-trend name."
     }
   ],
   "trade_events": [
