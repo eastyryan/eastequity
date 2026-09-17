@@ -1,34 +1,45 @@
 [
   {
-    "ticker": "ANET",
-    "first_watched": "2026-07-13",
-    "price_when_added": 181.15,
+    "ticker": "LITE",
+    "first_watched": "2026-09-09",
+    "price_when_added": 988.98,
     "hit_buy_level": false,
     "currently_watched": true,
-    "would_buy_at": "Live under $205 after the 2026-09-17 $192.98 test, with the 28-analyst mean still at least 10% above the stock.",
-    "one_line": "Interconnect starter: 28-analyst Strong Buy mean $241.04 is +17.8% vs live $204.63 after today's $192.98 test of the $195 hold.",
-    "latest_price": 204.63,
-    "move_pct_since_watched": 13.0,
-    "acted": true,
-    "parsed_level": 192.98,
-    "dropped_date": "2026-07-15"
+    "would_buy_at": "A no_supply_pullback that holds $880 after the 2026-09-17 +9.6% bar, with the 26-analyst mean still at least 10% above the stock, and only if ANET is no longer the networking seat.",
+    "one_line": "Optical interconnect: 26-analyst Strong Buy mean $1149.38 is +26% vs live $912.93, but it is the same networking bet as the ANET seat just opened.",
+    "latest_price": 912.93,
+    "move_pct_since_watched": -7.7,
+    "parsed_level": 880.0,
+    "acted": false,
+    "dropped_date": "2026-09-16"
   },
   {
     "ticker": "MSFT",
     "first_watched": "2026-09-14",
     "price_when_added": 495.63,
-    "hit_buy_level": true,
+    "hit_buy_level": false,
     "currently_watched": true,
-    "would_buy_at": "A daily close that holds $498 after the 2026-09-17 regular session, with the 52-analyst mean still at least 10% above the stock.",
-    "one_line": "Mega-tech compounder: prior 52-analyst mean $572.92 is still +15% vs live $497.26, but the $496 reclaim is a close, not this morning's print.",
+    "would_buy_at": "A daily close that holds $490 after 2026-09-18, with the 52-analyst mean still at least 10% above the stock.",
+    "one_line": "Mega-tech compounder: prior 52-analyst mean still ~15% above live $497.26, but the $498 reclaim is a close, not this morning's print.",
     "latest_price": 497.26,
     "move_pct_since_watched": 0.3,
-    "parsed_level": 498.0,
+    "parsed_level": 490.0,
     "acted": false,
-    "hit_date": "2026-09-17",
-    "unbought_hit_days": [
-      "2026-09-17"
-    ]
+    "trigger_gate": {
+      "held_on": "2026-09-17",
+      "reason": "event_gate_not_yet_satisfied",
+      "note": "price is at the stated level, but the trigger conditions on an event 1 day(s) out (2026-09-18) \u2014 \"after 2026-09-18\". Alert held until then: firing early is the AMD 2026-07-17 failure (LP-0693555695), and a fired trigger now owes a trigger_reviews row and counts toward a force-drop.",
+      "gates": [
+        {
+          "kind": "after",
+          "date": "2026-09-18",
+          "event": null,
+          "soft": false,
+          "raw": "after 2026-09-18",
+          "branch": 0
+        }
+      ]
+    }
   },
   {
     "ticker": "SCHW",
@@ -89,6 +100,20 @@
     "latest_price": 207.5,
     "move_pct_since_watched": 0.0,
     "parsed_level": 200.93
+  },
+  {
+    "ticker": "ANET",
+    "first_watched": "2026-07-13",
+    "price_when_added": 181.15,
+    "hit_buy_level": false,
+    "currently_watched": false,
+    "would_buy_at": "Live under $205 after the 2026-09-17 $192.98 test, with the 28-analyst mean still at least 10% above the stock.",
+    "one_line": "Interconnect starter: 28-analyst Strong Buy mean $241.04 is +17.8% vs live $204.63 after today's $192.98 test of the $195 hold.",
+    "latest_price": 204.63,
+    "move_pct_since_watched": 13.0,
+    "acted": true,
+    "parsed_level": 192.98,
+    "dropped_date": "2026-07-15"
   },
   {
     "ticker": "HOOD",
@@ -818,23 +843,5 @@
     "parsed_level": 335.0,
     "acted": false,
     "dropped_date": "2026-09-15"
-  },
-  {
-    "ticker": "LITE",
-    "first_watched": "2026-09-09",
-    "price_when_added": 988.98,
-    "hit_buy_level": true,
-    "currently_watched": false,
-    "would_buy_at": "A no_supply_pullback that holds $850 after the 2026-09-16 2:00 p.m. ET FOMC statement and 2:30 p.m. presser, with the live analyst mean still at least 10% above the stock.",
-    "one_line": "Optics name with a 26-analyst mean $1,149 still ~+29% vs live ~$890, but ATR 7% and this morning's +5\u20137% bounce is the opposite of the $800 hold.",
-    "latest_price": 912.93,
-    "move_pct_since_watched": -7.7,
-    "parsed_level": 850.0,
-    "acted": false,
-    "hit_date": "2026-09-16",
-    "unbought_hit_days": [
-      "2026-09-16"
-    ],
-    "dropped_date": "2026-09-16"
   }
 ]
