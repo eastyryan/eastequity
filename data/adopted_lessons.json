@@ -1,6 +1,5 @@
 {
-  "updated_at": "2026-09-18T21:48:42.704491+00:00",
-  "pruned_at": "2026-09-18T21:48:42.704498+00:00",
+  "updated_at": "2026-09-18T21:48:49.187210+00:00",
   "lessons": [
     {
       "id": "LP-0693555695",
@@ -370,6 +369,182 @@
       "text": "Dynamic universe add: ['MDB'] (187 names). Proposed from the market-wide radar; tradeable from the next run.",
       "adopted_at": "2026-09-04T21:46:28.015349+00:00",
       "run_id": "20260901-156a4a"
+    },
+    {
+      "id": "LP-6512562460",
+      "note_fp": "MSFT was the close-gated trigger this 15:30 ET full run was built to underwrite,",
+      "kind": "soft_process",
+      "text": "MSFT was the close-gated trigger this 15:30 ET full run was built to underwrite, but it is not in the focus set \u2014 no `data/charts/MSFT.png`, no `stop_engineering.floors.MSFT`, no options expected-move, no digest. Auto-promote every `watchlist_trigger_alerts` ticker into the focus/chart/options/stop-floor pack so a name that has reached its own stated level is researched with the same geometry tools as the scan leaders. Secondary: stamp `session_status: closed` and `bar_date: 2026-09-18` onto trigger alerts so the three earlier Friday slots stop firing on the 2026-09-17 daily_bar against a clos",
+      "adopted_at": "2026-09-18T21:48:49.185622+00:00",
+      "run_id": "20260918-6bc071"
+    },
+    {
+      "id": "LP-1031588778",
+      "note_fp": "Dynamic universe add: ['GNRC'] (187 names). Proposed from the market-wide radar;",
+      "kind": "soft_lesson",
+      "text": "Dynamic universe add: ['GNRC'] (187 names). Proposed from the market-wide radar; tradeable from the next run.",
+      "adopted_at": "2026-09-18T21:48:49.185630+00:00",
+      "run_id": "20260918-d40852"
+    },
+    {
+      "id": "LP-4479245893",
+      "note_fp": "The MSFT trigger fired a third time today (11:00, 12:46, and this 14:26 ET slot)",
+      "kind": "soft_process",
+      "text": "The MSFT trigger fired a third time today (11:00, 12:46, and this 14:26 ET slot) on prices_meta last_close $497.75 as of 2026-09-17 (daily_bar) against a trigger whose text explicitly requires the 2026-09-18 regular-session close. No remaining Friday trading slot (including 15:30) can observe a 16:00 ET close, so a same-day close-gate is un-actionable by construction. Stamp `session_status: open|closed` and `bar_date` onto watchlist_trigger_alerts, and suppress an alert whose event-gate is \u201cafter today\u2019s close\u201d until the regular session has actually closed. Secondary: live_prices.json is still",
+      "adopted_at": "2026-09-18T21:48:49.185633+00:00",
+      "run_id": "20260918-d40852"
+    },
+    {
+      "id": "LP-7247122383",
+      "note_fp": "The MSFT trigger fired again this 12:46 ET slot on prices_meta last_close $497.7",
+      "kind": "soft_process",
+      "text": "The MSFT trigger fired again this 12:46 ET slot on prices_meta last_close $497.75 as of 2026-09-17 (daily_bar) against a trigger whose text explicitly requires the 2026-09-18 regular-session close \u2014 the same close-gate the 11 AM run already requalified. Stamp `session_status: open|closed` and `bar_date` onto watchlist_trigger_alerts, and suppress an alert whose event-gate is \u201cafter today\u2019s close\u201d until the regular session has actually closed. Secondary: live_prices.json is still dated 2026-07-23 (age_min 1062), so this slot had to WebSearch ANET/MSFT/CRM marks to see that ANET\u2019s day low ($197.",
+      "adopted_at": "2026-09-18T21:48:49.185636+00:00",
+      "run_id": "20260918-337e4f"
+    },
+    {
+      "id": "LP-3448382878",
+      "note_fp": "Live overlay was stale (age_min 960 vs 30-min max; live_prices.json dated 2026-0",
+      "kind": "soft_process",
+      "text": "Live overlay was stale (age_min 960 vs 30-min max; live_prices.json dated 2026-07-23), so this 11 AM ET full run had to WebSearch CRM/ANET/MSFT marks to see that CRM had already undercut $240. Stamp a same-session quote onto watchlist_trigger_alerts (last_price + session_low + as_of_et) and suppress or flag an alert whose parsed level equals yesterday's close when today's session has already traded through it.",
+      "adopted_at": "2026-09-18T21:48:49.185638+00:00",
+      "run_id": "20260918-525d28"
+    },
+    {
+      "id": "LP-7764114550",
+      "note_fp": "The 15:30 CRM BUY died on `probe_cap_reached` (ANET is the open 0.52 probe), the",
+      "kind": "soft_lesson",
+      "text": "The 15:30 CRM BUY died on `probe_cap_reached` (ANET is the open 0.52 probe), then this evening_review cannot buy the $242.85 close that `waiting_for` required \u2014 stamp a `next_session_instruction` on close-conditioned waiting_for (ticker, min_confidence to clear the probe cap, named stop/target) so Friday 8:45 does not re-underwrite from scratch. Secondary: ANET's protective stop is `session_only` DAY and is unarmed overnight on a day-0 0.99-ATR cushion; surface `overnight_uncovered: true` on fractional holdings so the evening review names the gap explicitly.",
+      "adopted_at": "2026-09-18T21:48:49.185645+00:00",
+      "run_id": "20260917-8e05b4"
+    },
+    {
+      "id": "LP-3891442723",
+      "note_fp": "The 15:30 ET full pack still stamps `universe_scan.prices_meta.CRM` as the 2026-",
+      "kind": "soft_process",
+      "text": "The 15:30 ET full pack still stamps `universe_scan.prices_meta.CRM` as the 2026-09-16 daily_bar ($250.54) while options_signals.spot ($244.06) and deep_fundamentals.market_cap close ($244.2 as of 2026-09-17) already know today's session \u2014 surface a single same-session mark for holdings + the ranked watchlist at pack build so a $240 close-hold trigger does not require a MarketWatch scrape to underwrite.",
+      "adopted_at": "2026-09-18T21:48:49.185648+00:00",
+      "run_id": "20260917-9eb949"
+    },
+    {
+      "id": "LP-6016514767",
+      "note_fp": "`price_freshness_live` is still stale (`stale=true`, age 140 min, holdings-only ",
+      "kind": "soft_process",
+      "text": "`price_freshness_live` is still stale (`stale=true`, age 140 min, holdings-only ANET) while this 15:30 ET full run\u2019s `universe_scan.prices_meta` is entirely 2026-09-16 daily bars (`bars_older_than_et_today: 186`), so CRM\u2019s $241.52 tag, SCHW\u2019s $103.50 low, ANET\u2019s ~$200 hold, and GNRC\u2019s $175\u2192$232\u2192$206 fade again had to be reconstructed from WebSearch plus the CRM options spot ($243.81). Overlay a same-slot IEX last/nbbo onto holdings + watchlist + tape promotions + options-spot names before trigger evaluation. Secondary: a `waiting_for` keyed to today\u2019s regular-session close cannot be acted on t",
+      "adopted_at": "2026-09-18T21:48:49.185651+00:00",
+      "run_id": "20260917-e3e384"
+    },
+    {
+      "id": "LP-9894035389",
+      "note_fp": "`price_freshness_live` was 64 minutes stale (`stale=true`, holdings-only) while ",
+      "kind": "soft_process",
+      "text": "`price_freshness_live` was 64 minutes stale (`stale=true`, holdings-only) while this ~2:27 PM ET focused slot still had `universe_scan.prices_meta` on 2026-09-16 daily bars, so CRM\u2019s $241.52 tag, SCHW\u2019s $103.51 low, ANET\u2019s $198 hold, and GNRC\u2019s $175\u2192$232\u2192$206 fade all had to be reconstructed from WebSearch. Overlay a same-slot IEX last/nbbo onto holdings + watchlist + tape promotions before trigger evaluation, and do not count `hits_not_bought` on a parsed level that equals an incomplete-session print when the trigger text still says \u201cafter the regular session.\u201d Secondary: tape promotion of `S",
+      "adopted_at": "2026-09-18T21:48:49.185653+00:00",
+      "run_id": "20260917-8bc6e7"
+    },
+    {
+      "id": "LP-7049668529",
+      "note_fp": "The live-price overlay was 152 minutes stale (`price_freshness_live.stale=true`,",
+      "kind": "soft_process",
+      "text": "The live-price overlay was 152 minutes stale (`price_freshness_live.stale=true`, as_of 10:46 ET) while this 12:00-ish ET focused slot ran at 13:19 ET, so CRM's $240 tag, SCHW's $103.51 low, ANET's $202 hold, and GNRC's $175\u2192$232 gap all had to be reconstructed from WebSearch against `prices_meta` daily bars dated 2026-09-16. Stamp a same-slot IEX overlay onto holdings + watchlist + tape promotions before trigger evaluation, and suppress a `hits_not_bought` alert whose parsed level equals an incomplete session print on a name whose trigger text still says \"after the regular session.\"",
+      "adopted_at": "2026-09-18T21:48:49.185656+00:00",
+      "run_id": "20260917-88ba47"
+    },
+    {
+      "id": "LP-6742998030",
+      "note_fp": "Watchlist names that fire (MSFT this slot; ANET earlier) and overnight universe_",
+      "kind": "soft_process",
+      "text": "Watchlist names that fire (MSFT this slot; ANET earlier) and overnight universe_candidates (GNRC) still land outside the deep-research focus pack \u2014 no chart, no stack_card, no stop_engineering floor, no options card \u2014 so the underwrite is done off a compact indicator line plus WebSearch. Auto-promote `watchlist_trigger_alerts` and the prior run's `universe_candidates` into the focus set the same way tape/8-K promotions already are. Secondary: the CRM chart pane printed `no_supply_pullback` on today's developing bar while `universe_scan` still stamped yesterday's completed bar `neutral`; stamp ",
+      "adopted_at": "2026-09-18T21:48:49.185658+00:00",
+      "run_id": "20260917-433a09"
+    },
+    {
+      "id": "LP-1250412340",
+      "note_fp": "Watchlist names that actually fire (ANET, MSFT) and overnight universe_candidate",
+      "kind": "soft_process",
+      "text": "Watchlist names that actually fire (ANET, MSFT) and overnight universe_candidates (GNRC) still land outside the deep-research focus pack \u2014 no chart, no stack_card, no stop_engineering floor, no options card \u2014 so the 10:30 underwrite is done off a compact indicator line plus WebSearch. Auto-promote `watchlist_trigger_alerts` and the prior run's `universe_candidates` into the focus set the same way tape/8-K promotions already are.",
+      "adopted_at": "2026-09-18T21:48:49.185660+00:00",
+      "run_id": "20260917-a7db91"
+    },
+    {
+      "id": "LP-9821369485",
+      "note_fp": "Daily study (strategy_playbooks): The 3-C / cheat inner-pivot: ~40-66% of breako",
+      "kind": "soft_lesson",
+      "text": "Daily study (strategy_playbooks): The 3-C / cheat inner-pivot: ~40-66% of breakouts never throw back, so tightness inside the base is the entry \u2014 not a post-breakout retest the count often will not give - Thomas Bulkowski's counted throwback is a 30-calendar-day object: after an upward breakout, price must zoom (white space, not a slide along the boundary) and return to the breakout or pattern edge. Si",
+      "adopted_at": "2026-09-18T21:48:49.185662+00:00",
+      "run_id": "20260916-41a318"
+    },
+    {
+      "id": "LP-8067189371",
+      "note_fp": "The ANET $195 \"daily close that holds\" trigger fired on this evening pack becaus",
+      "kind": "soft_lesson",
+      "text": "The ANET $195 \"daily close that holds\" trigger fired on this evening pack because the 2026-09-16 bar is now $197.54, but volume_read is still neutral at rvol 0.66 on a FOMC bounce \u2014 stamp the session's `volume_read` / `no_supply_pullback` onto trigger evaluation so a light-volume Fed-day close does not count as the hold the 15:30 run was waiting for. Secondary: `todays_8ks.index_date` is still 2026-09-15 on a 2026-09-16 evening pack, so GNRC's Amazon Item 1.01 arrived only as `market_news` (and GNRC is off-universe); also still no live/dead `tests_gate` flag despite four 2026-09-16 cycles jour",
+      "adopted_at": "2026-09-18T21:48:49.185668+00:00",
+      "run_id": "20260916-994d25"
+    },
+    {
+      "id": "LP-1249377142",
+      "note_fp": "The slim pack still has no live/dead `tests_gate` flag even though three earlier",
+      "kind": "soft_process",
+      "text": "The slim pack still has no live/dead `tests_gate` flag even though three earlier 2026-09-16 cycles journaled `tests_red:test_partial_broker_side_fill_leaves_a_correct_remainder` as blocking new BUYs (LP-2388912077) \u2014 stamp the pytest verdict at the top of the pack so a 15:30 full cycle does not re-underwrite a ticket the orchestrator cannot arm. Secondary: `price_freshness_live` was 133 minutes stale and `prices_meta` is 2026-09-15 for all 186 names, so the ANET $195 alert evaluated yesterday's $192.84 close against a name already trading $195\u2013$200 on the FOMC session; overlay IEX marks onto w",
+      "adopted_at": "2026-09-18T21:48:49.185670+00:00",
+      "run_id": "20260916-4e8047"
+    },
+    {
+      "id": "LP-7137703628",
+      "note_fp": "The trigger event-gate still treats a dated `would_buy_at` as live on calendar d",
+      "kind": "soft_process",
+      "text": "The trigger event-gate still treats a dated `would_buy_at` as live on calendar date 2026-09-16 even when the clock is 2:20 p.m. ET and the named 2:30 p.m. FOMC presser has not started \u2014 parse the clock time (or keep `held_by_event_gate` until that timestamp plus a short buffer) so this 14:00 slot does not spend the underwrite requalifying ANET/MSFT hits the agent already gated to after Warsh. Secondary: stamp a live/dead `tests_gate` at the top of the pack (`tests_red:test_partial_broker_side_fill_leaves_a_correct_remainder` has been RED on both earlier 2026-09-16 cycles and is still missing f",
+      "adopted_at": "2026-09-18T21:48:49.185672+00:00",
+      "run_id": "20260916-4c488d"
+    },
+    {
+      "id": "LP-7619040547",
+      "note_fp": "The trigger event-gate treats a dated `would_buy_at` as live on calendar date 20",
+      "kind": "soft_process",
+      "text": "The trigger event-gate treats a dated `would_buy_at` as live on calendar date 2026-09-16 even when the clock is still 1:19 p.m. ET and the named 2:00 p.m. FOMC statement has not printed \u2014 stamp the event's *time* (or `held_by_event_gate` until the timestamp passes) so a focused cycle does not spend the whole underwrite requalifying three hits that the agent already gated to after the presser. Secondary: `price_freshness_live` was 1,090 minutes stale at 1:19 p.m. ET while LITE was mid-gap +8.5%; overlay IEX marks onto watchlist names even when `stale=true` rather than dropping the overlay, beca",
+      "adopted_at": "2026-09-18T21:48:49.185674+00:00",
+      "run_id": "20260916-3dd66b"
+    },
+    {
+      "id": "LP-7069398666",
+      "note_fp": "The SCHW and MSFT trigger alerts fired at ~10:50 a.m. ET on 2026-09-16 because t",
+      "kind": "soft_lesson",
+      "text": "The SCHW and MSFT trigger alerts fired at ~10:50 a.m. ET on 2026-09-16 because the event gate keys off the calendar date in `would_buy_at` (\"after the 2026-09-16 FOMC decision\"), not the clock time of the 2:00 p.m. ET statement / 2:30 p.m. presser. SCHW/ANET were gated correctly yesterday; today the same clause became a pre-decision proximity alert. Parse a clock time when the trigger names a scheduled print (FOMC, CPI, a dated AMC earnings) and suppress the alert until that timestamp plus a short buffer, so a 10:30 full cycle does not spend the run re-underwriting a condition that has not hap",
+      "adopted_at": "2026-09-18T21:48:49.185676+00:00",
+      "run_id": "20260916-23c7bb"
+    },
+    {
+      "id": "LP-4971238894",
+      "note_fp": "Daily study (risk_management): The 2% per-driver theme cap is not an AI-stack ca",
+      "kind": "soft_lesson",
+      "text": "Daily study (risk_management): The 2% per-driver theme cap is not an AI-stack cap: Turtle nested unit limits, and why four 1% AI seats are still one left-tail - The Original Turtle Rules (originalturtles.org, 2003) cap open risk in four nested layers of volatility-normalized Units: 4 in a single market, 6 in closely correlated markets, 10 in loosely correlate",
+      "adopted_at": "2026-09-18T21:48:49.185678+00:00",
+      "run_id": "20260915-0015f4"
+    },
+    {
+      "id": "LP-9208049610",
+      "note_fp": "Watchlist names that lose the 200-DMA after a trigger is written still inherit t",
+      "kind": "soft_process",
+      "text": "Watchlist names that lose the 200-DMA after a trigger is written still inherit the old Stage-2 rail (MELI's `$1,831 after FOMC` fired as event-gated even though Tuesday's compact line has `above_200dma: false`); stamp a 200-DMA-lost flag onto event-gated triggers so an evening review does not carry a hold-the-low instruction on a broken-trend name.",
+      "adopted_at": "2026-09-18T21:48:49.185680+00:00",
+      "run_id": "20260915-d1141c"
+    },
+    {
+      "id": "LP-5993767539",
+      "note_fp": "The 10:51 a.m. ET MSFT ticket still has no live `tests_gate` flag in the slim pa",
+      "kind": "soft_lesson",
+      "text": "The 10:51 a.m. ET MSFT ticket still has no live `tests_gate` flag in the slim pack, so a 3:51 p.m. full cycle re-underwrites a name the orchestrator cannot arm (LP-2388912077, same `tests_red:test_partial_broker_side_fill_leaves_a_correct_remainder` halt). Stamp a live/dead tests_gate at the top of the pack and suppress BUY proposals on a red test the way event-gated triggers are already suppressed.",
+      "adopted_at": "2026-09-18T21:48:49.185682+00:00",
+      "run_id": "20260915-cabdb9"
+    },
+    {
+      "id": "LP-2654713992",
+      "note_fp": "This 15:30 ET full pack still has no live/dead `tests_gate` flag at the top even",
+      "kind": "soft_process",
+      "text": "This 15:30 ET full pack still has no live/dead `tests_gate` flag at the top even though the 10:51 a.m. ET MSFT ticket died on `tests_red:tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder` and LP-2388912077 asked for that flag weeks ago; pair it with overlaying IEX marks onto holdings + watchlist even when `price_freshness_live.stale=true` (136 min today) so a 3:41 p.m. cycle does not underwrite 2026-09-14 closes while MSFT/ANET/LITE are live $7\u2013$10 away.",
+      "adopted_at": "2026-09-18T21:48:49.185684+00:00",
+      "run_id": "20260915-3fc14e"
     }
   ]
 }

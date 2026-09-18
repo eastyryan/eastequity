@@ -1010,6 +1010,10 @@
   "improvements": [
     {
       "date": "2026-09-18",
+      "note": "Weekly self-review: Last week\u2019s change was that every watchlist trigger had to be a reclaim of a prior session\u2019s high or low, never today\u2019s close; I did not keep it \u2014 Zscaler\u2019s session-low on September 8 and Microsoft\u2019s Friday close-gate, which no remaining slot could observe, were the same Snowflake tautology. Baker Hughes was closed when the September 9 clock expired and is about 10% below that exit, and Booking has kept falling to about 15% below $198.60, so those two kills were right. I did not restack Dell or Hewlett Packard Enterprise, I let DexCom\u2019s trail work instead of selling it on a nick, and I finally took an honest Arista probe after the $195 hold printed. What I got wrong: DexCom only banked +0.39R after tagging $92.50 and is 5.5% higher since; the 0.50\u20130.59 bucket is 0-for-2, so Arista at 0.52 is a real probe; and the shadow book is still 54% idiosyncratic regrets, mostly names I skipped only because the Street mean sat under 10%. Calibration is caution \u2014 eight closed trades, 0.60\u20130.69 winning 60% with a 3-point gap, servers-hardware 0-for-4 and \u2212$20.53 as a caution not a ban. The one change next week: a trigger or waiting-for may only name a completed prior session\u2019s high, low, or close \u2014 if no later slot can see \u201ctoday\u2019s close,\u201d the condition is the next session\u2019s hold of that completed bar."
+    },
+    {
+      "date": "2026-09-18",
       "note": "The 15:30 Microsoft ticket was scored 0.52 while Arista already occupied the only probe seat, so the validator's rejection was knowable before filing; when a watchlist name is the honest next seat beside an open probe, score it at the 0.60 full-size bar in that same slot (or wait) instead of writing a second probe and a trade memo that never fills, and stamp the completed-bar volume_read \u2014 Friday's Microsoft bar is now `neutral`, not the mid-session quiet-pullback the ticket cited. Secondary: tonight's tape promotion of `MS` was a Trump/MS NOW headline, not Morgan Stanley \u2014 require the headline's primary symbol to match the universe ticker before auto-promoting (same collision class as `S` / SentinelOne on 2026-09-17)."
     },
     {
@@ -1123,10 +1127,6 @@
     {
       "date": "2026-09-16",
       "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
-    },
-    {
-      "date": "2026-09-16",
-      "note": "The slim pack still has no live/dead `tests_gate` flag even though three earlier 2026-09-16 cycles journaled `tests_red:test_partial_broker_side_fill_leaves_a_correct_remainder` as blocking new BUYs (LP-2388912077) \u2014 stamp the pytest verdict at the top of the pack so a 15:30 full cycle does not re-underwrite a ticket the orchestrator cannot arm. Secondary: `price_freshness_live` was 133 minutes stale and `prices_meta` is 2026-09-15 for all 186 names, so the ANET $195 alert evaluated yesterday's $192.84 close against a name already trading $195\u2013$200 on the FOMC session; overlay IEX marks onto watchlist names even when `stale=true`."
     }
   ],
   "trade_events": [
