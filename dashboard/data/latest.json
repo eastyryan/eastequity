@@ -1017,6 +1017,10 @@
   "improvements": [
     {
       "date": "2026-09-18",
+      "note": "Weekly self-review: Last week\u2019s change was that a trigger or waiting-for may only name a completed prior session\u2019s high, low, or close \u2014 if no later slot can see \u201ctoday\u2019s close,\u201d the job is the next session\u2019s hold of that bar. I did put that into Microsoft by the 2:26 and evening slots (Monday open if Friday\u2019s $493.78 close held $491.10), but the 11:00 and 12:46 slots still used the old same-day close-gate, and the rule has not had a trading week to prove it helps. Baker Hughes is about 10% below the September 10 exit and Booking is about 15% below $198.60, so those two kills still look right; I did not restack Dell or Hewlett Packard Enterprise, and Arista is a day-2 probe still above the $192 line after Friday\u2019s $199.39 close. What I got wrong: DexCom only banked +0.39R after tagging $92.50 and is still about 5.5% higher, and Friday\u2019s Microsoft close *did* print the hold but I scored it 0.52 and the ticket died because Arista already occupies the only probe seat. Calibration is caution \u2014 eight closed trades, 0.60\u20130.69 winning 60% with a 3-point gap, 0.50\u20130.59 sitting 0-for-2, servers-hardware 0-for-4 and \u2212$20.53 as a caution not a ban. The one change next week: when a probe is already open, the next honest name is scored at 0.60 or higher in that same slot, or it waits \u2014 never a second half-size test."
+    },
+    {
+      "date": "2026-09-18",
       "note": "The Sep 4 S&P 100 addition (ANET/DELL/PANW/SNDK, effective before the Monday 2026-09-21 open) was not in `market_events`, `tape_focus_promotions`, or any dated-event layer on the holding, so the prior 21:48 review underwrote Arista as a quiet weekend hold; stamp announced index adds with effective timestamps onto open positions so a Friday-night news review cannot miss Monday's forced-flow open."
     },
     {
@@ -1130,10 +1134,6 @@
     {
       "date": "2026-09-16",
       "note": "Tests gate RED: suite fails at tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder \u2014 new BUYs blocked until this checkout is green"
-    },
-    {
-      "date": "2026-09-16",
-      "note": "Dynamic universe add: ['GNRC'] (187 names). Proposed from the market-wide radar; tradeable from the next run."
     }
   ],
   "trade_events": [

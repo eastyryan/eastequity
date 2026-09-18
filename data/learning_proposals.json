@@ -1,39 +1,6 @@
 {
   "proposals": [
     {
-      "id": "LP-8610498776",
-      "ts": "2026-07-10T23:47:53.241109+00:00",
-      "run_id": "20260710-manual",
-      "note_excerpt": "Weekly self-review: This week was mostly build week, not trade week - the system went from a bare skeleton to a full pipeline (data relay, validator, position sizing, watchlist triggers, insider activity, sector relative strength, post-earnings drift detection) in a handful of commits, and only opened its first two live paper positions on 7/9 (DELL) and 7/10 (HPE). Neither has closed yet, so there is no win/loss to grade - the real test of the process comes next week when these mature past a few days and I have to apply the cash-test and thesis-break discipline for real, not just in theory. Wh",
-      "kind": "hard_proposal",
-      "target": "needs_owner_code_change",
-      "title": "Weekly self-review: This week was mostly build week, not trade week - the system went from a bare skeleton to a full pip",
-      "auto_adoptable": false,
-      "status": "proposed"
-    },
-    {
-      "id": "LP-8131925634",
-      "ts": "2026-07-10T21:28:40.015184+00:00",
-      "run_id": "20260710-041ec0",
-      "note_excerpt": "** The insider_activity feed is dominated by financial-sponsor unwinds (Silver Lake's programmatic Dell distribution ran to 79 separate line items) and routine 10b5-1 officer sales, which bury any genuinely informative *open-market* signal. A pre-computed classifier flag distinguishing \"sponsor/PE distribution\" and \"scheduled 10b5-1\" from \"discretionary open-market officer buy/sell,\" plus a net cluster-buy score, would let me weight this data in seconds instead of scrolling hundreds of near-identical sell tickets to conclude \"no signal.\"",
-      "kind": "data_engineering",
-      "target": "needs_owner_code_change",
-      "title": "** The insider_activity feed is dominated by financial-sponsor unwinds (Silver Lake's programmatic Dell distribution ran",
-      "auto_adoptable": false,
-      "status": "proposed"
-    },
-    {
-      "id": "LP-7293170927",
-      "ts": "2026-07-10T19:17:58.216718+00:00",
-      "run_id": "20260710-6420c9",
-      "note_excerpt": "** The insider_activity feed lumps financial-sponsor distributions (Silver Lake's DELL unwind, ALAB's pre-arranged director sales) in with genuine operating-insider signals, forcing me to manually parse dozens of near-identical rows to conclude \"not a real signal.\" A pre-computed classification \u2014 tagging each cluster as sponsor/10b5-1-scheduled vs. discretionary officer transaction, and netting to a single per-ticker signal \u2014 would make the \"clustered officer buying vs. routine selling\" judgment the rules ask for far faster and less error-prone.",
-      "kind": "data_engineering",
-      "target": "needs_owner_code_change",
-      "title": "** The insider_activity feed lumps financial-sponsor distributions (Silver Lake's DELL unwind, ALAB's pre-arranged direc",
-      "auto_adoptable": false,
-      "status": "proposed"
-    },
-    {
       "id": "LP-9293638400",
       "ts": "2026-07-10T19:15:17.280189+00:00",
       "run_id": "20260710-f661cb",
@@ -964,7 +931,7 @@
       "target": "adopted_lessons",
       "title": "MSFT was the close-gated trigger this 15:30 ET full run was built to underwrite, but it is not in the focus set \u2014 no `da",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185622+00:00"
     },
     {
@@ -977,7 +944,7 @@
       "target": "adopted_lessons",
       "title": "Dynamic universe add: ['GNRC'] (187 names). Proposed from the market-wide radar; tradeable from the next run.",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185630+00:00"
     },
     {
@@ -990,7 +957,7 @@
       "target": "adopted_lessons",
       "title": "The MSFT trigger fired a third time today (11:00, 12:46, and this 14:26 ET slot) on prices_meta last_close $497.75 as of",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185633+00:00"
     },
     {
@@ -1003,7 +970,7 @@
       "target": "adopted_lessons",
       "title": "The MSFT trigger fired again this 12:46 ET slot on prices_meta last_close $497.75 as of 2026-09-17 (daily_bar) against a",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185636+00:00"
     },
     {
@@ -1016,7 +983,7 @@
       "target": "adopted_lessons",
       "title": "Live overlay was stale (age_min 960 vs 30-min max; live_prices.json dated 2026-07-23), so this 11 AM ET full run had to ",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185638+00:00"
     },
     {
@@ -1041,7 +1008,7 @@
       "target": "adopted_lessons",
       "title": "The 15:30 CRM BUY died on `probe_cap_reached` (ANET is the open 0.52 probe), then this evening_review cannot buy the $24",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185645+00:00"
     },
     {
@@ -1054,7 +1021,7 @@
       "target": "adopted_lessons",
       "title": "The 15:30 ET full pack still stamps `universe_scan.prices_meta.CRM` as the 2026-09-16 daily_bar ($250.54) while options_",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185648+00:00"
     },
     {
@@ -1067,7 +1034,7 @@
       "target": "adopted_lessons",
       "title": "`price_freshness_live` is still stale (`stale=true`, age 140 min, holdings-only ANET) while this 15:30 ET full run\u2019s `un",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185651+00:00"
     },
     {
@@ -1080,7 +1047,7 @@
       "target": "adopted_lessons",
       "title": "`price_freshness_live` was 64 minutes stale (`stale=true`, holdings-only) while this ~2:27 PM ET focused slot still had ",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185653+00:00"
     },
     {
@@ -1093,7 +1060,7 @@
       "target": "adopted_lessons",
       "title": "The live-price overlay was 152 minutes stale (`price_freshness_live.stale=true`, as_of 10:46 ET) while this 12:00-ish ET",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185656+00:00"
     },
     {
@@ -1106,7 +1073,7 @@
       "target": "adopted_lessons",
       "title": "Watchlist names that fire (MSFT this slot; ANET earlier) and overnight universe_candidates (GNRC) still land outside the",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185658+00:00"
     },
     {
@@ -1119,7 +1086,7 @@
       "target": "adopted_lessons",
       "title": "Watchlist names that actually fire (ANET, MSFT) and overnight universe_candidates (GNRC) still land outside the deep-res",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185660+00:00"
     },
     {
@@ -1132,7 +1099,7 @@
       "target": "adopted_lessons",
       "title": "Daily study (strategy_playbooks): The 3-C / cheat inner-pivot: ~40-66% of breakouts never throw back, so tightness insid",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185662+00:00"
     },
     {
@@ -1145,7 +1112,7 @@
       "target": "adopted_lessons",
       "title": "The ANET $195 \"daily close that holds\" trigger fired on this evening pack because the 2026-09-16 bar is now $197.54, but",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185668+00:00"
     },
     {
@@ -1158,7 +1125,7 @@
       "target": "adopted_lessons",
       "title": "The slim pack still has no live/dead `tests_gate` flag even though three earlier 2026-09-16 cycles journaled `tests_red:",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185670+00:00"
     },
     {
@@ -1171,7 +1138,7 @@
       "target": "adopted_lessons",
       "title": "The trigger event-gate still treats a dated `would_buy_at` as live on calendar date 2026-09-16 even when the clock is 2:",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185672+00:00"
     },
     {
@@ -1184,7 +1151,7 @@
       "target": "adopted_lessons",
       "title": "The trigger event-gate treats a dated `would_buy_at` as live on calendar date 2026-09-16 even when the clock is still 1:",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185674+00:00"
     },
     {
@@ -1197,7 +1164,7 @@
       "target": "adopted_lessons",
       "title": "The SCHW and MSFT trigger alerts fired at ~10:50 a.m. ET on 2026-09-16 because the event gate keys off the calendar date",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185676+00:00"
     },
     {
@@ -1210,7 +1177,7 @@
       "target": "adopted_lessons",
       "title": "Daily study (risk_management): The 2% per-driver theme cap is not an AI-stack cap: Turtle nested unit limits, and why fo",
       "auto_adoptable": true,
-      "status": "auto_adopted",
+      "status": "proposed",
       "adopted_at": "2026-09-18T21:48:49.185678+00:00"
     },
     {
@@ -1251,76 +1218,118 @@
       "auto_adoptable": true,
       "status": "auto_adopted",
       "adopted_at": "2026-09-18T21:48:49.185684+00:00"
+    },
+    {
+      "id": "LP-8484645688",
+      "note_fp": "The Sep 4 S&P 100 addition (ANET/DELL/PANW/SNDK, effective before the Monday 202",
+      "ts": "2026-09-18T22:02:29.641091+00:00",
+      "run_id": "20260918-5b8472",
+      "note_excerpt": "The Sep 4 S&P 100 addition (ANET/DELL/PANW/SNDK, effective before the Monday 2026-09-21 open) was not in `market_events`, `tape_focus_promotions`, or any dated-event layer on the holding, so the prior 21:48 review underwrote Arista as a quiet weekend hold; stamp announced index adds with effective timestamps onto open positions so a Friday-night news review cannot miss Monday's forced-flow open.",
+      "kind": "soft_lesson",
+      "target": "adopted_lessons",
+      "title": "The Sep 4 S&P 100 addition (ANET/DELL/PANW/SNDK, effective before the Monday 2026-09-21 open) was not in `market_events`",
+      "auto_adoptable": true,
+      "status": "auto_adopted",
+      "adopted_at": "2026-09-18T22:02:36.205641+00:00"
+    },
+    {
+      "id": "LP-9175026488",
+      "note_fp": "Weekly self-review: Last week\u2019s change was that every watchlist trigger had to b",
+      "ts": "2026-09-18T21:53:59.596827+00:00",
+      "run_id": "20260918-332c7e",
+      "note_excerpt": "Weekly self-review: Last week\u2019s change was that every watchlist trigger had to be a reclaim of a prior session\u2019s high or low, never today\u2019s close; I did not keep it \u2014 Zscaler\u2019s session-low on September 8 and Microsoft\u2019s Friday close-gate, which no remaining slot could observe, were the same Snowflake tautology. Baker Hughes was closed when the September 9 clock expired and is about 10% below that exit, and Booking has kept falling to about 15% below $198.60, so those two kills were right. I did not restack Dell or Hewlett Packard Enterprise, I let DexCom\u2019s trail work instead of selling it on a",
+      "kind": "soft_process",
+      "target": "adopted_lessons",
+      "title": "Weekly self-review: Last week\u2019s change was that every watchlist trigger had to be a reclaim of a prior session\u2019s high or",
+      "auto_adoptable": true,
+      "status": "auto_adopted",
+      "adopted_at": "2026-09-18T22:02:36.205649+00:00"
+    },
+    {
+      "id": "LP-2373567831",
+      "note_fp": "[learning-adopt] auto_adopted=22 hard_pending=2 ids=['LP-6512562460', 'LP-103158",
+      "ts": "2026-09-18T21:48:49.189819+00:00",
+      "run_id": "20260918-332c7e",
+      "note_excerpt": "[learning-adopt] auto_adopted=22 hard_pending=2 ids=['LP-6512562460', 'LP-1031588778', 'LP-4479245893', 'LP-7247122383', 'LP-3448382878', 'LP-7764114550', 'LP-3891442723', 'LP-6016514767', 'LP-9894035389', 'LP-7049668529', 'LP-6742998030', 'LP-1250412340', 'LP-9821369485', 'LP-8067189371', 'LP-1249377142', 'LP-7137703628', 'LP-7619040547', 'LP-7069398666', 'LP-4971238894', 'LP-9208049610', 'LP-5993767539', 'LP-2654713992']",
+      "kind": "soft_lesson",
+      "target": "adopted_lessons",
+      "title": "[learning-adopt] auto_adopted=22 hard_pending=2 ids=['LP-6512562460', 'LP-1031588778', 'LP-4479245893', 'LP-7247122383',",
+      "auto_adoptable": true,
+      "status": "auto_adopted",
+      "adopted_at": "2026-09-18T22:02:36.205653+00:00"
     }
   ],
   "adopted_ids": [
-    "LP-4479245893",
-    "LP-4320854641",
-    "LP-8200625986",
-    "LP-8887884271",
-    "LP-8422347894",
-    "LP-2057490471",
-    "LP-9270998477",
-    "LP-6800271407",
-    "LP-5569262445",
-    "LP-2555191189",
     "LP-2388912077",
-    "LP-6978260223",
-    "LP-4508008226",
-    "LP-8105930182",
-    "LP-4079134999",
-    "LP-7129156477",
-    "LP-7764114550",
-    "LP-4932859118",
-    "LP-1031588778",
-    "LP-9821369485",
-    "LP-0693555695",
-    "LP-7137703628",
-    "LP-2207714842",
-    "LP-2420715922",
-    "LP-5993767539",
-    "LP-4566902391",
-    "LP-2067116723",
-    "LP-7619040547",
-    "LP-0788578155",
-    "LP-1344551419",
-    "LP-6742998030",
-    "LP-3994041610",
-    "LP-4971238894",
-    "LP-8808708621",
-    "LP-1309413605",
-    "LP-4468264135",
-    "LP-5025699474",
-    "LP-3448382878",
-    "LP-6637294710",
-    "LP-9208049610",
-    "LP-6512562460",
-    "LP-6209693179",
-    "LP-3909672078",
+    "LP-2349279888",
+    "LP-8932726624",
     "LP-1250412340",
     "LP-7085646948",
-    "LP-9894035389",
-    "LP-6398206624",
-    "LP-6016514767",
-    "LP-8067189371",
-    "LP-0365001753",
-    "LP-5209354218",
+    "LP-2067116723",
+    "LP-4479245893",
+    "LP-2373567831",
+    "LP-0788578155",
+    "LP-6183971846",
     "LP-3504448789",
-    "LP-0217367290",
-    "LP-8932726624",
-    "LP-7069398666",
     "LP-3891442723",
-    "LP-8449573865",
+    "LP-6398206624",
+    "LP-5209354218",
+    "LP-7069398666",
+    "LP-2654713992",
+    "LP-6742998030",
+    "LP-5025699474",
+    "LP-7484439948",
+    "LP-3909672078",
+    "LP-4468264135",
+    "LP-8484645688",
+    "LP-9175026488",
+    "LP-6800271407",
+    "LP-1344551419",
+    "LP-2555191189",
+    "LP-3448382878",
+    "LP-4971238894",
+    "LP-0217367290",
+    "LP-8105930182",
+    "LP-8887884271",
+    "LP-7129156477",
+    "LP-4932859118",
+    "LP-2057490471",
+    "LP-1031588778",
+    "LP-8422347894",
+    "LP-2420715922",
+    "LP-9894035389",
     "LP-9271251482",
     "LP-4427977120",
-    "LP-6183971846",
-    "LP-7484439948",
+    "LP-6512562460",
+    "LP-4079134999",
+    "LP-9208049610",
+    "LP-7764114550",
+    "LP-6016514767",
     "LP-1249377142",
-    "LP-2654713992",
-    "LP-7105008934",
-    "LP-2349279888",
+    "LP-5993767539",
+    "LP-2207714842",
+    "LP-0365001753",
+    "LP-8200625986",
+    "LP-4508008226",
+    "LP-8449573865",
     "LP-7049668529",
-    "LP-7247122383"
+    "LP-9821369485",
+    "LP-1309413605",
+    "LP-7247122383",
+    "LP-0693555695",
+    "LP-9270998477",
+    "LP-8067189371",
+    "LP-6209693179",
+    "LP-3994041610",
+    "LP-7619040547",
+    "LP-8808708621",
+    "LP-6978260223",
+    "LP-4566902391",
+    "LP-7137703628",
+    "LP-4320854641",
+    "LP-6637294710",
+    "LP-5569262445",
+    "LP-7105008934"
   ],
-  "updated_at": "2026-09-18T21:48:49.185714+00:00"
+  "updated_at": "2026-09-18T22:02:36.205697+00:00"
 }

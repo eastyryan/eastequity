@@ -1,6 +1,5 @@
 {
-  "updated_at": "2026-09-18T22:02:29.640227+00:00",
-  "pruned_at": "2026-09-18T22:02:29.640229+00:00",
+  "updated_at": "2026-09-18T22:02:36.207217+00:00",
   "lessons": [
     {
       "id": "LP-0693555695",
@@ -612,6 +611,30 @@
       "text": "This 15:30 ET full pack still has no live/dead `tests_gate` flag at the top even though the 10:51 a.m. ET MSFT ticket died on `tests_red:tests/test_resting_stops.py::test_partial_broker_side_fill_leaves_a_correct_remainder` and LP-2388912077 asked for that flag weeks ago; pair it with overlaying IEX marks onto holdings + watchlist even when `price_freshness_live.stale=true` (136 min today) so a 3:41 p.m. cycle does not underwrite 2026-09-14 closes while MSFT/ANET/LITE are live $7\u2013$10 away.",
       "adopted_at": "2026-09-18T21:48:49.185684+00:00",
       "run_id": "20260915-3fc14e"
+    },
+    {
+      "id": "LP-8484645688",
+      "note_fp": "The Sep 4 S&P 100 addition (ANET/DELL/PANW/SNDK, effective before the Monday 202",
+      "kind": "soft_lesson",
+      "text": "The Sep 4 S&P 100 addition (ANET/DELL/PANW/SNDK, effective before the Monday 2026-09-21 open) was not in `market_events`, `tape_focus_promotions`, or any dated-event layer on the holding, so the prior 21:48 review underwrote Arista as a quiet weekend hold; stamp announced index adds with effective timestamps onto open positions so a Friday-night news review cannot miss Monday's forced-flow open.",
+      "adopted_at": "2026-09-18T22:02:36.205641+00:00",
+      "run_id": "20260918-5b8472"
+    },
+    {
+      "id": "LP-9175026488",
+      "note_fp": "Weekly self-review: Last week\u2019s change was that every watchlist trigger had to b",
+      "kind": "soft_process",
+      "text": "Weekly self-review: Last week\u2019s change was that every watchlist trigger had to be a reclaim of a prior session\u2019s high or low, never today\u2019s close; I did not keep it \u2014 Zscaler\u2019s session-low on September 8 and Microsoft\u2019s Friday close-gate, which no remaining slot could observe, were the same Snowflake tautology. Baker Hughes was closed when the September 9 clock expired and is about 10% below that exit, and Booking has kept falling to about 15% below $198.60, so those two kills were right. I did not restack Dell or Hewlett Packard Enterprise, I let DexCom\u2019s trail work instead of selling it on a",
+      "adopted_at": "2026-09-18T22:02:36.205649+00:00",
+      "run_id": "20260918-332c7e"
+    },
+    {
+      "id": "LP-2373567831",
+      "note_fp": "[learning-adopt] auto_adopted=22 hard_pending=2 ids=['LP-6512562460', 'LP-103158",
+      "kind": "soft_lesson",
+      "text": "[learning-adopt] auto_adopted=22 hard_pending=2 ids=['LP-6512562460', 'LP-1031588778', 'LP-4479245893', 'LP-7247122383', 'LP-3448382878', 'LP-7764114550', 'LP-3891442723', 'LP-6016514767', 'LP-9894035389', 'LP-7049668529', 'LP-6742998030', 'LP-1250412340', 'LP-9821369485', 'LP-8067189371', 'LP-1249377142', 'LP-7137703628', 'LP-7619040547', 'LP-7069398666', 'LP-4971238894', 'LP-9208049610', 'LP-5993767539', 'LP-2654713992']",
+      "adopted_at": "2026-09-18T22:02:36.205653+00:00",
+      "run_id": "20260918-332c7e"
     }
   ]
 }
