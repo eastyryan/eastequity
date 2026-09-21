@@ -202,7 +202,11 @@ def patch_dashboard(executed_fills_summary: dict) -> bool:
 
 def commit_and_push() -> None:
     """Commit executor results with the same pull-rebase-retry the publisher
-    uses. NO [vercel skip]: position changes must rebuild the site."""
+    uses. Carries [vercel skip] since 2026-09-21: this workflow reconciles every
+    15 minutes through the session, and rebuilding the site on each fill was a
+    second stream of ~70 MB builds on top of the trading runs'. Fills still reach
+    origin immediately — the dashboard publishes them on the once-a-day
+    dashboard-refresh build, which is the only build that now runs."""
     # Vercel blocks deploys for commits authored by unverified emails (the
     # hws.edu lesson) — use the account's proven noreply identity.
     subprocess.run(["git", "config", "user.name", "ee-executor"], cwd=ROOT)
@@ -218,7 +222,7 @@ def commit_and_push() -> None:
     for p in paths:
         subprocess.run(["git", "add", "-A", p], cwd=ROOT, capture_output=True)
     r = subprocess.run(["git", "commit", "-m",
-                        "Execute order intents via Alpaca [executor]"],
+                        "Execute order intents via Alpaca [executor] [vercel skip]"],
                        cwd=ROOT, capture_output=True, text=True)
     if r.returncode != 0:
         print("  nothing to commit")

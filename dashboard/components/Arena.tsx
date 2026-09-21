@@ -13,8 +13,8 @@ import ArenaStudyHall, { type LearningJournal } from "./ArenaStudyHall";
 // mount to stay live between deploys. That only works for a public repo — this
 // one is private, so every one of those requests 404'd and the page silently
 // fell back to its server-rendered props anyway. Removed rather than left to
-// fail on every load. Freshness already works without it: a trading run commits
-// latest.json without a [vercel skip] marker, which redeploys this page.
+// fail on every load. Freshness now comes from the once-a-day
+// dashboard-refresh.yml build (trading runs themselves carry [vercel skip]).
 const START = 1000;
 const GREEN = "var(--ee-up)";
 const RED = "var(--ee-down)";

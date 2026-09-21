@@ -309,7 +309,13 @@ def redeploy_dashboard() -> None:
         # add -A so a REMOVED kill switch (all-clear) also propagates; ignore missing paths.
         for p in paths:
             subprocess.run(["git", "add", "-A", p], cwd=ROOT, capture_output=True, text=True)
-        r = subprocess.run(["git", "commit", "-m", "Update dashboard data after trading run"],
+        # [vercel skip] since 2026-09-21: this commit used to rebuild the dashboard,
+        # and with ~10 slots a weekday that was ~8-9 full builds a day at ~70 MB each,
+        # which is what kept the Hobby deployment-storage quota blown. The data still
+        # lands in git on every run — only the rebuild is deferred to the once-a-day
+        # dashboard-refresh workflow, which is the single build that publishes it.
+        r = subprocess.run(["git", "commit", "-m",
+                            "Update dashboard data after trading run [vercel skip]"],
                            cwd=ROOT, capture_output=True, text=True)
         if r.returncode != 0:
             print("  (no data changes to publish)")

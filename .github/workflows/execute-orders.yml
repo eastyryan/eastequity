@@ -8,8 +8,11 @@ name: Execute order intents (Alpaca)
 # The scheduled ticks reconcile RESTING orders (e.g. an after-hours protective
 # sell that queues to the next open) and keep the mirror ledger fresh.
 #
-# Results (ledger, journal, dashboard patch) are committed WITHOUT
-# [vercel skip], so the site rebuilds and shows the trade within minutes.
+# Results (ledger, journal, dashboard patch) are committed WITH [vercel skip]
+# since 2026-09-21. Trading and reconciliation are unaffected — the fills still
+# reach origin on every tick. Only the rebuild moved: dashboard-refresh.yml
+# publishes the accumulated data once a day, so a fill shows on the site at the
+# next daily build rather than within minutes.
 
 on:
   push:

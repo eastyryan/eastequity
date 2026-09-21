@@ -1,0 +1,82 @@
+name: Dashboard daily rebuild
+
+# ONE VERCEL BUILD A DAY (2026-09-21). Until now every trading run and every
+# executor fill pushed a commit WITHOUT [vercel skip], and each of those was a
+# full ~70 MB Next.js build: ~10 grok-cycle slots a weekday plus executor ticks
+# came to roughly 8-9 builds a day, which is what kept the Hobby
+# deployment-storage quota (10 GB) permanently blown — 14.18 GB on 2026-09-20,
+# and ~247 accumulated deployments before the prune.
+#
+# The fix keeps the brain untouched. Trading, reconciliation, stop enforcement
+# and data gathering all still run on their own schedules and still push to
+# main every time; they just carry [vercel skip] now, so none of them builds.
+# This workflow is the ONLY thing that builds the site: one empty commit a day
+# carrying [vercel build], which dashboard/vercel.json's ignoreCommand honors
+# ahead of the skip check. The build then reads whatever data the day's runs
+# accumulated in the repo, so the dashboard is a daily snapshot by design.
+#
+# Consequence to keep in mind: a fill no longer shows on the site within
+# minutes. If that ever needs to change, make the dashboard read its JSON at
+# request time instead of at build time — do NOT re-enable per-run builds.
+
+on:
+  schedule:
+    # 19:40 and 19:55 ET (EDT) — after the 19:00 ET study slot, and both inside
+    # the SAME UTC day so the guard below sees the first one. Two asks because
+    # GitHub rations this repo's cron delivery (~7/day/workflow measured
+    # 2026-07-23); the guard makes the second fire a free no-op.
+    - cron: "40 23 * * *"
+    - cron: "55 23 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  # Shares the main-writer queue with the other pushers (x-post, stop-watch,
+  # gather-data). Unserialized pushes to main are what produced the
+  # rejected-push churn those workflows already queue to avoid.
+  group: main-writer
+  cancel-in-progress: false
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # Full history: the once-a-day guard greps the day's commits, and the
+          # default shallow checkout would only ever show the tip.
+          fetch-depth: 0
+
+      - name: Publish the day's data with one build
+        run: |
+          set -euo pipefail
+          git config user.name "ee-dashboard"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          for attempt in 1 2 3; do
+            git pull --rebase --autostash origin main || { echo "rebase failed"; exit 1; }
+
+            # Idempotency: if a [vercel build] commit already landed today, the
+            # site has had its build and the extra cron fire does nothing.
+            if [ -n "$(git log --since="$(date -u +%Y-%m-%d)T00:00:00Z" \
+                               -F --grep='[vercel build]' --format=%H)" ]; then
+              echo "already rebuilt today — nothing to do"
+              exit 0
+            fi
+
+            git commit --allow-empty -m "Publish dashboard for $(date -u +%Y-%m-%d) [vercel build]"
+
+            if git push origin HEAD:main; then
+              echo "pushed — Vercel building the day's dashboard"
+              exit 0
+            fi
+
+            # Lost the race to another main writer. Drop our commit and retry so
+            # a retry can never stack a second empty commit onto the branch.
+            echo "push rejected (attempt ${attempt}/3), retrying"
+            git reset --hard HEAD~1
+          done
+
+          echo "push failed after retries"; exit 1
