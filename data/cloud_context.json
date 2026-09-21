@@ -3,56 +3,51 @@
   "_tier_note": "SLIM brain pack, ordered so everything BINDING is inside the first ~2000 lines \u2014 the default Read window. Keys appear in decision order: limits, digest, then the hard gate flags (data quality, freshness, halts, engagement, earnings lanes), factor_map, portfolio_competition, the book (portfolio, stop_engineering, cushion), then reasoning_process (learning_pack), then research detail. Research maps below are structurally capped; every cap stamps a `_trimmed` note naming what it dropped. Full archive: full_context_path.",
   "_pack_budget": {
     "note": "Measured line budget for this pack. Your Read tool returns ~2000 lines by default; anything starting past that is NOT read unless you page to it with Read(offset=N). Every input that can BLOCK a proposal is above that line by construction, so a default Read is sufficient to answer every gate. The entries below are what you did NOT get \u2014 page to them when a name matters.",
-    "total_lines": 21280,
+    "total_lines": 21229,
     "read_window_lines": 2000,
     "keys_beyond_read_window": [
-      "macro_regime@2176",
-      "benchmark_close@2260",
-      "market_events@2261",
-      "market_breadth@2314",
-      "momentum_health@2647",
-      "watchlist_trigger_alerts@2705",
-      "tape_focus_promotions@2727",
-      "portfolio_risk@2779",
-      "track_record@2857",
-      "ownership_flow@3299",
-      "earnings_deep_dive@3597",
-      "earnings_week@3601",
-      "lessons_learned@3618",
-      "position_histories@3631",
-      "market_news@3724",
-      "market_radar@3889",
-      "universe_scan@3893",
-      "sec_filings@6096",
-      "deep_fundamentals@10249",
-      "filing_texts@14849",
-      "filing_texts_note@14968",
-      "news_and_catalysts@14969",
-      "insider_activity@16296",
-      "smart_money_13f@18467",
-      "options_signals@18681",
-      "partnerships@19746",
-      "guidance_ledger@19875",
-      "fundamental_screen@19876",
-      "todays_8ks@20087",
-      "stack_cards@20122",
-      "financial_checklists@20344",
-      "concept_memory@20848",
-      "discovery_screen@21276",
-      "market_checkin@21279"
+      "macro_regime@2164",
+      "benchmark_close@2248",
+      "market_events@2249",
+      "market_breadth@2302",
+      "momentum_health@2635",
+      "watchlist_trigger_alerts@2693",
+      "tape_focus_promotions@2715",
+      "portfolio_risk@2767",
+      "track_record@2845",
+      "ownership_flow@3287",
+      "earnings_deep_dive@3546",
+      "earnings_week@3550",
+      "lessons_learned@3567",
+      "position_histories@3580",
+      "market_news@3673",
+      "market_radar@3838",
+      "universe_scan@3842",
+      "sec_filings@6045",
+      "deep_fundamentals@10198",
+      "filing_texts@14798",
+      "filing_texts_note@14917",
+      "news_and_catalysts@14918",
+      "insider_activity@16245",
+      "smart_money_13f@18416",
+      "options_signals@18630",
+      "partnerships@19695",
+      "guidance_ledger@19824",
+      "fundamental_screen@19825",
+      "todays_8ks@20036",
+      "stack_cards@20071",
+      "financial_checklists@20293",
+      "concept_memory@20797",
+      "discovery_screen@21225",
+      "market_checkin@21228"
     ],
     "trimmed": [
       "portfolio.history: kept newest 5 of 38 order records as flat rows (plans omitted)",
-      "reasoning_process.price_freshness: sample cut to 5 of 8 rows",
-      "sec_filings: capped statement history to the newest 5 periods for 13 tickers",
-      "deep_fundamentals: capped quarterly_facts to the newest 2 periods for 13 tickers (693 rows); all series incl. deferred_revenue/RPO retained",
-      "filing_texts: truncated 9 prose excerpts (3000 chars, 6000 when guidance language is present)",
-      "fundamentals_freshness: dropped 13 fresh-ticker rows, kept all 0 stale/warned names",
-      "ownership_flow: kept alignment + read_for_swing + synthesis for 13 tickers, dropped the supporting evidence blocks (institutional / retail_proxy / price_action detail)"
+      "filing_texts: truncated 9 prose excerpts (3000 chars, 6000 when guidance language is present)"
     ],
     "withheld_by_design": [],
     "unregistered_keys": [],
-    "full_archive": "/home/runner/work/eastequity/eastequity/state/context_full_20260921-9926e1.json"
+    "full_archive": "/home/runner/work/eastequity/eastequity/state/context_full_20260921-72787a.json"
   },
   "run_date": "2026-09-21T13:23:57.718055+00:00",
   "as_of_et": "2026-09-21",
@@ -60,10 +55,10 @@
   "run_depth": "holdings_watchlist",
   "run_depth_note": "Focused cycle: mini-scan + deep research on holdings and watchlist (plus trigger alerts). No full-universe download \u2014 much faster.",
   "allows_new_buys": true,
-  "full_context_path": "/home/runner/work/eastequity/eastequity/state/context_full_20260921-9926e1.json",
+  "full_context_path": "/home/runner/work/eastequity/eastequity/state/context_full_20260921-72787a.json",
   "hard_limits": {
     "note": "SINGLE SOURCE OF TRUTH for every threshold the validator enforces, read live from autonomy_config.json this run. Any number quoted in CLAUDE.md prose is DESCRIPTIVE \u2014 when the two disagree, these values win, because these are the ones the code actually checks. (CLAUDE.md stated RR >= 1.0 for two days after the floor was raised to 2.0 on 2026-07-16, so every proposal built against the prose was rejected on arrival.)",
-    "effective_max_position_usd": 196.91,
+    "effective_max_position_usd": 196.89,
     "position_sizing": {
       "starting_capital_usd": 1000,
       "max_position_pct_of_portfolio": 0.2,
@@ -519,11 +514,18 @@
       }
     }
   },
+  "data_quality": {
+    "source": "relay_bundle",
+    "age_hours": 2.7,
+    "stale": false,
+    "bundle_gathered_at_depth": "holdings_watchlist"
+  },
+  "stale_data_notice": "Live data feeds unreachable here; using the relay bundle gathered 2.7h ago (still fresh). Prices and news may be up to that old - lower confidence and avoid time-sensitive entries accordingly.",
   "price_freshness_live": {
     "status": "ok",
-    "as_of": "2026-09-21T13:18:50.410009+00:00",
+    "as_of": "2026-09-21T16:00:24.981990+00:00",
     "source": "alpaca_iex",
-    "age_min": 5.1,
+    "age_min": 4.6,
     "max_age_min": 30.0,
     "stale": false,
     "applied": [
@@ -884,14 +886,14 @@
     "broker": "alpaca_paper",
     "mode": "paper",
     "cash_usd": 907.15,
-    "total_equity_usd": 984.55,
+    "total_equity_usd": 984.43,
     "positions": [
       {
         "ticker": "ANET",
         "quantity": 0.380726,
         "avg_cost": 203.926,
-        "market_value_usd": 77.4,
-        "last_price": 203.3,
+        "market_value_usd": 77.28,
+        "last_price": 202.97,
         "opened_at": "2026-09-17T15:05:01.775566+00:00",
         "proposal_id": "20260917-a7db91",
         "plan": {
@@ -946,7 +948,7 @@
           },
           "calibration_probe": true
         },
-        "days_held": 3
+        "days_held": 4
       }
     ],
     "pending_orders": {},
@@ -1006,7 +1008,7 @@
         "plan_omitted": "full order record in the archive"
       }
     ],
-    "broker_synced_at": "2026-09-21T13:23:58.543936+00:00",
+    "broker_synced_at": "2026-09-21T16:05:00.968278+00:00",
     "broker_backend": "alpaca_paper",
     "ingested_broker_orders": [
       "f86c48cf-b81c-4853-8800-51cb63f9a616",
@@ -2035,7 +2037,7 @@
             "target": "needs_owner_code_change"
           }
         ],
-        "n_adopted": 12
+        "n_adopted": 10
       },
       "knowledge_base": {
         "note": "KNOWLEDGE BASE from the daily study sessions (system 6). Durable craft lessons, EVIDENCE-RANKED: validated first (citing trades won), underperforming last (citing trades lost - weigh skeptically). Apply the how_to_apply lines when the situation matches; CITE the lesson id when one drives a decision - citations are how lessons get graded.",
@@ -2155,21 +2157,7 @@
           "macro_regimes": 1
         }
       },
-      "demand_driver_map_focus": {
-        "LITE": "networking",
-        "PGR": "financials",
-        "MSFT": "mega_tech_platforms",
-        "NOW": "software_platforms",
-        "MDT": "healthcare",
-        "ANET": "networking",
-        "AAPL": "mega_tech_platforms",
-        "OKTA": "cybersecurity",
-        "CRM": "software_platforms",
-        "DASH": "consumer_platforms",
-        "PLTR": "software_platforms",
-        "PM": "consumer_industrial",
-        "SNOW": "software_platforms"
-      },
+      "demand_driver_map_focus": {},
       "_deduped": "process_checklist, theme_exposure, theme_concentration_cap_pct, price_freshness, demand_driver_map_note and watchlist_feedback live one level up on reasoning_process \u2014 not repeated here."
     }
   },
@@ -3329,9 +3317,6 @@
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "neutral_or_unknown"
           }
-        },
-        "_trimmed": {
-          "supporting evidence (institutional, retail_proxy, price_action)": "omitted from the slim pack \u2014 full copy in full_context_path"
         }
       },
       "MSFT": {
@@ -3349,9 +3334,6 @@
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "neutral_or_unknown"
           }
-        },
-        "_trimmed": {
-          "supporting evidence (institutional, retail_proxy, price_action)": "omitted from the slim pack \u2014 full copy in full_context_path"
         }
       },
       "CRM": {
@@ -3369,9 +3351,6 @@
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "neutral_or_unknown"
           }
-        },
-        "_trimmed": {
-          "supporting evidence (institutional, retail_proxy, price_action)": "omitted from the slim pack \u2014 full copy in full_context_path"
         }
       },
       "LITE": {
@@ -3389,9 +3368,6 @@
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "constructive_sponsorship"
           }
-        },
-        "_trimmed": {
-          "supporting evidence (institutional, retail_proxy, price_action)": "omitted from the slim pack \u2014 full copy in full_context_path"
         }
       },
       "SNOW": {
@@ -3409,9 +3385,6 @@
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "neutral_or_unknown"
           }
-        },
-        "_trimmed": {
-          "supporting evidence (institutional, retail_proxy, price_action)": "omitted from the slim pack \u2014 full copy in full_context_path"
         }
       },
       "PLTR": {
@@ -3429,9 +3402,6 @@
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "constructive_sponsorship"
           }
-        },
-        "_trimmed": {
-          "supporting evidence (institutional, retail_proxy, price_action)": "omitted from the slim pack \u2014 full copy in full_context_path"
         }
       },
       "NOW": {
@@ -3449,9 +3419,6 @@
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "constructive_sponsorship"
           }
-        },
-        "_trimmed": {
-          "supporting evidence (institutional, retail_proxy, price_action)": "omitted from the slim pack \u2014 full copy in full_context_path"
         }
       },
       "MDT": {
@@ -3469,9 +3436,6 @@
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "constructive_sponsorship"
           }
-        },
-        "_trimmed": {
-          "supporting evidence (institutional, retail_proxy, price_action)": "omitted from the slim pack \u2014 full copy in full_context_path"
         }
       },
       "DASH": {
@@ -3489,9 +3453,6 @@
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "neutral_or_unknown"
           }
-        },
-        "_trimmed": {
-          "supporting evidence (institutional, retail_proxy, price_action)": "omitted from the slim pack \u2014 full copy in full_context_path"
         }
       },
       "OKTA": {
@@ -3509,9 +3470,6 @@
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "neutral_or_unknown"
           }
-        },
-        "_trimmed": {
-          "supporting evidence (institutional, retail_proxy, price_action)": "omitted from the slim pack \u2014 full copy in full_context_path"
         }
       },
       "PGR": {
@@ -3529,9 +3487,6 @@
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "neutral_or_unknown"
           }
-        },
-        "_trimmed": {
-          "supporting evidence (institutional, retail_proxy, price_action)": "omitted from the slim pack \u2014 full copy in full_context_path"
         }
       },
       "PM": {
@@ -3549,9 +3504,6 @@
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "neutral_or_unknown"
           }
-        },
-        "_trimmed": {
-          "supporting evidence (institutional, retail_proxy, price_action)": "omitted from the slim pack \u2014 full copy in full_context_path"
         }
       },
       "AAPL": {
@@ -3569,9 +3521,6 @@
             "thirteen_f_net": "no_tracked_activity",
             "tape_lean": "neutral_or_unknown"
           }
-        },
-        "_trimmed": {
-          "supporting evidence (institutional, retail_proxy, price_action)": "omitted from the slim pack \u2014 full copy in full_context_path"
         }
       }
     },
@@ -4948,1136 +4897,1136 @@
       }
     ],
     "prices": {
-      "PLTR": 177.49,
-      "NOW": 136.04,
-      "ANET": 199.43,
-      "LITE": 954.41,
-      "SNOW": 331.65,
-      "CRM": 237.91,
-      "MSFT": 495.48,
-      "MDT": 92.13,
-      "DASH": 192.89,
-      "OKTA": 182.3,
-      "PGR": 213.43,
-      "PM": 188.63,
-      "AAPL": 335.86,
-      "APD": 284.1,
-      "COHR": 327.57,
-      "AMZN": 254.99,
-      "CDNS": 282.82,
-      "GOOGL": 350.52,
-      "DDOG": 229.89,
-      "GEV": 940.0,
-      "EME": 750.18,
-      "CRWD": 237.61,
-      "ADI": 375.89,
-      "BKNG": 167.74,
-      "COIN": 205.53,
-      "KO": 88.14,
-      "HOOD": 126.47,
-      "LIN": 460.25,
-      "KMI": 31.84,
-      "CLS": 332.56,
-      "ALAB": 303.19,
-      "DLR": 182.12,
-      "ITW": 269.4,
-      "AVGO": 361.54,
-      "CB": 340.51,
-      "DE": 683.94,
-      "GILD": 149.99,
-      "DELL": 569.0,
-      "FANG": 192.43,
-      "KGC": 28.06,
-      "FCX": 71.55,
-      "CNC": 65.11,
-      "CRWV": 81.28,
-      "ADBE": 248.87,
-      "CCJ": 91.69,
-      "HD": 299.93,
-      "FTNT": 169.85,
-      "HON": 206.37,
-      "FNV": 266.08,
-      "HUBB": 446.98,
-      "CEG": 254.73,
-      "CVS": 88.85,
-      "AEM": 199.53,
-      "DUK": 117.5,
-      "APH": 77.57,
-      "BKR": 57.23,
-      "CSCO": 109.51,
-      "DXCM": 89.36,
-      "AMAT": 444.39,
-      "ALL": 249.81,
-      "ABNB": 166.13,
-      "COST": 895.75,
-      "KKR": 98.78,
-      "EOG": 144.22,
-      "DUOL": 141.94,
-      "ABBV": 263.86,
-      "AJG": 239.37,
-      "JNJ": 269.93,
-      "CME": 276.02,
-      "APP": 308.0,
-      "BX": 124.99,
-      "ICE": 155.53,
-      "HWM": 229.78,
-      "IBKR": 90.67,
-      "BLK": 1069.31,
-      "AMGN": 385.61,
-      "HCA": 427.99,
-      "ETN": 424.8,
-      "AMD": 579.3,
-      "ARES": 123.86,
-      "AXON": 447.95,
-      "HUM": 385.96,
-      "CRDO": 175.87,
-      "BSX": 43.4,
-      "ASML": 1679.25,
-      "KLAC": 176.89,
-      "EMR": 149.91,
-      "LLY": 1152.46,
-      "JPM": 349.4,
-      "INTU": 303.11,
-      "EQIX": 1021.59,
-      "IBM": 230.5,
-      "GS": 941.99,
-      "CVX": 209.4,
-      "FIX": 1651.93,
-      "ISRG": 393.13,
-      "B": 43.29,
-      "ABT": 102.57,
-      "GE": 313.99,
-      "APO": 125.89,
-      "CAMT": 149.27,
-      "CIEN": 349.18,
-      "GLW": 150.11,
-      "CAT": 808.56,
-      "COP": 131.84,
-      "IESC": 322.75,
-      "HPE": 60.73,
-      "ARM": 289.3,
-      "VST": 140.69,
-      "SCHW": 105.22,
-      "META": 679.52,
-      "MRK": 146.75,
+      "PLTR": 182.06,
+      "NOW": 137.46,
+      "ANET": 202.53,
+      "LITE": 966.36,
+      "SNOW": 334.87,
+      "CRM": 238.22,
+      "MSFT": 493.93,
+      "MDT": 91.83,
+      "DASH": 193.41,
+      "OKTA": 190.35,
+      "PGR": 213.39,
+      "PM": 187.45,
+      "AAPL": 337.58,
+      "APD": 282.33,
+      "COHR": 329.75,
+      "AMZN": 255.76,
+      "CDNS": 292.55,
+      "GOOGL": 356.74,
+      "DDOG": 240.19,
+      "GEV": 955.23,
+      "EME": 760.46,
+      "CRWD": 247.41,
+      "ADI": 378.61,
+      "BKNG": 167.6,
+      "COIN": 203.28,
+      "KO": 87.85,
+      "HOOD": 124.53,
+      "LIN": 458.36,
+      "KMI": 31.8,
+      "CLS": 343.74,
+      "ALAB": 327.21,
+      "DLR": 186.43,
+      "ITW": 267.32,
+      "AVGO": 357.97,
+      "CB": 339.37,
+      "DE": 689.75,
+      "GILD": 151.03,
+      "DELL": 578.76,
+      "FANG": 188.76,
+      "KGC": 27.62,
+      "FCX": 71.77,
+      "CNC": 65.23,
+      "CRWV": 85.56,
+      "ADBE": 247.63,
+      "CCJ": 92.65,
+      "HD": 297.47,
+      "FTNT": 174.61,
+      "HON": 205.92,
+      "FNV": 262.77,
+      "HUBB": 450.44,
+      "CEG": 263.95,
+      "CVS": 88.05,
+      "AEM": 196.82,
+      "DUK": 117.51,
+      "APH": 80.43,
+      "BKR": 57.36,
+      "CSCO": 109.68,
+      "DXCM": 88.5,
+      "AMAT": 460.75,
+      "ALL": 247.67,
+      "ABNB": 165.56,
+      "COST": 894.67,
+      "KKR": 100.44,
+      "EOG": 141.47,
+      "DUOL": 151.05,
+      "ABBV": 264.75,
+      "AJG": 239.19,
+      "JNJ": 271.72,
+      "CME": 275.11,
+      "APP": 324.56,
+      "BX": 126.37,
+      "ICE": 155.07,
+      "HWM": 227.65,
+      "IBKR": 93.28,
+      "BLK": 1077.82,
+      "AMGN": 391.99,
+      "HCA": 426.45,
+      "ETN": 435.02,
+      "AMD": 609.82,
+      "ARES": 127.06,
+      "AXON": 453.39,
+      "HUM": 381.17,
+      "CRDO": 185.41,
+      "BSX": 43.12,
+      "ASML": 1697.7,
+      "KLAC": 182.3,
+      "EMR": 151.3,
+      "LLY": 1160.3,
+      "JPM": 350.92,
+      "INTU": 301.94,
+      "EQIX": 1043.86,
+      "IBM": 229.47,
+      "GS": 949.57,
+      "CVX": 205.76,
+      "FIX": 1640.39,
+      "ISRG": 396.53,
+      "B": 42.71,
+      "ABT": 102.76,
+      "GE": 319.95,
+      "APO": 127.66,
+      "CAMT": 150.93,
+      "CIEN": 363.91,
+      "GLW": 159.06,
+      "CAT": 818.32,
+      "COP": 128.1,
+      "IESC": 326.21,
+      "HPE": 61.4,
+      "ARM": 318.29,
+      "VST": 141.67,
+      "SCHW": 106.61,
+      "META": 721.28,
+      "MRK": 149.28,
       "SLB": 51.12,
-      "SYK": 274.94,
-      "MPC": 424.59,
-      "NET": 323.4,
-      "LPLA": 328.11,
-      "XOM": 163.19,
-      "MCO": 468.41,
-      "SNPS": 384.76,
-      "VRTX": 508.29,
-      "RGLD": 249.66,
-      "STRL": 518.84,
-      "NU": 13.65,
-      "SMR": 8.51,
-      "MPWR": 1219.88,
-      "NEE": 80.46,
-      "WPM": 150.92,
-      "NRG": 103.58,
-      "MS": 202.56,
-      "UNH": 376.94,
-      "TER": 371.48,
-      "PG": 146.32,
-      "PH": 943.06,
-      "LMT": 533.59,
-      "NVDA": 223.47,
-      "NBIS": 223.74,
-      "SPY": 766.51,
-      "TXN": 266.71,
-      "LNG": 268.1,
-      "PANW": 363.57,
-      "V": 367.63,
-      "ZS": 197.24,
-      "UBER": 70.5,
-      "OKLO": 38.01,
-      "TLN": 292.37,
-      "WMT": 106.68,
-      "ROK": 415.29,
-      "WMB": 72.07,
-      "MELI": 1785.93,
-      "SCCO": 195.63,
-      "TJX": 127.25,
-      "MA": 565.08,
-      "WM": 211.05,
-      "SHOP": 128.43,
-      "TSM": 433.52,
-      "LOW": 192.5,
-      "SPGI": 405.46,
-      "STX": 858.47,
-      "S": 22.53,
-      "TEAM": 192.06,
-      "MCD": 248.38,
-      "TDG": 1085.77,
-      "ORCL": 147.6,
-      "REGN": 784.95,
-      "WDC": 441.48,
-      "MRVL": 251.11,
-      "VRT": 248.91,
-      "NVT": 157.96,
-      "ONTO": 263.78,
-      "RTX": 193.91,
-      "TRV": 374.56,
-      "QCOM": 178.01,
-      "SMCI": 40.55,
-      "NEM": 123.38,
-      "SNDK": 1792.96,
-      "NOC": 527.29,
-      "LRCX": 287.77,
-      "TMO": 651.24,
-      "NFLX": 71.8,
-      "PWR": 636.6,
-      "UNP": 279.34,
-      "TSLA": 369.69,
-      "MU": 1036.88,
-      "RBRK": 106.64,
-      "SPOT": 509.48,
-      "RDDT": 150.87
+      "SYK": 273.8,
+      "MPC": 417.13,
+      "NET": 345.74,
+      "LPLA": 330.45,
+      "XOM": 159.18,
+      "MCO": 469.39,
+      "SNPS": 399.78,
+      "VRTX": 510.72,
+      "RGLD": 247.62,
+      "STRL": 518.52,
+      "NU": 13.88,
+      "SMR": 8.89,
+      "MPWR": 1246.53,
+      "NEE": 80.07,
+      "WPM": 147.0,
+      "NRG": 103.09,
+      "MS": 205.09,
+      "UNH": 374.71,
+      "TER": 379.87,
+      "PG": 146.2,
+      "PH": 959.26,
+      "LMT": 535.98,
+      "NVDA": 224.97,
+      "NBIS": 233.45,
+      "SPY": 770.55,
+      "TXN": 268.41,
+      "LNG": 271.31,
+      "PANW": 371.98,
+      "V": 367.8,
+      "ZS": 204.52,
+      "UBER": 70.6,
+      "OKLO": 40.07,
+      "TLN": 296.73,
+      "WMT": 107.36,
+      "ROK": 421.04,
+      "WMB": 71.94,
+      "MELI": 1819.62,
+      "SCCO": 195.73,
+      "TJX": 129.7,
+      "MA": 564.61,
+      "WM": 208.76,
+      "SHOP": 129.76,
+      "TSM": 440.38,
+      "LOW": 191.65,
+      "SPGI": 406.37,
+      "STX": 872.38,
+      "S": 23.7,
+      "TEAM": 197.7,
+      "MCD": 247.88,
+      "TDG": 1108.18,
+      "ORCL": 148.66,
+      "REGN": 793.07,
+      "WDC": 440.04,
+      "MRVL": 254.04,
+      "VRT": 252.81,
+      "NVT": 160.49,
+      "ONTO": 273.93,
+      "RTX": 194.45,
+      "TRV": 373.59,
+      "QCOM": 190.58,
+      "SMCI": 41.12,
+      "NEM": 122.02,
+      "SNDK": 1761.53,
+      "NOC": 524.31,
+      "LRCX": 298.38,
+      "TMO": 655.7,
+      "NFLX": 73.58,
+      "PWR": 640.62,
+      "UNP": 271.71,
+      "TSLA": 374.83,
+      "MU": 1035.65,
+      "RBRK": 112.29,
+      "SPOT": 515.85,
+      "RDDT": 156.91
     },
     "prices_meta": {
       "PLTR": {
-        "last_close": 177.49,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 182.06,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 177.64
       },
       "NOW": {
-        "last_close": 136.04,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 137.46,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 135.47
       },
       "ANET": {
-        "last_close": 199.43,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 202.53,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 199.39
       },
       "LITE": {
-        "last_close": 954.41,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 966.36,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 930.91
       },
       "SNOW": {
-        "last_close": 331.65,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 334.87,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 332.43
       },
       "CRM": {
-        "last_close": 237.91,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 238.22,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 237.92
       },
       "MSFT": {
-        "last_close": 495.48,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 493.93,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 493.78
       },
       "MDT": {
-        "last_close": 92.13,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 91.83,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex",
         "daily_bar_close": 92.13
       },
       "APD": {
-        "last_close": 284.1,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 282.33,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "COHR": {
-        "last_close": 327.57,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 329.75,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "AMZN": {
-        "last_close": 254.99,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 255.76,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "CDNS": {
-        "last_close": 282.82,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 292.55,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "GOOGL": {
-        "last_close": 350.52,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 356.74,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "DDOG": {
-        "last_close": 229.89,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 240.19,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "GEV": {
-        "last_close": 940.0,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 955.23,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "EME": {
-        "last_close": 750.18,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 760.46,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "CRWD": {
-        "last_close": 237.61,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 247.41,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ADI": {
-        "last_close": 375.89,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 378.61,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "BKNG": {
-        "last_close": 167.74,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 167.6,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "COIN": {
-        "last_close": 205.53,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 203.28,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "KO": {
-        "last_close": 88.14,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 87.85,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "HOOD": {
-        "last_close": 126.47,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 124.53,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "LIN": {
-        "last_close": 460.25,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 458.36,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "KMI": {
-        "last_close": 31.84,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 31.8,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "CLS": {
-        "last_close": 332.56,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 343.74,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ALAB": {
-        "last_close": 303.19,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 327.21,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "DLR": {
-        "last_close": 182.12,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 186.43,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ITW": {
-        "last_close": 269.4,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 267.32,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "AVGO": {
-        "last_close": 361.54,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 357.97,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "CB": {
-        "last_close": 340.51,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 339.37,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "DE": {
-        "last_close": 683.94,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 689.75,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "GILD": {
-        "last_close": 149.99,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 151.03,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "DELL": {
-        "last_close": 569.0,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 578.76,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "FANG": {
-        "last_close": 192.43,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 188.76,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "KGC": {
-        "last_close": 28.06,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 27.62,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "FCX": {
-        "last_close": 71.55,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 71.77,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "CNC": {
-        "last_close": 65.11,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 65.23,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "CRWV": {
-        "last_close": 81.28,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 85.56,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ADBE": {
-        "last_close": 248.87,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 247.63,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "CCJ": {
-        "last_close": 91.69,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 92.65,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "HD": {
-        "last_close": 299.93,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 297.47,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "FTNT": {
-        "last_close": 169.85,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 174.61,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "HON": {
-        "last_close": 206.37,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 205.92,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "FNV": {
-        "last_close": 266.08,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 262.77,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "HUBB": {
-        "last_close": 446.98,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 450.44,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "CEG": {
-        "last_close": 254.73,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 263.95,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "CVS": {
-        "last_close": 88.85,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 88.05,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "AEM": {
-        "last_close": 199.53,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 196.82,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "DUK": {
-        "last_close": 117.5,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 117.51,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "APH": {
-        "last_close": 77.57,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 80.43,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "BKR": {
-        "last_close": 57.23,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 57.36,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "CSCO": {
-        "last_close": 109.51,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 109.68,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "DXCM": {
-        "last_close": 89.36,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 88.5,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "AAPL": {
-        "last_close": 335.86,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 337.58,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "AMAT": {
-        "last_close": 444.39,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 460.75,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ALL": {
-        "last_close": 249.81,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 247.67,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ABNB": {
-        "last_close": 166.13,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 165.56,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "COST": {
-        "last_close": 895.75,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 894.67,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "KKR": {
-        "last_close": 98.78,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 100.44,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "EOG": {
-        "last_close": 144.22,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 141.47,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "DUOL": {
-        "last_close": 141.94,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 151.05,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ABBV": {
-        "last_close": 263.86,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 264.75,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "AJG": {
-        "last_close": 239.37,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 239.19,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "JNJ": {
-        "last_close": 269.93,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 271.72,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "CME": {
-        "last_close": 276.02,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 275.11,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "APP": {
-        "last_close": 308.0,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 324.56,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "BX": {
-        "last_close": 124.99,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 126.37,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ICE": {
-        "last_close": 155.53,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 155.07,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "HWM": {
-        "last_close": 229.78,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 227.65,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "IBKR": {
-        "last_close": 90.67,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 93.28,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "BLK": {
-        "last_close": 1069.31,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 1077.82,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "AMGN": {
-        "last_close": 385.61,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 391.99,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "HCA": {
-        "last_close": 427.99,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 426.45,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ETN": {
-        "last_close": 424.8,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 435.02,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "AMD": {
-        "last_close": 579.3,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 609.82,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ARES": {
-        "last_close": 123.86,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 127.06,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "AXON": {
-        "last_close": 447.95,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 453.39,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "HUM": {
-        "last_close": 385.96,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 381.17,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "CRDO": {
-        "last_close": 175.87,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 185.41,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "BSX": {
-        "last_close": 43.4,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 43.12,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ASML": {
-        "last_close": 1679.25,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 1697.7,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "KLAC": {
-        "last_close": 176.89,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 182.3,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "EMR": {
-        "last_close": 149.91,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 151.3,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "LLY": {
-        "last_close": 1152.46,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 1160.3,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "JPM": {
-        "last_close": 349.4,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 350.92,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "INTU": {
-        "last_close": 303.11,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 301.94,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "EQIX": {
-        "last_close": 1021.59,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 1043.86,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "IBM": {
-        "last_close": 230.5,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 229.47,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "GS": {
-        "last_close": 941.99,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 949.57,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "CVX": {
-        "last_close": 209.4,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 205.76,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "FIX": {
-        "last_close": 1651.93,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 1640.39,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ISRG": {
-        "last_close": 393.13,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 396.53,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "B": {
-        "last_close": 43.29,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 42.71,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ABT": {
-        "last_close": 102.57,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 102.76,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "GE": {
-        "last_close": 313.99,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 319.95,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "APO": {
-        "last_close": 125.89,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 127.66,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "CAMT": {
-        "last_close": 149.27,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 150.93,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "CIEN": {
-        "last_close": 349.18,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 363.91,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "GLW": {
-        "last_close": 150.11,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 159.06,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "CAT": {
-        "last_close": 808.56,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 818.32,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "COP": {
-        "last_close": 131.84,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 128.1,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "IESC": {
-        "last_close": 322.75,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 326.21,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "DASH": {
-        "last_close": 192.89,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 193.41,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "HPE": {
-        "last_close": 60.73,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 61.4,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ARM": {
-        "last_close": 289.3,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 318.29,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "VST": {
-        "last_close": 140.69,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 141.67,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "SCHW": {
-        "last_close": 105.22,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 106.61,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "META": {
-        "last_close": 679.52,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 721.28,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "MRK": {
-        "last_close": 146.75,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 149.28,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "SLB": {
         "last_close": 51.12,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "SYK": {
-        "last_close": 274.94,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 273.8,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "MPC": {
-        "last_close": 424.59,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 417.13,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "NET": {
-        "last_close": 323.4,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 345.74,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "LPLA": {
-        "last_close": 328.11,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 330.45,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "XOM": {
-        "last_close": 163.19,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 159.18,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "PGR": {
-        "last_close": 213.43,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 213.39,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "MCO": {
-        "last_close": 468.41,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 469.39,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "SNPS": {
-        "last_close": 384.76,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 399.78,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "VRTX": {
-        "last_close": 508.29,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 510.72,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "RGLD": {
-        "last_close": 249.66,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 247.62,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "STRL": {
-        "last_close": 518.84,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 518.52,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "NU": {
-        "last_close": 13.65,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 13.88,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "SMR": {
-        "last_close": 8.51,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 8.89,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "MPWR": {
-        "last_close": 1219.88,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 1246.53,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "PM": {
-        "last_close": 188.63,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 187.45,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "NEE": {
-        "last_close": 80.46,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 80.07,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "WPM": {
-        "last_close": 150.92,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 147.0,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "NRG": {
-        "last_close": 103.58,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 103.09,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "MS": {
-        "last_close": 202.56,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 205.09,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "UNH": {
-        "last_close": 376.94,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 374.71,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "TER": {
-        "last_close": 371.48,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 379.87,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "PG": {
-        "last_close": 146.32,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 146.2,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "PH": {
-        "last_close": 943.06,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 959.26,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "LMT": {
-        "last_close": 533.59,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 535.98,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "NVDA": {
-        "last_close": 223.47,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 224.97,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "NBIS": {
-        "last_close": 223.74,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 233.45,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "SPY": {
-        "last_close": 766.51,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 770.55,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "TXN": {
-        "last_close": 266.71,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 268.41,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "LNG": {
-        "last_close": 268.1,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 271.31,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "PANW": {
-        "last_close": 363.57,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 371.98,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "V": {
-        "last_close": 367.63,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 367.8,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ZS": {
-        "last_close": 197.24,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 204.52,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "UBER": {
-        "last_close": 70.5,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 70.6,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "OKLO": {
-        "last_close": 38.01,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 40.07,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "TLN": {
-        "last_close": 292.37,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 296.73,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "OKTA": {
-        "last_close": 182.3,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 190.35,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "WMT": {
-        "last_close": 106.68,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 107.36,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ROK": {
-        "last_close": 415.29,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 421.04,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "WMB": {
-        "last_close": 72.07,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 71.94,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "MELI": {
-        "last_close": 1785.93,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 1819.62,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "SCCO": {
-        "last_close": 195.63,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 195.73,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "TJX": {
-        "last_close": 127.25,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 129.7,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "MA": {
-        "last_close": 565.08,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 564.61,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "WM": {
-        "last_close": 211.05,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 208.76,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "SHOP": {
-        "last_close": 128.43,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 129.76,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "TSM": {
-        "last_close": 433.52,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 440.38,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "LOW": {
-        "last_close": 192.5,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 191.65,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "SPGI": {
-        "last_close": 405.46,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 406.37,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "STX": {
-        "last_close": 858.47,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 872.38,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "S": {
-        "last_close": 22.53,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 23.7,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "TEAM": {
-        "last_close": 192.06,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 197.7,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "MCD": {
-        "last_close": 248.38,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 247.88,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "TDG": {
-        "last_close": 1085.77,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 1108.18,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ORCL": {
-        "last_close": 147.6,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 148.66,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "REGN": {
-        "last_close": 784.95,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 793.07,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "WDC": {
-        "last_close": 441.48,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 440.04,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "MRVL": {
-        "last_close": 251.11,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 254.04,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "VRT": {
-        "last_close": 248.91,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 252.81,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "NVT": {
-        "last_close": 157.96,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 160.49,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "ONTO": {
-        "last_close": 263.78,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 273.93,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "RTX": {
-        "last_close": 193.91,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 194.45,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "TRV": {
-        "last_close": 374.56,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 373.59,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "QCOM": {
-        "last_close": 178.01,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 190.58,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "SMCI": {
-        "last_close": 40.55,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 41.12,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "NEM": {
-        "last_close": 123.38,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 122.02,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "SNDK": {
-        "last_close": 1792.96,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 1761.53,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "NOC": {
-        "last_close": 527.29,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 524.31,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "LRCX": {
-        "last_close": 287.77,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 298.38,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "TMO": {
-        "last_close": 651.24,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 655.7,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "NFLX": {
-        "last_close": 71.8,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 73.58,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "PWR": {
-        "last_close": 636.6,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 640.62,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "UNP": {
-        "last_close": 279.34,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 271.71,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "TSLA": {
-        "last_close": 369.69,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 374.83,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "MU": {
-        "last_close": 1036.88,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 1035.65,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "RBRK": {
-        "last_close": 106.64,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 112.29,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "SPOT": {
-        "last_close": 509.48,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 515.85,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       },
       "RDDT": {
-        "last_close": 150.87,
-        "price_as_of": "2026-09-21T13:18:50.410009+00:00",
+        "last_close": 156.91,
+        "price_as_of": "2026-09-21T16:00:24.981990+00:00",
         "source": "alpaca_iex"
       }
     },
@@ -14855,21 +14804,21 @@
         "filed": "2026-08-05",
         "url": "https://www.sec.gov/Archives/edgar/data/1596532/000159653226000175/anet-20260630.htm",
         "section": "mdna_results_of_operations",
-        "excerpt": "results of operations will vary from period to period, including the potential impact on our results of operations of the timing and size of our investments to introduce new products and services and to enhance our existing platform; our expectations related to our inventory and purchase commitments; the potential impacts of tightening supply conditions and our ability to manage such supply chain constraints, particularly in the memory and silicon markets; actions we might take related to our supply of components, such as our expectation that we will continue to issue non-cancellable and non-returnable purchase orders; our expectation that our gross margin will fluctuate over time and the factors influencing such expectation; our plans to invest in the business, including in research and development; market trends, including our expectation that large system vendors will continue to combine cloud-focused hardware and software solutions as an alternative to our products; our expectation of increased competition and our ability to compete effectively; our expectation that our business will continue to be subject to new and changing legal and regulatory obligations, particularly related to AI, privacy, data protection, cybersecurity and the environment; our belief that no potential litigation-related liabilities are likely to have a material adverse effect on our financial position, results of operations or cash flows; our belief that we will not pay any cash dividends in the foreseeable future; the potential amount of capital expenditures related to our new building in Santa Clara; and our belief that our existing cash, cash equivalents and marketable securities, together with cash flow from operations, will be sufficient to meet our working capital requirements and our growth strategies for the foreseeable future. The forward-looking statements made in this Quarterly Report on Form 10-Q relate only to events as of the date on which the statements are made. Our actual results may differ materially from those anticipated in these forward-looking statements as a result of various factors, including those set forth under \u201cRisk Factors\u201d and elsewhere in this Quarterly Report on Form 10-Q. We undertake no obligation to update any forward-looking statements made in this Quarterly Report on Form 10-Q to reflect events or circumstances after the date of this Quarterly Report on Form 10-Q or to reflect new information or the occurrence of unanticipated events, except as required by law. You should not place undue reliance on our forward-looking statements.\nOverview\nIn a world where data is increasingly a precious commodity and competitive differentiator, Arista was founded to enable our customers to access all their centers of data in the quickest, most reliable, and secure manner. Over the last two decades, we have established ourselves as an industry leader in data-driven, client-to-cloud networking-as-a-service. Our \u201cCenters of Data\u201d strategy is a fundam\n\n[TRUNCATED for the brain pack: 7000 more characters of this mdna section are in full_context_path. Read them before quoting this section as complete.]",
+        "excerpt": "results of operations will vary from period to period, including the potential impact on our results of operations of the timing and size of our investments to introduce new products and services and to enhance our existing platform; our expectations related to our inventory and purchase commitments; the potential impacts of tightening supply conditions and our ability to manage such supply chain constraints, particularly in the memory and silicon markets; actions we might take related to our supply of components, such as our expectation that we will continue to issue non-cancellable and non-returnable purchase orders; our expectation that our gross margin will fluctuate over time and the factors influencing such expectation; our plans to invest in the business, including in research and development; market trends, including our expectation that large system vendors will continue to combine cloud-focused hardware and software solutions as an alternative to our products; our expectation of increased competition and our ability to compete effectively; our expectation that our business will continue to be subject to new and changing legal and regulatory obligations, particularly related to AI, privacy, data protection, cybersecurity and the environment; our belief that no potential litigation-related liabilities are likely to have a material adverse effect on our financial position, results of operations or cash flows; our belief that we will not pay any cash dividends in the foreseeable future; the potential amount of capital expenditures related to our new building in Santa Clara; and our belief that our existing cash, cash equivalents and marketable securities, together with cash flow from operations, will be sufficient to meet our working capital requirements and our growth strategies for the foreseeable future. The forward-looking statements made in this Quarterly Report on Form 10-Q relate only to events as of the date on which the statements are made. Our actual results may differ materially from those anticipated in these forward-looking statements as a result of various factors, including those set forth under \u201cRisk Factors\u201d and elsewhere in this Quarterly Report on Form 10-Q. We undertake no obligation to update any forward-looking statements made in this Quarterly Report on Form 10-Q to reflect events or circumstances after the date of this Quarterly Report on Form 10-Q or to reflect new information or the occurrence of unanticipated events, except as required by law. You should not place undue reliance on our forward-looking statements.\nOverview\nIn a world where data is increasingly a precious commodity and competitive differentiator, Arista was founded to enable our customers to access all their centers of data in the quickest, most reliable, and secure manner. Over the last two decades, we have established ourselves as an industry leader in data-driven, client-to-cloud networking-as-a-service. Our \u201cCenters of Data\u201d strategy is a fundam\n\n[TRUNCATED for the brain pack: 152 more characters of this mdna section are in full_context_path. Read them before quoting this section as complete.]",
         "truncated": true,
         "excerpt_truncated_for_pack": true,
-        "excerpt_full_chars": 10000
+        "excerpt_full_chars": 3152
       },
       "earnings_release": {
         "status": "ok",
         "ticker": "ANET",
         "filed": "2026-08-04",
         "url": "https://www.sec.gov/Archives/edgar/data/1596532/000159653226000174/ex991q226-earningsrelease.htm",
-        "excerpt": "EX-99.1\nex991q226-earningsrelease.htm\nEX-99.1\nExhibit 99.1\nArista Networks, Inc. Reports Second Quarter 2026 Financial Results\n\u2022Delivered 40% growth in non-GAAP EPS year-over-year as the company achieved its first $3+ billion revenue quarter.\n\u2022Recognized on the 2026 Fortune 500 list of the largest United States corporations by revenue and named a Leader in the 2026 Gartner\u00ae Magic Quadrant\u2122 for Enterprise Wired and Wireless LAN.\n\u2022Introduced 1.6 Tbps AI fabric platforms, including liquid-cooled options optimized for scale-up, scale-out, and scale-across networks.\nSANTA CLARA, Calif. - August 4, 2026 -- Arista Networks, Inc. (NYSE: ANET), an industry leader in data-driven, client-to-cloud networking for large AI, data center, campus, and routing environments, today announced financial results for its second quarter ended June 30, 2026.\n\u201cAs we deliver our first $3 billion quarter in Q2 2026, it is clear that our Arista 2.0 platform strategy is compelling,\u201d stated Jayshree Ullal, Chairperson and CEO of Arista Networks. \u201cCustomers see networking as the central nervous system for infrastructure from the client to campus to data and AI centers.\u201d\nSecond Quarter Financial Highlights\n\u2022Revenue of $3.036 billion, an increase of 12.1% compared to the first quarter of 2026, and an increase of 37.7% from the second quarter of 2025.\n\u2022GAAP and non-GAAP operating margin of 45.4% and 49.9%, respectively, compared to GAAP and non-GAAP operating margin of 44.7% and 48.8% in the second quarter of 2025.\n\u2022GAAP and non-GAAP diluted earnings per share of $0.95 and $1.02, respectively, compared to GAAP and non-GAAP diluted earnings per share of $0.70 and $0.73 in the second quarter of 2025.\nA reconciliation of the company\u2019s non-GAAP financial measures to their most directly comparable GAAP measures has been provided in the financial statement tables included in this press release.\nCommenting on the company's financial results, Chantelle Breithaupt, Arista\u2019s CFO, said, \u201cOur second quarter 2026 reflects strong, broad-based growth, with revenue up 37.7% and EPS up 39.7%. This performance underscores the strength of our market position and the continued dedication of our global team.\"\nCompany Highlights\n\u2022Defending the Keys to the Kingdom: Resilient Infrastructure vs. AI-Capable Adversaries \u2013 Join Arista, Anthropic and Palo Alto Networks for a webinar to discuss the future of security in an AI world. Register here: https://events.arista.com/webinar-defending-the-keys-to-the-kingdom.\n\u2022Arista Networks was named a Leader in the 2026 Gartner\u00ae Magic Quadrant\u2122 for Enterprise Wired and Wireless LAN \u2013 The recognition reflects Arista's continued momentum in the enterprise campus, built on its unified, single-EOS architecture spanning the data center to the campus edge.\n\u2022Arista introduced the 7060XE7 Series, a next-generation 1.6-terabit portfolio for AI fabrics \u2013 The new Etherlink\u2122 platforms deliver up to 100 Tbps of system bandwidth and support Linear Pluggable Optics, cutting interconnect power consumption by approximately 60% compared to traditional pluggable optics.\n\u2022Arista detailed new innovations for scale-up, scale-out, and scale-across AI fabrics \u2013 The company outlined techniques including multi-planar leaf-spine designs, the open Multipath Reliable Connection\n(MRC) protocol, and segment routing over IPv6 (SRv6), aimed at maximizing AI cluster utilization and resilience.\nFinancial Outlook\nFor the third quarter of 2026, we expect:\n\u2022Revenue of approximately $3.3 billion;\n\u2022Non-GAAP operating margin of 48 - 49%; and\n\u2022Non-GAAP diluted net income per share between $1.06 and $1.08.\nGuidance for non-GAAP financial measures excludes certain items, including stock-based compensation expense, intangible asset amortization, tax benefits on stock-based awards, the income tax effect on non-GAAP exclusions, and potential non-recurring charges or benefits. A reconciliation of non-GAAP guidance measures to corresponding GAAP measures is not available on a forward-looking basis without unreasonable effort because these exclusions can be uncertain or difficult to predict, including stock-based compensation expense and tax benefits on stock-based awards, which is impacted by the timing of employee stock transactions, and the future fair market value of the company\u2019s common stock. The actual amount of these exclusions will have a significant impact on the company's GAAP gross margin, operating margin, and net income per share.\nPrepared Materials and Conference Call Information\nArista's executives will discuss the second quarter 2026 financial results on a conference call today at 1:30 PM Pacific Time. To listen to the call via telephone, dial (888) 330-2502 in the United States or +1 (240) 789-2713 from international locations. The Conference ID is 5655862.\nThe financial results conference call will also be available via live webcast on Arista's investor relations website at https://investors.arista.com/. Shortly after the conference call concludes, a replay of the audio webcast will be available on Arista\u2019s investor relations website.\nARISTA NETWORKS, INC.\nCondensed Consolidated Income Statements\n(Unaudited, in millions, except per share amounts)\nThree Months Ended June 30,\nSix Months Ended June 30,\nRevenue:\nProduct\nService\nTotal revenue\nCost of revenue:\nProduct\nService\nTotal cost of revenue\nGross profit\nOperating expenses:\nResearch and development\nSales and marketing\nGeneral and administrative\nTotal operating expenses\nIncome from operations\nOther income (expense), net\nIncome before income taxes\nProvision for income taxes\nNet income\nNet income per share:\nBasic\nDiluted\nWeighted-average shares used in computing net income per share:\nBasic\nDiluted\nARISTA NETWORKS, INC.\nReconciliation of Selected GAAP to Non-GAAP Financial Measures\n(Unaudited, in millions, except percentages and per share amounts)\nThree Months Ended June 30,\nSix Months Ended June 30,\nGAAP gross profit\nGAAP gross margin\nStock-based compensation expense\nIntangible asset amortizat\n\n[TRUNCATED for the brain pack: 2000 more characters of this earnings_release section are in full_context_path. Read them before quoting this section as complete.]",
+        "excerpt": "EX-99.1\nex991q226-earningsrelease.htm\nEX-99.1\nExhibit 99.1\nArista Networks, Inc. Reports Second Quarter 2026 Financial Results\n\u2022Delivered 40% growth in non-GAAP EPS year-over-year as the company achieved its first $3+ billion revenue quarter.\n\u2022Recognized on the 2026 Fortune 500 list of the largest United States corporations by revenue and named a Leader in the 2026 Gartner\u00ae Magic Quadrant\u2122 for Enterprise Wired and Wireless LAN.\n\u2022Introduced 1.6 Tbps AI fabric platforms, including liquid-cooled options optimized for scale-up, scale-out, and scale-across networks.\nSANTA CLARA, Calif. - August 4, 2026 -- Arista Networks, Inc. (NYSE: ANET), an industry leader in data-driven, client-to-cloud networking for large AI, data center, campus, and routing environments, today announced financial results for its second quarter ended June 30, 2026.\n\u201cAs we deliver our first $3 billion quarter in Q2 2026, it is clear that our Arista 2.0 platform strategy is compelling,\u201d stated Jayshree Ullal, Chairperson and CEO of Arista Networks. \u201cCustomers see networking as the central nervous system for infrastructure from the client to campus to data and AI centers.\u201d\nSecond Quarter Financial Highlights\n\u2022Revenue of $3.036 billion, an increase of 12.1% compared to the first quarter of 2026, and an increase of 37.7% from the second quarter of 2025.\n\u2022GAAP and non-GAAP operating margin of 45.4% and 49.9%, respectively, compared to GAAP and non-GAAP operating margin of 44.7% and 48.8% in the second quarter of 2025.\n\u2022GAAP and non-GAAP diluted earnings per share of $0.95 and $1.02, respectively, compared to GAAP and non-GAAP diluted earnings per share of $0.70 and $0.73 in the second quarter of 2025.\nA reconciliation of the company\u2019s non-GAAP financial measures to their most directly comparable GAAP measures has been provided in the financial statement tables included in this press release.\nCommenting on the company's financial results, Chantelle Breithaupt, Arista\u2019s CFO, said, \u201cOur second quarter 2026 reflects strong, broad-based growth, with revenue up 37.7% and EPS up 39.7%. This performance underscores the strength of our market position and the continued dedication of our global team.\"\nCompany Highlights\n\u2022Defending the Keys to the Kingdom: Resilient Infrastructure vs. AI-Capable Adversaries \u2013 Join Arista, Anthropic and Palo Alto Networks for a webinar to discuss the future of security in an AI world. Register here: https://events.arista.com/webinar-defending-the-keys-to-the-kingdom.\n\u2022Arista Networks was named a Leader in the 2026 Gartner\u00ae Magic Quadrant\u2122 for Enterprise Wired and Wireless LAN \u2013 The recognition reflects Arista's continued momentum in the enterprise campus, built on its unified, single-EOS architecture spanning the data center to the campus edge.\n\u2022Arista introduced the 7060XE7 Series, a next-generation 1.6-terabit portfolio for AI fabrics \u2013 The new Etherlink\u2122 platforms deliver up to 100 Tbps of system bandwidth and support Linear Pluggable Optics, cutting interconnect power consumption by approximately 60% compared to traditional pluggable optics.\n\u2022Arista detailed new innovations for scale-up, scale-out, and scale-across AI fabrics \u2013 The company outlined techniques including multi-planar leaf-spine designs, the open Multipath Reliable Connection\n(MRC) protocol, and segment routing over IPv6 (SRv6), aimed at maximizing AI cluster utilization and resilience.\nFinancial Outlook\nFor the third quarter of 2026, we expect:\n\u2022Revenue of approximately $3.3 billion;\n\u2022Non-GAAP operating margin of 48 - 49%; and\n\u2022Non-GAAP diluted net income per share between $1.06 and $1.08.\nGuidance for non-GAAP financial measures excludes certain items, including stock-based compensation expense, intangible asset amortization, tax benefits on stock-based awards, the income tax effect on non-GAAP exclusions, and potential non-recurring charges or benefits. A reconciliation of non-GAAP guidance measures to corresponding GAAP measures is not available on a forward-looking basis without unreasonable effort because these exclusions can be uncertain or difficult to predict, including stock-based compensation expense and tax benefits on stock-based awards, which is impacted by the timing of employee stock transactions, and the future fair market value of the company\u2019s common stock. The actual amount of these exclusions will have a significant impact on the company's GAAP gross margin, operating margin, and net income per share.\nPrepared Materials and Conference Call Information\nArista's executives will discuss the second quarter 2026 financial results on a conference call today at 1:30 PM Pacific Time. To listen to the call via telephone, dial (888) 330-2502 in the United States or +1 (240) 789-2713 from international locations. The Conference ID is 5655862.\nThe financial results conference call will also be available via live webcast on Arista's investor relations website at https://investors.arista.com/. Shortly after the conference call concludes, a replay of the audio webcast will be available on Arista\u2019s investor relations website.\nARISTA NETWORKS, INC.\nCondensed Consolidated Income Statements\n(Unaudited, in millions, except per share amounts)\nThree Months Ended June 30,\nSix Months Ended June 30,\nRevenue:\nProduct\nService\nTotal revenue\nCost of revenue:\nProduct\nService\nTotal cost of revenue\nGross profit\nOperating expenses:\nResearch and development\nSales and marketing\nGeneral and administrative\nTotal operating expenses\nIncome from operations\nOther income (expense), net\nIncome before income taxes\nProvision for income taxes\nNet income\nNet income per share:\nBasic\nDiluted\nWeighted-average shares used in computing net income per share:\nBasic\nDiluted\nARISTA NETWORKS, INC.\nReconciliation of Selected GAAP to Non-GAAP Financial Measures\n(Unaudited, in millions, except percentages and per share amounts)\nThree Months Ended June 30,\nSix Months Ended June 30,\nGAAP gross profit\nGAAP gross margin\nStock-based compensation expense\nIntangible asset amortizat\n\n[TRUNCATED for the brain pack: 164 more characters of this earnings_release section are in full_context_path. Read them before quoting this section as complete.]",
         "truncated": true,
         "contains_guidance_language": true,
         "excerpt_truncated_for_pack": true,
-        "excerpt_full_chars": 8000
+        "excerpt_full_chars": 6164
       }
     },
     "MSFT": {
@@ -14880,21 +14829,21 @@
         "filed": "2026-04-29",
         "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526191507/msft-20260331.htm",
         "section": "mdna_results_of_operations",
-        "excerpt": "Results of Operations\u201d and \u201cRisk Factors\u201d (Part II, Item 1A of this Form 10-Q). These forward-looking statements generally are identified by the words \u201cbelieve,\u201d \u201cproject,\u201d \u201cexpect,\u201d \u201canticipate,\u201d \u201cestimate,\u201d \u201cintend,\u201d \u201cstrategy,\u201d \u201cfuture,\u201d \u201copportunity,\u201d \u201cplan,\u201d \u201cmay,\u201d \u201cshould,\u201d \u201cwill,\u201d \u201cwould,\u201d \u201cwill be,\u201d \u201cwill continue,\u201d \u201cwill likely result,\u201d and similar expressions. Forward-looking statements are based on current expectations and assumptions that are subject to risks and uncertainties that may cause actual results to differ materially. We describe risks and uncertainties that could cause actual results and events to differ materially in \u201cManagement\u2019s Discussion and Analysis of Financial Condition and Results of Operations,\u201d \u201cQuantitative and Qualitative Disclosures About Market Risk\u201d (Part I, Item 3 of this Form 10-Q), and \u201cRisk Factors\u201d. We undertake no obligation to update or revise publicly any forward-looking statements, whether because of new information, future events, or otherwise.\nThe following Management\u2019s Discussion and Analysis of Financial Condition and Results of Operations (\u201cMD&A\u201d) is intended to help the reader understand the results of operations and financial condition of Microsoft Corporation. MD&A is provided as a supplement to, and should be read in conjunction with, our Annual Report on Form 10-K for the year ended June 30, 2025, and our consolidated financial statements and the accompanying Notes to Financial Statements (Part I, Item 1 of this Form 10-Q).\nOVERVIEW\nMicrosoft is a technology company committed to making digital technology and artificial intelligence (\u201cAI\u201d) available broadly and doing so responsibly, with a mission to empower every person and every organization on the planet to achieve more. We create platforms and tools, powered by AI, that deliver innovative solutions that meet the evolving needs of our customers.\nWe generate revenue by offering a wide range of cloud-based solutions, content, and other services to people and businesses; licensing and supporting an array of software products; delivering relevant online advertising to a global audience; and designing and selling devices. Our most significant expenses are related to compensating employees; supporting and investing in our cloud-based services, including datacenter operations; designing, manufacturing, marketing, and selling our other products and services; and income taxes.\nHighlights from the third quarter of fiscal year 2026 compared with the third quarter of fiscal year 2025 included:\n\u2022\nMicrosoft Cloud revenue increased 29% to $54.5 billion.\n\u2022\nCommercial remaining performance obligation increased 99% to $627 billion.\n\u2022\nMicrosoft 365 Commercial cloud revenue increased 19%.\n\u2022\nMicrosoft 365 Consumer cloud revenue increased 33%.\n\u2022\nLinkedIn revenue increased 12%.\n\u2022\nDynamics 365 revenue increased 22%.\n\u2022\nAzure and other cloud services revenue increased 40%.\n\u2022\nWindows OEM and Devices revenue decreased 2%.\n\u2022\nXbox content and services revenue decreas\n\n[TRUNCATED for the brain pack: 132 more characters of this mdna section are in full_context_path. Read them before quoting this section as complete.]",
+        "excerpt": "Results of Operations\u201d and \u201cRisk Factors\u201d (Part II, Item 1A of this Form 10-Q). These forward-looking statements generally are identified by the words \u201cbelieve,\u201d \u201cproject,\u201d \u201cexpect,\u201d \u201canticipate,\u201d \u201cestimate,\u201d \u201cintend,\u201d \u201cstrategy,\u201d \u201cfuture,\u201d \u201copportunity,\u201d \u201cplan,\u201d \u201cmay,\u201d \u201cshould,\u201d \u201cwill,\u201d \u201cwould,\u201d \u201cwill be,\u201d \u201cwill continue,\u201d \u201cwill likely result,\u201d and similar expressions. Forward-looking statements are based on current expectations and assumptions that are subject to risks and uncertainties that may cause actual results to differ materially. We describe risks and uncertainties that could cause actual results and events to differ materially in \u201cManagement\u2019s Discussion and Analysis of Financial Condition and Results of Operations,\u201d \u201cQuantitative and Qualitative Disclosures About Market Risk\u201d (Part I, Item 3 of this Form 10-Q), and \u201cRisk Factors\u201d. We undertake no obligation to update or revise publicly any forward-looking statements, whether because of new information, future events, or otherwise.\nThe following Management\u2019s Discussion and Analysis of Financial Condition and Results of Operations (\u201cMD&A\u201d) is intended to help the reader understand the results of operations and financial condition of Microsoft Corporation. MD&A is provided as a supplement to, and should be read in conjunction with, our Annual Report on Form 10-K for the year ended June 30, 2025, and our consolidated financial statements and the accompanying Notes to Financial Statements (Part I, Item 1 of this Form 10-Q).\nOVERVIEW\nMicrosoft is a technology company committed to making digital technology and artificial intelligence (\u201cAI\u201d) available broadly and doing so responsibly, with a mission to empower every person and every organization on the planet to achieve more. We create platforms and tools, powered by AI, that deliver innovative solutions that meet the evolving needs of our customers.\nWe generate revenue by offering a wide range of cloud-based solutions, content, and other services to people and businesses; licensing and supporting an array of software products; delivering relevant online advertising to a global audience; and designing and selling devices. Our most significant expenses are related to compensating employees; supporting and investing in our cloud-based services, including datacenter operations; designing, manufacturing, marketing, and selling our other products and services; and income taxes.\nHighlights from the third quarter of fiscal year 2026 compared with the third quarter of fiscal year 2025 included:\n\u2022\nMicrosoft Cloud revenue increased 29% to $54.5 billion.\n\u2022\nCommercial remaining performance obligation increased 99% to $627 billion.\n\u2022\nMicrosoft 365 Commercial cloud revenue increased 19%.\n\u2022\nMicrosoft 365 Consumer cloud revenue increased 33%.\n\u2022\nLinkedIn revenue increased 12%.\n\u2022\nDynamics 365 revenue increased 22%.\n\u2022\nAzure and other cloud services revenue increased 40%.\n\u2022\nWindows OEM and Devices revenue decreased 2%.\n\u2022\nXbox content and services revenue decreas\n\n[TRUNCATED for the brain pack: 151 more characters of this mdna section are in full_context_path. Read them before quoting this section as complete.]",
         "truncated": false,
         "excerpt_truncated_for_pack": true,
-        "excerpt_full_chars": 3132
+        "excerpt_full_chars": 3151
       },
       "earnings_release": {
         "status": "ok",
         "ticker": "MSFT",
         "filed": "2026-09-02",
         "url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526380280/d291965dex991.htm",
-        "excerpt": "EX-99.1\nd291965dex991.htm\nEX-99.1\nFY27 Segments and Investor Metrics\nSeptember 2026 Exhibit 99.1\nThis presentation contains\nforward-looking statements, which are any predictions, projections, or other statements about future events. These statements are based on current expectations and assumptions that are subject to risks and uncertainties. Actual results could\nmaterially differ because of factors discussed in the Risk Factors section and other sections of our Form 10-K, Forms 10-Q, and other reports and filings with the Securities and Exchange Commission. We do not undertake any duty to update\nforward-looking statements.\nAll growth comparisons in this\npresentation relate to the corresponding period of last fiscal year unless otherwise noted. Numbers may not foot due to rounding. Agenda A note from Satya Updates for FY27 Segment Structure Metric Changes Restated Historical Financials FY27 Q1\nAdjusted Outlook\nOur updated segment reporting Satya\nNadella, Chairman and Chief Executive Officer of Microsoft There\u2019s no question AI represents a profound shift in both technology and business. It is changing what we build and how we operate, and it is blurring the boundaries between our\nproducts and reshaping our business models. To reflect this and provide increased transparency to investors, we are updating our financial reporting to mirror how the business is operating, how we allocate resources, and where we are headed.\nBeginning with FY27, we will transition from our current three reporting segments, Productivity and Business Processes, Intelligent Cloud, and More Personal Computing, to two segments: Agents and Infra and Devices and Consumer. Within each of these\nsegments, you will have full transparency of quarterly revenue across each of our key businesses, including Azure, M365 Cloud, Industry solutions, and ads. We will continue to focus on security, quality, and innovation in everything we do. We want\nevery organization to own its own continuous learning loop so it retains its core IP, and to ensure AI empowers every person, amplifying their agency and ambition. That is what we mean by a frontier ecosystem, ensuring value flows and accrues across\npeople, companies, industries, and countries, thereby leading to broad-based economic growth. As we build this ecosystem, the layers of our stack are not separate opportunities but reinforce each other. Investing in one strengthens the others and\nallows us to deliver customer value in a differentiated way.\nOur updated segment reporting Satya\nNadella, Chairman and Chief Executive Officer of Microsoft Our Agents and Infra segment brings together our high-value apps and agents, including Microsoft 365 and GitHub, our multi-model system grounded in rich-enterprise context, and global-scale\nAzure infrastructure. Under this reporting structure, Azure becomes more purely our consumption-based platform and infrastructure business. Microsoft 365 Cloud brings together our high-value apps and agents across knowledge work, code, and security\n(Security has largely been part of this business already; the new structure makes that alignment clearer). We are also bringing together the reporting of all our business process solutions as part of the new Industry solutions metric. This\nintegrated architecture across agents and infra is how we think about engaging with customers and driving their outcomes, building products, and monetization. It\u2019s no longer about building or selling one app or service, but about connecting\nthe entire trajectory of a \u201cjob to be done.\u201d This expands our opportunity across every layer of the stack, from apps and agents that compress and complete tasks, workflows, and processes; to model systems that power agent reasoning and\nactions; to infrastructure that trains and serves those models and agent loops in the most efficient way. Our Devices and Consumer segment is where we bring ubiquitous intelligence to billions of people every day, with expansive TAMs across search\nand advertising, XBOX, and Windows. This reporting structure brings our advertising businesses together better reflecting their shared economics and the increasingly connected experiences across search, browsing, content discovery, and transactions.\nAcross our tech stack, business models, and go-to-market, we are well positioned to generate high returns on invested capital because of the built-in diversification of our businesses, architectural coherence of our stack, and operational synergies.\nI have never been more confident in the opportunity ahead. Thank you for your continued investment in Microsoft. Satya\nSegment Structure\nWe will transition to two reporting\nsegments for FY27. Agents and Infra will include the Microsoft Cloud, productivity and server licensing, and our consulting and support businesses. Devices and Consumer will include our Windows, XBOX, and advertising businesses. With these\nsegment changes and to provide transparency to investors, we are updating our product and services reporting definitions to better represent the businesses as we manage them today, which will be used in our SEC filings going\nforward. Agents and Infra Azure has been updated to reflect the move of GitHub cloud and other developer cloud services as well as Security Copilot to Microsoft 365 cloud. Healthcare and Life Sciences cloud will move to the new Industry\nsolutions cloud metric. Microsoft 365 cloud now brings together our productivity, developer, and security app offerings across commercial and consumer including: Microsoft 365 commercial cloud will now include GitHub cloud and other developer\ncloud services as well as Security Copilot which were previously reported in Azure Microsoft 365 consumer cloud is unchanged Productivity and server licensing brings together licensing offerings across our products including: Server products now\nexcludes the on-premises portion of GitHub and other developer services which has moved to Microsoft 365 commercial products as well as the on\n\n[TRUNCATED for the brain pack: 2000 more characters of this earnings_release section are in full_context_path. Read them before quoting this section as complete.]",
+        "excerpt": "EX-99.1\nd291965dex991.htm\nEX-99.1\nFY27 Segments and Investor Metrics\nSeptember 2026 Exhibit 99.1\nThis presentation contains\nforward-looking statements, which are any predictions, projections, or other statements about future events. These statements are based on current expectations and assumptions that are subject to risks and uncertainties. Actual results could\nmaterially differ because of factors discussed in the Risk Factors section and other sections of our Form 10-K, Forms 10-Q, and other reports and filings with the Securities and Exchange Commission. We do not undertake any duty to update\nforward-looking statements.\nAll growth comparisons in this\npresentation relate to the corresponding period of last fiscal year unless otherwise noted. Numbers may not foot due to rounding. Agenda A note from Satya Updates for FY27 Segment Structure Metric Changes Restated Historical Financials FY27 Q1\nAdjusted Outlook\nOur updated segment reporting Satya\nNadella, Chairman and Chief Executive Officer of Microsoft There\u2019s no question AI represents a profound shift in both technology and business. It is changing what we build and how we operate, and it is blurring the boundaries between our\nproducts and reshaping our business models. To reflect this and provide increased transparency to investors, we are updating our financial reporting to mirror how the business is operating, how we allocate resources, and where we are headed.\nBeginning with FY27, we will transition from our current three reporting segments, Productivity and Business Processes, Intelligent Cloud, and More Personal Computing, to two segments: Agents and Infra and Devices and Consumer. Within each of these\nsegments, you will have full transparency of quarterly revenue across each of our key businesses, including Azure, M365 Cloud, Industry solutions, and ads. We will continue to focus on security, quality, and innovation in everything we do. We want\nevery organization to own its own continuous learning loop so it retains its core IP, and to ensure AI empowers every person, amplifying their agency and ambition. That is what we mean by a frontier ecosystem, ensuring value flows and accrues across\npeople, companies, industries, and countries, thereby leading to broad-based economic growth. As we build this ecosystem, the layers of our stack are not separate opportunities but reinforce each other. Investing in one strengthens the others and\nallows us to deliver customer value in a differentiated way.\nOur updated segment reporting Satya\nNadella, Chairman and Chief Executive Officer of Microsoft Our Agents and Infra segment brings together our high-value apps and agents, including Microsoft 365 and GitHub, our multi-model system grounded in rich-enterprise context, and global-scale\nAzure infrastructure. Under this reporting structure, Azure becomes more purely our consumption-based platform and infrastructure business. Microsoft 365 Cloud brings together our high-value apps and agents across knowledge work, code, and security\n(Security has largely been part of this business already; the new structure makes that alignment clearer). We are also bringing together the reporting of all our business process solutions as part of the new Industry solutions metric. This\nintegrated architecture across agents and infra is how we think about engaging with customers and driving their outcomes, building products, and monetization. It\u2019s no longer about building or selling one app or service, but about connecting\nthe entire trajectory of a \u201cjob to be done.\u201d This expands our opportunity across every layer of the stack, from apps and agents that compress and complete tasks, workflows, and processes; to model systems that power agent reasoning and\nactions; to infrastructure that trains and serves those models and agent loops in the most efficient way. Our Devices and Consumer segment is where we bring ubiquitous intelligence to billions of people every day, with expansive TAMs across search\nand advertising, XBOX, and Windows. This reporting structure brings our advertising businesses together better reflecting their shared economics and the increasingly connected experiences across search, browsing, content discovery, and transactions.\nAcross our tech stack, business models, and go-to-market, we are well positioned to generate high returns on invested capital because of the built-in diversification of our businesses, architectural coherence of our stack, and operational synergies.\nI have never been more confident in the opportunity ahead. Thank you for your continued investment in Microsoft. Satya\nSegment Structure\nWe will transition to two reporting\nsegments for FY27. Agents and Infra will include the Microsoft Cloud, productivity and server licensing, and our consulting and support businesses. Devices and Consumer will include our Windows, XBOX, and advertising businesses. With these\nsegment changes and to provide transparency to investors, we are updating our product and services reporting definitions to better represent the businesses as we manage them today, which will be used in our SEC filings going\nforward. Agents and Infra Azure has been updated to reflect the move of GitHub cloud and other developer cloud services as well as Security Copilot to Microsoft 365 cloud. Healthcare and Life Sciences cloud will move to the new Industry\nsolutions cloud metric. Microsoft 365 cloud now brings together our productivity, developer, and security app offerings across commercial and consumer including: Microsoft 365 commercial cloud will now include GitHub cloud and other developer\ncloud services as well as Security Copilot which were previously reported in Azure Microsoft 365 consumer cloud is unchanged Productivity and server licensing brings together licensing offerings across our products including: Server products now\nexcludes the on-premises portion of GitHub and other developer services which has moved to Microsoft 365 commercial products as well as the on\n\n[TRUNCATED for the brain pack: 164 more characters of this earnings_release section are in full_context_path. Read them before quoting this section as complete.]",
         "truncated": true,
         "contains_guidance_language": true,
         "excerpt_truncated_for_pack": true,
-        "excerpt_full_chars": 8000
+        "excerpt_full_chars": 6164
       }
     },
     "CRM": {
@@ -14905,21 +14854,21 @@
         "filed": "2026-08-27",
         "url": "https://www.sec.gov/Archives/edgar/data/1108524/000110852426000190/crm-20260731.htm",
         "section": "mdna_results_of_operations",
-        "excerpt": "Results of Operations,\u201d Part I, Item 3, \u201cQuantitative and Qualitative Disclosures About Market Risk,\u201d Part II, Item 1A, \u201cRisk Factors,\u201d and elsewhere in this Quarterly Report on Form 10-Q. Moreover, we operate in a very competitive and rapidly changing environment and new risks emerge from time to time. It is not possible for our management to predict all risks, nor can we assess the impact of all factors on our business or the extent to which any factor, or combination of factors, may cause actual results or outcomes to differ materially from those contained in any forward-looking statements.\nIn light of these and other risks and uncertainties, the future events and trends discussed in this Quarterly Report on Form 10-Q may not occur as we expect or at all, and our actual results or outcomes may differ materially and adversely from those expressed or implied in our forward-looking statements. Readers are cautioned not to place undue reliance on such forward-looking statements. Except as required by law, we undertake no obligation to revise or update publicly any forward-looking statements for any reason.\nOverview\nSalesforce is a global leader in customer relationship management (\u201cCRM\u201d) technology, helping organizations of any size become agentic enterprises. Founded in 1999, we bring humans, agents, apps, and data together on a trusted, unified platform to unlock growth and innovation.\nOur platform unites sales, service, marketing, commerce and IT teams by connecting customer data across systems, apps and devices to create a complete view of customers. With this single source of customer truth and integrated artificial intelligence (\u201cAI\u201d), teams can be more responsive, productive and efficient, deliver intelligent, personalized experiences across every channel and increase productivity. We continue to expand the capabilities of our autonomous AI agent layer integrated across our platform. Agentforce enables organizations to deploy autonomous agents that reason, make decisions, and execute tasks. Salesforce is the platform that powers how humans and agents work together, whether using Customer 360 apps, Slack, Headless 360, or other user interfaces. We continue to invest for growth, including investing in generative and agentic AI across all products, which we believe will change how our customers help their customers, and continuously look to expand our leadership role in the cloud computing industry.\nWe continue to focus on several key growth levers, including driving multiple service offering adoption, increasing our penetration with enterprise and international customers and expanding our industry-specific reach with more vertical software solutions. These growth levers often require a more sophisticated go-to-market approach and, as a result, we may incur additional costs upfront to obtain new customers and expand our relationships with existing customers, including additional sales and marketing expenses specific to subscription and support\n\n[TRUNCATED for the brain pack: 7000 more characters of this mdna section are in full_context_path. Read them before quoting this section as complete.]",
+        "excerpt": "Results of Operations,\u201d Part I, Item 3, \u201cQuantitative and Qualitative Disclosures About Market Risk,\u201d Part II, Item 1A, \u201cRisk Factors,\u201d and elsewhere in this Quarterly Report on Form 10-Q. Moreover, we operate in a very competitive and rapidly changing environment and new risks emerge from time to time. It is not possible for our management to predict all risks, nor can we assess the impact of all factors on our business or the extent to which any factor, or combination of factors, may cause actual results or outcomes to differ materially from those contained in any forward-looking statements.\nIn light of these and other risks and uncertainties, the future events and trends discussed in this Quarterly Report on Form 10-Q may not occur as we expect or at all, and our actual results or outcomes may differ materially and adversely from those expressed or implied in our forward-looking statements. Readers are cautioned not to place undue reliance on such forward-looking statements. Except as required by law, we undertake no obligation to revise or update publicly any forward-looking statements for any reason.\nOverview\nSalesforce is a global leader in customer relationship management (\u201cCRM\u201d) technology, helping organizations of any size become agentic enterprises. Founded in 1999, we bring humans, agents, apps, and data together on a trusted, unified platform to unlock growth and innovation.\nOur platform unites sales, service, marketing, commerce and IT teams by connecting customer data across systems, apps and devices to create a complete view of customers. With this single source of customer truth and integrated artificial intelligence (\u201cAI\u201d), teams can be more responsive, productive and efficient, deliver intelligent, personalized experiences across every channel and increase productivity. We continue to expand the capabilities of our autonomous AI agent layer integrated across our platform. Agentforce enables organizations to deploy autonomous agents that reason, make decisions, and execute tasks. Salesforce is the platform that powers how humans and agents work together, whether using Customer 360 apps, Slack, Headless 360, or other user interfaces. We continue to invest for growth, including investing in generative and agentic AI across all products, which we believe will change how our customers help their customers, and continuously look to expand our leadership role in the cloud computing industry.\nWe continue to focus on several key growth levers, including driving multiple service offering adoption, increasing our penetration with enterprise and international customers and expanding our industry-specific reach with more vertical software solutions. These growth levers often require a more sophisticated go-to-market approach and, as a result, we may incur additional costs upfront to obtain new customers and expand our relationships with existing customers, including additional sales and marketing expenses specific to subscription and support\n\n[TRUNCATED for the brain pack: 152 more characters of this mdna section are in full_context_path. Read them before quoting this section as complete.]",
         "truncated": true,
         "excerpt_truncated_for_pack": true,
-        "excerpt_full_chars": 10000
+        "excerpt_full_chars": 3152
       },
       "earnings_release": {
         "status": "ok",
         "ticker": "CRM",
         "filed": "2026-08-26",
         "url": "https://www.sec.gov/Archives/edgar/data/1108524/000110852426000187/crm-q2fy27xexhibit991.htm",
-        "excerpt": "EX-99.1\ncrm-q2fy27xexhibit991.htm\nEX-99.1\nExhibit 99.1\nSalesforce Delivers Record Second Quarter Fiscal 2027 Results\ncRPO growth accelerates to 14% Y/Y CC; Raises FY27 revenue guidance by $200M, $300M in CC\nSAN FRANCISCO, Calif. - August 26, 2026 - Salesforce (NYSE: CRM), the world's #1 AI CRM, today announced results for its second quarter fiscal 2027 ended July 31, 2026.\nSecond Quarter Financial Highlights\n\u2022Current remaining performance obligation (\"cRPO\") of $33.5 billion, up 14% year-over-year (\"Y/Y\") and in constant currency (\"CC\")\n\u2022Remaining performance obligation of $66.3 billion, up 11% Y/Y\n\u2022Subscription and support revenue of $10.8 billion, up 12% Y/Y and 11% in CC, including $440 million Informatica contribution\n\u2022Revenue of $11.3 billion, up 11% Y/Y and in CC, including $456 million Informatica contribution\n\u2022GAAP operating margin of 20.5% and non-GAAP operating margin of 34.1%\n\u2022GAAP diluted net income per share of $4.29, up 119% Y/Y and non-GAAP diluted net income per share of $5.90, up 103% Y/Y\n\u2022Operating cash flow of $1.3 billion, up 71% Y/Y, and free cash flow of $1.1 billion, up 81% Y/Y\n\u2022Returned $364 million in dividends to shareholders and continued to execute against $25 billion accelerated share repurchase (\u201cASR\u201d)\n\u201cWe just delivered one of our best quarters ever, outperforming across every key metric,\u201d said Marc Benioff, Chair and CEO, Salesforce. \u201cAI is delivering value across every layer of our platform. We\u2019re seeing incredible demand for our AI and data products, with ARR about to cross $4 billion. And with AIforce, our trusted enterprise harness, we\u2019re unlocking the data, workflows, business logic, actions, and governance inside Salesforce and making it available to every agent, model, and interface. This is how we are turning AI into customer success at unprecedented scale.\"\n\u201cAI is amplifying the power, reach, and value of our platform,\u201d said Robin Washington, President and Chief Financial and Operating Officer, Salesforce. \u201cNNAOV growth is the strongest it's been in four years, keeping us on track for second-half organic revenue reacceleration.\u201d\nSalesforce Company Highlights\n\u2022Agentforce and Data 360 annual recurring revenue (\"ARR\") reached nearly $3.9 billion, up over 210% Y/Y\n\u2022Agentforce ARR exceeded $1.5 billion, up over 240% Y/Y. Effective Q2 FY27, Agentforce ARR includes our AI offerings, Slackbot and Headless 360\n\u20227.0 billion Agentic Work Units (\u201cAWUs\u201d) delivered to date across Agentforce and Slack, with 3.2 billion in Q2, growing 97% quarter-over-quarter (\"Q/Q\")\n\u2022Slack delivered its fastest quarterly Net New Annual Order Value (\"NNAOV\") growth since acquisition as Slackbot users grew over 150% Q/Q\n\u2022Bookings from Agentforce One Edition and Agentforce for Apps, premium SKUs anchored in Sales and Service including the value from Agentic capabilities, more than doubled Q/Q\n\u2022In Q2, Data 360 ingested 104 trillion records, up 355% Y/Y, including 82 trillion via Zero Copy, up 731% Y/Y, and processed 22 terabytes of unstructured data\nGuidance\nSalesforce raises full year FY27 revenue guidance to $46.1 billion to $46.4 billion, up 11% - 12% Y/Y and 11% Y/Y in CC. In June, Salesforce announced separate definitive agreements to acquire Contentful and Fin. The Company now expects both transactions to close independently in the coming weeks, during the third quarter of Salesforce's fiscal year 2027. These acquisitions have been incorporated into all metrics within the Company's updated guidance, with the exception of cRPO; the guidance is conditional upon the closing of these transactions.\nWith the U.S. dollar strengthening in Q2, Salesforce now expects a reduced currency tailwind for the business relative to prior guidance. This currency movement has been incorporated into the Company's updated guidance.\n\u2022Initiates third quarter FY27 revenue guidance of $11.42 billion to $11.5 billion, up 11% - 12% Y/Y and in CC, including slightly above 4pts Informatica contribution\n\u2022Initiates third quarter FY27 cRPO growth guidance of approximately 14% Y/Y and in CC, which does not include any contribution from the pending acquisitions of Contentful and Fin\n\u2022Raises full year FY27 revenue guidance, now expects full year FY27 revenue of $46.1 billion to $46.4 billion, up 11% - 12% Y/Y and 11% in CC, including slightly above 3pts Informatica contribution. The $200M raise, $300 million CC, reflects $100 million of organic growth, $200 million from the pending Contentful and Fin acquisitions, and $100M FX headwind\n\u2022Raises full year FY27 subscription and support revenue growth guidance to slightly above 12% Y/Y and slightly under 12% in CC, including slightly above 3pts Informatica contribution\n\u2022Updates full year FY27 GAAP operating margin guidance to 20.1%, and maintains non-GAAP operating margin guidance of 34.3%\n\u2022Maintains full year FY27 operating cash flow growth guidance and free cash flow growth guidance of approximately 4% - 5% Y/Y\n\u2022Final settlement of the company's $25 billion ASR is expected in October 2026.\nSalesforce's guidance includes GAAP and non-GAAP financial measures. The following tables summarize Salesforce's guidance for the third quarter fiscal 2027 and full-year fiscal 2027:\nQ3 FY27 Guidance\nGAAP\nNon-GAAP(1)\nRevenue\n$11.42 - $11.5 billion\nN/A\nRevenue growth(2)\n11% - 12%\n11% - 12% CC, $0M Y/Y FX\nIncludes slightly above 4pts Informatica contribution\nDiluted net income per share\n$1.81 - $1.83\n$3.42 - $3.44\nCurrent remaining performance obligation growth(3)\nApproximately 14%\nApproximately 14% CC, $100M Y/Y FX\nFull Year FY27 Guidance\nGAAP\nNon-GAAP(1)\nRevenue\n$46.1 - $46.4 billion\nN/A\nRevenue growth(2)\n11% - 12%\nApproximately 11% CC, $200M Y/Y FX\nIncludes slightly above 3pts Informatica contribution\nSubscription and support revenue growth(4)\nSlightly above 12%\nSlightly under 12% CC\nIncludes slightly above 3pts Informatica contribution\nOperating margin\nDiluted net income per share\n$10.21 - $10.25\n$16.67 - $16.71\nOperating cash flow growth\nApproximately 4% - 5%\nN/A\nFree cash flo\n\n[TRUNCATED for the brain pack: 2000 more characters of this earnings_release section are in full_context_path. Read them before quoting this section as complete.]",
+        "excerpt": "EX-99.1\ncrm-q2fy27xexhibit991.htm\nEX-99.1\nExhibit 99.1\nSalesforce Delivers Record Second Quarter Fiscal 2027 Results\ncRPO growth accelerates to 14% Y/Y CC; Raises FY27 revenue guidance by $200M, $300M in CC\nSAN FRANCISCO, Calif. - August 26, 2026 - Salesforce (NYSE: CRM), the world's #1 AI CRM, today announced results for its second quarter fiscal 2027 ended July 31, 2026.\nSecond Quarter Financial Highlights\n\u2022Current remaining performance obligation (\"cRPO\") of $33.5 billion, up 14% year-over-year (\"Y/Y\") and in constant currency (\"CC\")\n\u2022Remaining performance obligation of $66.3 billion, up 11% Y/Y\n\u2022Subscription and support revenue of $10.8 billion, up 12% Y/Y and 11% in CC, including $440 million Informatica contribution\n\u2022Revenue of $11.3 billion, up 11% Y/Y and in CC, including $456 million Informatica contribution\n\u2022GAAP operating margin of 20.5% and non-GAAP operating margin of 34.1%\n\u2022GAAP diluted net income per share of $4.29, up 119% Y/Y and non-GAAP diluted net income per share of $5.90, up 103% Y/Y\n\u2022Operating cash flow of $1.3 billion, up 71% Y/Y, and free cash flow of $1.1 billion, up 81% Y/Y\n\u2022Returned $364 million in dividends to shareholders and continued to execute against $25 billion accelerated share repurchase (\u201cASR\u201d)\n\u201cWe just delivered one of our best quarters ever, outperforming across every key metric,\u201d said Marc Benioff, Chair and CEO, Salesforce. \u201cAI is delivering value across every layer of our platform. We\u2019re seeing incredible demand for our AI and data products, with ARR about to cross $4 billion. And with AIforce, our trusted enterprise harness, we\u2019re unlocking the data, workflows, business logic, actions, and governance inside Salesforce and making it available to every agent, model, and interface. This is how we are turning AI into customer success at unprecedented scale.\"\n\u201cAI is amplifying the power, reach, and value of our platform,\u201d said Robin Washington, President and Chief Financial and Operating Officer, Salesforce. \u201cNNAOV growth is the strongest it's been in four years, keeping us on track for second-half organic revenue reacceleration.\u201d\nSalesforce Company Highlights\n\u2022Agentforce and Data 360 annual recurring revenue (\"ARR\") reached nearly $3.9 billion, up over 210% Y/Y\n\u2022Agentforce ARR exceeded $1.5 billion, up over 240% Y/Y. Effective Q2 FY27, Agentforce ARR includes our AI offerings, Slackbot and Headless 360\n\u20227.0 billion Agentic Work Units (\u201cAWUs\u201d) delivered to date across Agentforce and Slack, with 3.2 billion in Q2, growing 97% quarter-over-quarter (\"Q/Q\")\n\u2022Slack delivered its fastest quarterly Net New Annual Order Value (\"NNAOV\") growth since acquisition as Slackbot users grew over 150% Q/Q\n\u2022Bookings from Agentforce One Edition and Agentforce for Apps, premium SKUs anchored in Sales and Service including the value from Agentic capabilities, more than doubled Q/Q\n\u2022In Q2, Data 360 ingested 104 trillion records, up 355% Y/Y, including 82 trillion via Zero Copy, up 731% Y/Y, and processed 22 terabytes of unstructured data\nGuidance\nSalesforce raises full year FY27 revenue guidance to $46.1 billion to $46.4 billion, up 11% - 12% Y/Y and 11% Y/Y in CC. In June, Salesforce announced separate definitive agreements to acquire Contentful and Fin. The Company now expects both transactions to close independently in the coming weeks, during the third quarter of Salesforce's fiscal year 2027. These acquisitions have been incorporated into all metrics within the Company's updated guidance, with the exception of cRPO; the guidance is conditional upon the closing of these transactions.\nWith the U.S. dollar strengthening in Q2, Salesforce now expects a reduced currency tailwind for the business relative to prior guidance. This currency movement has been incorporated into the Company's updated guidance.\n\u2022Initiates third quarter FY27 revenue guidance of $11.42 billion to $11.5 billion, up 11% - 12% Y/Y and in CC, including slightly above 4pts Informatica contribution\n\u2022Initiates third quarter FY27 cRPO growth guidance of approximately 14% Y/Y and in CC, which does not include any contribution from the pending acquisitions of Contentful and Fin\n\u2022Raises full year FY27 revenue guidance, now expects full year FY27 revenue of $46.1 billion to $46.4 billion, up 11% - 12% Y/Y and 11% in CC, including slightly above 3pts Informatica contribution. The $200M raise, $300 million CC, reflects $100 million of organic growth, $200 million from the pending Contentful and Fin acquisitions, and $100M FX headwind\n\u2022Raises full year FY27 subscription and support revenue growth guidance to slightly above 12% Y/Y and slightly under 12% in CC, including slightly above 3pts Informatica contribution\n\u2022Updates full year FY27 GAAP operating margin guidance to 20.1%, and maintains non-GAAP operating margin guidance of 34.3%\n\u2022Maintains full year FY27 operating cash flow growth guidance and free cash flow growth guidance of approximately 4% - 5% Y/Y\n\u2022Final settlement of the company's $25 billion ASR is expected in October 2026.\nSalesforce's guidance includes GAAP and non-GAAP financial measures. The following tables summarize Salesforce's guidance for the third quarter fiscal 2027 and full-year fiscal 2027:\nQ3 FY27 Guidance\nGAAP\nNon-GAAP(1)\nRevenue\n$11.42 - $11.5 billion\nN/A\nRevenue growth(2)\n11% - 12%\n11% - 12% CC, $0M Y/Y FX\nIncludes slightly above 4pts Informatica contribution\nDiluted net income per share\n$1.81 - $1.83\n$3.42 - $3.44\nCurrent remaining performance obligation growth(3)\nApproximately 14%\nApproximately 14% CC, $100M Y/Y FX\nFull Year FY27 Guidance\nGAAP\nNon-GAAP(1)\nRevenue\n$46.1 - $46.4 billion\nN/A\nRevenue growth(2)\n11% - 12%\nApproximately 11% CC, $200M Y/Y FX\nIncludes slightly above 3pts Informatica contribution\nSubscription and support revenue growth(4)\nSlightly above 12%\nSlightly under 12% CC\nIncludes slightly above 3pts Informatica contribution\nOperating margin\nDiluted net income per share\n$10.21 - $10.25\n$16.67 - $16.71\nOperating cash flow growth\nApproximately 4% - 5%\nN/A\nFree cash flo\n\n[TRUNCATED for the brain pack: 164 more characters of this earnings_release section are in full_context_path. Read them before quoting this section as complete.]",
         "truncated": true,
         "contains_guidance_language": true,
         "excerpt_truncated_for_pack": true,
-        "excerpt_full_chars": 8000
+        "excerpt_full_chars": 6164
       }
     },
     "LITE": {
@@ -14930,21 +14879,21 @@
         "filed": "2026-05-06",
         "url": "https://www.sec.gov/Archives/edgar/data/1633978/000162828026030777/lite-20260328.htm",
         "section": "mdna_results_of_operations",
-        "excerpt": "Results of Operations contains forward-looking statements. The matters discussed in these forward-looking statements are subject to risk, uncertainties and other factors that could cause actual results to differ materially from those made, projected or implied in the forward-looking statements. Please see \u201cRisk Factors\u201d and \u201cForward-Looking Statements\u201d for a discussion of the uncertainties, risks and assumptions associated with these statements.\nForward-Looking Statements\nThis Quarterly Report contains forward-looking statements within the meaning of Section 27A of the Securities Act of 1933, as amended, and Section 21E of the Securities Exchange Act of 1934, as amended (the \u201cExchange Act\u201d). These statements relate to, among other things, our markets and industry, products and strategy, the impact of import and export regulation changes, the expected benefits of our acquisitions, macroeconomic conditions, including supply chain conditions and inventory management by our customers, instability and uncertainty in the banking and financial services markets, and tightening credit markets on our business and results of operations, sales, gross margins, operating expenses, capital expenditures and requirements, liquidity, product development and research and development efforts, manufacturing plans, litigation, effective tax rates and tax reserves, our corporate and financial reporting structure, our plans for growth and innovation, our expectations regarding U.S.-China relations, market and regulatory conditions, trends and uncertainties in our business and financial results, and are often identified by the use of words such as, but not limited to, \u201canticipate,\u201d \u201cbelieve,\u201d \u201ccan,\u201d \u201ccontinue,\u201d \u201ccould,\u201d \u201cestimate,\u201d \u201cexpect,\u201d \u201cintend,\u201d \u201cmay,\u201d \u201cmight,\u201d \u201cplan,\u201d \u201cproject,\u201d \u201cseek,\u201d \u201cshould,\u201d \u201ctarget,\u201d \u201cwill,\u201d \u201cwould,\u201d \u201ccontemplate,\u201d \u201cpredict,\u201d \u201cpotential\u201d and similar expressions or variations intended to identify forward-looking statements. These statements are based on the beliefs and assumptions of our management, which are in turn based on information currently available to management. Such forward-looking statements are subject to risks, uncertainties and other important factors that could cause actual results and the timing of certain events to differ materially from future results expressed or implied by such forward-looking statements. Factors that could cause or contribute to such differences include, but are not limited to, those discussed in the section entitled \u201cRisk Factors\u201d included under Part II, Item 1A of this Quarterly Report. Furthermore, such forward-looking statements speak only as of the date of this report. Except as required by law, we undertake no obligation to update any forward-looking statements to reflect events or circumstances after the date of such statements.\nOverview\nWe are an industry-leading provider of optical and photonic products defined by revenue and market share. Our products are essential to a range of cloud, artifici\n\n[TRUNCATED for the brain pack: 7000 more characters of this mdna section are in full_context_path. Read them before quoting this section as complete.]",
+        "excerpt": "Results of Operations contains forward-looking statements. The matters discussed in these forward-looking statements are subject to risk, uncertainties and other factors that could cause actual results to differ materially from those made, projected or implied in the forward-looking statements. Please see \u201cRisk Factors\u201d and \u201cForward-Looking Statements\u201d for a discussion of the uncertainties, risks and assumptions associated with these statements.\nForward-Looking Statements\nThis Quarterly Report contains forward-looking statements within the meaning of Section 27A of the Securities Act of 1933, as amended, and Section 21E of the Securities Exchange Act of 1934, as amended (the \u201cExchange Act\u201d). These statements relate to, among other things, our markets and industry, products and strategy, the impact of import and export regulation changes, the expected benefits of our acquisitions, macroeconomic conditions, including supply chain conditions and inventory management by our customers, instability and uncertainty in the banking and financial services markets, and tightening credit markets on our business and results of operations, sales, gross margins, operating expenses, capital expenditures and requirements, liquidity, product development and research and development efforts, manufacturing plans, litigation, effective tax rates and tax reserves, our corporate and financial reporting structure, our plans for growth and innovation, our expectations regarding U.S.-China relations, market and regulatory conditions, trends and uncertainties in our business and financial results, and are often identified by the use of words such as, but not limited to, \u201canticipate,\u201d \u201cbelieve,\u201d \u201ccan,\u201d \u201ccontinue,\u201d \u201ccould,\u201d \u201cestimate,\u201d \u201cexpect,\u201d \u201cintend,\u201d \u201cmay,\u201d \u201cmight,\u201d \u201cplan,\u201d \u201cproject,\u201d \u201cseek,\u201d \u201cshould,\u201d \u201ctarget,\u201d \u201cwill,\u201d \u201cwould,\u201d \u201ccontemplate,\u201d \u201cpredict,\u201d \u201cpotential\u201d and similar expressions or variations intended to identify forward-looking statements. These statements are based on the beliefs and assumptions of our management, which are in turn based on information currently available to management. Such forward-looking statements are subject to risks, uncertainties and other important factors that could cause actual results and the timing of certain events to differ materially from future results expressed or implied by such forward-looking statements. Factors that could cause or contribute to such differences include, but are not limited to, those discussed in the section entitled \u201cRisk Factors\u201d included under Part II, Item 1A of this Quarterly Report. Furthermore, such forward-looking statements speak only as of the date of this report. Except as required by law, we undertake no obligation to update any forward-looking statements to reflect events or circumstances after the date of such statements.\nOverview\nWe are an industry-leading provider of optical and photonic products defined by revenue and market share. Our products are essential to a range of cloud, artifici\n\n[TRUNCATED for the brain pack: 152 more characters of this mdna section are in full_context_path. Read them before quoting this section as complete.]",
         "truncated": true,
         "excerpt_truncated_for_pack": true,
-        "excerpt_full_chars": 10000
+        "excerpt_full_chars": 3152
       },
       "earnings_release": {
         "status": "ok",
         "ticker": "LITE",
         "filed": "2026-08-11",
         "url": "https://www.sec.gov/Archives/edgar/data/1633978/000162828026055726/lite_ex991xq4fy26.htm",
-        "excerpt": "EX-99.1\nlite_ex991xq4fy26.htm\nEX-99.1\nNEWS RELEASE\nLUMENTUM ANNOUNCES FOURTH QUARTER AND FULL FISCAL YEAR 2026 RESULTS\nFiscal Fourth Quarter Highlights:\n\u2022Net revenue of $1.01 billion\n\u2022GAAP gross margin of 47.4%; Non-GAAP gross margin of 50.4%\n\u2022GAAP operating margin of 27.8%; Non-GAAP operating margin of 36.6%\n\u2022Forecasting first quarter of fiscal year 2027 revenue of $1.225 billion to $1.275 billion; Non-GAAP operating margin of 39.5% to 40.5%; and Non-GAAP diluted net income per share of $4.05 to $4.35\nSan Jose, Calif., August 11, 2026 \u2013 Lumentum Holdings Inc. (\u201cLumentum\u201d or the \u201cCompany\u201d) today reported results for its fiscal fourth quarter and full fiscal year ended June 27, 2026.\n\u201cLumentum is positioned at the heart of a secular industry shift. As AI compute workloads increase in both speed and bandwidth, data center architects are turning to optical links as a primary means of connectivity. While our Q4 results demonstrate broad-based traction, key growth drivers such as OCS solutions and our cloud module business, where we are advancing 1.6T adoption, are beginning to layer in. Increasing demand for ultra-high-power CPO lasers, an initial order for ELS modules, as well as our breadth of NPO engagements are the first signs that optics are starting to penetrate in-rack connectivity, significantly upping our optical TAM,\u201d said President and CEO Michael Hurlston.\n\u201cLooking ahead, our trajectory continues to accelerate as AI demand drives our Q1 revenue guidance midpoint to $1.25 billion, reaching our target model more than a quarter ahead of schedule.\u201d\nFiscal Fourth Quarter:\nNet revenue for the fourth quarter of fiscal year 2026 was $1.01 billion, with GAAP net loss of $7.2 billion, or $84.65 per diluted share. The GAAP net loss was driven by the equitization of certain amounts of our convertible notes in the fourth quarter of fiscal year 2026, which contributed to a one-time, non-cash loss on debt extinguishment of $7.8 billion. Net revenue for the third quarter of fiscal year 2026 was $808.4 million, with GAAP net income of $144.2 million, or $1.50 per diluted share. Net revenue for the fourth quarter of fiscal year 2025 was $480.7 million, with GAAP net income of $213.3 million, or $2.96 per diluted share.\nNon-GAAP net income for the fourth quarter of fiscal year 2026 was $326.3 million, or $3.23 per diluted share. Non-GAAP net income for the third quarter of fiscal year 2026 was $225.7 million, or $2.37 per diluted share. Non-GAAP net income for the fourth quarter of fiscal year 2025 was $63.3 million, or $0.88 per diluted share.\nThe Company held $2.7 billion in total cash, cash equivalents, and short-term investments at the end of the fourth quarter of fiscal year 2026, a decrease of $433.9 million from the end of the third quarter of fiscal year 2026.\nFull Fiscal Year 2026:\nNet revenue for fiscal year 2026 was $3.01 billion, with GAAP net loss of $6.9 billion, or $92.96 per diluted share. The GAAP net loss was driven by the equitization of certain amounts of our convertible notes in the fourth quarter of fiscal year 2026, which contributed to a one-time, non-cash loss on debt extinguishment of $7.8 billion. Net revenue for fiscal year 2025 was $1.6 billion, with GAAP net income of $25.9 million, or $0.37 per diluted share.\nNon-GAAP net income for fiscal year 2026 was $782.3 million, or $8.67 per diluted share. Non-GAAP net income for fiscal year 2025 was $146.4 million, or $2.06 per diluted share.\nThe Company held $2.7 billion in total cash, cash equivalents, and short-term investments at the end of the fourth quarter of fiscal year 2026, an increase of $1.9 billion from the end of fiscal year 2025.\nFinancial Overview \u2013 Fiscal Fourth Quarter Ended June 27, 2026\nGAAP Results ($ in millions)\nQ4\nQ3\nQ4\nChange\nFY 2026\nFY 2026\nFY 2025\nQ/Q\nY/Y\nNet revenue\nGAAP gross margin\n320bps\n1,410bps\nGAAP operating margin (loss)\n620bps\n2,950bps\nNon-GAAP Results ($ in millions)\nQ4\nQ3\nQ4\nChange\nFY 2026\nFY 2026\nFY 2025\nQ/Q\nY/Y\nNet revenue\nNon-GAAP gross margin\n250bps\n1,260bps\nNon-GAAP operating margin\n440bps\n2,160bps\nNet Revenue by Product Type ($ in millions)\nQ4\n% of\nQ3\nQ4\nChange\nFY 2026\nNet Revenue\nFY 2026\nFY 2025\nQ/Q\nY/Y\nComponents\nSystems\nTotal\nFinancial Overview \u2013 Fiscal Year Ended June 27, 2026\nGAAP Results ($ in millions)\nFY 2026\nFY 2025\nChange Y/Y\nNet revenue\nGAAP Gross margin\n1,370bps\nGAAP Operating margin (loss)\n2,830bps\nNon-GAAP Results ($ in millions)\nFY 2026\nFY 2025\nChange Y/Y\nNet revenue\nNon-GAAP Gross margin\n1,130bps\nNon-GAAP Operating margin\n2,010bps\nNet Revenue by Product Type ($ in millions)\nFY 2026\nFY 2025\nChange Y/Y\nComponents\nSystems\nTotal\nThe tables above provide comparisons of quarterly and annual results to prior periods, including sequential quarterly and year-over-year changes. A reconciliation between GAAP and non-GAAP financial measures is contained in this release under the section titled \u201cUse of Non-GAAP Financial Measures\u201d.\nBusiness Outlook\nLumentum expects the following for the first quarter of fiscal year 2027:\n\u2022Net revenue in the range of $1.225 billion to $1.275 billion\n\u2022Non-GAAP operating margin of 39.5% - 40.5%\n\u2022Non-GAAP diluted net income per share of $4.05 to $4.35\nWe have not provided reconciliations from GAAP to non-GAAP financial measures or the equivalent GAAP measure for non-GAAP financial measures in our outlook, as they cannot be provided without unreasonable effort. A large portion of non-GAAP adjustments, such as stock-based compensation and related payroll expenses, acquisition related costs, net, integration related costs, restructuring and related charges, non-GAAP income tax reconciling adjustments, and other non-GAAP adjustments are by their nature highly volatile and we have low visibility as to the range that may be incurred in the future.\nConference Call\nLumentum will host a conference call today, August 11, 2026, at 2:00 pm PT / 5:00 pm ET to discuss its fiscal fourth quarter and full year results. A live webcast of the call will be available in t\n\n[TRUNCATED for the brain pack: 2000 more characters of this earnings_release section are in full_context_path. Read them before quoting this section as complete.]",
+        "excerpt": "EX-99.1\nlite_ex991xq4fy26.htm\nEX-99.1\nNEWS RELEASE\nLUMENTUM ANNOUNCES FOURTH QUARTER AND FULL FISCAL YEAR 2026 RESULTS\nFiscal Fourth Quarter Highlights:\n\u2022Net revenue of $1.01 billion\n\u2022GAAP gross margin of 47.4%; Non-GAAP gross margin of 50.4%\n\u2022GAAP operating margin of 27.8%; Non-GAAP operating margin of 36.6%\n\u2022Forecasting first quarter of fiscal year 2027 revenue of $1.225 billion to $1.275 billion; Non-GAAP operating margin of 39.5% to 40.5%; and Non-GAAP diluted net income per share of $4.05 to $4.35\nSan Jose, Calif., August 11, 2026 \u2013 Lumentum Holdings Inc. (\u201cLumentum\u201d or the \u201cCompany\u201d) today reported results for its fiscal fourth quarter and full fiscal year ended June 27, 2026.\n\u201cLumentum is positioned at the heart of a secular industry shift. As AI compute workloads increase in both speed and bandwidth, data center architects are turning to optical links as a primary means of connectivity. While our Q4 results demonstrate broad-based traction, key growth drivers such as OCS solutions and our cloud module business, where we are advancing 1.6T adoption, are beginning to layer in. Increasing demand for ultra-high-power CPO lasers, an initial order for ELS modules, as well as our breadth of NPO engagements are the first signs that optics are starting to penetrate in-rack connectivity, significantly upping our optical TAM,\u201d said President and CEO Michael Hurlston.\n\u201cLooking ahead, our trajectory continues to accelerate as AI demand drives our Q1 revenue guidance midpoint to $1.25 billion, reaching our target model more than a quarter ahead of schedule.\u201d\nFiscal Fourth Quarter:\nNet revenue for the fourth quarter of fiscal year 2026 was $1.01 billion, with GAAP net loss of $7.2 billion, or $84.65 per diluted share. The GAAP net loss was driven by the equitization of certain amounts of our convertible notes in the fourth quarter of fiscal year 2026, which contributed to a one-time, non-cash loss on debt extinguishment of $7.8 billion. Net revenue for the third quarter of fiscal year 2026 was $808.4 million, with GAAP net income of $144.2 million, or $1.50 per diluted share. Net revenue for the fourth quarter of fiscal year 2025 was $480.7 million, with GAAP net income of $213.3 million, or $2.96 per diluted share.\nNon-GAAP net income for the fourth quarter of fiscal year 2026 was $326.3 million, or $3.23 per diluted share. Non-GAAP net income for the third quarter of fiscal year 2026 was $225.7 million, or $2.37 per diluted share. Non-GAAP net income for the fourth quarter of fiscal year 2025 was $63.3 million, or $0.88 per diluted share.\nThe Company held $2.7 billion in total cash, cash equivalents, and short-term investments at the end of the fourth quarter of fiscal year 2026, a decrease of $433.9 million from the end of the third quarter of fiscal year 2026.\nFull Fiscal Year 2026:\nNet revenue for fiscal year 2026 was $3.01 billion, with GAAP net loss of $6.9 billion, or $92.96 per diluted share. The GAAP net loss was driven by the equitization of certain amounts of our convertible notes in the fourth quarter of fiscal year 2026, which contributed to a one-time, non-cash loss on debt extinguishment of $7.8 billion. Net revenue for fiscal year 2025 was $1.6 billion, with GAAP net income of $25.9 million, or $0.37 per diluted share.\nNon-GAAP net income for fiscal year 2026 was $782.3 million, or $8.67 per diluted share. Non-GAAP net income for fiscal year 2025 was $146.4 million, or $2.06 per diluted share.\nThe Company held $2.7 billion in total cash, cash equivalents, and short-term investments at the end of the fourth quarter of fiscal year 2026, an increase of $1.9 billion from the end of fiscal year 2025.\nFinancial Overview \u2013 Fiscal Fourth Quarter Ended June 27, 2026\nGAAP Results ($ in millions)\nQ4\nQ3\nQ4\nChange\nFY 2026\nFY 2026\nFY 2025\nQ/Q\nY/Y\nNet revenue\nGAAP gross margin\n320bps\n1,410bps\nGAAP operating margin (loss)\n620bps\n2,950bps\nNon-GAAP Results ($ in millions)\nQ4\nQ3\nQ4\nChange\nFY 2026\nFY 2026\nFY 2025\nQ/Q\nY/Y\nNet revenue\nNon-GAAP gross margin\n250bps\n1,260bps\nNon-GAAP operating margin\n440bps\n2,160bps\nNet Revenue by Product Type ($ in millions)\nQ4\n% of\nQ3\nQ4\nChange\nFY 2026\nNet Revenue\nFY 2026\nFY 2025\nQ/Q\nY/Y\nComponents\nSystems\nTotal\nFinancial Overview \u2013 Fiscal Year Ended June 27, 2026\nGAAP Results ($ in millions)\nFY 2026\nFY 2025\nChange Y/Y\nNet revenue\nGAAP Gross margin\n1,370bps\nGAAP Operating margin (loss)\n2,830bps\nNon-GAAP Results ($ in millions)\nFY 2026\nFY 2025\nChange Y/Y\nNet revenue\nNon-GAAP Gross margin\n1,130bps\nNon-GAAP Operating margin\n2,010bps\nNet Revenue by Product Type ($ in millions)\nFY 2026\nFY 2025\nChange Y/Y\nComponents\nSystems\nTotal\nThe tables above provide comparisons of quarterly and annual results to prior periods, including sequential quarterly and year-over-year changes. A reconciliation between GAAP and non-GAAP financial measures is contained in this release under the section titled \u201cUse of Non-GAAP Financial Measures\u201d.\nBusiness Outlook\nLumentum expects the following for the first quarter of fiscal year 2027:\n\u2022Net revenue in the range of $1.225 billion to $1.275 billion\n\u2022Non-GAAP operating margin of 39.5% - 40.5%\n\u2022Non-GAAP diluted net income per share of $4.05 to $4.35\nWe have not provided reconciliations from GAAP to non-GAAP financial measures or the equivalent GAAP measure for non-GAAP financial measures in our outlook, as they cannot be provided without unreasonable effort. A large portion of non-GAAP adjustments, such as stock-based compensation and related payroll expenses, acquisition related costs, net, integration related costs, restructuring and related charges, non-GAAP income tax reconciling adjustments, and other non-GAAP adjustments are by their nature highly volatile and we have low visibility as to the range that may be incurred in the future.\nConference Call\nLumentum will host a conference call today, August 11, 2026, at 2:00 pm PT / 5:00 pm ET to discuss its fiscal fourth quarter and full year results. A live webcast of the call will be available in t\n\n[TRUNCATED for the brain pack: 164 more characters of this earnings_release section are in full_context_path. Read them before quoting this section as complete.]",
         "truncated": true,
         "contains_guidance_language": true,
         "excerpt_truncated_for_pack": true,
-        "excerpt_full_chars": 8000
+        "excerpt_full_chars": 6164
       }
     },
     "SNOW": {
@@ -14955,10 +14904,10 @@
         "filed": "2026-09-04",
         "url": "https://www.sec.gov/Archives/edgar/data/1640147/000164014726000037/snow-20260731.htm",
         "section": "mdna_results_of_operations",
-        "excerpt": "Results of Operations\u201d for the fiscal year ended January 31, 2026 included in the Annual Report on Form 10-K filed with the U.S. Securities and Exchange Commission (SEC) on March 20, 2026. This discussion, particularly information with respect to our future results of operations or financial condition, business strategy and plans, and objectives of management for future operations, includes forward-looking statements that involve risks and uncertainties as described under the heading \u201cSpecial Note About Forward-Looking Statements\u201d in this Quarterly Report on Form 10-Q. You should review the disclosure under the heading \u201cRisk Factors\u201d in this Quarterly Report on Form 10-Q for a discussion of important factors that could cause our actual results to differ materially from those anticipated in these forward-looking statements.\nIn addition to our results determined in accordance with U.S. generally accepted accounting principles (GAAP), free cash flow, a non-GAAP financial measure, is included in the section titled \u201cKey Business Metrics.\u201d This non-GAAP financial measure is not meant to be considered in isolation or as a substitute for, or superior to, comparable GAAP financial measures and should be read only in conjunction with our unaudited condensed consolidated financial statements prepared in accordance with GAAP. Our presentation of this non-GAAP financial measure may not be comparable to similar measures used by other companies. We encourage investors to carefully consider our results under GAAP, as well as our supplemental non-GAAP information and the GAAP-to-non-GAAP reconciliation included in the section titled \u201cKey Business Metrics\u2014Free Cash Flow,\u201d to more fully understand our business.\nUnless the context otherwise requires, all references in this report to \u201cSnowflake,\u201d the \u201cCompany,\u201d \u201cwe,\u201d \u201cour,\u201d \u201cus,\u201d or similar terms refer to Snowflake Inc. and its consolidated subsidiaries. Unless otherwise noted, all references in this report to our common stock refer to our Class A common stock, which was renamed to \u201ccommon stock\u201d pursuant to our amended and restated certificate of incorporation filed with the Secretary of State of the State of Delaware on July 3, 2025.\nOverview\nWe believe that a cloud computing platform that puts data and artificial intelligence (AI) at its core will offer great benefits to organizations by allowing them to realize the value of the data that powers their businesses. By offering rich primitives for data and applications, we believe that we can create a data connected world where organizations have seamless access to explore, share, and unlock the value of data. Our vision is a world where data and AI turn possibilities into reality. To realize this vision, we deliver the AI Data Cloud, a network where Snowflake customers, partners, developers, data providers, and data consumers can break down data silos and derive value from a growing number of data sets in secure, governed, and compliant ways.\nOur platform is the inn\n\n[TRUNCATED for the brain pack: 7000 more characters of this mdna section are in full_context_path. Read them before quoting this section as complete.]",
+        "excerpt": "Results of Operations\u201d for the fiscal year ended January 31, 2026 included in the Annual Report on Form 10-K filed with the U.S. Securities and Exchange Commission (SEC) on March 20, 2026. This discussion, particularly information with respect to our future results of operations or financial condition, business strategy and plans, and objectives of management for future operations, includes forward-looking statements that involve risks and uncertainties as described under the heading \u201cSpecial Note About Forward-Looking Statements\u201d in this Quarterly Report on Form 10-Q. You should review the disclosure under the heading \u201cRisk Factors\u201d in this Quarterly Report on Form 10-Q for a discussion of important factors that could cause our actual results to differ materially from those anticipated in these forward-looking statements.\nIn addition to our results determined in accordance with U.S. generally accepted accounting principles (GAAP), free cash flow, a non-GAAP financial measure, is included in the section titled \u201cKey Business Metrics.\u201d This non-GAAP financial measure is not meant to be considered in isolation or as a substitute for, or superior to, comparable GAAP financial measures and should be read only in conjunction with our unaudited condensed consolidated financial statements prepared in accordance with GAAP. Our presentation of this non-GAAP financial measure may not be comparable to similar measures used by other companies. We encourage investors to carefully consider our results under GAAP, as well as our supplemental non-GAAP information and the GAAP-to-non-GAAP reconciliation included in the section titled \u201cKey Business Metrics\u2014Free Cash Flow,\u201d to more fully understand our business.\nUnless the context otherwise requires, all references in this report to \u201cSnowflake,\u201d the \u201cCompany,\u201d \u201cwe,\u201d \u201cour,\u201d \u201cus,\u201d or similar terms refer to Snowflake Inc. and its consolidated subsidiaries. Unless otherwise noted, all references in this report to our common stock refer to our Class A common stock, which was renamed to \u201ccommon stock\u201d pursuant to our amended and restated certificate of incorporation filed with the Secretary of State of the State of Delaware on July 3, 2025.\nOverview\nWe believe that a cloud computing platform that puts data and artificial intelligence (AI) at its core will offer great benefits to organizations by allowing them to realize the value of the data that powers their businesses. By offering rich primitives for data and applications, we believe that we can create a data connected world where organizations have seamless access to explore, share, and unlock the value of data. Our vision is a world where data and AI turn possibilities into reality. To realize this vision, we deliver the AI Data Cloud, a network where Snowflake customers, partners, developers, data providers, and data consumers can break down data silos and derive value from a growing number of data sets in secure, governed, and compliant ways.\nOur platform is the inn\n\n[TRUNCATED for the brain pack: 152 more characters of this mdna section are in full_context_path. Read them before quoting this section as complete.]",
         "truncated": true,
         "excerpt_truncated_for_pack": true,
-        "excerpt_full_chars": 10000
+        "excerpt_full_chars": 3152
       },
       "earnings_release": {
         "status": "none_recent"
