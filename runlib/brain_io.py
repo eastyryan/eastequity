@@ -25,10 +25,17 @@ def apply_live_prices(context: dict, cfg: dict) -> dict:
     the next run instead of waiting for the next full gather. A snapshot older
     than the freshness window is NOT overlaid (a broken feed must not overwrite a
     good daily bar) but IS flagged so the run fails safe. Returns the freshness
-    report (also stored on context['price_freshness_live'])."""
+    report (also stored on context['price_freshness_live']).
+
+    During RTH, if the on-disk/branch snapshot is missing or older than
+    max_age_min AND Alpaca/IEX keys are reachable, this path refreshes
+    holdings+watchlist marks itself so gather/act are not hostages of a
+    throttled cron or a sleeping laptop feeder.
+    """
     try:
         from tools.live_prices import (
             load_live_prices, overlay_live_prices, freshness_report,
+            maybe_refresh_live_feed,
         )
     except Exception as e:
         report = {"status": f"unavailable:{str(e)[:80]}", "stale": True, "applied": []}
@@ -42,6 +49,24 @@ def apply_live_prices(context: dict, cfg: dict) -> dict:
     held = [str(p.get("ticker", "")).upper()
             for p in (context.get("portfolio", {}).get("positions") or [])
             if p.get("ticker")]
+
+    # Self-heal stale/missing live feed during RTH when Alpaca is reachable.
+    try:
+        refreshed = maybe_refresh_live_feed(max_age_min=max_age)
+        if refreshed and refreshed.get("n"):
+            print(f"  • live-price self-refresh: {refreshed.get('n')} quotes "
+                  f"via {refreshed.get('source')} (was stale/missing)")
+    except Exception as e:
+        print(f"  (live-price self-refresh skipped: {e})")
+
+    # ATR map: persist when present; backfill light/empty scans from last good.
+    try:
+        from tools.atr_map import ensure_atr_on_scan
+        atr = ensure_atr_on_scan(scan)
+        if atr and scan.get("atr_map_note"):
+            print(f"  • ATR map: {scan['atr_map_note']} ({len(atr)} tickers)")
+    except Exception as e:
+        print(f"  (ATR map ensure skipped: {e})")
 
     blob = load_live_prices()
     # The feed is already scoped to holdings + watchlist by the live-prices
@@ -100,6 +125,53 @@ def apply_live_prices(context: dict, cfg: dict) -> dict:
               f"stop enforcement may lag for {report['stale_holdings'] or 'holdings'}")
     context["price_freshness_live"] = report
     return report
+
+
+
+def apply_price_freshness_trade_gate(proposals: list, context: dict, cfg: dict,
+                                     run_id: str) -> list:
+    """Refuse NEW buys and discretionary sells when live marks are untrustworthy.
+
+    Forced exits/stops already ran via apply_safety_layer and are not proposals,
+    so this only filters brain/discretionary orders. Logs a machine-readable
+    rejection reason. Fail-soft: a broken gate never blocks the run silently —
+    it either blocks with a clear code or lets proposals through.
+    """
+    lp_cfg = ((cfg.get("schedule") or {}).get("live_prices") or {})
+    if not lp_cfg.get("trade_gate_enabled", True):
+        return proposals
+    try:
+        from tools.live_prices import trade_gate_decision
+    except Exception as e:
+        print(f"  (price freshness trade gate unavailable: {e})")
+        return proposals
+    report = context.get("price_freshness_live") or {}
+    max_age = float(lp_cfg.get("trade_gate_max_age_min", 120))
+    decision = trade_gate_decision(report, max_age_min=max_age)
+    context["price_freshness_trade_gate"] = decision
+    if not decision.get("blocked"):
+        return proposals
+    reason = decision.get("reason") or "price_freshness_gate:blocked"
+    code = decision.get("code") or "blocked"
+    kept = []
+    for p in proposals:
+        action = str((p or {}).get("action", "")).strip().upper()
+        # NEW buys always blocked. Discretionary sells/trims blocked too —
+        # without a trustworthy mark we should not size an exit. Forced stops
+        # already executed earlier and never appear here.
+        if action in ("BUY", "SELL", "SELL_TO_CLOSE", "TRIM", "REDUCE"):
+            try:
+                journal.log_rejection(p, [reason], run_id)
+            except Exception:
+                pass
+            print(f"      PRICE FRESHNESS GATE blocks {action} "
+                  f"{(p or {}).get('ticker')}: {code}")
+            continue
+        kept.append(p)
+    if len(kept) != len(proposals):
+        print(f"      PRICE FRESHNESS GATE: {reason}")
+    return kept
+
 
 
 def apply_safety_layer(context: dict, cfg: dict, run_id: str) -> list[dict]:
