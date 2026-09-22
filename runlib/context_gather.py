@@ -1197,6 +1197,162 @@ def _gather_market_checkin(depth: str, scan: dict, discovery_block: dict,
     return market_checkin
 
 
+
+def build_research_freshness(*, depth: str, scan: dict | None,
+                             news, filings, earnings_week: dict | None,
+                             price_freshness_live: dict | None = None) -> dict:
+    """Honest freshness card for gather + slim brain pack.
+
+    Surfaces price_as_of (bar session dates), live-overlay age when known, and
+    whether critical research lanes (news, filings, earnings calendar) are empty
+    or dead. Fail-loud: empty critical lanes on trading depths set
+    `critical_lanes_empty` and a non-null `fail_loud` string the slim pack
+    promotes into stale_data_notice.
+    """
+    today = et_date()
+    scan = scan if isinstance(scan, dict) else {}
+    meta = scan.get("prices_meta") if isinstance(scan.get("prices_meta"), dict) else {}
+    price_as_of = {
+        "note": ("Per-ticker bar session date is universe_scan.prices_meta[T]."
+                 "price_as_of — prefer it over bundle age alone."),
+        "n_priced": len(meta),
+        "bars_older_than_et_today": 0,
+        "sample": {},
+    }
+    if meta:
+        older = []
+        for t, v in meta.items():
+            if not isinstance(v, dict):
+                continue
+            pa = v.get("price_as_of")
+            if pa and str(pa)[:10] < today:
+                older.append(t)
+        price_as_of["bars_older_than_et_today"] = len(older)
+        # Stable sample: first 8 names by ticker
+        sample_keys = sorted(meta)[:8]
+        price_as_of["sample"] = {
+            t: {"price_as_of": (meta[t] or {}).get("price_as_of"),
+                "source": (meta[t] or {}).get("source")}
+            for t in sample_keys if isinstance(meta[t], dict)
+        }
+        price_as_of["scan_fetched_at_utc"] = scan.get("scan_fetched_at_utc")
+
+    live = price_freshness_live if isinstance(price_freshness_live, dict) else {}
+    live_overlay = {
+        "status": live.get("status") or "not_yet_applied",
+        "as_of": live.get("as_of"),
+        "age_min": live.get("age_min"),
+        "stale": live.get("stale"),
+        "applied_n": len(live.get("applied") or []),
+        "note": (
+            "Filled by apply_live_prices before the brain runs. "
+            "status=not_yet_applied here is normal at gather time; "
+            "trust price_freshness_live on the slim pack at decision time."
+            if not live else live.get("note")
+        ),
+    }
+
+    def _lane(name: str, feed) -> dict:
+        # Inline the orchestrator.feed_is_alive contract so gather does not
+        # import orchestrator (orchestrator imports gather_context).
+        _DEAD = {"error", "unavailable", "empty", "degraded_empty"}
+        if not isinstance(feed, dict):
+            alive = False
+        elif feed.get("status") in _DEAD:
+            alive = False
+        else:
+            entries = feed.get("tickers") if isinstance(feed.get("tickers"), dict) else {
+                k: e for k, e in feed.items()
+                if isinstance(e, dict) and k.isalpha() and k.upper() == k
+            }
+            if entries:
+                bad = sum(1 for e in entries.values()
+                          if e.get("error") or e.get("status") in _DEAD)
+                alive = bad < len(entries)
+            else:
+                alive = True
+        empty = feed is None or feed == {} or (isinstance(feed, dict) and (
+            feed.get("status") in ("error", "unavailable", "empty")
+            or (isinstance(feed.get("tickers"), dict) and not feed.get("tickers")
+                and feed.get("status") == "ok" and name == "news_and_catalysts")
+        ))
+        # Missing entirely counts as empty for trading depths.
+        if feed is None:
+            empty = True
+            alive = False
+        status = (feed.get("status") if isinstance(feed, dict) else None) or (
+            "missing" if feed is None else ("alive" if alive else "dead"))
+        return {"alive": bool(alive), "empty": bool(empty or not alive),
+                "status": status}
+
+    lanes = {
+        "news_and_catalysts": _lane("news_and_catalysts", news),
+        "sec_filings": _lane("sec_filings", filings),
+    }
+    ew = earnings_week if isinstance(earnings_week, dict) else {}
+    cal_status = ew.get("calendar_status") or ew.get("status")
+    cal_age = ew.get("calendar_age_days")
+    cal_stale = bool(ew.get("stale"))
+    cal_n = ew.get("names_in_calendar")
+    cal_empty = (
+        not ew
+        or ew.get("error")
+        or cal_status in ("empty", "error")
+        or (isinstance(cal_n, int) and cal_n <= 0)
+        or cal_stale
+    )
+    lanes["earnings_calendar"] = {
+        "alive": not cal_empty,
+        "empty": bool(cal_empty),
+        "status": cal_status or ("error" if ew.get("error") else "unknown"),
+        "calendar_age_days": cal_age,
+        "stale": cal_stale,
+        "names_in_calendar": cal_n,
+        "built_at": ew.get("calendar_built_at"),
+    }
+
+    # Light depth is allowed to skip news/filings; trading depths are not.
+    trading = depth in ("full", "holdings_watchlist", "weekly_market")
+    checked = list(lanes) if trading else ["earnings_calendar"]
+    empty_critical = [k for k in checked if lanes[k].get("empty")]
+    fail_loud = None
+    if empty_critical:
+        fail_loud = (
+            "CRITICAL RESEARCH LANES EMPTY/DEAD: "
+            + ", ".join(empty_critical)
+            + ". Do NOT open new positions on absent news/filings/earnings data; "
+              "treat this run as research-degraded."
+        )
+    status = "ok"
+    if empty_critical:
+        status = "critical_lanes_empty"
+    elif price_as_of["bars_older_than_et_today"] and price_as_of["n_priced"]:
+        status = "prices_stale_bars"
+    elif live_overlay.get("stale"):
+        status = "live_overlay_stale"
+
+    out = {
+        "status": status,
+        "as_of_et": today,
+        "run_depth": depth,
+        "price_as_of": price_as_of,
+        "live_overlay": live_overlay,
+        "critical_lanes": lanes,
+        "empty_critical_lanes": empty_critical,
+        "critical_lanes_empty": bool(empty_critical),
+        "fail_loud": fail_loud,
+        "note": (
+            "Freshness honesty card. Read price_as_of.sample / bars_older_than_et_today "
+            "before chasing triggers; read live_overlay.age_min at decision time; "
+            "if fail_loud is set, the slim pack also stamps stale_data_notice."
+        ),
+    }
+    if fail_loud:
+        print(f"  !! RESEARCH FRESHNESS: {fail_loud}")
+    return out
+
+
+
 def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
                    earnings_trigger: dict | None = None) -> dict:
     """Build the brain's context bundle.
@@ -1316,9 +1472,14 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
               f"(<= {_lanes['pre_print_blackout_days']}d), "
               f"{len(_lanes['post_print_drift'])} in the post-print drift lane")
 
+    _research_freshness = build_research_freshness(
+        depth=depth, scan=scan, news=news, filings=filings,
+        earnings_week=_earnings_week)
+
     return {
         "run_date": datetime.now(timezone.utc).isoformat(),
         "as_of_et": et_date(),  # today's US MARKET date - cite this, not the UTC run_date
+        "research_freshness": _research_freshness,
         "digest": {
             "note": "READ FIRST: per focus name, the key statement numbers (each with its "
                     "quarter-end date - cite them WITH the date), leverage/cash-flow reads, "

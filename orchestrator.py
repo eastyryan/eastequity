@@ -235,9 +235,30 @@ def assess_bundle_health(context: dict, run_depth: str) -> dict:
         and scan_ctx.get("scanned", 0) < 0.8 * requested)
     dead_feeds = [k for k in ("news_and_catalysts", "sec_filings", "insider_activity")
                   if not feed_is_alive(context.get(k))]
+    # Freshness honesty: research_freshness (gather) already classifies empty
+    # critical lanes. Mirror that into health so label_data_quality / slim pack
+    # fail loud even if a caller only consults assess_bundle_health.
+    rf = context.get("research_freshness") if isinstance(context.get("research_freshness"), dict) else {}
+    empty_critical = list(rf.get("empty_critical_lanes") or [])
+    if not empty_critical:
+        # Fallback when gather predates the card: inspect earnings_week directly.
+        ew = context.get("earnings_week") if isinstance(context.get("earnings_week"), dict) else {}
+        cal_status = ew.get("calendar_status") or ew.get("status")
+        cal_n = ew.get("names_in_calendar")
+        if (ew.get("error") or ew.get("stale") or cal_status in ("empty", "error")
+                or (isinstance(cal_n, int) and cal_n <= 0 and ew)):
+            empty_critical.append("earnings_calendar")
+        for k in ("news_and_catalysts", "sec_filings"):
+            if k in dead_feeds and k not in empty_critical:
+                empty_critical.append(k)
+    if empty_critical:
+        for k in empty_critical:
+            if k not in dead_feeds:
+                dead_feeds.append(k)
     return {
         "degraded": degraded, "scan_empty": scan_empty, "macro_bad": macro_bad,
         "low_coverage": low_coverage, "dead_feeds": dead_feeds,
+        "empty_critical_lanes": empty_critical,
         "partial": (not degraded) and (low_coverage or bool(dead_feeds)),
         "scanned": scan_ctx.get("scanned"), "requested": requested,
     }

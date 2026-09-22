@@ -396,6 +396,14 @@ def get_smart_money(tickers, company_names=None, ticker_cusip=None) -> dict:
                         "value_usd": d["latest_value_usd"],
                         "value_delta_usd": d["value_delta_usd"],
                         "pct_share_change": d["pct_share_change"]})
+                    # Surface the report period on the per-ticker card so
+                    # ownership_flow can show institutional freshness (not just
+                    # a generic "~45d lag" note).
+                    if latest_period and (
+                            not a.get("latest_period") or latest_period > a.get("latest_period")):
+                        a["latest_period"] = latest_period
+                    if prior_period and not a.get("prior_period"):
+                        a["prior_period"] = prior_period
 
         # An all-managers fetch failure is a FEED outage: returning the usual
         # shape would label every name no_tracked_activity ("none of the funds
