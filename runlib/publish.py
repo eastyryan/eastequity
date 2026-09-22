@@ -239,6 +239,118 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
     # silently wiping the S&P comparison line every run - removed. Do not reintroduce it.
 
 
+
+def _book_fingerprint_from_text(text: str) -> str:
+    """Stable fingerprint of cash + holdings (+ qty/cost). Fail-soft empty."""
+    try:
+        pf = json.loads(text) if text else {}
+    except Exception:
+        return ""
+    try:
+        pos = sorted(
+            (str(p.get("ticker", "")).upper(),
+             round(float(p.get("quantity") or 0), 6),
+             round(float(p.get("avg_cost") or 0), 6))
+            for p in (pf.get("positions") or []) if p.get("ticker")
+        )
+        cash = round(float(pf.get("cash_usd") or 0), 2)
+        return json.dumps({"cash": cash, "pos": pos}, separators=(",", ":"))
+    except Exception:
+        return ""
+
+
+def _staged_book_changed() -> bool:
+    """True when the index differs from HEAD on portfolio / latest holdings surface.
+
+    Quota-conscious: lease acquires, skips, and commentary-only publishes leave
+    portfolio.json untouched and must not rebuild. A fill, reset, or cash move
+    that stages state/portfolio.json (or latest equity/cash/positions) does.
+    """
+    try:
+        # Any staged change to the authoritative ledger is a book change.
+        st = subprocess.run(
+            ["git", "diff", "--cached", "--name-only", "--",
+             "state/portfolio.json", "dashboard/data/latest.json"],
+            cwd=ROOT, capture_output=True, text=True, timeout=30)
+        names = {ln.strip() for ln in (st.stdout or "").splitlines() if ln.strip()}
+        if "state/portfolio.json" in names:
+            head = subprocess.run(
+                ["git", "show", "HEAD:state/portfolio.json"],
+                cwd=ROOT, capture_output=True, text=True, timeout=30)
+            old_fp = _book_fingerprint_from_text(
+                head.stdout if head.returncode == 0 else "")
+            try:
+                new_text = (ROOT / "state" / "portfolio.json").read_text()
+            except Exception:
+                new_text = ""
+            new_fp = _book_fingerprint_from_text(new_text)
+            if old_fp != new_fp:
+                return True
+        # latest.json may carry fills/equity even when portfolio path races —
+        # treat staged latest with a different equity/cash/position set as change.
+        if "dashboard/data/latest.json" in names:
+            head = subprocess.run(
+                ["git", "show", "HEAD:dashboard/data/latest.json"],
+                cwd=ROOT, capture_output=True, text=True, timeout=30)
+            try:
+                old = json.loads(head.stdout) if head.returncode == 0 else {}
+            except Exception:
+                old = {}
+            try:
+                new = json.loads((ROOT / "dashboard" / "data" / "latest.json").read_text())
+            except Exception:
+                new = {}
+            old_key = (old.get("cash_usd"), old.get("total_equity_usd"),
+                       [(p.get("ticker"), p.get("quantity"))
+                        for p in (old.get("positions") or [])])
+            new_key = (new.get("cash_usd"), new.get("total_equity_usd"),
+                       [(p.get("ticker"), p.get("quantity"))
+                        for p in (new.get("positions") or [])])
+            if old_key != new_key:
+                return True
+    except Exception as e:
+        print(f"  (book-change detect failed: {e})")
+    return False
+
+
+def _trigger_vercel_book_build() -> None:
+    """ONE catch-up Vercel build after a book-changing publish.
+
+    Pushes an empty commit tagged [vercel build]. Allowed even when a prior
+    [vercel build] already landed earlier the same UTC day — that earlier build
+    would have published the pre-change book. Quota-conscious: only called when
+    _staged_book_changed() was True. Fail-soft.
+    """
+    try:
+        stamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H%M UTC")
+        msg = f"Publish dashboard after book change {stamp} [vercel build]"
+        r = subprocess.run(["git", "commit", "--allow-empty", "-m", msg],
+                           cwd=ROOT, capture_output=True, text=True)
+        if r.returncode != 0:
+            print(f"  (book-change vercel commit skipped: {(r.stderr or '')[:160]})")
+            return
+        for attempt in range(3):
+            psh = subprocess.run(["git", "push", "origin", "main"],
+                                 cwd=ROOT, capture_output=True, text=True,
+                                 timeout=120)
+            if psh.returncode == 0:
+                print("  book-change catch-up [vercel build] pushed")
+                return
+            rb = subprocess.run(["git", "pull", "--rebase", "--autostash",
+                                 "origin", "main"],
+                                cwd=ROOT, capture_output=True, text=True,
+                                timeout=120)
+            if rb.returncode != 0:
+                subprocess.run(["git", "rebase", "--abort"], cwd=ROOT,
+                               capture_output=True, text=True)
+                print(f"  (book-change vercel push rebase failed: "
+                      f"{(rb.stderr or '')[-200:]})")
+                return
+        print(f"  (book-change vercel push failed: {(psh.stderr or '')[-200:]})")
+    except Exception as e:
+        print(f"  (book-change vercel build trigger failed: {e})")
+
+
 def redeploy_dashboard() -> None:
     """Publish fresh data by committing and pushing to GitHub; Vercel auto-deploys
     from main. Fail-soft: a failed push logs loudly so numbers never go silently stale.
@@ -309,11 +421,15 @@ def redeploy_dashboard() -> None:
         # add -A so a REMOVED kill switch (all-clear) also propagates; ignore missing paths.
         for p in paths:
             subprocess.run(["git", "add", "-A", p], cwd=ROOT, capture_output=True, text=True)
-        # [vercel skip] since 2026-09-21: this commit used to rebuild the dashboard,
-        # and with ~10 slots a weekday that was ~8-9 full builds a day at ~70 MB each,
-        # which is what kept the Hobby deployment-storage quota blown. The data still
-        # lands in git on every run — only the rebuild is deferred to the once-a-day
-        # dashboard-refresh workflow, which is the single build that publishes it.
+        # Detect a real BOOK change (holdings / cash / fills surface) before we
+        # commit. Lease/skip-only publishes must NOT burn a Vercel build; a fill
+        # or reset that changes state/portfolio.json or latest holdings/cash MUST
+        # trigger one catch-up build so the public site is not a day behind.
+        book_changed = _staged_book_changed()
+        # [vercel skip] on the data commit (2026-09-21): ~10 slots/weekday used to
+        # each rebuild ~70 MB and blew Hobby storage. Data still lands every run;
+        # the rebuild is either the once-a-day dashboard-refresh workflow OR a
+        # single catch-up empty commit below when the book actually changed.
         r = subprocess.run(["git", "commit", "-m",
                             "Update dashboard data after trading run [vercel skip]"],
                            cwd=ROOT, capture_output=True, text=True)
@@ -325,7 +441,9 @@ def redeploy_dashboard() -> None:
             r = subprocess.run(["git", "push", "origin", "main"],
                                cwd=ROOT, capture_output=True, text=True, timeout=120)
             if r.returncode == 0:
-                print("  data pushed - Vercel deploying")
+                print("  data pushed" + (" (book changed)" if book_changed else ""))
+                if book_changed:
+                    _trigger_vercel_book_build()
                 return
             print(f"  push rejected (attempt {attempt + 1}/3), rebasing...")
             # --autostash is REQUIRED, not a nicety. A trading run writes several
@@ -400,25 +518,49 @@ def _fill_facts(fills: list, context: dict) -> list[dict]:
     return facts
 
 
-def _brain_trade_memo(fills: list, context: dict) -> str | None:
+def _brain_trade_memo(fills: list, context: dict,
+                      operator_notes=None, book_events=None) -> str | None:
     """Have the brain write the trade-day X memo at act time. Needed because
     forced exits execute AFTER the brain wrote its response (it cannot narrate
     an exit it never saw), and cloud brains sometimes omit x_post. Fail-soft:
-    returns None and the deterministic fallback below publishes instead."""
+    returns None and the deterministic fallback below publishes instead.
+
+    operator_notes / book_events (reset, brain migrate, kill switch) are optional
+    context the prompt MUST address when present so the public memo explains
+    material book events rather than pretending it was a normal session.
+    """
     try:
         from runlib.brain_io import run_claude
+        notes = list(operator_notes or context.get("operator_notes") or [])
+        events = list(book_events or context.get("book_events") or [])
+        op = context.get("operator_note")
+        if op and op not in notes:
+            notes.append(op)
         facts = {
             "date_et": et_date(),
             "fills": _fill_facts(fills, context),
             "portfolio_equity_usd": (context.get("portfolio") or {}).get("total_equity_usd"),
             "run_commentary": (context.get("latest_reasoning") or {}).get("commentary")
                               or context.get("commentary"),
+            "operator_notes": notes,
+            "book_events": events,
         }
+        event_rule = ""
+        if notes or events:
+            event_rule = (
+                "MATERIAL BOOK EVENTS: FACTS.book_events / FACTS.operator_notes describe "
+                "operator actions (book reset, brain migrate, kill switch, etc.). You MUST "
+                "explain any material book event in plain English in the memo — do not "
+                "pretend the session was an ordinary trade day if the book was reset or "
+                "halted. Keep fail-soft: if an event lacks detail, say what is known and "
+                "move on.\n\n"
+            )
         prompt = (
             "Write the trade-day journal post for East Equity Agent's public X account, "
             "first person, in the voice of a sharp fund manager writing a trade memo — "
             "not a bot alert. Use ONLY the numbers in the FACTS JSON below; never invent "
             "prices, percentages, or dates.\n\n"
+            + event_rule +
             "Structure, 3-6 short paragraphs: what was done and at what price (entry vs "
             "exit, P&L, holding period); WHY — a forced_exit_reason means the coded "
             "safety layer enforced a pre-committed stop, own the discipline; what the "
@@ -433,7 +575,6 @@ def _brain_trade_memo(fills: list, context: dict) -> str | None:
             "Return ONLY the post text."
         )
         memo = (run_claude(prompt, call="trade_memo") or "").strip()
-        # Sanity: long enough to be a memo, short enough for one long-form post.
         if 200 <= len(memo) <= 20000:
             return memo
         print(f"  (brain memo rejected: {len(memo)} chars)")
@@ -443,22 +584,38 @@ def _brain_trade_memo(fills: list, context: dict) -> str | None:
 
 
 def draft_x_summary(fills: list, results: list, context: dict, run_id: str,
-                    x_post: str | None = None) -> None:
+                    x_post: str | None = None,
+                    operator_notes=None, book_events=None) -> None:
     # Trade drafts get a _trade filename suffix so the poster prioritizes them.
     suffix = "_trade" if fills else ""
     path = ROOT / "state" / f"x_draft_{run_id}{suffix}.txt"
+    _events = list(book_events or (context or {}).get("book_events") or [])
+    _notes = list(operator_notes or (context or {}).get("operator_notes") or [])
     if x_post and x_post.strip():
         # The brain wrote its own post (fund-manager memo style). Publish verbatim.
         path.write_text(x_post.strip())
         return
     if fills:
-        memo = _brain_trade_memo(fills, context)
+        memo = _brain_trade_memo(fills, context,
+                                 operator_notes=_notes,
+                                 book_events=_events)
         if memo:
             path.write_text(memo)
             return
     # Deterministic fallback. Plain tickers, no $cashtags (X rejects multi-cashtag
     # posts); carries entry/exit/P&L so even the fallback reads like a journal.
     lines = [f"East Equity Agent swing update ({datetime.now():%b %d})"]
+    if _events or _notes:
+        bits = []
+        for ev in _events[:6]:
+            if isinstance(ev, dict):
+                bits.append(str(ev.get("type") or ev.get("detail") or ev))
+            else:
+                bits.append(str(ev))
+        for n in _notes[:3]:
+            bits.append(str(n)[:160])
+        if bits:
+            lines.append("Operator / book context: " + "; ".join(bits))
     if fills:
         for fact in _fill_facts(fills, context):
             if str(fact.get("action", "")).upper() == "BUY":
