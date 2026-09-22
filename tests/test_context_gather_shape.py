@@ -50,7 +50,7 @@ _FUNCS = {n.name: n for n in _TREE.body if isinstance(n, ast.FunctionDef)}
 # The bundle's top-level keys IN ORDER, verbatim from the pre-decomposition
 # monolith. If assembly ever drops, adds, or reorders a key, this fails.
 EXPECTED_BUNDLE_KEYS = [
-    "run_date", "as_of_et", "digest", "trading_mode", "run_depth",
+    "run_date", "as_of_et", "research_freshness", "digest", "trading_mode", "run_depth",
     "run_depth_note", "allows_new_buys", "market_events", "momentum_health",
     "market_radar", "discovery_screen", "market_checkin", "hard_limits",
     "benchmark_close", "macro_regime", "market_breadth", "portfolio",

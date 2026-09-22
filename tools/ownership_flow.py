@@ -173,7 +173,15 @@ def classify_institutional(
             "net_share_delta": sm.get("net_share_delta"),
             "net_value_delta_usd": sm.get("net_value_delta_usd"),
             "notable_funds": funds,
-            "lag_note": "13F ~45 days stale — conviction only, never timing",
+            "report_period": sm.get("latest_period"),
+            "prior_period": sm.get("prior_period"),
+            "lag_note": (
+                f"13F report period {sm.get('latest_period')} "
+                f"(prior {sm.get('prior_period') or 'n/a'}); "
+                "~45 days stale — conviction only, never timing"
+                if sm.get("latest_period")
+                else "13F ~45 days stale — conviction only, never timing"
+            ),
         },
         "ownership": {
             "held_pct_institutions": own.get("held_pct_institutions"),

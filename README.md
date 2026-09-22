@@ -131,6 +131,8 @@ Two things to know before running it:
 
 ## Reasoning / research (paper learning phase)
 
+Research lane map (depths × feeds, Grok slots, freshness fail-loud): [`docs/RESEARCH_LANES.md`](docs/RESEARCH_LANES.md).
+
 Context bundle includes:
 - `reasoning_process` — process checklist, watchlist feedback, exit lessons, themes, freshness
 - `stack_cards` — layer / customers / substitutes / differential per focus name

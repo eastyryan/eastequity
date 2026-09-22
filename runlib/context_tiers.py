@@ -109,6 +109,7 @@ BLOCKING_KEYS = (
     # rejects BUYs outright (data_quality_stale / fundamentals_stale:<TICKER>)
     # or forcibly closes positions. Emitted before any block that grows.
     "data_quality", "stale_data_notice", "price_freshness_live",
+    "research_freshness",  # price_as_of + live overlay age + empty critical lanes
     "fundamentals_freshness",   # HARD RULE; drives fundamentals_stale:<TICKER>
     "risk_halts", "forced_exits", "corporate_actions",
     # BLOCKING-adjacent: the obligations a run incurs by NOT acting — outstanding
@@ -199,6 +200,7 @@ ALWAYS_KEYS = (
     "earnings_lanes",         # the coded blackout + the post-print drift lane
     "engagement",             # cash drag + outstanding trigger obligations
     "price_freshness_live",   # holdings/watchlist live-price staleness guard
+    "research_freshness",    # price_as_of + live overlay age + empty critical lanes
     "trigger_run_note",       # why an event-driven run was spawned
     "operator_note",          # ad-hoc note passed in via --note
 )
@@ -871,6 +873,30 @@ def slim_context_for_brain(full: dict, *, learning_n: int = 5) -> dict:
     for k in ALWAYS_KEYS:
         if k in full:
             built[k] = full[k]
+    # Fail loud: empty critical research lanes must not look like a quiet market.
+    rf = built.get("research_freshness") if isinstance(built.get("research_freshness"), dict) else {}
+    if rf.get("critical_lanes_empty") and rf.get("fail_loud"):
+        prev = built.get("stale_data_notice")
+        notice = rf["fail_loud"]
+        if isinstance(prev, str) and prev.strip():
+            notice = prev.rstrip() + " | " + notice
+        built["stale_data_notice"] = notice
+        dq = built.get("data_quality") if isinstance(built.get("data_quality"), dict) else {}
+        if not dq:
+            built["data_quality"] = {
+                "source": "research_lanes_empty",
+                "stale": True,
+                "empty": True,
+                "note": rf["fail_loud"],
+                "empty_critical_lanes": list(rf.get("empty_critical_lanes") or []),
+            }
+        else:
+            dq = dict(dq)
+            dq.setdefault("empty_critical_lanes", list(rf.get("empty_critical_lanes") or []))
+            dq["research_lanes_empty"] = True
+            if rf.get("fail_loud"):
+                dq["research_lanes_note"] = rf["fail_loud"]
+            built["data_quality"] = dq
     # Portfolio rides in ALWAYS_KEYS verbatim except its ever-growing order log.
     if isinstance(built.get("portfolio"), dict):
         built["portfolio"] = _cap_portfolio_history(built["portfolio"], trim_log)
