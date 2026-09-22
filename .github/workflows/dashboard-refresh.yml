@@ -1,23 +1,34 @@
 name: Dashboard daily rebuild
 
-# ONE VERCEL BUILD A DAY (2026-09-21). Until now every trading run and every
-# executor fill pushed a commit WITHOUT [vercel skip], and each of those was a
-# full ~70 MB Next.js build: ~10 grok-cycle slots a weekday plus executor ticks
-# came to roughly 8-9 builds a day, which is what kept the Hobby
-# deployment-storage quota (10 GB) permanently blown — 14.18 GB on 2026-09-20,
-# and ~247 accumulated deployments before the prune.
+# ONE VERCEL BUILD A DAY by default (2026-09-21), plus book-change catch-up
+# (2026-09-22). Until 2026-09-21 every trading run and every executor fill pushed
+# a commit WITHOUT [vercel skip], and each of those was a full ~70 MB Next.js
+# build: ~10 grok-cycle slots a weekday plus executor ticks came to roughly 8-9
+# builds a day, which is what kept the Hobby deployment-storage quota (10 GB)
+# permanently blown — 14.18 GB on 2026-09-20, and ~247 accumulated deployments
+# before the prune.
 #
 # The fix keeps the brain untouched. Trading, reconciliation, stop enforcement
 # and data gathering all still run on their own schedules and still push to
 # main every time; they just carry [vercel skip] now, so none of them builds.
-# This workflow is the ONLY thing that builds the site: one empty commit a day
+# This workflow is the scheduled build of the site: one empty commit a day
 # carrying [vercel build], which dashboard/vercel.json's ignoreCommand honors
 # ahead of the skip check. The build then reads whatever data the day's runs
 # accumulated in the repo, so the dashboard is a daily snapshot by design.
 #
-# Consequence to keep in mind: a fill no longer shows on the site within
-# minutes. If that ever needs to change, make the dashboard read its JSON at
-# request time instead of at build time — do NOT re-enable per-run builds.
+# BOOK-CHANGE CATCH-UP (2026-09-22). A fill/reset that changes holdings/cash
+# must not wait until 19:40 ET if a [vercel build] already fired earlier the
+# same UTC day on the pre-change book. runlib/publish.redeploy_dashboard
+# pushes its own empty [vercel build] when the staged portfolio/latest
+# fingerprint changes. This workflow's once-a-day guard therefore ALSO allows
+# a rebuild when state/portfolio.json (or latest.json holdings surface) moved
+# AFTER the most recent [vercel build] today — so a late book change still
+# gets one catch-up build without re-enabling per-run builds for lease/skip
+# commits.
+#
+# Consequence to keep in mind: commentary-only / lease publishes still do not
+# rebuild. If fills need sub-minute site updates, make the dashboard read its
+# JSON at request time instead of at build time — do NOT re-enable per-run builds.
 
 on:
   schedule:
@@ -58,12 +69,20 @@ jobs:
           for attempt in 1 2 3; do
             git pull --rebase --autostash origin main || { echo "rebase failed"; exit 1; }
 
-            # Idempotency: if a [vercel build] commit already landed today, the
-            # site has had its build and the extra cron fire does nothing.
-            if [ -n "$(git log --since="$(date -u +%Y-%m-%d)T00:00:00Z" \
-                               -F --grep='[vercel build]' --format=%H)" ]; then
-              echo "already rebuilt today — nothing to do"
-              exit 0
+            SINCE="$(date -u +%Y-%m-%d)T00:00:00Z"
+            LAST_BUILD="$(git log --since="$SINCE" -F --grep='[vercel build]' -1 --format=%H || true)"
+            if [ -n "$LAST_BUILD" ]; then
+              # Book-changed path: if portfolio/latest moved after that build,
+              # allow one catch-up rebuild. Lease/skip-only commits do not touch
+              # these paths in a material way relative to fingerprint, but a
+              # real fill/reset does.
+              NEWER_BOOK="$(git log "${LAST_BUILD}"..HEAD --format=%H -- \
+                state/portfolio.json dashboard/data/latest.json || true)"
+              if [ -z "$NEWER_BOOK" ]; then
+                echo "already rebuilt today and no book change since — nothing to do"
+                exit 0
+              fi
+              echo "book changed since last [vercel build] — catch-up rebuild"
             fi
 
             git commit --allow-empty -m "Publish dashboard for $(date -u +%Y-%m-%d) [vercel build]"

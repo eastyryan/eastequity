@@ -79,7 +79,7 @@
     "starting_capital_usd": 1000,
     "max_position_pct_of_portfolio": 0.2,
     "max_position_usd": 200,
-    "_notional_cap_note": "Notional ceilings only. Risk-based sizing below is the binding constraint: a tight-stop setup may size up to these ceilings for the same 1% risk; a wide-stop setup sizes well under them. Raised from 10%/$1000 when risk-based sizing landed (2026-07-16). Rebased 10x DOWN on 2026-07-21 when the book was restated from a $10,000 start to a $1,000 start: every percentage stays identical, only the notional ceilings moved ($2000 -> $200, conviction $3000 -> $300, min clamp $200 -> $20). See _fractional_stop_note below — the smaller book changes what the broker can protect.",
+    "_notional_cap_note": "Notional ceilings only. Risk-based sizing below is the binding constraint: a tight-stop setup may size up to these ceilings for the same 1% risk; a wide-stop setup sizes well under them. Raised from 10%/$1000 when risk-based sizing landed (2026-07-16). Rebased 10x DOWN on 2026-07-21 when the book was restated from a $10,000 start to a $1,000 start: every percentage stays identical, only the notional ceilings moved ($2000 -> $200, conviction $3000 -> $300, min clamp $200 -> $20). See _fractional_stop_note below \u2014 the smaller book changes what the broker can protect.",
     "risk_based_sizing": {
       "enabled": true,
       "risk_per_trade_pct": 0.01,
@@ -349,7 +349,9 @@
     "live_prices": {
       "enabled": true,
       "max_age_min": 30,
-      "_note": "Holdings + watchlist intraday quotes are refreshed every few minutes during market hours by the live-prices Action into state/live_prices.json, and overlaid onto the bundle's daily-bar prices before stops are enforced. A snapshot older than max_age_min is NOT overlaid (a broken feed must not clobber a good daily bar) but IS flagged as stale so the run fails safe. GitHub throttles */5 crons, so real freshness is typically ~10-20 min, not 5."
+      "_note": "Holdings + watchlist intraday quotes are refreshed every few minutes during market hours by the live-prices Action / Mac feeder into state/live_prices.json, and overlaid onto the bundle's daily-bar prices before stops are enforced. apply_live_prices also self-refreshes via Alpaca during RTH when the snapshot is missing/stale so gather/act are not hostages of a throttled cron. A snapshot older than max_age_min is NOT overlaid (a broken feed must not clobber a good daily bar) but IS flagged as stale. trade_gate_max_age_min (default 120) refuses NEW buys and discretionary sells during RTH when overlay is missing or older than that window; forced stops still run.",
+      "trade_gate_enabled": true,
+      "trade_gate_max_age_min": 120
     },
     "weekly_market_checkin": {
       "enabled": true,

@@ -168,9 +168,18 @@ def _load_atr_map() -> dict:
          execution_costs.model_stop_gaps was added to remove after the DELL
          408.00 -> 389.75 case.
 
-    Reads the committed relay bundle first, then the newest local context archive.
-    Returns {} only when genuinely nothing is available, and says so out loud.
+    Order: state/atr_map.json (persisted on every successful scan), then the
+    committed relay bundle, then the newest local context archive. Returns {}
+    only when genuinely nothing is available, and says so out loud with an
+    actionable remount message.
     """
+    try:
+        from tools.atr_map import load_atr_map as _persisted
+        atr = _persisted()
+        if atr:
+            return atr
+    except Exception:
+        pass
     for path in (ROOT / "data" / "cloud_context.json",
                  *sorted((ROOT / "state").glob("context_2*.json"),
                          key=lambda f: f.stat().st_mtime, reverse=True)[:1]):
@@ -178,10 +187,17 @@ def _load_atr_map() -> dict:
             scan = json.loads(path.read_text()).get("universe_scan") or {}
             atr = scan.get("atr_by_ticker") or {}
             if atr:
+                try:
+                    from tools.atr_map import persist_atr_map
+                    persist_atr_map(atr, source=str(path.name))
+                except Exception:
+                    pass
                 return atr
         except Exception:
             continue
-    print("  (no atr_by_ticker available - trail cannot ratchet this tick)")
+    print("  (ATR map EMPTY — chandelier trail cannot ratchet this tick. "
+          "Action: run a full or holdings_watchlist gather so atr_by_ticker "
+          "is written to state/atr_map.json, or check cloud_context.json.)")
     return {}
 
 

@@ -222,6 +222,31 @@ def assess() -> dict:
         # reason.
         reasons.append("KILL_SWITCH is engaged — no runs will execute until removed")
 
+    # ATR map for the chandelier trail between cycles. An empty map used to be a
+    # silent no-op; during RTH with an open book that under-protects. Surface it.
+    if in_market:
+        try:
+            sys.path.insert(0, str(ROOT / "scripts"))
+            from stop_watch import _load_atr_map
+            atr = _load_atr_map() or {}
+            # Re-check via persisted file so a probe that printed to stdout still
+            # leaves a clear operator action when empty.
+            if not atr:
+                try:
+                    from tools.portfolio_state import get_portfolio_state
+                    n_pos = len((get_portfolio_state() or {}).get("positions") or [])
+                except Exception:
+                    n_pos = 0
+                if n_pos > 0:
+                    reasons.append(
+                        "ATR map EMPTY during RTH with open positions — chandelier "
+                        "trail cannot ratchet between cycles. Action: run a full or "
+                        "holdings_watchlist gather so atr_by_ticker is written to "
+                        "state/atr_map.json (and check cloud_context.json)."
+                    )
+        except Exception as e:
+            reasons.append(f"ATR map probe failed during RTH: {str(e)[:120]}")
+
     return {"healthy": not reasons, "reasons": reasons, "health": health}
 
 

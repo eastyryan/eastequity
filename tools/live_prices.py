@@ -155,6 +155,101 @@ def freshness_report(blob: dict | None, applied: list[str], *,
     }
 
 
+
+def trade_gate_decision(report: dict | None, *,
+                        rth: bool | None = None,
+                        max_age_min: float = 120.0) -> dict:
+    """Hard gate for NEW buys / discretionary sells when marks are untrustworthy.
+
+    During regular trading hours (RTH): refuse when there is no live overlay, or
+    when the live snapshot age exceeds max_age_min (default 2h). Outside RTH the
+    gate stands down — overnight stale marks are expected and daily bars are fine
+    for research. Forced stops/exits are NOT gated here (they run earlier).
+
+    Returns a machine-readable dict:
+      {"blocked": bool, "code": str, "reason": str, "rth": bool, ...}
+    Pure over the freshness report; never raises.
+    """
+    report = report or {}
+    if rth is None:
+        try:
+            from tools.market_calendar import is_market_open
+            rth = bool(is_market_open())
+        except Exception:
+            rth = False
+    out = {
+        "blocked": False,
+        "code": "ok",
+        "reason": "price freshness ok for discretionary trades",
+        "rth": bool(rth),
+        "status": report.get("status"),
+        "age_min": report.get("age_min"),
+        "max_age_min": float(max_age_min),
+    }
+    if not rth:
+        out["code"] = "outside_rth"
+        out["reason"] = "outside RTH — freshness gate stands down"
+        return out
+    status = str(report.get("status") or "")
+    if status == "no_live_overlay" or status.startswith("unavailable"):
+        out.update(blocked=True, code="no_live_overlay",
+                   reason=f"price_freshness_gate:no_live_overlay status={status}")
+        return out
+    age = report.get("age_min")
+    try:
+        age_f = float(age) if age is not None else None
+    except (TypeError, ValueError):
+        age_f = None
+    if age_f is None and report.get("stale"):
+        out.update(blocked=True, code="unknown_age_stale",
+                   reason="price_freshness_gate:unknown_age_stale")
+        return out
+    if age_f is not None and age_f > float(max_age_min):
+        thresh = float(max_age_min)
+        out.update(blocked=True, code="stale_live_overlay",
+                   reason=f"price_freshness_gate:age_min={age_f:.0f}>{thresh:.0f}_rth")
+        return out
+    return out
+
+
+def maybe_refresh_live_feed(*, max_age_min: float = 30.0,
+                            now: datetime | None = None,
+                            only_rth: bool = True) -> dict | None:
+    """Fetch holdings+watchlist marks when the on-disk/branch feed is missing or
+    stale AND Alpaca/IEX is reachable. Returns the new blob, or None if skipped.
+
+    gather/act used to only READ state/live_prices.json. When the Mac launchd
+    feeder was asleep and GitHub rationed live-prices.yml, overlays went
+    no_live_overlay for hours/days. Refreshing here makes the trade path
+    self-sufficient during RTH whenever keys exist. Fail-soft; never raises.
+    """
+    now = now or _now_utc()
+    if only_rth:
+        try:
+            from tools.market_calendar import is_market_open
+            if not is_market_open():
+                return None
+        except Exception:
+            return None
+    try:
+        from tools.alpaca_data import has_keys
+        if not has_keys():
+            return None
+    except Exception:
+        return None
+    blob = load_live_prices(use_branch=True)
+    age = live_age_minutes(blob, now)
+    need = (not (blob or {}).get("prices")
+            or age is None
+            or age > float(max_age_min))
+    if not need:
+        return None
+    try:
+        return refresh_from_book(now=now)
+    except Exception:
+        return None
+
+
 # --------------------------------------------------------------------------- #
 # I/O + network
 # --------------------------------------------------------------------------- #

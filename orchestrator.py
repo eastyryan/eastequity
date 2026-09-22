@@ -94,6 +94,7 @@ from runlib.analytics import (
 from runlib.context_gather import gather_context
 from runlib.brain_io import (
     apply_live_prices,
+    apply_price_freshness_trade_gate,
     apply_safety_layer,
     ask_claude,
     llm_settings,
@@ -1265,7 +1266,23 @@ def _execute_and_publish(args, cfg: dict, run_id: str, run_depth: str,
     refresh_dashboard(context, response, results, fills, run_id, no_trade_reason,
                       parsed["commentary"], parsed["watchlist"],
                       parsed.get("rejected_ideas"))
-    draft_x_summary(fills, results, context, run_id, parsed.get("x_post"))
+    # Fail-soft operator context for the X memo (reset / migrate / kill switch).
+    try:
+        events = list(context.get("book_events") or [])
+        notes = list(context.get("operator_notes") or [])
+        if args.note and args.note not in notes:
+            notes.append(args.note)
+        if (ROOT / "state" / "KILL_SWITCH").exists():
+            events.append({"type": "kill_switch", "detail": "KILL_SWITCH engaged"})
+        if notes:
+            context["operator_notes"] = notes
+        if events:
+            context["book_events"] = events
+    except Exception as e:
+        print(f"  (operator/book_events for X memo skipped: {e})")
+    draft_x_summary(fills, results, context, run_id, parsed.get("x_post"),
+                    operator_notes=context.get("operator_notes"),
+                    book_events=context.get("book_events"))
     journal.log_run_summary({
         "manual": args.manual,
         "trigger_run": args.trigger_run or None,
@@ -1380,6 +1397,16 @@ def main() -> int:
             journal.log_rejection(p, [f"{run_depth}_run_no_new_buys"], run_id)
         proposals = [p for p in proposals if str(p.get("action", "")).upper() != "BUY"]
     print(f"      {len(proposals)} proposal(s). {no_trade_reason or ''}")
+
+    # Hard price-freshness gate: during RTH, refuse NEW buys and discretionary
+    # sells when live overlay is missing or > trade_gate_max_age_min old.
+    # Forced stops already ran via apply_safety_layer and are unaffected.
+    try:
+        proposals = apply_price_freshness_trade_gate(
+            proposals, context, cfg, run_id)
+        parsed["proposals"] = proposals
+    except Exception as e:
+        print(f"      (price freshness trade gate skipped: {e})")
 
     _journal_side_outputs(parsed, response, run_id)
 
