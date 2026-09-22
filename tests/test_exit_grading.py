@@ -459,8 +459,18 @@ def test_the_mark_cycle_recovers_a_wiped_store(store, tmp_path, monkeypatch):
     """commit f02af98 (2026-07-16) committed a stale copy of this file and the
     real DELL track vanished with it; commit 80f2e63 emptied it entirely on
     2026-07-19. Neither was survivable before, because the only seeding path ran
-    at close time and both closes had already happened."""
-    _write_ledger(tmp_path, [DELL_EXIT, HPE_EXIT])
+    at close time and both closes had already happened.
+
+    Exit dates are relative to today (not the July-2026 fixture stamps): once
+    wall-clock age crossed the 67-day auto-complete threshold, recovery still
+    seeded DELL/HPE but the same mark pass moved them to completed, so the
+    tracking assertion saw set(). Sibling mark tests already use relative days.
+    """
+    from datetime import date, timedelta
+    exit_day = (date.today() - timedelta(days=20)).isoformat()
+    dell = {**DELL_EXIT, "filled_at": f"{exit_day}T16:32:49.841872+00:00"}
+    hpe = {**HPE_EXIT, "filled_at": f"{exit_day}T16:32:49.853725+00:00"}
+    _write_ledger(tmp_path, [dell, hpe])
     PR._save({"version": 1, "tracking": [], "completed": []})   # the wiped file
     monkeypatch.setattr(PR, "_fetch_bars", lambda *a, **k: {})
 

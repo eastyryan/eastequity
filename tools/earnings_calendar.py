@@ -329,7 +329,16 @@ def build_earnings_calendar(tickers: Iterable[str], *, now_et: datetime | None =
 
     carried, aged_out = age_out_entries(cached.get("by_ticker") or {}, now_et)
     by_ticker: dict[str, dict] = dict(carried)
-    now_ts = pd.Timestamp.now(tz="America/New_York")
+    # Use the injected clock (not wall-clock) so hermetic tests and a
+    # force-rebuild-at-time-T call classify past vs future the same way
+    # production does when now_et=_et_now(). Wall-clock here made the
+    # fixture dates in test_successful_sweep_does_refresh_and_persist
+    # silently lose `next` once calendar time passed 2026-08-26.
+    now_ts = pd.Timestamp(now_et)
+    if now_ts.tzinfo is None:
+        now_ts = now_ts.tz_localize("America/New_York")
+    else:
+        now_ts = now_ts.tz_convert("America/New_York")
     stamp = now_et.isoformat()
 
     ok = 0                 # names that returned at least one usable date
