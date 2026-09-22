@@ -426,6 +426,10 @@
   "improvements": [
     {
       "date": "2026-09-22",
+      "note": "Daily study (market_microstructure): Overnight gap continuation vs fade: classify by news durability, then wait for first RTH acceptance \u2014 never buy the opening auction print - An overnight gap is the opening auction's one-shot incorporation of news that arrived while RTH was closed; both continuation and fade are real, and the discriminating variable is the source of the ga"
+    },
+    {
+      "date": "2026-09-22",
       "note": "Process gate: trigger_dead_confirmation_leg_stripped:ALAB; trigger_dead_confirmation_leg_stripped:BSX; dead_indicator_veto:TDG"
     },
     {
@@ -539,10 +543,6 @@
     {
       "date": "2026-09-17",
       "note": "Dynamic universe add: ['GNRC'] (187 names). Proposed from the market-wide radar; tradeable from the next run."
-    },
-    {
-      "date": "2026-09-17",
-      "note": "`price_freshness_live` is still stale (`stale=true`, age 140 min, holdings-only ANET) while this 15:30 ET full run\u2019s `universe_scan.prices_meta` is entirely 2026-09-16 daily bars (`bars_older_than_et_today: 186`), so CRM\u2019s $241.52 tag, SCHW\u2019s $103.50 low, ANET\u2019s ~$200 hold, and GNRC\u2019s $175\u2192$232\u2192$206 fade again had to be reconstructed from WebSearch plus the CRM options spot ($243.81). Overlay a same-slot IEX last/nbbo onto holdings + watchlist + tape promotions + options-spot names before trigger evaluation. Secondary: a `waiting_for` keyed to today\u2019s regular-session close cannot be acted on this 15:30 slot (close is 16:00) and evening_review cannot buy, so the close can print and then sit overnight untraded \u2014 either stamp a next-morning MOC/open instruction on close-conditioned waiting_for, or evaluate it at 15:30 against live+options-spot geometry (as done here: 1.5x ATR to $278.93 already fails at $243.81). Tertiary: CRM\u2019s 2026-09-17 8-K is Item 7.01 of yesterday\u2019s Investor Day deck, not a new demand print \u2014 stamp 8-K item type on tape promotions so 7.01 decks are not re-underwritten as fresh catalysts."
     }
   ],
   "trade_events": [
