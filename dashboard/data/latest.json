@@ -1002,6 +1002,10 @@
   "improvements": [
     {
       "date": "2026-09-21",
+      "note": "Daily study (risk_management): Sequential risk of ruin at 1% sits far from Balsara's cliff; the 8% heat cap is the simultaneous-stop ruin budget - William Feller's classical ruin problem (An Introduction to Probability Theory, Vol. I, Chapter XIV) is an equal-step random walk: each independent round moves one unit up with probability p or one un"
+    },
+    {
+      "date": "2026-09-21",
       "note": "The MDT trigger fired because \u201cafter the MiniMed exchange prices\u201d was not parsed as a dated event, so a $90 proximity alert went live 18 days before the October 5\u20137 averaging window; treat an explicit corporate-action date (here 2026-10-09) as `held_by_event_gate` the same way a \u201cafter the 8/4 print\u201d clause already is."
     },
     {
@@ -1115,10 +1119,6 @@
     {
       "date": "2026-09-17",
       "note": "Dynamic universe add: ['GNRC'] (187 names). Proposed from the market-wide radar; tradeable from the next run."
-    },
-    {
-      "date": "2026-09-17",
-      "note": "The live-price overlay was 152 minutes stale (`price_freshness_live.stale=true`, as_of 10:46 ET) while this 12:00-ish ET focused slot ran at 13:19 ET, so CRM's $240 tag, SCHW's $103.51 low, ANET's $202 hold, and GNRC's $175\u2192$232 gap all had to be reconstructed from WebSearch against `prices_meta` daily bars dated 2026-09-16. Stamp a same-slot IEX overlay onto holdings + watchlist + tape promotions before trigger evaluation, and suppress a `hits_not_bought` alert whose parsed level equals an incomplete session print on a name whose trigger text still says \"after the regular session.\""
     }
   ],
   "trade_events": [

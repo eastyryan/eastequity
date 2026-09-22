@@ -1767,7 +1767,46 @@
       ],
       "times_cited": 4,
       "last_cited": "2026-09-21T18:29:59.761368+00:00"
+    },
+    {
+      "id": "KB-0705986594",
+      "discipline": "risk_management",
+      "topic": "Sequential risk of ruin at 1% sits far from Balsara's cliff; the 8% heat cap is the simultaneous-stop ruin budget",
+      "summary": "William Feller's classical ruin problem (An Introduction to Probability Theory, Vol. I, Chapter XIV) is an equal-step random walk: each independent round moves one unit up with probability p or one unit down with q = 1-p. Against an infinitely rich opponent, eventual ruin is (q/p)^i when p > q, and is certain when p \u2264 q. Nauzer Balsara (TASC, December 1992) states that Feller's closed form assumes a payoff ratio of 1 and the entire stake at risk; when average win differs from average loss, and especially when the payoff exceeds 2, the difference equations have no precise closed form, so he Monte Carlo'd 100,000 paths. His three inputs are win probability p, payoff ratio W, and the fraction of capital exposed per round k. The tables he published set k at 100%, 50%, 25%, and 10% per trade \u2014 ten to a hundred times this book's 1% numerator. At those exposures, ruin is 1 for every W \u2264 2 whenever p \u2264 0.30, at every k he tested. At k = 10% (his smallest cell), p = 0.35 and W = 2 still prints 0.608; raising p to 0.45 drops that cell to 0.033. He did not publish a 1% table, so I will not invent one. Perry Kaufman's Trading Systems and Methods restates the equal-payoff formula as R = ((1-A)/(1+A))^c with A = 2P\u22121, then gives a separate Gehm/Vince construction for unequal wins and losses; plugging an R-multiple expectancy into the equal-step formula mixes two models. This book sizes as a fixed fraction of current equity, so wealth after a loss is 0.99 times prior equity and never hits l",
+      "key_points": [
+        "Feller's (q/p)^i is exact for equal-step independent bets against an infinite opponent; eventual ruin is certain in that model when p \u2264 0.5.",
+        "Balsara's 100,000-path Monte Carlo adds payoff W and per-trade fraction k; his published k is 10\u2013100% per trade, ten to a hundred times this book's 1%.",
+        "At every k he tested, W \u2264 2 and p \u2264 0.30 prints ruin = 1. The 2:1 floor plus a 40%+ design is the pair that keeps sequential ruin off that cliff.",
+        "His 10% cell at p = 0.45 / W = 2 is already 0.033. This book's 1% is ten times smaller and was not in the table.",
+        "Fixed-fraction 1% of current equity is multiplicative: (0.99)^10 \u2248 \u22129.6%. P(10 consecutive losses) at 40% WR is 0.6^10 \u2248 0.60%.",
+        "The 8% heat / 2% theme / 4% stack caps are the simultaneous-stop ruin budget (Turtle open-unit logic). That is the path DELL+HPE took.",
+        "Any ruin estimate must use realized avg_win_R and avg_loss_R. Mean claimed RR across eight exits was 2.44; mean realized R was \u22120.05.",
+        "Eight trades cannot estimate p or W. Do not refit the 1% from this sample."
+      ],
+      "how_to_apply": "Keep size = (current equity \u00d7 1%) / stop_distance_pct on every BUY that clears thesis, an ATR-floored stop (aim 1.5\u20132\u00d7ATR, never past 15%), 10% upside and 2:1 from that stop, and the 3-day earnings blackout \u2014 a 2\u20133 loss streak at 1% is a ~2\u20133% hole that one 2R winner recovers, so do not add Elder's monthly halt or a cash stand-down on top of the 1% and the code's 0.5\u00d7 unwind haircut. Before the BUY, read remaining heat against the simultaneous budget: factor_map, the 2% theme_initial_risk_cap, the 4% max_factor_stack_risk_pct, and 8% gap-adjusted heat; if the candidate shares a demand_driver with a holding, size the pair as one 2% bet. If avg_loss on the blotter drifts above 1R (DELL \u22121.43R with 0.55 ATR gap-through), demand the ~2.5:1 cushion of KB-1365918646 on the next name and keep the 1% numerator. A 0.50\u20130.60 probe is a 0.5% sequential unit, still inside the same ruin geometry; never martingale after a streak. With eight closed trades still in caution phase, do not quote a ruin percentage from the sample \u2014 cite Balsara's 0.30/2:1 cliff as the reason the 2:1 floor stays, and cite the Turtle open-unit caps as the reason the next seat must clear heat and theme.",
+      "sources": [
+        "Nauzer J. Balsara, 'Appreciating The Risk Of Ruin,' Technical Analysis of Stocks & Commodities, Vol. 10:12 (December 1992), 525\u2013528, https://www.traders.com (copy read: http://m.cdn.blog.hu/vi/vilagbagoly/nonimage/risk_of_ruin_2.pdf)",
+        "William Feller, An Introduction to Probability Theory and Its Applications, Vol. I, Chapter XIV 'Random Walk and Ruin Problems' (Wiley, 1950; 3rd ed. 1968)",
+        "Perry J. Kaufman, Trading Systems and Methods, Chapter 23 'Probability of Success and Ruin' (Wiley) \u2014 equal-payoff R = ((1\u2212A)/(1+A))^c with A = 2P\u22121, then a separate Gehm/Vince construction for unequal wins and losses",
+        "Curtis Faith, 'The Original Turtle Trading Rules' (2003), https://www.tradingblox.com/originalturtles/originalturtlerules.htm \u2014 open-unit caps 4 / 6 / 10 / 12",
+        "Nauzer J. Balsara, Money Management Strategies for Futures Traders (Wiley, 1992), Chapter 2 'The Dynamics of Ruin'",
+        "Trader's Second Brain, 'Risk of Ruin: The Math That Keeps Accounts Alive' (Sep 2026) \u2014 Feller equal-step derivation and the warning that plugging R-multiple expectancy into ((1\u2212A)/(1+A))^N mixes two models, https://traderssecondbrain.com/guides/risk-of-ruin-math"
+      ],
+      "learned_at": "2026-09-22T00:13:21.402961+00:00",
+      "run_id": "20260921-223272",
+      "tensions": [
+        {
+          "with": "KB-9586927181",
+          "why": "KB-9586927181 is the participation rule after a sequential hole: E = +0.20R at 40%/2:1, recovery is L/(1\u2212L), and cash is the zero-drift cell. This lesson is the ruin-probability geometry of that same 1%/8% book: sequential 1% streaks sit far from Balsara's p \u2264 0.30 / W \u2264 2 cliff, while the 8% simult",
+          "noted_at": "2026-09-22"
+        },
+        {
+          "with": "KB-2999578881",
+          "why": "KB-2999578881 sets the 1% as deep-fractional Kelly under unknown edge (growth). This lesson is the survival reason the same 1% exists (ruin probability). Kelly 1956 maximizes long-run log-growth; Feller/Balsara ask whether a barrier is hit. Growth-optimal f and a ruin-constrained f are related and n",
+          "noted_at": "2026-09-22"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-09-21T22:52:55.754664+00:00"
+  "updated_at": "2026-09-22T00:13:21.409178+00:00"
 }
