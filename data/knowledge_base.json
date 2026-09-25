@@ -467,7 +467,10 @@
       "merged_from": [
         "KB-1223831607",
         "KB-0013366930"
-      ]
+      ],
+      "superseded_by": "KB-1904498296",
+      "superseded_at": "2026-09-25T23:00:56.642706+00:00",
+      "supersede_reason": "merged"
     },
     {
       "id": "KB-9689938621",
@@ -1392,7 +1395,10 @@
         }
       ],
       "times_cited": 1,
-      "last_cited": "2026-09-09T15:19:23.629713+00:00"
+      "last_cited": "2026-09-09T15:19:23.629713+00:00",
+      "retired": true,
+      "retired_at": "2026-09-25T23:00:56.644865+00:00",
+      "retire_why": "Redundant with KB-9135641435 (ADX/DMI as lagging extension description) and KB-8718018770 (RSI-14 timing context): MACD's own 12-year cells are flat, Appel/Murphy crosses carry no measured information here, and the validator already strips MACD-cross would_buy_at via dead_indicator_veto \u2014 a third la"
     },
     {
       "id": "KB-1510950925",
@@ -1431,7 +1437,10 @@
           "why": "Inverse-vol can produce LARGE notionals on tight-stop names (5% stop \u2192 ~$200 on this $1k book). Beta is a different axis: that $200 seat on a 2.3-beta name contributes ~0.46 of book beta against the 1.6 ceiling and the 12% stress. Do not skip a 3m-RS leader because ATR is high (that is this lesson);",
           "noted_at": "2026-09-08"
         }
-      ]
+      ],
+      "superseded_by": "KB-1904498296",
+      "superseded_at": "2026-09-25T23:00:56.642717+00:00",
+      "supersede_reason": "merged"
     },
     {
       "id": "KB-4009348751",
@@ -1928,7 +1937,36 @@
           "noted_at": "2026-09-24"
         }
       ]
+    },
+    {
+      "id": "KB-1904498296",
+      "discipline": "risk_management",
+      "topic": "1% sizing is deep-fractional Kelly AND the inverse-vol scaler \u2014 do not double-cut ATR or apologize for small size",
+      "summary": "The two sizing questions \u2014 how much to risk per trade, and whether a second ATR haircut is needed \u2014 are one theory. Kelly f* = W - (1-W)/R maps onto the 1%-of-equity entry-to-stop budget. On realistic swing parameters (2:1 RR, 40\u201355% wins) full Kelly is ~10\u201332.5%, so 1% is ~1/10 to 1/30 of full Kelly \u2014 deep-fractional BY DESIGN. With a tiny closed-trade sample edge is unmeasured, and MacLean\u2013Thorp\u2013Ziemba show overbetting is asymmetric: a 10% edge overestimate drives ~50% overbet and the growth parabola hits zero at 2\u00d7 Kelly. Half-Kelly keeps ~75% of growth at half size, so erring LOW is correct. Van Tharp splits percent-risk (P = equity \u00d7 risk% / stop) from percent-volatility (P = equity \u00d7 vol% / ATR). They coincide iff the stop is an ATR multiple. This book's size = (equity \u00d7 1%) / stop_distance_pct is percent-risk; the ATR/expected-move floor already makes it inverse-vol, so a second discretionary ATR cut double-counts. Equal-dollar notionals silently overweight loud names. Kelly also assumes independent bets: the 8% heat and 2% theme caps ARE the portfolio-Kelly constraint when corr/demand_driver collapses names into one bet. Time-series vol-management (Moreira\u2013Muir ~50% cut) is already coded as the 0.5\u00d7 unwind haircut plus the hostile gate \u2014 do not add a third discretionary vol cut or stand-down.",
+      "key_points": [
+        "Kelly f* maps to the 1% entry-to-stop budget; at R=2 and 40\u201355% wins, 1% is intentional deep-fractional Kelly, not timidity.",
+        "Overbetting is asymmetric and dominated; with unmeasured edge, err LOW. Never widen a stop or inflate a target to scrape 2:1.",
+        "size = (equity \u00d7 1%) / stop_distance_pct is percent-risk; ATR/EM floors already inverse-vol-scale \u2014 a second ATR haircut double-counts.",
+        "Place stop beyond the named structural low AND \u2265 stop_engineering.min_stop_distance_pct (aim 1.5\u20132\u00d7ATR, never past 15%); if tradeable is false, pass.",
+        "Hugging the min-stop floor to inflate notional cheats the vol-scaler; Turtles' 2N risk is not this book's 1R.",
+        "Correlated / shared demand_driver names are ONE Kelly bet \u2014 size the cluster against the 2% theme / 8% heat caps.",
+        "Moreira\u2013Muir time-series vol cut is already the coded 0.5\u00d7 unwind + hostile gate; do not invent a third discretionary vol cut."
+      ],
+      "how_to_apply": "On every BUY, place stop_loss beyond the named structural low AND at least stop_engineering.min_stop_distance_pct (aim 1.5\u20132\u00d7ATR, never past 15%), then size = (equity \u00d7 1%) / stop_distance_pct \u2014 that single fraction is both the 1R budget and the inverse-vol scaler. Do not also cut the 1% because ATR looks high, and do not treat the 1% floor as too small to take a clean setup. Before any BUY run the one-bet test with portfolio_risk and demand_driver_map: co-movers >~0.7 or shared demand_driver share the 2% theme / 8% heat budget. If stop_engineering.tradeable is false (ATR/EM floor exceeds the 15% cap), pass \u2014 do not squeeze the stop or inflate the target. Leave the coded 0.5\u00d7 unwind haircut and hostile regime gate alone; never add a discretionary third vol cut or cash stand-down on top of 1%.",
+      "sources": [
+        "Kelly (1956) / Thorp practical Kelly",
+        "MacLean, Thorp, Ziemba \u2014 The Kelly Capital Growth Criterion",
+        "Van Tharp \u2014 Trade Your Way to Financial Freedom, ch. 14 (percent-risk vs percent-vol)",
+        "Faith / Turtle Trading \u2014 unit sizing at 1N",
+        "Moreira & Muir \u2014 Volatility Managed Portfolios"
+      ],
+      "learned_at": "2026-09-25T23:00:56.635307+00:00",
+      "run_id": "20260925-2376a1",
+      "merged_from": [
+        "KB-2999578881",
+        "KB-1510950925"
+      ]
     }
   ],
-  "updated_at": "2026-09-24T23:02:07.685005+00:00"
+  "updated_at": "2026-09-25T23:00:56.644869+00:00"
 }
