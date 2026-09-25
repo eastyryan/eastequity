@@ -308,3 +308,21 @@ This book's shadow portfolio currently surfaces multiple regret_misses (OKTA/PAN
 
 *Sources:* https://www.theoptionpremium.com/p/annie-duke-probabilistic-thinking; https://annieduke.com/site/uploads/howToDecide_excerpt.pdf; https://www.annieduke.com/article-3-ways-to-prepare-for-a-future-you-cant-predict/; https://capital.com/en-int/learn/trading-psychology/regret-aversion; https://enlightenedstocktrading.com/regret-aversion-in-trading/; https://faculty.haas.berkeley.edu/odean/Papers%20current%20versions/FAJ%20NovDec99%20Barber%20and%20Odean.pdf
 
+### [2026-09-25] risk_management — KB-1904498296
+
+**1% sizing is deep-fractional Kelly AND the inverse-vol scaler — do not double-cut ATR or apologize for small size**
+
+The two sizing questions — how much to risk per trade, and whether a second ATR haircut is needed — are one theory. Kelly f* = W - (1-W)/R maps onto the 1%-of-equity entry-to-stop budget. On realistic swing parameters (2:1 RR, 40–55% wins) full Kelly is ~10–32.5%, so 1% is ~1/10 to 1/30 of full Kelly — deep-fractional BY DESIGN. With a tiny closed-trade sample edge is unmeasured, and MacLean–Thorp–Ziemba show overbetting is asymmetric: a 10% edge overestimate drives ~50% overbet and the growth parabola hits zero at 2× Kelly. Half-Kelly keeps ~75% of growth at half size, so erring LOW is correct. Van Tharp splits percent-risk (P = equity × risk% / stop) from percent-volatility (P = equity × vol% / ATR). They coincide iff the stop is an ATR multiple. This book's size = (equity × 1%) / stop_distance_pct is percent-risk; the ATR/expected-move floor already makes it inverse-vol, so a second discretionary ATR cut double-counts. Equal-dollar notionals silently overweight loud names. Kelly also assumes independent bets: the 8% heat and 2% theme caps ARE the portfolio-Kelly constraint when corr/demand_driver collapses names into one bet. Time-series vol-management (Moreira–Muir ~50% cut) is already coded as the 0.5× unwind haircut plus the hostile gate — do not add a third discretionary vol cut or stand-down.
+
+- Kelly f* maps to the 1% entry-to-stop budget; at R=2 and 40–55% wins, 1% is intentional deep-fractional Kelly, not timidity.
+- Overbetting is asymmetric and dominated; with unmeasured edge, err LOW. Never widen a stop or inflate a target to scrape 2:1.
+- size = (equity × 1%) / stop_distance_pct is percent-risk; ATR/EM floors already inverse-vol-scale — a second ATR haircut double-counts.
+- Place stop beyond the named structural low AND ≥ stop_engineering.min_stop_distance_pct (aim 1.5–2×ATR, never past 15%); if tradeable is false, pass.
+- Hugging the min-stop floor to inflate notional cheats the vol-scaler; Turtles' 2N risk is not this book's 1R.
+- Correlated / shared demand_driver names are ONE Kelly bet — size the cluster against the 2% theme / 8% heat caps.
+- Moreira–Muir time-series vol cut is already the coded 0.5× unwind + hostile gate; do not invent a third discretionary vol cut.
+
+*Apply here:* On every BUY, place stop_loss beyond the named structural low AND at least stop_engineering.min_stop_distance_pct (aim 1.5–2×ATR, never past 15%), then size = (equity × 1%) / stop_distance_pct — that single fraction is both the 1R budget and the inverse-vol scaler. Do not also cut the 1% because ATR looks high, and do not treat the 1% floor as too small to take a clean setup. Before any BUY run the one-bet test with portfolio_risk and demand_driver_map: co-movers >~0.7 or shared demand_driver share the 2% theme / 8% heat budget. If stop_engineering.tradeable is false (ATR/EM floor exceeds the 15% cap), pass — do not squeeze the stop or inflate the target. Leave the coded 0.5× unwind haircut and hostile regime gate alone; never add a discretionary third vol cut or cash stand-down on top of 1%.
+
+*Sources:* Kelly (1956) / Thorp practical Kelly; MacLean, Thorp, Ziemba — The Kelly Capital Growth Criterion; Van Tharp — Trade Your Way to Financial Freedom, ch. 14 (percent-risk vs percent-vol); Faith / Turtle Trading — unit sizing at 1N; Moreira & Muir — Volatility Managed Portfolios
+
