@@ -8,9 +8,10 @@ name: Gather market data for cloud runs
 
 on:
   schedule:
-    - cron: "40 9,15,17,21 * * 1-5"              # 20 min before weekday run slots (UTC):
-                                                  # 05:40/11:40/13:40 ET feed the
-                                                  # 06:00/12:00/14:00 slots, and
+    - cron: "40 9,15,18,21 * * 1-5"              # 20 min before weekday run slots (UTC):
+                                                  # 05:40/11:40/14:40 ET feed the
+                                                  # 06:00/12:00/15:00 slots (14:00 paused,
+                                                  # 15:30 -> 15:00 on 2026-09-28), and
                                                   # 21:40 feeds the 5:30pm ET full review
                                                   # (7:30pm slot removed 2026-07-13).
                                                   # 19:40 REMOVED 2026-08-03: it fed the

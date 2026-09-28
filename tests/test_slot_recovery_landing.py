@@ -96,10 +96,13 @@ def test_a_late_afternoon_recovery_never_takes_the_evening_slot(monkeypatch, tmp
     shape — it buys headroom. At 17:00 a 15:30 recovery would still land ~17:25,
     inside 17:30's window, so it stays blocked. What the move DOES change is that
     the same miss is now recoverable earlier: 15:30 + NO_SHOW_H is 16:00, and a
-    recovery launched then lands ~16:25, comfortably clear of 17:30."""
-    r = _find(monkeypatch, tmp_path, [6.0, 8.75, 10.5, 12.0, 14.0], now_h=17.0)
+    recovery launched then lands ~16:25, comfortably clear of 17:30.
+
+    2026-09-28: 14:00 paused and 15:30 -> 15:00 (the box schedule). Same shape
+    again: at 17:00 a 15:00 recovery lands ~17:25, inside 17:30's window."""
+    r = _find(monkeypatch, tmp_path, [6.0, 8.75, 10.5, 12.0], now_h=17.0)
     assert r["slot"] is None
-    assert any(b["slot"] == "15:30" and b["why"] == "would_land_in_next_window"
+    assert any(b["slot"] == "15:00" and b["why"] == "would_land_in_next_window"
                for b in r["blocked"])
 
 
@@ -220,12 +223,12 @@ def test_an_unknown_slot_label_falls_back_instead_of_being_journaled(monkeypatch
     import journal
     import mark_run_start as mk
     monkeypatch.setattr(journal, "JOURNAL", tmp_path / "journal")
-    monkeypatch.setattr(mk, "_et_now_hour", lambda: (14.08, "14:05"))
+    monkeypatch.setattr(mk, "_et_now_hour", lambda: (15.08, "15:05"))
     monkeypatch.setattr(mk, "_et_is_weekday", lambda: True)
 
     assert mk.run(no_push=True, slot="8:45") == 0
     rec = json.loads(
         next((tmp_path / "journal" / "run_starts").glob("*.jsonl")).read_text()
         .splitlines()[-1])
-    assert rec["slot"] == "14:00"          # fell back to the clock
+    assert rec["slot"] == "15:00"          # fell back to the clock
     assert "recovery_for" not in rec

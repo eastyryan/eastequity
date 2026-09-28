@@ -186,6 +186,20 @@ def apply_safety_layer(context: dict, cfg: dict, run_id: str) -> list[dict]:
         if ca.get("errors"):
             print(f"  corporate-actions errors: {ca['errors']}")
 
+    # LEDGER TRUTH for resting stops (2026-09-28): ask the broker, not the
+    # ledger, whether each position's stop is still working, and re-arm the
+    # ones that are not — a sub-share position's DAY stop expires at every
+    # close while the ledger keeps calling it 'resting'. Risk-reducing only
+    # (sell stops), alpaca backend only, and a failure here never blocks the
+    # forced-exit check below.
+    try:
+        rearm = broker.rearm_protective_stops(reason="slot_run")
+        if rearm and (rearm.get("failed") or rearm.get("errors")):
+            print(f"  protective stop re-arm: failed={rearm.get('failed')} "
+                  f"errors={rearm.get('errors')}")
+    except Exception as e:
+        print(f"  (protective stop re-arm skipped: {e})")
+
     prices = context["universe_scan"].get("prices", {})
     # ATR per name lets the broker model stop gap-through (a stop rarely fills exactly
     # at its level; price gaps beyond it). Same map the volatility-stop floor uses.

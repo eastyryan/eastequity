@@ -189,3 +189,67 @@ def test_the_alarm_reports_slots_against_slots(monkeypatch):
     assert "9 journaled run(s)" in reason, "the raw run count must stay, but labelled"
     assert "expected 7, completed 9" not in reason, "the contradictory pairing is back"
     assert "+29min" in reason, "drift is the diagnosis for a slot eaten by its neighbour"
+
+
+# --------------------------------------------------------------------------- #
+# 2026-09-28 (issue #4): the heartbeat grades the schedule the box ACTUALLY runs.
+# The 14:00 slot is paused and the 15:30 full pre-close run moved to 15:00, so
+# every afternoon paged "14:00 missed" against a slot nobody fires.
+# --------------------------------------------------------------------------- #
+BOX_SLOTS = [6, 8.75, 10.5, 12, 15, 17.5]   # 06:00 08:45 10:30 12:00 15:00 17:30 ET
+
+
+def test_heartbeat_expected_slots_match_the_box_schedule():
+    from runlib.analytics import expected_slots
+    assert expected_slots(True) == BOX_SLOTS
+    assert expected_slots(False) == [0, 23.98]
+
+
+def test_config_and_depth_defaults_name_the_same_six_slots():
+    import json as _json
+    from runlib.depths import DEFAULT_SLOT_DEPTHS, slot_depth_from_hhmm
+    cfg = _json.loads((Path(__file__).resolve().parent.parent
+                       / "autonomy_config.json").read_text())
+    live = {k: v for k, v in cfg["schedule"]["slot_depths"].items()
+            if len(k) == 4 and k.isdigit()}
+    want = {"0600": "light", "0845": "holdings_watchlist", "1030": "full",
+            "1200": "holdings_watchlist", "1500": "full",
+            "1730": "evening_review"}
+    assert live == want == DEFAULT_SLOT_DEPTHS
+    # the 3pm run resolves to a full scan whether launched on time or a bit late
+    for hhmm in ("1458", "1500", "1512", "1530"):
+        assert slot_depth_from_hhmm(hhmm, cfg) == "full", hhmm
+
+
+def _box_day(monkeypatch, tmp_path, et_hours):
+    import json as _json
+    import runlib.analytics as A
+    runs = tmp_path / "journal" / "runs"
+    runs.mkdir(parents=True)
+    lines = []
+    for i, h in enumerate(et_hours):
+        utc_h = h + 4
+        lines.append(_json.dumps({
+            "ts": f"2026-09-28T{int(utc_h):02d}:{int(round((utc_h % 1) * 60)):02d}"
+                  f":00+00:00", "run_id": f"20260928-{i:04d}", "node": "box",
+            "manual": False}))
+    (runs / "2026-09-28.jsonl").write_text("\n".join(lines) + "\n")
+    monkeypatch.setattr(A, "ROOT", tmp_path)
+    monkeypatch.setattr(A, "et_date", lambda: "2026-09-28")
+    monkeypatch.setattr(A, "to_et_date", lambda ts: "2026-09-28")
+    return A
+
+
+def test_a_normal_box_day_has_no_phantom_1400_miss(monkeypatch, tmp_path):
+    """Runs complete ~10-25 min after each slot (a record is stamped when the
+    run FINISHES). No 14:00 run exists — and none is owed."""
+    A = _box_day(monkeypatch, tmp_path, [6.1, 9.0, 10.9, 12.2, 15.3, 17.6])
+    r = A.slot_report(now_h=18.0, weekday=True)
+    assert r["missed_slots"] == [], r
+    assert "14:00" not in [s["label"] for s in r["slots"]]
+
+
+def test_a_missing_1500_run_still_pages(monkeypatch, tmp_path):
+    A = _box_day(monkeypatch, tmp_path, [6.1, 9.0, 10.9, 12.2])
+    r = A.slot_report(now_h=16.5, weekday=True)
+    assert r["missed_slots"] == ["15:00"]

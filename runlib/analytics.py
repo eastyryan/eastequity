@@ -36,8 +36,15 @@ def expected_slots(weekday: bool) -> list[float]:
       * TIMING. 10:00 sits 30 minutes after the open, inside the opening range;
         10:30 is a full hour in, by which point the range has settled. For a
         swing book that is a better place to act, independent of the plumbing.
+
+    2026-09-28 — the box schedule, which is what actually runs (GitHub issue #4
+    paged "14:00 missed" for weeks against a slot nobody fires any more): the
+    14:00 holdings slot is PAUSED and the 15:30 full pre-close run moved to
+    15:00, so it decides and pushes well before the bell. Six weekday slots:
+    06:00 light, 08:45 holdings, 10:30 full, 12:00 holdings, 15:00 full,
+    17:30 evening review.
     """
-    return [6, 8.75, 10.5, 12, 14, 15.5, 17.5] if weekday else [0, 23.98]
+    return [6, 8.75, 10.5, 12, 15, 17.5] if weekday else [0, 23.98]
 
 
 # A run may fire slightly early (cron jitter) and still belong to its slot; and a slot

@@ -18,6 +18,8 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import runlib.analytics as A  # noqa: E402
@@ -26,6 +28,18 @@ SLOTS = [6, 8.75, 10.5, 12, 14, 15.5, 17.5]  # 09:00/10:00 -> 08:45/10:30 (07-25
                                              # 16:00 -> 15:30 (08-03): a full run
                                              # takes 18-20 min, so a 16:00 slot
                                              # COMPLETED after the closing bell.
+
+
+@pytest.fixture(autouse=True)
+def _pin_seven_slot_geometry(monkeypatch):
+    """These tests pin slot_report's MECHANICS (grace windows, died vs missed,
+    manual runs, double fires) on the seven-slot day they were written against.
+    The live schedule moved on 2026-09-28 (14:00 paused, 15:30 -> 15:00; the
+    live list is pinned in tests/test_heartbeat_check.py and
+    tests/test_schedule_sources_agree.py) — the mechanics did not, so the
+    geometry is fixed here rather than rewritten under every schedule change."""
+    monkeypatch.setattr(A, "expected_slots",
+                        lambda weekday: list(SLOTS) if weekday else [0, 23.98])
 
 
 def _journal(tmp_path, hours, node="vm"):

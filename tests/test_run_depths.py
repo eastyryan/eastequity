@@ -46,11 +46,14 @@ def test_slot_map():
     # before the afternoon; 16:00 became 15:30 because a full run takes 18-20 min,
     # so a 16:00 slot COMPLETED after the closing bell on every day it ran.
     check("1530 full", slot_depth_from_hhmm("1530") == "full")
+    # 2026-09-28: 14:00 paused, 15:30 -> 15:00 (box schedule). The pre-close
+    # full scan is the 15:00 slot now.
+    check("1500 full", slot_depth_from_hhmm("1500") == "full")
     check("1030 full", slot_depth_from_hhmm("1030") == "full")
     check("0600 light", slot_depth_from_hhmm("0600") == "light")
     cfg = {"schedule": {"slot_depths": {"1030": "holdings_watchlist"}}}
     check("config override", slot_depth_from_hhmm("1030", cfg) == "holdings_watchlist")
-    check("default keys cover weekday slots", set(DEFAULT_SLOT_DEPTHS) >= {"0845", "1030", "1200", "1400", "1530"})
+    check("default keys cover weekday slots", set(DEFAULT_SLOT_DEPTHS) >= {"0845", "1030", "1200", "1500"})
 
 
 def test_nearest_slot_matching():

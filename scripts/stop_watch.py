@@ -272,7 +272,10 @@ def _broker_maintenance(out: dict) -> None:
         for pos in (alpaca_broker.get_portfolio().get("positions") or []):
             alpaca_broker.ensure_protective_stop(
                 str(pos.get("ticker", "")).upper(), reason="stop_watch_tick")
-        naked = [str(p.get("ticker")) for p in alpaca_broker.unprotected_positions()]
+        # verify_broker: a ledger 'resting' record is checked against the
+        # broker, so an expired DAY stop is reported, never assumed armed.
+        naked = [str(p.get("ticker")) for p in
+                 alpaca_broker.unprotected_positions(verify_broker=True)]
         if naked:
             out["unprotected"] = naked
             print(f"  UNPROTECTED POSITIONS (no resting stop): {', '.join(naked)}")

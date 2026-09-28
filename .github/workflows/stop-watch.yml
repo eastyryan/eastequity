@@ -140,9 +140,14 @@ jobs:
 
       - name: Fall back to the published snapshot if our fetch produced nothing
         run: |
+          # state/live_prices.json is no longer tracked on main (a stale
+          # 2026-09-23 copy used to sit there, so this -s test was ALWAYS true
+          # and the fallback never fired). Explicit refspec so the tracking ref
+          # exists however the checkout was configured.
           if [ ! -s state/live_prices.json ]; then
-            git fetch origin live-data --depth=1 || exit 0
+            git fetch --depth=1 origin "+refs/heads/live-data:refs/remotes/origin/live-data" || exit 0
             git checkout origin/live-data -- state/live_prices.json || true
+            git reset -q -- state/live_prices.json || true
           fi
 
       - name: Enforce stops and re-arm protective orders

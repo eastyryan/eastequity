@@ -24,6 +24,14 @@ state is an alarm that can cause the incident it is meant to report.
   python scripts/heartbeat_check.py            # exit 1 if unhealthy
   python scripts/heartbeat_check.py --notify   # + macOS banner
   python scripts/heartbeat_check.py --json     # machine-readable, always exit 0
+
+EXPECTED SLOTS come from runlib.analytics.expected_slots() — one list shared with
+the watchdog's missed-slot finder and the run-start marker, so the alarm can never
+grade a different day than the one the fleet runs. Aligned with the box schedule on
+2026-09-28 (GitHub issue #4): 06:00 light, 08:45 holdings, 10:30 full, 12:00
+holdings, 15:00 full pre-close, 17:30 evening review (the 14:00 slot is paused and
+15:30 moved to 15:00). The hourly Heartbeat cron is throttled by GitHub (first run
+of the day lands ~10:30 ET); it stays as the out-of-band backstop.
 """
 
 from __future__ import annotations
