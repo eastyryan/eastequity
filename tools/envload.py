@@ -47,18 +47,59 @@ def env_path() -> Path | None:
     return None
 
 
+def _parse_env_file(path: Path) -> dict[str, str]:
+    """Minimal .env parser for when python-dotenv is not importable. Pure.
+
+    Handles what these files actually contain: KEY=VALUE lines, blank lines,
+    `#` comments, an optional leading `export `, and single/double-quoted values
+    (an unquoted value loses a trailing ` # comment`). No interpolation."""
+    out: dict[str, str] = {}
+    for raw in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        line = raw.strip()
+        if not line or line.startswith("#"):
+            continue
+        if line.startswith("export "):
+            line = line[len("export "):].lstrip()
+        key, sep, val = line.partition("=")
+        key = key.strip()
+        if not sep or not key or not key.replace("_", "").isalnum():
+            continue
+        val = val.strip()
+        if len(val) >= 2 and val[0] == val[-1] and val[0] in ("'", '"'):
+            val = val[1:-1]
+        else:
+            hash_at = val.find(" #")
+            if hash_at >= 0:
+                val = val[:hash_at].rstrip()
+        out[key] = val
+    return out
+
+
 def load_env() -> Path | None:
     """Load the resolved secrets file into os.environ and return the path used.
 
-    Never raises: a missing file, an unreadable file, or an absent python-dotenv all
-    degrade to "rely on the ambient environment", which is the correct behavior in CI.
+    Never raises: a missing or unreadable file degrades to "rely on the ambient
+    environment", which is the correct behavior in CI. Like python-dotenv, an
+    already-set environment variable is never overridden.
+
+    python-dotenv ABSENT no longer means "silently load nothing" (fixed
+    2026-09-28): a script run under the system python3 (no venv) used to drop
+    the Alpaca keys on the floor and then behave as a keyless node. The file is
+    parsed by hand instead.
     """
     path = env_path()
     if path is None:
         return None
     try:
         from dotenv import load_dotenv
-        load_dotenv(path)
+    except Exception:
+        load_dotenv = None
+    try:
+        if load_dotenv is not None:
+            load_dotenv(path)
+        else:
+            for k, v in _parse_env_file(path).items():
+                os.environ.setdefault(k, v)
     except Exception:
         return None
     return path

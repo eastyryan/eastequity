@@ -63,6 +63,15 @@ def update_trailing_stops(trailing: dict) -> int:
     return _backend().update_trailing_stops(trailing)
 
 
+def rearm_protective_stops(*, reason: str = "slot_run") -> dict:
+    """Verify every held position's resting stop AT THE BROKER and re-arm any
+    that expired / were cancelled (a sub-share DAY stop dies at every close).
+    Simulation has no resting orders — returns {}."""
+    b = _backend()
+    fn = getattr(b, "rearm_protective_stops", None)
+    return fn(reason=reason) if callable(fn) else {}
+
+
 def reconcile() -> list:
     """Complete broker-side pending orders (async fills). Simulation has no
     async lifecycle — returns []."""

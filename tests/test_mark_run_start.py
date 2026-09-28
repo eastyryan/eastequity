@@ -16,15 +16,16 @@ import mark_run_start as mk  # noqa: E402
 
 
 def test_slot_label_matches_a_real_slot(monkeypatch):
-    """At 14:05 ET the marker must claim the 14:00 slot — the SAME slot list the
-    heartbeat grades against, so a marker cannot certify a slot the heartbeat ignores."""
-    monkeypatch.setattr(mk, "_et_now_hour", lambda: (14.08, "14:05"))
+    """At 15:05 ET the marker must claim the 15:00 slot — the SAME slot list the
+    heartbeat grades against, so a marker cannot certify a slot the heartbeat ignores.
+    (Was 14:05 -> 14:00 until 2026-09-28: 14:00 paused, 15:30 -> 15:00.)"""
+    monkeypatch.setattr(mk, "_et_now_hour", lambda: (15.08, "15:05"))
     # BOTH halves of "when is it" must be pinned. This used to patch only the hour
     # and let the weekday fall through to the real clock, so the assertion below
     # was false every Saturday and Sunday (the weekend slot list is [0, 23.98])
     # and the suite went red on schedule twice a week.
     monkeypatch.setattr(mk, "_et_is_weekday", lambda: True)
-    assert mk._current_slot_label() == "14:00"
+    assert mk._current_slot_label() == "15:00"
 
 
 def test_off_slot_time_gets_no_slot(monkeypatch):
@@ -43,7 +44,7 @@ def test_marker_is_written_with_slot_and_stage(monkeypatch, tmp_path):
     """The journaled record must carry slot + stage so slot_report can read it."""
     import journal
     monkeypatch.setattr(journal, "JOURNAL", tmp_path / "journal")
-    monkeypatch.setattr(mk, "_et_now_hour", lambda: (14.08, "14:05"))
+    monkeypatch.setattr(mk, "_et_now_hour", lambda: (15.08, "15:05"))
     monkeypatch.setattr(mk, "_et_is_weekday", lambda: True)
 
     rc = mk.main_for_test(no_push=True)
@@ -52,7 +53,7 @@ def test_marker_is_written_with_slot_and_stage(monkeypatch, tmp_path):
     files = list(f.glob("*.jsonl"))
     assert files, "no run_start breadcrumb written"
     rec = json.loads(files[0].read_text().splitlines()[-1])
-    assert rec["slot"] == "14:00"
+    assert rec["slot"] == "15:00"
     assert rec["stage"] == "start"
     assert rec["node"]
 

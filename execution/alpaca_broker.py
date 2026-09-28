@@ -88,6 +88,7 @@ import tempfile
 import time
 import uuid
 from datetime import datetime, timedelta, timezone
+from decimal import ROUND_DOWN, Decimal, InvalidOperation
 from pathlib import Path
 
 import requests
@@ -117,7 +118,7 @@ _DEFAULTS = {
 
 # Alpaca order statuses that mean "this order is live and holding shares".
 _STOP_WORKING = ("new", "accepted", "held", "partially_filled", "pending_new",
-                 "accepted_for_bidding", "calculated")
+                 "accepted_for_bidding", "calculated", "pending_replace")
 
 # Statuses that mean an order is DEAD at the broker with nothing to show for it.
 # Used by the duplicate-client_order_id path: Alpaca client ids are unique
@@ -227,6 +228,29 @@ def _f(v, default: float = 0.0) -> float:
         return float(v)
     except (TypeError, ValueError):
         return default
+
+
+# Alpaca carries fractional share quantities to 9 decimal places.
+_QTY_QUANTUM = Decimal("0.000000001")
+
+
+def _floor_qty(v) -> float:
+    """A share count truncated (NEVER rounded up) to Alpaca's 9-dp precision.
+
+    2026-09-28, NOW: the broker held 0.791986698 shares and every protective
+    stop was sized round(qty, 6) = 0.791987 — MORE than the position — so
+    Alpaca refused buy_fill, manual_rearm and every stop_watch_tick re-arm and
+    the position sat naked. A sell/stop quantity must never exceed what is
+    held; rounding to nearest guarantees it will, half the time. Going through
+    str() keeps the broker's own decimal string exact ("0.791986698" stays
+    0.791986698) instead of inheriting binary-float noise. Garbage -> 0.0."""
+    try:
+        d = Decimal(str(v).strip()).quantize(_QTY_QUANTUM, rounding=ROUND_DOWN)
+    except (InvalidOperation, ValueError, TypeError, AttributeError):
+        return 0.0
+    if not d.is_finite() or d <= 0:
+        return 0.0
+    return float(d)
 
 
 # --------------------------------------------------------------------------- #
@@ -919,22 +943,61 @@ def _stop_shape(qty: float) -> tuple[float, str, float]:
     was computed AS the current one. The desired stop shape is a function of
     what we hold now, never of what the last order happened to be — a DAY stop
     on a position that now has a whole-share leg upgrades to GTC on the next
-    ensure call."""
-    whole = float(int(qty))
+    ensure call.
+
+    NEVER ROUNDS UP (fixed 2026-09-28). Quantities are truncated to Alpaca's
+    9-dp precision via _floor_qty: round(0.791986698, 6) = 0.791987 is more
+    shares than the account holds, and the broker refused every such stop."""
+    q = _floor_qty(qty)
+    whole = float(int(q))
     if whole >= 1.0:
-        return whole, "gtc", round(qty - whole, 6)
-    return round(qty, 6), "day", 0.0
+        tail = Decimal(str(q)) - Decimal(int(q))
+        return whole, "gtc", _floor_qty(tail)
+    return q, "day", 0.0
+
+
+def _refusal_text(refusal: dict | None) -> str:
+    if not refusal:
+        return "no broker response recorded"
+    code = refusal.get("http_status")
+    msg = refusal.get("message") or "no message"
+    return (f"alpaca HTTP {code if code else 'transport-failure'}: {msg} "
+            f"(qty {refusal.get('qty')} {refusal.get('time_in_force')} "
+            f"@ {refusal.get('stop_price')})")
 
 
 def _submit_stop(ticker: str, qty: float, stop_price: float,
-                 tif: str) -> dict | None:
+                 tif: str, *, refusals: list | None = None) -> dict | None:
+    """Submit one sell-stop. Returns the accepted order, or None.
+
+    A refusal is no longer discarded (fixed 2026-09-28): the HTTP status and
+    Alpaca's own message are appended to `refusals` (when given) and printed,
+    so the journal/rejected record says WHY the broker said no — the NOW
+    incident read 'no reason given' three times while the answer ('qty exceeds
+    position') sat in the response body."""
+    qty_s = _fmt_qty(_floor_qty(qty))
     body = {"symbol": ticker, "side": "sell", "type": "stop",
-            "time_in_force": tif, "qty": _fmt_qty(qty),
+            "time_in_force": tif, "qty": qty_s,
             "stop_price": f"{float(stop_price):.2f}",
             "client_order_id": f"EESTOP-{ticker}-{uuid.uuid4().hex[:10]}"}
     code, resp = _req("POST", "/v2/orders", body=body, timeout=15)
     if code == 200 and isinstance(resp, dict) and resp.get("id"):
         return resp
+    msg = None
+    if isinstance(resp, dict):
+        msg = resp.get("message") or resp.get("error") or resp.get("msg")
+        if msg is None and resp:
+            msg = json.dumps(resp, default=str)[:300]
+    elif resp is not None:
+        msg = str(resp)[:300]
+    refusal = {"http_status": code or None, "message": msg,
+               "broker_code": (resp.get("code") if isinstance(resp, dict) else None),
+               "qty": qty_s, "time_in_force": tif,
+               "stop_price": body["stop_price"],
+               "at": datetime.now(timezone.utc).isoformat()}
+    if refusals is not None:
+        refusals.append(refusal)
+    print(f"  (stop submit refused for {ticker}: {_refusal_text(refusal)})")
     return None
 
 
@@ -951,50 +1014,76 @@ def _write_protective_stop(ticker: str, rec: dict | None) -> None:
 
 
 def _record_protective_stop(ticker: str, o: dict, qty: float, tif: str,
-                            uncovered: float, level: float) -> dict:
+                            uncovered: float, level: float,
+                            extra: dict | None = None) -> dict:
     rec = {
         "status": "resting",
         "stop_price": round(float(level), 4),
-        "qty": round(float(qty), 6),
+        "qty": _floor_qty(qty),
         # The share fraction NO resting order can carry. Disclosed, never
         # silently treated as protected.
-        "uncovered_qty": round(float(uncovered), 6),
+        "uncovered_qty": _floor_qty(uncovered),
         "session_only": tif == "day",
         "time_in_force": tif,
         "client_order_id": o.get("client_order_id"),
         "alpaca_order_id": o.get("id"),
         "armed_at": datetime.now(timezone.utc).isoformat(),
     }
+    if extra:
+        rec.update(extra)
     _write_protective_stop(ticker, rec)
     return rec
 
 
-def _fail_protective_stop(ticker: str, level, qty: float, reason: str) -> dict:
+def _fail_protective_stop(ticker: str, level, qty: float, reason: str,
+                          refusals: list | None = None) -> dict:
     """A position with NO resting stop is a risk event, not a footnote."""
+    refusals = list(refusals or [])
+    last = refusals[-1] if refusals else None
     rec = {
         "status": "FAILED",
         "stop_price": round(float(level), 4) if level else None,
-        "qty": round(float(qty), 6),
-        "uncovered_qty": round(float(qty), 6),
+        "qty": _floor_qty(qty),
+        "uncovered_qty": _floor_qty(qty),
         "session_only": False,
         "time_in_force": None,
         "reason": reason or None,
+        "broker_http_status": (last or {}).get("http_status"),
+        "broker_message": (last or {}).get("message"),
         "failed_at": datetime.now(timezone.utc).isoformat(),
     }
     _write_protective_stop(ticker, rec)
     try:
         journal.log_rejection(
             {"ticker": ticker, "action": "PROTECTIVE_STOP",
-             "stop_price": rec["stop_price"], "quantity": rec["qty"]},
+             "stop_price": rec["stop_price"], "quantity": rec["qty"],
+             "broker_refusals": refusals},
             ["RISK_EVENT_protective_stop_not_armed",
              f"the broker refused every protective stop for {ticker} "
              f"({reason or 'no reason given'}) — the position is carrying "
-             f"UNPROTECTED risk until a cycle or stop_watch tick re-arms it"],
+             f"UNPROTECTED risk until a cycle or stop_watch tick re-arms it",
+             *[_refusal_text(r) for r in refusals]],
             "protective-stop")
     except Exception:
         pass
-    print(f"  RISK EVENT: protective stop NOT armed for {ticker} @ {level}")
+    print(f"  RISK EVENT: protective stop NOT armed for {ticker} @ {level}"
+          + (f" — {_refusal_text(last)}" if last else ""))
     return rec
+
+
+def _journal_stop_note(ticker: str, tag: str, detail: str,
+                       refusals: list | None = None, **fields) -> None:
+    """Informational journal/rejected line for a stop the broker would not
+    CHANGE while an older stop kept protecting the position. Not a risk event
+    (the position is still covered) but never silent. Fail-soft."""
+    try:
+        journal.log_rejection(
+            {"ticker": ticker, "action": "PROTECTIVE_STOP", **fields,
+             "broker_refusals": list(refusals or [])},
+            [tag, detail, *[_refusal_text(r) for r in (refusals or [])]],
+            "protective-stop")
+    except Exception:
+        pass
 
 
 def _stand_down_protective_stop(ticker: str, *, reason: str = "") -> bool:
@@ -1031,18 +1120,61 @@ def _retire_protective_stop(ticker: str, *, reason: str = "") -> None:
         _write_protective_stop(ticker, None)
 
 
+def _order_status_by_client_id(cid) -> str | None:
+    """Broker status of a recorded order ('missing' if the broker has no such
+    order, None if the lookup itself failed)."""
+    if not cid:
+        return "missing"
+    code, body = _req("GET", "/v2/orders:by_client_order_id",
+                      params={"client_order_id": str(cid)})
+    if code == 200 and isinstance(body, dict):
+        return str(body.get("status") or "unknown")
+    if code == 404:
+        return "missing"
+    return None
+
+
+def _still_working(o: dict) -> bool:
+    """Re-read an order we were about to give up on. Unknown => assume it is
+    still working: cancelling or duplicating a live stop on a read hiccup is
+    the worse mistake."""
+    cid = o.get("client_order_id")
+    if not cid:
+        return True
+    st = _order_status_by_client_id(cid)
+    if st is None:
+        return True
+    return st in _STOP_WORKING
+
+
 def ensure_protective_stop(ticker: str, *, reason: str = "") -> dict | None:
     """Arm / re-size / ratchet the resting stop for one position.
 
     Called on every filled BUY (including scale-ins), after a sell_fraction
-    partial, and from update_trailing_stops. Idempotent: re-running it against
-    an already-correct stop touches nothing.
+    partial, from update_trailing_stops, from every stop_watch tick and from
+    each slot run's safety layer (rearm_protective_stops). Idempotent:
+    re-running it against an already-correct stop touches nothing.
 
     RATCHET-ONLY, ENFORCED AT THE BROKER as well as in the ledger. A live
     protective stop is raised or left alone — never widened. The mirror's guard
     is not sufficient on its own: a bad write or a stale metadata replay can ask
     for a lower level, and widening a live stop is the one thing a trail must
-    never do."""
+    never do.
+
+    REPLACE-SAFE (fixed 2026-09-28). A refused modify used to fall straight
+    through to "cancel the working stop, then submit a new one" — and when the
+    new one was refused too (the NOW 0.791987 > 0.791986698 case) the position
+    was left with ZERO stops. Now: a refused PATCH KEEPS the working stop (it is
+    still protecting, just not at the new size/level); a tif change submits the
+    replacement FIRST and cancels the old one only once the new one is
+    accepted, and if the broker will not take a replacement while the old stop
+    holds the shares, the cancel-and-rewrite that follows ROLLS BACK to the old
+    shape when the rewrite is refused.
+
+    LEDGER TRUTH (fixed 2026-09-28). The ledger saying 'resting' is not
+    evidence a stop exists: DAY stops expire at every close. The broker is
+    asked every time; a recorded stop that is expired/cancelled/missing is
+    treated as unarmed and re-armed, and the re-arm says so."""
     ticker = str(ticker).upper()
     if not _stop_cfg_on() or not api_reachable():
         return None
@@ -1080,7 +1212,8 @@ def ensure_protective_stop(ticker: str, *, reason: str = "") -> dict | None:
         _write_protective_stop(ticker, None)
         return None
 
-    qty = round(_f(bp.get("qty")), 6)
+    # The broker's own quantity, truncated — never rounded up past what is held.
+    qty = _floor_qty(bp.get("qty"))
     if qty <= 0:
         _retire_protective_stop(ticker, reason=reason or "flat")
         return None
@@ -1092,16 +1225,30 @@ def ensure_protective_stop(ticker: str, *, reason: str = "") -> dict | None:
         return pos.get("protective_stop")
 
     rec = pos.get("protective_stop")
-    existing = _working_stop_order(ticker, rec if isinstance(rec, dict) else None)
+    rec = rec if isinstance(rec, dict) else None
+    existing = _working_stop_order(ticker, rec)
+    refusals: list[dict] = []
+    extra: dict = {}
+
+    if existing is None and rec and rec.get("status") == "resting":
+        # The ledger believes a stop is resting; the broker has no working stop
+        # for this ticker. Most often a DAY stop that expired at the close.
+        prior = _order_status_by_client_id(rec.get("client_order_id"))
+        extra["rearmed_from"] = {
+            "client_order_id": rec.get("client_order_id"),
+            "alpaca_order_id": rec.get("alpaca_order_id"),
+            "broker_status": prior or "unreadable"}
+        print(f"  {ticker}: ledger said stop 'resting' but broker order is "
+              f"{prior or 'unreadable'} — treating as UNARMED and re-arming")
 
     if existing is not None:
         cur_price = round(_f(existing.get("stop_price")), 4)
-        cur_qty = round(_f(existing.get("qty")), 6)
+        cur_qty = _floor_qty(existing.get("qty"))
         cur_tif = str(existing.get("time_in_force") or "").lower()
         level = max(desired, cur_price)          # <- the ratchet
         want_qty, want_tif, uncovered = _stop_shape(qty)
         if want_tif == cur_tif:
-            if abs(level - cur_price) < 5e-5 and abs(want_qty - cur_qty) < 1e-6:
+            if abs(level - cur_price) < 5e-5 and abs(want_qty - cur_qty) < 1e-9:
                 return _record_protective_stop(ticker, existing, want_qty,
                                                want_tif, uncovered, level)
             code, resp = _req("PATCH", f"/v2/orders/{existing['id']}",
@@ -1110,28 +1257,167 @@ def ensure_protective_stop(ticker: str, *, reason: str = "") -> dict | None:
             if code == 200 and isinstance(resp, dict):
                 return _record_protective_stop(ticker, resp, want_qty,
                                                want_tif, uncovered, level)
-        # A replace the broker will not take (tif has to change, or the order
-        # went terminal under us): cancel and rewrite — never at a lower level.
-        _req("DELETE", f"/v2/orders/{existing['id']}")
-        desired = level
+            refusals.append({
+                "http_status": code or None,
+                "message": ((resp or {}).get("message")
+                            if isinstance(resp, dict) else None),
+                "qty": _fmt_qty(want_qty), "time_in_force": want_tif,
+                "stop_price": f"{level:.2f}", "op": "replace",
+                "at": datetime.now(timezone.utc).isoformat()})
+            if _still_working(existing):
+                # KEEP THE OLD STOP. It is still protecting the position — at
+                # its own size and level, which is what we record (truth, not
+                # the level we wished for). The next tick retries the change.
+                _journal_stop_note(
+                    ticker, "PROTECTIVE_STOP_REPLACE_REFUSED",
+                    f"broker refused to modify the {ticker} stop to "
+                    f"{_fmt_qty(want_qty)} @ {level:.2f}; KEPT the working stop "
+                    f"{_fmt_qty(cur_qty)} @ {cur_price:.2f} ({cur_tif})",
+                    refusals, stop_price=cur_price, quantity=cur_qty)
+                return _record_protective_stop(
+                    ticker, existing, cur_qty, cur_tif,
+                    max(0.0, _floor_qty(qty - cur_qty)), cur_price,
+                    extra={"replace_refused": refusals[-1]})
+            # The order went terminal under us (filled/cancelled/expired):
+            # nothing to cancel — fall through and arm a fresh stop.
+            desired = level
+        else:
+            # tif has to change: the broker cannot PATCH it. Replacement FIRST;
+            # the old stop is cancelled only once a new one is accepted.
+            o = _submit_stop(ticker, want_qty, level, want_tif, refusals=refusals)
+            if o is not None:
+                _req("DELETE", f"/v2/orders/{existing['id']}")
+                return _record_protective_stop(ticker, o, want_qty, want_tif,
+                                               uncovered, level)
+            # Refused — almost always because the old stop still HOLDS the
+            # shares. Cancel, rewrite, and roll back to the old shape if the
+            # rewrite is refused, so a failed replace never leaves zero stops.
+            _req("DELETE", f"/v2/orders/{existing['id']}")
+            try:
+                _await_shares_released(ticker, timeout_s=4.0)
+            except Exception:
+                pass
+            o = _submit_stop(ticker, want_qty, level, want_tif, refusals=refusals)
+            if o is None and want_tif == "gtc":
+                o = _submit_stop(ticker, qty, level, "day", refusals=refusals)
+                if o is not None:
+                    want_qty, want_tif, uncovered = qty, "day", 0.0
+            if o is None:
+                o = _submit_stop(ticker, cur_qty, cur_price, cur_tif,
+                                 refusals=refusals)
+                if o is not None:
+                    _journal_stop_note(
+                        ticker, "PROTECTIVE_STOP_REPLACE_ROLLED_BACK",
+                        f"broker refused the {ticker} replacement stop; "
+                        f"re-armed the previous shape {_fmt_qty(cur_qty)} @ "
+                        f"{cur_price:.2f} ({cur_tif})",
+                        refusals, stop_price=cur_price, quantity=cur_qty)
+                    return _record_protective_stop(
+                        ticker, o, cur_qty, cur_tif,
+                        max(0.0, _floor_qty(qty - cur_qty)), cur_price,
+                        extra={"replace_refused": refusals[-1]})
+                return _fail_protective_stop(ticker, level, qty, reason, refusals)
+            return _record_protective_stop(ticker, o, want_qty, want_tif,
+                                           uncovered, level)
 
-    want_qty, want_tif, uncovered = _stop_shape(qty)
-    o = _submit_stop(ticker, want_qty, desired, want_tif)
+    # No working stop at the broker: arm one. Sized from the broker's quantity
+    # (capped at qty_available when some other order holds part of it).
+    avail = _floor_qty(bp.get("qty_available")) if bp.get("qty_available") \
+        not in (None, "") else qty
+    arm_qty = min(qty, avail) if avail > 0 else qty
+    want_qty, want_tif, uncovered = _stop_shape(arm_qty)
+    uncovered = _floor_qty(max(0.0, qty - want_qty)) if want_tif == "gtc" \
+        else _floor_qty(max(0.0, qty - arm_qty))
+    o = _submit_stop(ticker, want_qty, desired, want_tif, refusals=refusals)
     if o is None and want_tif == "gtc":
         # GTC refused (the fractional rule, or anything else): a DAY stop on the
         # FULL position beats leaving it naked. Session-only, and it says so.
-        o = _submit_stop(ticker, qty, desired, "day")
-        want_qty, want_tif, uncovered = round(qty, 6), "day", 0.0
+        o = _submit_stop(ticker, arm_qty, desired, "day", refusals=refusals)
+        want_qty, want_tif = arm_qty, "day"
+        uncovered = _floor_qty(max(0.0, qty - arm_qty))
     if o is None:
-        return _fail_protective_stop(ticker, desired, qty, reason)
+        # Another node (the Actions stop-watch vs this box) may have armed a
+        # stop between our look and our submit — its held shares are exactly
+        # why ours was refused. Adopt it rather than stamp a false FAILED.
+        other = _working_stop_order(ticker, None)
+        if other is not None:
+            oq = _floor_qty(other.get("qty"))
+            otif = str(other.get("time_in_force") or "").lower()
+            return _record_protective_stop(
+                ticker, other, oq, otif, _floor_qty(max(0.0, qty - oq)),
+                round(_f(other.get("stop_price")), 4),
+                extra={**extra, "adopted_after_refusal":
+                       (refusals[-1] if refusals else None)})
+        return _fail_protective_stop(ticker, desired, qty, reason, refusals)
     return _record_protective_stop(ticker, o, want_qty, want_tif,
-                                   uncovered, desired)
+                                   uncovered, desired, extra=extra or None)
 
 
-def unprotected_positions() -> list[dict]:
+def verify_protective_stops() -> list[str]:
+    """Reconcile the ledger's 'resting' stop records against the broker.
+
+    A record whose order is expired / cancelled / missing at the broker is
+    downgraded to status 'expired' (NOT resting) so unprotected_positions() and
+    the protective_stops_armed capability tell the truth. Returns the tickers
+    downgraded. Read-only at the broker. Fail-soft: an unreadable order is left
+    as it was."""
+    if not api_reachable():
+        return []
+    stale: list[str] = []
+    for p in simulated_broker._load().get("positions", []) or []:
+        rec = p.get("protective_stop")
+        if p.get("not_at_broker") or not isinstance(rec, dict) \
+                or rec.get("status") != "resting":
+            continue
+        t = str(p.get("ticker", "")).upper()
+        st = _order_status_by_client_id(rec.get("client_order_id"))
+        if st is None or st in _STOP_WORKING:
+            continue
+        if _working_stop_order(t, None) is not None:
+            continue  # a different working stop covers it; ensure will adopt
+        _write_protective_stop(t, {**rec, "status": "expired",
+                                   "broker_status": st,
+                                   "verified_at": datetime.now(timezone.utc).isoformat()})
+        stale.append(t)
+    return stale
+
+
+def rearm_protective_stops(*, reason: str = "slot_run") -> dict:
+    """Ask the broker about EVERY held position's stop and re-arm what is not
+    working. The slot-run half of LEDGER TRUTH: a sub-share position's DAY stop
+    expires at every close, and before this only a stop_watch tick (rationed
+    by GitHub, or a laptop that happened to be awake) would put it back.
+    Risk-reducing only — arms sell stops, never opens exposure. Never raises."""
+    out = {"checked": [], "failed": [], "errors": {}}
+    if not _stop_cfg_on() or not api_reachable():
+        return out
+    for p in list(simulated_broker._load().get("positions", []) or []):
+        t = str(p.get("ticker", "")).upper()
+        if not t or p.get("not_at_broker"):
+            continue
+        try:
+            rec = ensure_protective_stop(t, reason=reason)
+            out["checked"].append(t)
+            if isinstance(rec, dict) and rec.get("status") == "FAILED":
+                out["failed"].append(t)
+        except Exception as e:
+            out["errors"][t] = str(e)[:200]
+    return out
+
+
+def unprotected_positions(*, verify_broker: bool = False) -> list[dict]:
     """Open broker-held positions with no resting stop. Mirror-only
     `not_at_broker` remnants are excluded — they have no shares at the exchange
-    to protect (see reconcile_not_at_broker_ghosts)."""
+    to protect (see reconcile_not_at_broker_ghosts).
+
+    verify_broker=True first reconciles every 'resting' record against the
+    broker (verify_protective_stops), so an expired DAY stop the ledger still
+    calls resting is reported as the naked position it is."""
+    if verify_broker:
+        try:
+            verify_protective_stops()
+        except Exception as e:
+            print(f"  (protective stop verification failed: {e})")
     return [p for p in simulated_broker._load().get("positions", []) or []
             if not p.get("not_at_broker")
             and not (isinstance(p.get("protective_stop"), dict)
@@ -1226,7 +1512,7 @@ def _sweep_fractional_dust(ticker: str, *, parent_reason: str = "") -> dict | No
     bp = _broker_position(ticker)
     if not isinstance(bp, dict):
         return None
-    qty = round(_f(bp.get("qty")), 6)
+    qty = _floor_qty(bp.get("qty"))
     if qty <= 0 or qty >= 1.0 - 1e-9:
         return None
     # Free shares held by any lingering stop before sizing the sweep.
@@ -1238,8 +1524,8 @@ def _sweep_fractional_dust(ticker: str, *, parent_reason: str = "") -> dict | No
     bp = _broker_position(ticker)
     if not isinstance(bp, dict):
         return None
-    qty = round(_f(bp.get("qty")), 6)
-    avail = round(_f(bp.get("qty_available") or bp.get("qty")), 6)
+    qty = _floor_qty(bp.get("qty"))
+    avail = _floor_qty(bp.get("qty_available") or bp.get("qty"))
     if qty <= 0 or qty >= 1.0 - 1e-9 or avail <= 0:
         return None
     sell_qty = min(qty, avail)
@@ -1814,7 +2100,8 @@ def _sell_qty(ticker: str, sell_fraction) -> float | None:
     except (TypeError, ValueError):
         frac = 1.0
     frac = min(max(frac, 0.0001), 1.0)
-    return avail if frac >= 1.0 else round(avail * frac, 6)
+    # Truncate, never round up: a sell sized above what is available is refused.
+    return avail if frac >= 1.0 else _floor_qty(avail * frac)
 
 
 def _record_dead_order(pending: dict) -> dict:

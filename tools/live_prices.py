@@ -283,23 +283,45 @@ def _read_local() -> dict:
         return {}
 
 
+def _branch_refspec(branch: str = LIVE_BRANCH) -> str:
+    """Explicit fetch refspec for the live-data branch. Pure.
+
+    A plain `git fetch origin live-data` only updates FETCH_HEAD in a
+    single-branch clone (remote.origin.fetch = refs/heads/main only — exactly
+    how the box checkout is cloned), so origin/live-data NEVER exists there and
+    the `git show origin/live-data:...` that followed failed silently, returning
+    {} on every read (diagnosed 2026-09-28). Naming the destination ref makes
+    the remote-tracking ref exist regardless of the clone's configured refspec."""
+    return f"+refs/heads/{branch}:refs/remotes/origin/{branch}"
+
+
 def _read_from_branch(branch: str = LIVE_BRANCH) -> dict:
     """Read state/live_prices.json from origin/<branch> via git. Fail-soft.
 
     The feed publishes to the dedicated live-data branch (not main), so the
     cloud trader's main checkout has no local file — it reads the freshest
     snapshot from the branch here. Any git/parse failure returns {} so the
-    overlay simply no-ops and stops fall back to the daily bar."""
+    overlay simply no-ops and stops fall back to the daily bar.
+
+    Fetches with an EXPLICIT refspec (see _branch_refspec) and, should the
+    tracking ref still be unreadable, falls back to FETCH_HEAD from that same
+    fetch."""
     import subprocess
     try:
-        subprocess.run(["git", "fetch", "--depth=1", "origin", branch],
-                       cwd=str(ROOT), capture_output=True, timeout=30, check=False)
-        r = subprocess.run(["git", "show", f"origin/{branch}:state/live_prices.json"],
-                           cwd=str(ROOT), capture_output=True, timeout=15,
-                           text=True, check=False)
-        if r.returncode == 0 and r.stdout.strip():
-            blob = json.loads(r.stdout)
-            return blob if isinstance(blob, dict) else {}
+        f = subprocess.run(["git", "fetch", "--quiet", "--depth=1", "origin",
+                            _branch_refspec(branch)],
+                           cwd=str(ROOT), capture_output=True, timeout=30,
+                           check=False)
+        refs = [f"refs/remotes/origin/{branch}"]
+        if f.returncode == 0:
+            refs.append("FETCH_HEAD")
+        for ref in refs:
+            r = subprocess.run(["git", "show", f"{ref}:state/live_prices.json"],
+                               cwd=str(ROOT), capture_output=True, timeout=15,
+                               text=True, check=False)
+            if r.returncode == 0 and r.stdout.strip():
+                blob = json.loads(r.stdout)
+                return blob if isinstance(blob, dict) else {}
     except Exception:
         pass
     return {}
