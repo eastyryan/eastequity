@@ -3,40 +3,42 @@
   "_tier_note": "SLIM brain pack, ordered so everything BINDING is inside the first ~2000 lines \u2014 the default Read window. Keys appear in decision order: limits, digest, then the hard gate flags (data quality, freshness, halts, engagement, earnings lanes), factor_map, portfolio_competition, the book (portfolio, stop_engineering, cushion), then reasoning_process (learning_pack), then research detail. Research maps below are structurally capped; every cap stamps a `_trimmed` note naming what it dropped. Full archive: full_context_path.",
   "_pack_budget": {
     "note": "Measured line budget for this pack. Your Read tool returns ~2000 lines by default; anything starting past that is NOT read unless you page to it with Read(offset=N). Every input that can BLOCK a proposal is above that line by construction, so a default Read is sufficient to answer every gate. The entries below are what you did NOT get \u2014 page to them when a name matters.",
-    "total_lines": 4934,
+    "total_lines": 4946,
     "read_window_lines": 2000,
     "keys_beyond_read_window": [
-      "market_breadth@2047",
-      "momentum_health@2347",
-      "watchlist_trigger_alerts@2390",
-      "tape_focus_promotions@2395",
-      "portfolio_risk@2400",
-      "track_record@2423",
-      "ownership_flow@2436",
-      "earnings_deep_dive@2503",
-      "earnings_week@2507",
-      "lessons_learned@2524",
-      "position_histories@2541",
-      "market_news@2721",
-      "market_radar@2909",
-      "universe_scan@2913",
-      "sec_filings@4045",
-      "deep_fundamentals@4053",
-      "filing_texts@4061",
-      "filing_texts_note@4062",
-      "news_and_catalysts@4063",
-      "insider_activity@4279",
-      "smart_money_13f@4282",
-      "options_signals@4285",
-      "partnerships@4503",
-      "guidance_ledger@4506",
-      "fundamental_screen@4507",
-      "todays_8ks@4718",
-      "stack_cards@4723",
-      "financial_checklists@4766",
-      "concept_memory@4856",
-      "discovery_screen@4930",
-      "market_checkin@4933"
+      "benchmark_close@2014",
+      "market_events@2015",
+      "market_breadth@2068",
+      "momentum_health@2368",
+      "watchlist_trigger_alerts@2411",
+      "tape_focus_promotions@2416",
+      "portfolio_risk@2421",
+      "track_record@2444",
+      "ownership_flow@2457",
+      "earnings_deep_dive@2524",
+      "earnings_week@2528",
+      "lessons_learned@2545",
+      "position_histories@2562",
+      "market_news@2742",
+      "market_radar@2921",
+      "universe_scan@2925",
+      "sec_filings@4057",
+      "deep_fundamentals@4065",
+      "filing_texts@4073",
+      "filing_texts_note@4074",
+      "news_and_catalysts@4075",
+      "insider_activity@4291",
+      "smart_money_13f@4294",
+      "options_signals@4297",
+      "partnerships@4515",
+      "guidance_ledger@4518",
+      "fundamental_screen@4519",
+      "todays_8ks@4730",
+      "stack_cards@4735",
+      "financial_checklists@4778",
+      "concept_memory@4868",
+      "discovery_screen@4942",
+      "market_checkin@4945"
     ],
     "trimmed": [
       "portfolio.history: kept newest 1 of 1 order records as flat rows (plans omitted)",
@@ -44,15 +46,15 @@
     ],
     "withheld_by_design": [],
     "unregistered_keys": [],
-    "full_archive": "/home/runner/work/eastequity/eastequity/state/context_full_20260928-55224b.json"
+    "full_archive": "/home/runner/work/eastequity/eastequity/state/context_full_20260928-6b9daa.json"
   },
-  "run_date": "2026-09-28T10:01:43.064336+00:00",
+  "run_date": "2026-09-28T10:10:18.224651+00:00",
   "as_of_et": "2026-09-28",
   "trading_mode": "paper",
   "run_depth": "light",
   "run_depth_note": "Light check: holdings + watchlist prices and news; exits allowed; no full scan; new BUYs discarded.",
   "allows_new_buys": false,
-  "full_context_path": "/home/runner/work/eastequity/eastequity/state/context_full_20260928-55224b.json",
+  "full_context_path": "/home/runner/work/eastequity/eastequity/state/context_full_20260928-6b9daa.json",
   "hard_limits": {
     "note": "SINGLE SOURCE OF TRUTH for every threshold the validator enforces, read live from autonomy_config.json this run. Any number quoted in CLAUDE.md prose is DESCRIPTIVE \u2014 when the two disagree, these values win, because these are the ones the code actually checks. (CLAUDE.md stated RR >= 1.0 for two days after the floor was raised to 2.0 on 2026-07-16, so every proposal built against the prose was rejected on arrival.)",
     "effective_max_position_usd": 196.89,
@@ -260,9 +262,9 @@
   },
   "price_freshness_live": {
     "status": "ok",
-    "as_of": "2026-09-28T10:00:44.402612+00:00",
+    "as_of": "2026-09-28T10:10:07.403151+00:00",
     "source": "alpaca_iex",
-    "age_min": 1.0,
+    "age_min": 0.2,
     "max_age_min": 30.0,
     "stale": false,
     "applied": [
@@ -769,7 +771,7 @@
     "broker": "alpaca_paper",
     "mode": "paper",
     "broker_backend": "alpaca_paper",
-    "broker_synced_at": "2026-09-28T10:01:44.157966+00:00",
+    "broker_synced_at": "2026-09-28T10:10:19.557840+00:00",
     "cash_usd": 907.15,
     "total_equity_usd": 984.45,
     "positions": [
@@ -996,7 +998,7 @@
     "theme_concentration_cap_pct": 0.35,
     "price_freshness": {
       "bundle_as_of_et": "2026-09-28",
-      "bundle_run_utc": "2026-09-28T10:01:43.154473+00:00",
+      "bundle_run_utc": "2026-09-28T10:10:18.317925+00:00",
       "note": "Prefer universe_scan.prices_meta[T].price_as_of (bar session date) over bundle age alone. On catalyst days, verify live before chasing a trigger on a lagging close.",
       "scan_fetched_at_utc": null
     },
@@ -1023,7 +1025,7 @@
           "price_when_added": null,
           "latest_price": 393.52,
           "would_buy_at": "A completed session hold at or below $380 while WTI stops making fresh 5-day lows, with SPY still above its 200-DMA",
-          "one_line": "Net-cash refiner diversifier \u2014 need price plus oil stability; Hormuz headlines may change the oil leg Monday.",
+          "one_line": "Net-cash refiner diversifier \u2014 need price plus oil stability; Hormuz/diesel headlines are live Monday.",
           "first_watched": "2026-07-19",
           "hit_date": "2026-09-25",
           "dropped_date": "2026-07-21",
@@ -1919,8 +1921,8 @@
         }
       },
       "demand_driver_map_focus": {
-        "ANET": "networking",
-        "NOW": "software_platforms"
+        "NOW": "software_platforms",
+        "ANET": "networking"
       },
       "_deduped": "process_checklist, theme_exposure, theme_concentration_cap_pct, price_freshness, demand_driver_map_note and watchlist_feedback live one level up on reasoning_process \u2014 not repeated here."
     }
@@ -1938,10 +1940,20 @@
         "frequency": "daily"
       },
       "ten_year_yield": {
-        "error": "HTTPSConnectionPool(host='east-equity-agent.vercel.app', port=443): Read timed out. (read timeout=8)"
+        "latest": 5.18,
+        "three_months_ago": 4.38,
+        "direction": "rising",
+        "as_of": "2026-09-24",
+        "units": "percent",
+        "frequency": "daily"
       },
       "two_year_yield": {
-        "error": "HTTPSConnectionPool(host='east-equity-agent.vercel.app', port=443): Read timed out. (read timeout=8)"
+        "latest": 4.87,
+        "three_months_ago": 4.07,
+        "direction": "rising",
+        "as_of": "2026-09-24",
+        "units": "percent",
+        "frequency": "daily"
       },
       "cpi_yoy_pct": {
         "latest": 3.35,
@@ -1960,7 +1972,12 @@
         "frequency": "monthly"
       },
       "hy_credit_spread": {
-        "error": "HTTPSConnectionPool(host='east-equity-agent.vercel.app', port=443): Read timed out. (read timeout=8)"
+        "latest": 2.8,
+        "three_months_ago": 2.83,
+        "direction": "falling",
+        "as_of": "2026-09-24",
+        "units": "percent",
+        "frequency": "daily"
       },
       "vix": {
         "latest": 14.21,
@@ -1977,36 +1994,40 @@
         "as_of": "2026-09-18",
         "units": "index_zscore",
         "frequency": "weekly"
+      },
+      "yield_curve_10y2y": {
+        "latest": 0.31,
+        "units": "percentage_points",
+        "as_of": "2026-09-24",
+        "inverted": false,
+        "three_months_ago": 0.31,
+        "direction": "flattening"
       }
     },
     "regime_hint": {
-      "score_0_to_5": 3,
-      "label": "neutral",
-      "series_missing": [
-        "hy_credit_spread",
-        "ten_year_yield",
-        "two_year_yield"
-      ],
-      "note": "Deterministic hint only \u2014 the agent must form its own regime view. CAUTION: 3 series failed to load and scored on conservative defaults (hy_credit_spread, ten_year_yield, two_year_yield)."
+      "score_0_to_5": 4,
+      "label": "supportive",
+      "series_missing": null,
+      "note": "Deterministic hint only \u2014 the agent must form its own regime view."
     }
   },
   "benchmark_close": 771.35,
   "market_events": {
     "note": "commodities via yfinance (CL=F/USO, GC=F/GLD, ^VIX/VIXY, DX-Y.NYB/UUP); flags from keyword classification of market_news headlines \u2014 heuristic tags, not a risk model",
     "status": "ok",
-    "as_of": "2026-09-28T10:01:38.609943+00:00",
+    "as_of": "2026-09-28T10:10:12.157669+00:00",
     "commodities": {
       "oil": {
         "symbol": "CL=F",
-        "last": 95.65,
-        "pct_1d": 3.51,
-        "pct_5d": -0.14
+        "last": 95.78,
+        "pct_1d": 3.65,
+        "pct_5d": 0.0
       },
       "gold": {
         "symbol": "GC=F",
-        "last": 4187.0,
-        "pct_1d": -3.11,
-        "pct_5d": -4.49
+        "last": 4188.2002,
+        "pct_1d": -3.08,
+        "pct_5d": -4.46
       },
       "vix": {
         "symbol": "^VIX",
@@ -2016,30 +2037,30 @@
       },
       "dxy": {
         "symbol": "DX-Y.NYB",
-        "last": 101.103,
-        "pct_1d": 0.13,
-        "pct_5d": 0.67
+        "last": 101.119,
+        "pct_1d": 0.15,
+        "pct_5d": 0.69
       }
     },
     "flags": {
       "counts": {
-        "geopolitical": 1,
-        "inflation_rates": 0,
+        "geopolitical": 0,
+        "inflation_rates": 1,
         "financial_stress": 0,
         "sector_macro": 0
       },
       "active": [
-        "geopolitical"
+        "inflation_rates"
       ],
       "n_flagged": 1
     },
     "flagged_headlines": [
       {
-        "title": "White House Denies Plans to Sell Weapons to China After Ambassador Says Trump Asked Xi Jinping if Beijing Wanted to Buy",
+        "title": "Gold and silver prices fall sharply as higher bond yields weigh on metals",
         "tags": [
-          "geopolitical"
+          "inflation_rates"
         ],
-        "age_hours": 0.1
+        "age_hours": 0.2
       }
     ],
     "headline_source": "market_news"
@@ -2384,7 +2405,7 @@
         "source": "live"
       }
     },
-    "as_of": "2026-09-28T10:01:41.901452+00:00",
+    "as_of": "2026-09-28T10:10:16.625806+00:00",
     "note": "Momentum factor healthy (SPMO is -0.2% off its 20d high vs SPY -0.3%) \u2014 recent leaders still leading; no factor-unwind adjustment."
   },
   "watchlist_trigger_alerts": {
@@ -2721,7 +2742,7 @@
   "market_news": {
     "note": "Market-wide headlines (last ~24h) for tape context - what is moving EVERYTHING today, not just your focus names. Weigh it in the macro/regime read; never build a single-name thesis on it alone.",
     "status": "ok",
-    "as_of": "2026-09-28T10:01:42.322636+00:00",
+    "as_of": "2026-09-28T10:10:17.170623+00:00",
     "sources": [
       {
         "name": "yahoo_finance",
@@ -2746,11 +2767,121 @@
     ],
     "headlines": [
       {
+        "title": "National Healthcare Properties To Sell 40 Outpatient Medical Facilities For ~$531M; Announced Transactions Expected To Reduce Net Debt To Further Adjusted EBITDA To 0X Based On Q2 2026 Financials",
+        "source": "alpaca_benzinga",
+        "published": "2026-09-28T10:09:22Z",
+        "url": "https://www.benzinga.com/news/26/09/62015981/national-healthcare-properties-sell-40-outpatient-medical-facilities-531m-announced-transactions-exp",
+        "age_hours": 0.0,
+        "symbols": [
+          "NHP",
+          "NHPBP"
+        ]
+      },
+      {
+        "title": "Stephens & Co. Maintains Equal-Weight on Lamb Weston Holdings, Lowers Price Target to $50",
+        "source": "alpaca_benzinga",
+        "published": "2026-09-28T10:07:35Z",
+        "url": "https://www.benzinga.com/news/26/09/62015965/stephens-co-maintains-equal-weight-lamb-weston-holdings-lowers-price-target-50",
+        "age_hours": 0.0,
+        "symbols": [
+          "LW"
+        ]
+      },
+      {
+        "title": "FTAI Aviation Acquires 27 Boeing 737-700 Aircraft From WestJet; Financial Terms Not Disclosed",
+        "source": "alpaca_benzinga",
+        "published": "2026-09-28T10:06:43Z",
+        "url": "https://www.benzinga.com/news/26/09/62015950/ftai-aviation-acquires-27-boeing-737-700-aircraft-westjet-financial-terms-not-disclosed",
+        "age_hours": 0.1,
+        "symbols": [
+          "FTAI"
+        ]
+      },
+      {
+        "title": "OMS Energy Technologies Announces $9.4M In New Orders From Saudi Aramco And Pertamina Hulu Rokan",
+        "source": "alpaca_benzinga",
+        "published": "2026-09-28T10:05:11Z",
+        "url": "https://www.benzinga.com/news/26/09/62015836/oms-energy-technologies-announces-9-4m-new-orders-saudi-aramco-and-pertamina-hulu-rokan",
+        "age_hours": 0.1,
+        "symbols": [
+          "OMSE"
+        ]
+      },
+      {
+        "title": "Keybanc Upgrades First Solar to Sector Weight",
+        "source": "alpaca_benzinga",
+        "published": "2026-09-28T10:04:40Z",
+        "url": "https://www.benzinga.com/news/26/09/62015786/keybanc-upgrades-first-solar-sector-weight",
+        "age_hours": 0.1,
+        "symbols": [
+          "FSLR"
+        ]
+      },
+      {
+        "title": "Raymond James Downgrades RLJ Lodging Trust to Market Perform",
+        "source": "alpaca_benzinga",
+        "published": "2026-09-28T10:04:33Z",
+        "url": "https://www.benzinga.com/news/26/09/62015765/raymond-james-downgrades-rlj-lodging-trust-market-perform",
+        "age_hours": 0.1,
+        "symbols": [
+          "RLJ"
+        ]
+      },
+      {
+        "title": "Codexis Enters Agreement With An Unnamed siRNA Drug Innovator To Explore Stereo-Defined Fragment Synthesis Using Its ECO Synthesis Manufacturing Platform",
+        "source": "alpaca_benzinga",
+        "published": "2026-09-28T10:03:33Z",
+        "url": "https://www.benzinga.com/news/26/09/62015675/codexis-enters-agreement-unnamed-sirna-drug-innovator-explore-stereo-defined-fragment-synthesis-usin",
+        "age_hours": 0.1,
+        "symbols": [
+          "CDXS"
+        ]
+      },
+      {
+        "title": "Needham Reiterates Buy on PAR Technology, Maintains $25 Price Target",
+        "source": "alpaca_benzinga",
+        "published": "2026-09-28T10:02:39Z",
+        "url": "https://www.benzinga.com/news/26/09/62015578/needham-reiterates-buy-par-technology-maintains-25-price-target",
+        "age_hours": 0.1,
+        "symbols": [
+          "PAR"
+        ]
+      },
+      {
+        "title": "BTIG Reiterates Buy on Nektar Therapeutics, Maintains $178 Price Target",
+        "source": "alpaca_benzinga",
+        "published": "2026-09-28T10:01:21Z",
+        "url": "https://www.benzinga.com/news/26/09/62015516/btig-reiterates-buy-nektar-therapeutics-maintains-178-price-target",
+        "age_hours": 0.1,
+        "symbols": [
+          "NKTR"
+        ]
+      },
+      {
+        "title": "Gold and silver prices fall sharply as higher bond yields weigh on metals",
+        "source": "cnbc",
+        "published": "2026-09-28T09:56:44+00:00",
+        "url": "https://www.cnbc.com/2026/09/28/gold-silver-prices-bond-yields.html",
+        "age_hours": 0.2
+      },
+      {
+        "title": "Top 3 Utilities Stocks That Could Blast Off In Q3",
+        "source": "alpaca_benzinga",
+        "published": "2026-09-28T10:01:06Z",
+        "url": "https://www.benzinga.com/trading-ideas/long-ideas/26/09/62015492/top-3-utilities-stocks-that-could-blast-off-in-q3",
+        "age_hours": 0.2,
+        "symbols": [
+          "D",
+          "MSEX",
+          "SWX"
+        ]
+      },
+      {
         "title": "Understanding Automatic Data Processing's Position In Professional Services Industry Compared To Competitors",
         "source": "alpaca_benzinga",
         "published": "2026-09-28T09:59:21Z",
         "url": "https://www.benzinga.com/news/26/09/62015408/understanding-automatic-data-processing-s-position-professional-services-industry-compared-competito",
-        "age_hours": 0.0,
+        "age_hours": 0.2,
         "symbols": [
           "ADP"
         ]
@@ -2760,7 +2891,7 @@
         "source": "alpaca_benzinga",
         "published": "2026-09-28T09:59:18Z",
         "url": "https://www.benzinga.com/news/26/09/62015399/competitor-analysis-evaluating-analog-devices-and-competitors-semiconductors-amp-semiconductor-equip",
-        "age_hours": 0.0,
+        "age_hours": 0.2,
         "symbols": [
           "ADI"
         ]
@@ -2770,7 +2901,7 @@
         "source": "alpaca_benzinga",
         "published": "2026-09-28T09:59:14Z",
         "url": "https://www.benzinga.com/news/26/09/62015394/insights-adobe-s-performance-versus-peers-software-sector",
-        "age_hours": 0.0,
+        "age_hours": 0.2,
         "symbols": [
           "ADBE"
         ]
@@ -2780,128 +2911,9 @@
         "source": "alpaca_benzinga",
         "published": "2026-09-28T09:59:10Z",
         "url": "https://www.benzinga.com/news/26/09/62015393/tesla-planning-average-4-5-pay-raise-workers-its-berlin-brandenburg-gigafactory-effective-october-1-",
-        "age_hours": 0.0,
+        "age_hours": 0.2,
         "symbols": [
           "TSLA"
-        ]
-      },
-      {
-        "title": "Analyzing Airbnb In Comparison To Competitors In Hotels, Restaurants &amp; Leisure Industry",
-        "source": "alpaca_benzinga",
-        "published": "2026-09-28T09:59:07Z",
-        "url": "https://www.benzinga.com/news/26/09/62015392/analyzing-airbnb-comparison-competitors-hotels-restaurants-amp-leisure-industry",
-        "age_hours": 0.0,
-        "symbols": [
-          "ABNB"
-        ]
-      },
-      {
-        "title": "Inquiry Into Apple's Competitor Dynamics In Technology Hardware, Storage &amp; Peripherals Industry",
-        "source": "alpaca_benzinga",
-        "published": "2026-09-28T09:59:02Z",
-        "url": "https://www.benzinga.com/news/26/09/62015391/inquiry-apple-s-competitor-dynamics-technology-hardware-storage-amp-peripherals-industry",
-        "age_hours": 0.0,
-        "symbols": [
-          "AAPL"
-        ]
-      },
-      {
-        "title": "White House Denies Plans to Sell Weapons to China After Ambassador Says Trump Asked Xi Jinping if Beijing Wanted to Buy",
-        "source": "alpaca_benzinga",
-        "published": "2026-09-28T09:58:36Z",
-        "url": "https://www.benzinga.com/news/politics/26/09/62015380/white-house-denies-plans-to-sell-weapons-to-china-after-ambassador-says-trump-asked-xi-jinping-if-beijing-wanted-to-buy",
-        "age_hours": 0.1,
-        "symbols": []
-      },
-      {
-        "title": "Raymond James Upgrades Park Hotels & Resorts to Strong Buy, Announces $19 Price Target",
-        "source": "alpaca_benzinga",
-        "published": "2026-09-28T09:56:53Z",
-        "url": "https://www.benzinga.com/news/26/09/62015369/raymond-james-upgrades-park-hotels-resorts-strong-buy-announces-19-price-target",
-        "age_hours": 0.1,
-        "symbols": [
-          "PK"
-        ]
-      },
-      {
-        "title": "Needham Maintains Buy on Nutanix, Raises Price Target to $90",
-        "source": "alpaca_benzinga",
-        "published": "2026-09-28T09:56:31Z",
-        "url": "https://www.benzinga.com/news/26/09/62015358/needham-maintains-buy-nutanix-raises-price-target-90",
-        "age_hours": 0.1,
-        "symbols": [
-          "NTNX"
-        ]
-      },
-      {
-        "title": "$27 Billion Bid Fails To Create World's Second-Largest Gold Producer",
-        "source": "alpaca_benzinga",
-        "published": "2026-09-28T09:55:39Z",
-        "url": "https://www.benzinga.com/m-a/26/09/62015346/27-billion-bid-fails-to-create-worlds-second-largest-gold-producer",
-        "age_hours": 0.1,
-        "symbols": [
-          "GDX",
-          "GFI",
-          "NESRF"
-        ]
-      },
-      {
-        "title": "BTIG Reiterates Buy on Block, Maintains $100 Price Target",
-        "source": "alpaca_benzinga",
-        "published": "2026-09-28T09:51:29Z",
-        "url": "https://www.benzinga.com/news/26/09/62015329/btig-reiterates-buy-block-maintains-100-price-target",
-        "age_hours": 0.2,
-        "symbols": [
-          "XYZ"
-        ]
-      },
-      {
-        "title": "Deutsche Bank Downgrades PepsiCo to Hold, Lowers Price Target to $138",
-        "source": "alpaca_benzinga",
-        "published": "2026-09-28T09:49:48Z",
-        "url": "https://www.benzinga.com/news/26/09/62015316/deutsche-bank-downgrades-pepsico-hold-lowers-price-target-138",
-        "age_hours": 0.2,
-        "symbols": [
-          "PEP"
-        ]
-      },
-      {
-        "title": "Deutsche Bank Upgrades Royal Caribbean Group to Buy, Maintains Price Target to $299",
-        "source": "alpaca_benzinga",
-        "published": "2026-09-28T09:46:04Z",
-        "url": "https://www.benzinga.com/news/26/09/62015274/deutsche-bank-upgrades-royal-caribbean-group-buy-maintains-price-target-299",
-        "age_hours": 0.3,
-        "symbols": [
-          "RCL"
-        ]
-      },
-      {
-        "title": "Retail Investors \u2018Locking in Gains in Tech\u2019 \u2014 Sell Record $300 Million in ETFs as Chip Funds Take Biggest Hit",
-        "source": "alpaca_benzinga",
-        "published": "2026-09-28T09:45:51Z",
-        "url": "https://www.benzinga.com/etfs/sector-etfs/26/09/62015268/semiconductor-etfs-worst-outflows-retail-investors-lock-in-tech-gains",
-        "age_hours": 0.3,
-        "symbols": [
-          "AMD",
-          "ARM",
-          "META",
-          "MTUM",
-          "SOXL",
-          "SOXX",
-          "SPCX"
-        ]
-      },
-      {
-        "title": "Micron Heads Into Earnings With Memory Prices Still Climbing and Supply Nowhere Near Enough",
-        "source": "alpaca_benzinga",
-        "published": "2026-09-28T09:38:27Z",
-        "url": "https://www.benzinga.com/markets/tech/26/09/62015164/micron-heads-into-earnings-with-memory-prices-still-climbing-and-supply-nowhere-near-enough",
-        "age_hours": 0.4,
-        "symbols": [
-          "MU",
-          "SOXQ",
-          "SOXX",
-          "XNTK"
         ]
       }
     ]
@@ -2924,1120 +2936,1120 @@
       "MPC": 393.26,
       "COST": 922.76,
       "SMCI": 43.26,
-      "KKR": 96.67,
-      "GLW": 156.58,
-      "COP": 127.29,
-      "HWM": 232.59,
-      "ITW": 274.25,
-      "DLR": 178.62,
-      "AEM": 194.49,
-      "ISRG": 405.12,
-      "CRWD": 252.1,
-      "CB": 333.48,
-      "ADBE": 235.48,
-      "CVX": 204.44,
-      "CAMT": 147.14,
-      "HUBB": 466.09,
-      "ARES": 122.05,
-      "EOG": 140.33,
-      "DDOG": 268.13,
-      "DXCM": 86.57,
-      "CAT": 821.04,
-      "LITE": 941.66,
       "HOOD": 119.39,
-      "GEV": 957.17,
-      "CSCO": 106.69,
-      "DOCU": 67.48,
-      "DUK": 113.34,
-      "CLS": 365.5,
-      "CDNS": 326.13,
-      "AMZN": 249.63,
-      "HD": 293.18,
-      "ABBV": 264.28,
+      "LIN": 469.77,
+      "GTLB": 46.84,
+      "IBM": 225.54,
+      "CME": 264.48,
+      "CRWV": 87.62,
+      "KLAC": 187.92,
       "HUM": 398.16,
-      "EME": 761.67,
-      "HCA": 435.64,
+      "JPM": 342.88,
+      "JNJ": 271.2,
+      "DASH": 193.38,
+      "CLS": 365.5,
+      "GOOGL": 343.85,
+      "ALL": 227.47,
+      "AJG": 231.15,
+      "CNC": 61.81,
+      "ABBV": 264.28,
+      "FNV": 257.71,
       "CRM": 234.12,
-      "BKR": 57.85,
-      "FCX": 72.28,
-      "COHR": 296.54,
-      "AMAT": 484.83,
-      "IESC": 323.69,
-      "ASML": 1743.61,
+      "DDOG": 268.13,
+      "ICE": 154.31,
       "APD": 281.81,
       "CEG": 263.3,
-      "IBM": 225.54,
-      "ESTC": 87.99,
-      "DE": 690.08,
-      "ETN": 440.07,
-      "ALAB": 364.48,
-      "KMI": 30.75,
-      "GTLB": 46.84,
-      "KO": 87.81,
+      "CB": 333.48,
+      "HCA": 435.64,
       "INTC": 123.0,
-      "APH": 84.09,
-      "DELL": 563.28,
-      "GS": 935.26,
-      "CRWV": 87.62,
-      "FTNT": 173.45,
-      "ADI": 393.56,
-      "APO": 121.69,
-      "DASH": 193.38,
-      "GOOGL": 343.85,
-      "COIN": 195.0,
-      "ALL": 227.47,
-      "CVS": 89.12,
-      "FNV": 257.71,
-      "ARM": 310.38,
-      "JPM": 342.88,
-      "LIN": 469.77,
-      "GILD": 150.88,
-      "EQIX": 1008.54,
-      "KLAC": 187.92,
-      "B": 42.89,
-      "KGC": 25.06,
-      "EMR": 158.22,
-      "ABNB": 157.41,
-      "BLK": 1086.35,
-      "FIX": 1657.03,
-      "AMD": 630.47,
-      "JNJ": 271.2,
-      "AVGO": 352.72,
-      "CCJ": 88.06,
-      "CRDO": 210.86,
+      "KMI": 30.75,
       "FANG": 186.63,
-      "INTU": 275.7,
-      "AJG": 231.15,
-      "AAPL": 341.02,
-      "IBKR": 89.25,
-      "ICE": 154.31,
-      "CNC": 61.81,
-      "ABT": 101.26,
-      "AMGN": 414.67,
-      "BKNG": 163.89,
+      "AVGO": 352.72,
+      "ETN": 440.07,
+      "CAT": 821.04,
+      "CDNS": 326.13,
+      "KO": 87.81,
+      "DXCM": 86.57,
+      "CVS": 89.12,
+      "HUBB": 466.09,
+      "GEV": 957.17,
+      "FCX": 72.28,
+      "KKR": 96.67,
+      "COP": 127.29,
+      "APO": 121.69,
+      "B": 42.89,
+      "DELL": 563.28,
+      "CVX": 204.44,
+      "ADI": 393.56,
       "DUOL": 143.51,
-      "CME": 264.48,
-      "BX": 118.43,
+      "BKR": 57.85,
+      "AEM": 194.49,
+      "ABNB": 157.41,
+      "INTU": 275.7,
+      "EME": 761.67,
+      "IBKR": 89.25,
+      "AMGN": 414.67,
+      "ESTC": 87.99,
+      "GS": 935.26,
+      "COHR": 296.54,
+      "CRDO": 210.86,
+      "LITE": 941.66,
+      "AAPL": 341.02,
+      "AMD": 630.47,
+      "IESC": 323.69,
+      "EOG": 140.33,
+      "DUK": 113.34,
+      "EQIX": 1008.54,
+      "ASML": 1743.61,
+      "CAMT": 147.14,
+      "AMAT": 484.83,
+      "ARES": 122.05,
+      "KGC": 25.06,
+      "APH": 84.09,
+      "CSCO": 106.69,
+      "ITW": 274.25,
+      "DE": 690.08,
+      "ADBE": 235.48,
+      "AMZN": 249.63,
+      "EMR": 158.22,
+      "CRWD": 252.1,
+      "HWM": 232.59,
+      "GILD": 150.88,
       "AXON": 430.04,
-      "VRTX": 526.28,
-      "VLO": 387.1,
-      "SNOW": 335.97,
-      "VEEV": 280.81,
-      "LOW": 189.22,
-      "PG": 146.24,
-      "TSLA": 372.09,
-      "SCCO": 203.93,
-      "LPLA": 314.48,
-      "SPOT": 509.64,
-      "ZS": 192.94,
-      "MCD": 236.53,
-      "TMO": 674.65,
-      "NVDA": 225.05,
-      "NTRA": 412.35,
-      "UNP": 273.6,
+      "ABT": 101.26,
+      "GLW": 156.58,
+      "COIN": 195.0,
+      "CCJ": 88.06,
+      "BKNG": 163.89,
+      "ISRG": 405.12,
+      "HD": 293.18,
+      "DLR": 178.62,
+      "BLK": 1086.35,
+      "BX": 118.43,
+      "ALAB": 364.48,
+      "FIX": 1657.03,
+      "ARM": 310.38,
+      "DOCU": 67.48,
+      "FTNT": 173.45,
       "SHOP": 142.29,
-      "LNG": 268.52,
-      "TLN": 304.28,
-      "V": 367.34,
-      "TSM": 450.56,
-      "NEM": 121.41,
-      "OKTA": 195.16,
-      "NFLX": 71.14,
-      "LMT": 519.49,
-      "WMT": 107.97,
-      "ROK": 434.21,
-      "MU": 1081.82,
       "SPGI": 403.27,
-      "SCHW": 99.02,
-      "QCOM": 202.03,
-      "TRV": 362.92,
-      "UBER": 69.6,
-      "LLY": 1183.99,
-      "PANW": 374.56,
-      "SLB": 51.55,
-      "MRVL": 261.8,
-      "SNDK": 1777.01,
-      "WM": 206.8,
-      "XOM": 160.56,
-      "PH": 977.39,
-      "UNH": 376.7,
-      "SPY": 771.21,
-      "MSFT": 516.15,
-      "VST": 138.72,
-      "PGR": 205.47,
-      "NU": 13.58,
-      "MELI": 1752.79,
-      "RDDT": 149.98,
-      "MS": 196.32,
-      "NVT": 164.36,
-      "NET": 348.68,
-      "REGN": 787.54,
-      "NEE": 76.08,
-      "TWLO": 275.82,
-      "LRCX": 315.19,
-      "MA": 567.5,
-      "RTX": 189.37,
-      "STX": 916.75,
-      "WDAY": 189.42,
-      "MCO": 468.93,
-      "WMB": 69.28,
-      "TEAM": 187.71,
-      "SNPS": 425.88,
-      "WDC": 456.61,
       "PM": 190.49,
-      "NOC": 510.51,
-      "RGLD": 252.53,
-      "PSX": 255.7,
-      "META": 751.26,
-      "MRK": 148.77,
-      "WPM": 142.9,
-      "PWR": 648.99,
-      "S": 22.37,
-      "TXN": 277.96,
+      "NU": 13.58,
+      "MCD": 236.53,
+      "LOW": 189.22,
       "MPWR": 1366.9,
-      "RBRK": 109.53,
-      "TER": 398.13,
-      "NBIS": 237.24,
-      "ONTO": 287.88,
+      "QCOM": 202.03,
+      "XOM": 160.56,
+      "NVT": 164.36,
+      "UNH": 376.7,
       "ORCL": 137.06,
+      "TMO": 674.65,
+      "VRT": 253.24,
+      "PANW": 374.56,
+      "NEE": 76.08,
+      "TLN": 304.28,
+      "RDDT": 149.98,
+      "MSFT": 516.15,
+      "LRCX": 315.19,
+      "NOC": 510.51,
+      "TEAM": 187.71,
+      "TXN": 277.96,
+      "TSM": 450.56,
+      "RTX": 189.37,
+      "RBRK": 109.53,
+      "LPLA": 314.48,
+      "VRTX": 526.28,
+      "NFLX": 71.14,
+      "TWLO": 275.82,
+      "MELI": 1752.79,
+      "NBIS": 237.24,
+      "WMB": 69.28,
+      "SLB": 51.55,
+      "SPOT": 509.64,
+      "PWR": 648.99,
+      "WM": 206.8,
+      "NVDA": 225.05,
+      "PG": 146.24,
+      "NET": 348.68,
+      "MA": 567.5,
+      "MU": 1081.82,
+      "S": 22.37,
+      "LLY": 1183.99,
+      "MCO": 468.93,
+      "STX": 916.75,
+      "SNPS": 425.88,
+      "MS": 196.32,
+      "VEEV": 280.81,
+      "REGN": 787.54,
+      "TRV": 362.92,
+      "PH": 977.39,
+      "TER": 398.13,
+      "ZS": 192.94,
+      "UNP": 273.6,
+      "LNG": 268.52,
+      "WMT": 107.97,
+      "VLO": 387.1,
+      "META": 751.26,
+      "WDC": 456.61,
+      "NTRA": 412.35,
+      "SPY": 771.21,
+      "ONTO": 287.88,
+      "SNOW": 335.97,
+      "OKTA": 195.16,
+      "WPM": 142.9,
+      "NEM": 121.41,
+      "RGLD": 252.53,
+      "MRK": 148.77,
+      "LMT": 519.49,
+      "SNDK": 1777.01,
+      "TSLA": 372.09,
+      "UBER": 69.6,
       "PLTR": 189.63,
-      "VRT": 253.24
+      "PGR": 205.47,
+      "MRVL": 261.8,
+      "ROK": 434.21,
+      "PSX": 255.7,
+      "WDAY": 189.42,
+      "VST": 138.72,
+      "SCHW": 99.02,
+      "SCCO": 203.93,
+      "V": 367.34
     },
     "atr_by_ticker": {},
     "prices_meta": {
-      "KKR": {
-        "last_close": 96.67,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "GLW": {
-        "last_close": 156.58,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "COP": {
-        "last_close": 127.29,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "HWM": {
-        "last_close": 232.59,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ITW": {
-        "last_close": 274.25,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "DLR": {
-        "last_close": 178.62,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "AEM": {
-        "last_close": 194.49,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ISRG": {
-        "last_close": 405.12,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "CRWD": {
-        "last_close": 252.1,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "CB": {
-        "last_close": 333.48,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ADBE": {
-        "last_close": 235.48,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "CVX": {
-        "last_close": 204.44,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "CAMT": {
-        "last_close": 147.14,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "HUBB": {
-        "last_close": 466.09,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ARES": {
-        "last_close": 122.05,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "EOG": {
-        "last_close": 140.33,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "DDOG": {
-        "last_close": 268.13,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "DXCM": {
-        "last_close": 86.57,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "CAT": {
-        "last_close": 821.04,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "LITE": {
-        "last_close": 941.66,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
       "HOOD": {
         "last_close": 119.39,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "GEV": {
-        "last_close": 957.17,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "CSCO": {
-        "last_close": 106.69,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "DOCU": {
-        "last_close": 67.48,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "DUK": {
-        "last_close": 113.34,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "CLS": {
-        "last_close": 365.5,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "CDNS": {
-        "last_close": 326.13,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "AMZN": {
-        "last_close": 249.63,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "HD": {
-        "last_close": 293.18,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ABBV": {
-        "last_close": 264.28,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "HUM": {
-        "last_close": 398.16,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "EME": {
-        "last_close": 761.67,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "HPE": {
-        "last_close": 62.94,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ANET": {
-        "last_close": 206.49,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "HCA": {
-        "last_close": 435.64,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "CRM": {
-        "last_close": 234.12,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "BKR": {
-        "last_close": 57.85,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "FCX": {
-        "last_close": 72.28,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "COHR": {
-        "last_close": 296.54,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "AMAT": {
-        "last_close": 484.83,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "IESC": {
-        "last_close": 323.69,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ASML": {
-        "last_close": 1743.61,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "APD": {
-        "last_close": 281.81,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "CEG": {
-        "last_close": 263.3,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "IBM": {
-        "last_close": 225.54,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ESTC": {
-        "last_close": 87.99,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "DE": {
-        "last_close": 690.08,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ETN": {
-        "last_close": 440.07,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "BSX": {
-        "last_close": 43.91,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ALAB": {
-        "last_close": 364.48,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "KMI": {
-        "last_close": 30.75,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "GE": {
-        "last_close": 327.02,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "GTLB": {
-        "last_close": 46.84,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "KO": {
-        "last_close": 87.81,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "INTC": {
-        "last_close": 123.0,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "APH": {
-        "last_close": 84.09,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "DELL": {
-        "last_close": 563.28,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "GS": {
-        "last_close": 935.26,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "CRWV": {
-        "last_close": 87.62,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "FTNT": {
-        "last_close": 173.45,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ADI": {
-        "last_close": 393.56,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "APO": {
-        "last_close": 121.69,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "DASH": {
-        "last_close": 193.38,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "GOOGL": {
-        "last_close": 343.85,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "COIN": {
-        "last_close": 195.0,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ALL": {
-        "last_close": 227.47,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "CVS": {
-        "last_close": 89.12,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "FNV": {
-        "last_close": 257.71,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ARM": {
-        "last_close": 310.38,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "JPM": {
-        "last_close": 342.88,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
       "LIN": {
         "last_close": 469.77,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "GILD": {
-        "last_close": 150.88,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "GTLB": {
+        "last_close": 46.84,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "EQIX": {
-        "last_close": 1008.54,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "KLAC": {
-        "last_close": 187.92,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "B": {
-        "last_close": 42.89,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "KGC": {
-        "last_close": 25.06,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "EMR": {
-        "last_close": 158.22,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "COST": {
-        "last_close": 922.76,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ABNB": {
-        "last_close": 157.41,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "BLK": {
-        "last_close": 1086.35,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "FIX": {
-        "last_close": 1657.03,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "AMD": {
-        "last_close": 630.47,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "JNJ": {
-        "last_close": 271.2,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "AVGO": {
-        "last_close": 352.72,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "CCJ": {
-        "last_close": 88.06,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "CRDO": {
-        "last_close": 210.86,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "FANG": {
-        "last_close": 186.63,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "INTU": {
-        "last_close": 275.7,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "AJG": {
-        "last_close": 231.15,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "AAPL": {
-        "last_close": 341.02,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "IBKR": {
-        "last_close": 89.25,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ICE": {
-        "last_close": 154.31,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "CNC": {
-        "last_close": 61.81,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ABT": {
-        "last_close": 101.26,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "AMGN": {
-        "last_close": 414.67,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "BKNG": {
-        "last_close": 163.89,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "DUOL": {
-        "last_close": 143.51,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "IBM": {
+        "last_close": 225.54,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
       "CME": {
         "last_close": 264.48,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "BX": {
-        "last_close": 118.43,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "CRWV": {
+        "last_close": 87.62,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "KLAC": {
+        "last_close": 187.92,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "HPE": {
+        "last_close": 62.94,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "HUM": {
+        "last_close": 398.16,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "JPM": {
+        "last_close": 342.88,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "JNJ": {
+        "last_close": 271.2,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "DASH": {
+        "last_close": 193.38,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "CLS": {
+        "last_close": 365.5,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "GOOGL": {
+        "last_close": 343.85,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "ALL": {
+        "last_close": 227.47,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "ANET": {
+        "last_close": 206.49,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "AJG": {
+        "last_close": 231.15,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "CNC": {
+        "last_close": 61.81,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "ABBV": {
+        "last_close": 264.28,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "FNV": {
+        "last_close": 257.71,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "CRM": {
+        "last_close": 234.12,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "DDOG": {
+        "last_close": 268.13,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "ICE": {
+        "last_close": 154.31,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "BSX": {
+        "last_close": 43.91,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "APD": {
+        "last_close": 281.81,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "GE": {
+        "last_close": 327.02,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "CEG": {
+        "last_close": 263.3,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "CB": {
+        "last_close": 333.48,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "HCA": {
+        "last_close": 435.64,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "INTC": {
+        "last_close": 123.0,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "KMI": {
+        "last_close": 30.75,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "FANG": {
+        "last_close": 186.63,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "AVGO": {
+        "last_close": 352.72,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "ETN": {
+        "last_close": 440.07,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "CAT": {
+        "last_close": 821.04,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "CDNS": {
+        "last_close": 326.13,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "KO": {
+        "last_close": 87.81,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "DXCM": {
+        "last_close": 86.57,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "CVS": {
+        "last_close": 89.12,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "HUBB": {
+        "last_close": 466.09,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "GEV": {
+        "last_close": 957.17,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "FCX": {
+        "last_close": 72.28,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "COST": {
+        "last_close": 922.76,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "KKR": {
+        "last_close": 96.67,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "COP": {
+        "last_close": 127.29,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "APO": {
+        "last_close": 121.69,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "B": {
+        "last_close": 42.89,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "DELL": {
+        "last_close": 563.28,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "CVX": {
+        "last_close": 204.44,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "ADI": {
+        "last_close": 393.56,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "DUOL": {
+        "last_close": 143.51,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "BKR": {
+        "last_close": 57.85,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "AEM": {
+        "last_close": 194.49,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "ABNB": {
+        "last_close": 157.41,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "INTU": {
+        "last_close": 275.7,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "EME": {
+        "last_close": 761.67,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "IBKR": {
+        "last_close": 89.25,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "AMGN": {
+        "last_close": 414.67,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "ESTC": {
+        "last_close": 87.99,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "GS": {
+        "last_close": 935.26,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "COHR": {
+        "last_close": 296.54,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "CRDO": {
+        "last_close": 210.86,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "LITE": {
+        "last_close": 941.66,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "AAPL": {
+        "last_close": 341.02,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "AMD": {
+        "last_close": 630.47,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "IESC": {
+        "last_close": 323.69,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "EOG": {
+        "last_close": 140.33,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "DUK": {
+        "last_close": 113.34,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "EQIX": {
+        "last_close": 1008.54,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "ASML": {
+        "last_close": 1743.61,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "CAMT": {
+        "last_close": 147.14,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "AMAT": {
+        "last_close": 484.83,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "ARES": {
+        "last_close": 122.05,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "KGC": {
+        "last_close": 25.06,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "APH": {
+        "last_close": 84.09,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "CSCO": {
+        "last_close": 106.69,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "ITW": {
+        "last_close": 274.25,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "DE": {
+        "last_close": 690.08,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "ADBE": {
+        "last_close": 235.48,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "AMZN": {
+        "last_close": 249.63,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "EMR": {
+        "last_close": 158.22,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "CRWD": {
+        "last_close": 252.1,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "HWM": {
+        "last_close": 232.59,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "GILD": {
+        "last_close": 150.88,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
       "AXON": {
         "last_close": 430.04,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "VRTX": {
-        "last_close": 526.28,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "ABT": {
+        "last_close": 101.26,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "VLO": {
-        "last_close": 387.1,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "GLW": {
+        "last_close": 156.58,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "SNOW": {
-        "last_close": 335.97,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "COIN": {
+        "last_close": 195.0,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "VEEV": {
-        "last_close": 280.81,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "CCJ": {
+        "last_close": 88.06,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "LOW": {
-        "last_close": 189.22,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "BKNG": {
+        "last_close": 163.89,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "PG": {
-        "last_close": 146.24,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "ISRG": {
+        "last_close": 405.12,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "TSLA": {
-        "last_close": 372.09,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "HD": {
+        "last_close": 293.18,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "SCCO": {
-        "last_close": 203.93,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "DLR": {
+        "last_close": 178.62,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "LPLA": {
-        "last_close": 314.48,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "BLK": {
+        "last_close": 1086.35,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "SPOT": {
-        "last_close": 509.64,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "BX": {
+        "last_close": 118.43,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "ZS": {
-        "last_close": 192.94,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "ALAB": {
+        "last_close": 364.48,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "MCD": {
-        "last_close": 236.53,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "FIX": {
+        "last_close": 1657.03,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "TMO": {
-        "last_close": 674.65,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "ARM": {
+        "last_close": 310.38,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "NVDA": {
-        "last_close": 225.05,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "DOCU": {
+        "last_close": 67.48,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "NTRA": {
-        "last_close": 412.35,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "UNP": {
-        "last_close": 273.6,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "FTNT": {
+        "last_close": 173.45,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
       "SHOP": {
         "last_close": 142.29,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "LNG": {
-        "last_close": 268.52,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "TLN": {
-        "last_close": 304.28,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "V": {
-        "last_close": 367.34,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "TSM": {
-        "last_close": 450.56,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "NEM": {
-        "last_close": 121.41,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "SMCI": {
-        "last_close": 43.26,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "OKTA": {
-        "last_close": 195.16,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "NFLX": {
-        "last_close": 71.14,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "LMT": {
-        "last_close": 519.49,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "WMT": {
-        "last_close": 107.97,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ROK": {
-        "last_close": 434.21,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "MU": {
-        "last_close": 1081.82,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "SPGI": {
-        "last_close": 403.27,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "SCHW": {
-        "last_close": 99.02,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "QCOM": {
-        "last_close": 202.03,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "TRV": {
-        "last_close": 362.92,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "UBER": {
-        "last_close": 69.6,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "LLY": {
-        "last_close": 1183.99,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "PANW": {
-        "last_close": 374.56,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "SLB": {
-        "last_close": 51.55,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "MRVL": {
-        "last_close": 261.8,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "SNDK": {
-        "last_close": 1777.01,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "WM": {
-        "last_close": 206.8,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "XOM": {
-        "last_close": 160.56,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "PH": {
-        "last_close": 977.39,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "UNH": {
-        "last_close": 376.7,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "SPY": {
-        "last_close": 771.21,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "MSFT": {
-        "last_close": 516.15,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "VST": {
-        "last_close": 138.72,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "PGR": {
-        "last_close": 205.47,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "NU": {
-        "last_close": 13.58,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "MELI": {
-        "last_close": 1752.79,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "RDDT": {
-        "last_close": 149.98,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "MS": {
-        "last_close": 196.32,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "NVT": {
-        "last_close": 164.36,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "NET": {
-        "last_close": 348.68,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "REGN": {
-        "last_close": 787.54,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "NEE": {
-        "last_close": 76.08,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "TWLO": {
-        "last_close": 275.82,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
       "MDT": {
         "last_close": 88.6,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "LRCX": {
-        "last_close": 315.19,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "MA": {
-        "last_close": 567.5,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "RTX": {
-        "last_close": 189.37,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "STX": {
-        "last_close": 916.75,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "WDAY": {
-        "last_close": 189.42,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "MCO": {
-        "last_close": 468.93,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "WMB": {
-        "last_close": 69.28,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "TEAM": {
-        "last_close": 187.71,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "SNPS": {
-        "last_close": 425.88,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "WDC": {
-        "last_close": 456.61,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "SPGI": {
+        "last_close": 403.27,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
       "PM": {
         "last_close": 190.49,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "NOC": {
-        "last_close": 510.51,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "RGLD": {
-        "last_close": 252.53,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "PSX": {
-        "last_close": 255.7,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "META": {
-        "last_close": 751.26,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "MRK": {
-        "last_close": 148.77,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "WPM": {
-        "last_close": 142.9,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
       "MPC": {
         "last_close": 393.26,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "PWR": {
-        "last_close": 648.99,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "NU": {
+        "last_close": 13.58,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "S": {
-        "last_close": 22.37,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "MCD": {
+        "last_close": 236.53,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "TXN": {
-        "last_close": 277.96,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "LOW": {
+        "last_close": 189.22,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
       "MPWR": {
         "last_close": 1366.9,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "RBRK": {
-        "last_close": 109.53,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "QCOM": {
+        "last_close": 202.03,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "TER": {
-        "last_close": 398.13,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "XOM": {
+        "last_close": 160.56,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "NOW": {
-        "last_close": 135.62,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "NVT": {
+        "last_close": 164.36,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "NBIS": {
-        "last_close": 237.24,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
-        "source": "alpaca_iex"
-      },
-      "ONTO": {
-        "last_close": 287.88,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "UNH": {
+        "last_close": 376.7,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
       "ORCL": {
         "last_close": 137.06,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
-      "PLTR": {
-        "last_close": 189.63,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+      "TMO": {
+        "last_close": 674.65,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       },
       "VRT": {
         "last_close": 253.24,
-        "price_as_of": "2026-09-28T10:00:44.402612+00:00",
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "PANW": {
+        "last_close": 374.56,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "NEE": {
+        "last_close": 76.08,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "TLN": {
+        "last_close": 304.28,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "RDDT": {
+        "last_close": 149.98,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "MSFT": {
+        "last_close": 516.15,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "LRCX": {
+        "last_close": 315.19,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "NOC": {
+        "last_close": 510.51,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "TEAM": {
+        "last_close": 187.71,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "TXN": {
+        "last_close": 277.96,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "TSM": {
+        "last_close": 450.56,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "RTX": {
+        "last_close": 189.37,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "RBRK": {
+        "last_close": 109.53,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "LPLA": {
+        "last_close": 314.48,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "VRTX": {
+        "last_close": 526.28,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "NFLX": {
+        "last_close": 71.14,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "TWLO": {
+        "last_close": 275.82,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "MELI": {
+        "last_close": 1752.79,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "NBIS": {
+        "last_close": 237.24,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "WMB": {
+        "last_close": 69.28,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "SLB": {
+        "last_close": 51.55,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "NOW": {
+        "last_close": 135.62,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "SPOT": {
+        "last_close": 509.64,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "PWR": {
+        "last_close": 648.99,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "WM": {
+        "last_close": 206.8,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "NVDA": {
+        "last_close": 225.05,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "PG": {
+        "last_close": 146.24,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "NET": {
+        "last_close": 348.68,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "MA": {
+        "last_close": 567.5,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "MU": {
+        "last_close": 1081.82,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "S": {
+        "last_close": 22.37,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "LLY": {
+        "last_close": 1183.99,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "MCO": {
+        "last_close": 468.93,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "STX": {
+        "last_close": 916.75,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "SNPS": {
+        "last_close": 425.88,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "MS": {
+        "last_close": 196.32,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "VEEV": {
+        "last_close": 280.81,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "REGN": {
+        "last_close": 787.54,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "TRV": {
+        "last_close": 362.92,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "PH": {
+        "last_close": 977.39,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "TER": {
+        "last_close": 398.13,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "ZS": {
+        "last_close": 192.94,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "UNP": {
+        "last_close": 273.6,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "LNG": {
+        "last_close": 268.52,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "WMT": {
+        "last_close": 107.97,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "VLO": {
+        "last_close": 387.1,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "META": {
+        "last_close": 751.26,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "WDC": {
+        "last_close": 456.61,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "NTRA": {
+        "last_close": 412.35,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "SPY": {
+        "last_close": 771.21,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "ONTO": {
+        "last_close": 287.88,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "SNOW": {
+        "last_close": 335.97,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "OKTA": {
+        "last_close": 195.16,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "WPM": {
+        "last_close": 142.9,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "NEM": {
+        "last_close": 121.41,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "RGLD": {
+        "last_close": 252.53,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "MRK": {
+        "last_close": 148.77,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "LMT": {
+        "last_close": 519.49,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "SNDK": {
+        "last_close": 1777.01,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "TSLA": {
+        "last_close": 372.09,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "UBER": {
+        "last_close": 69.6,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "PLTR": {
+        "last_close": 189.63,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "PGR": {
+        "last_close": 205.47,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "MRVL": {
+        "last_close": 261.8,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "ROK": {
+        "last_close": 434.21,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "PSX": {
+        "last_close": 255.7,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "WDAY": {
+        "last_close": 189.42,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "VST": {
+        "last_close": 138.72,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "SMCI": {
+        "last_close": 43.26,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "SCHW": {
+        "last_close": 99.02,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "SCCO": {
+        "last_close": 203.93,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
+        "source": "alpaca_iex"
+      },
+      "V": {
+        "last_close": 367.34,
+        "price_as_of": "2026-09-28T10:10:07.403151+00:00",
         "source": "alpaca_iex"
       }
     }
@@ -4061,7 +4073,7 @@
   "filing_texts": {},
   "filing_texts_note": "Real MD&A and press-release prose per focus ticker. When earnings_release.contains_guidance_language is true, QUOTE the specific guidance sentence (numbers and fiscal period) instead of paraphrasing. mdna.section == 'document_start' means general filing text, not MD&A.",
   "news_and_catalysts": {
-    "as_of": "2026-09-28T10:01:39.872937+00:00",
+    "as_of": "2026-09-28T10:10:13.759236+00:00",
     "news_max_age_days": 7,
     "tickers": {
       "ANET": {
@@ -4506,7 +4518,7 @@
   "guidance_ledger": {},
   "fundamental_screen": {
     "as_of": "2026-08-03T20:11:30.870911+00:00",
-    "age_hours": 1333.8,
+    "age_hours": 1334.0,
     "names_covered": 186,
     "note": "Full-universe estimate screen, refreshed pre-market (6am/9am ET, gated on true America/New_York time). top_upward_revisions = fundamental inflections regardless of price - candidates the momentum funnel may not surface. estimate_changes_since_previous = what moved THIS MORNING (earnings/guidance). Each row may carry revision_direction (up/down/flat), eps_growth_next_yr_pct (forward EPS growth), and eps_estimate_current_yr / eps_estimate_next_yr (current/next fiscal-year EPS estimates - the scanner's fwd_pe_est divides last close by the current-year figure) - judge a multiple against growth, not news tone.",
     "top_upward_revisions": [
@@ -4888,7 +4900,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-09-28T10:01:43.184704+00:00"
+        "updated_at": "2026-09-28T10:10:18.337003+00:00"
       },
       "NOW": {
         "what_they_do": "Operates in: Enterprise / AI software platforms",
@@ -4922,7 +4934,7 @@
           }
         ],
         "recent_lessons": [],
-        "updated_at": "2026-09-28T10:01:43.185095+00:00"
+        "updated_at": "2026-09-28T10:10:18.337199+00:00"
       }
     },
     "n": 2
