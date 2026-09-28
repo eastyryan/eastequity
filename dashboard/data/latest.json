@@ -429,6 +429,10 @@
   "improvements": [
     {
       "date": "2026-09-28",
+      "note": "Daily study (technical_analysis): Opening-range breakout is a daytrade construct: do not promote a 5\u201360 minute ORH print into a 3\u201390 day swing entry \u2014 wait for daily acceptance (or a daily NR compression break) instead - Toby Crabel's Opening Range Breakout (ORB) defines the high and low of the first N minutes of the RTH session (commonly 5, 30, or 60) and trades a break of that opening-range high (ORH) or low (ORL). "
+    },
+    {
+      "date": "2026-09-28",
       "note": "Freshness sweep found stale fundamentals for ['ABT', 'CB', 'CDNS', 'DLR', 'DUK', 'HCA', 'HUBB', 'HUM', 'KO', 'NEE', 'SPGI', 'V'] - do not trust these names' fundamentals until resolved."
     },
     {
@@ -542,10 +546,6 @@
     {
       "date": "2026-09-18",
       "note": "The Sep 4 S&P 100 addition (ANET/DELL/PANW/SNDK, effective before the Monday 2026-09-21 open) was not in `market_events`, `tape_focus_promotions`, or any dated-event layer on the holding, so the prior 21:48 review underwrote Arista as a quiet weekend hold; stamp announced index adds with effective timestamps onto open positions so a Friday-night news review cannot miss Monday's forced-flow open."
-    },
-    {
-      "date": "2026-09-18",
-      "note": "Weekly self-review: Last week\u2019s change was that every watchlist trigger had to be a reclaim of a prior session\u2019s high or low, never today\u2019s close; I did not keep it \u2014 Zscaler\u2019s session-low on September 8 and Microsoft\u2019s Friday close-gate, which no remaining slot could observe, were the same Snowflake tautology. Baker Hughes was closed when the September 9 clock expired and is about 10% below that exit, and Booking has kept falling to about 15% below $198.60, so those two kills were right. I did not restack Dell or Hewlett Packard Enterprise, I let DexCom\u2019s trail work instead of selling it on a nick, and I finally took an honest Arista probe after the $195 hold printed. What I got wrong: DexCom only banked +0.39R after tagging $92.50 and is 5.5% higher since; the 0.50\u20130.59 bucket is 0-for-2, so Arista at 0.52 is a real probe; and the shadow book is still 54% idiosyncratic regrets, mostly names I skipped only because the Street mean sat under 10%. Calibration is caution \u2014 eight closed trades, 0.60\u20130.69 winning 60% with a 3-point gap, servers-hardware 0-for-4 and \u2212$20.53 as a caution not a ban. The one change next week: a trigger or waiting-for may only name a completed prior session\u2019s high, low, or close \u2014 if no later slot can see \u201ctoday\u2019s close,\u201d the condition is the next session\u2019s hold of that completed bar."
     }
   ],
   "trade_events": [

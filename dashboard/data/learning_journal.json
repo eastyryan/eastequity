@@ -1,8 +1,8 @@
 {
-  "updated_at": "2026-09-25T23:00:56.646562+00:00",
+  "updated_at": "2026-09-28T23:05:33.164059+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
-    "technical_analysis": 12,
+    "technical_analysis": 13,
     "fundamental_analysis": 2,
     "risk_management": 12,
     "strategy_playbooks": 13,
@@ -11,6 +11,42 @@
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-7496787085",
+      "discipline": "technical_analysis",
+      "topic": "Opening-range breakout is a daytrade construct: do not promote a 5\u201360 minute ORH print into a 3\u201390 day swing entry \u2014 wait for daily acceptance (or a daily NR compression break) instead",
+      "summary": "Toby Crabel's Opening Range Breakout (ORB) defines the high and low of the first N minutes of the RTH session (commonly 5, 30, or 60) and trades a break of that opening-range high (ORH) or low (ORL). Practitioner and system literature treat ORB as an INTRADAY framework: institutional order flow and volatility cluster at the open, the edge is session-scoped, and responsible implementations force an end-of-day exit because overnight gap risk was never part of the design (Build Alpha; Pomegra ORB playbook). Academic-style daytrade tests that look impressive (e.g. high relative-volume 'stocks in play' on a 5-minute ORB) are measuring SAME-DAY momentum, not multi-day swing expectancy \u2014 extrapolating those stats into a 3\u201390 day hold is a category error. The only swing-usable cousin from the same Crabel family is daily-bar volatility compression (NR4/NR7: the narrowest daily range of the last 4 or 7 sessions), which StockCharts and Crabel both frame as a contraction-before-expansion FILTER that is directionally neutral and still needs a larger Stage-2 / fat-pitch context; even then, modern cost-aware backtests of standalone NR7 breakouts are often unprofitable (Validated Strategies NR7 on gold 2017\u20132026: information vs random, but negative expectancy after costs). For this book the practical rule is negative: a morning ORH break on a watchlist name is not an entry trigger, not a 'confirmation' that upgrades an unfinished daily pivot, and not a reason to loosen the fat-pitch bar. Sou",
+      "key_points": [
+        "ORB = first N minutes of RTH high/low; classic windows are 5 / 30 / 60 minutes \u2014 session-scoped by design",
+        "Force EOD exit is the honest ORB risk model; overnight holds import gap risk the strategy never priced",
+        "Impressive ORB backtests on high-rvol 'stocks in play' measure same-day momentum, not 3\u201390d swing expectancy",
+        "Daily NR4/NR7 compression is the only Crabel cousin that lives on the daily chart \u2014 and it is a neutral volatility filter, not a buy signal",
+        "A morning ORH break does not confirm or upgrade an unfinished daily pivot / fat-pitch setup",
+        "The intraday ORB retest (break then reclaim ORH) is the same SHAPE as this book's daily throwback preference \u2014 keep the analogy at the daily scale"
+      ],
+      "how_to_apply": "During gather/act, if a candidate's 'trigger' is a 5\u201360 minute opening-range high break, an IB (initial balance) break, or 'confirmed above the first-hour high', treat that as NOT an entry \u2014 decline or leave it on the watchlist until the daily pivot is accepted (close above the named level, or a constructive throwback/reclaim of that daily level on light supply). Do not widen size, shorten the ATR stop, or loosen the fat-pitch bar because the open 'looked confirmed'. NR7 / tight daily compression may SUPPORT an already-valid VCP / 3-weeks-tight / inner-pivot story as evidence the base is coiling, but it never replaces Stage-2 location, 2:1 RR, or the written invalidation under the last confirmed swing low. For overnight gaps, keep using the existing gap-continuation lesson (news durability + first RTH acceptance) \u2014 do not substitute an ORH break for that acceptance test.",
+      "sources": [
+        "https://www.buildalpha.com/opening-range-breakout/",
+        "https://pomegra.io/learn/library/track-e-trading-risk/active-trading/chapter-05-setups-and-playbooks/opening-range-breakout-orb",
+        "https://chartschool.stockcharts.com/table-of-contents/trading-strategies-and-models/trading-strategies/narrow-range-day-nr7",
+        "https://validatedstrategies.com/strategy/NR7",
+        "Toby Crabel, Day Trading with Short-Term Price Patterns and Opening Range Breakout (1990) \u2014 via StockCharts NR7 summary"
+      ],
+      "learned_at": "2026-09-28T23:05:33.154629+00:00",
+      "run_id": "20260928-404303",
+      "tensions": [
+        {
+          "with": "KB-0519854047",
+          "why": "Overnight-gap lesson already requires first RTH acceptance after classifying news durability; this lesson adds that an opening-range high break is NOT that acceptance test \u2014 same regime, different false trigger to refuse.",
+          "noted_at": "2026-09-28"
+        },
+        {
+          "with": "KB-9692173165",
+          "why": "Daily pivot throwback entry remains the higher-expectancy swing path; ORB literature's preference for retest-of-ORH is the intraday rhyme, not a substitute \u2014 keep entries on the daily pivot, not the first-hour print.",
+          "noted_at": "2026-09-28"
+        }
+      ]
+    },
     {
       "id": "KB-1904498296",
       "discipline": "risk_management",
