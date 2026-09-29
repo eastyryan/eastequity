@@ -343,3 +343,21 @@ Toby Crabel's Opening Range Breakout (ORB) defines the high and low of the first
 
 *Sources:* https://www.buildalpha.com/opening-range-breakout/; https://pomegra.io/learn/library/track-e-trading-risk/active-trading/chapter-05-setups-and-playbooks/opening-range-breakout-orb; https://chartschool.stockcharts.com/table-of-contents/trading-strategies-and-models/trading-strategies/narrow-range-day-nr7; https://validatedstrategies.com/strategy/NR7; Toby Crabel, Day Trading with Short-Term Price Patterns and Opening Range Breakout (1990) — via StockCharts NR7 summary
 
+### [2026-09-29] risk_management — KB-0801985270
+
+**ATR-stop 1% sizing is not a gap-risk bound: when a binary print sits inside the hold window, size against the options expected move (or exit/skip) — the stop cannot fire overnight**
+
+Practitioner and options literature agree on a structural fact: stop-loss orders only work while the exchange is open. An after-close or pre-open earnings print reprices in one overnight gap, so a stop at entry−1.5×ATR fills at the open — often well past the intended level (Longbridge; Traders Agency). That breaks the usual share-count formula shares = (equity×1%) / stop_distance: the PLANNED 1R is a day-session intent, not a hard overnight loss bound. Pomegra’s earnings sizing chapter makes the same point from the Kelly/fractional side — standard fixed-fractional sizing is dangerously optimistic when gap risk can 2–3× the planned R, so professionals cut the risk fraction (often to ~0.25–0.75%) or size against the maximum adverse gap, not the stop. The market already publishes that gap scale as the ATM straddle expected move; this book’s options_signals.expected_move_pct and the validator’s min_stop_expected_move_fraction=0.5 already treat EM as a noise floor for STOP PLACEMENT. The missing half is SIZE: when days_to_earnings falls inside holding_horizon_days (outside the coded 3-day blackout, or inside it with an earnings_case), the honest 1% budget is shares × price × EM% ≤ ~1% equity — or half-size / exit-before-print / wait for the post-print drift lane. Sources agree the tools are sizing and the pre-decision to step aside, not a tighter ATR stop. Sources disagree on the exact haircut (half-size vs EM-dollar bound vs skip); the common principle is that planned-R from an A
+
+- Stops do not execute overnight — an earnings gap fills at the open, past the intended stop
+- shares = (equity×1%) / ATR-stop-distance understates loss when EM% ≫ stop_distance%
+- Size the adverse gap: shares × price × expected_move_pct ≲ 1% equity (or cut/skip)
+- options_signals.expected_move_pct is already the book’s gap-scale input — use it for SIZE, not only stop floor
+- Coded 3-day pre_print_blackout blocks new BUYs; 4–45d prints still sit inside swing holds — re-underwrite size or exit before the print
+- A tighter ATR stop does not fix gap risk; exit-before-print, half-size, or post-print drift do
+- earnings_case (trade-through) must state the EM-sized max loss, not just the thesis narrative
+
+*Apply here:* Before any BUY (and on every holdings review of an open name), read days_to_earnings / earnings_week and options_signals.expected_move_pct. If the print falls inside holding_horizon_days: (1) prefer the existing pre-print fork — exit into strength before the print, or wait for the post_print_drift lane — rather than hope the ATR stop saves you; (2) if you still hold or deliberately trade through (earnings_case ≥80 chars inside the 3-day blackout), recompute size so shares × mark × EM% ≤ the 1% risk budget (use half-size when EM is noisy/missing), and write that EM-dollar max loss into the plan; (3) never ‘fix’ overnight binary risk by tightening stop_loss inside the ATR / 0.5×EM floor — that only worsens day-session noise exits and does nothing to the gap. On the current NOW seat, apply the same re-underwrite when its next print enters the horizon: cushion-in-ATR is a day-session metric, not a gap bound.
+
+*Sources:* https://longbridge.com/academy/options/blog/gap-risk-around-earnings-managing-overnight-moves-100691; https://tradersagency.com/blog/atr-position-sizing-stop-loss-placement; https://pomegra.io/learn/library/track-b-stock-market-core/earnings/chapter-13-trading-earnings-with-caveats/position-sizing-for-earnings; https://flashalpha.com/articles/complete-guide-trading-earnings-volatility
+
