@@ -2002,7 +2002,48 @@
           "noted_at": "2026-09-28"
         }
       ]
+    },
+    {
+      "id": "KB-0801985270",
+      "discipline": "risk_management",
+      "topic": "ATR-stop 1% sizing is not a gap-risk bound: when a binary print sits inside the hold window, size against the options expected move (or exit/skip) \u2014 the stop cannot fire overnight",
+      "summary": "Practitioner and options literature agree on a structural fact: stop-loss orders only work while the exchange is open. An after-close or pre-open earnings print reprices in one overnight gap, so a stop at entry\u22121.5\u00d7ATR fills at the open \u2014 often well past the intended level (Longbridge; Traders Agency). That breaks the usual share-count formula shares = (equity\u00d71%) / stop_distance: the PLANNED 1R is a day-session intent, not a hard overnight loss bound. Pomegra\u2019s earnings sizing chapter makes the same point from the Kelly/fractional side \u2014 standard fixed-fractional sizing is dangerously optimistic when gap risk can 2\u20133\u00d7 the planned R, so professionals cut the risk fraction (often to ~0.25\u20130.75%) or size against the maximum adverse gap, not the stop. The market already publishes that gap scale as the ATM straddle expected move; this book\u2019s options_signals.expected_move_pct and the validator\u2019s min_stop_expected_move_fraction=0.5 already treat EM as a noise floor for STOP PLACEMENT. The missing half is SIZE: when days_to_earnings falls inside holding_horizon_days (outside the coded 3-day blackout, or inside it with an earnings_case), the honest 1% budget is shares \u00d7 price \u00d7 EM% \u2264 ~1% equity \u2014 or half-size / exit-before-print / wait for the post-print drift lane. Sources agree the tools are sizing and the pre-decision to step aside, not a tighter ATR stop. Sources disagree on the exact haircut (half-size vs EM-dollar bound vs skip); the common principle is that planned-R from an A",
+      "key_points": [
+        "Stops do not execute overnight \u2014 an earnings gap fills at the open, past the intended stop",
+        "shares = (equity\u00d71%) / ATR-stop-distance understates loss when EM% \u226b stop_distance%",
+        "Size the adverse gap: shares \u00d7 price \u00d7 expected_move_pct \u2272 1% equity (or cut/skip)",
+        "options_signals.expected_move_pct is already the book\u2019s gap-scale input \u2014 use it for SIZE, not only stop floor",
+        "Coded 3-day pre_print_blackout blocks new BUYs; 4\u201345d prints still sit inside swing holds \u2014 re-underwrite size or exit before the print",
+        "A tighter ATR stop does not fix gap risk; exit-before-print, half-size, or post-print drift do",
+        "earnings_case (trade-through) must state the EM-sized max loss, not just the thesis narrative"
+      ],
+      "how_to_apply": "Before any BUY (and on every holdings review of an open name), read days_to_earnings / earnings_week and options_signals.expected_move_pct. If the print falls inside holding_horizon_days: (1) prefer the existing pre-print fork \u2014 exit into strength before the print, or wait for the post_print_drift lane \u2014 rather than hope the ATR stop saves you; (2) if you still hold or deliberately trade through (earnings_case \u226580 chars inside the 3-day blackout), recompute size so shares \u00d7 mark \u00d7 EM% \u2264 the 1% risk budget (use half-size when EM is noisy/missing), and write that EM-dollar max loss into the plan; (3) never \u2018fix\u2019 overnight binary risk by tightening stop_loss inside the ATR / 0.5\u00d7EM floor \u2014 that only worsens day-session noise exits and does nothing to the gap. On the current NOW seat, apply the same re-underwrite when its next print enters the horizon: cushion-in-ATR is a day-session metric, not a gap bound.",
+      "sources": [
+        "https://longbridge.com/academy/options/blog/gap-risk-around-earnings-managing-overnight-moves-100691",
+        "https://tradersagency.com/blog/atr-position-sizing-stop-loss-placement",
+        "https://pomegra.io/learn/library/track-b-stock-market-core/earnings/chapter-13-trading-earnings-with-caveats/position-sizing-for-earnings",
+        "https://flashalpha.com/articles/complete-guide-trading-earnings-volatility"
+      ],
+      "learned_at": "2026-09-29T23:04:52.305999+00:00",
+      "run_id": "20260929-db16a4",
+      "tensions": [
+        {
+          "with": "KB-8308262054",
+          "why": "KB-8308262054 teaches how to READ expected_move / IV crush for timing around prints; this lesson is the SIZE math when you still hold or trade through \u2014 same input, different decision (shares vs entry timing). Both stay active.",
+          "noted_at": "2026-09-29"
+        },
+        {
+          "with": "KB-5731674677",
+          "why": "KB-5731674677 is the strategic pre-print fork (run-up/exit vs hold-through vs wait). This lesson supplies the risk arithmetic for the hold-through / trade-through branch so the fork is not just narrative \u2014 they answer different questions.",
+          "noted_at": "2026-09-29"
+        },
+        {
+          "with": "KB-1365918646",
+          "why": "KB-1365918646 covers general stop underwriting (sqrt(t) noise, gap-fill slippage, entry location). This lesson isolates the binary-event case where the stop is structurally unreachable overnight \u2014 a stricter bound, not a replacement of day-session underwriting.",
+          "noted_at": "2026-09-29"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-09-28T23:05:33.161885+00:00"
+  "updated_at": "2026-09-29T23:04:52.319179+00:00"
 }
