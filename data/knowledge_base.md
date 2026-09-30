@@ -361,3 +361,21 @@ Practitioner and options literature agree on a structural fact: stop-loss orders
 
 *Sources:* https://longbridge.com/academy/options/blog/gap-risk-around-earnings-managing-overnight-moves-100691; https://tradersagency.com/blog/atr-position-sizing-stop-loss-placement; https://pomegra.io/learn/library/track-b-stock-market-core/earnings/chapter-13-trading-earnings-with-caveats/position-sizing-for-earnings; https://flashalpha.com/articles/complete-guide-trading-earnings-volatility
 
+### [2026-09-30] technical_analysis — KB-6024719545
+
+**Fibonacci 38.2–61.8% is a pullback ALERT ZONE that only earns a would_buy_at when it co-locates with a named rail (20-day / 50-DMA / last swing) — standalone Fib levels are not a bounce edge**
+
+ChartSchool frames Fibonacci retracements as ALERT ZONES, not hard reversal points: after a swing advance you mark 23.6/38.2/50/61.8% of that leg, watch the 38.2–61.8% band (50% is Dow Theory's half-retracement, not a Fib ratio), and still need candlesticks, volume, oscillators, or moving averages to confirm a turn. Practitioner swing guides agree that the useful case is CONFLUENCE — a Fib band sitting on the same price as a 20/50/200-DMA or prior support — not a lone 61.8% line. The academic record is load-bearing and I keep it. Batchelor and Ramyar (Cass, 2006) find Dow price/time ratios around Fib and round fractions occur no more often than a stationary block bootstrap expects — magic-number clustering can be dismissed. Tsinaslanidis et al. (Expert Systems with Applications, 2022) similarly find bounce probabilities on Fib zones statistically indistinguishable from random non-Fib S&R zones, and Fib trading rules do not beat the random-zone benchmark or buy-and-hold. So the ratios are not a measured edge; they are a shared-attention map that sometimes coincides with real structure. Sources disagree on whether self-fulfilling anchoring rescues standalone Fib (practitioner yes; rigorous tests no) — the honest resolution for this book is: never promote a Fib touch alone; only use the band when it names the same invalidation geometry as the rails and swing lows we already trust.
+
+- Fib 38.2/50/61.8 after a named swing leg is an alert zone; ChartSchool requires other confirmation for a reversal
+- 50% is Dow Theory's half-move, not a Fibonacci ratio — still useful as the zone midpoint
+- Batchelor-Ramyar (2006): Fib/round ratios in the Dow are no denser than bootstrap chance
+- Tsinaslanidis et al. (2022): Fib S&R bounce odds ≈ random non-Fib zones; Fib rules do not beat random or buy-and-hold
+- Confluence is the only swing use: Fib band overlapping 20-day / 50-DMA / prior support / last HL
+- Anchor from the last confirmed swing low→high of the thrust you are trading — not an arbitrary mid-base wiggle
+- A lone 61.8% tag is not a BUY trigger and does not replace Stage-2, no-supply, 2:1, or ATR stop underwriting
+
+*Apply here:* On a Stage-2 pullback candidate (above_200dma, trend_up_50_over_200, rel_strength_3m_pct still constructive), identify the last confirmed thrust swing low→high and note where 38.2–61.8% of that leg sits. Promote to would_buy_at ONLY when that band co-locates (± roughly one ATR or a tight price cluster) with a named rail this book already uses — rising 20-day (KB-3099641994), 50-DMA (KB-4252672139), or the last confirmed higher low (KB-2454897375) — AND volume is drying (no_supply / KB-2413484258 / KB-6241168493). Write the trigger as the rail hold or light-volume reclaim, not 'Fib 61.8 bounce'. Place stop_loss beyond the deeper of the Fib-band failure and the last confirmed swing low, floored by stop_engineering.min_stop_distance_pct / ATR rules, and require ≥2:1 to the first overhead supply or measured target (KB-6231300499). Never loosen the fat-pitch bar or size up because price 'hit golden Fib'. If Fib and the rails disagree, trust the rail and the swing invalidation — Fib alone is not evidence.
+
+*Sources:* https://chartschool.stockcharts.com/table-of-contents/chart-analysis/chart-annotation-tools/fibonacci-retracements; https://openaccess.city.ac.uk/id/eprint/16276/1/magic%20numbers%20in%20the%20dow.pdf; https://www.sciencedirect.com/science/article/abs/pii/S0957417421012495; https://tickerdaily.com/learn/swing-trading/fibonacci; https://articles.stockcharts.com/article/fibonacci-retracements-finding-the-levels-that-matter-most/
+
