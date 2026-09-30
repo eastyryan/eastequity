@@ -436,6 +436,10 @@
   "improvements": [
     {
       "date": "2026-09-30",
+      "note": "Daily study (technical_analysis): Fibonacci 38.2\u201361.8% is a pullback ALERT ZONE that only earns a would_buy_at when it co-locates with a named rail (20-day / 50-DMA / last swing) \u2014 standalone Fib levels are not a bounce edge - ChartSchool frames Fibonacci retracements as ALERT ZONES, not hard reversal points: after a swing advance you mark 23.6/38.2/50/61.8% of that leg, watch the 38.2\u201361.8% band (50% is Dow Theory's half-r"
+    },
+    {
+      "date": "2026-09-30",
       "note": "slim pack omitted COST/MPC digests and options_signals.by_ticker resolution was empty this gather \u2014 next full run should page `options_signals.tickers` + full_context for COST post-print geometry before drift window expires."
     },
     {
@@ -549,10 +553,6 @@
     {
       "date": "2026-09-21",
       "note": "The MDT trigger fired because \u201cafter the MiniMed exchange prices\u201d was not parsed as a dated event, so a $90 proximity alert went live 18 days before the October 5\u20137 averaging window; treat an explicit corporate-action date (here 2026-10-09) as `held_by_event_gate` the same way a \u201cafter the 8/4 print\u201d clause already is."
-    },
-    {
-      "date": "2026-09-21",
-      "note": "Overlay IEX marks onto holdings and watchlist even when `price_freshness_live.stale=true` (79.6 min today) and stamp a live/dead `tests_gate` at the top of the slim pack \u2014 this 15:30 ET cycle still underwrote 186 names off 2026-09-18 `daily_bar` closes (`prices_meta[MSFT].price_as_of=2026-09-18`) while Microsoft was live at $500.37, and LP-2654713992 already asked for both; watchlist-trigger names (MSFT) also still lack a chart and a `stop_engineering` floor on full runs."
     }
   ],
   "trade_events": [
