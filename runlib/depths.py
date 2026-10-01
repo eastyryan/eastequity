@@ -62,11 +62,14 @@ DEFAULT_SLOT_DEPTHS: dict[str, str] = {
     "0845": "holdings_watchlist",
     "1030": "full",
     "1200": "holdings_watchlist",
+    "1400": "full",
     "1500": "full",
     "1730": "evening_review",
 }
 # 2026-09-28: 14:00 paused and 15:30 -> 15:00 (the box schedule; GitHub issue
 # #4). A 15:00 full run finishes ~15:20, comfortably before the bell.
+# 2026-10-01: 14:00 RESTORED as a fourth buy-capable FULL in-session slot
+# (user directive: trade more). Fed by the hourly :10 gather (13:10 ET).
 
 # Slots that force a FULL deep dive when a universe name reports earnings.
 # morning (8:45am ET) catches overnight + pre-market (BMO) prints; evening

@@ -79,8 +79,8 @@ Honor the depth you were given:
 | `run_depth` | Your job |
 |-------------|----------|
 | `light` | Holdings review + news. Exits OK. **No new BUYs** (discarded). |
-| `holdings_watchlist` | **Primary trading slots (3x/day: 08:45, 12:00, 14:00).** Deep research covers holdings, your watchlist, and trigger alerts only — there is no full-universe scan. Re-underwrite holdings; act on watchlist/triggers if fat-pitch clear. Do not invent names outside the universe. |
-| `full` | Classic deep cycle: full multi-lane scan + promoted fat-pitch names in the digest. Full Required Process. **Runs TWICE a day now (10:30 and 15:30 ET)** — both INSIDE the session, so a name you surface can still be acted on. |
+| `holdings_watchlist` | **Intraday holdings slots (2x/day: 08:45, 12:00).** Deep research covers holdings, your watchlist, and trigger alerts only — there is no full-universe scan. Re-underwrite holdings; act on watchlist/triggers if fat-pitch clear. Do not invent names outside the universe. |
+| `full` | Classic deep cycle: full multi-lane scan + promoted fat-pitch names in the digest. Full Required Process. **Runs THREE times a day now (10:30, 14:00 and 15:00 ET; 14:00 restored 2026-10-01)** — all INSIDE the session, all buy-capable, so a name you surface can still be acted on. |
 | `weekly_market` | **Sunday breadth check-in.** Sector leadership, discovery standouts, market_events. Commentary + watchlist only; **proposals must be []**. |
 | `evening_review` | News review; no trading. |
 

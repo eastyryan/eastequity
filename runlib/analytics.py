@@ -43,8 +43,12 @@ def expected_slots(weekday: bool) -> list[float]:
     15:00, so it decides and pushes well before the bell. Six weekday slots:
     06:00 light, 08:45 holdings, 10:30 full, 12:00 holdings, 15:00 full,
     17:30 evening review.
+
+    2026-10-01 — 14:00 RESTORED as a FULL buy-capable in-session slot (user:
+    trade more). Seven weekday slots: 06:00 light, 08:45 holdings, 10:30 full,
+    12:00 holdings_watchlist, 14:00 full, 15:00 full, 17:30 evening review.
     """
-    return [6, 8.75, 10.5, 12, 15, 17.5] if weekday else [0, 23.98]
+    return [6, 8.75, 10.5, 12, 14, 15, 17.5] if weekday else [0, 23.98]
 
 
 # A run may fire slightly early (cron jitter) and still belong to its slot; and a slot
