@@ -1442,7 +1442,14 @@ def main() -> int:
         full_p = Path(str(ctx_path).replace("context_", "context_full_"))
         if full_p.exists():
             ctx_path = str(full_p)
-        proposals = adversarial_review(proposals, ctx_path, run_id)
+        # Lazy inputs for the deterministic local desk (used only when the grok
+        # CLI is absent or the LLM desk fails): the live book and the same
+        # market_context the validator will see, so its dry run is faithful.
+        _desk_props = list(proposals)
+        proposals = adversarial_review(
+            proposals, ctx_path, run_id,
+            local_inputs=lambda: (get_portfolio_state(),
+                                  _build_market_context(context, _desk_props)))
 
     print("[3/5] Validating (pure Python)...")
     live_portfolio = get_portfolio_state()

@@ -421,6 +421,7 @@ TESTS_GATE_TARGETS = (
     "tests/test_risk_controls.py",
     "tests/test_risk_fail_closed.py",
     "tests/test_risk_sizing.py",
+    "tests/test_local_risk_desk.py",
     "tests/test_publish_kill_switch.py",
     "tests/test_run_lease_lifecycle.py",
     "tests/test_stop_watch.py",

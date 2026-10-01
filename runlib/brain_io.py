@@ -776,10 +776,22 @@ def _desk_phase_instructions() -> str:
     return shared + "If the case is merely adequate, that is a veto.\n"
 
 
-def adversarial_review(proposals: list[dict], context_file: str, run_id: str) -> list[dict]:
+def adversarial_review(proposals: list[dict], context_file: str, run_id: str,
+                       *, local_inputs=None) -> list[dict]:
     """Second pass by a separate Grok session prompted to REFUTE each BUY.
     Veto drops the proposal (journaled); survivors may get a confidence haircut.
-    Skipped where the grok CLI is unavailable - noted loudly."""
+
+    Where the grok CLI is absent (the box's cloud routine — see
+    runlib/local_risk_desk.py) or the LLM desk fails/returns nothing parsable,
+    the DETERMINISTIC local desk reviews instead when
+    risk_controls.local_risk_desk_fallback is true. It vetoes on hard fails
+    (incl. a full validator dry run against the live book) and haircuts on soft
+    ones; it never passes a BUY through unreviewed. With the fallback off the
+    old behaviour stands: reject BUYs (require_risk_desk_for_buys) or pass
+    them through with a journal note.
+
+    local_inputs: optional zero-arg callable -> (portfolio, market_context),
+    evaluated only if the local desk actually runs (it may hit the broker)."""
     import shutil
     LAST_RISK_DESK_VETOES.clear()
     buys = [p for p in proposals if str(p.get("action", "")).upper() == "BUY"]
@@ -794,9 +806,110 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
             return False
         return bool(rc.get("require_risk_desk_for_buys"))
 
+    def _apply_reviews(reviews: dict) -> list[dict]:
+        """Apply desk verdicts (LLM or local): veto drops + journals, approve
+        may haircut, a BUY with no review is vetoed under require_desk."""
+        kept = []
+        for p in proposals:
+            r = reviews.get(str(p.get("ticker", "")).upper())
+            is_buy = str(p.get("action", "")).upper() == "BUY"
+            if r is None and is_buy:
+                # FAIL CLOSED on an UNREVIEWED buy. This used to fall through to
+                # kept.append(p): a desk response that returned valid JSON but simply
+                # omitted a ticker waved that BUY through completely unreviewed, with no
+                # journal line and no console warning — and _no_desk never fired, because
+                # `reviews` was non-empty. A truncated or lazy desk reply therefore
+                # bypassed the entire adversarial pass while looking like it had run.
+                # Silence is not approval.
+                if _require_desk():
+                    miss = ("risk_desk_no_review: the desk returned reviews but none for "
+                            "this ticker — an unreviewed BUY is treated as vetoed")
+                    print(f"  RISK DESK MISSING REVIEW {p.get('ticker')}: rejected")
+                    journal.log_rejection(p, [miss], run_id)
+                    LAST_RISK_DESK_VETOES.append(
+                        validator.ValidationResult(proposal=p, approved=False,
+                                                   reasons=[miss]))
+                    continue
+                print(f"  (risk desk returned no review for {p.get('ticker')} — "
+                      f"kept, require_risk_desk_for_buys is off)")
+                kept.append(p)
+                continue
+            if r is None or not is_buy:
+                kept.append(p)
+                continue
+            if r.get("verdict") == "veto":
+                print(f"  RISK DESK VETO {p['ticker']}: {r.get('objection', '')[:120]}")
+                # Full objection text: the veto rationale is the audit trail for a
+                # killed trade (the 300-char slice lost the actual grounds — the
+                # ABT 7/17 veto's stated reason was cut mid-sentence).
+                veto_reason = f"risk_desk_veto: {r.get('objection', '')[:2000]}"
+                journal.log_rejection(p, [veto_reason], run_id)
+                LAST_RISK_DESK_VETOES.append(
+                    validator.ValidationResult(proposal=p, approved=False,
+                                               reasons=[veto_reason]))
+                continue
+            try:
+                # The prompt states "max -0.10", but this only ever clamped the UPPER
+                # bound at 0 — the floor was never enforced, so a desk returning -0.5
+                # had it applied in full and could silently drive a proposal under the
+                # 0.60 confidence floor. Clamp both ends to the documented range.
+                adj = max(min(float(r.get("confidence_adjustment", 0) or 0), 0.0),
+                          MAX_RISK_DESK_HAIRCUT)
+            except (TypeError, ValueError):
+                adj = 0  # non-numeric desk output: keep the proposal, no haircut
+            if adj:
+                p["confidence"] = round(max(p.get("confidence", 0) + adj, 0), 2)
+                p["risk_desk_note"] = r.get("objection", "")[:300]
+                print(f"  risk desk haircut {p['ticker']}: {adj} -> {p['confidence']}")
+            kept.append(p)
+        return kept
+
+    def _local_fallback_enabled() -> bool:
+        """risk_controls.local_risk_desk_fallback, read defensively (off on error)."""
+        try:
+            rc = validator.load_config().get("risk_controls") or {}
+        except Exception:
+            return False
+        return bool(rc.get("local_risk_desk_fallback"))
+
+    def _local_desk(reason: str) -> list[dict] | None:
+        """Run the deterministic desk. None = it could not run at all (the caller
+        then falls through to the strict _no_desk path, never to approval)."""
+        try:
+            from runlib import local_risk_desk
+            pf = mc = None
+            if callable(local_inputs):
+                try:
+                    pf, mc = local_inputs()
+                except Exception as exc:
+                    print(f"  (local risk desk inputs unavailable: {str(exc)[:120]})")
+                    pf = mc = None
+            local = local_risk_desk.review(proposals, context_file,
+                                           portfolio=pf, market_context=mc)
+        except Exception as exc:
+            print(f"  (local risk desk failed to run: {str(exc)[:120]})")
+            return None
+        n_veto = sum(1 for r in local.values() if r.get("verdict") == "veto")
+        print(f"  risk desk: LOCAL DETERMINISTIC fallback ({reason}) — "
+              f"{len(local)} reviewed, {n_veto} vetoed")
+        journal.log_improvement(
+            f"Risk desk ran in LOCAL DETERMINISTIC mode ({reason}): "
+            f"{len(buys)} BUY(s) reviewed, {n_veto} vetoed. Catalysts were not "
+            f"web-verified; install/authenticate the grok CLI on this node to "
+            f"restore the adversarial LLM desk.", run_id)
+        for p in proposals:
+            if str(p.get("action", "")).upper() == "BUY":
+                p["risk_desk_mode"] = local_risk_desk.DESK_NAME
+        return _apply_reviews(local)
+
     def _no_desk(reason: str) -> list[dict]:
-        """CLI absent or review failed: pass-through by default, or reject BUYs
-        when risk_controls.require_risk_desk_for_buys is set (cloud discipline)."""
+        """CLI absent or review failed: deterministic local desk when enabled;
+        otherwise pass-through by default, or reject BUYs when
+        risk_controls.require_risk_desk_for_buys is set (cloud discipline)."""
+        if _local_fallback_enabled():
+            kept_local = _local_desk(reason)
+            if kept_local is not None:
+                return kept_local
         if not _require_desk():
             print(f"  ({reason} - proposals pass unreviewed)")
             # Leave a public trace: CLAUDE.md promises every BUY an adversarial
@@ -983,60 +1096,7 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
                     r["repairable"] = False  # one round only
                     reviews[tkr] = r
 
-    kept = []
-    for p in proposals:
-        r = reviews.get(str(p.get("ticker", "")).upper())
-        is_buy = str(p.get("action", "")).upper() == "BUY"
-        if r is None and is_buy:
-            # FAIL CLOSED on an UNREVIEWED buy. This used to fall through to
-            # kept.append(p): a desk response that returned valid JSON but simply
-            # omitted a ticker waved that BUY through completely unreviewed, with no
-            # journal line and no console warning — and _no_desk never fired, because
-            # `reviews` was non-empty. A truncated or lazy desk reply therefore
-            # bypassed the entire adversarial pass while looking like it had run.
-            # Silence is not approval.
-            if _require_desk():
-                miss = ("risk_desk_no_review: the desk returned reviews but none for "
-                        "this ticker — an unreviewed BUY is treated as vetoed")
-                print(f"  RISK DESK MISSING REVIEW {p.get('ticker')}: rejected")
-                journal.log_rejection(p, [miss], run_id)
-                LAST_RISK_DESK_VETOES.append(
-                    validator.ValidationResult(proposal=p, approved=False,
-                                               reasons=[miss]))
-                continue
-            print(f"  (risk desk returned no review for {p.get('ticker')} — "
-                  f"kept, require_risk_desk_for_buys is off)")
-            kept.append(p)
-            continue
-        if r is None or not is_buy:
-            kept.append(p)
-            continue
-        if r.get("verdict") == "veto":
-            print(f"  RISK DESK VETO {p['ticker']}: {r.get('objection', '')[:120]}")
-            # Full objection text: the veto rationale is the audit trail for a
-            # killed trade (the 300-char slice lost the actual grounds — the
-            # ABT 7/17 veto's stated reason was cut mid-sentence).
-            veto_reason = f"risk_desk_veto: {r.get('objection', '')[:2000]}"
-            journal.log_rejection(p, [veto_reason], run_id)
-            LAST_RISK_DESK_VETOES.append(
-                validator.ValidationResult(proposal=p, approved=False,
-                                           reasons=[veto_reason]))
-            continue
-        try:
-            # The prompt states "max -0.10", but this only ever clamped the UPPER
-            # bound at 0 — the floor was never enforced, so a desk returning -0.5
-            # had it applied in full and could silently drive a proposal under the
-            # 0.60 confidence floor. Clamp both ends to the documented range.
-            adj = max(min(float(r.get("confidence_adjustment", 0) or 0), 0.0),
-                      MAX_RISK_DESK_HAIRCUT)
-        except (TypeError, ValueError):
-            adj = 0  # non-numeric desk output: keep the proposal, no haircut
-        if adj:
-            p["confidence"] = round(max(p.get("confidence", 0) + adj, 0), 2)
-            p["risk_desk_note"] = r.get("objection", "")[:300]
-            print(f"  risk desk haircut {p['ticker']}: {adj} -> {p['confidence']}")
-        kept.append(p)
-    return kept
+    return _apply_reviews(reviews)
 
 
 # ---------------------------------------------------------------------------

@@ -661,6 +661,12 @@ Beyond filings/13F/news, every run now includes:
 - **Risk desk**: every BUY you propose faces an independent adversarial review that can
   veto it or cut its confidence. Write theses that survive attack - address the strongest
   objection preemptively in your risk_map.
+  **NO grok CLI ON THIS NODE = LOCAL DETERMINISTIC DESK (2026-10-01).** On the box's cloud
+  routine the LLM desk cannot launch; `runlib/local_risk_desk.py` reviews instead. It cannot
+  web-verify anything: it VETOES on missing/invalid stop, stop inside the ATR/expected-move
+  noise floor, target <10%, flattered RR, missing volatility data, or ANY validator reason
+  in a dry run against the live book, and haircuts (bounded) for entities cited that are
+  absent from the bundle and for stacking a held demand_driver. No repair round.
   **ONE REPAIR ROUND EXISTS (2026-08-03) — do not rely on it.** When the desk vetoes for
   a specific FACTUAL OR CITATION defect it judges correctable (a misattributed source, an
   unsourced figure, a wrong date) it marks the veto `repairable` and you get exactly one
