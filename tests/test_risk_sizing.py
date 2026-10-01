@@ -106,8 +106,9 @@ def test_trailed_stop_frees_heat():
 
 
 def test_theme_risk_cap():
-    # $150 of committed hyperscaler risk held; new $80 same-theme -> 230 > $200 cap.
-    positions = [pos("DELL", 450, 435, 10, "hyperscaler_server_capex")]  # $150
+    # $200 of committed hyperscaler risk held; new $100 same-theme -> 300 > $250
+    # cap (2.5% since 2026-10-01, sized for two seats).
+    positions = [pos("DELL", 450, 430, 10, "hyperscaler_server_capex")]  # $200
     p = buy(ticker="HPE", size=1000.0, driver="hyperscaler_server_capex")
     r = validator.validate_proposals([p], pf(positions=positions), {})[0]
     assert not r.approved

@@ -108,20 +108,26 @@ check("probe budget = base * risk_scale",
 check("full entry keeps base budget",
       abs(validator._risk_budget_pct(p62, CFG) - base) < 1e-12)
 
-print("probe cap: one on the book at a time")
+print("probe cap: max_open_probes (2 since 2026-10-01) on the book at a time")
+check("max_open_probes is 2", int(TQR["calibration_probe"]["max_open_probes"]) == 2)
 held_probe = {"ticker": "XYZ", "quantity": 1.0, "avg_cost": 50.0,
               "plan": {"stop_loss": 45.0, "confidence": 0.55,
                        "calibration_probe": True}}
-r = conf_reasons(buy(0.57), portfolio={"total_equity_usd": 1000,
-                                       "positions": [held_probe]})
-check("second probe rejected while one is open",
+held_probe2 = dict(held_probe, ticker="XYZ2")
+one_open = {"total_equity_usd": 1000, "positions": [held_probe]}
+two_open = {"total_equity_usd": 1000, "positions": [held_probe, held_probe2]}
+r = conf_reasons(buy(0.57), portfolio=one_open)
+check("second probe ALLOWED while one is open", not r, str(r))
+r = conf_reasons(buy(0.57), portfolio=two_open)
+check("third probe rejected while two are open",
       any("probe_cap_reached" in x for x in r), str(r))
 r = conf_reasons(buy(0.57), probes_this_batch=1)
-check("second probe rejected within a batch",
+check("second probe allowed within a batch", not r, str(r))
+r = conf_reasons(buy(0.57), portfolio=one_open, probes_this_batch=1)
+check("one open + one in batch blocks a third",
       any("probe_cap_reached" in x for x in r), str(r))
-r = conf_reasons(buy(0.62), portfolio={"total_equity_usd": 1000,
-                                       "positions": [held_probe]})
-check("open probe does not block a full-confidence entry", not r, str(r))
+r = conf_reasons(buy(0.62), portfolio=two_open)
+check("open probes do not block a full-confidence entry", not r, str(r))
 
 print("probe fills grade into their own bucket")
 check("0.57 -> 0.50-0.60", _confidence_bucket(0.57) == "0.50-0.60")

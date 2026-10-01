@@ -6,8 +6,8 @@ This is a **trading-enabled market-cycle slot**. You have a real checkout, a ven
 
 1. **Mode.** Run `date` and confirm US Eastern Time. If it is Saturday or Sunday in ET, this is NEWS-ONLY (markets closed — you must not trade). On weekdays, each slot runs at a coded DEPTH the orchestrator resolves with `--auto-depth`:
    - **6:00 AM** = `light` pre-market (holdings + watchlist + news; new BUYs are discarded by code)
-   - **8:45 AM / 12:00 PM / 2:00 PM** = `holdings_watchlist` trading cycles (deep research on holdings, watchlist, and tape/8-K promotions — no full-universe scan)
-   - **10:30 AM and 3:30 PM** = `full` deep dives (entire universe scanned)
+   - **8:45 AM / 12:00 PM** = `holdings_watchlist` trading cycles (deep research on holdings, watchlist, and tape/8-K promotions — no full-universe scan)
+   - **10:30 AM, 2:00 PM and 3:00 PM** = `full` deep dives (entire universe scanned), all in-session and buy-capable (14:00 restored as full on 2026-10-01)
    Honor `run_depth` in the bundle per the Run depths table in CLAUDE.md. On the 6:00 and 8:45 slots, overweight overnight and pre-market news (earnings after yesterday's close or this morning, guidance, CPI/jobs/Fed, analyst actions). Pre-market news is where the day's edge usually is.
 
 2. **Pull first.** `git fetch origin && git status`. If you are behind origin/main, `git pull --ff-only origin main`. Do not rebase trading work onto a diverged local tree. Secrets live in `~/.config/east-equity-agent/.env` (or the legacy repo `.env`); never write keys into the prompt, the repo, or a new `.env`. Use `.venv/bin/python` (or `.venv311/bin/python` if that is what the checkout uses).
@@ -22,6 +22,14 @@ This is a **trading-enabled market-cycle slot**. You have a real checkout, a ven
 
 7. **Verify.** `git fetch && git log origin/main -1 --oneline`. If the push failed non-fast-forward because another run landed first: do **not** rebase or merge trading results — `git reset --hard origin/main` and end with a note that a concurrent run superseded this one. Only on a branch-permission error, push the same commit to `grok/run-data` and say so.
 
+## Trade-more rules (user-approved 2026-10-01, PAPER only — full detail in CLAUDE.md)
+
+- **Analyst target is never a veto.** A consensus/street target below price or < +10% above it is sentiment context only and may never be the sole or primary reason to reject. Your own measured-move target governs; the validator's RR >= 2.0 and target >= +10% apply to YOUR target.
+- **Intraday starter.** On a full in-session slot with a fresh live overlay, a watchlist name at/through its `would_buy_at` level or within min(0.5 ATR, 1.5%) of it (`starter_zone` true on the alert) may be bought as a STARTER: `"entry_type": "starter"`, half risk (0.5% of equity). Add the remainder only after a completed session close confirms, on a later slot. Write plain price-level triggers; do not append "completed session close" by default ("close-confirmed" is optional, for add-ons/reclaims).
+- **Two seats per theme.** A second seat in a held demand_driver is fine when the book is < 40% deployed and its setup score >= the holder's; the validator caps it at 0.75% risk and blocks a third. Different AI sub-themes are not stacking; the 50% AI factor-stack cap is the guard.
+- **Cash drag.** Under 30% deployed, every no-trade in-session full run owes a dated `waiting_for` {ticker, condition, by_date}.
+- **Probe lane.** On a full in-session slot with < 30% deployed, if nothing clears 0.60, propose your best candidate as an honest 0.50-0.59 probe instead of `[]` (max 2 open probes; still must pass geometry). "Never a second half-size test" is superseded.
+
 ## Do not
 
 - Do **not** run `orchestrator.py --study` in this session. Study is its own 7:00 PM ET routine. Chaining it here collided with the 6 AM trading slot on 2026-07-23 and that slot produced no run.
@@ -31,10 +39,11 @@ This is a **trading-enabled market-cycle slot**. You have a real checkout, a ven
 
 ## Slot times (do not "fix" these)
 
-Intraday slots: 6:00, 8:45, 10:30, 12:00, 2:00, 3:30 ET.
+Weekday slots: 6:00 light, 8:45 holdings, 10:30 full, 12:00 holdings_watchlist, 2:00 full, 3:00 full, 5:30 evening ET.
 
 - 9:00/10:00 moved to 8:45/10:30 on 2026-07-25 so windows cannot overlap (every gap ≥ 90 min) and 10:30 sits after the opening range.
-- 4:00 moved to 3:30 on 2026-08-03 because a full run takes 18–20 min and a 16:00 start finished after the bell every day it ran. At 3:30 the same work decides ~15:52, with liquidity left. Do not move it back.
+- 4:00 moved to 3:30 on 2026-08-03 because a full run takes 18–20 min and a 16:00 start finished after the bell every day it ran; 3:30 moved to 3:00 on 2026-09-28. Do not move it back.
+- 2:00 was restored as a `full` buy-capable slot on 2026-10-01 (user: trade more).
 - 10:30 was promoted to `full` on 2026-08-03 so a new name can surface with five hours of session left.
 
 If anything fails, leave the repo in a clean committed state (or reset to origin/main) and describe the failure in your final message.

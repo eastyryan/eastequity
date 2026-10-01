@@ -840,6 +840,19 @@ def _last_good_watchlist() -> list:
 
 
 
+def _requires_commitment(context: dict, run_depth: str) -> bool:
+    """A no-trade run owes a dated waiting_for once the book has sat under the
+    engagement flat threshold for N days, and (2026-10-01) on EVERY in-session
+    full run while under it. Fails to the original flag on any error."""
+    eng = context.get("engagement") or {}
+    try:
+        from tools.engagement import commitment_required
+        from tools.market_calendar import is_market_open
+        return commitment_required(eng, run_depth, bool(is_market_open()))
+    except Exception:
+        return bool(eng.get("requires_commitment"))
+
+
 def _process_gate_inputs(context: dict, cfg: dict, run_depth: str) -> dict:
     """Everything the process-gate audit needs, assembled from the bundle.
 
@@ -894,8 +907,7 @@ def _process_gate_inputs(context: dict, cfg: dict, run_depth: str) -> dict:
         # been flat for days owes a dated commitment.
         "fired_triggers": _fired_triggers,
         "unbought_hits": _unbought_hits,
-        "requires_commitment": bool(
-            (context.get("engagement") or {}).get("requires_commitment")),
+        "requires_commitment": _requires_commitment(context, run_depth),
         "max_unbought_hits": int(
             ((cfg.get("swing_rules") or {}).get("max_unbought_trigger_hits")) or 3),
     }

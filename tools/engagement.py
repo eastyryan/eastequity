@@ -191,13 +191,18 @@ def decay_watchlist(watchlist: Any, unbought_hits: dict[str, int] | None,
 # ---------------------------------------------------------------------------
 def deployment_status(positions: Any, equity: Any, prior: dict | None,
                       today: Any = None, *,
-                      flat_threshold_pct: float = 0.05,
+                      flat_threshold_pct: float = 0.30,
                       commitment_after_days: int = 3) -> dict:
     """How long the book has been sitting in cash, and what that now requires.
 
     `prior` is the previous run's block (state/engagement.json), so the counter
     survives restarts without re-deriving history. Returns a new block to persist
     plus the flags the bundle and process gates read.
+
+    flat_threshold_pct comes from autonomy_config engagement.flat_threshold_pct
+    (2026-10-01: 0.05 -> 0.30, user: trade more). Below it the book counts as
+    under-deployed; the orchestrator additionally requires a dated waiting_for
+    on EVERY no-trade in-session full run while under the threshold.
 
     This never demands a trade. Past the threshold it demands a COMMITMENT: name
     the specific, dated condition being waited for, so "nothing clears the bar"
@@ -241,18 +246,20 @@ def deployment_status(positions: Any, equity: Any, prior: dict | None,
         "open_positions": len([p for p in (positions or [])
                                if isinstance(p, dict)]),
         "flat": flat,
+        "flat_threshold_pct": round(flat_threshold_pct * 100, 1),
         "flat_since": flat_since.isoformat() if flat_since else None,
         "flat_days": flat_days,
         "requires_commitment": bool(flat and flat_days >= commitment_after_days),
         "commitment_after_days": commitment_after_days,
         "note": (
-            f"The book has been effectively all cash for {flat_days} consecutive "
+            f"The book has been under {round(flat_threshold_pct * 100)}% deployed for {flat_days} consecutive "
             f"day(s). At {commitment_after_days}+ a no-trade run owes a "
             f"`waiting_for` object: the specific, DATED condition being waited "
             f"for and the name it applies to. This is not a demand to trade — a "
             f"fabricated setup is worse than silence — it is a demand that "
             f"'nothing clears the bar' stop being a renewable answer carrying no "
-            f"information."
+            f"information. While under the threshold, EVERY no-trade in-session "
+            f"FULL run owes a dated waiting_for too."
         ) if flat else (
             f"Deployed {round(deployed * 100, 1)}% of equity across "
             f"{len([p for p in (positions or []) if isinstance(p, dict)])} "
@@ -310,3 +317,31 @@ def stale_commitments(prior_waiting: Any, today: Any = None) -> list[dict]:
                                 "whether it fired and you acted, or it did not "
                                 "and the name should be dropped"})
     return out
+
+
+DEFAULT_FLAT_THRESHOLD_PCT = 0.30
+
+
+def flat_threshold_pct(cfg: dict | None) -> float:
+    """engagement.flat_threshold_pct from autonomy_config (default 0.30).
+
+    2026-10-01: was a hardcoded 0.05 — "effectively all cash" — so a book 10%
+    deployed carried no cash-drag accountability at all."""
+    try:
+        v = float(((cfg or {}).get("engagement") or {}).get("flat_threshold_pct"))
+    except (TypeError, ValueError):
+        return DEFAULT_FLAT_THRESHOLD_PCT
+    return v if 0 < v < 1 else DEFAULT_FLAT_THRESHOLD_PCT
+
+
+def commitment_required(engagement: dict | None, run_depth: str,
+                        in_session: bool) -> bool:
+    """Does a no-trade run owe a dated waiting_for?
+
+    Yes once the book has been under the flat threshold for
+    commitment_after_days (the original rule), AND — added 2026-10-01 — on
+    every in-session FULL run while the book is under the threshold."""
+    eng = engagement or {}
+    if eng.get("requires_commitment"):
+        return True
+    return bool(eng.get("flat") and run_depth == "full" and in_session)

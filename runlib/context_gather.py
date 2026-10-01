@@ -318,6 +318,34 @@ def _earnings_week_block(days: int = 7) -> dict:
                         "earnings timing as UNKNOWN, not as absent."}
 
 
+def mark_superseded_lessons(notes: list[dict], cfg: dict | None) -> list[dict]:
+    """Annotate retired lessons instead of deleting them (journal is append-only).
+
+    learning_controls.superseded_lessons lists {match, superseded_at, by, why};
+    any note whose text contains `match` (case-insensitive) is prefixed with a
+    SUPERSEDED marker and carries a `superseded` block, so the brain sees the
+    history AND that the rule no longer binds. Fail-soft: returns notes as-is."""
+    try:
+        rules = (((cfg or {}).get("learning_controls") or {})
+                 .get("superseded_lessons") or [])
+        out = []
+        for n in notes or []:
+            text = str((n or {}).get("note", ""))
+            hit = next((r for r in rules if isinstance(r, dict) and r.get("match")
+                        and str(r["match"]).lower() in text.lower()), None)
+            if hit:
+                n = dict(n)
+                n["superseded"] = {k: hit.get(k) for k in
+                                   ("match", "superseded_at", "by", "why")}
+                n["note"] = (f"[SUPERSEDED {hit.get('superseded_at')} - no longer "
+                             f"binding: '{hit.get('match')}'. {hit.get('why')}] "
+                             + text)
+            out.append(n)
+        return out
+    except Exception:
+        return notes
+
+
 def _engagement_block(portfolio: dict, cfg: dict | None = None) -> dict:
     """Cash-drag status + outstanding trigger obligations, for the DECIDING run.
 
@@ -332,7 +360,8 @@ def _engagement_block(portfolio: dict, cfg: dict | None = None) -> dict:
     try:
         import json as _json
         from tools.engagement import (
-            count_unbought_hits, deployment_status, stale_commitments)
+            count_unbought_hits, deployment_status, flat_threshold_pct,
+            stale_commitments)
 
         sr = (cfg or {}).get("swing_rules") or {}
         after = sr.get("commitment_after_flat_days")
@@ -347,10 +376,12 @@ def _engagement_block(portfolio: dict, cfg: dict | None = None) -> dict:
         except Exception:
             prior = {}
 
+        flat_thr = flat_threshold_pct(cfg)
         status = deployment_status(
             (portfolio or {}).get("positions") or [],
             (portfolio or {}).get("total_equity_usd"),
-            prior.get("deployment"), et_date(), commitment_after_days=after)
+            prior.get("deployment"), et_date(), commitment_after_days=after,
+            flat_threshold_pct=flat_thr)
 
         hits = {}
         try:
@@ -674,7 +705,8 @@ def _gather_holdings_watchlist_research(*, held: list, watch: list,
     # Prioritize watchlist trigger alerts into deep research.
     early_prices = scan.get("prices") or {}
     alerts, _held_early = filter_trigger_alerts(
-        check_watchlist_triggers(prior_watchlist, early_prices),
+        check_watchlist_triggers(prior_watchlist, early_prices,
+                                 scan.get("atr_by_ticker") or {}),
         prior_watchlist, as_of=et_date())
     alert_tickers = [a["ticker"] for a in alerts if a.get("ticker")]
     focus = list(dict.fromkeys(held + watch + alert_tickers))
@@ -952,7 +984,8 @@ def _gather_watchlist_alerts(prior_watchlist: list, scan: dict) -> tuple[list, l
     # and can decay a name off the watchlist for a miss that never happened.
     # filter_trigger_alerts fails OPEN on anything it cannot parse confidently.
     watchlist_alerts, watchlist_alerts_held = filter_trigger_alerts(
-        check_watchlist_triggers(prior_watchlist, scan.get("prices", {})),
+        check_watchlist_triggers(prior_watchlist, scan.get("prices", {}),
+                                 scan.get("atr_by_ticker") or {}),
         prior_watchlist, as_of=et_date())
     if watchlist_alerts_held:
         print(f"    ({len(watchlist_alerts_held)} alert(s) held by an event gate: "
@@ -1559,7 +1592,14 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
                     "so an alert here means the WHOLE stated condition is live, not "
                     "just the price. held_by_event_gate lists names at their price "
                     "level whose event has not happened yet - those owe no "
-                    "trigger_reviews row and do not count toward the force-drop.",
+                    "trigger_reviews row and do not count toward the force-drop. "
+                    "STARTER: an alert with starter_zone=true (price at/through "
+                    "the level or within min(0.5 ATR, 1.5%) above it) may be "
+                    "bought as a half-risk STARTER (entry_type 'starter', 0.5% "
+                    "of equity) on a FULL in-session slot with a fresh live "
+                    "overlay - no completed session close required. The "
+                    "remainder is added only after a completed close confirms, "
+                    "on a later slot.",
             "alerts": watchlist_alerts,
             "held_by_event_gate": watchlist_alerts_held,
         },
@@ -1701,8 +1741,9 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
             "note": "Your own most recent self-review conclusions and process notes. "
                     "The CURRENT stated behavior change is binding until the next "
                     "review grades it - honor it in this run's decisions.",
-            "recent": [n for n in recent_improvements(40)
-                       if str(n.get("note", "")).startswith("Weekly self-review:")
-                       or "[style-log]" in str(n.get("note", ""))][:5],
+            "recent": mark_superseded_lessons(
+                [n for n in recent_improvements(40)
+                 if str(n.get("note", "")).startswith("Weekly self-review:")
+                 or "[style-log]" in str(n.get("note", ""))][:5], cfg),
         },
     }

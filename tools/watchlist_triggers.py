@@ -32,6 +32,26 @@ _DOLLAR_RE = re.compile(r"\$\s*(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?")
 # effectively here, in either direction, but not arbitrarily far past it.
 TRIGGER_TOLERANCE_PCT = 0.02
 
+# STARTER ZONE (2026-10-01, user: trade more). On a full in-session slot with a
+# fresh live overlay, a name at/through its level or within
+# min(STARTER_ATR_FRACTION x ATR, STARTER_MAX_PCT) of it may be bought as a
+# half-risk STARTER (proposal entry_type "starter"); the remainder is added only
+# after a completed session close confirms, on a later slot.
+STARTER_ATR_FRACTION = 0.5
+STARTER_MAX_PCT = 0.015
+
+
+def starter_band_pct(atr_pct) -> float:
+    """Starter proximity band in PERCENT: min(0.5 ATR%, 1.5%)."""
+    cap = STARTER_MAX_PCT * 100
+    try:
+        a = float(atr_pct)
+    except (TypeError, ValueError):
+        return cap
+    if a <= 0:
+        return cap
+    return round(min(STARTER_ATR_FRACTION * a, cap), 3)
+
 
 def parse_price_level(text) -> float | None:
     """Extract the buy level from free-text would_buy_at; None if unparseable.
@@ -50,8 +70,14 @@ def parse_price_level(text) -> float | None:
     return min(levels) if levels else None
 
 
-def check_watchlist_triggers(watchlist: list[dict], prices: dict) -> list[dict]:
-    """Return an alert per watchlist name whose price trigger has been reached."""
+def check_watchlist_triggers(watchlist: list[dict], prices: dict,
+                             atr_by_ticker: dict | None = None) -> list[dict]:
+    """Return an alert per watchlist name whose price trigger has been reached.
+
+    Each alert carries `starter_zone`: true when the price is at/through the
+    level (at or below it) or above it by no more than starter_band_pct(ATR%).
+    Whether a STARTER may actually be bought is decided by the slot (full,
+    in-session, fresh overlay) and the validator, not here."""
     alerts: list[dict] = []
     try:
         if not watchlist or not prices:
@@ -71,12 +97,15 @@ def check_watchlist_triggers(watchlist: list[dict], prices: dict) -> list[dict]:
                 last = float(last)
                 dist_pct = (last / level - 1) * 100
                 if abs(dist_pct) <= TRIGGER_TOLERANCE_PCT * 100:
+                    band = starter_band_pct((atr_by_ticker or {}).get(ticker))
                     alerts.append({
                         "ticker": ticker,
                         "trigger_text": trigger_text,
                         "parsed_level": level,
                         "last_price": round(last, 2),
                         "distance_from_level_pct": round(dist_pct, 2),
+                        "starter_band_pct": band,
+                        "starter_zone": bool(dist_pct <= band),
                         "note": "price within 2% of your stated buy level - "
                                 "prioritize deep research on this name this run",
                     })
