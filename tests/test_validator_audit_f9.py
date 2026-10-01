@@ -45,8 +45,8 @@ def check(name, cond, detail=""):
 CFG = validator.load_config()
 HEAT_CAP = CFG["position_sizing"]["risk_based_sizing"]["portfolio_heat_cap_pct"]
 THEME_CAP = CFG["position_sizing"]["risk_based_sizing"]["theme_initial_risk_cap_pct"]
-assert HEAT_CAP == 0.08 and THEME_CAP == 0.02, (
-    "fixture arithmetic below assumes the documented 8%/2% caps — "
+assert HEAT_CAP == 0.08 and THEME_CAP == 0.025, (
+    "fixture arithmetic below assumes the documented 8%/2.5% caps — "
     "recompute the numbers if config moved")
 
 
@@ -163,7 +163,7 @@ def test_unparseable_intent_geometry_fails_open_loudly():
 
 
 def test_theme_cap_sees_pending_intents():
-    print("theme cap: pending $30 on ai_compute_gpu vs the $20 (2%) theme budget:")
+    print("theme cap: pending $30 on ai_compute_gpu vs the $25 (2.5%) theme budget:")
     set_intents({"intents": [queued_buy()]})
     reasons = []
     with contextlib.redirect_stdout(io.StringIO()):

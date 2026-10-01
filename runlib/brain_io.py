@@ -860,9 +860,15 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
         "2) VARIANT PERCEPTION: Is consensus a straw man? Is the mechanism vague? "
         "Is there a dated resolution event? Weak = veto or haircut.\n"
         "3) THEME OVERLAP: demand_driver vs open positions / theme_exposure / "
-        "portfolio_risk. Same hyperscaler_server_capex (or other driver) stack "
-        "without a distinct catalyst = veto or force smaller size via haircut.\n"
-        "4) GEOMETRY: stop inside noise? target <10%? RR flattered? earnings too close?\n"
+        "portfolio_risk. A SECOND seat in a held driver is ALLOWED (validator: "
+        "book <40% deployed, setup score >= holder, <=0.75% risk; third seat "
+        "blocked) - do not veto on overlap alone; haircut only a second seat with "
+        "no distinct catalyst. Different AI sub-themes (different demand_drivers) "
+        "are NOT overlap; the 50% AI factor-stack cap is that guard.\n"
+        "4) GEOMETRY: stop inside noise? target <10%? RR flattered? earnings too close? "
+        "Judge the proposer's OWN measured-move target. A street/consensus target "
+        "below price or <+10% is sentiment context only and is NEVER a veto or "
+        "the primary reason for a haircut.\n"
         "5) FRESHNESS: if data_quality/stale_data_notice or price_freshness says stale "
         "on a catalyst day, haircut or veto chasing.\n"
         "6) CHARTS: if charts missing for the ticker, haircut confidence.\n"
@@ -1047,6 +1053,7 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str) ->
 #   calibration_exception  tools/calibration_gate.py — losing-bucket override text
 #   conviction_case        validator._risk_budget_pct / calibration gate — tier case
 #   earnings_case          validator._check_earnings_window — trade-the-print case
+#   entry_type             validator._check_starter — "starter" half-risk tranche
 #   exit_reason            brain_io.execute — discretionary-exit autopsy reason
 #   instrument             validator._check_long_only — defaults "EQUITY" if absent
 #   sell_fraction          validator._check_sell_fraction / execute — partial exits
@@ -1064,6 +1071,7 @@ OPTIONAL_PROPOSAL_FIELDS = (
     "calibration_exception",
     "conviction_case",
     "earnings_case",
+    "entry_type",          # validator._check_starter — "starter" = half-risk tranche
     "exit_reason",
     "instrument",
     "sell_fraction",
@@ -1242,7 +1250,8 @@ def execute(approved: list[validator.ValidationResult], context: dict,
             plan = {k: p.get(k) for k in (
                 "stop_loss", "target_price", "holding_horizon_days",
                 "entry_price_max", "confidence", "demand_driver",
-                "thesis_invalidators", "calibration_probe")}
+                "thesis_invalidators", "calibration_probe",
+                "entry_type", "starter", "theme_second_seat")}
         elif p["action"] == "SELL_TO_CLOSE" and isinstance(pos_before, dict):
             # CARRY THE ENTRY PLAN ONTO A DISCRETIONARY EXIT (2026-08-03). This
             # branch did not exist, so every discretionary sell placed with

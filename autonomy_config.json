@@ -84,7 +84,16 @@
       "enabled": true,
       "risk_per_trade_pct": 0.01,
       "portfolio_heat_cap_pct": 0.08,
-      "theme_initial_risk_cap_pct": 0.02,
+      "theme_initial_risk_cap_pct": 0.025,
+      "_theme_cap_2026_10_01_note": "Raised 0.02 -> 0.025 (user: 'I'm fine with betting twice on the same theme if the setup is right'). Two seats (1.0% + <=0.75%) must fit after gap-adjusted heat. The 35% notional theme cap and the 50% AI factor-stack cap are unchanged and remain the guards.",
+      "second_theme_seat": {
+        "enabled": true,
+        "max_deployed_pct": 0.40,
+        "risk_pct": 0.0075,
+        "max_seats_per_theme": 2,
+        "require_setup_score_gte_holder": true,
+        "_note": "ADDED 2026-10-01 (user-approved). A second seat in a demand_driver that already has an open position is allowed only while the book is < max_deployed_pct deployed (market value / equity) and, when the bundle carries setup scores for both, the challenger's setup score >= the holder's. Its risk budget is capped at risk_pct (0.75% of equity). A third seat in one driver is rejected. A BUY on a ticker already held is an ADD, not a seat. Different AI sub-themes (different demand_drivers) are NOT stacking; book_risk.max_factor_stack_pct is that guard. validator._check_theme_seats."
+      },
       "min_clamped_position_usd": 20,
       "momentum_unwind_risk_scale": 0.5,
       "_note": "Van Tharp / Elder / Turtle framework (research 2026-07-16, user-approved). Every BUY risks at most risk_per_trade_pct of equity measured entry-to-stop; the validator CLAMPS oversized proposals down to the risk budget rather than rejecting. Portfolio heat = sum over open positions of entry-basis committed risk max(0,(avg_cost-stop)*qty)/equity; new BUYs are rejected past portfolio_heat_cap_pct (user chose 8%; literature 6-10%). Theme cap: committed initial risk sharing one demand_driver <= theme_initial_risk_cap_pct. Entry-basis heat means trailed stops above cost free the budget (pyramiding into winners stays possible). momentum_unwind_risk_scale halves the risk budget when momentum_health flags an unwind."
@@ -145,11 +154,19 @@
     "max_unsourced_claims_reported": 3,
     "_claim_grounding_note": "Added 2026-07-25, DEFAULT OFF pending evidence, same staged rollout as _tradeability_note below. WHAT IT DOES: validator._check_claim_grounding greps every entity a BUY's variant_perception/catalysts name against the FULL context bundle and rejects the ones that appear nowhere in it. Built from four real incidents the LLM risk desk caught by hand: DDOG 07-22 ('JMP Securities raised its target to $311' - the string 'JMP' appears ZERO times in that day's bundle), MELI 07-24 ('Loggi acquisition', a Citi fair-value cut, '14 new Brazil fulfillment centers'), IBKR 07-22 (an invented 'fourth consecutive beat' with an EMPTY guidance_ledger), UNP 07-24 (a 'binding MOU signed one day earlier' that inverts the actual sequence). WHY IT IS NOT ON YET: CLAUDE.md step 5 makes WebSearch MANDATORY before any BUY, so the brain is REQUIRED to bring in facts that legitimately are not in the bundle - blocking on 'absent from bundle' would reject true WebSearch findings alongside fabricated ones, and a false rejection costs a real trade on a book that has already gone days without one. Until proposals carry per-claim sources, the SAME computation is fed to the risk desk every run (validator.unsourced_claims -> runlib.brain_io), which can weigh the WebSearch context a regex cannot. TO ENABLE: watch the risk-desk prompt's UNSOURCED CLAIMS block for a week; if the entities it lists are consistently real fabrications rather than WebSearch-sourced truth, flip this to true. Precision was tuned against the 7 real BUY proposals in journal/proposals + journal/rejected: multi-word candidates are only taken from an explicit attribution pattern ('<Firm> raised/said/cut'), because the bare proper-noun pass produced prose fragments like 'MINIMUM CONTRACTED' and 'Case After Strong' that no bundle would ever contain verbatim.",
     "min_confidence": 0.6,
+    "starter_entry": {
+      "enabled": true,
+      "risk_scale": 0.5,
+      "allowed_depths": ["full"],
+      "require_fresh_live_overlay": true,
+      "_note": "ADDED 2026-10-01 (user-approved). A BUY tagged entry_type 'starter' is a half-risk first tranche (risk_scale x the 1% budget = 0.5% of equity) taken on a FULL in-session slot when the live price overlay is fresh and price is at/through the watchlist would_buy_at level or within min(0.5 ATR, 1.5%) of it (watchlist_trigger_alerts[].starter_zone). The remainder may be ADDED only after a completed session close confirms, on a later slot (normal add-on rules: above blended cost, max 2 adds). Starters do NOT consume a calibration_probe slot. Every other cap applies: max 2 new positions/day, 20% min cash, $200/20% max position, 8% heat, theme caps. validator._check_starter."
+    },
     "calibration_probe": {
       "enabled": true,
       "min_confidence": 0.5,
       "risk_scale": 0.5,
-      "max_open_probes": 1,
+      "max_open_probes": 2,
+      "_max_open_probes_2026_10_01_note": "Raised 1 -> 2 (user: trade more). Supersedes the 2026-09-18/25 weekly self-review rule 'never a second half-size test'. Starters (entry_type 'starter') do NOT consume a probe slot.",
       "_note": "ADDED 2026-08-05. A BUY scored honestly in [0.50, 0.60) is no longer rejected outright: it trades as a CALIBRATION PROBE at risk_scale x the normal risk budget (0.5% of equity instead of 1%), stamped calibration_probe on the proposal AND persisted onto the position's plan at fill, with at most max_open_probes such positions on the book at once (validator._check_probe_limits). WHY: the hard 0.60 floor could never learn whether 0.50-0.60 setups win, because it never let one trade - HPE on 2026-08-05 died at 0.57 the same afternoon a validated DXCM entry died on a keyword false-positive, on a book that had made 3 trades in a month - and its only lasting lesson to the proposer was that honesty costs the trade while writing 0.62 sails through. The desk's confidence haircut (max -0.10) previously turned into a death sentence whenever it landed under 0.60; now it converts the trade to half-risk instead, so the desk can express skepticism without killing the setup. Probe fills grade into their own 0.50-0.60 bucket (tools/performance_breakdown._confidence_bucket), so once 5+ close the existing calibration machinery has REAL fill data: if the bucket proves losing (<40% WR) the losing-bucket gate starts rejecting it with evidence, and if it proves fine that argues the floor down. Every other gate - RR>=2, geometry, volatility stop, heat, theme caps, earnings window, risk desk - applies to a probe at full strength; below probe min_confidence remains a hard rejection."
     },
     "earnings_window": {
@@ -184,6 +201,10 @@
     "enforce_scenario_math": true,
     "scenario_prob_sum_tolerance": 0.05,
     "_falsifiability_note": "ADDED 2026-07-19 (audit). variant_perception, scenarios and thesis_invalidators were PRESENCE-checked only, while CLAUDE.md twice called variant_perception 'validator-enforced' - a single non-space character satisfied it. min_invalidator_chars was 12, so 'drops below 50dma' (17) passed as a binding falsifier. scenarios' probabilities need not have summed to 1, and tools/scenario_ev.py computed honest EV whose only callers were two RENDERING paths. Now: invalidating_print needs a numeric threshold, time_box needs a date or day-count, variant_perception needs a figure and a dated resolution, and scenario probabilities must sum to ~1 with a non-negative probability-weighted return. These check SHAPE, not argument quality - no regex grades a thesis, and the risk desk and the reader remain the judges of that."
+  },
+  "engagement": {
+    "flat_threshold_pct": 0.30,
+    "_note": "ADDED 2026-10-01 (user: trade more). Cash-drag accountability threshold, read by runlib.context_gather via tools.engagement.flat_threshold_pct (was a hardcoded 0.05 in tools/engagement.py). Below this fraction deployed the book counts as under-deployed: after swing_rules.commitment_after_flat_days days a no-trade run owes a dated waiting_for, AND every no-trade in-session FULL run owes one regardless of the day count. Expired commitments are graded by the existing stale_commitments mechanism."
   },
   "theme_risk": {
     "max_demand_driver_concentration_pct": 0.35,
@@ -244,6 +265,21 @@
     "_note": "Coded regime filter (Faber 2007/2013: ~halved max drawdown over a century; user-approved 2026-07-16). When the benchmark trend is hostile (SPY below its 200DMA), new BUYs are REJECTED (regime_gate_spy_below_200dma) - exits and holds are never blocked, and existing stops keep working, consistent with the evidence that the filter's value is blocking NEW risk, not forced liquidation. Momentum-unwind detection (tools/momentum_health.py) separately halves the risk budget via position_sizing.risk_based_sizing.momentum_unwind_risk_scale rather than hard-blocking. Fail-open when regime data is absent from market_context."
   },
   "learning_controls": {
+    "superseded_lessons": [
+      {
+        "match": "never a second half-size test",
+        "superseded_at": "2026-10-01",
+        "by": "operator (user-approved trade-more change #5)",
+        "why": "max_open_probes raised 1 -> 2: a second half-size calibration probe is now allowed. On full in-session slots with the book <30% deployed, propose the best candidate as a 0.50-0.59 probe rather than returning []."
+      },
+      {
+        "match": "may only name a completed prior session",
+        "superseded_at": "2026-10-01",
+        "by": "operator (user-approved trade-more change #2)",
+        "why": "Triggers no longer default to a completed-session-close gate. A plain price level is the default; 'close-confirmed' is an optional qualifier for add-ons and reclaim setups. On full in-session slots with a fresh overlay a STARTER (half risk) may be taken at/through the level or within min(0.5 ATR, 1.5%)."
+      }
+    ],
+    "_superseded_lessons_note": "ADDED 2026-10-01. Journal lessons are append-only, so a lesson the operator retires is not deleted: runlib.context_gather annotates any lessons_learned note containing `match` with a SUPERSEDED marker and the reason, and the note no longer binds.",
     "min_trades_for_binding": 15,
     "min_trades_for_caution": 5,
     "min_bucket_trades": 5,

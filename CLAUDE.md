@@ -230,6 +230,12 @@ Always reason in this order (also in `reasoning_process.process_checklist`):
 2. **Book** — cash, theme_exposure, portfolio_risk, open plans. *Can* I add this theme?
 3. **Idea** — 2–3 pillars only. If it needs ten indicators, it is not a fat pitch.
 4. **Geometry** — stop outside noise, ≥10% upside, honest RR, earnings path (through vs around binary).
+   **The analyst/street target is NEVER a veto (2026-10-01, user-approved).** A consensus
+   price target below the current price, or less than +10% above it, is SENTIMENT CONTEXT
+   only. It may never be the sole or primary reason to reject or skip a setup. YOUR OWN
+   measured-move target (from the base, range, or prior swing) governs, and the validator
+   applies RR ≥ 2.0 and target ≥ +10% to THAT target. "Analyst target below price" is
+   not a rejection reason.
 5. **Kill** — binding `thesis_invalidators` before entry; re-underwrite against them every hold.
 
 **Falsification over more bullish inputs.** Edge is what would make you wrong in days–weeks, not another confirming oscillator.
@@ -588,7 +594,10 @@ Beyond filings/13F/news, every run now includes:
   n_analysts, target_mean_price and target_vs_price_pct. This is SENTIMENT CONTEXT, not
   a signal: a crowded "strong buy" with the price above the mean target says expectations
   are stretched; a rating upgrade cycle alongside rising estimates is corroboration. Never
-  cite a price target as your own target. Headlines in news_and_catalysts now carry
+  cite a price target as your own target. **And never use it as a veto**: a mean target
+  below price or < +10% above it may NEVER be the sole or primary reason to reject. Your
+  own measured-move target governs; the validator's RR >= 2.0 and target >= +10% apply to
+  YOUR target, not the street's. Headlines in news_and_catalysts now carry
   age_days (older than ~7 days are filtered out; age_days null = date unknown) - weight
   fresh news over stale, and say the age when a headline is load-bearing.
 - **portfolio_risk** - correlation/beta math for the CURRENT book and top candidates
@@ -810,9 +819,25 @@ Beyond filings/13F/news, every run now includes:
    thesis_invalidators (if stamped). Thesis broken = exit. Also cash test — your JUDGMENT, not a coded gate (no config key
    backs this, do not cite it as an enforced rule): does this beat T-bills over
    its horizon after the gap-adjusted risk it adds?
-   theme_exposure, portfolio_risk. Prefer not stacking the same demand_driver.
+   theme_exposure, portfolio_risk. **Two seats per theme are allowed (2026-10-01,
+   user-approved: "I'm fine with betting twice on the same theme if the setup is
+   right")**: a second seat in a demand_driver you already hold is fine when the book is
+   <40% deployed and the challenger's setup score >= the holder's; size it at <=0.75%
+   risk (the validator caps it and rejects a third seat). Different AI sub-themes
+   (e.g. hyperscaler_server_capex vs software platforms) are NOT stacking; the 50% AI
+   factor-stack cap is the guard there, not your reluctance.
 3. **Watchlist promote loop** — for each watchlist name + hits_not_bought: drop, hold
    (update thoughts/would_buy_at), or promote to BUY. Explicit one-liner why not BUY if hold.
+   **INTRADAY STARTER (2026-10-01, user-approved).** On a FULL in-session slot (10:30,
+   14:00, 15:00) with a FRESH live overlay (`price_freshness_live.stale` false), when
+   price is at/through the `would_buy_at` level or within min(0.5 ATR, 1.5%) of it
+   (`watchlist_trigger_alerts[].starter_zone` true), you MAY buy a STARTER: set
+   `"entry_type": "starter"` and the validator sizes it at half risk (0.5% of equity).
+   No completed session close is required for a starter. The REMAINDER may be added
+   only after a completed session close confirms the level, on a later slot, as a
+   normal add (above blended cost, max 2 adds). Starters do NOT use the probe slot and
+   respect every cap (max 2 new positions/day, 20% min cash, $200/20% max position, 8%
+   heat, theme caps). A starter on a non-full slot or a stale overlay is rejected.
 4. **Candidates** — at most 3 swing-quality ideas from scan / PED / tape promotions /
    contrarian lanes. Prefer post_earnings_drift_candidate when revisions up and price lagging.
 5. **Deep research** — WebSearch MANDATORY before any BUY: catalyst still live? Breaking news?
@@ -877,7 +902,7 @@ Output proposals inside a fenced ```json block as a list under key `"proposals"`
   "no_trade_reason": "Required if proposals is empty.",
   "rejected_ideas": [
     {"ticker": "MU", "reason": "Unconfirmed reclaim; memory cycle-peak risk; would deepen AI-supplier theme."},
-    {"ticker": "PANW", "reason": "Extended after headline pop; analyst target below price; not a fat pitch."}
+    {"ticker": "PANW", "reason": "Extended 18% above the 20-DMA after a headline pop; my measured-move target from the base gives RR 1.4 - fails geometry, not a fat pitch."}
   ],
   "trigger_reviews": [
     {
@@ -918,7 +943,7 @@ Output proposals inside a fenced ```json block as a list under key `"proposals"`
       "ticker": "ANET",
       "one_line": "One sentence: why this is one of the most compelling next positions.",
       "thoughts": "3-6 sentences: setup, what you like, what blocks BUY today.",
-      "would_buy_at": "Price or condition, e.g. 'near $170 or after the 8/4 print'. TRIGGERS ARE SANITIZED IN CODE: a confirmation leg resting on a measured-dead read (MACD cross, volume/rvol confirmation, ADX, confirmed_breakout, anchored-VWAP reclaim, weekly structure) is STRIPPED before storage and journaled. Write triggers on price level, structure, catalyst, or no_supply_pullback - the one volume read that survived its ablation. Do not write a trigger you would then refuse to act on.",
+      "would_buy_at": "Price or condition, e.g. 'near $170 or after the 8/4 print'. DEFAULT TO A PLAIN PRICE LEVEL - do NOT append 'on a completed session close' to every trigger. 'close-confirmed' is an OPTIONAL qualifier for add-ons and reclaim setups only; a plain level lets a full in-session slot take a half-risk STARTER at it. TRIGGERS ARE SANITIZED IN CODE: a confirmation leg resting on a measured-dead read (MACD cross, volume/rvol confirmation, ADX, confirmed_breakout, anchored-VWAP reclaim, weekly structure) is STRIPPED before storage and journaled. Write triggers on price level, structure, catalyst, or no_supply_pullback - the one volume read that survived its ablation. Do not write a trigger you would then refuse to act on.",
       "status": "hold"
     }
   ]
@@ -941,8 +966,11 @@ Output proposals inside a fenced ```json block as a list under key `"proposals"`
   **FORCE-DROPPED** from the stored watchlist and must be re-underwritten from scratch;
   `engagement.decay_at_risk` names the ones one miss away.
 - **CASH-DRAG COMMITMENT** — when `engagement.requires_commitment` is true (the book has
-  been effectively all cash for `commitment_after_flat_days`, default 3) a run with no
-  BUY owes a **`waiting_for`**: `{ticker, condition, by_date}`. The date is the point - an
+  been under `engagement.flat_threshold_pct` deployed - 30% since 2026-10-01, was 5% -
+  for `commitment_after_flat_days`, default 3) a run with no BUY owes a
+  **`waiting_for`**: `{ticker, condition, by_date}`. **While the book is under 30%
+  deployed, EVERY no-trade in-session FULL run (10:30 / 14:00 / 15:00) owes one too**,
+  regardless of the day count. The date is the point - an
   undated condition cannot be graded and becomes a renewable excuse, which is what
   "nothing clears the fat-pitch bar" became for twelve consecutive days. Expired
   commitments come back in `engagement.expired_commitments` and you must say plainly
@@ -997,8 +1025,12 @@ Rules the validator enforces (know them so you don't waste runs):
   just to pass.
 - **CALIBRATION PROBES (score honestly, never inflate)**: a BUY you honestly
   score in [0.50, 0.60) is NOT rejected - the validator converts it to a
-  half-risk probe (0.5% risk budget instead of 1%, max ONE open probe on the
-  book at a time). Probes grade into their own 0.50-0.60 track-record bucket,
+  half-risk probe (0.5% risk budget instead of 1%, max TWO open probes on the
+  book at a time since 2026-10-01). **PROBE LANE: on a full in-session slot with the
+  book <30% deployed, when nothing clears 0.60, propose your BEST candidate as an
+  honest 0.50-0.59 probe instead of returning [] (it must still pass every geometry
+  gate: RR >= 2, target >= +10%, stop outside noise).** The old weekly-review rule
+  "never a second half-size test" is SUPERSEDED. Probes grade into their own 0.50-0.60 track-record bucket,
   which is how the system learns whether your sub-0.60 reads win. A 0.57 setup
   proposed at 0.57 trades small and teaches; the same setup dressed up as 0.62
   poisons your calibration record and, once buckets bind, costs you the
@@ -1017,9 +1049,18 @@ Rules the validator enforces (know them so you don't waste runs):
   firing every stop would cost, measured entry-to-stop) plus your new BUY must stay
   under 8% of equity. Stops trailed above cost free their budget - a winning book
   can keep adding; a book full of fresh unproven risk cannot.
-- **THEME RISK ≤ 2%**: committed risk sharing one demand_driver is capped at 2% of
+- **THEME RISK ≤ 2.5%** (raised from 2% on 2026-10-01 so two seats fit after
+  gap-adjusted heat): committed risk sharing one demand_driver is capped at 2.5% of
   equity - two tickers on the same economic bet fail together, so they are budgeted
-  as ONE bet (DELL+HPE lesson). Notional theme cap (35% MV) still applies on top.
+  together (DELL+HPE lesson). Notional theme cap (35% MV) still applies on top.
+- **TWO SEATS PER THEME** (validator `_check_theme_seats`): a BUY on a NEW ticker whose
+  driver already holds one seat is a SECOND SEAT. Allowed while the book is <40%
+  deployed and (when the bundle carries setup scores) the challenger's score >= the
+  holder's; its risk budget is capped at 0.75% and it is stamped `theme_second_seat`.
+  Rejections: `theme_second_seat_blocked` (book >=40% deployed),
+  `theme_second_seat_weaker_setup`, `theme_seat_cap` (a third seat). An add to a held
+  ticker is not a seat. Do not reject a good setup just because it is "also AI": a
+  different demand_driver is a different seat, and the factor-stack cap is the guard.
 - **REGIME GATE**: when SPY closes below its 200-day average, new BUYs are rejected
   outright (exits and holds never blocked). Do not fight it - research and build the
   watchlist for the turn instead.

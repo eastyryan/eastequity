@@ -120,8 +120,9 @@ def test_a_name_being_promoted_to_buy_is_never_decayed():
 # Cash-drag accountability
 # ---------------------------------------------------------------------------
 def test_a_deployed_book_owes_nothing():
+    # 2026-10-01: the flat threshold is 30% deployed (was 5%).
     st = deployment_status(
-        [{"ticker": "BKR", "market_value_usd": 60.0}], 984.0, None, "2026-08-03")
+        [{"ticker": "BKR", "market_value_usd": 400.0}], 984.0, None, "2026-08-03")
     assert not st["flat"] and not st["requires_commitment"]
     assert st["open_positions"] == 1
 
@@ -147,7 +148,7 @@ def test_many_runs_in_one_day_advance_the_counter_once():
 def test_deploying_capital_resets_the_counter():
     flat = deployment_status([], 1000.0, None, "2026-07-27")
     assert flat["flat"]
-    now = deployment_status([{"ticker": "BKR", "market_value_usd": 60.0}],
+    now = deployment_status([{"ticker": "BKR", "market_value_usd": 400.0}],
                             984.0, flat, "2026-07-28")
     assert not now["flat"] and now["flat_since"] is None
 

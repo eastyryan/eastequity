@@ -448,6 +448,131 @@ def _check_confidence(p: dict, cfg: dict, reasons: list[str]) -> None:
     reasons.append(f"confidence_too_low:{conf} < {floor}")
 
 
+def _is_starter(p: dict) -> bool:
+    return (str(p.get("action", "")).upper() == "BUY"
+            and str(p.get("entry_type") or "").strip().lower() == "starter")
+
+
+def _check_starter(p: dict, cfg: dict, market_context: dict,
+                   reasons: list[str]) -> None:
+    """STARTER entries (2026-10-01, user-approved): a half-risk first tranche
+    taken at a watchlist trigger INSIDE the session, before a completed close.
+
+    Only legal on a run whose depth is in starter_entry.allowed_depths (full)
+    with a FRESH live price overlay — the whole point is acting on a live
+    price, so a starter on stale bars is the failure it exists to avoid.
+    Fails CLOSED when the bundle cannot show either. Sizing is halved in
+    _risk_budget_pct; a starter does NOT consume a calibration_probe slot."""
+    if not _is_starter(p):
+        return
+    st = cfg["trade_quality_requirements"].get("starter_entry") or {}
+    if not st.get("enabled"):
+        reasons.append("starter_entry_disabled")
+        return
+    bundle = (market_context or {}).get("_bundle") or {}
+    depth = str(bundle.get("run_depth") or "")
+    allowed = st.get("allowed_depths") or ["full"]
+    if depth not in allowed:
+        reasons.append(f"starter_wrong_slot:run_depth={depth or 'unknown'} "
+                       f"not in {allowed}")
+        return
+    if st.get("require_fresh_live_overlay", True):
+        pf = bundle.get("price_freshness_live") or {}
+        fresh = (isinstance(pf, dict) and pf.get("status") == "ok"
+                 and pf.get("stale") is False)
+        if not fresh:
+            reasons.append("starter_requires_fresh_live_overlay:"
+                           f"{(pf or {}).get('status') if isinstance(pf, dict) else pf}")
+            return
+    p["starter"] = True
+
+
+def _check_theme_seats(p: dict, cfg: dict, portfolio: dict, market_context: dict,
+                       batch_theme_seats: dict, reasons: list[str]) -> None:
+    """Two seats per theme (2026-10-01, user-approved: "I'm fine with betting
+    twice on the same theme if the setup is right").
+
+    A BUY on a NEW ticker whose demand_driver already holds a seat is a SECOND
+    seat: allowed only while the book is < max_deployed_pct deployed and (when
+    the bundle carries setup scores for both) the challenger scores >= the
+    holder. It is stamped theme_second_seat and its risk budget capped at
+    risk_pct in _risk_budget_pct. A third seat is rejected. Adds to a held
+    ticker are not seats. The theme risk/notional caps still apply on top."""
+    if str(p.get("action", "")).upper() != "BUY":
+        return
+    rbs = cfg["position_sizing"].get("risk_based_sizing") or {}
+    seat = rbs.get("second_theme_seat") or {}
+    if not seat.get("enabled"):
+        return
+    ticker = str(p.get("ticker", "")).upper()
+    driver = str(p.get("demand_driver") or "").strip().lower()
+    if not driver or not ticker:
+        return  # field check reports a missing driver
+    try:
+        from tools.demand_drivers import (AUTHORITATIVE_SOURCES, build_driver_map,
+                                          resolve_driver)
+        canon, source = resolve_driver(ticker)
+        if source in AUTHORITATIVE_SOURCES and canon:
+            driver = str(canon).strip().lower()
+        driver_map = build_driver_map()
+    except Exception:
+        driver_map = {}
+    positions = [x for x in (portfolio.get("positions") or []) if isinstance(x, dict)]
+    held = {str(x.get("ticker", "")).upper() for x in positions}
+    if ticker in held:
+        return  # an add-on, not a new seat
+    holders = [x for x in positions
+               if (_position_demand_driver(x, driver_map) or "") == driver]
+    seats = len(holders) + int(batch_theme_seats.get(driver, 0))
+    if seats <= 0:
+        return
+    max_seats = int(seat.get("max_seats_per_theme", 2))
+    if seats + 1 > max_seats:
+        reasons.append(f"theme_seat_cap:{driver} already has {seats} seat(s); "
+                       f"max {max_seats} per theme")
+        return
+    equity = portfolio.get("total_equity_usd",
+                           cfg["position_sizing"]["starting_capital_usd"])
+    mv = 0.0
+    for x in positions:
+        try:
+            mv += float(x.get("market_value_usd") or 0.0)
+        except (TypeError, ValueError):
+            continue
+    deployed = (mv / float(equity)) if equity else 1.0
+    max_dep = float(seat.get("max_deployed_pct", 0.40))
+    if deployed >= max_dep:
+        reasons.append(f"theme_second_seat_blocked:{driver} book {deployed:.0%} "
+                       f"deployed >= {max_dep:.0%} — a second seat in one theme "
+                       f"is only for an under-deployed book")
+        return
+    if seat.get("require_setup_score_gte_holder", True) and holders:
+        mine = _setup_score_from_bundle(ticker, market_context)
+        theirs = [s for s in (_setup_score_from_bundle(
+            str(h.get("ticker", "")).upper(), market_context) for h in holders)
+            if s is not None]
+        if mine is not None and theirs and mine < max(theirs):
+            reasons.append(f"theme_second_seat_weaker_setup:{ticker} setup score "
+                           f"{mine} < holder {max(theirs)} in {driver}")
+            return
+    p["theme_second_seat"] = True
+
+
+def _setup_score_from_bundle(ticker: str, market_context: dict) -> float | None:
+    """Scanner setup score for a ticker from the bundle (None when absent)."""
+    try:
+        from tools.portfolio_competition import setup_score
+        us = (((market_context or {}).get("_bundle") or {}).get("universe_scan")
+              or {})
+        row = (us.get("indicators_by_ticker") or {}).get(ticker)
+        if row is None:
+            row = next((r for r in (us.get("top_setups") or [])
+                        if str(r.get("ticker", "")).upper() == ticker), None)
+        return setup_score(row) if row else None
+    except Exception:
+        return None
+
+
 def _check_probe_limits(p: dict, cfg: dict, portfolio: dict,
                         probes_this_batch: int, reasons: list[str]) -> None:
     """A probe is a measurement instrument, not a lower bar: the book carries at
@@ -697,6 +822,20 @@ def _risk_budget_pct(p: dict, cfg: dict) -> float:
     halves it (applied by the caller via market_context)."""
     rbs = cfg["position_sizing"].get("risk_based_sizing") or {}
     base = float(rbs.get("risk_per_trade_pct", 0.01))
+    # 2026-10-01 trade-more lanes. Each caps the budget; they never compound
+    # (a starter that is also a probe or a second seat takes the SMALLEST cap).
+    caps: list[float] = []
+    if _is_starter(p):
+        st = cfg["trade_quality_requirements"].get("starter_entry") or {}
+        caps.append(base * float(st.get("risk_scale", 0.5)))
+    if p.get("theme_second_seat"):
+        seat = rbs.get("second_theme_seat") or {}
+        caps.append(float(seat.get("risk_pct", 0.0075)))
+    if p.get("calibration_probe"):
+        probe = cfg["trade_quality_requirements"].get("calibration_probe") or {}
+        caps.append(base * float(probe.get("risk_scale", 0.5)))
+    if caps:
+        return min([base] + caps)
     if p.get("calibration_probe"):
         # Sub-floor confidence trades half the budget; a probe can never reach
         # the conviction tier (its confidence is below even the base floor).
@@ -1972,6 +2111,7 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
     already_today = _count_filled_buys_today(portfolio)
     buys_this_batch = 0
     probes_this_batch = 0     # calibration probes accepted earlier in this batch
+    batch_theme_seats: dict[str, int] = {}   # new-ticker seats accepted per driver
     batch_risk = 0.0          # committed risk accepted earlier in this batch
     batch_theme_risk: dict[str, float] = {}
     for p in proposals:
@@ -1993,6 +2133,9 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
         _check_sell_position(p, portfolio, reasons)
         _check_confidence(p, cfg, reasons)
         _check_probe_limits(p, cfg, portfolio, probes_this_batch, reasons)
+        _check_starter(p, cfg, market_context or {}, reasons)
+        _check_theme_seats(p, cfg, portfolio, market_context or {},
+                           batch_theme_seats, reasons)
         _check_calibration_gate(p, cfg, sector_map, reasons)
         _check_regime_gate(p, cfg, market_context or {}, reasons)
         _check_earnings_window(p, cfg, market_context or {}, reasons)
@@ -2034,5 +2177,17 @@ def validate_proposals(proposals: list[dict], portfolio: dict,
             d = str(p.get("demand_driver") or "").strip().lower()
             if d:
                 batch_theme_risk[d] = batch_theme_risk.get(d, 0.0) + proposed_risk
+            held_now = {str(x.get("ticker", "")).upper()
+                        for x in (portfolio.get("positions") or [])
+                        if isinstance(x, dict)}
+            if str(p.get("ticker", "")).upper() not in held_now:
+                try:
+                    from tools.demand_drivers import AUTHORITATIVE_SOURCES, resolve_driver
+                    c, src = resolve_driver(str(p.get("ticker", "")).upper())
+                    seat_d = str(c).strip().lower() if (src in AUTHORITATIVE_SOURCES and c) else d
+                except Exception:
+                    seat_d = d
+                if seat_d:
+                    batch_theme_seats[seat_d] = batch_theme_seats.get(seat_d, 0) + 1
         results.append(ValidationResult(p, approved=approved, reasons=reasons))
     return results
