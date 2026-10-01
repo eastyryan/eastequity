@@ -2085,7 +2085,49 @@
           "noted_at": "2026-09-30"
         }
       ]
+    },
+    {
+      "id": "KB-8644690385",
+      "discipline": "risk_management",
+      "topic": "ADV participation is a second size ceiling beside 1% risk: shares = min(risk-budget shares, ~5\u201310% of 20-day ADV) \u2014 the $20M universe floor is not a footprint blank check",
+      "summary": "Risk-budget sizing (shares = equity\u00d71% / stop_distance) answers how much you can LOSE if the stop fills near the plan. It does not answer whether that share count is a meaningful fraction of the name's traded volume. Execution literature (Kissell & Glantz 2003; QuanterLab capacity note citing the same tradition) caps a single-day trade at a participation rate p of 20-day average daily volume \u2014 commonly p\u22485% for low impact, p\u224810% as a moderate institutional default, with p\u224825% reserved for liquid large-caps under time pressure. Almgren-style impact rises roughly with the square root of participation, so living near a 10% of ADV footprint is not 'free liquidity' \u2014 it is several times the cost of a 1% footprint. Practitioner liquidity-sizing guides (Pomegra; Elite Trader swing threads measured in dollar ADV) add that Position$/ADV$ above ~10\u201320% turns an exit into a multi-day forced hold and that crash-period ADV can collapse far below the calm 20-day average. Sources disagree on the exact p (5 vs 10 vs 20) and whether to express ADV in shares or dollars \u2014 they agree on the structure: liquidity is a HARD CEILING that intersects the 1% risk formula, not a soft preference after the fact. This book's discovery screen already requires median 20-session dollar volume \u2265 $20M before a name enters the universe; that floor keeps most paper-sized orders trivially under 1% of ADV, but it is a UNIVERSE filter, not a per-order participation check. A thin name that slips through (stale ADV, E",
+      "key_points": [
+        "1% risk sizing bounds planned stop loss; ADV participation bounds market impact and exit speed \u2014 both must bind",
+        "Kissell/Glantz-style single-day caps: ~5% ADV conservative, ~10% common moderate default, ~25% aggressive liquid only",
+        "Almgren: impact scales ~sqrt(participation) \u2014 a 10% footprint is ~3\u00d7 the impact of a 1% footprint, not 10\u00d7 dollars of 'free' liquidity",
+        "Dollar ADV matters: same share count is a different footprint at $2 vs $20 \u2014 prefer dollar or share ADV consistently",
+        "This book's $20M / 20-session median ADV screen is a universe floor; it does not replace a per-order participation ceiling",
+        "Stress ADV << calm ADV \u2014 size for a worse participation day when the invalidation forces a fast exit",
+        "If risk-budget shares exceed p\u00d7ADV, cut size (or pass) \u2014 never widen the stop or invent a multi-day 'scale in' to keep full 1R notionals in a thin name"
+      ],
+      "how_to_apply": "On every BUY (and when re-underwriting size on adds), compute risk_shares = (equity \u00d7 1%) / (entry \u2212 stop) as today, then also compute adv_cap_shares \u2248 0.05\u20130.10 \u00d7 20-session average share volume (prefer the same SESS_ADV=20 window the discovery screen uses; use dollar ADV / mark when share ADV is missing). Set order size to min(risk_shares, adv_cap_shares), still respecting cash, theme 2% risk, 8% heat, and beta caps. If adv_usd is missing, stale, or the name only barely cleared the $20M floor and the planned exit may need same-day liquidation, treat liquidity as unverifiable: half-size or pass rather than assume the universe screen already solved footprint. Never 'fix' a thin ADV by tightening stop_loss inside the ATR / 0.5\u00d7EM floor to inflate share count \u2014 that worsens noise exits and leaves the exit footprint unchanged. At current ~$1k equity the $20M floor usually makes adv_cap non-binding; still run the min() so the habit holds when the book or the name's volume changes. Cite this lesson when declining or cutting size on a thin-liquidity candidate even if the 1% math alone would clear.",
+      "sources": [
+        "https://quanterlab.com/articles/diagnostics-capacity-liquidity",
+        "https://pomegra.io/learn/library/track-e-trading-risk/risk-management/chapter-04-position-sizing-methods/liquidity-adjusted-sizing",
+        "https://www.elitetrader.com/et/threads/max-of-avergae-daily-volume-position-sizing-for-swing-trading.184815/",
+        "Kissell, R. & Glantz, M. (2003). Optimal Trading Strategies (AMACOM) \u2014 participation-rate / ADV capacity framing",
+        "Almgren, R. (2003). Optimal Execution with Nonlinear Impact Functions \u2014 impact ~ sqrt(participation)"
+      ],
+      "learned_at": "2026-10-01T23:04:04.334092+00:00",
+      "run_id": "20261001-83fed6",
+      "tensions": [
+        {
+          "with": "KB-1904498296",
+          "why": "KB-1904498296 owns the 1% Kelly / inverse-vol risk-budget formula and forbids double-cutting ATR. This lesson adds an orthogonal HARD CEILING from ADV participation; when ADV binds you cut shares, you do not also cut the 1% fraction or the ATR floor.",
+          "noted_at": "2026-10-01"
+        },
+        {
+          "with": "KB-0801985270",
+          "why": "KB-0801985270 sizes overnight binary gap risk against options expected move. ADV participation is about continuous-session footprint and exit speed, not the overnight print \u2014 both can shrink the same order for different reasons.",
+          "noted_at": "2026-10-01"
+        },
+        {
+          "with": "KB-0705986594",
+          "why": "KB-0705986594 owns the 8% simultaneous-stop heat budget. ADV caps per-name footprint; heat caps aggregate stop risk. A liquid name can clear ADV and still be blocked by heat/theme \u2014 different gates.",
+          "noted_at": "2026-10-01"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-09-30T23:02:49.184783+00:00"
+  "updated_at": "2026-10-01T23:04:04.344219+00:00"
 }
