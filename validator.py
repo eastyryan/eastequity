@@ -319,7 +319,10 @@ def _check_prices_and_rr(p: dict, cfg: dict, reasons: list[str]) -> None:
     if upside < q["min_target_upside_pct"]:
         reasons.append(f"target_upside_too_small:{upside:.1%} < {q['min_target_upside_pct']:.0%}")
     computed_rr = (target - entry) / (entry - stop)
-    if computed_rr < q["min_risk_reward_ratio"]:
+    # Float tolerance (2026-10-01): HPE 64.90/58.90/76.90 is exactly 12/6 = 2.00,
+    # but binary floats give 1.9999999999999976 and the gate printed the absurd
+    # "risk_reward_too_low:2.00 < 2.0". 1e-6 RR is far below any price tick.
+    if computed_rr < q["min_risk_reward_ratio"] - 1e-6:
         reasons.append(f"risk_reward_too_low:{computed_rr:.2f} < {q['min_risk_reward_ratio']}")
     claimed_rr = p.get("risk_reward_ratio")
     if isinstance(claimed_rr, (int, float)) and abs(claimed_rr - computed_rr) > 0.5:

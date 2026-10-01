@@ -271,6 +271,17 @@
     "require_broker_readback_confirmation": true,
     "require_risk_desk_for_buys": true,
     "_require_risk_desk_note": "Paper track-record integrity: BUYs require adversarial risk desk when the grok CLI is available. If CLI is absent, BUYs are rejected (risk_desk_unavailable) rather than passing unreviewed. Set false only for emergency local dry debugging.",
+    "local_risk_desk_fallback": true,
+    "local_risk_desk": {
+      "min_target_upside_pct": 0.10,
+      "rr_flatter_tolerance": 0.25,
+      "unsourced_haircut_per_entity": -0.01,
+      "unsourced_haircut_cap": -0.03,
+      "theme_overlap_haircut": -0.03,
+      "stale_data_haircut": -0.05,
+      "require_volatility_data": true
+    },
+    "_local_risk_desk_note": "ADDED 2026-10-01. The box (cloud routine) has no grok CLI, so require_risk_desk_for_buys rejected EVERY BUY as risk_desk_unavailable (HPE, run 20261001-87d7c5). When the CLI is absent or the LLM desk fails/unparsable, runlib/local_risk_desk.py reviews instead: VETO on missing/invalid stop, missing volatility data, stop inside noise, target <10%, flattered RR, unreadable bundle/book, or ANY reason from a batch-aware validator dry run against the live book (risk/heat, theme caps, cash/sizing, invalidators, daily cap...); bounded HAIRCUT for unsourced entities, held-theme stacking, stale data. Every use is journaled. Set false to restore strict risk_desk_unavailable rejection.",
     "max_orders_per_run": 3,
     "market_hours_only": true,
     "cross_node_lease_enabled": true,
