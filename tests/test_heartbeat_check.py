@@ -196,7 +196,8 @@ def test_the_alarm_reports_slots_against_slots(monkeypatch):
 # The 14:00 slot is paused and the 15:30 full pre-close run moved to 15:00, so
 # every afternoon paged "14:00 missed" against a slot nobody fires.
 # --------------------------------------------------------------------------- #
-BOX_SLOTS = [6, 8.75, 10.5, 12, 15, 17.5]   # 06:00 08:45 10:30 12:00 15:00 17:30 ET
+# 2026-10-01: 14:00 restored as a full buy-capable slot (user: trade more).
+BOX_SLOTS = [6, 8.75, 10.5, 12, 14, 15, 17.5]   # 06:00 08:45 10:30 12:00 14:00 15:00 17:30 ET
 
 
 def test_heartbeat_expected_slots_match_the_box_schedule():
@@ -205,7 +206,7 @@ def test_heartbeat_expected_slots_match_the_box_schedule():
     assert expected_slots(False) == [0, 23.98]
 
 
-def test_config_and_depth_defaults_name_the_same_six_slots():
+def test_config_and_depth_defaults_name_the_same_seven_slots():
     import json as _json
     from runlib.depths import DEFAULT_SLOT_DEPTHS, slot_depth_from_hhmm
     cfg = _json.loads((Path(__file__).resolve().parent.parent
@@ -213,7 +214,7 @@ def test_config_and_depth_defaults_name_the_same_six_slots():
     live = {k: v for k, v in cfg["schedule"]["slot_depths"].items()
             if len(k) == 4 and k.isdigit()}
     want = {"0600": "light", "0845": "holdings_watchlist", "1030": "full",
-            "1200": "holdings_watchlist", "1500": "full",
+            "1200": "holdings_watchlist", "1400": "full", "1500": "full",
             "1730": "evening_review"}
     assert live == want == DEFAULT_SLOT_DEPTHS
     # the 3pm run resolves to a full scan whether launched on time or a bit late
@@ -240,16 +241,22 @@ def _box_day(monkeypatch, tmp_path, et_hours):
     return A
 
 
-def test_a_normal_box_day_has_no_phantom_1400_miss(monkeypatch, tmp_path):
+def test_a_normal_box_day_grades_all_seven_slots(monkeypatch, tmp_path):
     """Runs complete ~10-25 min after each slot (a record is stamped when the
-    run FINISHES). No 14:00 run exists — and none is owed."""
-    A = _box_day(monkeypatch, tmp_path, [6.1, 9.0, 10.9, 12.2, 15.3, 17.6])
+    run FINISHES). The restored 14:00 full run is graded and credited."""
+    A = _box_day(monkeypatch, tmp_path, [6.1, 9.0, 10.9, 12.2, 14.3, 15.3, 17.6])
     r = A.slot_report(now_h=18.0, weekday=True)
     assert r["missed_slots"] == [], r
-    assert "14:00" not in [s["label"] for s in r["slots"]]
+    assert "14:00" in [s["label"] for s in r["slots"]]
+
+
+def test_a_missing_1400_run_pages(monkeypatch, tmp_path):
+    A = _box_day(monkeypatch, tmp_path, [6.1, 9.0, 10.9, 12.2, 15.3, 17.6])
+    r = A.slot_report(now_h=18.0, weekday=True)
+    assert r["missed_slots"] == ["14:00"], r
 
 
 def test_a_missing_1500_run_still_pages(monkeypatch, tmp_path):
-    A = _box_day(monkeypatch, tmp_path, [6.1, 9.0, 10.9, 12.2])
+    A = _box_day(monkeypatch, tmp_path, [6.1, 9.0, 10.9, 12.2, 14.3])
     r = A.slot_report(now_h=16.5, weekday=True)
     assert r["missed_slots"] == ["15:00"]

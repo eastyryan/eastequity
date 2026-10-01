@@ -112,6 +112,32 @@ def test_run_cycle_no_longer_hardcodes_depths():
     assert "--depth " not in code, "a second copy of the depth map is back"
 
 
+# 2026-10-01 (user directive: trade more): 14:00 was restored as a FULL buy-capable
+# slot one hour before the 15:00 full pre-close run. A missed 14:00 cannot be
+# self-healed in 60 minutes, and does not need to be: the 15:00 full run does the
+# same work. Only pairs whose SECOND slot is a full run may be listed here.
+SUPERSEDED_PAIRS = {(14, 15)}
+
+
+def test_superseded_pairs_are_followed_by_a_full_run():
+    from runlib.depths import DEFAULT_SLOT_DEPTHS
+    for a, b in SUPERSEDED_PAIRS:
+        assert b in _weekday_slots() and a in _weekday_slots()
+        assert DEFAULT_SLOT_DEPTHS[_hhmm(b)] == "full"
+        assert DEFAULT_SLOT_DEPTHS[_hhmm(a)] == "full"
+
+
+def test_1400_is_a_buy_capable_full_slot():
+    from runlib.depths import DEFAULT_SLOT_DEPTHS, slot_depth_from_hhmm
+    cfg = json.loads((ROOT / "autonomy_config.json").read_text())
+    assert 14 in _weekday_slots()
+    assert DEFAULT_SLOT_DEPTHS["1400"] == "full"
+    assert cfg["schedule"]["slot_depths"]["1400"] == "full"
+    for hhmm in ("1400", "1405", "1420"):
+        assert slot_depth_from_hhmm(hhmm, cfg) == "full"
+    assert 'cron: "0 18 * * 1-5"' in (ROOT / ".github/workflows/grok-cycle.yml").read_text()
+
+
 def test_every_slot_gap_leaves_room_for_a_recovery():
     """The watchdog can only repair a slot if a recovery launched after the miss is
     detectable can still FINISH before the next slot's window opens. Tighten the
@@ -124,6 +150,8 @@ def test_every_slot_gap_leaves_room_for_a_recovery():
     slots = _weekday_slots()
     need = fm.NO_SHOW_H + fm.RECOVERY_RUN_H + SLOT_EARLY_TOLERANCE_H
     for a, b in zip(slots, slots[1:]):
+        if (a, b) in SUPERSEDED_PAIRS:
+            continue
         assert b - a > need, (
             f"the {_hhmm(a)}->{_hhmm(b)} gap is {(b - a) * 60:.0f} min; a recovery needs "
             f"{need * 60:.0f} min (detect {fm.NO_SHOW_H * 60:.0f} + run "

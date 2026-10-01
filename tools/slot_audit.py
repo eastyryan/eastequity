@@ -63,6 +63,8 @@ SLOT_HISTORY: list[tuple[str, list[float]]] = [
     ("2026-08-03", [6, 8.75, 10.5, 12, 14, 15.5, 17.5]),
     # 14:00 paused, 15:30 -> 15:00 (box schedule; recorded 2026-09-28, issue #4).
     ("2026-09-28", [6, 8.75, 10.5, 12, 15, 17.5]),
+    # 14:00 restored as a full buy-capable slot (user: trade more, 2026-10-01).
+    ("2026-10-01", [6, 8.75, 10.5, 12, 14, 15, 17.5]),
 ]
 
 
