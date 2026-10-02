@@ -1,16 +1,77 @@
 {
-  "updated_at": "2026-10-01T23:04:04.346393+00:00",
+  "updated_at": "2026-10-02T22:58:03.295466+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 14,
     "fundamental_analysis": 2,
-    "risk_management": 14,
+    "risk_management": 12,
     "strategy_playbooks": 13,
     "market_microstructure": 2,
     "trading_psychology": 2,
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-7057672046",
+      "discipline": "risk_management",
+      "topic": "Stop underwriting: entry location is the binding lever; MAE is a path diagnostic \u2014 do not tighten from n=2",
+      "summary": "Two essays were one underwriting rule. A stop is a trigger that becomes a market order (Schwager/Schwab/SEC): fill is guaranteed, price is not, so 1R is a FLOOR on the loss, not a ceiling \u2014 DELL's 408 plan filled at 389.75 (0.55 ATR / 4.47% through \u2192 realized \u22121.43R). Kaminski & Lo (SIFR 63 / JFM 2014): under a random walk stops always reduce expected return and only pay when momentum is present; a stop inside the noise band is a tax. Noise scales with sqrt(t), and Danielsson & Zigrand (JBF 2006) show jumps make sqrt(t) understate risk at longer horizons \u2014 so min_stop_distance_pct is a ONE-DAY floor, not a multi-week band. Aim ~1.5\u20132\u00d7ATR beyond the named structural low (never past 15%); the free lever is ENTRY LOCATION (buy the pullback/throwback/day-after-gap-low so the same stop clears both the sqrt(t) band and a typical 0.5-ATR gap-through as a fraction of R), not stop width. John Sweeney's MAE/MFE (TASC 1985/1991; Campaign Trading; Maximum Adverse Excursion) measure the PATH, not the blotter: winner-MAE and loser-MAE separate when the entry has edge, and the stop belongs just beyond the winner cluster. Normalize in R or ATR and require 30\u2013100 trades per setup before changing a stop \u2014 two closed trades are anecdotes (Tharp curve-fitting; LuxAlgo regime shift). Do NOT take the blog 'tighten to winner-MAE' half as a standing rule, and do NOT jump to breakeven at +0.5R/+1R (that guts 3\u201390d expectancy and fights the chandelier). Live MAE is already position_stop_cushion.cushio",
+      "key_points": [
+        "1R is a floor not a ceiling: stops become market orders; gap-through (DELL \u22121.43R) is structural.",
+        "Kaminski\u2013Lo: stops inside the noise band are a tax under a random walk; noise scales with sqrt(t).",
+        "Aim stop beyond the named structural low AND ~1.5\u20132\u00d7ATR (never past 15%); entry location is the binding lever.",
+        "On event/gap names demand ~2.5:1 rather than scraping 2.00 so a 0.5-ATR through-fill stays near 1R.",
+        "Sweeney MAE/MFE diagnose path quality; require 30\u2013100 trades/setup before refitting a stop.",
+        "Do not tighten to a winner-MAE cliff from n=2, and do not jump to breakeven at +1R \u2014 the chandelier governs.",
+        "Live MAE = position_stop_cushion.cushion_in_atr; under ~1 ATR means ordinary noise can finish the 1R.",
+        "Prefer pullback / throwback / day-after-gap-low entries so winner-MAE stays inside the ATR floor."
+      ],
+      "how_to_apply": "Before any BUY, underwrite realized-R not planned-R. Place stop_loss beyond the named structural low AND at least stop_engineering.min_stop_distance_pct (aim 1.5\u20132\u00d7ATR, never past 15%) so one width clears both the sqrt(t) noise band until the nearest catalyst and a typical 0.5-ATR gap-through as a fraction of R. Prefer the low-MAE entries already in the playbooks (pullback / throwback / day-after-gap-low). Check 2:1 and 10% still clear after that floor; on event names demand ~2.5:1. Read cushion_in_atr as remaining room to 1R and as gap-exposure. Do NOT refit the entry stop from two closes, do NOT tighten toward a winner-MAE cliff, and do NOT move to breakeven at +1R \u2014 the 3\u00d7ATR chandelier (ratchet-only from high-water since entry) is the designed capture/exit overlay.",
+      "sources": [
+        "Kaminski & Lo, SIFR 63 / JFM 2014 (stops under random walk vs momentum)",
+        "Danielsson & Zigrand, JBF 2006 (jumps vs sqrt(t))",
+        "John Sweeney, TASC Oct 1985 / Jan 1991; Campaign Trading; Maximum Adverse Excursion (Wiley)",
+        "Schwab / SEC stop-order mechanics (fill vs price)",
+        "Van Tharp (curve-fitting caution); LeBeau chandelier as exit overlay"
+      ],
+      "learned_at": "2026-10-02T22:58:03.281838+00:00",
+      "run_id": "20261002-0e4849",
+      "merged_from": [
+        "KB-1365918646",
+        "KB-1005106931"
+      ]
+    },
+    {
+      "id": "KB-5969100993",
+      "discipline": "risk_management",
+      "topic": "Don't stand down after a small hole: sequential ruin at 1% is far from Balsara's cliff; the 8% heat cap is the simultaneous-stop budget",
+      "summary": "Two essays were the same principle. William Feller's classical ruin and Nauzer Balsara's Monte Carlo (TASC Dec 1992) show sequential ruin cliffs at per-trade fractions of 10\u2013100% with weak W and p \u2014 ten to a hundred times this book's 1%. At 1% of current equity with a 2:1 floor and a ~40% design win rate, a 2\u20133 loss streak is a ~2\u20133% hole that one honest 2R winner recovers (recovery = L/(1-L)); P(10 consecutive losses) at 40% WR is ~0.6%. Separately, expectancy E = (W\u00d7avg_win_R) \u2212 ((1\u2212W)\u00d7avg_loss_R) at 40%/2:1 is +0.20R per trade \u2014 that is why the validator's 2:1 floor exists. Tversky\u2013Kahneman's law of small numbers: n=3\u20135 with 0 wins cannot distinguish a 40% system from a coin flip, so abandoning a positive-E process after the first few losses is the named error. Magdon-Ismail et al. (JAP 2004): expected max drawdown grows with sqrt(T) under zero drift \u2014 standing down (cash, \u03bc=0) is the cell where underwater depth grows with waiting. The 8% heat / 2% theme / 4% stack caps are the SIMULTANEOUS-stop ruin budget (Turtle open-unit / Chekhlov CDD logic) \u2014 the path DELL+HPE took as one shared_left_tail event, not two independent 1R hits. Realized avg_loss above 1R (DELL \u22121.43R gap-through) is a gap/slippage problem (demand ~2.5:1 on event names), not a reason to raise the 2:1 floor or skip the next clean setup. Never martingale to get even; never cut a live winner early to 'get back'.",
+      "key_points": [
+        "At 1% risk + 2:1 + ~40% WR, sequential ruin sits far from Balsara's cliff; a 2\u20133 loss streak is a recoverable ~2\u20133% hole.",
+        "Expectancy at 40%/2:1 is +0.20R/trade \u2014 win rate alone is vanity; the validator's 2:1 floor is the design.",
+        "n=3\u20135 with 0 wins cannot estimate W or E; abandoning after early losses is the law-of-small-numbers error.",
+        "Recovery is L/(1\u2212L); standing down (\u03bc=0) is Magdon-Ismail's zero-drift cell where underwater depth grows with sqrt(waiting).",
+        "The 8% heat / 2% theme / 4% stack caps are the simultaneous-stop ruin budget \u2014 clustered same-theme losses are one path-DD event.",
+        "Realized avg_loss >1R is a gap/slippage problem (demand ~2.5:1 on event names), not a reason to stand down or raise 2:1.",
+        "Judge the next BUY on thesis, geometry, ATR/EM stop floor, and the 3-day earnings blackout \u2014 not 'we are in a hole'.",
+        "Never martingale; never cut a live winner early to get even. A 0.50\u20130.60 setup is a half-risk probe, not a halt."
+      ],
+      "how_to_apply": "After every close, grade the book in realized R versus high-water (L/(1\u2212L)), not win rate. If the hole is inside the 8% heat budget, keep size = (current equity \u00d7 1%) / stop_distance_pct on every BUY that clears thesis, an ATR-floored stop (aim 1.5\u20132\u00d7ATR, never past 15%), 10% upside and 2:1 from that stop, and the 3-day earnings blackout \u2014 do not add Elder's monthly halt, a cash stand-down, or a discretionary third haircut on top of the coded 0.5\u00d7 unwind. Rotate the demand_driver after a shared_left_tail cluster; do not abstain from the next clean setup in a different driver. On event/gap names demand ~2.5:1 rather than scraping 2.00. Never martingale; never discretionary-exit a winner whose thesis_invalidators are still clean just to 'get flat'.",
+      "sources": [
+        "Feller, An Introduction to Probability Theory Vol. I Ch. XIV (ruin)",
+        "Nauzer Balsara, TASC December 1992 (Monte Carlo ruin with payoff W and fraction k)",
+        "Tversky & Kahneman, law of small numbers",
+        "Magdon-Ismail et al., JAP 2004 (expected MDD vs drift)",
+        "Chekhlov conditional drawdown / Turtle open-unit heat logic",
+        "Tharp position-sizing examples (2%/5%/10% R paths)"
+      ],
+      "learned_at": "2026-10-02T22:58:03.262584+00:00",
+      "run_id": "20261002-0e4849",
+      "merged_from": [
+        "KB-9586927181",
+        "KB-0705986594"
+      ]
+    },
     {
       "id": "KB-8644690385",
       "discipline": "risk_management",
@@ -319,45 +380,6 @@
         {
           "with": "KB-8308262054",
           "why": "Options-implied expected move sizes the earnings event range; gap continuation vs fade classifies whether overnight repricing was durable once RTH opens. Use both: EM for sizing context, auction acceptance for whether to act on the gap day.",
-          "noted_at": "2026-09-22"
-        }
-      ]
-    },
-    {
-      "id": "KB-0705986594",
-      "discipline": "risk_management",
-      "topic": "Sequential risk of ruin at 1% sits far from Balsara's cliff; the 8% heat cap is the simultaneous-stop ruin budget",
-      "summary": "William Feller's classical ruin problem (An Introduction to Probability Theory, Vol. I, Chapter XIV) is an equal-step random walk: each independent round moves one unit up with probability p or one unit down with q = 1-p. Against an infinitely rich opponent, eventual ruin is (q/p)^i when p > q, and is certain when p \u2264 q. Nauzer Balsara (TASC, December 1992) states that Feller's closed form assumes a payoff ratio of 1 and the entire stake at risk; when average win differs from average loss, and especially when the payoff exceeds 2, the difference equations have no precise closed form, so he Monte Carlo'd 100,000 paths. His three inputs are win probability p, payoff ratio W, and the fraction of capital exposed per round k. The tables he published set k at 100%, 50%, 25%, and 10% per trade \u2014 ten to a hundred times this book's 1% numerator. At those exposures, ruin is 1 for every W \u2264 2 whenever p \u2264 0.30, at every k he tested. At k = 10% (his smallest cell), p = 0.35 and W = 2 still prints 0.608; raising p to 0.45 drops that cell to 0.033. He did not publish a 1% table, so I will not invent one. Perry Kaufman's Trading Systems and Methods restates the equal-payoff formula as R = ((1-A)/(1+A))^c with A = 2P\u22121, then gives a separate Gehm/Vince construction for unequal wins and losses; plugging an R-multiple expectancy into the equal-step formula mixes two models. This book sizes as a fixed fraction of current equity, so wealth after a loss is 0.99 times prior equity and never hits l",
-      "key_points": [
-        "Feller's (q/p)^i is exact for equal-step independent bets against an infinite opponent; eventual ruin is certain in that model when p \u2264 0.5.",
-        "Balsara's 100,000-path Monte Carlo adds payoff W and per-trade fraction k; his published k is 10\u2013100% per trade, ten to a hundred times this book's 1%.",
-        "At every k he tested, W \u2264 2 and p \u2264 0.30 prints ruin = 1. The 2:1 floor plus a 40%+ design is the pair that keeps sequential ruin off that cliff.",
-        "His 10% cell at p = 0.45 / W = 2 is already 0.033. This book's 1% is ten times smaller and was not in the table.",
-        "Fixed-fraction 1% of current equity is multiplicative: (0.99)^10 \u2248 \u22129.6%. P(10 consecutive losses) at 40% WR is 0.6^10 \u2248 0.60%.",
-        "The 8% heat / 2% theme / 4% stack caps are the simultaneous-stop ruin budget (Turtle open-unit logic). That is the path DELL+HPE took.",
-        "Any ruin estimate must use realized avg_win_R and avg_loss_R. Mean claimed RR across eight exits was 2.44; mean realized R was \u22120.05.",
-        "Eight trades cannot estimate p or W. Do not refit the 1% from this sample."
-      ],
-      "how_to_apply": "Keep size = (current equity \u00d7 1%) / stop_distance_pct on every BUY that clears thesis, an ATR-floored stop (aim 1.5\u20132\u00d7ATR, never past 15%), 10% upside and 2:1 from that stop, and the 3-day earnings blackout \u2014 a 2\u20133 loss streak at 1% is a ~2\u20133% hole that one 2R winner recovers, so do not add Elder's monthly halt or a cash stand-down on top of the 1% and the code's 0.5\u00d7 unwind haircut. Before the BUY, read remaining heat against the simultaneous budget: factor_map, the 2% theme_initial_risk_cap, the 4% max_factor_stack_risk_pct, and 8% gap-adjusted heat; if the candidate shares a demand_driver with a holding, size the pair as one 2% bet. If avg_loss on the blotter drifts above 1R (DELL \u22121.43R with 0.55 ATR gap-through), demand the ~2.5:1 cushion of KB-1365918646 on the next name and keep the 1% numerator. A 0.50\u20130.60 probe is a 0.5% sequential unit, still inside the same ruin geometry; never martingale after a streak. With eight closed trades still in caution phase, do not quote a ruin percentage from the sample \u2014 cite Balsara's 0.30/2:1 cliff as the reason the 2:1 floor stays, and cite the Turtle open-unit caps as the reason the next seat must clear heat and theme.",
-      "sources": [
-        "Nauzer J. Balsara, 'Appreciating The Risk Of Ruin,' Technical Analysis of Stocks & Commodities, Vol. 10:12 (December 1992), 525\u2013528, https://www.traders.com (copy read: http://m.cdn.blog.hu/vi/vilagbagoly/nonimage/risk_of_ruin_2.pdf)",
-        "William Feller, An Introduction to Probability Theory and Its Applications, Vol. I, Chapter XIV 'Random Walk and Ruin Problems' (Wiley, 1950; 3rd ed. 1968)",
-        "Perry J. Kaufman, Trading Systems and Methods, Chapter 23 'Probability of Success and Ruin' (Wiley) \u2014 equal-payoff R = ((1\u2212A)/(1+A))^c with A = 2P\u22121, then a separate Gehm/Vince construction for unequal wins and losses",
-        "Curtis Faith, 'The Original Turtle Trading Rules' (2003), https://www.tradingblox.com/originalturtles/originalturtlerules.htm \u2014 open-unit caps 4 / 6 / 10 / 12",
-        "Nauzer J. Balsara, Money Management Strategies for Futures Traders (Wiley, 1992), Chapter 2 'The Dynamics of Ruin'",
-        "Trader's Second Brain, 'Risk of Ruin: The Math That Keeps Accounts Alive' (Sep 2026) \u2014 Feller equal-step derivation and the warning that plugging R-multiple expectancy into ((1\u2212A)/(1+A))^N mixes two models, https://traderssecondbrain.com/guides/risk-of-ruin-math"
-      ],
-      "learned_at": "2026-09-22T00:13:21.402961+00:00",
-      "run_id": "20260921-223272",
-      "tensions": [
-        {
-          "with": "KB-9586927181",
-          "why": "KB-9586927181 is the participation rule after a sequential hole: E = +0.20R at 40%/2:1, recovery is L/(1\u2212L), and cash is the zero-drift cell. This lesson is the ruin-probability geometry of that same 1%/8% book: sequential 1% streaks sit far from Balsara's p \u2264 0.30 / W \u2264 2 cliff, while the 8% simult",
-          "noted_at": "2026-09-22"
-        },
-        {
-          "with": "KB-2999578881",
-          "why": "KB-2999578881 sets the 1% as deep-fractional Kelly under unknown edge (growth). This lesson is the survival reason the same 1% exists (ruin probability). Kelly 1956 maximizes long-run log-growth; Feller/Balsara ask whether a barrier is hit. Growth-optimal f and a ruin-constrained f are related and n",
           "noted_at": "2026-09-22"
         }
       ]
@@ -736,37 +758,6 @@
       ],
       "times_cited": 5,
       "last_cited": "2026-09-09T17:02:30.438122+00:00"
-    },
-    {
-      "id": "KB-9586927181",
-      "discipline": "risk_management",
-      "topic": "A 1%/8% swing book does not halt on a small hole: 40%/2:1 still earns +0.20R, recovery is L/(1-L), and standing down is the zero-drift cell",
-      "summary": "A 2:1 book at 40% wins with avg_loss near 1R has expectancy E = +0.20R per trade (breakeven W = 33.3%). That is why the validator's 2:1 floor exists; win rate alone is a vanity metric. This book's closed sequence (DELL -1.43R with 0.55 ATR gap-through; HPE around -0.54R) is not a measured expectancy: Tversky and Kahneman's law of small numbers says n=3-5 with 0 wins cannot distinguish a 40% system from a coin flip. A 3-loss streak is a ~22% event at the design 40% win rate; abandoning a positive-E process because the first few lost is the named error. Recovery from a peak-to-trough loss L requires L/(1-L) on remaining capital. At 1% risk, five sequential losers are -4.90%; a ~2% paper-book hole needs ~2.1% \u2014 one honest 2R winner. Magdon-Ismail et al. (JAP 2004) show expected MDD scales as log T under positive drift and as sigma*sqrt(pi*T/2) under zero drift, so standing down (cash, mu=0) is the regime where expected underwater depth grows with sqrt of waiting. Chekhlov et al. (IJTAF 2005) formalize the 8% heat cap as a MaxDD constraint on simultaneous stop-out, not a participation rule. Tharp: the same system at 2%/5%/10% R produced 26%/65%/blown \u2014 size is the lever, and 1% plus 8% heat are already set. Clustered same-theme losses (DELL+HPE) are one path-DD event, not a broken process. Never martingale; never add a de-risk halt on top of 1%-of-current-equity and the code's 0.5x unwind haircut.",
-      "key_points": [
-        "Expectancy E = (W x avg_win_R) - ((1-W) x avg_loss_R). At 2:1 with avg_loss near 1R, breakeven W is 33.3% and 40% wins produce +0.20R/trade \u2014 that is why the validator's 2:1 floor exists.",
-        "n=3-5 with 0 wins cannot estimate W or E (Tversky-Kahneman law of small numbers). A 3-loss streak is a ~22% event at the design 40% win rate; abandoning a positive-E process because the first few lost is the named error.",
-        "Recovery is L/(1-L) on remaining capital: 10% needs +11.1%, 20% needs +25%. At 1% risk, five sequential losers are -4.90%; a ~2% paper-book hole needs ~2.1%, i.e. one honest 2R winner.",
-        "Magdon-Ismail et al. (JAP 2004): expected MDD ~ log T with positive drift, sigma*sqrt(pi*T/2) with zero drift, linear with negative drift. Standing down (cash, mu=0) is the cell where expected underwater depth grows with sqrt of waiting.",
-        "The 8% heat cap is a MaxDD budget on simultaneous stop-out (Chekhlov CDD), not a participation rule. Tharp: the same system at 2%/5%/10% R produced 26%/65%/blown \u2014 size is the lever, and 1% plus 8% heat are already set.",
-        "Clustered same-theme losses (DELL+HPE, shared_left_tail) are one path-DD event, not two independent 1R hits and not evidence that swing trading does not work. Rotate the driver; do not abstain.",
-        "Realized avg_loss above 1R (DELL -1.43R) can flip a 40%/2:1 book negative; that is a gap/slippage problem (demand ~2.5:1 on event names) \u2014 not a reason to raise the 2:1 floor or skip the next clean setup.",
-        "Never martingale to get even; never cut a live winner early to get back (that kills avg_win_R). Percent-of-current-equity is already the brake. A 0.50-0.60 setup is a half-risk probe, the correct re-entry size, not a stand-down."
-      ],
-      "how_to_apply": "After every close, compute realized drawdown versus the high-water mark as L/(1-L) and grade the book in realized R, not win rate. If the hole is inside the 8% heat budget (a ~2% hole needs ~2.1%, one honest 2R winner), judge the next BUY on thesis, geometry, 2:1, the ATR/expected-move stop floor, and the 3-day earnings blackout \u2014 not on 'we are in a hole' and not because the last three lost. Never size up to get even; keep size = (current equity x 1%) / stop_distance_pct. Never invent an extra de-risk halt or cash stand-down on top of that 1% and the code's 0.5x unwind haircut: cash is the zero-drift cell where expected MDD grows as sqrt(T). If avg_loss drifts above 1R, demand the ~2.5:1 cushion of KB-1365918646 on the NEXT buy rather than standing down. When losses cluster on one demand_driver or shared_left_tail is true, treat them as one path-DD event: prefer a different driver or a diversifier=true / low corr_to_book name, and respect the 2% theme and factor-stack caps \u2014 rotation, not abstention. Never cut a live winner early to get even (HPE 07-15): that kills avg_win_R; bank sell_fraction 0.4-0.6 only at >=2R and let the 3xATR chandelier trail the rest.",
-      "sources": [
-        "Van K. Tharp, Trade Your Way to Financial Freedom (McGraw-Hill, 1993; 2nd ed. 2007) \u2014 R-multiples, expectancy, recovery table, and the same-system 2%/5%/10% R producing 26%/65%/blown",
-        "Magdon-Ismail, M., Atiya, A.F., Pratap, A., and Abu-Mostafa, Y.S. (2004), 'On the maximum drawdown of a Brownian motion,' Journal of Applied Probability 41(1), 147-161",
-        "Chekhlov, A., Uryasev, S., and Zabarankin, M. (2005), 'Drawdown Measure in Portfolio Optimization,' International Journal of Theoretical and Applied Finance 8(1), 13-58",
-        "Tversky, A. and Kahneman, D. (1971), 'Belief in the Law of Small Numbers,' Psychological Bulletin 76(2), 105-110 \u2014 n=3-5 cannot represent the generating process",
-        "https://crosstrade.io/learn/performance-metrics/r-multiple \u2014 E in R; 40%/2:1 = +0.20R; avg_loss can exceed -1R on slip",
-        "https://www.backtestbase.com/education/losing-streak-calculator-trading \u2014 P(k consecutive)=q^k; expected longest streak ~ ln(N)/ln(1/q); independent-Bernoulli baseline"
-      ],
-      "learned_at": "2026-09-04T23:20:37.570478+00:00",
-      "run_id": "20260904-60cb36",
-      "merged_from": [
-        "KB-8671934946",
-        "KB-2863806537"
-      ]
     },
     {
       "id": "KB-5080476485",
@@ -1164,37 +1155,6 @@
       ]
     },
     {
-      "id": "KB-1365918646",
-      "discipline": "risk_management",
-      "topic": "Stop underwriting: the sqrt(t) noise band plus gap-fill slippage make 1R a floor not a ceiling, and entry location \u2014 not stop width \u2014 is the binding lever",
-      "summary": "A stop is a trigger that becomes a market order, so 1R is a floor on the loss, not a ceiling (Schwab; SEC). Kaminski and Lo (SIFR 63 / JFM 2014): under a random walk stops always reduce expected return and only pay when momentum is present, so a stop inside the noise band is a tax. Noise grows with sqrt(t) \u2014 a 1-day ATR stop is ~sqrt(N) too tight for an N-day hold \u2014 and Danielsson and Zigrand (JBF 2006) show jumps make the sqrt(t) rule understate risk, worse at longer horizons. Independently, overnight and event gaps are the fat left tail: DELL's 408 stop filled 0.55 ATR / 4.47% through at 389.75, turning planned -1R into realized -1.43R. Intraday slippage on liquid large-caps is ~0.1%; scheduled earnings is the #1 controllable gap. When gaps push avgLoss past -1R the 2:1 design erodes: a 0.55-ATR through-fill is +55% of a 1-ATR stop but only +27% of a 2-ATR stop. Diffusion noise and jump fills always add, which is why I aim ~1.5-2x ATR on a multi-week swing rather than hugging the 1-day min_stop_distance_pct floor \u2014 not a license to exceed the 15% cap or inflate a target to scrape 2:1. No static entry stop inside that cap covers a 45-day band or an earnings jump: ENTRY LOCATION is the binding lever. Buy at structural support so the same stop clears both the sqrt(t) band until the thesis starts working (~ATR * sqrt(days_to_catalyst)) and a 1.5-2x ATR swing width. On event/gap names demand ~2.5:1 rather than scraping 2.00. The chandelier (22d high - 3x ATR) re-measures the ban",
-      "key_points": [
-        "A stop is a trigger that becomes a market order: fill guaranteed, price not (Schwab; SEC). 1R is the floor on a loss, not the ceiling. DELL's 408 stop filled at 389.75, 0.55 ATR / 4.47% through, turning planned -1R into realized -1.43R.",
-        "Kaminski & Lo: under a random walk stops ALWAYS reduce expected return; they only pay when momentum is present. A stop inside the noise band is a tax. Noise scales with sqrt(t): min_stop_distance_pct is a ONE-DAY floor, not a horizon band.",
-        "Danielsson & Zigrand: under jumps the sqrt(t) rule UNDERSTATES risk, worse at longer horizons. Gaps dwarf intraday slippage (~0.1% on liquid large-caps). Scheduled earnings is the #1 controllable gap; no ATR-floored stop inside the 15% cap covers the print jump.",
-        "Two always-additive reasons to sit beyond the 1-day floor: diffusion noise AND gap-as-fraction-of-R. A 0.55-ATR through-fill is +55% of a 1-ATR stop but only +27% of a 2-ATR stop. Aim ~1.5-2x ATR on a multi-week swing. Neither reason licenses widening past 15% or inflating a target to scrape 2:1.",
-        "No static entry stop within the 15% cap can cover a 45-day noise band or an earnings jump. Stop WIDTH is not the free lever; ENTRY LOCATION is. Buy at structural support so the same stop clears both the sqrt(t) band until the thesis starts working and a 1.5-2x ATR swing width.",
-        "On event/gap names demand a genuine ~2.5:1 cushion rather than scraping 2.00, because a 0.5-ATR gap-through converts a 1R plan into ~1.4-1.5R realized. Prefer liquid names and structure entries; chasing extension compounds gap exposure.",
-        "The chandelier (22d high - 3x ATR) re-measures the band as the trade works. Job at entry is only to buy the trade time to get moving. Do not refit the entry stop from two closes \u2014 that is the MAE diagnostic (KB-1005106931), which warns that tightening toward a winner-MAE cliff recreates the gap hole",
-        "Read cushion_in_atr as remaining room to 1R and as gap-exposure, not only as a noise flag. A 40-day thesis with no catalyst for three weeks needs ~4x ATR of room just to survive to its event, which usually breaches the cap and is a pass."
-      ],
-      "how_to_apply": "Before any BUY, underwrite realized-R not planned-R. Place stop_loss beyond the named structural low AND at least ~1.5-2x ATR \u2014 never hugging stop_engineering.min_stop_distance_pct \u2014 so one width clears both the sqrt(t) noise band until the nearest catalyst and a typical 0.5-ATR gap-through as a fraction of R. Then check that 2:1 and 10% still clear honestly from that stop; if they do not, move the entry down to the swing low, shorten holding_horizon_days to match what the stop can actually survive (days to catalyst, not the full horizon), or pass. Never widen past 15% and never inflate the target. On any name with event or overnight-gap exposure (earnings inside the horizon, a history of gaps, thin dollar volume) demand ~2.5:1 rather than scraping 2.0, because DELL's 0.55-ATR fill turned a 1R plan into -1.43R. Never carry an ATR-floored stop through a print: enter after the gap settles, or size for gap-adjusted risk with an explicit earnings_case, and honor the 3-day blackout. Prefer liquid names and entries at support; a chase that opens 1 ATR in the hole has already spent the MAE budget. Read cushion_in_atr as remaining room to 1R and as gap-exposure. Do not refit the stop from ",
-      "sources": [
-        "Kaminski, K. & Lo, A.W., 'When Do Stop-Loss Rules Stop Losses?', SIFR Research Report Series 63 (2008); Journal of Financial Markets 18(C):234-254 (2014)",
-        "Danielsson, J. & Zigrand, J-P., 'On Time-Scaling of Risk and the Square-Root-Of-Time Rule', Journal of Banking & Finance 30(10):2701-2713 (2006)",
-        "U.S. SEC, 'Investor Bulletin: Stop, Stop-Limit, and Trailing Stop Orders' \u2014 https://www.sec.gov/oiea/investor-alerts-bulletins/ib-stoporders",
-        "StockCharts ChartSchool, 'Chandelier Exit' \u2014 https://chartschool.stockcharts.com/table-of-contents/technical-indicators-and-overlays/technical-overlays/chandelier-exit",
-        "https://www.schwab.com/learn/story/help-protect-your-position-using-stop-orders",
-        "https://www.tradingsetupsreview.com/manage-gap-risk-swing-trading/"
-      ],
-      "learned_at": "2026-08-21T23:23:52.090297+00:00",
-      "run_id": "20260821-e2a624",
-      "merged_from": [
-        "KB-2388376284",
-        "KB-9689938621"
-      ]
-    },
-    {
       "id": "KB-1382348131",
       "discipline": "risk_management",
       "topic": "Time stops and stalled-capital opportunity cost: a 14-day flat is a forced re-underwrite not an auto-exit, and a 5-day clock is the wrong import for a 3-90 day chandelier book",
@@ -1395,46 +1355,6 @@
       ],
       "times_cited": 5,
       "last_cited": "2026-08-20T21:51:42.101368+00:00"
-    },
-    {
-      "id": "KB-1005106931",
-      "discipline": "risk_management",
-      "topic": "Maximum Adverse/Favorable Excursion as a path diagnostic: winner-MAE is the empirical stop check, live heat is read from position_stop_cushion, and two closed trades cannot refit a stop",
-      "summary": "John Sweeney (TASC Oct 1985 / Jan 1991; Campaign Trading, Wiley 1996; Maximum Adverse Excursion, Wiley 1997) defined MAE as the worst unrealized loss from entry to the lowest subsequent low on a long, and MFE (MaxFE) as the peak unrealized gain, independent of the final P&L. His rule, quoted from the MAE book, is that good trades generally do not go far against you while bad ones do: if the entry rules can distinguish winners from losers, their MAE distributions separate, and the cliff where a trade becomes more likely to end badly than profitably is where the stop belongs. Van Tharp (Trade Your Way to Financial Freedom, 1998) restates the same observation \u2014 'Good trades seldom go too far against us' \u2014 and lists winner-MAE as one legitimate way to set a stop, alongside a noise-beyond stop of roughly 2.7\u20133.4\u00d7 the 10-day ATR (about 3 ATR; he suggests even wider, ~10 ATR, for long-term stock holdings). Practitioner write-ups (LuxAlgo; JournalPlus; Traders Second Brain) operationalize this as a scatter of MAE vs final P&L in R or ATR units, plus an MFE capture rate (realized gain / MFE) as the exit-quality diagnostic. Sources disagree on the action: some secondary blogs say if winner-MAE sits at 0.3R against a 1R stop you should tighten to 0.5\u20130.6R; JournalPlus says if 30%+ of winners cluster just beyond the stop you should widen; Tharp himself warns the MAE stop is after-the-fact and easy to curve-fit, and that the wider ~3 ATR stop is generally more profitable than a tight one ",
-      "key_points": [
-        "Sweeney's rule: if the entry has edge, winner-MAE and loser-MAE separate; the stop belongs just beyond the winner cluster, not at a round number or a support line everyone else uses.",
-        "MAE/MFE measure the PATH, not the blotter: two +$200 winners can be a near-stop rescue and a 50%-captured runner; final P&L hides both stop quality and exit leakage.",
-        "Normalize in R or ATR, never raw dollars, and require 30\u2013100 trades per setup before changing a stop. Two closed trades are anecdotes. Tharp flags curve-fitting; LuxAlgo flags regime shift.",
-        "Do not take the blog 'tighten to winner-MAE' half as a standing rule. Tharp's 3\u00d7ATR class of stop and this system's 1.5\u20132\u00d7ATR swing floor plus gap buffer are the prior; MAE may later justify WIDENING if winners cluster inside the noise band, not tightening into gaps.",
-        "MFE capture (realized / peak open profit) grades exits. Retail sources put typical capture near 35\u201355% and call 65\u201380% healthy for swings \u2014 those bands are practitioner-illustrative, not a measured law. This system's >=2R partial plus 3\u00d7ATR chandelier is the designed capture mechanism; a discretiona",
-        "A break-even move once MFE hits +0.5R or +1R is a common MAE-blog tactic and is the opposite of this system's coded trail (the chandelier never jumps to breakeven at +1R). For 3\u201390 day swings that early BE move guts expectancy.",
-        "Live MAE is already in the bundle: position_stop_cushion.cushion_in_atr. Under ~1 ATR (inside_noise_band) means ordinary noise can finish the 1R. Stalled (14d, \u00b13% of cost) is low MAE and low MFE together \u2014 opportunity cost, not a stop-width problem."
-      ],
-      "how_to_apply": "On every BUY, treat low expected MAE as a reason to prefer the pullback / throwback / day-after-gap-low entries already in the playbooks (KB-6241168493, KB-9692173165, KB-3704904010): buying at the level keeps the winner-MAE budget inside stop_engineering.min_stop_distance_pct and the 1.5\u20132\u00d7ATR swing width so the 2:1 RR floor is honest; a chase that opens 1 ATR in the hole has already spent that budget and should be sized as a 50\u201370% starter or passed. Do not refit the stop from two closes \u2014 leave it beyond structure AND the ATR/expected-move floor, and after a gap-prone or event name add the realized-R cushion from KB-9689938621 rather than hugging a hypothetical MAE cliff. On every holdings review, read cushion_in_atr as live remaining room to 1R: inside_noise_band means the path is approaching Sweeney's loser side, so either hold through knowingly because thesis_invalidators are clean or let the recorded/chandelier stop do its job \u2014 never discretionarily exit because 'it's taking too much heat' (that is the HPE process_fail). On every close, log MAE and MFE in both R and ATR (DELL: loser that kept digging, 1.43R realized with 0.55 ATR gap-through; HPE: \u22120.54R cut before either c",
-      "sources": [
-        "John Sweeney, Maximum Adverse Excursion: Analyzing Price Fluctuations for Trading Management (Wiley, 1997) \u2014 'Generally, good trades don\u2019t go too far against you while bad ones do'; stop at the point a trade is more likely to end badly than profitably (excerpts via dokumen.pub)",
-        "John Sweeney, Campaign Trading (Wiley, 1996) \u2014 divide backtested trades into winners/losers, tabulate MAE for each; a decent rule-set produces distinctly different distributions; adjust stops to the loss/profit combination you accept (reviewed with page cites at readingthemarkets.blogspot.com/2010/0",
-        "John Sweeney, Technical Analysis of Stocks & Commodities, Oct 1985 and Jan 1991; also 'Quantifying The Tried And True,' TASC V.9:9 (387\u2013389) \u2014 MAE as the quantified version of 'minimize losses'; the amount of movement against you indicates whether to hold or stop",
-        "Van Tharp, Trade Your Way to Financial Freedom (1998), Ch. 10\u201311, via the7circles.uk/van-tharp-7-stops-and-exits/ \u2014 winner-MAE as a stop method; 2.7\u20133.4\u00d7 10-day ATR noise stop; MAE analysis is after-the-fact / curve-fit risk; wider ~3 ATR generally more profitable than tight stops; trail rather than",
-        "https://www.luxalgo.com/library/concept/mae-mfe-informed-management/ \u2014 calculation in R or ATR; 50\u2013100 trades per setup; regime-dependent; cannot give an objectively best stop",
-        "https://journalplus.co/learn/guides/mae-mfe-guide and https://journalplus.co/learn/glossary/mae \u2014 scatter method; 30\u201340 trade floor / 80\u2013100 before permanent change; widen if winners cluster beyond the stop; do not mix setups on one plot (practitioner/SaaS \u2014 treat sample-size and widen-vs-tighten fr"
-      ],
-      "learned_at": "2026-08-12T23:06:32.878594+00:00",
-      "run_id": "20260812-cd2e46",
-      "tensions": [
-        {
-          "with": "KB-2388376284",
-          "why": "KB-2388376284 is the a-priori stop: sit beyond the sqrt(t)/ATR noise band, and treat entry location as the lever. This lesson is the empirical check on the same stop once trades exist \u2014 winner-MAE vs loser-MAE \u2014 and the live read of that path via cushion_in_atr. They stack: a late chase inflates MAE",
-          "noted_at": "2026-08-12"
-        },
-        {
-          "with": "KB-9689938621",
-          "why": "Winner-MAE scatter is computed on trades that survived to a close; it systematically misses the gap-through tail (DELL filled 0.55 ATR / 4.47% past the stop). Tightening toward a winner-MAE cliff would recreate the planned-R vs realized-R gap that lesson exists to prevent. Use MAE to diagnose entrie",
-          "noted_at": "2026-08-12"
-        }
-      ],
-      "times_cited": 2,
-      "last_cited": "2026-08-19T13:50:28.422658+00:00"
     },
     {
       "id": "KB-1695380801",
