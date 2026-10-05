@@ -1,16 +1,56 @@
 {
-  "updated_at": "2026-10-02T22:58:03.295466+00:00",
+  "updated_at": "2026-10-05T23:02:26.647695+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 14,
     "fundamental_analysis": 2,
     "risk_management": 12,
     "strategy_playbooks": 13,
-    "market_microstructure": 2,
+    "market_microstructure": 3,
     "trading_psychology": 2,
     "macro_regimes": 1
   },
   "entries": [
+    {
+      "id": "KB-3629292777",
+      "discipline": "market_microstructure",
+      "topic": "Price-contingent '\u2264 level' buy triggers carry two-sided adverse selection: they fill most on bad-news days and miss most on good-news days \u2014 pair every pullback level with a pre-committed strength pat",
+      "summary": "A 'buy at or below X' trigger (a resting limit or a would_buy_at level checked at slots) is price-contingent, and that contingency is not neutral. Handa & Schwartz (JF 1996) name the two risks: an adverse information event triggers an undesirable execution, and favorable news causes a desirable execution never to happen; on 1988 Dow-stock data they find limit-order returns conditional on NON-execution are lower, i.e. missing is a real cost, and limit orders only pay when temporary liquidity-driven dips (which revert) offset the information-driven ones (which do not). Linnainmaa (JF 2010, all Finnish individual investors plus simulations) shows the effect is large enough to mechanically manufacture apparent bad timing: limit buys execute after declines, sells after rises, and limit fills lose money when new information arrives \u2014 poor post-trade returns and 'contrarian' behaviour appear even without a behavioural bias. Harris & Hasbrouck (JFQA 1996, NYSE SuperDOT) is the honest counterweight: limit orders at or better than the quote beat market orders even after imputing a penalty for unexecuted orders, and they give separate measures for traders who MUST trade versus passive traders who can walk away \u2014 so patience is not wrong, it just has a measurable price. Perold (JPM 1988) supplies the accounting: implementation shortfall = execution cost on filled shares + opportunity cost on unfilled shares ((end price \u2212 decision price) \u00d7 unfilled), so a level that never prints is not 'f",
+      "key_points": [
+        "A \u2264level buy trigger fills disproportionately when the name is falling on information and misses disproportionately when it is rising on information (Handa & Schwartz 1996; Linnainmaa 2010).",
+        "Non-execution has a cost: Perold's opportunity cost = (price at horizon \u2212 decision price) \u00d7 unfilled size; an unprinted level belongs in the ledger, not in the 'no harm done' bucket.",
+        "Patient levels still win on average when the dip that fills them is liquidity-driven and reverts (Harris & Hasbrouck 1996) \u2014 the edge depends on WHY price reached the level.",
+        "A fill on a gap-down / name-specific negative news / high-volume selling day is the adverse-selection fill; a quiet, low-volume, tape-wide dip is the compensated fill.",
+        "Decide the strength path (close-above confirm, inner pivot) at decision time alongside the pullback level, so a miss is handled by the plan rather than by after-the-fact loosening.",
+        "Magnitudes come from intraday limit-book studies; treat the mechanism as transferable and the numbers as not."
+      ],
+      "how_to_apply": "When a watchlist or thesis note writes a 'BUY \u2264 $X' level, also write \u2014 at the same time \u2014 the strength path it will accept instead (e.g. a daily close above the inner pivot / prior high per KB-0246322924 and KB-9692173165), or state explicitly that it is pullback-only and will accept missing. When a \u2264level trigger actually prints, do not treat the print as the licence: check the fill-day context in the bundle \u2014 if the name gapped down, carries fresh name-specific negative news, or the drop came on above-average volume, re-underwrite the thesis_invalidators before buying (this is the adverse-selection fill); if it is a quiet low-volume pullback to a named rail on a tape-wide dip, it is the fill the level was designed for (KB-6241168493). Grade the triggers Perold-style in aggregate: for unprinted levels use the shadow book's watchlist_hold regret_miss/good_skip as the opportunity-cost ledger, and only conclude a trigger family is too tight with n\u226530 bar-verified verdicts \u2014 never widen one name's level after it ran (KB-8420105363). Nothing here changes stop placement, sizing, the 2:1 floor or the 10% upside bar.",
+      "sources": [
+        "Handa, P. & Schwartz, R.A. (1996), 'Limit Order Trading', Journal of Finance 51(5):1835-1861 \u2014 https://papers.ssrn.com/sol3/papers.cfm?abstract_id=8200 ; working paper https://papers.ssrn.com/sol3/papers.cfm?abstract_id=1299464",
+        "Linnainmaa, J.T. (2010), 'Do Limit Orders Alter Inferences about Investor Performance and Behavior?', Journal of Finance 65(4):1473-1506 \u2014 http://jlinnainmaa.com/publications.html ; internet appendix https://afajof.org/wp-content/uploads/files/supplements/Internet_Appendix_to_Do_Limi.pdf",
+        "Harris, L. & Hasbrouck, J. (1996), 'Market vs. Limit Orders: The SuperDOT Evidence on Order Submission Strategy', JFQA 31(2):213-231 \u2014 https://papers.ssrn.com/sol3/papers.cfm?abstract_id=7758",
+        "Perold, A.F. (1988), 'The Implementation Shortfall: Paper versus Reality', Journal of Portfolio Management 14(3):4-9 \u2014 opportunity-cost formula as implemented in https://github.com/braverock/blotter/blob/master/R/impShortfall.R"
+      ],
+      "learned_at": "2026-10-05T23:02:26.630912+00:00",
+      "run_id": "20261005-11f841",
+      "tensions": [
+        {
+          "with": "KB-8420105363",
+          "why": "Shadow-regret discipline forbids loosening one name's bar after a miss; this lesson keeps that and adds that non-execution cost is graded only in aggregate (n>=30 bar-verified) and that the strength path must be written at decision time, not after the run.",
+          "noted_at": "2026-10-05"
+        },
+        {
+          "with": "KB-6241168493",
+          "why": "The no-supply pullback entry remains the preferred fill; this lesson adds the fill-day test that separates a quiet liquidity dip to the rail (take it) from an information-driven drop through it (re-underwrite first).",
+          "noted_at": "2026-10-05"
+        },
+        {
+          "with": "KB-0246322924",
+          "why": "The inner-pivot lesson already notes many breakouts never throw back; this lesson supplies the microstructure reason (favorable news prevents limit execution) and makes the paired strength trigger a decision-time requirement.",
+          "noted_at": "2026-10-05"
+        }
+      ]
+    },
     {
       "id": "KB-7057672046",
       "discipline": "risk_management",
