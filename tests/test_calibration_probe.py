@@ -108,25 +108,30 @@ check("probe budget = base * risk_scale",
 check("full entry keeps base budget",
       abs(validator._risk_budget_pct(p62, CFG) - base) < 1e-12)
 
-print("probe cap: max_open_probes (2 since 2026-10-01) on the book at a time")
-check("max_open_probes is 2", int(TQR["calibration_probe"]["max_open_probes"]) == 2)
+print("probe cap: max_open_probes (3 since 2026-10-05) on the book at a time")
+check("max_open_probes is 3", int(TQR["calibration_probe"]["max_open_probes"]) == 3)
 held_probe = {"ticker": "XYZ", "quantity": 1.0, "avg_cost": 50.0,
               "plan": {"stop_loss": 45.0, "confidence": 0.55,
                        "calibration_probe": True}}
 held_probe2 = dict(held_probe, ticker="XYZ2")
+held_probe3 = dict(held_probe, ticker="XYZ3")
 one_open = {"total_equity_usd": 1000, "positions": [held_probe]}
 two_open = {"total_equity_usd": 1000, "positions": [held_probe, held_probe2]}
+three_open = {"total_equity_usd": 1000,
+              "positions": [held_probe, held_probe2, held_probe3]}
 r = conf_reasons(buy(0.57), portfolio=one_open)
 check("second probe ALLOWED while one is open", not r, str(r))
 r = conf_reasons(buy(0.57), portfolio=two_open)
-check("third probe rejected while two are open",
+check("third probe ALLOWED while two are open", not r, str(r))
+r = conf_reasons(buy(0.57), portfolio=three_open)
+check("fourth probe rejected while three are open",
       any("probe_cap_reached" in x for x in r), str(r))
 r = conf_reasons(buy(0.57), probes_this_batch=1)
 check("second probe allowed within a batch", not r, str(r))
-r = conf_reasons(buy(0.57), portfolio=one_open, probes_this_batch=1)
-check("one open + one in batch blocks a third",
+r = conf_reasons(buy(0.57), portfolio=two_open, probes_this_batch=1)
+check("two open + one in batch blocks a fourth",
       any("probe_cap_reached" in x for x in r), str(r))
-r = conf_reasons(buy(0.62), portfolio=two_open)
+r = conf_reasons(buy(0.62), portfolio=three_open)
 check("open probes do not block a full-confidence entry", not r, str(r))
 
 print("probe fills grade into their own bucket")
