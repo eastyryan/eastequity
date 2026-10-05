@@ -1031,8 +1031,8 @@ Rules the validator enforces (know them so you don't waste runs):
   just to pass.
 - **CALIBRATION PROBES (score honestly, never inflate)**: a BUY you honestly
   score in [0.50, 0.60) is NOT rejected - the validator converts it to a
-  half-risk probe (0.5% risk budget instead of 1%, max TWO open probes on the
-  book at a time since 2026-10-01). **PROBE LANE: on a full in-session slot with the
+  half-risk probe (0.5% risk budget instead of 1%, max THREE open probes on the
+  book at a time since 2026-10-05). **PROBE LANE: on a full in-session slot with the
   book <30% deployed, when nothing clears 0.60, propose your BEST candidate as an
   honest 0.50-0.59 probe instead of returning [] (it must still pass every geometry
   gate: RR >= 2, target >= +10%, stop outside noise).** The old weekly-review rule

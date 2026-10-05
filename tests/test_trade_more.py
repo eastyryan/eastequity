@@ -6,7 +6,7 @@
     deployed and the challenger's setup score >= the holder's, capped at 0.75%
     risk; blocked otherwise; a third seat always blocked.
   * Engagement flat threshold read from config (0.30).
-  * max_open_probes = 2.
+  * max_open_probes = 3.
 """
 
 from __future__ import annotations
@@ -191,13 +191,13 @@ def test_every_in_session_full_run_under_threshold_owes_a_commitment():
                                "light", False)
 
 
-def test_max_open_probes_is_two():
+def test_max_open_probes_is_three():
     probe = CFG["trade_quality_requirements"]["calibration_probe"]
-    assert probe["max_open_probes"] == 2
-    held = [{"ticker": f"P{i}", "plan": {"calibration_probe": True}} for i in range(2)]
+    assert probe["max_open_probes"] == 3
+    held = [{"ticker": f"P{i}", "plan": {"calibration_probe": True}} for i in range(3)]
     reasons: list[str] = []
     validator._check_probe_limits({"calibration_probe": True}, CFG,
-                                  {"positions": held[:1]}, 0, reasons)
+                                  {"positions": held[:2]}, 0, reasons)
     assert reasons == []
     validator._check_probe_limits({"calibration_probe": True}, CFG,
                                   {"positions": held}, 0, reasons)

@@ -165,7 +165,8 @@
       "enabled": true,
       "min_confidence": 0.5,
       "risk_scale": 0.5,
-      "max_open_probes": 2,
+      "max_open_probes": 3,
+      "_max_open_probes_2026_10_05_note": "Raised 2 -> 3 (user: Raise, after OKTA blocked at probe cap with CLS+ILMN open). Starters (entry_type 'starter') do NOT consume a probe slot.",
       "_max_open_probes_2026_10_01_note": "Raised 1 -> 2 (user: trade more). Supersedes the 2026-09-18/25 weekly self-review rule 'never a second half-size test'. Starters (entry_type 'starter') do NOT consume a probe slot.",
       "_note": "ADDED 2026-08-05. A BUY scored honestly in [0.50, 0.60) is no longer rejected outright: it trades as a CALIBRATION PROBE at risk_scale x the normal risk budget (0.5% of equity instead of 1%), stamped calibration_probe on the proposal AND persisted onto the position's plan at fill, with at most max_open_probes such positions on the book at once (validator._check_probe_limits). WHY: the hard 0.60 floor could never learn whether 0.50-0.60 setups win, because it never let one trade - HPE on 2026-08-05 died at 0.57 the same afternoon a validated DXCM entry died on a keyword false-positive, on a book that had made 3 trades in a month - and its only lasting lesson to the proposer was that honesty costs the trade while writing 0.62 sails through. The desk's confidence haircut (max -0.10) previously turned into a death sentence whenever it landed under 0.60; now it converts the trade to half-risk instead, so the desk can express skepticism without killing the setup. Probe fills grade into their own 0.50-0.60 bucket (tools/performance_breakdown._confidence_bucket), so once 5+ close the existing calibration machinery has REAL fill data: if the bucket proves losing (<40% WR) the losing-bucket gate starts rejecting it with evidence, and if it proves fine that argues the floor down. Every other gate - RR>=2, geometry, volatility stop, heat, theme caps, earnings window, risk desk - applies to a probe at full strength; below probe min_confidence remains a hard rejection."
     },
@@ -270,7 +271,7 @@
         "match": "never a second half-size test",
         "superseded_at": "2026-10-01",
         "by": "operator (user-approved trade-more change #5)",
-        "why": "max_open_probes raised 1 -> 2: a second half-size calibration probe is now allowed. On full in-session slots with the book <30% deployed, propose the best candidate as a 0.50-0.59 probe rather than returning []."
+        "why": "max_open_probes raised 1 -> 2 (2026-10-01) then 2 -> 3 (2026-10-05, user: Raise): up to three half-size calibration probes allowed. On full in-session slots with the book <30% deployed, propose the best candidate as a 0.50-0.59 probe rather than returning []."
       },
       {
         "match": "may only name a completed prior session",
