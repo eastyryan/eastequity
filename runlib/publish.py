@@ -413,7 +413,8 @@ def redeploy_dashboard() -> None:
         # all iterate an empty list and return 0, silently, forever.
         for learning_file in ("knowledge_base.json", "adopted_lessons.json",
                               "learning_proposals.json", "shadow_portfolio.json",
-                              "post_exit_runners.json", "binding_exit_lessons.json"):
+                              "post_exit_runners.json", "binding_exit_lessons.json",
+                              "lesson_scorecard.json", "lesson_scorecard.md"):
             if (ROOT / "data" / learning_file).exists():
                 paths.append(f"data/{learning_file}")
         if (ROOT / "data" / "concept_memory").is_dir():

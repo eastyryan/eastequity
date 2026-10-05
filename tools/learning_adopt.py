@@ -340,15 +340,28 @@ def brain_facing_adopted_lessons(limit: int = 12) -> dict:
     """Inject into trading context — durable soft lessons (active only)."""
     try:
         lessons = []
+        retired: list = []
         if ADOPTED_JSON.exists():
             j = json.loads(ADOPTED_JSON.read_text())
             raw = list(j.get("lessons") or [])
-            # Newest first; skip superseded
+            # Newest first; skip superseded. The weekly lesson scorecard's
+            # priority is applied on top as a STABLE sort: boost (evidence says
+            # the lesson helps) first, normal next, deprioritize (pipeline log
+            # lines, KB duplicates, stale) last — so with 40 active lessons and
+            # 12 seats, noise stops crowding out real lessons. No priority
+            # stamped = normal = the old newest-first order exactly.
             active = [
                 L for L in reversed(raw)
                 if isinstance(L, dict) and not L.get("superseded_by")
             ]
+            active.sort(key=lambda L: {"boost": 0, "deprioritize": 2}.get(
+                str(L.get("scorecard_priority") or ""), 1))
             lessons = active[:limit]
+            try:
+                from tools.lesson_scorecard import retired_markers
+                retired = retired_markers(raw, title_key="text")
+            except Exception:
+                retired = []
         hard = []
         if PROPOSALS_FILE.exists():
             st = json.loads(PROPOSALS_FILE.read_text())
@@ -357,12 +370,14 @@ def brain_facing_adopted_lessons(limit: int = 12) -> dict:
                 if isinstance(p, dict) and not p.get("auto_adoptable")
                 and p.get("status") == "proposed"
             ][:8]
-        return {
+        out = {
             "note": (
                 "ADOPTED LESSONS from the weekly pipeline (improvement notes → durable "
                 "text). Treat as standing process commitments until a later review "
                 "supersedes them. hard_pending items need owner/code — do not invent "
-                "validator changes yourself. Superseded lessons are omitted."
+                "validator changes yourself. Superseded lessons are omitted. Cite "
+                "the LP- id (in the item and in lessons_applied) when one shapes a "
+                "decision — the weekly lesson scorecard grades cited lessons."
             ),
             "lessons": [
                 {"id": L.get("id"), "kind": L.get("kind"),
@@ -376,9 +391,35 @@ def brain_facing_adopted_lessons(limit: int = 12) -> dict:
             ],
             "n_adopted": len(lessons),
         }
+        if retired:
+            out["superseded_by_scorecard"] = retired
+        return out
     except Exception as e:
         return {"status": "error", "reason": str(e)[:150], "lessons": [],
                 "hard_pending": []}
+
+
+def record_adopted_citations(ids: list) -> int:
+    """Bump times_cited/last_cited on cited ACTIVE adopted lessons (the LP-
+    counterpart of knowledge_base.record_citations; adopted lessons had no
+    citation tracking at all before the lesson scorecard). Never raises."""
+    try:
+        want = {str(i) for i in (ids or []) if str(i).startswith("LP-")}
+        if not want or not ADOPTED_JSON.exists():
+            return 0
+        j = json.loads(ADOPTED_JSON.read_text())
+        n = 0
+        for L in j.get("lessons") or []:
+            if (isinstance(L, dict) and L.get("id") in want
+                    and not L.get("superseded_by")):
+                L["times_cited"] = int(L.get("times_cited") or 0) + 1
+                L["last_cited"] = _now()
+                n += 1
+        if n:
+            ADOPTED_JSON.write_text(json.dumps(j, indent=2))
+        return n
+    except Exception:
+        return 0
 
 
 def _lesson_fingerprint(text: str, n: int = 48) -> str:

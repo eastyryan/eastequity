@@ -903,9 +903,21 @@ def prune_knowledge_base(max_active: int = MAX_ACTIVE) -> dict:
 def _selection_rank(e: dict) -> tuple:
     """Evidence beats recency: validated first, then ungraded/mixed by recency,
     underperforming last (still shown — with a warning — until consolidation
-    retires them). Pure."""
+    retires them). Pure.
+
+    The weekly lesson scorecard (tools/lesson_scorecard.py) adds its own
+    priority on top: a lesson whose attributed decisions beat the book's
+    baseline (`scorecard_priority: boost`) joins the validated tier; a stale or
+    noise lesson (`deprioritize`) sinks to the bottom tier with the
+    underperformers. Absent priority = normal, so behaviour is unchanged until
+    the scorecard has evidence."""
     status = e.get("evidence_status")
     tier = {"validated": 0, None: 1, "mixed": 1, "underperforming": 2}.get(status, 1)
+    prio = str(e.get("scorecard_priority") or "")
+    if prio == "boost" and tier == 1:
+        tier = 0
+    elif prio == "deprioritize" and tier < 2:
+        tier = 2
     return (tier, str(e.get("learned_at") or ""))
 
 
@@ -922,6 +934,13 @@ def _lesson_row(e: dict) -> dict:
                           "skeptically; it is a retirement candidate")
     if e.get("times_cited"):
         row["times_cited"] = e["times_cited"]
+    sc = e.get("scorecard")
+    if isinstance(sc, dict) and sc.get("verdict") in ("helping", "hurting", "no_clear_edge"):
+        # Only verdicts with a real sample reach the brain; insufficient_data
+        # would be noise on every row.
+        row["scorecard"] = (f"{sc['verdict']}: right on {round((sc.get('correct_rate') or 0) * 100)}% "
+                            f"of {sc.get('n_graded')} graded decisions vs "
+                            f"{round((sc.get('baseline') or 0) * 100)}% baseline")
     if e.get("tensions"):
         row["tensions"] = e["tensions"][-2:]
     return row
@@ -949,11 +968,25 @@ def brain_facing_knowledge_base(limit: int = 8, include_index: bool = False) -> 
                      "(citing trades won), underperforming last (citing trades "
                      "lost - weigh skeptically). Apply the how_to_apply lines "
                      "when the situation matches; CITE the lesson id when one "
-                     "drives a decision - citations are how lessons get graded."),
+                     "drives a decision - in that proposal/rejected_idea/"
+                     "watchlist item AND in the top-level lessons_applied list. "
+                     "The weekly lesson scorecard grades every cited buy, skip "
+                     "and wait against hindsight and retires lessons that "
+                     "hurt; an uncited lesson can never earn a boost."),
             "recent": [_lesson_row(e) for e in picked[:limit]],
             "n_active": len(active),
             "discipline_counts": discipline_counts(doc["entries"]),
         }
+        try:  # scorecard retirements + citation health (fail-soft extras)
+            from tools.lesson_scorecard import citation_health, retired_markers
+            markers = retired_markers(doc["entries"])
+            if markers:
+                out["superseded_by_scorecard"] = markers
+            ch = citation_health()
+            if ch.get("nudge"):
+                out["citation_health"] = ch
+        except Exception:
+            pass
         if include_index:
             out["topics_index"] = [
                 {"id": e.get("id"), "discipline": e.get("discipline"),

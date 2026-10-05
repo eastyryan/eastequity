@@ -177,6 +177,9 @@ _GUARDED_LEARNING_PATHS = (
     "data/shadow_portfolio.json",
     "data/binding_exit_lessons.json",
     "journal/exit_autopsies",
+    "data/lesson_scorecard.json",
+    "journal/lesson_citations",
+    "journal/lesson_scorecard",
 )
 
 
