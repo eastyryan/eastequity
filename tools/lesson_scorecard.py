@@ -1111,15 +1111,21 @@ def summary_lines(card: dict, changed: dict | None, applied: bool) -> list:
         lines.append(f"  review {x['id']}: {x['why']}")
     if plan.get("stale_skipped_reason"):
         lines.append(f"  staleness: {plan['stale_skipped_reason']}")
-    ranked = [r for r in card["lessons"] if r["active"] and r["n_graded"]]
-    top = sorted(ranked, key=lambda r: (-(r["correct_rate"] - r["baseline"]), -r["n_graded"]))
-    if top:
+    # Rank by evidence WEIGHT (gap x sqrt(n)), and only lessons with 3+ graded
+    # decisions: a 1/1 is a coin flip, not the "best lesson".
+    ranked = [r for r in card["lessons"] if r["active"] and r["n_graded"] >= 3]
+    top = sorted(ranked, key=lambda r: (-(r["correct_rate"] - r["baseline"])
+                                        * math.sqrt(r["n_graded"]), r["id"]))
+    best = [r for r in top if r["correct_rate"] > r["baseline"]][:3]
+    worst = [r for r in reversed(top) if r["correct_rate"] < r["baseline"]][:3]
+    if best:
         lines.append("Best evidence so far:")
-        for r in top[:3]:
+        for r in best:
             lines.append(f"  {r['id']} {r['n_correct']}/{r['n_graded']} right "
                          f"(base {round(r['baseline'] * 100)}%) [{r['verdict']}] {_title(r)}")
+    if worst:
         lines.append("Worst evidence so far:")
-        for r in list(reversed(top))[:3]:
+        for r in worst:
             lines.append(f"  {r['id']} {r['n_correct']}/{r['n_graded']} right "
                          f"(base {round(r['baseline'] * 100)}%) [{r['verdict']}] {_title(r)}")
     return lines
