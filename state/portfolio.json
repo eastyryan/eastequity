@@ -1,15 +1,15 @@
 {
   "broker_backend": "alpaca_paper",
-  "broker_synced_at": "2026-10-05T13:01:35.671030+00:00",
-  "cash_usd": 685.71,
-  "total_equity_usd": 1000.89,
+  "broker_synced_at": "2026-10-05T15:04:22.630922+00:00",
+  "cash_usd": 611.69,
+  "total_equity_usd": 1001.05,
   "positions": [
     {
       "ticker": "CLS",
       "quantity": 0.139601,
       "avg_cost": 383.88,
-      "market_value_usd": 54.21,
-      "last_price": 388.3546,
+      "market_value_usd": 53.6,
+      "last_price": 383.94,
       "opened_at": "2026-10-02T18:20:41.267027+00:00",
       "proposal_id": "20261002-a4de72",
       "plan": {
@@ -42,15 +42,15 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-CLS-5fb4245178",
         "alpaca_order_id": "3046b08b-0645-430f-aef9-d01ee4446714",
-        "armed_at": "2026-10-05T13:01:28.253068+00:00"
+        "armed_at": "2026-10-05T15:04:11.518537+00:00"
       }
     },
     {
       "ticker": "COST",
       "quantity": 0.167366,
       "avg_cost": 914.404,
-      "market_value_usd": 153.89,
-      "last_price": 919.5,
+      "market_value_usd": 154.37,
+      "last_price": 922.325,
       "opened_at": "2026-10-02T14:52:16.438914+00:00",
       "proposal_id": "20261002-a31f7c",
       "plan": {
@@ -70,7 +70,7 @@
         "starter": true,
         "theme_second_seat": null
       },
-      "high_water": 920.65,
+      "high_water": 922.45,
       "adds_count": 0,
       "buy_commission_usd": 0.0,
       "demand_driver": "broad_market",
@@ -83,15 +83,56 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-COST-2569458a93",
         "alpaca_order_id": "303f4d9f-0597-464b-994d-2d81e57d7291",
-        "armed_at": "2026-10-05T13:01:29.054227+00:00"
+        "armed_at": "2026-10-05T15:04:12.125322+00:00"
+      }
+    },
+    {
+      "ticker": "ILMN",
+      "quantity": 0.264418,
+      "avg_cost": 279.936,
+      "market_value_usd": 73.99,
+      "last_price": 279.84,
+      "opened_at": "2026-10-05T15:04:20.734766+00:00",
+      "proposal_id": "20261005-0e6781",
+      "plan": {
+        "stop_loss": 262.0,
+        "target_price": 320.0,
+        "holding_horizon_days": 35,
+        "entry_price_max": 281.0,
+        "confidence": 0.52,
+        "demand_driver": "healthcare",
+        "thesis_invalidators": {
+          "invalidating_print": "The 2026-10-29 Q3 print shows clinical/oncology sequencing growth slowing below low double digits, or the FY revenue or EPS guide is cut.",
+          "invalidating_structure": "A daily close below $262, or failure back below Friday's $273 close on heavy volume that does not recover within two sessions while SPY holds above its 50-DMA.",
+          "time_box": "If ILMN has not made a daily close above $295 by 2026-10-28, exit before the 2026-10-29 print rather than carry a stalled probe through the binary; hard exit or re-underwrite by 2026-11-09."
+        },
+        "calibration_probe": true,
+        "entry_type": null,
+        "starter": null,
+        "theme_second_seat": null
+      },
+      "high_water": 279.936,
+      "adds_count": 0,
+      "buy_commission_usd": 0.0,
+      "demand_driver": "healthcare",
+      "protective_stop": {
+        "status": "resting",
+        "stop_price": 262.0,
+        "qty": 0.264417581,
+        "uncovered_qty": 0.0,
+        "session_only": true,
+        "time_in_force": "day",
+        "client_order_id": "EESTOP-ILMN-ef16f27169",
+        "alpaca_order_id": "49f40943-9839-45c9-814a-c05d6db71003",
+        "armed_at": "2026-10-05T15:04:21.566072+00:00"
       }
     },
     {
       "ticker": "NOW",
       "quantity": 0.791987,
       "avg_cost": 135.924,
-      "market_value_usd": 107.07,
-      "last_price": 135.19,
+      "market_value_usd": 107.44,
+      "last_price": 135.665,
       "opened_at": "2026-09-22T16:28:12.476854+00:00",
       "proposal_id": "20260922-c84f23",
       "plan": {
@@ -122,7 +163,7 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-NOW-e8e726b727",
         "alpaca_order_id": "adde4fc6-f355-454e-9f1d-af0546b331d2",
-        "armed_at": "2026-10-05T13:01:29.798022+00:00"
+        "armed_at": "2026-10-05T15:04:12.714561+00:00"
       }
     }
   ],
@@ -271,6 +312,55 @@
       "alpaca_status": "filled",
       "filled_at": "2026-10-02T18:20:39.812787755Z",
       "position_avg_cost_after": 383.88
+    },
+    {
+      "ticker": "ILMN",
+      "action": "BUY",
+      "position_size_usd": 74.03,
+      "reference_price": 278.76,
+      "proposal_id": "20261005-0e6781",
+      "sell_fraction": null,
+      "atr_pct": 4.88,
+      "entry_price_max": 281.0,
+      "plan": {
+        "stop_loss": 262.0,
+        "target_price": 320.0,
+        "holding_horizon_days": 35,
+        "entry_price_max": 281.0,
+        "confidence": 0.52,
+        "demand_driver": "healthcare",
+        "thesis_invalidators": {
+          "invalidating_print": "The 2026-10-29 Q3 print shows clinical/oncology sequencing growth slowing below low double digits, or the FY revenue or EPS guide is cut.",
+          "invalidating_structure": "A daily close below $262, or failure back below Friday's $273 close on heavy volume that does not recover within two sessions while SPY holds above its 50-DMA.",
+          "time_box": "If ILMN has not made a daily close above $295 by 2026-10-28, exit before the 2026-10-29 print rather than carry a stalled probe through the binary; hard exit or re-underwrite by 2026-11-09."
+        },
+        "calibration_probe": true,
+        "entry_type": null,
+        "starter": null,
+        "theme_second_seat": null
+      },
+      "demand_driver": "healthcare",
+      "order_id": "EE-f16f8ffdf522",
+      "client_order_id": "EE-f16f8ffdf522",
+      "status": "filled",
+      "submitted_at": "2026-10-05T15:04:18.117886+00:00",
+      "alpaca_order_id": "e720cd95-9cd4-4ce5-9e6f-b74941d57f7c",
+      "fill_price": 279.936,
+      "quantity": 0.264418,
+      "notional_usd": 74.02,
+      "is_add": false,
+      "total_cost_usd": 74.02,
+      "entry_gap_usd": 0.0,
+      "fees_usd": {
+        "commission": 0.0,
+        "sec_fee": 0.0,
+        "taf": 0.0,
+        "slippage_bps": 0.0,
+        "effective_slippage_pct": 0.0
+      },
+      "alpaca_status": "filled",
+      "filled_at": "2026-10-05T15:04:19.531038919Z",
+      "position_avg_cost_after": 279.936
     }
   ],
   "ingested_broker_orders": []
