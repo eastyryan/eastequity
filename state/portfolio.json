@@ -1,15 +1,15 @@
 {
   "broker_backend": "alpaca_paper",
-  "broker_synced_at": "2026-10-05T18:25:20.608874+00:00",
-  "cash_usd": 611.69,
-  "total_equity_usd": 1004.89,
+  "broker_synced_at": "2026-10-05T19:12:37.428474+00:00",
+  "cash_usd": 550.3,
+  "total_equity_usd": 1004.69,
   "positions": [
     {
       "ticker": "CLS",
       "quantity": 0.139601,
       "avg_cost": 383.88,
-      "market_value_usd": 53.86,
-      "last_price": 385.825,
+      "market_value_usd": 53.65,
+      "last_price": 384.3,
       "opened_at": "2026-10-02T18:20:41.267027+00:00",
       "proposal_id": "20261002-a4de72",
       "plan": {
@@ -42,15 +42,15 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-CLS-5fb4245178",
         "alpaca_order_id": "3046b08b-0645-430f-aef9-d01ee4446714",
-        "armed_at": "2026-10-05T18:25:11.648272+00:00"
+        "armed_at": "2026-10-05T19:12:24.323654+00:00"
       }
     },
     {
       "ticker": "COST",
       "quantity": 0.167366,
       "avg_cost": 914.404,
-      "market_value_usd": 154.43,
-      "last_price": 922.735,
+      "market_value_usd": 154.04,
+      "last_price": 920.36,
       "opened_at": "2026-10-02T14:52:16.438914+00:00",
       "proposal_id": "20261002-a31f7c",
       "plan": {
@@ -83,15 +83,15 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-COST-2569458a93",
         "alpaca_order_id": "303f4d9f-0597-464b-994d-2d81e57d7291",
-        "armed_at": "2026-10-05T18:25:12.234205+00:00"
+        "armed_at": "2026-10-05T19:12:24.929941+00:00"
       }
     },
     {
       "ticker": "ILMN",
       "quantity": 0.264418,
       "avg_cost": 279.936,
-      "market_value_usd": 77.54,
-      "last_price": 293.23,
+      "market_value_usd": 77.74,
+      "last_price": 294.015,
       "opened_at": "2026-10-05T15:04:20.734766+00:00",
       "proposal_id": "20261005-0e6781",
       "plan": {
@@ -111,7 +111,7 @@
         "starter": null,
         "theme_second_seat": null
       },
-      "high_water": 293.525,
+      "high_water": 294.15,
       "adds_count": 0,
       "buy_commission_usd": 0.0,
       "demand_driver": "healthcare",
@@ -124,15 +124,15 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-ILMN-ef16f27169",
         "alpaca_order_id": "49f40943-9839-45c9-814a-c05d6db71003",
-        "armed_at": "2026-10-05T18:25:12.835607+00:00"
+        "armed_at": "2026-10-05T19:12:25.655471+00:00"
       }
     },
     {
       "ticker": "NOW",
       "quantity": 0.791987,
       "avg_cost": 135.924,
-      "market_value_usd": 107.37,
-      "last_price": 135.57,
+      "market_value_usd": 107.6,
+      "last_price": 135.86,
       "opened_at": "2026-09-22T16:28:12.476854+00:00",
       "proposal_id": "20260922-c84f23",
       "plan": {
@@ -163,7 +163,48 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-NOW-e8e726b727",
         "alpaca_order_id": "adde4fc6-f355-454e-9f1d-af0546b331d2",
-        "armed_at": "2026-10-05T18:25:13.460674+00:00"
+        "armed_at": "2026-10-05T19:12:26.282117+00:00"
+      }
+    },
+    {
+      "ticker": "OKTA",
+      "quantity": 0.28053,
+      "avg_cost": 218.836,
+      "market_value_usd": 61.36,
+      "last_price": 218.735,
+      "opened_at": "2026-10-05T19:12:35.492949+00:00",
+      "proposal_id": "20261005-cf6fd3",
+      "plan": {
+        "stop_loss": 202.0,
+        "target_price": 258.0,
+        "holding_horizon_days": 40,
+        "entry_price_max": 220.0,
+        "confidence": 0.54,
+        "demand_driver": "cybersecurity",
+        "thesis_invalidators": {
+          "invalidating_print": "Before exit, any guide cut or consensus FY27 EPS cut of more than 5%, or if still held into the 2026-12-01 Q3 FY27 print, cRPO growth below 10% or Q3 revenue below the $813M low end of guidance.",
+          "invalidating_structure": "A daily close below $205 (the 10/1 flag low) on rising volume that does not recover within two sessions while SPY holds above its 50-DMA - a failed breakout back into the flag; hard stop $202.",
+          "time_box": "If OKTA has not made a daily close above $235 within 20 calendar days (by 2026-10-25), cut or exit; hard horizon 40 days (2026-11-14), well before the 2026-12-01 print."
+        },
+        "calibration_probe": true,
+        "entry_type": null,
+        "starter": null,
+        "theme_second_seat": null
+      },
+      "high_water": 218.96,
+      "adds_count": 0,
+      "buy_commission_usd": 0.0,
+      "demand_driver": "cybersecurity",
+      "protective_stop": {
+        "status": "resting",
+        "stop_price": 202.0,
+        "qty": 0.280529711,
+        "uncovered_qty": 0.0,
+        "session_only": true,
+        "time_in_force": "day",
+        "client_order_id": "EESTOP-OKTA-6cae4b5b40",
+        "alpaca_order_id": "2827ffed-a4b6-4260-b0b8-31f5f83adeb4",
+        "armed_at": "2026-10-05T19:12:36.312026+00:00"
       }
     }
   ],
@@ -361,6 +402,55 @@
       "alpaca_status": "filled",
       "filled_at": "2026-10-05T15:04:19.531038919Z",
       "position_avg_cost_after": 279.936
+    },
+    {
+      "ticker": "OKTA",
+      "action": "BUY",
+      "position_size_usd": 61.4,
+      "reference_price": 218.96,
+      "proposal_id": "20261005-cf6fd3",
+      "sell_fraction": null,
+      "atr_pct": 4.48,
+      "entry_price_max": 220.0,
+      "plan": {
+        "stop_loss": 202.0,
+        "target_price": 258.0,
+        "holding_horizon_days": 40,
+        "entry_price_max": 220.0,
+        "confidence": 0.54,
+        "demand_driver": "cybersecurity",
+        "thesis_invalidators": {
+          "invalidating_print": "Before exit, any guide cut or consensus FY27 EPS cut of more than 5%, or if still held into the 2026-12-01 Q3 FY27 print, cRPO growth below 10% or Q3 revenue below the $813M low end of guidance.",
+          "invalidating_structure": "A daily close below $205 (the 10/1 flag low) on rising volume that does not recover within two sessions while SPY holds above its 50-DMA - a failed breakout back into the flag; hard stop $202.",
+          "time_box": "If OKTA has not made a daily close above $235 within 20 calendar days (by 2026-10-25), cut or exit; hard horizon 40 days (2026-11-14), well before the 2026-12-01 print."
+        },
+        "calibration_probe": true,
+        "entry_type": null,
+        "starter": null,
+        "theme_second_seat": null
+      },
+      "demand_driver": "cybersecurity",
+      "order_id": "EE-4b2579513512",
+      "client_order_id": "EE-4b2579513512",
+      "status": "filled",
+      "submitted_at": "2026-10-05T19:12:32.804955+00:00",
+      "alpaca_order_id": "be6b84b4-8c9a-4bb5-aec9-e082c4e03fe3",
+      "fill_price": 218.836,
+      "quantity": 0.28053,
+      "notional_usd": 61.39,
+      "is_add": false,
+      "total_cost_usd": 61.39,
+      "entry_gap_usd": 0.0,
+      "fees_usd": {
+        "commission": 0.0,
+        "sec_fee": 0.0,
+        "taf": 0.0,
+        "slippage_bps": 0.0,
+        "effective_slippage_pct": 0.0
+      },
+      "alpaca_status": "filled",
+      "filled_at": "2026-10-05T19:12:34.272735731Z",
+      "position_avg_cost_after": 218.836
     }
   ],
   "ingested_broker_orders": []
