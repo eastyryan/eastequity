@@ -938,6 +938,10 @@ Output proposals inside a fenced ```json block as a list under key `"proposals"`
       "reason": "under_pressure vs S on setup score; free 1/3 of the capital for a higher-scoring diversifier."
     }
   ],
+  "lessons_applied": [
+    {"id": "KB-0123456789", "ticker": "ANET", "decision": "wait", "how": "Waiting for the light-volume retest the lesson calls the real entry."},
+    {"id": "LP-0123456789", "ticker": "PANW", "decision": "skip", "how": "Extended past the 20-DMA stretch the lesson says not to chase."}
+  ],
   "factor_response": {
     "concentration_level": "high",
     "plan": "AI-stack heat is elevated; no new cybersecurity add. Prefer cash or a different driver if buying.",
@@ -955,6 +959,16 @@ Output proposals inside a fenced ```json block as a list under key `"proposals"`
   ]
 }
 ```
+
+**`lessons_applied` (graded weekly — cite honestly):** one row per KB-/LP- lesson that
+actually shaped a decision this run, `decision` in `buy|skip|wait|other`, with the
+`ticker` it shaped. Also put the id in that proposal / rejected_idea / watchlist item's
+own text. The weekly lesson scorecard (`tools/lesson_scorecard.py`) joins each row to
+hindsight — the trade's R for a buy, the shadow book's good_skip / regret_miss for a skip
+or wait — and auto-retires lessons whose decisions are reliably worse than the book's
+baseline (max 3/week), boosts lessons that are reliably better, and sinks stale ones.
+An uncited lesson can never be graded; a lesson cited where it did not drive the
+decision corrupts the grade. `[]` when no lesson shaped anything.
 
 **Process gates (machine-checked every run):**
 - Every watchlist entry **must** include `status`: `drop` | `hold` | `buy` (missing → treated as hold + journaled).
@@ -1268,6 +1282,18 @@ and reading alone can never supersede a trade-validated lesson). FRIDAYS the stu
 is consolidation instead of a new topic: merge duplicate lessons into principles,
 retire what the evidence killed, keep the playbook small and true (max 5 actions/week,
 code-enforced; retired/superseded lessons stay archived, never deleted).
+
+**Lesson scorecard (weekly, deterministic — `orchestrator.py --lesson-scorecard`).**
+Grades every active KB-/LP- lesson on the decisions it was cited in (the
+`lessons_applied` ledger in `journal/lesson_citations/` plus the run archives), against
+the book's own baseline: under 8 graded decisions = `insufficient_data` (no action);
+`hurting` needs both a 15-point gap AND a one-sided 90% Wilson bound below baseline.
+Hurting lessons are superseded (shown to you as `superseded_by_scorecard` markers —
+they no longer bind), helping ones rank first in the pack, stale/noise ones rank last.
+Caps: 3 retire/reinstate per ISO week, nothing under 14 days old, never a
+trade-validated or `risk_management` lesson (flagged instead). It edits lesson
+metadata only — never validator caps, stops or sizing. Output:
+`data/lesson_scorecard.json` / `.md`.
 
 **Always in weekly self-review:** quote breakdown + calibration phase, grade last week’s
 behavior change, name worst pattern, state ONE change for next week, and address shadow

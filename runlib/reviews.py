@@ -233,6 +233,18 @@ def daily_study(run_id: str) -> int:
     }
     if mode == "consolidate":
         bundle["active_lessons_full"] = active_lessons()
+    try:  # last weekly lesson scorecard: hindsight evidence per lesson
+        sc = json.loads((ROOT / "data" / "lesson_scorecard.json").read_text())
+        bundle["lesson_scorecard"] = {
+            "as_of": sc.get("as_of"), "summary": sc.get("summary"),
+            "flag_for_review": (sc.get("actions") or {}).get("flag_for_review"),
+            "deferred_by_cap": (sc.get("actions") or {}).get("deferred_by_cap"),
+            "note": ("Deterministic hindsight grades of cited lessons. Prefer "
+                     "merging/retiring what it flags; never retire a lesson it "
+                     "shows helping."),
+        }
+    except Exception:
+        pass
     study_file = ROOT / "state" / f"study_{run_id}.json"
     study_file.write_text(json.dumps(json_safe(bundle), indent=2, default=str))
 

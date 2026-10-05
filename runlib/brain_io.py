@@ -1198,6 +1198,14 @@ def parse_proposals(response: str) -> dict:
                     "trigger_reviews": data.get("trigger_reviews"),
                     "waiting_for": data.get("waiting_for"),
                 }
+                # [{id, ticker, decision: buy|skip|wait|other, how}] — the
+                # structured lesson citations the weekly lesson scorecard
+                # grades (tools/lesson_scorecard.py). Emitted ONLY when the
+                # brain wrote it, so a legacy-shaped response keeps exactly
+                # the old key set (tests/test_parse_whitelist.py pins that).
+                # Shape-guarded + capped; never read by the validator.
+                if "lessons_applied" in data:
+                    out["lessons_applied"] = _dicts(data.get("lessons_applied"), 40)
                 # Schema-derived pass-through: keys the validator layer knows
                 # about survive parsing verbatim when the brain wrote them.
                 # Sorted so emitted key order is deterministic run to run.

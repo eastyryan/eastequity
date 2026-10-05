@@ -408,6 +408,15 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
                     help="daily study session: research ONE curriculum topic "
                          "(web search) and write a durable lesson into the "
                          "knowledge base + dashboard learning journal; no trading")
+    ap.add_argument("--lesson-scorecard", action="store_true",
+                    help="weekly lesson scorecard: grade every active lesson's "
+                         "cited buys/skips/waits against hindsight, retire "
+                         "hurting lessons (capped), boost helping ones, "
+                         "deprioritize stale/noise; writes data/lesson_scorecard.*; "
+                         "no trading")
+    ap.add_argument("--scorecard-dry-run", action="store_true",
+                    help="with --lesson-scorecard: compute and print only, change "
+                         "no lesson (writes data/lesson_scorecard_preview.json)")
     return ap.parse_args(argv)
 
 
@@ -447,6 +456,18 @@ def _dispatch_special_modes(args, run_id: str) -> int | None:
         out = run_learning_mark(run_id=run_id)
         print(json.dumps(out, indent=2, default=str))
         return 0 if out.get("status") != "error" else 1
+
+    if getattr(args, "lesson_scorecard", False):
+        print(f"=== East Equity Agent lesson scorecard {run_id} ===")
+        from tools.lesson_scorecard import run as run_scorecard
+        card = run_scorecard(apply=not args.scorecard_dry_run, run_id=run_id)
+        print("\n".join(card.get("summary") or []))
+        if not args.scorecard_dry_run:
+            # Same commit+push (rebase-retry, [vercel skip]) every run uses;
+            # data/lesson_scorecard.* and the stamped lesson stores are in
+            # its learning-file list.
+            redeploy_dashboard()
+        return 0
 
     if args.study:
         print(f"=== East Equity Agent daily study {run_id} ===")
@@ -1039,6 +1060,20 @@ def _journal_side_outputs(parsed: dict, response: str, run_id: str) -> None:
             print(f"      knowledge base: {n_cited} lesson(s) cited this run")
     except Exception as e:
         print(f"      (kb citation scan failed: {e})")
+
+    # Per-decision citation ledger (journal/lesson_citations/) for the weekly
+    # lesson scorecard. Written on EVERY run, including zero-citation runs:
+    # from 2026-09-23 to 10-05 the box-routine brain cited no lesson in ~60
+    # runs and nothing noticed, because "no citations" left no trace at all.
+    try:
+        from tools.lesson_scorecard import record_run_citations
+        lc = record_run_citations(parsed, response, run_id)
+        print(f"      lesson citations: {lc.get('n_citations', 0)} "
+              f"({lc.get('n_decision_linked', 0)} tied to a buy/skip/wait)"
+              + ("" if lc.get("n_citations") else
+                 " — NO lesson cited; uncited lessons cannot be graded"))
+    except Exception as e:
+        print(f"      (lesson citation ledger failed: {e})")
 
     if parsed.get("guidance_entries"):
         try:
