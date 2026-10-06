@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-05T23:02:26.647695+00:00",
+  "updated_at": "2026-10-06T23:00:21.291141+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 14,
@@ -8,9 +8,46 @@
     "strategy_playbooks": 13,
     "market_microstructure": 3,
     "trading_psychology": 2,
-    "macro_regimes": 1
+    "macro_regimes": 2
   },
   "entries": [
+    {
+      "id": "KB-4524008086",
+      "discipline": "macro_regimes",
+      "topic": "Scheduled macro prints (FOMC/CPI/jobs) as a swing-entry calendar: the announcement premium argues against 'wait until after the Fed', the pre-FOMC drift has decayed, and a macro date is an index-gap s",
+      "summary": "Savor and Wilson (2013, JFQA) found that average stock returns and Sharpe ratios are significantly higher on days with scheduled inflation, unemployment and FOMC announcements than on other days; the NBER macro announcement premium paper extends this to 1961-2023 and still finds it large and significant. Brusa, Savor and Wilson report a US FOMC-day excess return of about 24.8 bps versus about 1.3 bps on non-announcement days, while separately estimated CPI and jobs premia were positive but not statistically significant in their sample, i.e. the premium has migrated toward the FOMC. Lucca and Moench (2015) located the FOMC piece in the 24 hours BEFORE the 2pm statement (about 49 bps on average, 1994-2011, not reversed afterward, and zero on average from 2pm to the close). Kurov, Wolfe and Gilbert (2021) extended the sample to 2019 and found the pre-FOMC drift essentially disappeared after 2015, plausibly because uncertainty fell; a 2025 QuantSeeker backtest through 2024 claims it persists, mostly in high-VIX regimes, but its own commenters could not reproduce an edge, so treat the drift as weak and regime-dependent, not a timing signal. Cieslak, Morse and Vissing-Jorgensen (2019) found the 1994-2016 equity premium was earned in even weeks of the FOMC cycle, and a 2026 Federal Reserve FEDS paper notes that cycle turned negative in 2017-2021, so calendar-week patterns are fragile too. The durable, well-replicated part is narrow: scheduled macro risk is compensated on average rat",
+      "key_points": [
+        "Scheduled macro announcement days have historically paid MORE than ordinary days on average (Savor-Wilson 2013; extended to 2023 by the NBER announcement-premium paper), so deferring a qualified entry until 'after CPI/Fed' gives up compensated days rather than avoiding a penalty.",
+        "The premium has concentrated in FOMC days; separately, CPI and jobs-day premia were positive but not statistically significant in Brusa-Savor-Wilson.",
+        "The Lucca-Moench pre-FOMC drift (about 49 bps in the prior 24h, 1994-2011) largely disappeared after 2015 (Kurov-Wolfe-Gilbert 2021); recent practitioner claims that it lives are contested and VIX-dependent. Do not trade it.",
+        "The FOMC even-week cycle (Cieslak-Morse-Vissing-Jorgensen) reversed in 2017-2021 per a 2026 Fed paper: calendar-week patterns are not a timing rule.",
+        "Post-statement surprises averaged roughly zero historically; the risk is two-sided noise, which is a sizing and gap question, not a direction call.",
+        "Index-level macro gap risk is usually far smaller than a single-name earnings binary, so a macro date inside the hold window does not trigger the earnings expected-move rule."
+      ],
+      "how_to_apply": "When a fat-pitch setup qualifies on its own rails (structure, RR >= 2:1, ATR-floored stop) and the only reason to wait is an upcoming FOMC statement, CPI or jobs print, do NOT write 'wait until after the Fed' as a skip or watch reason; the evidence says those days are compensated on average, and that reason feeds shadow-book regret_miss. Size it normally under the 1% risk budget and 8% heat cap; the macro date is an index-level gap input, so only shade size (e.g. half-risk probe) when the name is high beta (> ~1.8) or rate-sensitive AND the ATR stop sits within roughly one day's index move of price. Never open a position BECAUSE an FOMC is near (the pre-FOMC drift is decayed and regime-dependent), and never let a calendar-week pattern set entry timing. Keep earnings binaries on the separate expected-move rule (KB-0801985270 / KB-8308262054). For the current calendar, the next scheduled FOMC statement is Oct 28, 2026 (meeting Oct 27-28), one day before ILMN's 10/29 print; that FOMC date alone is not a reason to exit or defer, but the ILMN earnings binary still is.",
+      "sources": [
+        "Savor, P. and Wilson, M. (2013), How Much Do Investors Care About Macroeconomic Risk? Evidence from Scheduled Economic Announcements, JFQA (as summarized in https://people.duke.edu/~rb7/bio/announcement_premium_econometrica.pdf and https://www.nber.org/system/files/working_papers/w31923/revisions/w3",
+        "Lucca, D. and Moench, E., The Pre-FOMC Announcement Drift, FRBNY Staff Report 512 / Journal of Finance 2015: https://www.bostonfed.org/-/media/Documents/conference/PDF/Lucca_preFOMCDrift.pdf",
+        "Kurov, A., Wolfe, M. and Gilbert, T. (2021), The disappearing pre-FOMC announcement drift, Finance Research Letters 40: https://ncbi.nlm.nih.gov/pmc/articles/PMC7525326",
+        "Brusa, F., Savor, P. and Wilson, M., One Central Bank to Rule Them All: https://rodneywhitecenter.wharton.upenn.edu/wp-content/uploads/2014/03/Savor.pdf",
+        "Cieslak, A., Morse, A. and Vissing-Jorgensen, A., Stock Returns over the FOMC Cycle: https://www.stern.nyu.edu/sites/default/files/assets/documents/cycle_paper_cieslak_morse_vissingjorgensen.pdf",
+        "Federal Reserve FEDS 2026-023, The Effect of the Federal Reserve on the Stock Market: https://www.federalreserve.gov/econres/feds/files/2026023pap.pdf"
+      ],
+      "learned_at": "2026-10-06T23:00:21.277680+00:00",
+      "run_id": "20261006-ea0460",
+      "tensions": [
+        {
+          "with": "KB-0801985270",
+          "why": "That lesson sizes single-name earnings binaries against the options expected move; this one covers index-level scheduled macro prints, whose gap risk is smaller and compensated on average, so the earnings rule still governs prints and macro dates only shade size for high-beta, tight-stop names.",
+          "noted_at": "2026-10-06"
+        },
+        {
+          "with": "KB-6840616104",
+          "why": "Breadth remains the regime aggression dial (a condition); this lesson only says a scheduled macro date by itself is not a reason to stand aside, so both apply: breadth sets aggression, the macro calendar is not a veto.",
+          "noted_at": "2026-10-06"
+        }
+      ]
+    },
     {
       "id": "KB-3629292777",
       "discipline": "market_microstructure",
@@ -49,6 +86,16 @@
           "why": "The inner-pivot lesson already notes many breakouts never throw back; this lesson supplies the microstructure reason (favorable news prevents limit execution) and makes the paired strength trigger a decision-time requirement.",
           "noted_at": "2026-10-05"
         }
+      ],
+      "times_cited": 6,
+      "last_cited": "2026-10-06T21:41:35.724770+00:00",
+      "linked_trades": [
+        {
+          "ticker": "MRVL",
+          "linked_on": "2026-10-06",
+          "run_id": "20261006-97f4ff",
+          "trade_ref": "EE-f8de3b43ce96"
+        }
       ]
     },
     {
@@ -79,6 +126,16 @@
       "merged_from": [
         "KB-1365918646",
         "KB-1005106931"
+      ],
+      "times_cited": 5,
+      "last_cited": "2026-10-06T21:41:35.724761+00:00",
+      "linked_trades": [
+        {
+          "ticker": "MRVL",
+          "linked_on": "2026-10-06",
+          "run_id": "20261006-97f4ff",
+          "trade_ref": "EE-f8de3b43ce96"
+        }
       ]
     },
     {
@@ -110,6 +167,16 @@
       "merged_from": [
         "KB-9586927181",
         "KB-0705986594"
+      ],
+      "times_cited": 2,
+      "last_cited": "2026-10-06T19:11:38.539039+00:00",
+      "linked_trades": [
+        {
+          "ticker": "MRVL",
+          "linked_on": "2026-10-06",
+          "run_id": "20261006-97f4ff",
+          "trade_ref": "EE-f8de3b43ce96"
+        }
       ]
     },
     {
