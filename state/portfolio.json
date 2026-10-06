@@ -1,15 +1,15 @@
 {
   "broker_backend": "alpaca_paper",
-  "broker_synced_at": "2026-10-06T16:11:34.472645+00:00",
-  "cash_usd": 550.29,
-  "total_equity_usd": 1002.45,
+  "broker_synced_at": "2026-10-06T18:21:19.906734+00:00",
+  "cash_usd": 428.3,
+  "total_equity_usd": 1003.55,
   "positions": [
     {
       "ticker": "CLS",
       "quantity": 0.139601,
       "avg_cost": 383.88,
-      "market_value_usd": 53.06,
-      "last_price": 380.1053,
+      "market_value_usd": 54.0,
+      "last_price": 386.82,
       "opened_at": "2026-10-02T18:20:41.267027+00:00",
       "proposal_id": "20261002-a4de72",
       "plan": {
@@ -42,15 +42,15 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-CLS-51c63f05ed",
         "alpaca_order_id": "2d36061d-e7d5-49f7-a4e8-1ad2b5d8a87d",
-        "armed_at": "2026-10-06T16:11:25.891406+00:00"
+        "armed_at": "2026-10-06T18:21:06.900457+00:00"
       }
     },
     {
       "ticker": "COST",
       "quantity": 0.167366,
       "avg_cost": 914.404,
-      "market_value_usd": 155.68,
-      "last_price": 930.2,
+      "market_value_usd": 156.08,
+      "last_price": 932.59,
       "opened_at": "2026-10-02T14:52:16.438914+00:00",
       "proposal_id": "20261002-a31f7c",
       "plan": {
@@ -70,7 +70,8 @@
         "starter": true,
         "theme_second_seat": null
       },
-      "high_water": 930.2,
+      "high_water": 932.66,
+      "trailing_stop": 888.7331,
       "adds_count": 0,
       "buy_commission_usd": 0.0,
       "demand_driver": "broad_market",
@@ -83,15 +84,24 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-COST-21be5fea87",
         "alpaca_order_id": "5728e0ba-8968-41d1-85a1-01eda8b9c1cc",
-        "armed_at": "2026-10-06T16:11:26.495700+00:00"
+        "armed_at": "2026-10-06T18:21:10.855430+00:00",
+        "replace_refused": {
+          "http_status": 422,
+          "message": "qty must be an integer",
+          "qty": "0.167365847",
+          "time_in_force": "day",
+          "stop_price": "888.73",
+          "op": "replace",
+          "at": "2026-10-06T18:21:10.604367+00:00"
+        }
       }
     },
     {
       "ticker": "ILMN",
       "quantity": 0.264418,
       "avg_cost": 279.936,
-      "market_value_usd": 73.04,
-      "last_price": 276.24,
+      "market_value_usd": 73.15,
+      "last_price": 276.63,
       "opened_at": "2026-10-05T15:04:20.734766+00:00",
       "proposal_id": "20261005-0e6781",
       "plan": {
@@ -124,15 +134,56 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-ILMN-491c3b8da1",
         "alpaca_order_id": "45375bf8-f2b7-4f74-bf80-ec9ca23118c2",
-        "armed_at": "2026-10-06T16:11:27.052703+00:00"
+        "armed_at": "2026-10-06T18:21:08.033963+00:00"
+      }
+    },
+    {
+      "ticker": "MRVL",
+      "quantity": 0.420655,
+      "avg_cost": 290.0,
+      "market_value_usd": 121.94,
+      "last_price": 289.88,
+      "opened_at": "2026-10-06T18:21:17.891941+00:00",
+      "proposal_id": "20261006-97f4ff",
+      "plan": {
+        "stop_loss": 268.0,
+        "target_price": 342.0,
+        "holding_horizon_days": 40,
+        "entry_price_max": 292.0,
+        "confidence": 0.6,
+        "demand_driver": "ai_compute_gpu",
+        "thesis_invalidators": {
+          "invalidating_print": "Any walk-back of the new ~$20B FY2028 target, a disclosed loss or delay of a hyperscaler custom program, or consensus FY2028 revenue failing to move up toward the new target within three weeks.",
+          "invalidating_structure": "A daily close below $268, which is under both the $271.25 pre-event close and the $273.83 breakout anchored VWAP, meaning the full Investor Day gap has filled.",
+          "time_box": "If MRVL has not made a daily close above $310 by 2026-10-27, cut or exit; hard horizon 40 days (2026-11-15), before the next print around 2026-12-01."
+        },
+        "calibration_probe": null,
+        "entry_type": null,
+        "starter": null,
+        "theme_second_seat": null
+      },
+      "high_water": 290.0,
+      "adds_count": 0,
+      "buy_commission_usd": 0.0,
+      "demand_driver": "ai_compute_gpu",
+      "protective_stop": {
+        "status": "resting",
+        "stop_price": 268.0,
+        "qty": 0.420655172,
+        "uncovered_qty": 0.0,
+        "session_only": true,
+        "time_in_force": "day",
+        "client_order_id": "EESTOP-MRVL-5a13201ba4",
+        "alpaca_order_id": "950a4556-93ea-441d-8c36-dbc537a42d1a",
+        "armed_at": "2026-10-06T18:21:18.813749+00:00"
       }
     },
     {
       "ticker": "NOW",
       "quantity": 0.791987,
       "avg_cost": 135.924,
-      "market_value_usd": 109.37,
-      "last_price": 138.1,
+      "market_value_usd": 108.7,
+      "last_price": 137.255,
       "opened_at": "2026-09-22T16:28:12.476854+00:00",
       "proposal_id": "20260922-c84f23",
       "plan": {
@@ -163,7 +214,7 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-NOW-ca76467e64",
         "alpaca_order_id": "2c9791bb-dc93-430a-9afa-2e6dafd940c3",
-        "armed_at": "2026-10-06T16:11:28.231964+00:00",
+        "armed_at": "2026-10-06T18:21:09.166580+00:00",
         "replace_refused": {
           "http_status": 422,
           "message": "qty must be an integer",
@@ -171,7 +222,7 @@
           "time_in_force": "day",
           "stop_price": "125.35",
           "op": "replace",
-          "at": "2026-10-06T16:11:27.945131+00:00"
+          "at": "2026-10-06T18:21:08.904342+00:00"
         }
       }
     },
@@ -179,8 +230,8 @@
       "ticker": "OKTA",
       "quantity": 0.28053,
       "avg_cost": 218.836,
-      "market_value_usd": 61.0,
-      "last_price": 217.435,
+      "market_value_usd": 61.38,
+      "last_price": 218.795,
       "opened_at": "2026-10-05T19:12:35.492949+00:00",
       "proposal_id": "20261005-cf6fd3",
       "plan": {
@@ -213,7 +264,7 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-OKTA-4ba0a15ce5",
         "alpaca_order_id": "c45c32b6-d696-4f83-be3c-72f96259cb96",
-        "armed_at": "2026-10-06T16:11:28.849290+00:00"
+        "armed_at": "2026-10-06T18:21:09.748521+00:00"
       }
     }
   ],
@@ -460,6 +511,55 @@
       "alpaca_status": "filled",
       "filled_at": "2026-10-05T19:12:34.272735731Z",
       "position_avg_cost_after": 218.836
+    },
+    {
+      "ticker": "MRVL",
+      "action": "BUY",
+      "position_size_usd": 122,
+      "reference_price": 289.16,
+      "proposal_id": "20261006-97f4ff",
+      "sell_fraction": null,
+      "atr_pct": 4.41,
+      "entry_price_max": 292.0,
+      "plan": {
+        "stop_loss": 268.0,
+        "target_price": 342.0,
+        "holding_horizon_days": 40,
+        "entry_price_max": 292.0,
+        "confidence": 0.6,
+        "demand_driver": "ai_compute_gpu",
+        "thesis_invalidators": {
+          "invalidating_print": "Any walk-back of the new ~$20B FY2028 target, a disclosed loss or delay of a hyperscaler custom program, or consensus FY2028 revenue failing to move up toward the new target within three weeks.",
+          "invalidating_structure": "A daily close below $268, which is under both the $271.25 pre-event close and the $273.83 breakout anchored VWAP, meaning the full Investor Day gap has filled.",
+          "time_box": "If MRVL has not made a daily close above $310 by 2026-10-27, cut or exit; hard horizon 40 days (2026-11-15), before the next print around 2026-12-01."
+        },
+        "calibration_probe": null,
+        "entry_type": null,
+        "starter": null,
+        "theme_second_seat": null
+      },
+      "demand_driver": "ai_compute_gpu",
+      "order_id": "EE-f8de3b43ce96",
+      "client_order_id": "EE-f8de3b43ce96",
+      "status": "filled",
+      "submitted_at": "2026-10-06T18:21:15.389013+00:00",
+      "alpaca_order_id": "28f8e8f1-7867-4626-bb80-a6a5104be94b",
+      "fill_price": 290.0,
+      "quantity": 0.420655,
+      "notional_usd": 121.99,
+      "is_add": false,
+      "total_cost_usd": 121.99,
+      "entry_gap_usd": 0.0,
+      "fees_usd": {
+        "commission": 0.0,
+        "sec_fee": 0.0,
+        "taf": 0.0,
+        "slippage_bps": 0.0,
+        "effective_slippage_pct": 0.0
+      },
+      "alpaca_status": "filled",
+      "filled_at": "2026-10-06T18:21:16.725519831Z",
+      "position_avg_cost_after": 290.0
     }
   ],
   "ingested_broker_orders": []
