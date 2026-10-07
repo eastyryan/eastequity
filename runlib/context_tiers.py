@@ -112,6 +112,10 @@ BLOCKING_KEYS = (
     "research_freshness",  # price_as_of + live overlay age + empty critical lanes
     "fundamentals_freshness",   # HARD RULE; drives fundamentals_stale:<TICKER>
     "risk_halts", "forced_exits", "corporate_actions",
+    # Broker vs ledger check (2026-10-07, ILMN): a stop that fired at the broker
+    # between slots, or any ledger row the account does not back. Pinned before
+    # the portfolio so the brain reads it BEFORE reviewing holdings.
+    "broker_reconciliation",
     # BLOCKING-adjacent: the obligations a run incurs by NOT acting — outstanding
     # trigger resolutions, watchlist decay, and the dated commitment owed once the
     # book has been flat. Pinned because an obligation the brain cannot see is one
@@ -188,6 +192,7 @@ ALWAYS_KEYS = (
     # window, and is precisely where momentum_health was lost.
     "market_breadth",
     "risk_halts", "forced_exits", "corporate_actions", "lessons_learned",
+    "broker_reconciliation",  # broker vs ledger positions; loud ALERT on mismatch
     "track_record",  # compact closed trades already truncated in gather
     "earnings_deep_dive",     # why a full run was forced (earnings reporter)
     # WHO REPORTS THIS WEEK, universe-wide. Registered 2026-07-23: on its first run it

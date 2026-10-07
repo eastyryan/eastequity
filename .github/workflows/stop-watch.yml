@@ -163,7 +163,17 @@ jobs:
           # state/live_prices.json is deliberately NOT staged: the live-data branch
           # owns that file, and pushing it to main is what made the trader abandon on
           # a non-fast-forward on 2026-07-15.
-          git add -A state/portfolio.json journal data/cache/market_calendar.json 2>/dev/null || true
+          # THE LEDGER ADD MUST STAND ALONE (fixed 2026-10-07). This was one
+          # `git add -A state/portfolio.json journal data/cache/market_calendar.json
+          # 2>/dev/null || true`. data/cache/* is gitignored and the calendar cache
+          # is usually absent on a fresh runner, so git aborted the WHOLE add with
+          # "pathspec did not match" and `|| true` hid it: the tick ingested ILMN's
+          # filled stop (2026-10-07 15:01Z log: "OUT-OF-BAND FILL ILMN") and then
+          # printed "no ledger change" - the booked fill died with the runner.
+          # Ledger paths are added on their own and a failure is loud;
+          # the optional cache keeps its old (ignored -> skipped) behaviour.
+          git add -A state/portfolio.json journal
+          git add data/cache/market_calendar.json 2>/dev/null || true
           git diff --cached --quiet && { echo "no ledger change"; exit 0; }
           git commit -m "Stop watch: enforce stops and re-arm protective orders [vercel skip]"
           # Rebase-retry with --autostash: this runner writes tracked files outside

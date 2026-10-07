@@ -547,6 +547,9 @@ def _run_gather_only(args, cfg: dict, run_id: str, run_depth: str,
         except Exception:
             age_h = 999.0
         cached["portfolio"] = context["portfolio"]
+        # The broker check belongs to THIS run's live portfolio read, never the
+        # relay bundle's (whose portfolio may predate a broker-side exit).
+        cached["broker_reconciliation"] = context.get("broker_reconciliation")
         cached["hard_limits"] = context["hard_limits"]
         # THIS RUN's slot depth governs gating and the brain's job — never
         # the depth the bundle happened to be gathered at. A bundle gathered

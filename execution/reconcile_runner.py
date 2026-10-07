@@ -125,3 +125,109 @@ def run_reconcile() -> list[dict]:
     except Exception as e:
         print(f"  (reconcile failed: {e})")
     return fills
+
+
+# --------------------------------------------------------------------------- #
+# Pre-context broker sync (added 2026-10-07)
+# --------------------------------------------------------------------------- #
+# ROOT CAUSE THIS CLOSES. The trading cycle never called run_reconcile(): it read
+# the book through broker.get_portfolio() -> sync_mirror(), which only FLAGS a
+# position the broker no longer holds (not_at_broker) and keeps it in the mirror.
+# Recording a broker-side exit was left entirely to the stop-watch workflow — and
+# that job's commit step staged nothing (see stop-watch.yml), so every fill it
+# ingested died with the runner. ILMN's stop filled 09:39 ET on 2026-10-07 and
+# the 10:30 slot still reviewed it as held. Every trading context is now built
+# AFTER the same ingest the stop watch runs, and carries a loud
+# broker_reconciliation block comparing the two books.
+
+def _fill_line(f: dict) -> dict:
+    return {"ticker": f.get("ticker"), "action": f.get("action"),
+            "quantity": f.get("quantity"), "fill_price": f.get("fill_price"),
+            "filled_at": f.get("filled_at"),
+            "reason": f.get("forced_exit_reason")
+            or ("resting_stop_breached" if str(f.get("client_order_id") or "")
+                .startswith("EESTOP-") else None),
+            "realized_pnl_usd": f.get("realized_pnl_usd")}
+
+
+def sync_broker_state(*, ingest: bool = True) -> dict:
+    """Ingest broker-side fills, then compare mirror vs broker positions.
+
+    Alpaca backend only (simulation has no broker-side lifecycle). Fail-soft:
+    never raises. `ingest=False` runs the read-only comparison alone (used when
+    another process holds the run lock and owns ledger writes)."""
+    try:
+        if broker.backend_name() != "alpaca_paper":
+            return {"status": "not_applicable", "mismatches": [],
+                    "ingested_fills": []}
+    except Exception:
+        return {"status": "unavailable", "mismatches": [], "ingested_fills": [],
+                "reason": "backend unknown"}
+    fills: list[dict] = []
+    if ingest:
+        fills = run_reconcile()
+    try:
+        from execution import alpaca_broker
+        rec = alpaca_broker.broker_position_mismatches()
+    except Exception as e:
+        rec = {"status": "unavailable", "mismatches": [],
+               "reason": f"mismatch check failed: {str(e)[:160]}"}
+    rec["ingested_fills"] = [_fill_line(f) for f in fills]
+    rec["ingest_ran"] = bool(ingest)
+    return rec
+
+
+def reconciliation_block(rec: dict | None) -> dict | None:
+    """The brain-facing context block. Loud by construction: a mismatch or a
+    fill booked this run leads with an ALERT the brain cannot read past."""
+    if not isinstance(rec, dict) or rec.get("status") == "not_applicable":
+        return None
+    block = dict(rec)
+    alerts = []
+    for f in rec.get("ingested_fills") or []:
+        alerts.append(
+            f"{f.get('ticker')} was CLOSED AT THE BROKER ({f.get('reason') or 'broker-side fill'}) "
+            f"- {f.get('quantity')} @ {f.get('fill_price')} at {f.get('filled_at')}, "
+            f"P&L {f.get('realized_pnl_usd')}. Booked into the ledger just before this "
+            f"run. It is NOT held: do not review or propose selling it; explain the exit "
+            f"in commentary.")
+    for m in rec.get("mismatches") or []:
+        alerts.append(
+            f"BROKER/LEDGER MISMATCH {m.get('ticker')} ({m.get('kind')}): ledger qty "
+            f"{m.get('mirror_qty')} vs broker qty {m.get('broker_qty')}. The BROKER is the "
+            f"truth for quantities; treat the ledger row as unreliable and say so in "
+            f"commentary.")
+    if rec.get("status") == "unavailable":
+        alerts.append("Broker position check DID NOT RUN ("
+                      f"{rec.get('reason') or 'unavailable'}) - holdings come from the "
+                      "last committed ledger and are UNVERIFIED against the account.")
+    block["ALERT"] = (" | ".join(alerts) if alerts
+                      else "ok - ledger positions match the broker account")
+    return block
+
+
+def ingest_allowed_here() -> bool:
+    """Ledger-writing ingest only where the ledger is persisted: everywhere
+    except the hourly GitHub bundle-refresh gather, which commits data/ only
+    (its ingested fills would die with the runner). grok-cycle.yml sets
+    EE_SCHEDULED_TRADER and does persist the ledger."""
+    import os
+    if os.environ.get("EE_SCHEDULED_TRADER"):
+        return True
+    return not os.environ.get("GITHUB_ACTIONS")
+
+
+def annotate_portfolio(portfolio: dict | None, block: dict | None) -> None:
+    """Stamp every mismatched holding in-place so a reader of the portfolio
+    block alone (not just broker_reconciliation) sees the row is not backed."""
+    if not isinstance(portfolio, dict) or not isinstance(block, dict):
+        return
+    by_t = {str(m.get("ticker", "")).upper(): m
+            for m in block.get("mismatches") or []}
+    for pos in portfolio.get("positions") or []:
+        m = by_t.get(str(pos.get("ticker", "")).upper())
+        if m:
+            pos["BROKER_MISMATCH"] = (
+                f"{m.get('kind')}: ledger qty {m.get('mirror_qty')} vs broker qty "
+                f"{m.get('broker_qty')} - the broker is the truth; see "
+                f"broker_reconciliation")
