@@ -2313,7 +2313,39 @@
           "noted_at": "2026-10-06"
         }
       ]
+    },
+    {
+      "id": "KB-2365875878",
+      "discipline": "trading_psychology",
+      "topic": "Re-entry after a stop-out: the stop is a verdict on that entry, not a ban on the ticker; re-buy only on a fresh named trigger (reclaim of the stopped level or a new base), never out of regret, revenge",
+      "summary": "Strahilevitz, Odean and Barber (Journal of Marketing Research, 2011), using trade records for 66,465 households (1991-96) and 665,533 retail investors (1997-99), found that investors are far more willing to repurchase stocks they previously sold for a gain than ones sold for a loss, and prefer to repurchase stocks that fell after the sale over ones that rose. They attribute both to naive reinforcement learning and counterfactual regret, and report that neither pattern improved returns. So the two instincts after a stop-out, 'that name burned me, never again' and 'I'll buy it back now that it's cheaper than where I sold', are both emotional, not edges. The Original Turtle Rules took the opposite, mechanical stance: under the alternative 'Whipsaw' stop (1/2 N stop, 1/2% risk), a stopped-out unit was re-entered if price returned to its original entry price, which produced more losses and a lower win rate but was reported to be more profitable; Eckhardt told the Turtles to trade as though they did not know their entry price, and they re-entered whenever the system gave a fresh signal after a loss. Kaminski and Lo (Journal of Financial Markets, 2014) show stops subtract expected return under a random walk and only add value when returns carry momentum or regime persistence, which is why a re-entry rule matters: a stop that is never followed by re-entry turns a momentum name's normal noise into a permanent exit. Practitioner SEPA material (Minervini summaries via secondary sites, w",
+      "key_points": [
+        "The prior loss and the prior entry price are not evidence about the next 3-90 days; underwrite a stopped name as if it was never owned (Eckhardt).",
+        "Investors systematically avoid names sold at a loss and favor names that fell after the sale; neither habit improves returns (Strahilevitz-Odean-Barber 2011).",
+        "Stops only earn their keep when returns persist (Kaminski-Lo 2014), so a stop on a momentum name needs a defined way back in or noise becomes a permanent exit.",
+        "Valid re-entry triggers are structural: a daily close back above the stopped-out level or original entry, ideally a volume-backed reclaim, or a fresh base.",
+        "Invalid re-entry reasons: 'it's cheaper than where I sold', revenge to win the loss back, or filling the seat the stop just freed.",
+        "A volume-backed break of support that does not recover is information against the thesis; a quick low-volume undercut that is reclaimed is not."
+      ],
+      "how_to_apply": "After any resting_stop_breached exit, the validator's 5-day min_days_between_entries_same_ticker cooldown blocks churn; once it clears, the stopped name goes back on the watchlist only with a written structural trigger, a daily close back above the stopped level or original entry on volume at least equal to the recent down days (or a new base per KB-9692173165), never a 'below my exit' price level. Re-underwrite from zero: fresh confidence, fresh stop under the shakeout or new swing low (KB-2454897375), fresh 2:1 math from the new entry, and run the pre-print fork (KB-5731674677, KB-0801985270) if earnings sits in the window. Do not lower the bar because the name stopped us out, and do not shun it either; cite this lesson when either instinct shows up. Treat a seat freed by a stop as neutral, so a different candidate in the same theme still has to clear its own fat-pitch bar. For ILMN (stopped $261.79 on 2026-10-07, bought 2026-10-05) the cooldown clears after 2026-10-10, and any re-entry before the 2026-10-29 print needs a reclaim of roughly $273-$280 plus the pre-print decision.",
+      "sources": [
+        "Strahilevitz, Odean & Barber (2011), 'Once Burned, Twice Shy', Journal of Marketing Research 48(SPL) S102-S120: https://faculty.haas.berkeley.edu/odean/papers/Repurchases/Once%20burned%20JMR.pdf",
+        "UC Berkeley Haas summary of the repurchase study: https://newsroom.haas.berkeley.edu/buying-same-stock-%E2%80%93-again-pride-and-regret-drive-investors%E2%80%99-decisions/",
+        "Kaminski & Lo (2014), 'When Do Stop-Loss Rules Stop Losses?', Journal of Financial Markets 18: https://papers.ssrn.com/sol3/papers.cfm?abstract_id=972612",
+        "The Original Turtle Trading Rules (Curtis Faith et al.), Whipsaw stop and re-entry: https://oxfordstrat.com/coasdfASD32/uploads/2016/01/turtle-rules.pdf",
+        "Turtle notes incl. Eckhardt on trading as if the entry price were unknown: https://the7circles.uk/the-turtle-traders-4/",
+        "Minervini shakeout and reversal recovery summary (secondary, weaker): https://profitvisionlab.com/en/sepa-m01-tennis-ball"
+      ],
+      "learned_at": "2026-10-07T22:58:41.030289+00:00",
+      "run_id": "20261007-1ef7ff",
+      "tensions": [
+        {
+          "with": "KB-8420105363",
+          "why": "KB-8420105363 governs regret over ideas we skipped (never loosen the bar after a rejected name runs); this lesson governs regret over names that stopped us out. Same principle, judge the written bar at decision time, applied to a different trigger, so both stand.",
+          "noted_at": "2026-10-07"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-10-07T18:27:14.360998+00:00"
+  "updated_at": "2026-10-07T22:58:41.042944+00:00"
 }
