@@ -104,6 +104,13 @@ def store(tmp_path, monkeypatch):
     import tools.concept_memory as CM
     monkeypatch.setattr(CM, "MEM_DIR", tmp_path / "concept_memory")
     monkeypatch.setattr(CM, "ROOT", tmp_path)
+    # reconciles_with_ledger reads the book through simulated_broker._load(),
+    # not PR.ROOT, so the ledger must be redirected too. While the real
+    # alpaca-era ledger carried no SELL rows it failed open and this leak was
+    # invisible; the first real closed trade (ILMN 2026-10-07) made these tests
+    # quarantine their own synthetic DELL track against the LIVE book.
+    import execution.simulated_broker as _SB
+    monkeypatch.setattr(_SB, "STATE_FILE", tmp_path / "state" / "portfolio.json")
     return f
 
 
