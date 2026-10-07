@@ -179,6 +179,28 @@ def apply_safety_layer(context: dict, cfg: dict, run_id: str) -> list[dict]:
     never rationalize holding through its own written plan. Returns forced fills."""
     if cfg["mode"]["trading_mode"] == "dry_run":
         return []
+    # BROKER SYNC FIRST (2026-10-07, ILMN). Book any broker-side fill (a resting
+    # stop that fired between slots) and re-verify the book against the account
+    # before stops, exits or the brain's proposals act on it. The act path holds
+    # the run lock here, so this is the same ingest stop_watch runs, under the
+    # same lock. Fail-soft: a broker hiccup must never block the stop check.
+    try:
+        from execution import reconcile_runner
+        rec = reconcile_runner.sync_broker_state(ingest=True)
+        block = reconcile_runner.reconciliation_block(rec)
+        if block is not None:
+            prior = context.get("broker_reconciliation") or {}
+            # Keep fills the gather already booked visible on the act side too.
+            if prior.get("ingested_fills") and not block.get("ingested_fills"):
+                block["ingested_fills_at_gather"] = prior.get("ingested_fills")
+            context["broker_reconciliation"] = block
+            if not str(block.get("ALERT", "")).startswith("ok"):
+                print(f"  !! BROKER RECONCILIATION: {block['ALERT']}")
+        if rec.get("ingested_fills"):
+            context["portfolio"] = get_portfolio_state()
+        reconcile_runner.annotate_portfolio(context.get("portfolio"), block)
+    except Exception as e:
+        print(f"  (broker sync skipped: {e})")
     ca = corporate_actions.apply_corporate_actions()
     if ca.get("events") or ca.get("errors"):
         context["corporate_actions"] = ca

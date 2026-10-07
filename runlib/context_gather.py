@@ -1386,6 +1386,39 @@ def build_research_freshness(*, depth: str, scan: dict | None,
 
 
 
+def _broker_sync_for_gather() -> dict | None:
+    """Book any broker-side fill BEFORE the portfolio is read (2026-10-07, ILMN).
+
+    The gather takes no run lock, so the ledger-writing ingest runs only if the
+    lock is free right now (stop_watch maintenance takes the same lock); when a
+    trading cycle already holds it, apply_safety_layer ingests under that lock
+    instead and this does the read-only comparison. Fail-soft."""
+    try:
+        from execution import reconcile_runner
+        from runlib.preflight import acquire_run_lock, release_run_lock
+        if broker.backend_name() != "alpaca_paper":
+            return None              # simulation has no broker-side lifecycle
+        ingest = False
+        lock_id = None
+        if reconcile_runner.ingest_allowed_here():
+            lock_id = f"gather-broker-sync-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%S')}"
+            ingest = acquire_run_lock(lock_id)
+        try:
+            rec = reconcile_runner.sync_broker_state(ingest=ingest)
+        finally:
+            if ingest and lock_id:
+                release_run_lock(lock_id)
+        block = reconcile_runner.reconciliation_block(rec)
+        if block and not str(block.get("ALERT", "")).startswith("ok"):
+            print(f"  !! BROKER RECONCILIATION: {block['ALERT']}")
+        return block
+    except Exception as e:
+        print(f"  (broker sync skipped: {e})")
+        return {"status": "unavailable", "mismatches": [],
+                "ALERT": f"Broker position check DID NOT RUN ({str(e)[:120]}) - "
+                         f"holdings are UNVERIFIED against the account."}
+
+
 def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
                    earnings_trigger: dict | None = None) -> dict:
     """Build the brain's context bundle.
@@ -1416,8 +1449,15 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
 
     print("  • macro regime...")
     macro = get_macro_snapshot()
+    print("  • broker sync (ingest broker-side fills, verify positions)...")
+    broker_recon = _broker_sync_for_gather()
     print("  • portfolio state...")
     portfolio = get_portfolio_state()
+    try:
+        from execution.reconcile_runner import annotate_portfolio
+        annotate_portfolio(portfolio, broker_recon)
+    except Exception:
+        pass
 
     prior_watchlist = prev_watchlist()
     held, watch = _held_and_watch(portfolio, prior_watchlist)
@@ -1573,6 +1613,10 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
         # invisible to the brain. Breadth is a step-1 REGIME input; it has to sit
         # with the regime read or it is not an input at all.
         "market_breadth": _market_breadth_block(scan, discovery_block),
+        # LOUD broker-vs-ledger check (2026-10-07, ILMN). Read its ALERT before
+        # reviewing any holding: a broker-side exit booked just before this run,
+        # or a ledger row the account does not back, is called out here.
+        "broker_reconciliation": broker_recon,
         "portfolio": portfolio,
         "position_histories": {
             "note": "Last 10 daily sessions for each CURRENT HOLDING, newest last, "

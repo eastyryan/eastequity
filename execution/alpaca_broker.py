@@ -451,6 +451,77 @@ def sync_mirror() -> dict | None:
 
 
 # --------------------------------------------------------------------------- #
+# broker vs mirror position check (added 2026-10-07)
+# --------------------------------------------------------------------------- #
+# ILMN 2026-10-07: the resting stop filled at 09:39 ET, sync_mirror flagged the
+# mirror row not_at_broker (cash already included the proceeds), and the 10:30
+# slot still reviewed ILMN as a held position. Nothing compared the two books
+# out loud. This does, so the brain and the log can never be quietly wrong
+# about what the account actually holds.
+_QTY_ABS_TOL = 1e-5            # mirror quantities are rounded to 6 dp
+_QTY_REL_TOL = 1e-4
+
+
+def broker_position_mismatches(state: dict | None = None,
+                               broker_positions: list | None = None) -> dict:
+    """Compare the mirror's positions with the broker's live positions list.
+
+    Read-only: never touches the ledger. Returns
+      {"status": "ok" | "mismatch" | "unavailable", "mismatches": [...], ...}
+    where each mismatch is {ticker, kind, mirror_qty, broker_qty} and kind is
+      mirror_only   - the ledger carries it, the broker does not (a broker-side
+                      exit nobody recorded: a filled resting stop, a manual sell)
+      broker_only   - the broker holds it, the ledger does not
+      qty_mismatch  - both hold it at materially different quantities.
+    "unavailable" (API unreachable / no keys) is NOT "ok": the caller must say
+    the check did not run rather than imply the books agree."""
+    if broker_positions is None:
+        if not api_reachable():
+            return {"status": "unavailable", "mismatches": [],
+                    "reason": "broker API unreachable - mirror NOT verified"}
+        code, poss = _req("GET", "/v2/positions")
+        if code != 200 or not isinstance(poss, list):
+            return {"status": "unavailable", "mismatches": [],
+                    "reason": f"positions read failed (HTTP {code}) - mirror NOT verified"}
+        broker_positions = poss
+    state = state if state is not None else simulated_broker._load()
+    broker_qty: dict[str, float] = {}
+    for bp in broker_positions or []:
+        t = str(bp.get("symbol") or bp.get("ticker") or "").upper()
+        if t:
+            broker_qty[t] = broker_qty.get(t, 0.0) + _f(bp.get("qty"))
+    mirror_qty: dict[str, float] = {}
+    flagged: set[str] = set()
+    for p in state.get("positions", []) or []:
+        t = str(p.get("ticker", "")).upper()
+        if not t:
+            continue
+        mirror_qty[t] = mirror_qty.get(t, 0.0) + _f(p.get("quantity"))
+        if p.get("not_at_broker"):
+            flagged.add(t)
+    mismatches = []
+    for t in sorted(set(broker_qty) | set(mirror_qty)):
+        m, b = mirror_qty.get(t), broker_qty.get(t)
+        if m is not None and (b is None or b <= 0 or t in flagged):
+            kind = "mirror_only"
+        elif b is not None and m is None:
+            kind = "broker_only"
+        elif abs((m or 0.0) - (b or 0.0)) > max(_QTY_ABS_TOL,
+                                                  _QTY_REL_TOL * abs(b or 0.0)):
+            kind = "qty_mismatch"
+        else:
+            continue
+        mismatches.append({"ticker": t, "kind": kind,
+                           "mirror_qty": None if m is None else round(m, 6),
+                           "broker_qty": None if b is None else round(b, 9)})
+    return {"status": "mismatch" if mismatches else "ok",
+            "mismatches": mismatches,
+            "broker_positions": len(broker_qty),
+            "mirror_positions": len(mirror_qty),
+            "checked_at": datetime.now(timezone.utc).isoformat()}
+
+
+# --------------------------------------------------------------------------- #
 # contract: get_portfolio / mark_to_market / update_trailing_stops
 # --------------------------------------------------------------------------- #
 def get_portfolio() -> dict:
