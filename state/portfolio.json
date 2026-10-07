@@ -1,15 +1,15 @@
 {
   "broker_backend": "alpaca_paper",
-  "broker_synced_at": "2026-10-07T13:07:43.114437+00:00",
-  "cash_usd": 428.29,
-  "total_equity_usd": 1001.01,
+  "broker_synced_at": "2026-10-07T14:58:54.564810+00:00",
+  "cash_usd": 497.51,
+  "total_equity_usd": 995.46,
   "positions": [
     {
       "ticker": "CLS",
       "quantity": 0.139601,
       "avg_cost": 383.88,
-      "market_value_usd": 52.82,
-      "last_price": 378.4,
+      "market_value_usd": 51.69,
+      "last_price": 370.26,
       "opened_at": "2026-10-02T18:20:41.267027+00:00",
       "proposal_id": "20261002-a4de72",
       "plan": {
@@ -42,15 +42,15 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-CLS-ae9dfead37",
         "alpaca_order_id": "8c2d2a41-2ad0-4fc3-9ad1-8dc1f8466924",
-        "armed_at": "2026-10-07T13:07:32.933721+00:00"
+        "armed_at": "2026-10-07T14:58:45.555369+00:00"
       }
     },
     {
       "ticker": "COST",
       "quantity": 0.167366,
       "avg_cost": 914.404,
-      "market_value_usd": 158.33,
-      "last_price": 946.04,
+      "market_value_usd": 158.05,
+      "last_price": 944.34,
       "opened_at": "2026-10-02T14:52:16.438914+00:00",
       "proposal_id": "20261002-a31f7c",
       "plan": {
@@ -84,7 +84,7 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-COST-3885e5b811",
         "alpaca_order_id": "21619362-c6eb-4053-a763-911bef76f06f",
-        "armed_at": "2026-10-07T13:07:37.984495+00:00",
+        "armed_at": "2026-10-07T14:58:46.745717+00:00",
         "replace_refused": {
           "http_status": 422,
           "message": "qty must be an integer",
@@ -92,16 +92,146 @@
           "time_in_force": "day",
           "stop_price": "900.57",
           "op": "replace",
-          "at": "2026-10-07T13:07:37.694016+00:00"
+          "at": "2026-10-07T14:58:46.443864+00:00"
         }
+      }
+    },
+    {
+      "ticker": "MRVL",
+      "quantity": 0.420655,
+      "avg_cost": 290.0,
+      "market_value_usd": 118.21,
+      "last_price": 281.01,
+      "opened_at": "2026-10-06T18:21:17.891941+00:00",
+      "proposal_id": "20261006-97f4ff",
+      "plan": {
+        "stop_loss": 268.0,
+        "target_price": 342.0,
+        "holding_horizon_days": 40,
+        "entry_price_max": 292.0,
+        "confidence": 0.6,
+        "demand_driver": "ai_compute_gpu",
+        "thesis_invalidators": {
+          "invalidating_print": "Any walk-back of the new ~$20B FY2028 target, a disclosed loss or delay of a hyperscaler custom program, or consensus FY2028 revenue failing to move up toward the new target within three weeks.",
+          "invalidating_structure": "A daily close below $268, which is under both the $271.25 pre-event close and the $273.83 breakout anchored VWAP, meaning the full Investor Day gap has filled.",
+          "time_box": "If MRVL has not made a daily close above $310 by 2026-10-27, cut or exit; hard horizon 40 days (2026-11-15), before the next print around 2026-12-01."
+        },
+        "calibration_probe": null,
+        "entry_type": null,
+        "starter": null,
+        "theme_second_seat": null
+      },
+      "high_water": 290.0,
+      "adds_count": 0,
+      "buy_commission_usd": 0.0,
+      "demand_driver": "ai_compute_gpu",
+      "protective_stop": {
+        "status": "resting",
+        "stop_price": 268.0,
+        "qty": 0.420655172,
+        "uncovered_qty": 0.0,
+        "session_only": true,
+        "time_in_force": "day",
+        "client_order_id": "EESTOP-MRVL-d7d5687a04",
+        "alpaca_order_id": "e2d5f146-28d7-487b-a060-05704cf3770d",
+        "armed_at": "2026-10-07T14:58:47.295325+00:00"
+      }
+    },
+    {
+      "ticker": "NOW",
+      "quantity": 0.791987,
+      "avg_cost": 135.924,
+      "market_value_usd": 109.41,
+      "last_price": 138.145,
+      "opened_at": "2026-09-22T16:28:12.476854+00:00",
+      "proposal_id": "20260922-c84f23",
+      "plan": {
+        "stop_loss": 125.0,
+        "target_price": 164.0,
+        "holding_horizon_days": 45,
+        "entry_price_max": 137.8,
+        "confidence": 0.65,
+        "demand_driver": "software_platforms",
+        "thesis_invalidators": {
+          "invalidating_print": "Late-October 2026 earnings or guide that cuts cRPO/net expansion or shows AI attach stalling versus the prior quarter's trajectory.",
+          "invalidating_structure": "Daily close below 125 on rising volume, or a decisive break and close under the 50-DMA while SPY remains above its 200-DMA (stock-specific failure).",
+          "time_box": "If NOW has not reclaimed and held above 145 within 30 calendar days of entry, cut or exit \u2014 the pullback thesis will have failed to resolve."
+        },
+        "calibration_probe": null
+      },
+      "high_water": 141.15,
+      "trailing_stop": 125.3511,
+      "adds_count": 0,
+      "buy_commission_usd": 0.0,
+      "demand_driver": "software_platforms",
+      "protective_stop": {
+        "status": "resting",
+        "stop_price": 125.35,
+        "qty": 0.791986698,
+        "uncovered_qty": 0.0,
+        "session_only": true,
+        "time_in_force": "day",
+        "client_order_id": "EESTOP-NOW-585cdb5636",
+        "alpaca_order_id": "2c9cdfda-9a8f-4408-95fb-e37cfefcd887",
+        "armed_at": "2026-10-07T14:58:48.416345+00:00",
+        "replace_refused": {
+          "http_status": 422,
+          "message": "qty must be an integer",
+          "qty": "0.791986698",
+          "time_in_force": "day",
+          "stop_price": "125.35",
+          "op": "replace",
+          "at": "2026-10-07T14:58:48.155024+00:00"
+        }
+      }
+    },
+    {
+      "ticker": "OKTA",
+      "quantity": 0.28053,
+      "avg_cost": 218.836,
+      "market_value_usd": 60.61,
+      "last_price": 216.04,
+      "opened_at": "2026-10-05T19:12:35.492949+00:00",
+      "proposal_id": "20261005-cf6fd3",
+      "plan": {
+        "stop_loss": 202.0,
+        "target_price": 258.0,
+        "holding_horizon_days": 40,
+        "entry_price_max": 220.0,
+        "confidence": 0.54,
+        "demand_driver": "cybersecurity",
+        "thesis_invalidators": {
+          "invalidating_print": "Before exit, any guide cut or consensus FY27 EPS cut of more than 5%, or if still held into the 2026-12-01 Q3 FY27 print, cRPO growth below 10% or Q3 revenue below the $813M low end of guidance.",
+          "invalidating_structure": "A daily close below $205 (the 10/1 flag low) on rising volume that does not recover within two sessions while SPY holds above its 50-DMA - a failed breakout back into the flag; hard stop $202.",
+          "time_box": "If OKTA has not made a daily close above $235 within 20 calendar days (by 2026-10-25), cut or exit; hard horizon 40 days (2026-11-14), well before the 2026-12-01 print."
+        },
+        "calibration_probe": true,
+        "entry_type": null,
+        "starter": null,
+        "theme_second_seat": null
+      },
+      "high_water": 224.98,
+      "adds_count": 0,
+      "buy_commission_usd": 0.0,
+      "demand_driver": "cybersecurity",
+      "protective_stop": {
+        "status": "resting",
+        "stop_price": 202.0,
+        "qty": 0.280529711,
+        "uncovered_qty": 0.0,
+        "session_only": true,
+        "time_in_force": "day",
+        "client_order_id": "EESTOP-OKTA-c4d345072e",
+        "alpaca_order_id": "b7f82d6d-175e-415e-a9f8-a76d3d324ef9",
+        "armed_at": "2026-10-07T14:58:49.012299+00:00"
       }
     },
     {
       "ticker": "ILMN",
       "quantity": 0.264418,
       "avg_cost": 279.936,
-      "market_value_usd": 71.66,
-      "last_price": 271.01,
+      "market_value_usd": 71.97,
+      "last_price": 272.18,
       "opened_at": "2026-10-05T15:04:20.734766+00:00",
       "proposal_id": "20261005-0e6781",
       "plan": {
@@ -135,137 +265,9 @@
         "client_order_id": "EESTOP-ILMN-fd0f67e639",
         "alpaca_order_id": "16b8c672-b221-4f13-a06b-caf95e2c4497",
         "armed_at": "2026-10-07T13:07:34.565464+00:00"
-      }
-    },
-    {
-      "ticker": "MRVL",
-      "quantity": 0.420655,
-      "avg_cost": 290.0,
-      "market_value_usd": 118.84,
-      "last_price": 282.5,
-      "opened_at": "2026-10-06T18:21:17.891941+00:00",
-      "proposal_id": "20261006-97f4ff",
-      "plan": {
-        "stop_loss": 268.0,
-        "target_price": 342.0,
-        "holding_horizon_days": 40,
-        "entry_price_max": 292.0,
-        "confidence": 0.6,
-        "demand_driver": "ai_compute_gpu",
-        "thesis_invalidators": {
-          "invalidating_print": "Any walk-back of the new ~$20B FY2028 target, a disclosed loss or delay of a hyperscaler custom program, or consensus FY2028 revenue failing to move up toward the new target within three weeks.",
-          "invalidating_structure": "A daily close below $268, which is under both the $271.25 pre-event close and the $273.83 breakout anchored VWAP, meaning the full Investor Day gap has filled.",
-          "time_box": "If MRVL has not made a daily close above $310 by 2026-10-27, cut or exit; hard horizon 40 days (2026-11-15), before the next print around 2026-12-01."
-        },
-        "calibration_probe": null,
-        "entry_type": null,
-        "starter": null,
-        "theme_second_seat": null
       },
-      "high_water": 290.0,
-      "adds_count": 0,
-      "buy_commission_usd": 0.0,
-      "demand_driver": "ai_compute_gpu",
-      "protective_stop": {
-        "status": "resting",
-        "stop_price": 268.0,
-        "qty": 0.420655172,
-        "uncovered_qty": 0.0,
-        "session_only": true,
-        "time_in_force": "day",
-        "client_order_id": "EESTOP-MRVL-d7d5687a04",
-        "alpaca_order_id": "e2d5f146-28d7-487b-a060-05704cf3770d",
-        "armed_at": "2026-10-07T13:07:35.106828+00:00"
-      }
-    },
-    {
-      "ticker": "NOW",
-      "quantity": 0.791987,
-      "avg_cost": 135.924,
-      "market_value_usd": 109.91,
-      "last_price": 138.78,
-      "opened_at": "2026-09-22T16:28:12.476854+00:00",
-      "proposal_id": "20260922-c84f23",
-      "plan": {
-        "stop_loss": 125.0,
-        "target_price": 164.0,
-        "holding_horizon_days": 45,
-        "entry_price_max": 137.8,
-        "confidence": 0.65,
-        "demand_driver": "software_platforms",
-        "thesis_invalidators": {
-          "invalidating_print": "Late-October 2026 earnings or guide that cuts cRPO/net expansion or shows AI attach stalling versus the prior quarter's trajectory.",
-          "invalidating_structure": "Daily close below 125 on rising volume, or a decisive break and close under the 50-DMA while SPY remains above its 200-DMA (stock-specific failure).",
-          "time_box": "If NOW has not reclaimed and held above 145 within 30 calendar days of entry, cut or exit \u2014 the pullback thesis will have failed to resolve."
-        },
-        "calibration_probe": null
-      },
-      "high_water": 141.15,
-      "trailing_stop": 125.3511,
-      "adds_count": 0,
-      "buy_commission_usd": 0.0,
-      "demand_driver": "software_platforms",
-      "protective_stop": {
-        "status": "resting",
-        "stop_price": 125.35,
-        "qty": 0.791986698,
-        "uncovered_qty": 0.0,
-        "session_only": true,
-        "time_in_force": "day",
-        "client_order_id": "EESTOP-NOW-585cdb5636",
-        "alpaca_order_id": "2c9cdfda-9a8f-4408-95fb-e37cfefcd887",
-        "armed_at": "2026-10-07T13:07:36.250368+00:00",
-        "replace_refused": {
-          "http_status": 422,
-          "message": "qty must be an integer",
-          "qty": "0.791986698",
-          "time_in_force": "day",
-          "stop_price": "125.35",
-          "op": "replace",
-          "at": "2026-10-07T13:07:35.982279+00:00"
-        }
-      }
-    },
-    {
-      "ticker": "OKTA",
-      "quantity": 0.28053,
-      "avg_cost": 218.836,
-      "market_value_usd": 61.16,
-      "last_price": 218.01,
-      "opened_at": "2026-10-05T19:12:35.492949+00:00",
-      "proposal_id": "20261005-cf6fd3",
-      "plan": {
-        "stop_loss": 202.0,
-        "target_price": 258.0,
-        "holding_horizon_days": 40,
-        "entry_price_max": 220.0,
-        "confidence": 0.54,
-        "demand_driver": "cybersecurity",
-        "thesis_invalidators": {
-          "invalidating_print": "Before exit, any guide cut or consensus FY27 EPS cut of more than 5%, or if still held into the 2026-12-01 Q3 FY27 print, cRPO growth below 10% or Q3 revenue below the $813M low end of guidance.",
-          "invalidating_structure": "A daily close below $205 (the 10/1 flag low) on rising volume that does not recover within two sessions while SPY holds above its 50-DMA - a failed breakout back into the flag; hard stop $202.",
-          "time_box": "If OKTA has not made a daily close above $235 within 20 calendar days (by 2026-10-25), cut or exit; hard horizon 40 days (2026-11-14), well before the 2026-12-01 print."
-        },
-        "calibration_probe": true,
-        "entry_type": null,
-        "starter": null,
-        "theme_second_seat": null
-      },
-      "high_water": 224.98,
-      "adds_count": 0,
-      "buy_commission_usd": 0.0,
-      "demand_driver": "cybersecurity",
-      "protective_stop": {
-        "status": "resting",
-        "stop_price": 202.0,
-        "qty": 0.280529711,
-        "uncovered_qty": 0.0,
-        "session_only": true,
-        "time_in_force": "day",
-        "client_order_id": "EESTOP-OKTA-c4d345072e",
-        "alpaca_order_id": "b7f82d6d-175e-415e-a9f8-a76d3d324ef9",
-        "armed_at": "2026-10-07T13:07:36.835572+00:00"
-      }
+      "actions_processed_through": "2026-10-07",
+      "not_at_broker": true
     }
   ],
   "pending_orders": {},
