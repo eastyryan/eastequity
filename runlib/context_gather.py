@@ -1478,6 +1478,22 @@ def gather_context(cfg: dict, light: bool = False, depth: str | None = None,
         market_events=market_events, earnings_reporters=earnings_reporters,
         depth=depth)
     scan = research["scan"]
+    # Light (pre-market) and failed mini-scans measure no ATR. Carry the most
+    # recent measured map forward, labelled with its as-of and source, so the
+    # committed bundle still feeds stop-watch's trail. Must run BEFORE
+    # data/cloud_context.json is overwritten with this bundle (gather-data.yml
+    # copies it afterwards), so the previous bundle is still on disk here.
+    if not (scan.get("atr_by_ticker") or {}):
+        try:
+            from tools.atr_map import carry_forward_atr
+            cf = carry_forward_atr(scan, prior_bundle=ROOT / "data" / "cloud_context.json")
+            if cf:
+                print(f"  • ATR map: carried forward {cf['n']} tickers from "
+                      f"{cf['source']} as of {cf['as_of']} ({cf['age_hours']}h old)")
+            else:
+                print("  (ATR map: this scan measured none and no recent map to carry)")
+        except Exception as e:
+            print(f"  (ATR carry-forward skipped: {e})")
     focus = research["focus"]
     filings = research["filings"]
     deep_fundamentals = research["deep_fundamentals"]
