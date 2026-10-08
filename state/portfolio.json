@@ -1,8 +1,8 @@
 {
   "broker_backend": "alpaca_paper",
-  "broker_synced_at": "2026-10-08T20:46:49.228736+00:00",
+  "broker_synced_at": "2026-10-08T20:53:06.070289+00:00",
   "cash_usd": 588.11,
-  "total_equity_usd": 988.6,
+  "total_equity_usd": 988.59,
   "positions": [
     {
       "ticker": "COST",
@@ -36,19 +36,14 @@
       "demand_driver": "broad_market",
       "protective_stop": {
         "status": "resting",
-        "stop_price": 906.2586,
+        "stop_price": 906.26,
         "qty": 0.167365847,
         "uncovered_qty": 0.0,
         "session_only": true,
         "time_in_force": "day",
         "client_order_id": "EESTOP-COST-8052bbe147",
         "alpaca_order_id": "edc24f02-0d7d-48da-b83d-553def195347",
-        "armed_at": "2026-10-08T20:46:45.361513+00:00",
-        "rearmed_from": {
-          "client_order_id": "EESTOP-COST-ba14f00311",
-          "alpaca_order_id": "c28a7079-19be-4232-870a-eea9f68102ee",
-          "broker_status": "expired"
-        }
+        "armed_at": "2026-10-08T20:53:03.110877+00:00"
       }
     },
     {
@@ -80,18 +75,22 @@
       "demand_driver": "software_platforms",
       "protective_stop": {
         "status": "resting",
-        "stop_price": 125.3915,
+        "stop_price": 125.39,
         "qty": 0.791986698,
         "uncovered_qty": 0.0,
         "session_only": true,
         "time_in_force": "day",
         "client_order_id": "EESTOP-NOW-70473d52cc",
         "alpaca_order_id": "8e8a49ec-bf5f-4c4c-b81c-f4816c43b3be",
-        "armed_at": "2026-10-08T20:46:46.261765+00:00",
-        "rearmed_from": {
-          "client_order_id": "EESTOP-NOW-c780a61fcc",
-          "alpaca_order_id": "245a3dda-7269-4d60-991b-df67eec2fac5",
-          "broker_status": "expired"
+        "armed_at": "2026-10-08T20:53:04.149094+00:00",
+        "replace_refused": {
+          "http_status": 422,
+          "message": "qty must be an integer",
+          "qty": "0.791986698",
+          "time_in_force": "day",
+          "stop_price": "125.39",
+          "op": "replace",
+          "at": "2026-10-08T20:53:03.938332+00:00"
         }
       }
     },
@@ -133,20 +132,15 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-NTRA-7d814fa60b",
         "alpaca_order_id": "ff61d0f0-c77f-4253-a944-e07b71991778",
-        "armed_at": "2026-10-08T20:46:47.217154+00:00",
-        "rearmed_from": {
-          "client_order_id": "EESTOP-NTRA-fcc24a6d62",
-          "alpaca_order_id": "e2608b49-8acd-4886-8eed-0d60d7348855",
-          "broker_status": "expired"
-        }
+        "armed_at": "2026-10-08T20:53:04.546524+00:00"
       }
     },
     {
       "ticker": "OKTA",
       "quantity": 0.28053,
       "avg_cost": 218.836,
-      "market_value_usd": 61.72,
-      "last_price": 220.01,
+      "market_value_usd": 61.71,
+      "last_price": 219.96,
       "opened_at": "2026-10-05T19:12:35.492949+00:00",
       "proposal_id": "20261005-cf6fd3",
       "plan": {
@@ -179,12 +173,7 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-OKTA-5eb8b29158",
         "alpaca_order_id": "3fc762bf-05cd-444a-b2f2-69c01407bada",
-        "armed_at": "2026-10-08T20:46:48.136700+00:00",
-        "rearmed_from": {
-          "client_order_id": "EESTOP-OKTA-b804ec328d",
-          "alpaca_order_id": "ed261bf6-b006-46ac-9fb0-4049d0495e06",
-          "broker_status": "expired"
-        }
+        "armed_at": "2026-10-08T20:53:04.925984+00:00"
       }
     }
   ],
