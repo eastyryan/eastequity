@@ -189,7 +189,9 @@ def _load_atr_map() -> dict:
             if atr:
                 try:
                     from tools.atr_map import persist_atr_map
-                    persist_atr_map(atr, source=str(path.name))
+                    cf = scan.get("atr_carried_forward") or {}
+                    persist_atr_map(atr, source=str(cf.get("source") or path.name),
+                                    as_of=cf.get("as_of"))
                 except Exception:
                     pass
                 return atr
