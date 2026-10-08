@@ -302,6 +302,63 @@ def reconciles_with_ledger(record: dict, closed_trades: list[dict] | None = None
         return True  # never let a reconciliation bug delete real tracking
 
 
+# --------------------------------------------------------------------------- #
+# Legacy (pre-ledger) records
+#
+# THE FAILURE (2026-10-07). The book was reset on 2026-09-22, so the current ledger
+# starts there. The store still held real tracks for exits from the PREVIOUS book
+# (HPE 2026-08-19, BKNG, DXCM, BKR). While the new ledger had no SELL rows,
+# reconciles_with_ledger failed open and nobody noticed; the first new close (ILMN
+# stopped out 2026-10-07) armed it, and every prior-book track was quarantined as
+# "a learning record with no trade behind it" — the label for FABRICATION — and
+# stopped being marked, mid-window. The trades were real; they simply live in a
+# ledger that no longer exists. A ledger can only falsify records inside the window
+# it covers, so a record whose exit predates the ledger's first entry is LEGACY:
+# kept, still marked and still learned from, but not judged by a ledger that
+# cannot see it. Records inside the window are reconciled exactly as strictly as
+# before (strict `<` on the exit day, so a same-day exit is still checked).
+# --------------------------------------------------------------------------- #
+def ledger_start_day(history: list | None) -> str | None:
+    """Earliest YYYY-MM-DD of any row in the ledger, or None with no dated rows."""
+    try:
+        days = []
+        for row in history or []:
+            if not isinstance(row, dict):
+                continue
+            ts = row.get("filled_at") or row.get("submitted_at") or row.get("ts")
+            day = str(ts or "")[:10]
+            if len(day) == 10 and _parse_day(day):
+                days.append(day)
+        return min(days) if days else None
+    except Exception:
+        return None
+
+
+def predates_ledger(record: dict, ledger_start: str | None) -> bool:
+    """True when the record's exit is strictly before the ledger's first entry.
+
+    False whenever either date is unknown: with no ledger window to compare
+    against, nothing is granted legacy status and the normal checks apply."""
+    try:
+        if not ledger_start or not isinstance(record, dict):
+            return False
+        exit_day = str(record.get("exit_date") or "")[:10]
+        if len(exit_day) != 10 or not _parse_day(exit_day):
+            return False
+        return exit_day < str(ledger_start)[:10]
+    except Exception:
+        return False
+
+
+def _ledger_history() -> list:
+    """The same book reconciles_with_ledger reads (simulated_broker._load())."""
+    from execution import simulated_broker
+    return list((simulated_broker._load() or {}).get("history") or [])
+
+
+_QUARANTINE_REASON_PREFIX = "no closed trade in the ledger matches"
+
+
 def _seed_key(ticker, exit_date) -> str:
     return f"{str(ticker or '').upper()}|{str(exit_date or '')[:10]}"
 
@@ -1154,11 +1211,67 @@ def mark_post_exit_runners(prices: dict, *, cache_news_on_marks: bool = True,
         # Quarantine, never delete: an unreconciled record is evidence of a bug,
         # and reconciliation itself fails OPEN (returns True with no ledger to
         # compare against) so this can never destroy real tracking data.
+        legacy_now = []
+        released = []
         try:
-            closed = None
+            history = _ledger_history()
+            closed = [h for h in history
+                      if "SELL" in str(h.get("action", "")).upper()]
+            ledger_start = ledger_start_day(history)
+        except Exception as e:
+            print(f"  (runner ledger read failed: {e})")
+            closed, ledger_start = None, None
+        # Release prior-book tracks that an earlier run quarantined only because
+        # they predate the ledger (see ledger_start_day). Narrow on purpose: only
+        # records stamped by THIS loop's generic reason, strictly pre-ledger, and
+        # whose (ticker, exit_date) is not already live in tracking/completed —
+        # so a quarantined duplicate/fabrication of a known exit stays put.
+        try:
+            if ledger_start and state.get("quarantined"):
+                live_keys = {_seed_key(r.get("ticker"), r.get("exit_date"))
+                             for b in ("tracking", "completed")
+                             for r in (state.get(b) or []) if isinstance(r, dict)}
+                keep_q = []
+                for q in state.get("quarantined") or []:
+                    k = _seed_key((q or {}).get("ticker"), (q or {}).get("exit_date"))
+                    if (isinstance(q, dict)
+                            and predates_ledger(q, ledger_start)
+                            and str(q.get("unreconciled") or "").startswith(
+                                _QUARANTINE_REASON_PREFIX)
+                            and k not in live_keys):
+                        r = dict(q)
+                        r["prior_quarantine"] = {
+                            "unreconciled": r.pop("unreconciled", None),
+                            "quarantined_at": r.pop("quarantined_at", None),
+                        }
+                        r["released_from_quarantine_at"] = _today()
+                        state.setdefault("tracking", []).append(r)
+                        live_keys.add(k)
+                        released.append(r)
+                    else:
+                        keep_q.append(q)
+                if released:
+                    state["quarantined"] = keep_q
+                    print(f"  (post-exit runners: released {len(released)} "
+                          f"pre-ledger record(s) from quarantine as legacy: "
+                          f"{[r.get('ticker') for r in released]})")
+        except Exception as e:
+            print(f"  (runner legacy release skipped: {e})")
+        try:
             checked = []
             for rec in state.get("tracking") or []:
-                if reconciles_with_ledger(rec, closed):
+                if predates_ledger(rec, ledger_start):
+                    # Legacy: the exit belongs to a book the current ledger does
+                    # not cover, so the ledger cannot falsify it. Keep marking it.
+                    rec["legacy_pre_ledger"] = {
+                        "ledger_start": ledger_start,
+                        "note": ("exit predates the current ledger's first entry "
+                                 "(book reset); excluded from strict ledger "
+                                 "reconciliation, still tracked for learning"),
+                    }
+                    legacy_now.append(rec)
+                    checked.append(rec)
+                elif reconciles_with_ledger(rec, closed):
                     checked.append(rec)
                 else:
                     r = dict(rec)
@@ -1307,6 +1420,8 @@ def mark_post_exit_runners(prices: dict, *, cache_news_on_marks: bool = True,
             # records being caught, rather than it living only in a print().
             "quarantined_now": len(quarantined),
             "quarantined_tickers": [q.get("ticker") for q in quarantined],
+            "legacy_pre_ledger": [r.get("ticker") for r in legacy_now],
+            "released_from_quarantine": [r.get("ticker") for r in released],
             # The ADD side of reconciliation, reported for the same reason: a
             # study that silently recovers nothing looks identical to one with
             # nothing to recover, and for nineteen days that ambiguity is exactly

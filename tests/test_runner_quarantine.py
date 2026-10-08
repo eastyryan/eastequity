@@ -50,6 +50,11 @@ def store(tmp_path, monkeypatch):
     import tools.concept_memory as CM
     monkeypatch.setattr(CM, "MEM_DIR", tmp_path / "concept_memory")
     monkeypatch.setattr(CM, "ROOT", tmp_path)
+    # The ledger too: mark_post_exit_runners reads the book through
+    # simulated_broker._load(), not PR.ROOT. Unredirected, these tests judged
+    # their synthetic tracks against the LIVE book (see test_exit_grading).
+    import execution.simulated_broker as _SB
+    monkeypatch.setattr(_SB, "STATE_FILE", tmp_path / "state" / "portfolio.json")
     return f
 
 
@@ -169,3 +174,112 @@ def test_reconciles_with_ledger_matches_on_ticker_and_pnl():
 
 def test_reconciles_with_ledger_fails_open_on_empty_ledger():
     assert PR.reconciles_with_ledger({"ticker": "DELL", "realized_pnl_usd": -1}, []) is True
+
+
+# --------------------------------------------------------------------------- #
+# Legacy pre-ledger exits (2026-10-07). The book was reset 2026-09-22; the first
+# new close (ILMN) armed reconciliation and quarantined real prior-book tracks
+# (HPE 2026-08-19, BKNG, DXCM, BKR) as if fabricated. A ledger can only falsify
+# what it covers: pre-ledger exits are legacy — kept and marked, not judged.
+# Everything inside the window must stay exactly as strict as before.
+# --------------------------------------------------------------------------- #
+RESET_LEDGER = {
+    "cash_usd": 500.0, "positions": [], "pending_orders": {},
+    "history": [
+        {"action": "BUY", "ticker": "NOW", "status": "filled",
+         "fill_price": 135.9, "filled_at": "2026-09-22T16:28:11Z"},
+        {"action": "BUY", "ticker": "ILMN", "status": "filled",
+         "fill_price": 279.9, "filled_at": "2026-10-05T15:04:19Z"},
+        {"action": "SELL_TO_CLOSE", "ticker": "ILMN", "status": "filled",
+         "fill_price": 261.792, "filled_at": "2026-10-07T13:39:06Z",
+         "realized_pnl_usd": -4.80},
+    ],
+}
+
+
+def _write_ledger(store, ledger=RESET_LEDGER):
+    f = store.parent / "state" / "portfolio.json"
+    f.parent.mkdir(parents=True, exist_ok=True)
+    f.write_text(json.dumps(ledger))
+
+
+def _dated(ticker, exit_date, *, exit_price, pnl) -> dict:
+    t = _track(ticker, exit_price=exit_price, pnl=pnl)
+    t["exit_date"] = exit_date
+    return t
+
+
+def test_pre_ledger_exit_is_legacy_not_quarantined(store):
+    """THE REGRESSION: HPE 2026-08-19 was a real trade in the previous book."""
+    _write_ledger(store)
+    _write(store, [_dated("HPE", "2026-08-19", exit_price=53.04, pnl=-2.10),
+                   _dated("ILMN", "2026-10-07", exit_price=261.792, pnl=-4.80)])
+
+    out = PR.mark_post_exit_runners({"HPE": 60.0, "ILMN": 250.0},
+                                    cache_news_on_marks=False, backfill=False)
+
+    assert out["quarantined_now"] == 0
+    assert out["legacy_pre_ledger"] == ["HPE"]
+    state = json.loads(store.read_text())
+    kept = (state.get("tracking") or []) + (state.get("completed") or [])
+    hpe = next(t for t in kept if t["ticker"] == "HPE")
+    assert hpe["legacy_pre_ledger"]["ledger_start"] == "2026-09-22"
+    assert hpe.get("current_leftover_pct") is not None, "legacy tracks keep learning"
+    assert not state.get("quarantined")
+
+
+def test_in_window_mismatch_is_still_quarantined_alongside_legacy(store):
+    """Legacy status must not leak into the ledger's window: a post-reset record
+    with no matching close is quarantined exactly as before."""
+    _write_ledger(store)
+    _write(store, [_dated("HPE", "2026-08-19", exit_price=53.04, pnl=-2.10),
+                   _dated("FAKE", "2026-10-01", exit_price=40.0, pnl=-50.0),
+                   # Same day as the ledger's first entry: inside the window.
+                   _dated("NOW", "2026-09-22", exit_price=130.0, pnl=-9.0)])
+
+    out = PR.mark_post_exit_runners({"HPE": 60.0, "FAKE": 41.0, "NOW": 131.0},
+                                    cache_news_on_marks=False, backfill=False)
+
+    assert sorted(out["quarantined_tickers"]) == ["FAKE", "NOW"]
+    assert out["legacy_pre_ledger"] == ["HPE"]
+
+
+def test_pre_ledger_records_quarantined_earlier_are_released(store):
+    """The 2026-10-07 run already quarantined the prior-book tracks. They come
+    back as legacy; an in-window quarantine and a duplicate of a live exit stay."""
+    _write_ledger(store)
+    reason = ("no closed trade in the ledger matches this ticker and realized "
+              "P&L — quarantined, not marked.")
+    q_hpe = {**_dated("HPE", "2026-08-19", exit_price=53.04, pnl=-2.10),
+             "unreconciled": reason, "quarantined_at": "2026-10-07"}
+    q_fake = {**_dated("FAKE", "2026-10-01", exit_price=40.0, pnl=-50.0),
+              "unreconciled": reason, "quarantined_at": "2026-10-07"}
+    q_dup = {**_dated("DELL", "2026-07-15", exit_price=40.0, pnl=-50.0),
+             "unreconciled": reason, "quarantined_at": "2026-07-19"}
+    live_dell = {**_dated("DELL", "2026-07-15", exit_price=389.75, pnl=-13.52),
+                 "status": "completed"}
+    store.write_text(json.dumps({"version": 1, "tracking": [],
+                                 "completed": [live_dell],
+                                 "quarantined": [q_hpe, q_fake, q_dup]}))
+
+    out = PR.mark_post_exit_runners({"HPE": 60.0}, cache_news_on_marks=False,
+                                    backfill=False)
+
+    assert out["released_from_quarantine"] == ["HPE"]
+    assert out["quarantined_now"] == 0
+    state = json.loads(store.read_text())
+    assert sorted(q["ticker"] for q in state["quarantined"]) == ["DELL", "FAKE"]
+    hpe = next(t for t in state["tracking"] + state["completed"]
+               if t["ticker"] == "HPE")
+    assert "unreconciled" not in hpe
+    assert hpe["prior_quarantine"]["quarantined_at"] == "2026-10-07"
+    assert hpe["exit_price"] == 53.04 and hpe["realized_pnl_usd"] == -2.10
+
+
+def test_no_ledger_grants_no_legacy_status():
+    assert PR.ledger_start_day([]) is None
+    assert PR.predates_ledger({"exit_date": "2020-01-01"}, None) is False
+    assert PR.ledger_start_day(RESET_LEDGER["history"]) == "2026-09-22"
+    assert PR.predates_ledger({"exit_date": "2026-09-21"}, "2026-09-22") is True
+    assert PR.predates_ledger({"exit_date": "2026-09-22"}, "2026-09-22") is False
+    assert PR.predates_ledger({"exit_date": None}, "2026-09-22") is False
