@@ -92,6 +92,7 @@ from runlib.analytics import (
     trade_plans,
 )
 from runlib.context_gather import gather_context
+from runlib.x_sentiment import attach_x_sentiment
 from runlib.brain_io import (
     apply_live_prices,
     apply_price_freshness_trade_gate,
@@ -584,6 +585,14 @@ def _run_gather_only(args, cfg: dict, run_id: str, run_depth: str,
         context["data_quality"] = {"source": "live_partial", "note": note}
         print(f"  (partial degradation - {note[:80]}; labeled)")
 
+    # PRE-MARKET X SENTIMENT (soft context, 2026-10-08). Read AFTER the relay
+    # fallback so a relay bundle's stale (or absent) copy is replaced by this
+    # node's file. Fail-soft: a missing file (the GitHub gather-data runner)
+    # yields status "absent", never an exception.
+    _xs = attach_x_sentiment(context)
+    print(f"  (gather: x_sentiment {_xs.get('status')}"
+          f"{', age ' + str(_xs.get('age_hours')) + 'h' if _xs.get('age_hours') is not None else ''})")
+
     # OVERLAY LIVE PRICES INTO THE BUNDLE THE BRAIN ACTUALLY READS (2026-07-23).
     #
     # This branch writes the context the cloud brain reasons from, and it was the
@@ -772,6 +781,7 @@ def _gather_and_wake(args, cfg: dict, run_id: str, run_depth: str,
     context = gather_context(cfg, light=args.light, depth=run_depth,
                              earnings_trigger=earnings_trigger)
     apply_live_prices(context, cfg)
+    attach_x_sentiment(context)  # soft pre-market X note; fail-soft, never raises
     if args.trigger_run:
         context["trigger_run_note"] = (
             f"EVENT-DRIVEN RUN: watchlist would_buy_at level(s) CONFIRMED on "

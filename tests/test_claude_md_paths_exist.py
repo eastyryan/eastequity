@@ -88,6 +88,7 @@ CONDITIONAL_PATHS = [
     "earnings_deep_dive",
     "trigger_run_note",
     "operator_note",
+    "x_sentiment",
 ]
 
 

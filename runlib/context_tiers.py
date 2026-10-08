@@ -153,6 +153,13 @@ BLOCKING_KEYS = (
 # alerts and book risk get the remaining window space, and the history follows.
 DECISION_CONTEXT = (
     "macro_regime", "benchmark_close", "market_events",
+    # Pre-market X sentiment note (2026-10-08). SOFT context: ~10 lines (the
+    # note is one capped string), placed first-thing after the regime read so
+    # it is as early as it can be without touching BLOCKING_KEYS. Deliberately
+    # NOT pinned there: on the 2026-10-08 bundle reasoning_process already
+    # started at line 1,999, so even 10 more lines above it would push a gate
+    # out of the window. Never a gate; must not override validator rules.
+    "x_sentiment",
     "market_breadth", "momentum_health",
     "watchlist_trigger_alerts", "tape_focus_promotions",
     "portfolio_risk",
@@ -208,6 +215,7 @@ ALWAYS_KEYS = (
     "research_freshness",    # price_as_of + live overlay age + empty critical lanes
     "trigger_run_note",       # why an event-driven run was spawned
     "operator_note",          # ad-hoc note passed in via --note
+    "x_sentiment",            # pre-market X sentiment note; soft, not a signal
 )
 
 # Focus research maps (trimmed to focus keys already)

@@ -748,6 +748,13 @@ Beyond filings/13F/news, every run now includes:
   or stale (feeds were blocked and a relay bundle or empty context was substituted). Lower
   confidence, avoid time-sensitive entries on stale prices, and if the context is labeled
   EMPTY do NOT open new positions on absent data - say so plainly in commentary.
+- **x_sentiment** - pre-market X sentiment note (weekday ~8:40am ET read of ~20 public
+  accounts): `{status: present|absent|stale, as_of, age_hours, text, note}`. SOFT context
+  only - an outside mood read, not verified data and not a trade signal on its own; it must
+  never override a validator rule, hard limit or your own research. A `stale` note is an
+  old mood read; `absent` just means no note reached this run. It sits with the regime
+  read right after the blocking set; if `_pack_budget.keys_beyond_read_window` lists it,
+  page to it with Read(offset=N) during the regime step.
 
 
 <!-- Moved here 2026-07-19: these 66 lines documented CONTEXT BUNDLE
