@@ -12,7 +12,17 @@ Runs from the hourly relay job on the Mac, so API keys stay local-only in .env
 (X_API_KEY, X_API_SECRET, X_ACCESS_TOKEN, X_ACCESS_SECRET - an X developer
 app with the free tier's write access is enough at this volume).
 
-CLI: python -m tools.x_poster [--dry-run]
+CLI: python -m tools.x_poster [--dry-run] [--force-window] [--draft PATH]
+
+BOX-RUN (2026-10-08). GitHub's cron for x-post.yml was delivered hours late
+(every run since 09-24 started after 19:00 ET), so the 16:00-18:59 window
+silently rejected every trade day from 10-02 on. The box is now the poster:
+scripts/post_x_daily.sh runs this module at ~16:30 ET on weekdays and commits
+journal/x_posts.jsonl. Skips now print a one-line reason instead of exiting
+silently. --force-window bypasses ONLY the clock gate (manual catch-ups); the
+duplicate guard (journal/x_posts.jsonl) is never bypassed. --draft posts one
+specific file (e.g. state/x_catchup/20261002.txt) as kind "catchup", which
+does not count toward the one-trade-post-per-day policy.
 """
 
 from __future__ import annotations
@@ -87,35 +97,77 @@ def post_tweet(text: str, media_path: str | None = None) -> dict:
         media_id = _upload_media(session, media_path)
         if media_id:
             payload["media"] = {"media_ids": [media_id]}
-    r = session.post("https://api.twitter.com/2/tweets", json=payload, timeout=60)
+    try:
+        r = session.post("https://api.twitter.com/2/tweets", json=payload, timeout=60)
+    except Exception as e:
+        # The request may have been accepted before the connection died. Report
+        # "unknown" so the caller logs it as consumed: never blind-retry a post.
+        return {"status": "unknown", "error": type(e).__name__,
+                "with_media": "media" in payload}
     if r.status_code in (200, 201):
         return {"status": "posted", "tweet_id": r.json().get("data", {}).get("id"),
                 "with_media": "media" in payload}
     return {"status": "error", "code": r.status_code, "body": r.text[:300]}
 
 
-def _already_posted() -> set[str]:
+# A log entry with one of these statuses CONSUMES its draft: it never posts
+# again. "unknown" = the POST request may have reached X but we never saw the
+# response (timeout / connection drop) - treat as posted, never auto-retry.
+# "error" records (e.g. a 402 with no credits) are logged for audit but do NOT
+# consume, so the draft can post once the cause is fixed. Legacy rows without
+# a status (and July's dry_run rows) stay consumed, as before.
+_CONSUMING = {"posted", "superseded", "unknown", "dry_run", None}
+_COUNTS_AS_POSTED = {"posted", "unknown"}
+
+
+def _log_records() -> list[dict]:
     if not POST_LOG.exists():
-        return set()
-    return {json.loads(line)["draft"] for line in POST_LOG.read_text().splitlines()}
+        return []
+    out = []
+    for line in POST_LOG.read_text().splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            out.append(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    return out
+
+
+def _already_posted() -> set[str]:
+    return {r.get("draft") for r in _log_records()
+            if r.get("status") in _CONSUMING}
+
+
+def _et_day_of(ts: str | None) -> str | None:
+    from tools.et_time import to_et_date
+    d = to_et_date(ts)
+    return d.strftime("%Y%m%d") if d else None
 
 
 def _summary_posted_today(today: str) -> bool:
-    if not POST_LOG.exists():
-        return False
-    for line in POST_LOG.read_text().splitlines():
-        rec = json.loads(line)
-        if rec.get("kind") == "summary" and rec.get("ts", "").startswith(today):
-            return True
-    return False
+    """today = YYYYMMDD in ET."""
+    return any(r.get("kind") == "summary" and _et_day_of(r.get("ts")) == today
+               for r in _log_records())
 
 
 def _posted_today(today: str) -> bool:
-    if not POST_LOG.exists():
-        return False
-    return any(json.loads(line).get("ts", "").startswith(today)
-               and json.loads(line).get("status") == "posted"
-               for line in POST_LOG.read_text().splitlines())
+    """True when the DAILY policy post (trade/summary) already went out today.
+
+    today = YYYYMMDD in ET (was a UTC date: a post after 20:00 ET landed on the
+    next UTC day). Catch-up and manual posts do not count toward the daily one.
+    """
+    return any(r.get("status") in _COUNTS_AS_POSTED
+               and r.get("kind") in ("trade", "summary")
+               and _et_day_of(r.get("ts")) == today
+               for r in _log_records())
+
+
+def _append_log(record: dict) -> None:
+    POST_LOG.parent.mkdir(parents=True, exist_ok=True)
+    with POST_LOG.open("a") as f:
+        f.write(json.dumps(record) + "\n")
 
 
 def promote_draft_for_fill(run_id: str | None, order: dict | None = None,
@@ -144,6 +196,18 @@ def promote_draft_for_fill(run_id: str | None, order: dict | None = None,
     if not run_id:
         return None
     try:
+        if not _DATED_RUN_ID.match(str(run_id)):
+            # Undated pseudo run ids (2026-10-08 fix). "out-of-band" is a REAL
+            # broker-side fill (a resting stop); it used to write the undated
+            # x_draft_out-of-band_trade.txt, which (a) the poster's same-day
+            # filter could never match and (b) the early return below then
+            # reused forever - the 09-18 HPE memo sat there while the 10-07
+            # ILMN stop-out got no memo at all. Date-stamp it per day+ticker.
+            # ghost-reconcile / not-at-broker-writeoff are ledger repairs,
+            # not trades: no public memo.
+            if str(run_id) != "out-of-band" and not (order or {}).get("out_of_band"):
+                return None
+            return _promote_out_of_band(order or {}, fill or {})
         src = ROOT / "state" / f"x_draft_{run_id}.txt"
         dst = ROOT / "state" / f"x_draft_{run_id}_trade.txt"
         if dst.exists():
@@ -162,6 +226,37 @@ def promote_draft_for_fill(run_id: str | None, order: dict | None = None,
     except Exception as e:
         print(f"  (draft promotion skipped: {str(e)[:120]})")
         return None
+
+
+_DATED_RUN_ID = re.compile(r"^\d{8}-")
+
+
+def _fill_et_day(order: dict, fill: dict) -> str:
+    """YYYYMMDD (ET) of the fill, falling back to today in ET."""
+    for ts in (fill.get("filled_at"), order.get("submitted_at"),
+               fill.get("submitted_at")):
+        d = _et_day_of(ts) if ts else None
+        if d:
+            return d
+    from tools.et_time import et_now
+    return et_now().strftime("%Y%m%d")
+
+
+def _promote_out_of_band(order: dict, fill: dict) -> str | None:
+    ticker = re.sub(r"[^A-Z0-9.]", "",
+                    str(fill.get("ticker") or order.get("ticker") or "").upper())
+    if not ticker:
+        return None
+    day = _fill_et_day(order, fill)
+    dst = ROOT / "state" / f"x_draft_{day}-oob-{ticker}_trade.txt"
+    if dst.exists():          # idempotent per day+ticker (same fill re-seen)
+        return str(dst)
+    composed = _compose_trade_memo(f"{day}-oob-{ticker}", order, fill)
+    if not composed:
+        return None
+    dst.write_text(composed + "\n")
+    print(f"  composed out-of-band trade memo from fill: {dst.name}")
+    return str(dst)
 
 
 def _find_proposal(run_id: str) -> dict | None:
@@ -206,6 +301,17 @@ def _compose_trade_memo(run_id: str, order: dict, fill: dict) -> str | None:
     if action == "BUY" and stop and tgt:
         lines.append(f"Plan: stop ${float(stop):,.2f}, target ${float(tgt):,.2f}"
                      + (f", horizon {int(hor)}d." if hor else "."))
+    if action != "BUY":
+        reason = str(order.get("forced_exit_reason") or fill.get("forced_exit_reason") or "")
+        bits = []
+        if reason == "resting_stop_breached":
+            bits.append("The resting stop at the broker filled.")
+        pnl = fill.get("realized_pnl_usd")
+        if isinstance(pnl, (int, float)):
+            sign = "-" if pnl < 0 else "+"
+            bits.append(f"Realized P&L {sign}${abs(float(pnl)):,.2f}.")
+        if bits:
+            lines.append(" ".join(bits))
     thesis = str(prop.get("thesis") or order.get("exit_thesis") or "").strip()
     if thesis:
         # First two sentences of the brain's own thesis — its words, not a summary.
@@ -215,27 +321,62 @@ def _compose_trade_memo(run_id: str, order: dict, fill: dict) -> str | None:
     return "\n\n".join(lines)
 
 
-def process_drafts(dry_run: bool = False) -> list[dict]:
-    """User policy: at most ONE post per day, in the market-close window
-    (4:00-6:59pm local), and ONLY if a trade was made that day. The post is the
-    day's latest trade memo; everything else stays on the dashboard."""
-    results = []
-    posted = _already_posted()
-    today_utc = datetime.now(timezone.utc).date().isoformat()
-    today_local = datetime.now().strftime("%Y%m%d")
+WINDOW_START_HOUR, WINDOW_END_HOUR = 16, 18     # 16:00-18:59 ET inclusive
 
-    if not (16 <= datetime.now().hour <= 18):
-        return results
-    if _posted_today(today_utc):
-        return results
 
-    todays_trades = [d for d in sorted((ROOT / "state").glob("x_draft_*_trade.txt"))
-                     if today_local in d.name and d.name not in posted
-                     and d.read_text().strip()]
-    if not todays_trades:
-        return results
+def _skip(reason: str) -> list[dict]:
+    """Print a one-line skip reason (never a secret) and post nothing."""
+    print(json.dumps({"status": "skipped", "reason": reason}))
+    return []
 
-    draft = todays_trades[-1]  # latest trade memo of the day
+
+def _trade_times(day: str) -> dict[str, str]:
+    """run_id -> latest journaled fill ts for an ET day (YYYYMMDD).
+
+    Out-of-band fills are keyed as "<day>-oob-<TICKER>" to match their drafts.
+    """
+    f = ROOT / "journal" / "trades" / f"{day[:4]}-{day[4:6]}-{day[6:8]}.jsonl"
+    out: dict[str, str] = {}
+    if not f.exists():
+        return out
+    for line in f.read_text().splitlines():
+        try:
+            rec = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        rid = str(rec.get("run_id") or "")
+        if rid == "out-of-band":
+            tk = str((rec.get("fill") or {}).get("ticker")
+                     or (rec.get("order") or {}).get("ticker") or "").upper()
+            rid = f"{day}-oob-{tk}"
+        ts = str(rec.get("ts") or "")
+        if rid and ts > out.get(rid, ""):
+            out[rid] = ts
+    return out
+
+
+def _is_thin(text: str) -> bool:
+    """A bare template / probe line rather than a real memo (e.g. the 10-02 CLS
+    'swing update' stub or the 10-05 OKTA 'proposing a probe' one-liner)."""
+    t = text.strip()
+    return len(t) < 250 or t.startswith("East Equity Agent swing update")
+
+
+def pick_daily_draft(drafts: list[Path], day: str) -> Path:
+    """Newest-wins by FILL time (journal/trades), not by the random hex in the
+    filename (sorted() made 'latest' an alphabetical accident). A real memo
+    beats a thin template; ties fall back to file mtime, then name."""
+    times = _trade_times(day)
+
+    def key(d: Path):
+        rid = d.name[len("x_draft_"):-len("_trade.txt")]
+        text = d.read_text()
+        return (not _is_thin(text), times.get(rid, ""), d.stat().st_mtime, d.name)
+
+    return max(drafts, key=key)
+
+
+def _post_one(draft: Path, kind: str, dry_run: bool) -> dict:
     text = journal_header() + "\n\n" + format_for_x(draft.read_text().strip())
     chart = None
     try:
@@ -243,24 +384,90 @@ def process_drafts(dry_run: bool = False) -> list[dict]:
         chart = str(render_equity_card())
     except Exception as e:
         print(json.dumps({"chart_card_error": str(e)[:200]}))
-    result = {"status": "dry_run"} if dry_run else post_tweet(text, media_path=chart)
-    record = {"ts": datetime.now(timezone.utc).isoformat(), "draft": draft.name,
-              "kind": "trade", **result}
-    results.append(record)
-    if result["status"] in ("posted", "dry_run"):
-        POST_LOG.parent.mkdir(parents=True, exist_ok=True)
-        with POST_LOG.open("a") as f:
-            f.write(json.dumps(record) + "\n")
-        # Retire the day's other trade drafts so they never post late.
-        for d in todays_trades[:-1]:
-            with POST_LOG.open("a") as f:
-                f.write(json.dumps({"ts": record["ts"], "draft": d.name,
-                                    "kind": "trade", "status": "superseded"}) + "\n")
+    if dry_run:
+        rec = {"status": "dry_run", "chars": len(text), "media": chart,
+               "text": text}
+        print(json.dumps(rec))
+        return rec        # dry runs are NOT logged: logging consumed the draft
+    result = post_tweet(text, media_path=chart)
+    try:
+        key = str(draft.relative_to(ROOT / "state"))
+    except ValueError:
+        key = draft.name
+    record = {"ts": datetime.now(timezone.utc).isoformat(), "draft": key,
+              "kind": kind, **result}
+    if result.get("status") in ("posted", "unknown", "error"):
+        _append_log(record)
     print(json.dumps(record))
-    return results
+    return record
+
+
+def process_drafts(dry_run: bool = False, force_window: bool = False,
+                   draft: str | None = None) -> list[dict]:
+    """User policy: at most ONE post per day, in the market-close window
+    (4:00-6:59pm ET), and ONLY if a trade was made that day. The post is the
+    day's best trade memo (newest real memo by fill time); everything else
+    stays on the dashboard. `draft` posts one explicit file as a catch-up."""
+    from tools.et_time import et_now
+    now = et_now()
+    today = now.strftime("%Y%m%d")
+    posted = _already_posted()
+
+    if not force_window and not (WINDOW_START_HOUR <= now.hour <= WINDOW_END_HOUR):
+        return _skip(f"outside the 16:00-18:59 ET window (now {now:%H:%M} ET); "
+                     "use --force-window for a manual catch-up")
+
+    if draft:
+        path = Path(draft)
+        if not path.is_absolute():
+            path = ROOT / path
+        if not path.exists() or not path.read_text().strip():
+            return _skip(f"draft not found or empty: {draft}")
+        try:
+            key = str(path.relative_to(ROOT / "state"))
+        except ValueError:
+            key = path.name
+        if key in posted or path.name in posted:
+            return _skip(f"{key} is already in journal/x_posts.jsonl (duplicate guard)")
+        return [_post_one(path, "catchup", dry_run)]
+
+    if _posted_today(today):
+        return _skip(f"already posted the daily trade memo for {today}")
+
+    todays = [d for d in (ROOT / "state").glob("x_draft_*_trade.txt")
+              if d.name.startswith(f"x_draft_{today}-") and d.name not in posted
+              and d.read_text().strip()]
+    if not todays:
+        return _skip(f"no same-day trade draft for {today}; nothing to post")
+
+    best = pick_daily_draft(todays, today)
+    record = _post_one(best, "trade", dry_run)
+    if record.get("status") in ("posted", "unknown"):
+        # Retire the day's other trade drafts so they never post late.
+        for d in todays:
+            if d != best:
+                _append_log({"ts": record["ts"], "draft": d.name,
+                             "kind": "trade", "status": "superseded"})
+    return [record]
+
+
+def main(argv: list[str] | None = None) -> int:
+    import argparse
+    ap = argparse.ArgumentParser(prog="python -m tools.x_poster")
+    ap.add_argument("--dry-run", action="store_true",
+                    help="render and print, never call X, never log")
+    ap.add_argument("--force-window", action="store_true",
+                    help="ignore the 16:00-18:59 ET gate (manual catch-ups)")
+    ap.add_argument("--draft", help="post one specific draft file as a catch-up")
+    args = ap.parse_args(argv)
+    from tools.envload import load_env
+    load_env()
+    results = process_drafts(dry_run=args.dry_run, force_window=args.force_window,
+                             draft=args.draft)
+    # Non-zero ONLY when X was called and did not confirm success; a skip
+    # (no draft, outside window, duplicate) is a clean 0.
+    return 2 if any(r.get("status") in ("error", "unknown") for r in results) else 0
 
 
 if __name__ == "__main__":
-    from tools.envload import load_env
-    load_env()
-    process_drafts(dry_run="--dry-run" in sys.argv)
+    sys.exit(main())
