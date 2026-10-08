@@ -146,6 +146,40 @@ def _validated_slot(explicit: str | None) -> tuple[str | None, str | None]:
     return label, None
 
 
+def _stale_flag_claim(label: str | None, stage: str,
+                      env_claim: str | None) -> str | None:
+    """Why a --slot FLAG claim must be refused, or None if it may stand.
+
+    THE INCIDENT (2026-10-08). A routine that started late ran
+    `mark_run_start.py --slot 14:00` at 15:22 ET as an ordinary start, not a
+    recovery, and then gathered with --auto-depth on the 15:00 clock slot. The
+    stale claim got the 15:00 run credited to 14:00 (slot_report now ignores such
+    claims; PR #17). That left 15:00 reading "died", which led to a false 15:00
+    recovery.
+
+    A watchdog recovery says so explicitly: `--stage recovery` (find_missed_slot's
+    mark_run_start_args) and/or $EE_RECOVERY_SLOT naming the same slot. Those are
+    honoured exactly as before, however late. Any other flag claim must match the
+    slot the clock puts this run in. If it doesn't (the named slot's window has
+    passed, or hasn't opened yet), the claim is refused and the run is labelled
+    from the clock, with no recovery_for. Fail-open like everything else here.
+    """
+    try:
+        if not label:
+            return None
+        if stage == "recovery" or (env_claim and env_claim.strip() == label):
+            return None
+        clock = _current_slot_label()
+        if clock == label:
+            return None
+        return (f"--slot {label} refused: this is not a watchdog recovery "
+                f"(no --stage recovery / EE_RECOVERY_SLOT) and the clock puts this "
+                f"run in {clock or 'no slot'}; a stale or mismatched --slot claim "
+                f"would credit this run to the wrong slot")
+    except Exception:
+        return None
+
+
 def _git(*args: str, timeout: int = 120) -> subprocess.CompletedProcess:
     return subprocess.run(["git", *args], cwd=ROOT, capture_output=True,
                           text=True, timeout=timeout)
@@ -179,8 +213,13 @@ def run(stage: str = "start", no_push: bool = False,
     """Journal (and optionally push) the breadcrumb. Fail-OPEN: always returns 0."""
     try:
         import journal
-        claimed = slot or os.environ.get("EE_RECOVERY_SLOT") or None
+        env_claim = os.environ.get("EE_RECOVERY_SLOT") or None
+        claimed = slot or env_claim
         label, err = _validated_slot(slot)
+        if not err and slot is not None:
+            stale = _stale_flag_claim(label, stage, env_claim)
+            if stale:
+                err = stale
         if err:
             # Still fail-open — but say so loudly and fall back to the clock, rather
             # than stamping a slot label no consumer recognises.

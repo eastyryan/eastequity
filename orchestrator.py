@@ -139,6 +139,40 @@ def _should_mark_run_start(auto_depth: bool) -> bool:
     return not os.environ.get("GITHUB_ACTIONS")
 
 
+def _scheduled_slot_standdown(args) -> str | None:
+    """A clear stand-down message when this SCHEDULED run's slot was already served.
+
+    Applies only to scheduled routine runs (--auto-depth, not --manual, not a
+    --trigger-run, not a watchdog recovery carrying $EE_RECOVERY_SLOT), and for
+    --gather-only only to the trading routine's gather (_should_mark_run_start), never
+    the GitHub bundle refresh. Watchdog recoveries pin --depth and export
+    EE_RECOVERY_SLOT, so they are never stood down. Fail-OPEN: any error returns None
+    and the run proceeds exactly as before.
+    """
+    import os
+    try:
+        if not getattr(args, "auto_depth", False):
+            return None
+        if getattr(args, "manual", False) or getattr(args, "trigger_run", None):
+            return None
+        if os.environ.get("EE_RECOVERY_SLOT"):
+            return None
+        if getattr(args, "gather_only", False) and not _should_mark_run_start(True):
+            return None
+        from runlib.analytics import slot_already_served
+        served = slot_already_served()
+        if not served:
+            return None
+        how = " (recovered)" if served.get("recovered") else ""
+        return (f"STAND DOWN: scheduled slot {served['slot']} ET already has a "
+                f"journaled run today: {served['run_id']}{how}. This duplicate "
+                f"scheduled run will not gather, trade or push. Nothing to do; "
+                f"exiting 0. Do not run --act-on for this slot.")
+    except Exception as e:
+        print(f"  (slot stand-down check skipped: {e})")
+        return None
+
+
 # ---------------------------------------------------------------------------
 # Backward-compatible private aliases (tests + older tools)
 # ---------------------------------------------------------------------------
@@ -1402,6 +1436,14 @@ def main() -> int:
     rc = _dispatch_special_modes(args, run_id)
     if rc is not None:
         return rc
+
+    # One journaled run per scheduled slot (2026-10-08: a second routine re-ran the
+    # 15:00 full slot after 433eed had already served it). Checked before the gather
+    # breadcrumb, the lease and any ledger write, so a stand-down leaves no trace.
+    standdown = _scheduled_slot_standdown(args)
+    if standdown:
+        print(standdown)
+        return 0
     print(f"=== East Equity Agent run {run_id} (mode: {cfg['mode']['trading_mode']}, "
           f"depth: {run_depth}) ===")
 
