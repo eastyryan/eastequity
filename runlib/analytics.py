@@ -169,6 +169,50 @@ def run_starts_today() -> list[dict]:
     return sorted(out, key=lambda r: r["et_hour"])
 
 
+def _ts_key(ts) -> datetime | None:
+    try:
+        return datetime.fromisoformat(str(ts).replace("Z", "+00:00"))
+    except Exception:
+        return None
+
+
+def _claim_contradicted(claim: dict, starts: list[dict], run: dict) -> bool:
+    """Did the claiming run's OWN later breadcrumb say it served a different slot?
+
+    THE INCIDENT (2026-10-08). A late routine marked `--slot 14:00` at 15:22:05 ET,
+    then ran an UNPINNED `--gather-only --auto-depth`. The orchestrator re-marks under
+    --gather-only, and 5 s later that marker said 15:00 with no recovery claim,
+    because the gather resolved its depth from the clock. The run (20261008-433eed)
+    really was the 15:00 full slot ("Full 15:00 slot ..." in its own summary). The
+    pre-pass still credited it to 14:00 because of the claim. 15:00 then read as
+    "died", and from 16:00 find_missed_slot asked for a false 15:00 recovery.
+
+    A real watchdog recovery exports EE_RECOVERY_SLOT around BOTH processes, so its
+    gather marker carries the same recovery_for. So an UNCLAIMED marker for a
+    different slot from the same node, landing after the claim and no later than the
+    run, means the claim was never pinned. Return True in that case; the run is then
+    matched by timestamp like any other run.
+    """
+    try:
+        want = claim.get("recovery_for")
+        t0, t1 = _ts_key(claim.get("ts")), _ts_key(run.get("ts"))
+        if not want or t0 is None or t1 is None:
+            return False
+        for o in starts:
+            if o is claim or o.get("recovery_for"):
+                continue
+            if o.get("node") != claim.get("node"):
+                continue
+            if not o.get("slot") or o.get("slot") == want:
+                continue
+            to = _ts_key(o.get("ts"))
+            if to is not None and t0 < to <= t1:
+                return True
+        return False
+    except Exception:
+        return False
+
+
 def slot_report(now_h: float | None = None, weekday: bool | None = None) -> dict:
     """PER-SLOT accounting: which scheduled slots actually produced a run today.
 
@@ -220,6 +264,8 @@ def slot_report(now_h: float | None = None, weekday: bool | None = None) -> dict
         j = next((k for k, r in enumerate(runs)
                   if k not in used and st["et_hour"] <= r["et_hour"]
                   <= st["et_hour"] + 25 / 60), None)
+        if j is not None and _claim_contradicted(st, starts, runs[j]):
+            continue
         if j is not None:
             used.add(j)
             declared[sv] = j
