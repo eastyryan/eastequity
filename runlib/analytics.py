@@ -1287,3 +1287,55 @@ def append_runs_index(run_id: str, mode: str, fills: list, commentary: str | Non
         f.write_text(json.dumps(idx[-400:], indent=2))
     except Exception:
         pass
+
+
+def clock_slot_label(now_h: float, weekday: bool) -> str | None:
+    """The scheduled slot a run starting at now_h belongs to, or None off-slot.
+
+    Same rule as scripts/mark_run_start._current_slot_label: the nearest slot at or
+    before now (plus the early tolerance), within one hour."""
+    slots = expected_slots(weekday)
+    cands = [s for s in slots if s <= now_h + SLOT_EARLY_TOLERANCE_H]
+    if not cands:
+        return None
+    slot = max(cands)
+    if now_h - slot > 1.0:
+        return None
+    return f"{int(slot):02d}:{int(round((slot % 1) * 60)):02d}"
+
+
+def slot_already_served(now_h: float | None = None,
+                        weekday: bool | None = None) -> dict | None:
+    """If this weekday's current clock slot already has a journaled run, say which.
+
+    THE INCIDENT (2026-10-08). Two routines both executed the 15:00 full slot.
+    Run 433eed journaled at 15:41 ET. A second routine started at 15:43, gathered,
+    reasoned, and at 15:53 acted again on the same slot. Its push lost a race with
+    stop-watch, so the duplicate was discarded (0 fills). With fills it would have
+    traded the same slot twice on a book that had moved under it.
+
+    Attribution is slot_report's, so a run counts toward the slot it is credited to
+    (PR #17 behaviour included). Weekdays only: weekend news-only runs share one
+    catch-all slot and must not stand each other down. Returns None when unsure;
+    the caller fails open.
+    """
+    try:
+        now = et_now()
+        if now_h is None:
+            now_h = now.hour + now.minute / 60
+        if weekday is None:
+            weekday = now.weekday() < 5
+        if not weekday:
+            return None
+        label = clock_slot_label(now_h, weekday)
+        if not label:
+            return None
+        rep = slot_report(now_h=now_h, weekday=weekday)
+        entry = next((e for e in rep["slots"] if e["label"] == label), None)
+        if not entry or entry.get("status") != "hit" or not entry.get("run_id"):
+            return None
+        return {"slot": label, "run_id": entry["run_id"],
+                "drift_min": entry.get("drift_min"),
+                "recovered": bool(entry.get("recovered"))}
+    except Exception:
+        return None
