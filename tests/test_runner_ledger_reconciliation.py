@@ -18,7 +18,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from tools.post_exit_runners import reconciles_with_ledger  # noqa: E402
+from tools.post_exit_runners import (  # noqa: E402
+    ledger_start_day, predates_ledger, reconciles_with_ledger)
 
 
 REAL_CLOSES = [
@@ -80,5 +81,26 @@ def test_the_live_tracking_file_reconciles_today():
               if "SELL" in str(h.get("action", "")).upper()]
     if not closed:
         return
+    # Exits from before the ledger's first entry belong to a book this ledger
+    # does not cover (the 2026-09-22 reset): legacy, not falsifiable here.
+    # Everything inside the window is checked as strictly as ever.
+    start = ledger_start_day(state.get("history") or [])
     for rec in (json.loads(p.read_text()).get("tracking") or []):
+        if predates_ledger(rec, start):
+            continue
         assert reconciles_with_ledger(rec, closed), rec
+
+
+def test_pre_ledger_exits_are_exempt_but_the_window_is_not():
+    """Pins the live-file test's exemption: HPE 2026-08-19 (prior book) is legacy
+    against a ledger that starts 2026-09-22; a bogus in-window record is not."""
+    history = [{"action": "BUY", "ticker": "NOW", "filled_at": "2026-09-22T16:28:11Z"},
+               {"action": "SELL_TO_CLOSE", "ticker": "ILMN",
+                "filled_at": "2026-10-07T13:39:06Z", "realized_pnl_usd": -4.80}]
+    closed = [h for h in history if "SELL" in h["action"]]
+    start = ledger_start_day(history)
+    legacy = {"ticker": "HPE", "exit_date": "2026-08-19", "realized_pnl_usd": -2.10}
+    bogus = {"ticker": "HPE", "exit_date": "2026-09-30", "realized_pnl_usd": -2.10}
+    assert predates_ledger(legacy, start) is True
+    assert predates_ledger(bogus, start) is False
+    assert reconciles_with_ledger(bogus, closed) is False
