@@ -1,15 +1,15 @@
 {
   "broker_backend": "alpaca_paper",
-  "broker_synced_at": "2026-10-09T15:09:15.373362+00:00",
-  "cash_usd": 588.09,
-  "total_equity_usd": 991.51,
+  "broker_synced_at": "2026-10-09T15:18:20.864460+00:00",
+  "cash_usd": 519.81,
+  "total_equity_usd": 992.33,
   "positions": [
     {
       "ticker": "COST",
       "quantity": 0.167366,
       "avg_cost": 914.404,
-      "market_value_usd": 157.98,
-      "last_price": 943.92,
+      "market_value_usd": 158.26,
+      "last_price": 945.5999,
       "opened_at": "2026-10-02T14:52:16.438914+00:00",
       "proposal_id": "20261002-a31f7c",
       "plan": {
@@ -43,15 +43,15 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-COST-8052bbe147",
         "alpaca_order_id": "edc24f02-0d7d-48da-b83d-553def195347",
-        "armed_at": "2026-10-09T15:09:14.682436+00:00"
+        "armed_at": "2026-10-09T15:18:12.575190+00:00"
       }
     },
     {
       "ticker": "NOW",
       "quantity": 0.791987,
       "avg_cost": 135.924,
-      "market_value_usd": 111.43,
-      "last_price": 140.7,
+      "market_value_usd": 111.6,
+      "last_price": 140.915,
       "opened_at": "2026-09-22T16:28:12.476854+00:00",
       "proposal_id": "20260922-c84f23",
       "plan": {
@@ -82,7 +82,7 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-NOW-70473d52cc",
         "alpaca_order_id": "8e8a49ec-bf5f-4c4c-b81c-f4816c43b3be",
-        "armed_at": "2026-10-09T15:09:14.835171+00:00",
+        "armed_at": "2026-10-09T15:18:13.011236+00:00",
         "replace_refused": {
           "http_status": 422,
           "message": "qty must be an integer",
@@ -90,16 +90,57 @@
           "time_in_force": "day",
           "stop_price": "125.39",
           "op": "replace",
-          "at": "2026-10-09T15:09:14.797005+00:00"
+          "at": "2026-10-09T15:18:12.914680+00:00"
         }
+      }
+    },
+    {
+      "ticker": "NTAP",
+      "quantity": 0.292583,
+      "avg_cost": 233.37,
+      "market_value_usd": 68.27,
+      "last_price": 233.335,
+      "opened_at": "2026-10-09T15:18:19.055438+00:00",
+      "proposal_id": "20261009-1e0596",
+      "plan": {
+        "stop_loss": 217.0,
+        "target_price": 270.0,
+        "holding_horizon_days": 50,
+        "entry_price_max": 234.0,
+        "confidence": 0.54,
+        "demand_driver": "hyperscaler_server_capex",
+        "thesis_invalidators": {
+          "invalidating_print": "Any company update or sell-side estimate cut showing FY27 revenue tracking at or below the 17% guide, or a hyperscaler capex cut that names storage, kills the revision thesis.",
+          "invalidating_structure": "A daily close below $217, under the 10/1-10/2 shelf lows, means the breakout leg has failed; exit on that close.",
+          "time_box": "If NTAP has not made a daily close above $250 by 2026-11-06, cut or exit; hard exit by the 2026-11-28 close, before the 2026-12-01 print."
+        },
+        "calibration_probe": true,
+        "entry_type": null,
+        "starter": null,
+        "theme_second_seat": null
+      },
+      "high_water": 233.37,
+      "adds_count": 0,
+      "buy_commission_usd": 0.0,
+      "demand_driver": "hyperscaler_server_capex",
+      "protective_stop": {
+        "status": "resting",
+        "stop_price": 217.0,
+        "qty": 0.292582594,
+        "uncovered_qty": 0.0,
+        "session_only": true,
+        "time_in_force": "day",
+        "client_order_id": "EESTOP-NTAP-a56bdfe72b",
+        "alpaca_order_id": "5dfcfe3b-d4dc-4d2e-a19a-f07f42d6c57e",
+        "armed_at": "2026-10-09T15:18:19.352761+00:00"
       }
     },
     {
       "ticker": "NTRA",
       "quantity": 0.178042,
       "avg_cost": 398.726,
-      "market_value_usd": 70.64,
-      "last_price": 396.77,
+      "market_value_usd": 70.98,
+      "last_price": 398.66,
       "opened_at": "2026-10-07T18:27:13.426502+00:00",
       "proposal_id": "20261007-fdcbe1",
       "plan": {
@@ -132,15 +173,15 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-NTRA-7d814fa60b",
         "alpaca_order_id": "ff61d0f0-c77f-4253-a944-e07b71991778",
-        "armed_at": "2026-10-09T15:09:14.923050+00:00"
+        "armed_at": "2026-10-09T15:18:13.209336+00:00"
       }
     },
     {
       "ticker": "OKTA",
       "quantity": 0.28053,
       "avg_cost": 218.836,
-      "market_value_usd": 63.37,
-      "last_price": 225.89,
+      "market_value_usd": 63.41,
+      "last_price": 226.03,
       "opened_at": "2026-10-05T19:12:35.492949+00:00",
       "proposal_id": "20261005-cf6fd3",
       "plan": {
@@ -160,7 +201,7 @@
         "starter": null,
         "theme_second_seat": null
       },
-      "high_water": 225.89,
+      "high_water": 226.03,
       "adds_count": 0,
       "buy_commission_usd": 0.0,
       "demand_driver": "cybersecurity",
@@ -173,7 +214,7 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-OKTA-5eb8b29158",
         "alpaca_order_id": "3fc762bf-05cd-444a-b2f2-69c01407bada",
-        "armed_at": "2026-10-09T15:09:15.129436+00:00"
+        "armed_at": "2026-10-09T15:18:13.401959+00:00"
       }
     }
   ],
@@ -665,6 +706,55 @@
       },
       "alpaca_status": "filled",
       "filled_at": "2026-10-08T17:00:55.085471Z"
+    },
+    {
+      "ticker": "NTAP",
+      "action": "BUY",
+      "position_size_usd": 68.29,
+      "reference_price": 233.28,
+      "proposal_id": "20261009-1e0596",
+      "sell_fraction": null,
+      "atr_pct": 3.59,
+      "entry_price_max": 234.0,
+      "plan": {
+        "stop_loss": 217.0,
+        "target_price": 270.0,
+        "holding_horizon_days": 50,
+        "entry_price_max": 234.0,
+        "confidence": 0.54,
+        "demand_driver": "hyperscaler_server_capex",
+        "thesis_invalidators": {
+          "invalidating_print": "Any company update or sell-side estimate cut showing FY27 revenue tracking at or below the 17% guide, or a hyperscaler capex cut that names storage, kills the revision thesis.",
+          "invalidating_structure": "A daily close below $217, under the 10/1-10/2 shelf lows, means the breakout leg has failed; exit on that close.",
+          "time_box": "If NTAP has not made a daily close above $250 by 2026-11-06, cut or exit; hard exit by the 2026-11-28 close, before the 2026-12-01 print."
+        },
+        "calibration_probe": true,
+        "entry_type": null,
+        "starter": null,
+        "theme_second_seat": null
+      },
+      "demand_driver": "hyperscaler_server_capex",
+      "order_id": "EE-ef79ca180c91",
+      "client_order_id": "EE-ef79ca180c91",
+      "status": "filled",
+      "submitted_at": "2026-10-09T15:18:18.088379+00:00",
+      "alpaca_order_id": "b139712e-d2ef-4cf8-ac9e-48a006b9535b",
+      "fill_price": 233.37,
+      "quantity": 0.292583,
+      "notional_usd": 68.28,
+      "is_add": false,
+      "total_cost_usd": 68.28,
+      "entry_gap_usd": 0.0,
+      "fees_usd": {
+        "commission": 0.0,
+        "sec_fee": 0.0,
+        "taf": 0.0,
+        "slippage_bps": 0.0,
+        "effective_slippage_pct": 0.0
+      },
+      "alpaca_status": "filled",
+      "filled_at": "2026-10-09T15:18:18.603682327Z",
+      "position_avg_cost_after": 233.37
     }
   ],
   "ingested_broker_orders": [
