@@ -139,6 +139,32 @@ def _should_mark_run_start(auto_depth: bool) -> bool:
     return not os.environ.get("GITHUB_ACTIONS")
 
 
+def _auto_depth_hhmm(args, cfg: dict) -> str:
+    """The HHMM that --auto-depth resolves the slot depth from.
+
+    Normally the ET clock, which slot_depth_from_hhmm maps to the nearest slot.
+    A late FULL slot that hasn't landed keeps its own time, so it keeps its type
+    and its powers (2026-10-09: the 10:30 full act at about 11:16 resolved to the
+    12:00 holdings slot). See runlib.analytics.held_full_slot for the exact rule.
+    Explicit depth flags already win in resolve_depth. Fail-open to the clock.
+    """
+    clock = f"{et_now():%H%M}"
+    if args.depth or args.light or args.news_only or args.weekly_market:
+        return clock
+    try:
+        from runlib.analytics import held_full_slot
+        held = held_full_slot(cfg=cfg)
+    except Exception:
+        held = None
+    if held and held["hhmm"] != clock:
+        if slot_depth_from_hhmm(clock, cfg) != held["depth"]:
+            print(f"  (late scheduled slot: {held['slot']} full slot has not "
+                  f"landed and the next slot's window hasn't opened — keeping "
+                  f"depth 'full' at {clock[:2]}:{clock[2:]} ET)")
+        return held["hhmm"]
+    return clock
+
+
 def _scheduled_slot_standdown(args) -> str | None:
     """A clear stand-down message when this SCHEDULED run's slot was already served.
 
@@ -1424,7 +1450,7 @@ def main() -> int:
             light_flag=args.light,
             news_only=args.news_only,
             weekly_market=args.weekly_market,
-            hhmm=f"{et_now():%H%M}" if args.auto_depth else None,
+            hhmm=_auto_depth_hhmm(args, cfg) if args.auto_depth else None,
             cfg=cfg,
         )
     except ValueError as e:

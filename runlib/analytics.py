@@ -1339,3 +1339,65 @@ def slot_already_served(now_h: float | None = None,
                 "recovered": bool(entry.get("recovered"))}
     except Exception:
         return None
+
+
+# How long past its own time a late slot may still claim its slot type. Same 75 min
+# as runlib.depths.slot_depth_from_hhmm's tolerance and scripts/cloud_slot.sh's
+# primary window. Without the cap, a 15:00 full slot that never landed would hold
+# "full" until 17:15, after the closing bell. With it, the hold ends where the old
+# rule already ended.
+LATE_SLOT_HOLD_MAX_H = 75 / 60
+
+
+def held_full_slot(now_h: float | None = None, weekday: bool | None = None,
+                   cfg: dict | None = None) -> dict | None:
+    """The late FULL slot this scheduled run still belongs to, or None.
+
+    THE INCIDENT (2026-10-09). The 10:30 full routine fired at 11:07 ET. Its gather
+    resolved "full", but the act at about 11:16 re-resolved the depth from the
+    clock with slot_depth_from_hhmm's NEAREST-slot rule: 11:16 is 46 min after
+    10:30 and 44 min before 12:00, so the act called itself the 12:00
+    holdings_watchlist slot. The trades came from the bundle's depth, which was
+    full, but anything after 11:15 was one step from losing full-slot powers such
+    as a starter buy. The nearest-slot rule predates PR #18; PR #18's clock
+    fallback (most recent slot within 1h) was not involved.
+
+    The rule: a weekday run keeps the type of the most recent scheduled slot
+    (the latest slot at or before now plus the early tolerance) while all of
+    these hold:
+      * that slot is a FULL slot;
+      * it has not landed (no journaled run from its window through now);
+      * the next slot's window has not opened (that's implied by "most recent");
+      * the run is no more than LATE_SLOT_HOLD_MAX_H past the slot.
+    Only FULL is held; other slot types resolve exactly as before. Fail-open:
+    None means "use the old rule".
+    """
+    try:
+        now = et_now()
+        if now_h is None:
+            now_h = now.hour + now.minute / 60
+        if weekday is None:
+            weekday = now.weekday() < 5
+        if not weekday:
+            return None
+        cands = [x for x in expected_slots(True) if x <= now_h + SLOT_EARLY_TOLERANCE_H]
+        if not cands:
+            return None
+        slot = max(cands)
+        if now_h - slot > LATE_SLOT_HOLD_MAX_H:
+            return None
+        hhmm = f"{int(slot):02d}{int(round((slot % 1) * 60)):02d}"
+        from runlib.depths import slot_depth_from_hhmm
+        if slot_depth_from_hhmm(hhmm, cfg) != "full":
+            return None
+        lo = slot - SLOT_EARLY_TOLERANCE_H
+        if any(lo <= r["et_hour"] <= now_h + 1e-9 for r in completed_runs_today()):
+            return None
+        label = f"{hhmm[:2]}:{hhmm[2:]}"
+        rep = slot_report(now_h=now_h, weekday=True)
+        if any(e.get("label") == label and e.get("status") == "hit"
+               for e in rep.get("slots", [])):
+            return None
+        return {"slot": label, "hhmm": hhmm, "depth": "full"}
+    except Exception:
+        return None
