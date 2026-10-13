@@ -1,24 +1,24 @@
-# X pre-market sentiment (Fri Oct 9, 2026, about 9:04 AM ET)
+# X pre-market sentiment (Tue Oct 13, 2026, about 8:55 AM ET)
 
-Window 4:50 PM ET Oct 8 to 8:57 AM ET Oct 9. 305 posts from 16 of 22 accounts, replies excluded. Gap: DeItaone only returned 7:31 to 8:46 AM. Soft context only, not a trade signal. Full note: state/x_sentiment_20261009.md.
+Window 4:50 PM ET Oct 12 to 8:49 AM ET Oct 13. 428 posts from 16 of 22 accounts, replies excluded. Gap: DeItaone returned nothing 5:05 PM to 6:31 AM. Soft context only, not a trade signal. Full note: state/x_sentiment_20261013.md.
 
-Mood: Relief overnight, fresh Gulf risk into the open. Trump vowed no Iran attack before Nov 3, crude fell below $90.50, and futures were up (S&P +0.5%, Nasdaq 100 +0.9% at 4:56 AM, chips rebounding). From 8:36 AM the IRGC said it struck an LPG tanker near Hormuz. Yields remain the main worry.
+Mood: Risk-off for AI and semis overnight, better tone in bank and healthcare earnings. KOSPI closed -5.46% (SK Hynix -10%, Samsung -7.7%) on China CXMT memory progress and Broadcom's CEO calling the market a "casino"; Nasdaq futures were -0.8% to -1% Monday evening. Fed's Goolsbee calls AI an inflation problem ahead of Wednesday CPI.
 
 Top tickers:
-1. NVDA, 11 posts, 5 authors, mixed leaning bullish (Vera CPU claim, D-Matrix stake; Nvidia-backed Firmus pulled its IPO). 4 are Beth_Kindig self-retweets.
-2. SPCX, 8 posts, 6 authors, mixed (spectrum deal to be a mobile carrier, Barclays Overweight; PatrickMoorhead skeptical). T, VZ, TMUS fell 5% to 7% after hours.
-3. DAL, 5 posts, 4 authors, bearish (Q3 EPS miss, FY guide cut per LiveSquawk).
-4. AMD, 4 posts, 2 authors, mixed (3 from Beth_Kindig).
-5. AAPL, 3 posts, 3 authors, bearish (iPhone 18 Pro orders cut, Nikkei).
-Also TSM bullish (3 posts: $2B GlobalFoundries interposer deal) and LITE bullish (optics sold out to early 2029).
+1. JPM, 14 posts, 6 accounts, bearish to mixed (EPS and revenue miss; premarket move disputed, -2.8% vs +2%).
+2. WFC, 9 posts, 6 accounts, bearish (revenue and NII miss, about -2% premarket).
+3. GS, 8 posts, 6 accounts, bullish (EPS $17.01 vs $13.02 est, about +5% premarket).
+4. UNH, 8 posts, 5 accounts, bullish (beat, FY guide raised, +2% to +5% premarket).
+5. JNJ, 7 posts, 5 accounts, mixed (beat and raise, -2% premarket).
+Semis: AVGO bearish (4 posts, "casino" comment), memory names bearish (8 posts), NVDA mixed (6 posts, no catalyst), CBRS bearish (record low, 19.4M share unlock Oct 14).
 
-Held tickers (COST, NOW, NTRA, OKTA): no mentions in any post.
+Held tickers (COST, NOW, NTAP, NTRA, OKTA): no mentions in any post.
 
 Top headlines (ET):
-- 8:18 PM Oct 8, FirstSquawk: Trump says Iran talks productive, no attack before Nov 3 elections.
-- 8:36 to 8:49 AM, DeItaone/FirstSquawk/LiveSquawk: IRGC strikes LPG tanker near Hormuz, warns ships outside the strait.
-- 12:07 AM, FirstSquawk/LiveSquawk: Pimco says US 10-year risks 6%; it hit 5.34% Thursday.
-- 5:55 AM, wallstengine: Lumentum optics "completely sold out" through early 2029.
-- 4:57 to 5:03 PM Oct 8, dnystedt: TSMC and GFS $2B interposer deal; Taiwan Sept chip exports +46.1% Y/Y.
+- 2:17 AM, LiveSquawk/FirstSquawk: chip stocks slide after Broadcom CEO calls market a "casino" (FT).
+- 2:34 AM, FirstSquawk: Kospi closes -5.46%; wallstengine says CXMT memory advances drove it.
+- 7:03 AM, DeItaone/LiveSquawk: Fed's Goolsbee says AI is an inflation problem, warns of stagflation risk.
+- 8:40 AM, DeItaone: Houthis tell civilians to evacuate areas near Aramco oil sites, calling them targets.
+- 6:34 to 7:26 AM, DeItaone: JPM misses, GS beats big; UNH beat and raised at 5:55 AM (wallstengine).
 
-Crowded calls: AI is the disputed trade, with concentration and correction warnings (DeItaone, Beth_Kindig, Firmus IPO pull) against strong supply-chain data; rates talk is one-sided toward higher yields.
+Crowded calls: AI is crowded and disputed (BofA says tech exposure highest since 2020, top-10 S&P weight a record 39.5%, IMF and Bain warnings vs HSBC "don't fight the AI trade"); rates talk is one-sided toward higher for longer.
