@@ -1,15 +1,15 @@
 {
   "broker_backend": "alpaca_paper",
-  "broker_synced_at": "2026-10-13T18:25:41.103851+00:00",
-  "cash_usd": 519.8,
-  "total_equity_usd": 993.67,
+  "broker_synced_at": "2026-10-13T18:30:24.337506+00:00",
+  "cash_usd": 416.47,
+  "total_equity_usd": 993.22,
   "positions": [
     {
       "ticker": "COST",
       "quantity": 0.167366,
       "avg_cost": 914.404,
-      "market_value_usd": 160.38,
-      "last_price": 958.26,
+      "market_value_usd": 160.41,
+      "last_price": 958.455,
       "opened_at": "2026-10-02T14:52:16.438914+00:00",
       "proposal_id": "20261002-a31f7c",
       "plan": {
@@ -43,15 +43,56 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-COST-205370e933",
         "alpaca_order_id": "139e13c1-4fac-47dc-aa39-78aeab0c6758",
-        "armed_at": "2026-10-13T18:25:38.023380+00:00"
+        "armed_at": "2026-10-13T18:30:07.236950+00:00"
+      }
+    },
+    {
+      "ticker": "CVX",
+      "quantity": 0.474688,
+      "avg_cost": 217.68,
+      "market_value_usd": 103.33,
+      "last_price": 217.67,
+      "opened_at": "2026-10-13T18:30:21.305849+00:00",
+      "proposal_id": "20261013-ff3424",
+      "plan": {
+        "stop_loss": 208.0,
+        "target_price": 245.0,
+        "holding_horizon_days": 14,
+        "entry_price_max": 218.5,
+        "confidence": 0.62,
+        "demand_driver": "energy",
+        "thesis_invalidators": {
+          "invalidating_print": "A 2026-10-30 Q3 print or guide that cuts production outlook or shows refining margins collapsing enough to force consensus FY26/FY27 EPS cuts of more than 5%.",
+          "invalidating_structure": "A daily close below $208 on rising volume, giving back the breakout shelf while SPY remains above its 200-DMA (stock-specific failure).",
+          "time_box": "Exit by the 2026-10-29 close in every case so we are not holding through the 2026-10-30 binary; if CVX has not held a daily close above $225 by 2026-10-24, cut or exit."
+        },
+        "calibration_probe": null,
+        "entry_type": "starter",
+        "starter": true,
+        "theme_second_seat": null
+      },
+      "high_water": 217.72,
+      "adds_count": 0,
+      "buy_commission_usd": 0.0,
+      "demand_driver": "energy",
+      "protective_stop": {
+        "status": "resting",
+        "stop_price": 208.0,
+        "qty": 0.474687614,
+        "uncovered_qty": 0.0,
+        "session_only": true,
+        "time_in_force": "day",
+        "client_order_id": "EESTOP-CVX-4e310adaf8",
+        "alpaca_order_id": "aecf9dd0-1805-4121-abc1-05ca5d82eace",
+        "armed_at": "2026-10-13T18:30:22.577806+00:00"
       }
     },
     {
       "ticker": "NOW",
       "quantity": 0.791987,
       "avg_cost": 135.924,
-      "market_value_usd": 110.48,
-      "last_price": 139.5,
+      "market_value_usd": 110.43,
+      "last_price": 139.44,
       "opened_at": "2026-09-22T16:28:12.476854+00:00",
       "proposal_id": "20260922-c84f23",
       "plan": {
@@ -75,22 +116,22 @@
       "demand_driver": "software_platforms",
       "protective_stop": {
         "status": "resting",
-        "stop_price": 126.6769,
+        "stop_price": 126.68,
         "qty": 0.791986698,
         "uncovered_qty": 0.0,
         "session_only": true,
         "time_in_force": "day",
         "client_order_id": "EESTOP-NOW-5087c00487",
         "alpaca_order_id": "5d92e152-0be4-4fb3-a38e-1daf2b54c85c",
-        "armed_at": "2026-10-13T18:25:42.426583+00:00"
+        "armed_at": "2026-10-13T18:30:12.193594+00:00"
       }
     },
     {
       "ticker": "NTAP",
       "quantity": 0.292583,
       "avg_cost": 233.37,
-      "market_value_usd": 68.71,
-      "last_price": 234.845,
+      "market_value_usd": 68.67,
+      "last_price": 234.7,
       "opened_at": "2026-10-09T15:18:19.055438+00:00",
       "proposal_id": "20261009-1e0596",
       "plan": {
@@ -123,15 +164,15 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-NTAP-63796fa25a",
         "alpaca_order_id": "2cd4650a-ed5a-41db-80f4-027a85ab2ea0",
-        "armed_at": "2026-10-13T18:25:38.830952+00:00"
+        "armed_at": "2026-10-13T18:30:09.599702+00:00"
       }
     },
     {
       "ticker": "NTRA",
       "quantity": 0.178042,
       "avg_cost": 398.726,
-      "market_value_usd": 70.61,
-      "last_price": 396.57,
+      "market_value_usd": 70.4,
+      "last_price": 395.43,
       "opened_at": "2026-10-07T18:27:13.426502+00:00",
       "proposal_id": "20261007-fdcbe1",
       "plan": {
@@ -164,15 +205,15 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-NTRA-3b92b7dee8",
         "alpaca_order_id": "dccc05c6-b186-486d-81f2-aed29d55f948",
-        "armed_at": "2026-10-13T18:25:39.237032+00:00"
+        "armed_at": "2026-10-13T18:30:10.491077+00:00"
       }
     },
     {
       "ticker": "OKTA",
       "quantity": 0.28053,
       "avg_cost": 218.836,
-      "market_value_usd": 63.69,
-      "last_price": 227.0325,
+      "market_value_usd": 63.5,
+      "last_price": 226.37,
       "opened_at": "2026-10-05T19:12:35.492949+00:00",
       "proposal_id": "20261005-cf6fd3",
       "plan": {
@@ -206,7 +247,7 @@
         "time_in_force": "day",
         "client_order_id": "EESTOP-OKTA-f66a5b84ce",
         "alpaca_order_id": "7543b66e-95ee-4e22-b3af-a755418026c9",
-        "armed_at": "2026-10-13T18:25:39.649679+00:00"
+        "armed_at": "2026-10-13T18:30:11.323149+00:00"
       }
     }
   ],
@@ -747,6 +788,55 @@
       "alpaca_status": "filled",
       "filled_at": "2026-10-09T15:18:18.603682327Z",
       "position_avg_cost_after": 233.37
+    },
+    {
+      "ticker": "CVX",
+      "action": "BUY",
+      "position_size_usd": 103.34,
+      "reference_price": 217.72,
+      "proposal_id": "20261013-ff3424",
+      "sell_fraction": null,
+      "atr_pct": 1.92,
+      "entry_price_max": 218.5,
+      "plan": {
+        "stop_loss": 208.0,
+        "target_price": 245.0,
+        "holding_horizon_days": 14,
+        "entry_price_max": 218.5,
+        "confidence": 0.62,
+        "demand_driver": "energy",
+        "thesis_invalidators": {
+          "invalidating_print": "A 2026-10-30 Q3 print or guide that cuts production outlook or shows refining margins collapsing enough to force consensus FY26/FY27 EPS cuts of more than 5%.",
+          "invalidating_structure": "A daily close below $208 on rising volume, giving back the breakout shelf while SPY remains above its 200-DMA (stock-specific failure).",
+          "time_box": "Exit by the 2026-10-29 close in every case so we are not holding through the 2026-10-30 binary; if CVX has not held a daily close above $225 by 2026-10-24, cut or exit."
+        },
+        "calibration_probe": null,
+        "entry_type": "starter",
+        "starter": true,
+        "theme_second_seat": null
+      },
+      "demand_driver": "energy",
+      "order_id": "EE-4f2dc0575942",
+      "client_order_id": "EE-4f2dc0575942",
+      "status": "filled",
+      "submitted_at": "2026-10-13T18:30:17.366536+00:00",
+      "alpaca_order_id": "f5a5001f-539a-4a1d-a47a-0d784e61d047",
+      "fill_price": 217.68,
+      "quantity": 0.474688,
+      "notional_usd": 103.33,
+      "is_add": false,
+      "total_cost_usd": 103.33,
+      "entry_gap_usd": 0.0,
+      "fees_usd": {
+        "commission": 0.0,
+        "sec_fee": 0.0,
+        "taf": 0.0,
+        "slippage_bps": 0.0,
+        "effective_slippage_pct": 0.0
+      },
+      "alpaca_status": "filled",
+      "filled_at": "2026-10-13T18:30:19.367565398Z",
+      "position_avg_cost_after": 217.68
     }
   ],
   "ingested_broker_orders": [
