@@ -1,9 +1,9 @@
 {
-  "updated_at": "2026-10-07T22:58:41.045700+00:00",
+  "updated_at": "2026-10-13T23:05:08.798338+00:00",
   "note": "Daily study journal: one researched lesson per weekday, injected into every trading run.",
   "discipline_counts": {
     "technical_analysis": 14,
-    "fundamental_analysis": 2,
+    "fundamental_analysis": 3,
     "risk_management": 12,
     "strategy_playbooks": 13,
     "market_microstructure": 3,
@@ -11,6 +11,44 @@
     "macro_regimes": 2
   },
   "entries": [
+    {
+      "id": "KB-9033692099",
+      "discipline": "fundamental_analysis",
+      "topic": "Revenue-confirmed vs expense-driven beats: an EPS beat backed by a same-direction revenue surprise is the more persistent signal, so grade the SOURCE of the beat before treating a print gap as an epis",
+      "summary": "Ertimur, Livnat and Martikainen (2003, Review of Accounting Studies) show investors pay more for a dollar of revenue surprise than for a dollar of expense surprise at the preliminary earnings announcement, and that the gap varies with growth vs value status and cost structure. The mechanism, developed in Jegadeesh and Livnat (2006, Journal of Accounting and Economics), is persistence: earnings growth that comes from revenue tends to persist, while growth from cost cuts tends not to. Jegadeesh and Livnat find that after controlling for the earnings surprise, large revenue surprises predict abnormal returns over the following six months, strongest when revenue and earnings surprises point the same way, and that analysts also update too slowly on revenue surprises (forecast errors still linked to them 5 to 6 months later). The important caveat for this book: the six-month drift was significant for small firms but NOT for large firms. For large firms, the underreaction shows up mainly in the window around the NEXT earnings announcement, where returns are still related to the prior quarter's revenue surprise. Ertimur and Livnat (2002, Journal of Portfolio Management) add the sign logic: confirming positive sales and profit signals get a positive reaction, and a growth company that beats on profit while sales are flat or falling gets a negative reaction, while value companies are rewarded for that same cost control. Rees and Sivaramakrishnan (2007, Contemporary Accounting Research)",
+      "key_points": [
+        "A dollar of revenue surprise is valued more than a dollar of expense surprise because revenue-driven earnings growth persists (Ertimur-Livnat-Martikainen 2003; Jegadeesh-Livnat 2006).",
+        "Drift is strongest when revenue and EPS surprises point the same way; a beat on only one line is a weaker, conflicting signal.",
+        "For growth companies, an EPS beat on flat or falling sales draws a NEGATIVE reaction (Ertimur-Livnat 2002); for value companies cost control can be rewarded.",
+        "In large firms the six-month drift was not significant; the residual underreaction shows up at the NEXT print, so revenue confirmation is a hold-through-next-print input, not a 60-day drift trade.",
+        "Meeting or beating revenue consensus carries a premium beyond the EPS forecast error, stronger for high-growth firms (Rees-Sivaramakrishnan 2007).",
+        "Old samples and SUE decay (KB-5080476485) mean this is a quality filter on which gaps should hold, not standalone alpha.",
+        "A long-dated management target (investor-day style) is neither a reported revenue surprise nor a confirmed beat; grade it as guidance, not as a print."
+      ],
+      "how_to_apply": "Before any episodic-pivot / earnings-gap entry under KB-3704904010, classify the print in the thesis: revenue_confirmed (revenue beat AND EPS beat, same direction), eps_only (EPS beat on inline or missed revenue, i.e. margin or cost driven), or revenue_only. Use the news headline or filing for revenue vs consensus, and quarterly_fundamentals revenue history for YoY acceleration as the time-series check; if the revenue line is not in context, write revenue_source unknown and do not treat it as confirmed. For a growth or AI-stack name, an eps_only beat should not take full size on a 0.60+ confidence; shade it to a probe or wait for the day-after hold to prove itself, and a gap built on a long-dated target with no reported revenue beat (like MRVL's investor-day gap, which filled within two days, n=1 anecdote) is graded as guidance under the pre-print and invalidator rules, not as a print. A revenue_confirmed beat is a legitimate input to the pre-print fork (KB-5731674677) in favor of holding a winner through the next report, since that is where large-cap underreaction to revenue shows up; it never overrides the 1% risk budget, the 2:1 RR floor, or the stop.",
+      "sources": [
+        "Jegadeesh & Livnat (2006), 'Revenue surprises and stock returns', Journal of Accounting and Economics 41(1-2):147-171: https://www.sciencedirect.com/science/article/abs/pii/S0165410106000061",
+        "RePEc record for Jegadeesh & Livnat (2006): https://ideas.repec.org/a/eee/jaecon/v41y2006i1-2p147-171.html",
+        "Ertimur, Livnat & Martikainen (2003), 'Differential Market Reactions to Revenue and Expense Surprises', Review of Accounting Studies 8:185-211: https://link.springer.com/article/10.1023/A:1024409311267",
+        "Ertimur & Livnat (2002), 'Confirming or Conflicting Sales and Earnings Signals', Journal of Portfolio Management 28(4):45-56, doi:10.3905/jpm.2002.319853 (abstract via https://exa.ai/library/publication/wsrnsv3n9xs)",
+        "Rees & Sivaramakrishnan (2007), 'The Effect of Meeting or Beating Revenue Forecasts on the Association between Quarterly Returns and Earnings Forecast Errors', Contemporary Accounting Research 24(1):259-290: https://onlinelibrary.wiley.com/doi/10.1506/G767-1674-5686-5375",
+        "Rees & Sivaramakrishnan working paper 'Valuation Implications of Revenue Forecasts' (SSRN 275490): https://papers.ssrn.com/sol3/papers.cfm?abstract_id=275490"
+      ],
+      "learned_at": "2026-10-13T23:05:08.782431+00:00",
+      "run_id": "20261013-ef2aef",
+      "tensions": [
+        {
+          "with": "KB-5080476485",
+          "why": "KB-5080476485 says the 60-day SUE drift is dead in this book's liquid names; this lesson agrees and does not claim a large-cap revenue drift (Jegadeesh-Livnat found it insignificant for large firms over six months). It only uses the revenue/EPS source as a quality grade on the print and a next-print",
+          "noted_at": "2026-10-13"
+        },
+        {
+          "with": "KB-3704904010",
+          "why": "KB-3704904010 defines the episodic-pivot entry mechanics (leader that holds, day-after first pullback, stop under gap-day low); this lesson adds a fundamental grade of the beat that sizes conviction within that playbook, without changing its entry or stop geometry.",
+          "noted_at": "2026-10-13"
+        }
+      ]
+    },
     {
       "id": "KB-2365875878",
       "discipline": "trading_psychology",
@@ -40,6 +78,22 @@
           "with": "KB-8420105363",
           "why": "KB-8420105363 governs regret over ideas we skipped (never loosen the bar after a rejected name runs); this lesson governs regret over names that stopped us out. Same principle, judge the written bar at decision time, applied to a different trigger, so both stand.",
           "noted_at": "2026-10-07"
+        }
+      ],
+      "times_cited": 11,
+      "last_cited": "2026-10-13T21:40:47.518458+00:00",
+      "linked_trades": [
+        {
+          "ticker": "NTAP",
+          "linked_on": "2026-10-09",
+          "run_id": "20261009-1e0596",
+          "trade_ref": "EE-ef79ca180c91"
+        },
+        {
+          "ticker": "CVX",
+          "linked_on": "2026-10-13",
+          "run_id": "20261013-ff3424",
+          "trade_ref": "EE-4f2dc0575942"
         }
       ]
     },
@@ -77,6 +131,16 @@
           "with": "KB-6840616104",
           "why": "Breadth remains the regime aggression dial (a condition); this lesson only says a scheduled macro date by itself is not a reason to stand aside, so both apply: breadth sets aggression, the macro calendar is not a veto.",
           "noted_at": "2026-10-06"
+        }
+      ],
+      "times_cited": 2,
+      "last_cited": "2026-10-13T18:30:12.269301+00:00",
+      "linked_trades": [
+        {
+          "ticker": "CVX",
+          "linked_on": "2026-10-13",
+          "run_id": "20261013-ff3424",
+          "trade_ref": "EE-4f2dc0575942"
         }
       ]
     },
@@ -119,16 +183,34 @@
           "noted_at": "2026-10-05"
         }
       ],
-      "times_cited": 8,
-      "last_cited": "2026-10-07T16:11:28.241754+00:00",
+      "times_cited": 12,
+      "last_cited": "2026-10-13T18:30:12.269298+00:00",
       "linked_trades": [
         {
           "ticker": "MRVL",
           "linked_on": "2026-10-06",
           "run_id": "20261006-97f4ff",
-          "trade_ref": "EE-f8de3b43ce96"
+          "trade_ref": "EE-f8de3b43ce96",
+          "outcome": {
+            "win": false,
+            "pnl_usd": -9.25,
+            "closed_at": "2026-10-08",
+            "verdict": "Stopped out"
+          }
+        },
+        {
+          "ticker": "CVX",
+          "linked_on": "2026-10-13",
+          "run_id": "20261013-ff3424",
+          "trade_ref": "EE-4f2dc0575942"
         }
-      ]
+      ],
+      "outcome": {
+        "n": 1,
+        "wins": 0,
+        "graded_at": "2026-10-13T23:01:37.055522+00:00"
+      },
+      "evidence_status": null
     },
     {
       "id": "KB-7057672046",
@@ -159,22 +241,40 @@
         "KB-1365918646",
         "KB-1005106931"
       ],
-      "times_cited": 10,
-      "last_cited": "2026-10-07T18:27:04.595879+00:00",
+      "times_cited": 12,
+      "last_cited": "2026-10-09T16:19:51.630365+00:00",
       "linked_trades": [
         {
           "ticker": "MRVL",
           "linked_on": "2026-10-06",
           "run_id": "20261006-97f4ff",
-          "trade_ref": "EE-f8de3b43ce96"
+          "trade_ref": "EE-f8de3b43ce96",
+          "outcome": {
+            "win": false,
+            "pnl_usd": -9.25,
+            "closed_at": "2026-10-08",
+            "verdict": "Stopped out"
+          }
         },
         {
           "ticker": "NTRA",
           "linked_on": "2026-10-07",
           "run_id": "20261007-fdcbe1",
           "trade_ref": "EE-14e9804a8d9a"
+        },
+        {
+          "ticker": "NTAP",
+          "linked_on": "2026-10-09",
+          "run_id": "20261009-1e0596",
+          "trade_ref": "EE-ef79ca180c91"
         }
-      ]
+      ],
+      "outcome": {
+        "n": 1,
+        "wins": 0,
+        "graded_at": "2026-10-13T23:01:37.055513+00:00"
+      },
+      "evidence_status": null
     },
     {
       "id": "KB-5969100993",
@@ -213,9 +313,21 @@
           "ticker": "MRVL",
           "linked_on": "2026-10-06",
           "run_id": "20261006-97f4ff",
-          "trade_ref": "EE-f8de3b43ce96"
+          "trade_ref": "EE-f8de3b43ce96",
+          "outcome": {
+            "win": false,
+            "pnl_usd": -9.25,
+            "closed_at": "2026-10-08",
+            "verdict": "Stopped out"
+          }
         }
-      ]
+      ],
+      "outcome": {
+        "n": 1,
+        "wins": 0,
+        "graded_at": "2026-10-13T23:01:37.055476+00:00"
+      },
+      "evidence_status": null
     },
     {
       "id": "KB-8644690385",
@@ -1697,8 +1809,16 @@
       ],
       "learned_at": "2026-07-29T23:05:43.016059+00:00",
       "run_id": "20260729-21bd37",
-      "times_cited": 5,
-      "last_cited": "2026-08-07T16:16:31.370795+00:00"
+      "times_cited": 7,
+      "last_cited": "2026-10-13T18:30:12.269285+00:00",
+      "linked_trades": [
+        {
+          "ticker": "CVX",
+          "linked_on": "2026-10-13",
+          "run_id": "20261013-ff3424",
+          "trade_ref": "EE-4f2dc0575942"
+        }
+      ]
     },
     {
       "id": "KB-2665689010",
