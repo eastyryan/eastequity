@@ -162,9 +162,127 @@ def _pull_rebase_autostash() -> subprocess.CompletedProcess:
 
     publish.py fixed the same refusal on 2026-07-19 with --autostash. With it,
     the lease rebase succeeds and the act builds on origin's ledger.
+
+    THE FOLLOW-UP (2026-10-13 08:45 slot, 09:12). The gather had itself
+    broker-synced and written state/portfolio.json, and so had origin
+    (stop-watch). Re-applying the autostash conflicted on price marks alone, and
+    the act crashed on a portfolio.json full of conflict markers. Now every
+    file the autostash could not restore cleanly is resolved deterministically
+    (see _resolve_autostash_conflict), and git's leftover stash entry is dropped.
     """
-    return subprocess.run(["git", "pull", "--rebase", "--autostash", "origin", "main"],
-                          cwd=ROOT, capture_output=True, text=True, timeout=120)
+    before = _dirty_tracked_snapshot()
+    rb = subprocess.run(["git", "pull", "--rebase", "--autostash", "origin", "main"],
+                        cwd=ROOT, capture_output=True, text=True, timeout=120)
+    if rb.returncode == 0:
+        _settle_autostash_conflicts(before, rb)
+    return rb
+
+
+def _git_out(*args: str) -> str:
+    r = subprocess.run(["git", *args], cwd=ROOT, capture_output=True, text=True,
+                       timeout=60)
+    return r.stdout if r.returncode == 0 else ""
+
+
+def _dirty_tracked_snapshot() -> dict[str, bytes]:
+    """{path: working-tree bytes} for every tracked file that differs from HEAD."""
+    out: dict[str, bytes] = {}
+    for rel in _git_out("diff", "--name-only", "HEAD").splitlines():
+        f = ROOT / rel
+        if rel and f.is_file():
+            try:
+                out[rel] = f.read_bytes()
+            except OSError:
+                pass
+    return out
+
+
+def _has_conflict_markers(data: bytes) -> bool:
+    return any(line.startswith((b"<<<<<<< ", b">>>>>>> "))
+               for line in data.splitlines())
+
+
+def _broker_synced_at(data: bytes | None) -> str | None:
+    try:
+        blob = json.loads(data or b"")
+        v = blob.get("broker_synced_at") if isinstance(blob, dict) else None
+        return str(v) if v else None
+    except Exception:
+        return None
+
+
+def _resolve_autostash_conflict(rel: str, local: bytes | None,
+                                upstream: bytes | None) -> bytes | None:
+    """Content for a file the autostash could not re-apply. Pure.
+
+    * A broker-synced state file (one with broker_synced_at, such as
+      state/portfolio.json): the NEWER broker sync wins. Both sides are mirrors
+      of the same broker, so the newer one is the truth.
+    * An append-only journal (*.jsonl): union. Upstream's lines first, then any
+      local line upstream lacks.
+    * Anything else: the local (gather-written) copy, which is what the run was
+      about to use anyway. Upstream's version is still in HEAD.
+    """
+    if local is None:
+        return upstream
+    if upstream is None:
+        return local
+    lt, ut = _broker_synced_at(local), _broker_synced_at(upstream)
+    if lt or ut:
+        def _key(t):
+            try:
+                return datetime.fromisoformat(t.replace("Z", "+00:00"))
+            except Exception:
+                return datetime.min.replace(tzinfo=timezone.utc)
+        if not lt:
+            return upstream
+        if not ut:
+            return local
+        return upstream if _key(ut) >= _key(lt) else local
+    if rel.endswith(".jsonl"):
+        up_lines = upstream.splitlines(keepends=True)
+        if up_lines and not up_lines[-1].endswith(b"\n"):
+            up_lines[-1] += b"\n"
+        seen = {ln.rstrip(b"\r\n") for ln in up_lines}
+        extra = [ln if ln.endswith(b"\n") else ln + b"\n"
+                 for ln in local.splitlines(keepends=True)
+                 if ln.rstrip(b"\r\n") and ln.rstrip(b"\r\n") not in seen]
+        return b"".join(up_lines + extra)
+    return local
+
+
+def _settle_autostash_conflicts(before: dict[str, bytes], rb) -> list[str]:
+    """Resolve files left conflicted by a failed autostash re-apply. Fail-soft."""
+    try:
+        unmerged = set(_git_out("diff", "--name-only", "--diff-filter=U").split())
+        marked = {rel for rel in before
+                  if (ROOT / rel).is_file()
+                  and _has_conflict_markers((ROOT / rel).read_bytes())}
+        conflicted = sorted(unmerged | marked)
+        if not conflicted:
+            return []
+        for rel in conflicted:
+            up = subprocess.run(["git", "show", f"HEAD:{rel}"], cwd=ROOT,
+                                capture_output=True, timeout=60)
+            upstream = up.stdout if up.returncode == 0 else None
+            content = _resolve_autostash_conflict(rel, before.get(rel), upstream)
+            if content is not None:
+                (ROOT / rel).write_bytes(content)
+        subprocess.run(["git", "reset", "-q", "--", *conflicted], cwd=ROOT,
+                       capture_output=True, timeout=60)
+        # git parks the unapplied autostash as a stash entry. Its content is
+        # now applied (resolved above), so drop it, but only if it IS ours.
+        top = _git_out("stash", "list", "-1", "--format=%s")
+        if "autostash" in top.lower():
+            subprocess.run(["git", "stash", "drop", "-q"], cwd=ROOT,
+                           capture_output=True, timeout=60)
+        print(f"  (lease rebase: resolved autostash conflict(s) in "
+              f"{', '.join(conflicted)}; newer broker sync / journal union / "
+              f"local copy)")
+        return conflicted
+    except Exception as e:
+        print(f"  (lease rebase: autostash conflict resolution failed: {e})")
+        return []
 
 
 def _lease_conflict(lease: dict | None, run_id: str,
