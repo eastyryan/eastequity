@@ -834,8 +834,8 @@ Beyond filings/13F/news, every run now includes:
    its horizon after the gap-adjusted risk it adds?
    theme_exposure, portfolio_risk. **Two seats per theme are allowed (2026-10-01,
    user-approved: "I'm fine with betting twice on the same theme if the setup is
-   right")**: a second seat in a demand_driver you already hold is fine when the book is
-   <40% deployed and the challenger's setup score >= the holder's; size it at <=0.75%
+   right")**: a second seat in a demand_driver you already hold is fine when the
+   challenger's setup score >= the holder's (no deployment condition since 2026-10-13); size it at <=0.75%
    risk (the validator caps it and rejects a third seat). Different AI sub-themes
    (e.g. hyperscaler_server_capex vs software platforms) are NOT stacking; the 50% AI
    factor-stack cap is the guard there, not your reluctance.
@@ -1081,11 +1081,10 @@ Rules the validator enforces (know them so you don't waste runs):
   equity - two tickers on the same economic bet fail together, so they are budgeted
   together (DELL+HPE lesson). Notional theme cap (35% MV) still applies on top.
 - **TWO SEATS PER THEME** (validator `_check_theme_seats`): a BUY on a NEW ticker whose
-  driver already holds one seat is a SECOND SEAT. Allowed while the book is <40%
-  deployed and (when the bundle carries setup scores) the challenger's score >= the
-  holder's; its risk budget is capped at 0.75% and it is stamped `theme_second_seat`.
-  Rejections: `theme_second_seat_blocked` (book >=40% deployed),
-  `theme_second_seat_weaker_setup`, `theme_seat_cap` (a third seat). An add to a held
+  driver already holds one seat is a SECOND SEAT. Allowed (the <40%-deployed condition
+  was removed 2026-10-13) when, if the bundle carries setup scores, the challenger's
+  score >= the holder's; its risk budget is capped at 0.75% and it is stamped `theme_second_seat`.
+  Rejections: `theme_second_seat_weaker_setup`, `theme_seat_cap` (a third seat). An add to a held
   ticker is not a seat. Do not reject a good setup just because it is "also AI": a
   different demand_driver is a different seat, and the factor-stack cap is the guard.
 - **REGIME GATE**: when SPY closes below its 200-day average, new BUYs are rejected

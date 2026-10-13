@@ -996,7 +996,7 @@ def adversarial_review(proposals: list[dict], context_file: str, run_id: str,
         "Is there a dated resolution event? Weak = veto or haircut.\n"
         "3) THEME OVERLAP: demand_driver vs open positions / theme_exposure / "
         "portfolio_risk. A SECOND seat in a held driver is ALLOWED (validator: "
-        "book <40% deployed, setup score >= holder, <=0.75% risk; third seat "
+        "setup score >= holder, <=0.75% risk; third seat "
         "blocked) - do not veto on overlap alone; haircut only a second seat with "
         "no distinct catalyst. Different AI sub-themes (different demand_drivers) "
         "are NOT overlap; the 50% AI factor-stack cap is that guard.\n"

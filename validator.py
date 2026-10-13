@@ -496,9 +496,10 @@ def _check_theme_seats(p: dict, cfg: dict, portfolio: dict, market_context: dict
     twice on the same theme if the setup is right").
 
     A BUY on a NEW ticker whose demand_driver already holds a seat is a SECOND
-    seat: allowed only while the book is < max_deployed_pct deployed and (when
-    the bundle carries setup scores for both) the challenger scores >= the
-    holder. It is stamped theme_second_seat and its risk budget capped at
+    seat: allowed when (if the bundle carries setup scores for both) the
+    challenger scores >= the holder. The old "book < 40% deployed" condition
+    was REMOVED 2026-10-13 (user-approved: it rejected RBRK beside OKTA at the
+    noon run). Deployment is still bounded by the exposure, heat and theme caps. It is stamped theme_second_seat and its risk budget capped at
     risk_pct in _risk_budget_pct. A third seat is rejected. Adds to a held
     ticker are not seats. The theme risk/notional caps still apply on top."""
     if str(p.get("action", "")).upper() != "BUY":
@@ -533,21 +534,6 @@ def _check_theme_seats(p: dict, cfg: dict, portfolio: dict, market_context: dict
     if seats + 1 > max_seats:
         reasons.append(f"theme_seat_cap:{driver} already has {seats} seat(s); "
                        f"max {max_seats} per theme")
-        return
-    equity = portfolio.get("total_equity_usd",
-                           cfg["position_sizing"]["starting_capital_usd"])
-    mv = 0.0
-    for x in positions:
-        try:
-            mv += float(x.get("market_value_usd") or 0.0)
-        except (TypeError, ValueError):
-            continue
-    deployed = (mv / float(equity)) if equity else 1.0
-    max_dep = float(seat.get("max_deployed_pct", 0.40))
-    if deployed >= max_dep:
-        reasons.append(f"theme_second_seat_blocked:{driver} book {deployed:.0%} "
-                       f"deployed >= {max_dep:.0%} — a second seat in one theme "
-                       f"is only for an under-deployed book")
         return
     if seat.get("require_setup_score_gte_holder", True) and holders:
         mine = _setup_score_from_bundle(ticker, market_context)

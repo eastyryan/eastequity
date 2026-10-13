@@ -2,9 +2,9 @@
 
   * STARTER entries — half-risk first tranche at a watchlist trigger on a full
     in-session slot with a fresh live overlay; does NOT consume a probe slot.
-  * TWO SEATS PER THEME — a second same-driver seat while the book is <40%
-    deployed and the challenger's setup score >= the holder's, capped at 0.75%
-    risk; blocked otherwise; a third seat always blocked.
+  * TWO SEATS PER THEME — a second same-driver seat when the challenger's setup
+    score >= the holder's (the <40%-deployed condition was removed 2026-10-13),
+    capped at 0.75% risk; blocked otherwise; a third seat always blocked.
   * Engagement flat threshold read from config (0.30).
   * max_open_probes = 3.
 """
@@ -123,12 +123,21 @@ def test_second_same_theme_seat_allowed_under_40pct_and_capped_at_075():
     assert abs(p["position_size_usd"] - 937.5) < 0.01, p["position_size_usd"]
 
 
-def test_second_seat_blocked_when_book_is_40pct_deployed():
-    positions = [_dell(mv_qty=40)]              # $4,000 MV = 40% deployed
-    p = buy(ticker="HPE", size=2000.0, driver="hyperscaler_server_capex")
-    r = validator.validate_proposals([p], pf(positions=positions), _bundle())[0]
-    assert not r.approved
-    assert any("theme_second_seat_blocked" in x for x in r.reasons), r.reasons
+def test_second_seat_is_not_blocked_by_deployment():
+    """2026-10-13 (user-approved): the <40%-deployed condition is gone. A second
+    seat in a 45%-deployed book is allowed and still capped at 0.75% risk."""
+    positions = [_dell(),                                            # 10%
+                 pos("ZZZ", 100.0, 95.0, 35, "other_driver")]        # +35% = 45%
+    p = buy(ticker="HPE", size=1500.0, driver="hyperscaler_server_capex")
+    r = validator.validate_proposals(
+        [p], pf(positions=positions),
+        _bundle(scores={"HPE": 2.0, "DELL": 1.5}))[0]
+    assert not any("theme_second_seat_blocked" in x for x in r.reasons), r.reasons
+    assert r.approved, r.reasons
+    assert p.get("theme_second_seat") is True
+    seat = CFG["position_sizing"]["risk_based_sizing"]["second_theme_seat"]
+    assert "max_deployed_pct" not in seat
+    assert abs(validator._risk_budget_pct(p, CFG) - float(seat["risk_pct"])) < 1e-12
 
 
 def test_second_seat_blocked_when_challenger_setup_is_weaker():

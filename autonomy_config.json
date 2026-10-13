@@ -88,11 +88,10 @@
       "_theme_cap_2026_10_01_note": "Raised 0.02 -> 0.025 (user: 'I'm fine with betting twice on the same theme if the setup is right'). Two seats (1.0% + <=0.75%) must fit after gap-adjusted heat. The 35% notional theme cap and the 50% AI factor-stack cap are unchanged and remain the guards.",
       "second_theme_seat": {
         "enabled": true,
-        "max_deployed_pct": 0.40,
         "risk_pct": 0.0075,
         "max_seats_per_theme": 2,
         "require_setup_score_gte_holder": true,
-        "_note": "ADDED 2026-10-01 (user-approved). A second seat in a demand_driver that already has an open position is allowed only while the book is < max_deployed_pct deployed (market value / equity) and, when the bundle carries setup scores for both, the challenger's setup score >= the holder's. Its risk budget is capped at risk_pct (0.75% of equity). A third seat in one driver is rejected. A BUY on a ticker already held is an ADD, not a seat. Different AI sub-themes (different demand_drivers) are NOT stacking; book_risk.max_factor_stack_pct is that guard. validator._check_theme_seats."
+        "_note": "ADDED 2026-10-01 (user-approved). A second seat in a demand_driver that already has an open position is allowed when, if the bundle carries setup scores for both, the challenger's setup score >= the holder's. The former max_deployed_pct (0.40) condition was REMOVED 2026-10-13 (user-approved). Its risk budget is capped at risk_pct (0.75% of equity). A third seat in one driver is rejected. A BUY on a ticker already held is an ADD, not a seat. Different AI sub-themes (different demand_drivers) are NOT stacking; book_risk.max_factor_stack_pct is that guard. validator._check_theme_seats."
       },
       "min_clamped_position_usd": 20,
       "momentum_unwind_risk_scale": 0.5,
