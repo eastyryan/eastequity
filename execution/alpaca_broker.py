@@ -234,6 +234,14 @@ def _f(v, default: float = 0.0) -> float:
 _QTY_QUANTUM = Decimal("0.000000001")
 
 
+def _is_whole(q) -> bool:
+    """True when a share quantity is a whole number (PATCH-able at Alpaca)."""
+    try:
+        return abs(float(q) - round(float(q))) < 1e-9
+    except (TypeError, ValueError):
+        return False
+
+
 def _floor_qty(v) -> float:
     """A share count truncated (NEVER rounded up) to Alpaca's 9-dp precision.
 
@@ -1318,10 +1326,21 @@ def ensure_protective_stop(ticker: str, *, reason: str = "") -> dict | None:
         cur_tif = str(existing.get("time_in_force") or "").lower()
         level = max(desired, cur_price)          # <- the ratchet
         want_qty, want_tif, uncovered = _stop_shape(qty)
-        if want_tif == cur_tif:
-            if abs(level - cur_price) < 5e-5 and abs(want_qty - cur_qty) < 1e-9:
-                return _record_protective_stop(ticker, existing, want_qty,
-                                               want_tif, uncovered, level)
+        # Compare at the broker's precision. Stops go out as f"{level:.2f}", so
+        # a trail of 125.3915 against a working 125.39 is NO change. The old
+        # raw-float compare PATCHed that no-op on every tick, and Alpaca refused
+        # it for the fractional NOW stop (2026-10-13). KEEP the working stop.
+        same_level = f"{level:.2f}" == f"{cur_price:.2f}"
+        if want_tif == cur_tif and same_level and abs(want_qty - cur_qty) < 1e-9:
+            return _record_protective_stop(ticker, existing, want_qty,
+                                           want_tif, uncovered, cur_price)
+        # Alpaca cannot PATCH an order with a fractional quantity: HTTP 422
+        # "qty must be an integer", even when the qty is unchanged. Such a
+        # stop is changed the way a tif change already is: replacement first,
+        # then cancel-and-rewrite with rollback. A refused PATCH can never succeed
+        # on a later tick.
+        fractional = not (_is_whole(want_qty) and _is_whole(cur_qty))
+        if want_tif == cur_tif and not fractional:
             code, resp = _req("PATCH", f"/v2/orders/{existing['id']}",
                               body={"qty": _fmt_qty(want_qty),
                                     "stop_price": f"{level:.2f}"})
@@ -1353,7 +1372,8 @@ def ensure_protective_stop(ticker: str, *, reason: str = "") -> dict | None:
             # nothing to cancel — fall through and arm a fresh stop.
             desired = level
         else:
-            # tif has to change: the broker cannot PATCH it. Replacement FIRST;
+            # tif has to change, or the qty is fractional: the broker cannot PATCH
+            # it. Replacement FIRST;
             # the old stop is cancelled only once a new one is accepted.
             o = _submit_stop(ticker, want_qty, level, want_tif, refusals=refusals)
             if o is not None:

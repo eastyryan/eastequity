@@ -147,6 +147,26 @@ def _read_remote_lease() -> dict | None:
     return None
 
 
+def _pull_rebase_autostash() -> subprocess.CompletedProcess:
+    """`git pull --rebase --autostash origin main` for the lease commits.
+
+    THE INCIDENT (2026-10-13 06:00 light run). The lease push lost a race with a
+    stop-watch commit (06:05). The retry was a plain `git pull --rebase`, which
+    refuses on a dirty tree ("cannot pull with rebase: You have unstaged
+    changes"). By act time the tree is ALWAYS dirty: the gather writes tracked
+    data files. So the retry never ran, the lease stayed local and unseen, and
+    the act wrote its ledger on a base that was missing the stop-watch commit.
+    At publish, state/portfolio.json and journal/rejected conflicted. The routine
+    did as its prompt says (`git reset --hard origin/main`), and the run's
+    journal record was lost: a "died" slot.
+
+    publish.py fixed the same refusal on 2026-07-19 with --autostash. With it,
+    the lease rebase succeeds and the act builds on origin's ledger.
+    """
+    return subprocess.run(["git", "pull", "--rebase", "--autostash", "origin", "main"],
+                          cwd=ROOT, capture_output=True, text=True, timeout=120)
+
+
 def _lease_conflict(lease: dict | None, run_id: str,
                     now: datetime) -> str | None:
     """A halt reason if `lease` is another node's live claim, else None.
@@ -232,8 +252,7 @@ def acquire_cross_node_lease(run_id: str, cfg: dict, manual: bool = False) -> st
             p = subprocess.run(["git", "push", "origin", "main"], cwd=ROOT,
                                capture_output=True, text=True, timeout=120)
             if p.returncode != 0:  # lost the push race - rebase and re-check the holder
-                rb = subprocess.run(["git", "pull", "--rebase", "origin", "main"],
-                                    cwd=ROOT, capture_output=True, text=True, timeout=120)
+                rb = _pull_rebase_autostash()
                 if rb.returncode != 0:
                     subprocess.run(["git", "rebase", "--abort"], cwd=ROOT, capture_output=True)
                     print("  (lease push race, rebase failed - proceeding fail-open)")
@@ -330,8 +349,7 @@ def release_cross_node_lease(run_id: str) -> bool:
         p = subprocess.run(["git", "push", "origin", "main"], cwd=ROOT,
                            capture_output=True, text=True, timeout=120)
         if p.returncode != 0:
-            rb = subprocess.run(["git", "pull", "--rebase", "origin", "main"], cwd=ROOT,
-                                capture_output=True, text=True, timeout=120)
+            rb = _pull_rebase_autostash()
             if rb.returncode != 0:
                 subprocess.run(["git", "rebase", "--abort"], cwd=ROOT,
                                capture_output=True, timeout=30)
