@@ -1,24 +1,24 @@
-# X pre-market sentiment (Tue Oct 13, 2026, about 8:55 AM ET)
+# X pre-market sentiment (Wed Oct 14, 2026, about 8:55 AM ET)
 
-Window 4:50 PM ET Oct 12 to 8:49 AM ET Oct 13. 428 posts from 16 of 22 accounts, replies excluded. Gap: DeItaone returned nothing 5:05 PM to 6:31 AM. Soft context only, not a trade signal. Full note: state/x_sentiment_20261013.md.
+Window 4:50 PM ET Oct 13 to 8:49 AM ET Oct 14. 522 posts from 16 of 22 accounts, replies excluded. Gap: DeItaone returned nothing before 5:23 AM. Soft context only, not a trade signal. Full note: state/x_sentiment_20261014.md.
 
-Mood: Risk-off for AI and semis overnight, better tone in bank and healthcare earnings. KOSPI closed -5.46% (SK Hynix -10%, Samsung -7.7%) on China CXMT memory progress and Broadcom's CEO calling the market a "casino"; Nasdaq futures were -0.8% to -1% Monday evening. Fed's Goolsbee calls AI an inflation problem ahead of Wednesday CPI.
+Mood: Hawkish into the open. Sept CPI ran hot (3.7% y/y vs 3.6% est, core +0.3% m/m vs 0.2%), October hike odds jumped to 33% on Kalshi, the 2-year yield rose about 13 bp to 4.92% and the dollar hit its highest since November. ASML's beat and raise is a strong overnight semis catalyst, while Gulf shipping attacks keep oil elevated.
 
 Top tickers:
-1. JPM, 14 posts, 6 accounts, bearish to mixed (EPS and revenue miss; premarket move disputed, -2.8% vs +2%).
-2. WFC, 9 posts, 6 accounts, bearish (revenue and NII miss, about -2% premarket).
-3. GS, 8 posts, 6 accounts, bullish (EPS $17.01 vs $13.02 est, about +5% premarket).
-4. UNH, 8 posts, 5 accounts, bullish (beat, FY guide raised, +2% to +5% premarket).
-5. JNJ, 7 posts, 5 accounts, mixed (beat and raise, -2% premarket).
-Semis: AVGO bearish (4 posts, "casino" comment), memory names bearish (8 posts), NVDA mixed (6 posts, no catalyst), CBRS bearish (record low, 19.4M share unlock Oct 14).
+1. ASML, 18 posts, 6 accounts, bullish (beat, FY26 guide raised to EUR 44B to 45B, customers asking for 2029 and 2030 orders). Half the posts are TheTranscript_.
+2. BLK, 14 posts, 7 accounts, bullish (EPS and revenue beat, $205B net flows, +4% to +5% premarket).
+3. BAC, 12 posts, 7 accounts, bearish (EPS and revenue miss, $1.2B charge, about -5.5% premarket).
+4. MS, 9 posts, 5 accounts, mixed (beat on equities trading, FICC miss, about -0.6% premarket).
+5. NVDA, 5 posts, 5 accounts, bullish (SemiAnalysis says Rubin is 4.23x GB300 perf per dollar; 800VDC partner list at OCP).
+Also: MU bullish (Musk praise on memory pricing, 3 posts), SK Hynix bearish (defers HBM4 equipment orders), STT bearish (-8.7% premarket), MSFT cloud asked for 20% cost cuts.
 
-Held tickers (COST, NOW, NTAP, NTRA, OKTA): no mentions in any post.
+Held tickers (COST, CVX, NOW, NTAP, NTRA, OKTA): no mentions in any post. CVX context only: Brent above $106 overnight on Houthi attacks on Aramco sites.
 
 Top headlines (ET):
-- 2:17 AM, LiveSquawk/FirstSquawk: chip stocks slide after Broadcom CEO calls market a "casino" (FT).
-- 2:34 AM, FirstSquawk: Kospi closes -5.46%; wallstengine says CXMT memory advances drove it.
-- 7:03 AM, DeItaone/LiveSquawk: Fed's Goolsbee says AI is an inflation problem, warns of stagflation risk.
-- 8:40 AM, DeItaone: Houthis tell civilians to evacuate areas near Aramco oil sites, calling them targets.
-- 6:34 to 7:26 AM, DeItaone: JPM misses, GS beats big; UNH beat and raised at 5:55 AM (wallstengine).
+- 8:30 AM, all headline feeds: CPI hot, core 3-month annualized 3.4% (NickTimiraos); traders add bets on three more hikes by end-2027 (DeItaone).
+- 1:00 to 2:44 AM, wallstengine/TheTranscript_: ASML beats and raises; 2027 and 2028 supply will not meet demand.
+- 5:10 AM, FirstSquawk/DeItaone: container ship sinks after hitting a mine near Hormuz; 8:22 AM, a second ship hit.
+- 4:46 AM, FirstSquawk: Houthis say they hit Aramco in Dhahran and Riyadh, more attacks to come.
+- 6:03 to 8:28 AM: bank earnings split, BLK up, BAC and STT down sharply.
 
-Crowded calls: AI is crowded and disputed (BofA says tech exposure highest since 2020, top-10 S&P weight a record 39.5%, IMF and Bain warnings vs HSBC "don't fight the AI trade"); rates talk is one-sided toward higher for longer.
+Crowded calls: US equity allocation is disputed (BlackRock Institute cuts US stocks to neutral, Goldman upgrades global equities); AI concentration is crowded (10 stocks drove 70% of S&P gains since March 30) and rates talk is one-sided toward more hikes.
