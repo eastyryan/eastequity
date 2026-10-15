@@ -2197,7 +2197,7 @@
       "outcome": {
         "n": 1,
         "wins": 0,
-        "graded_at": "2026-10-13T23:01:37.055476+00:00"
+        "graded_at": "2026-10-15T22:59:34.223364+00:00"
       },
       "evidence_status": null
     },
@@ -2255,13 +2255,19 @@
           "ticker": "NTAP",
           "linked_on": "2026-10-09",
           "run_id": "20261009-1e0596",
-          "trade_ref": "EE-ef79ca180c91"
+          "trade_ref": "EE-ef79ca180c91",
+          "outcome": {
+            "win": false,
+            "pnl_usd": -5.32,
+            "closed_at": "2026-10-15",
+            "verdict": "Stopped out"
+          }
         }
       ],
       "outcome": {
-        "n": 1,
+        "n": 2,
         "wins": 0,
-        "graded_at": "2026-10-13T23:01:37.055513+00:00"
+        "graded_at": "2026-10-15T22:59:34.223413+00:00"
       },
       "evidence_status": null
     },
@@ -2329,7 +2335,7 @@
       "outcome": {
         "n": 1,
         "wins": 0,
-        "graded_at": "2026-10-13T23:01:37.055522+00:00"
+        "graded_at": "2026-10-15T22:59:34.223421+00:00"
       },
       "evidence_status": null
     },
@@ -2418,7 +2424,13 @@
           "ticker": "NTAP",
           "linked_on": "2026-10-09",
           "run_id": "20261009-1e0596",
-          "trade_ref": "EE-ef79ca180c91"
+          "trade_ref": "EE-ef79ca180c91",
+          "outcome": {
+            "win": false,
+            "pnl_usd": -5.32,
+            "closed_at": "2026-10-15",
+            "verdict": "Stopped out"
+          }
         },
         {
           "ticker": "CVX",
@@ -2426,7 +2438,13 @@
           "run_id": "20261013-ff3424",
           "trade_ref": "EE-4f2dc0575942"
         }
-      ]
+      ],
+      "outcome": {
+        "n": 1,
+        "wins": 0,
+        "graded_at": "2026-10-15T22:59:34.223432+00:00"
+      },
+      "evidence_status": null
     },
     {
       "id": "KB-9033692099",
@@ -2503,7 +2521,48 @@
           "noted_at": "2026-10-14"
         }
       ]
+    },
+    {
+      "id": "KB-7161557341",
+      "discipline": "macro_regimes",
+      "topic": "Rising 10y yields as a duration CONDITION for long-duration growth/software: cash-flow duration is real, but only pure-discounting rate shocks transmit one-for-one \u2014 so read 3-month yield direction pl",
+      "summary": "Lettau and Wachter (2007, JF) and Dechow, Sloan and Soliman (2004, RAS) establish the cash-flow duration fact: growth stocks' expected cash flows sit further in the future than value's, so growth has higher equity duration and larger betas to discount-rate news (Campbell-Vuolteenaho 2004). That theory is the starting point, not the trading rule. Gormsen and Lazarus (NBER w34814 / 2025) decompose real-rate changes into expected-growth, risk/uncertainty, and pure-discounting shocks and show only the pure-discounting term transmits one-for-one into equity valuations; growth and risk shocks have little or negative transmission. Unconditionally, stock valuations and trend real rates are weakly related, but the pure-discounting component explains over 80% of cross-country valuation changes since 1990, and in the U.S. only about 35% of the post-1990 rate decline was pure discounting \u2014 so most observed rate moves should not be read as one-for-one equity-duration hits. In the cross-section, duration-sorted portfolios do not differ much in exposure to RAW yield changes, but long-duration firms have materially greater exposure to pure-discounting shocks (implied duration spread >20 years). AQR (Moskowitz-Maloney 2020) is the practitioner counterweight: the value-vs-growth link to interest-rate LEVELS is insignificant across 1954-2019; contemporaneous slopes and long-rate changes show modest, specification-dependent coefficients that shrink for multi-metric value composites, reverse in s",
+      "key_points": [
+        "Growth/software is high-duration equity: farther cash flows imply larger sensitivity to discount-rate news (Lettau-Wachter; Dechow-Sloan-Soliman; Campbell-Vuolteenaho).",
+        "Only PURE-DISCOUNTING rate shocks transmit one-for-one to equity yields; growth and risk shocks do not (Gormsen-Lazarus). Raw 10y moves mix all three.",
+        "Unconditional rates-vs-valuations is weak; the pure-discounting component explains most cross-country valuation changes, but only ~35% of the U.S. rate decline was that component.",
+        "Duration-sorted stocks look similar on raw yield betas and diverge on pure-discounting betas \u2014 so a narrative 'rates up, skip growth' from the raw 10y alone is under-identified.",
+        "AQR: levels of rates do not explain value/growth; contemporaneous slope/long-rate links are modest, fragile across measures/samples, and useless for timing.",
+        "Practical regime read uses 3-MONTH direction of the 10y plus a coarse WHY (sticky growth vs growth scare vs risk-off), never a single session's yield tick."
+      ],
+      "how_to_apply": "Each run, read macro_regime.indicators.ten_year_yield (level + three_months_ago + direction) as a duration CONDITION beside hy_credit_spread, market_breadth, and the SPY-200DMA regime_gate. It never overrides the gate and never becomes a standalone skip (shadow regret is already high). When the 10y is rising over 3 months (today: 5.19 from 4.57) AND the candidate is long-duration growth/software/AI-beneficiary with extended tape (RSI>~65, no-supply pullback absent), prefer the cleaner geometry or the nearer-cash-flow / net-cash name when two setups otherwise tie, and demand the fat-pitch bar plus a stop outside the 1% noise floor \u2014 do not auto-reject a legal fat pitch solely because yields rose. When the 10y rise coincides with a growth scare or risk-off vol spike, defer to the existing vol-managed size scaler (KB-2211352502) and credit/breadth conditions rather than stacking a third veto. When the 10y is falling over 3 months, duration is not a reason to stretch size past 1% risk. Cite the 10y level and 3-month direction in the regime note so the lesson scorecard can grade whether the duration read helped. Today's OKTA stop and the DT/SHOP/ESTC rejects on extended software into ri",
+      "sources": [
+        "Lettau, M. and Wachter, J. (2007), 'Why Is Long-Horizon Equity Less Risky? A Duration-Based Explanation of the Value Premium', Journal of Finance 62(1); Haas PDF https://haas.berkeley.edu/wp-content/uploads/LettauWachter.pdf",
+        "Dechow, P., Sloan, R. and Soliman, M. (2004), 'Implied Equity Duration: A New Measure of Equity Security Risk', Review of Accounting Studies 9(2-3):197-228",
+        "Gormsen, N. and Lazarus, E. (2025), 'Interest Rates and Equity Valuations' / Equity Duration and Interest Rates, NBER WP 34814 https://www.nber.org/papers/w34814 ; Chicago PDF https://bpb-us-w2.wpmucdn.com/voices.uchicago.edu/dist/e/1646/files/2025/04/GormsenLazarus2025.pdf",
+        "Campbell, J. and Vuolteenaho, T. (2004), 'Bad Beta, Good Beta', American Economic Review 94(5):1249-1275",
+        "Moskowitz, T. and Maloney, T. (2020), 'Value and Interest Rates', AQR https://images.aqr.com/-/media/AQR/Documents/Insights/White-Papers/AQR-Value-and-Interest-Rates.pdf"
+      ],
+      "learned_at": "2026-10-15T23:03:51.467972+00:00",
+      "run_id": "20261015-3d959b",
+      "tensions": [
+        {
+          "with": "KB-1058019694",
+          "why": "Credit spreads and the 10y are both slow regime CONDITIONS. Credit reads intermediary risk appetite / tail risk; the 10y duration read ranks long-vs-near cash-flow candidates. Agreement on hostile readings justifies preferring nearer cash flows and cleaner geometry; neither alone vetoes a fat pitch.",
+          "noted_at": "2026-10-15"
+        },
+        {
+          "with": "KB-2211352502",
+          "why": "Vol-managed sizing scales after a realized-vol shock; this lesson is a duration-selection condition on a rising 10y. Apply the vol scaler on vol shocks; apply the duration read when choosing among otherwise equal growth/software candidates while yields have been rising over 3 months.",
+          "noted_at": "2026-10-15"
+        },
+        {
+          "with": "KB-1695380801",
+          "why": "Valuation is a weak timing tool over a swing horizon; this lesson does not revive multiple-compression as an entry veto. It only ranks candidates by cash-flow duration when the 10y is rising over months, leaving the fat-pitch and geometry rules untouched.",
+          "noted_at": "2026-10-15"
+        }
+      ]
     }
   ],
-  "updated_at": "2026-10-15T21:44:01.760849+00:00"
+  "updated_at": "2026-10-15T23:03:51.487982+00:00"
 }
