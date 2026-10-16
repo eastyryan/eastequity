@@ -1223,6 +1223,10 @@
   "improvements": [
     {
       "date": "2026-10-16",
+      "note": "Weekly self-review: The 10/09 review was never logged, so the latest stated change is from 10/02: every requalify new_trigger must be at least five characters, like $262.00 not $262. I followed it, no run this week logged a new_trigger length rejection, and tonight's two requalifies ($297.40 PSX, $227.00 CVX) passed, so it removed a failure mode but did nothing for returns. track_record.breakdowns now shows 5 closed trades, 0 wins, -$27.91 total: four were 0.50-0.60 probes (-$18.66), and four closed inside 0-7 days (-$24.09), nearly all stopped at about -1R. This week's closes were NTAP stopped (-$5.32) and OKTA thesis exit (-$3.82). The open book is healthier: COST +8.0%, CVX +3.4%, NOW +3.8%, PSX flat, NTRA -1.3%, equity $990.84 with about half in cash. The one change next week: no new BUY unless the stop sits at least 1.5 ATR below the live entry; if the level cannot give that room, wait for a better price instead of buying a tight stop."
+    },
+    {
+      "date": "2026-10-16",
       "note": "Risk desk ran in LOCAL DETERMINISTIC mode (risk desk unavailable in this environment): 1 BUY(s) reviewed, 0 vetoed. Catalysts were not web-verified; install/authenticate the grok CLI on this node to restore the adversarial LLM desk."
     },
     {
@@ -1256,90 +1260,6 @@
     {
       "date": "2026-10-14",
       "note": "Daily study (macro_regimes): High-yield credit spreads as a regime CONDITION for swing longs: level vs the ~10-year median plus 3-month direction sets aggression, the EBP (not expected default) carries the signal, and a spread ri - Gilchrist and Zakrajsek (2012, AER) build a bond-level credit spread index and split it into an expected-default component and a residual 'excess bond premium' (EBP); the predictive content of credit "
-    },
-    {
-      "date": "2026-10-13",
-      "note": "Daily study (fundamental_analysis): Revenue-confirmed vs expense-driven beats: an EPS beat backed by a same-direction revenue surprise is the more persistent signal, so grade the SOURCE of the beat before treating a print gap as an epis - Ertimur, Livnat and Martikainen (2003, Review of Accounting Studies) show investors pay more for a dollar of revenue surprise than for a dollar of expense surprise at the preliminary earnings announce"
-    },
-    {
-      "date": "2026-10-13",
-      "note": "Process gate: dead_indicator_veto:TEAM"
-    },
-    {
-      "date": "2026-10-13",
-      "note": "Risk desk ran in LOCAL DETERMINISTIC mode (risk desk unavailable in this environment): 1 BUY(s) reviewed, 0 vetoed. Catalysts were not web-verified; install/authenticate the grok CLI on this node to restore the adversarial LLM desk."
-    },
-    {
-      "date": "2026-10-13",
-      "note": "Process gate: dead_indicator_veto:TEAM"
-    },
-    {
-      "date": "2026-10-09",
-      "note": "Risk desk ran in LOCAL DETERMINISTIC mode (risk desk unavailable in this environment): 1 BUY(s) reviewed, 0 vetoed. Catalysts were not web-verified; install/authenticate the grok CLI on this node to restore the adversarial LLM desk."
-    },
-    {
-      "date": "2026-10-07",
-      "note": "Daily study (trading_psychology): Re-entry after a stop-out: the stop is a verdict on that entry, not a ban on the ticker; re-buy only on a fresh named trigger (reclaim of the stopped level or a new base), never out of regret, revenge - Strahilevitz, Odean and Barber (Journal of Marketing Research, 2011), using trade records for 66,465 households (1991-96) and 665,533 retail investors (1997-99), found that investors are far more will"
-    },
-    {
-      "date": "2026-10-07",
-      "note": "the evening bundle carried Costco's September sales headline but no after-hours price for COST, so the add decision for 10/8 cannot see the initial reaction; an after-hours mark for holdings with a same-evening event would make the next-morning plan sharper."
-    },
-    {
-      "date": "2026-10-07",
-      "note": "Risk desk ran in LOCAL DETERMINISTIC mode (risk desk unavailable in this environment): 1 BUY(s) reviewed, 0 vetoed. Catalysts were not web-verified; install/authenticate the grok CLI on this node to restore the adversarial LLM desk."
-    },
-    {
-      "date": "2026-10-07",
-      "note": "** the watchlist rows should carry a computed `seat_status` (unheld driver / second seat blocked / swap-only) from the driver map, so a trigger like ACN's $200 is never written as actionable when the validator would reject it. Separately, the COST trailing-stop replace failed at the broker (422 \"qty must be an integer\" on a fractional quantity); stop_watch should cancel-and-re-arm instead of replace for fractional legs."
-    },
-    {
-      "date": "2026-10-06",
-      "note": "Daily study (macro_regimes): Scheduled macro prints (FOMC/CPI/jobs) as a swing-entry calendar: the announcement premium argues against 'wait until after the Fed', the pre-FOMC drift has decayed, and a macro date is an index-gap s - Savor and Wilson (2013, JFQA) found that average stock returns and Sharpe ratios are significantly higher on days with scheduled inflation, unemployment and FOMC announcements than on other days; the "
-    },
-    {
-      "date": "2026-10-06",
-      "note": "Risk desk ran in LOCAL DETERMINISTIC mode (risk desk unavailable in this environment): 1 BUY(s) reviewed, 0 vetoed. Catalysts were not web-verified; install/authenticate the grok CLI on this node to restore the adversarial LLM desk."
-    },
-    {
-      "date": "2026-10-05",
-      "note": "Daily study (market_microstructure): Price-contingent '\u2264 level' buy triggers carry two-sided adverse selection: they fill most on bad-news days and miss most on good-news days \u2014 pair every pullback level with a pre-committed strength pat - A 'buy at or below X' trigger (a resting limit or a would_buy_at level checked at slots) is price-contingent, and that contingency is not neutral. Handa & Schwartz (JF 1996) name the two risks: an adv"
-    },
-    {
-      "date": "2026-10-05",
-      "note": "Risk desk ran in LOCAL DETERMINISTIC mode (risk desk unavailable in this environment): 1 BUY(s) reviewed, 0 vetoed. Catalysts were not web-verified; install/authenticate the grok CLI on this node to restore the adversarial LLM desk."
-    },
-    {
-      "date": "2026-10-05",
-      "note": "Risk desk ran in LOCAL DETERMINISTIC mode (risk desk unavailable in this environment): 1 BUY(s) reviewed, 0 vetoed. Catalysts were not web-verified; install/authenticate the grok CLI on this node to restore the adversarial LLM desk."
-    },
-    {
-      "date": "2026-10-05",
-      "note": "Risk desk ran in LOCAL DETERMINISTIC mode (risk desk unavailable in this environment): 1 BUY(s) reviewed, 0 vetoed. Catalysts were not web-verified; install/authenticate the grok CLI on this node to restore the adversarial LLM desk."
-    },
-    {
-      "date": "2026-10-04",
-      "note": "Weekly universe review: added ['ACN', 'AVT', 'DINO', 'DT', 'ILMN', 'NTAP', 'NTNX', 'SWKS', 'U', 'ZBRA'], removed ['AXON', 'BKNG', 'BX', 'CCJ', 'CVS', 'HD', 'KKR', 'MELI', 'RDDT', 'SPOT'] (186 names). Sunday curation one week after 2026-09-28 refresh: add discovery-screen leaders NTAP/AVT (AI storage & distribution), ACN/NTNX/DT/U (software & IT services riding the Accenture/AI-ops tape), SWKS (RF semi), ILMN (genomics RS peer to NTRA), DINO (refining diversifier), and ZBRA (automation). Remove persistent below-200DMA laggards with soft 1m/3m momentum \u2014 AXON/BKNG/BX/MELI/SPOT/KKR/CCJ/CVS/HD/RDDT. Protected holdings and watchlist names untouched; AI/tech bias preserved."
-    },
-    {
-      "date": "2026-10-02",
-      "note": "Weekly knowledge consolidation: 2 merged, 0 retired. Friday consolidation (box-brain; grok CLI still missing on PATH). Merged the 'don't halt on a small hole / expectancy' essay with the Feller\u2013Balsara ruin essay into one 1%/8% stand-down discipline, and merged stop-underwriting (sqrt(t) + gap floor) with the MAE path-diagnostic into one stop-craft lesson so future runs stop treating n=2 closes as a license to tighten. Left base-pattern playbooks (VCP/flat/cup/flag/3-C/pocket pivot), TA rails (20/50/200, RSI, ADX, 52w-high), chandelier+pyramid as separate mechanics, and all <7d lessons (gap-risk sizing, ADV ceiling, Fib alert-zone, ORB daytrade veto) untouched. No retires \u2014 nothing underperforming or redundant with the validator this week."
-    },
-    {
-      "date": "2026-10-02",
-      "note": "Weekly self-review: Last Friday's stated change was: on the first live-overlay slot of each day, recompute every open seat's cushion from the fresh mark before any new BUY \u2014 do not inherit overnight/stale-bar ATR math. I followed it: stale-overlay mornings (including Tuesday\u2013Thursday overnight and Friday 8:45) refused new BUYs and named the stale age, and the week's only fills (COST starter mid-morning Friday, CLS probe Friday afternoon) both cited live-mark cushions (~1.7\u20132.1 ATR) on a fresh Alpaca IEX overlay before the ticket, so the rule helped keep stop math honest. track_record.breakdowns is still total_trades 0 / anecdote on this reset paper book, so the week's audit is the open book \u2014 NOW day-10 (0.792 @ $135.92, mark ~$134.44, plan $125/$164/45d), plus Friday's COST starter (0.167 @ ~$914.40) and CLS half-risk probe (0.140 @ ~$383.88), cash ~$686 / equity ~$1,000, no forced exits. What went right: two honest seats filled on live overlay instead of another flat week, LNG near-miss was requalified to $262.00 instead of held unchanged, and Dell/HPE were not restacked on top of CLS. What went wrong: first act this evening died on a four-character new_trigger ($262 < 5-char floor) and a chart-file push race, and NOW's $145-by-~Oct-22 time-box is now the live clock. The one change next week: every requalify new_trigger must be at least five characters (e.g. $262.00 not $262) and I will dry-check len(new_trigger) before writing brain_response \u2014 next Friday grades whether any trigger_reviews gate fired on length again."
-    },
-    {
-      "date": "2026-10-02",
-      "note": "Risk desk ran in LOCAL DETERMINISTIC mode (risk desk unavailable in this environment): 1 BUY(s) reviewed, 0 vetoed. Catalysts were not web-verified; install/authenticate the grok CLI on this node to restore the adversarial LLM desk."
-    },
-    {
-      "date": "2026-10-02",
-      "note": "Risk desk ran in LOCAL DETERMINISTIC mode (risk desk unavailable in this environment): 1 BUY(s) reviewed, 0 vetoed. Catalysts were not web-verified; install/authenticate the grok CLI on this node to restore the adversarial LLM desk."
-    },
-    {
-      "date": "2026-10-02",
-      "note": "Process gate: trigger_reviews_requalify_without_new_trigger:COST; trigger_reviews_missing_need_1_got_0:COST"
     }
   ],
   "trade_events": [
