@@ -234,10 +234,31 @@ def refresh_dashboard(context: dict, response: str, results: list, fills: list,
     (dash / f"run_{run_id}.json").write_text(json.dumps(json_safe(run_out), indent=2, default=str))
     slim = {k: v for k, v in out.items() if k != "latest_reasoning"}
     (dash / "latest.json").write_text(json.dumps(json_safe(slim), indent=2, default=str))
+    publish_brain_memory(dash)
     # NOTE: equity_history (with benchmark_close) was already written at the top of this
     # function. A second write here used to re-append today's point WITHOUT benchmark_close,
     # silently wiping the S&P comparison line every run - removed. Do not reintroduce it.
 
+
+
+def publish_brain_memory(dash=None) -> None:
+    """Publish BRAIN_MEMORY.md to dashboard/data/brain_memory.json.
+
+    The brain's living memory, rendered on the dashboard's Memory tab.
+    Fail-soft: a missing or unreadable file must never break a run.
+    """
+    try:
+        dash = dash or (ROOT / "dashboard" / "data")
+        dash.mkdir(parents=True, exist_ok=True)
+        src = ROOT / "BRAIN_MEMORY.md"
+        if not src.exists():
+            return
+        (dash / "brain_memory.json").write_text(json.dumps({
+            "markdown": src.read_text(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+        }, indent=2))
+    except Exception as e:
+        print(f"  (brain memory publish failed: {e})")
 
 
 def _book_fingerprint_from_text(text: str) -> str:

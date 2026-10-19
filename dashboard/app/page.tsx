@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import Arena from "@/components/Arena";
 import type { LearningJournal } from "@/components/ArenaStudyHall";
+import type { BrainMemoryData } from "@/components/BrainMemory";
 import type { HistoryPoint, Latest } from "@/lib/types";
 
 // Read at build time from the JSON the agent commits. Since 2026-09-21 every
@@ -30,6 +31,7 @@ export default function Home() {
   const latest = readJson<Latest>("latest.json");
   const history = readJson<HistoryPoint[]>("equity_history.json");
   const journal = readJsonSafe<NonNullable<LearningJournal>>("learning_journal.json");
+  const brainMemory = readJsonSafe<NonNullable<BrainMemoryData>>("brain_memory.json");
 
-  return <Arena latest={latest} history={history} journal={journal} />;
+  return <Arena latest={latest} history={history} journal={journal} brainMemory={brainMemory} />;
 }

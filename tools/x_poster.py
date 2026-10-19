@@ -84,21 +84,42 @@ def _upload_media(session, path: str) -> str | None:
     return None
 
 
+def _bearer_token() -> str | None:
+    return os.environ.get("X_BEARER_TOKEN") or None
+
+
 def post_tweet(text: str, media_path: str | None = None) -> dict:
-    """Single long-form post (X Premium allows up to 25k chars), optional image."""
-    from requests_oauthlib import OAuth1Session
-    keys = _keys()
-    if keys is None:
-        return {"status": "skipped", "reason": "X API keys not configured in .env"}
-    session = OAuth1Session(keys["X_API_KEY"], keys["X_API_SECRET"],
-                            keys["X_ACCESS_TOKEN"], keys["X_ACCESS_SECRET"])
+    """Single long-form post (X Premium allows up to 25k chars), optional image.
+
+    Auth: prefers the 4-key OAuth 1.0a user context (full path incl. media
+    upload). Falls back to an OAuth 2.0 user bearer token (X_BEARER_TOKEN):
+    the v1.1 media upload endpoint only accepts OAuth 1.0a, so media is
+    skipped on the bearer path and the text posts alone.
+    """
     payload = {"text": text[:25000]}
-    if media_path:
-        media_id = _upload_media(session, media_path)
-        if media_id:
-            payload["media"] = {"media_ids": [media_id]}
+    keys = _keys()
+    if keys is not None:
+        from requests_oauthlib import OAuth1Session
+        session = OAuth1Session(keys["X_API_KEY"], keys["X_API_SECRET"],
+                                keys["X_ACCESS_TOKEN"], keys["X_ACCESS_SECRET"])
+        if media_path:
+            media_id = _upload_media(session, media_path)
+            if media_id:
+                payload["media"] = {"media_ids": [media_id]}
+        sender = session.post
+    else:
+        bearer = _bearer_token()
+        if not bearer:
+            return {"status": "skipped", "reason": "X API keys not configured in .env"}
+        if media_path:
+            print("  (x_poster: bearer path skips media upload — v1.1 needs OAuth1)")
+        import requests
+
+        def sender(url, json=None, timeout=60):  # noqa: A001 - matches session.post
+            return requests.post(url, json=json, timeout=timeout,
+                                 headers={"Authorization": f"Bearer {bearer}"})
     try:
-        r = session.post("https://api.twitter.com/2/tweets", json=payload, timeout=60)
+        r = sender("https://api.twitter.com/2/tweets", json=payload, timeout=60)
     except Exception as e:
         # The request may have been accepted before the connection died. Report
         # "unknown" so the caller logs it as consumed: never blind-retry a post.

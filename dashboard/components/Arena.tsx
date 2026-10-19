@@ -6,6 +6,7 @@ import type { HistoryPoint, Latest, Position } from "@/lib/types";
 import { formatEtStamp } from "@/lib/format";
 import ArenaCalibration from "./ArenaCalibration";
 import ArenaStudyHall, { type LearningJournal } from "./ArenaStudyHall";
+import BrainMemory, { type BrainMemoryData } from "./BrainMemory";
 
 // Data arrives as props, rendered from the JSON committed in dashboard/data.
 //
@@ -251,10 +252,12 @@ export default function Arena({
   latest,
   history,
   journal = null,
+  brainMemory = null,
 }: {
   latest: Latest;
   history: HistoryPoint[];
   journal?: LearningJournal;
+  brainMemory?: BrainMemoryData;
 }) {
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   // Separate from `expanded` (which keys the watchlist) so a ticker that is
@@ -478,6 +481,7 @@ export default function Arena({
             <a href="#log">The Log</a>
             <a href="#calibration">Calibration</a>
             <a href="#study">Study Hall</a>
+            <a href="#memory">Memory</a>
           </nav>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
             <button
@@ -589,10 +593,10 @@ export default function Arena({
               flexWrap: "wrap",
             }}
           >
-            <span style={{ fontSize: 11, letterSpacing: "0.32em", color: "var(--ee-powered)" }}>POWERED BY</span>
-            <span style={{ fontSize: 16, fontWeight: 700, color: "var(--ee-brand)" }}>Claude</span>
+            <span style={{ fontSize: 11, letterSpacing: "0.32em", color: "var(--ee-powered)" }}>BUILT BY</span>
             <span style={{ fontSize: 16, fontWeight: 700, color: "var(--ee-brand)" }}>Grok</span>
-            <span style={{ fontSize: 16, fontWeight: 700, color: "var(--ee-brand)" }}>Python Risk Desk</span>
+            <span style={{ fontSize: 11, letterSpacing: "0.32em", color: "var(--ee-powered)" }}>BRAIN BY</span>
+            <span style={{ fontSize: 16, fontWeight: 700, color: "var(--ee-brand)" }}>Muse</span>
           </div>
         </div>
 
@@ -1567,6 +1571,19 @@ export default function Arena({
           </span>
         </div>
         <ArenaStudyHall journal={journal} />
+      </section>
+
+      {/* ---------------- Brain Memory ---------------- */}
+      <section id="memory" className="ee-section" style={{ padding: "70px 32px 10px" }}>
+        <div style={{ display: "flex", alignItems: "baseline", gap: 20, flexWrap: "wrap", marginBottom: 26 }}>
+          <h3 className="ee-serif" style={{ fontSize: 34 }}>
+            Brain <i>memory</i>
+          </h3>
+          <span style={{ fontSize: 11, letterSpacing: "0.2em", color: "var(--ee-muted)" }}>
+            WHAT THE BRAIN BELIEVES, AND WHY
+          </span>
+        </div>
+        <BrainMemory data={brainMemory} />
       </section>
 
       {/* ---------------- Footer ---------------- */}
